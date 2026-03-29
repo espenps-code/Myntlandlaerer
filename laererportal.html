@@ -11,7 +11,7 @@
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   // ── LIM INN DIN FIREBASE-KONFIG HER ──────────────────────────────────────
-     const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
   authDomain: "myntland.firebaseapp.com",
   databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
@@ -56,8 +56,15 @@
 
   window._startListeners = startListeners;
 
-  document.getElementById('fb-status').textContent = '🟢 Firebase klar';
-  document.getElementById('fb-status').style.color = '#9FE1CB';
+  // Module scripts run after DOM is fully parsed, so DOM is guaranteed ready here.
+  // Just mark firebase as ready and call loadProfiles directly via a small timeout
+  // so the non-module script below has had a chance to define loadProfiles().
+  window._firebaseReady = true;
+  setTimeout(() => {
+    const el = document.getElementById('fb-status');
+    if (el) { el.textContent = '🟢 Firebase klar'; el.style.color = '#9FE1CB'; }
+    if (typeof loadProfiles === 'function') loadProfiles();
+  }, 0);
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
@@ -585,7 +592,7 @@ let selectedGroupColor = '#1D9E75';
 let selectedTeacherColor = '#1D9E75';
 
 function fbRef(path) { return window._ref(window._db, path); }
-function ready()     { return !!window._fbReady; }
+function ready()     { return !!(window._fbReady && window._db && window._ref); }
 
 // ══════════════════════════════════════════════════════════
 // LOGIN / TEACHER PROFILES
@@ -594,7 +601,6 @@ let loginPin = '', loginTarget = null;
 
 // Load teacher profiles for login screen
 function loadProfiles() {
-  if (!ready()) { setTimeout(loadProfiles, 500); return; }
   window._onValue(fbRef('teachers'), snap => {
     window._teachers = snap.val()
       ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
@@ -1300,7 +1306,8 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('cli
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
-loadProfiles();
+// loadProfiles() is called by the module script via setTimeout(0)
+// after Firebase is ready. Nothing needed here.
 </script>
 </body>
 </html>
