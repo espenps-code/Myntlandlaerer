@@ -6,7 +6,7 @@
 <title>Myntland – Elevapp</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- ZXing for camera QR scanning -->
-<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getDatabase, ref, onValue, update }
@@ -495,56 +495,90 @@ async function initCamera() {
       video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
     });
     video.srcObject = stream;
+    video.setAttribute('playsinline', true);
     await video.play();
-    requestAnimationFrame(scanFrame);
+    // Give the video a moment to stabilise before scanning
+    setTimeout(() => { if (scanActive) requestAnimationFrame(scanFrame); }, 300);
   } catch(e) {
     document.getElementById('scanner-hint').textContent = '⚠️ Kameratilgang nektet – sjekk nettleserinnstillinger';
     scanActive = false;
   }
 }
 
-async function scanFrame() {
+// Reusable offscreen canvas for frame capture
+let _scanCanvas = null;
+let _scanCtx    = null;
+
+function scanFrame() {
   if (!scanActive) return;
   const video = document.getElementById('scanner-video');
-  if (video.readyState < 2) { requestAnimationFrame(scanFrame); return; }
 
-  // Use ZXing if available, otherwise canvas fallback
-  if (window.ZXing) {
-    try {
-      const hints = new Map();
-      const formats = [window.ZXing.BarcodeFormat.QR_CODE];
-      hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-      if (!codeReader) codeReader = new window.ZXing.BrowserQRCodeReader();
-
-      const canvas = document.createElement('canvas');
-      canvas.width  = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      const imgData = canvas.toDataURL('image/png');
-
-      codeReader.decodeFromImage(undefined, imgData).then(result => {
-        if (result && scanActive) handleScanResult(result.getText());
-      }).catch(() => { if (scanActive) requestAnimationFrame(scanFrame); });
-      return;
-    } catch(e) {}
+  // Wait until video has actual pixel data
+  if (!video || video.readyState < 2 || video.videoWidth === 0) {
+    requestAnimationFrame(scanFrame);
+    return;
   }
-  // Fallback: try BarcodeDetector API (Chrome on Android)
+
+  // Reuse canvas across frames for performance
+  if (!_scanCanvas) {
+    _scanCanvas = document.createElement('canvas');
+    _scanCtx    = _scanCanvas.getContext('2d', { willReadFrequently: true });
+  }
+  _scanCanvas.width  = video.videoWidth;
+  _scanCanvas.height = video.videoHeight;
+  _scanCtx.drawImage(video, 0, 0);
+
+  // Strategy 1: native BarcodeDetector (Chrome on Android, Safari 17+)
   if ('BarcodeDetector' in window) {
-    try {
-      if (!window._barcodeDetector) window._barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-      const codes = await window._barcodeDetector.detect(video);
-      if (codes.length > 0 && scanActive) { handleScanResult(codes[0].rawValue); return; }
-    } catch(e) {}
+    if (!window._barcodeDetector) {
+      window._barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+    }
+    window._barcodeDetector.detect(_scanCanvas).then(codes => {
+      if (!scanActive) return;
+      if (codes.length > 0) {
+        handleScanResult(codes[0].rawValue);
+      } else {
+        requestAnimationFrame(scanFrame);
+      }
+    }).catch(() => {
+      // BarcodeDetector failed this frame – fall through to jsQR below
+      tryJsQR(video);
+    });
+    return;
   }
-  if (scanActive) requestAnimationFrame(scanFrame);
+
+  // Strategy 2: jsQR (works everywhere via canvas pixel data)
+  tryJsQR(video);
+}
+
+function tryJsQR(video) {
+  if (!scanActive) return;
+  if (!window.jsQR) {
+    // jsQR not loaded yet, retry shortly
+    setTimeout(() => { if (scanActive) requestAnimationFrame(scanFrame); }, 100);
+    return;
+  }
+  try {
+    const imageData = _scanCtx.getImageData(0, 0, _scanCanvas.width, _scanCanvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert'
+    });
+    if (code) {
+      handleScanResult(code.data);
+    } else {
+      requestAnimationFrame(scanFrame);
+    }
+  } catch(e) {
+    requestAnimationFrame(scanFrame);
+  }
 }
 
 function handleScanResult(text) {
+  if (!scanActive) return; // guard against double-fire
   stopScan();
   try {
     const data = JSON.parse(text);
     if (scanMode === 'cashier') {
-      // Kasse: legg vare i handlekurv
       if (data.type === 'grocery') addToCart(data.name || '?', data.name || '?', data.price || 0, data.emoji || '🛒');
     } else if (scanMode === 'payment') {
       if (data.type === 'payment' && data.amount > 0) {
@@ -561,10 +595,14 @@ function handleScanResult(text) {
 
 function stopScan() {
   scanActive = false;
+  _scanCanvas = null;
+  _scanCtx    = null;
   const video = document.getElementById('scanner-video');
-  if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+  }
   document.getElementById('scanner-overlay').classList.remove('open');
-  codeReader = null;
 }
 
 // ── PIN confirmation before payment ───────────────────────────────────────
