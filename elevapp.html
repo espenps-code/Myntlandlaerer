@@ -5,22 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Myntland – Elevapp</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- ZXing for camera QR scanning -->
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, onValue, update, push, set }
+  import { getDatabase, ref, onValue, update }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   // ── LIM INN SAMME FIREBASE-KONFIG SOM I LÆRERPORTALEN ───────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
-  authDomain: "myntland.firebaseapp.com",
-  databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "myntland",
-  storageBucket: "myntland.firebasestorage.app",
-  messagingSenderId: "711264415533",
-  appId: "1:711264415533:web:644a77a1e8b234667b2da4",
-  measurementId: "G-95QZNLQ6V9"
-};
+  const firebaseConfig = {
+    apiKey:            "DIN_API_KEY",
+    authDomain:        "DIN_PROJECT.firebaseapp.com",
+    databaseURL:       "https://DIN_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "DIN_PROJECT",
+    storageBucket:     "DIN_PROJECT.appspot.com",
+    messagingSenderId: "DIN_SENDER_ID",
+    appId:             "DIN_APP_ID"
+  };
   // ─────────────────────────────────────────────────────────────────────────
 
   const app = initializeApp(firebaseConfig);
@@ -30,21 +31,18 @@ const firebaseConfig = {
   window._ref     = ref;
   window._onValue = onValue;
   window._update  = update;
-  window._push    = push;
-  window._set     = set;
   window._fbReady = true;
 
-  // Hent studenter og groceries én gang
   onValue(ref(db, 'students'), snap => {
     window._allStudents = snap.val()
       ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
       : [];
-    // Oppdater saldo live hvis innlogget
     if (window._currentStudent) {
       const updated = window._allStudents.find(s => s.fbKey === window._currentStudent.fbKey);
       if (updated) {
         window._currentStudent = updated;
-        document.getElementById('customer-balance').textContent = updated.balance;
+        const el = document.getElementById('customer-balance');
+        if (el) el.textContent = updated.balance;
       }
     }
   });
@@ -53,6 +51,8 @@ const firebaseConfig = {
     window._groceries = snap.val()
       ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
       : [];
+    if (window._groceriesReady) renderGroceryButtons();
+    window._groceriesReady = true;
   });
 </script>
 <style>
@@ -93,7 +93,7 @@ const firebaseConfig = {
 
   /* BOTTOM NAV */
   .bottom-nav{background:white;border-top:2px solid var(--border);display:flex;position:sticky;bottom:0;}
-  .nav-item{flex:1;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;transition:all .1s;}
+  .nav-item{flex:1;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;}
   .nav-item.active{color:var(--teal);}.nav-item:not(.active){color:var(--muted);}
   .nav-icon{font-size:1.4rem;}.nav-label{font-size:.68rem;font-weight:800;}
 
@@ -132,10 +132,7 @@ const firebaseConfig = {
   /* CASHIER */
   .cashier-top{background:var(--teal-dark);padding:16px 18px;color:white;}
   .cashier-top-title{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--amber);text-align:center;}
-  .cashier-tabs{display:flex;gap:8px;padding:0 18px 16px;background:var(--teal-dark);}
-  .cashier-tab{flex:1;padding:12px;text-align:center;border:2px solid rgba(255,255,255,.2);border-radius:12px;background:transparent;color:rgba(255,255,255,.7);font-family:'Fredoka One',cursive;font-size:1.1rem;cursor:pointer;transition:all .15s;}
-  .cashier-tab.active{background:var(--amber);border-color:var(--amber);color:var(--teal-dark);}
-  .cashier-content{padding:1.5rem;flex:1;}
+  .cashier-content{padding:1.5rem;flex:1;overflow-y:auto;}
   .register-display{background:var(--teal-dark);border-radius:20px;padding:1.5rem;margin-bottom:1.5rem;text-align:center;}
   .register-total{font-family:'Fredoka One',cursive;font-size:3rem;color:var(--amber);}
   .register-label{color:rgba(255,255,255,.7);font-size:.85rem;font-weight:700;}
@@ -148,6 +145,43 @@ const firebaseConfig = {
   .action-btn-amber{background:var(--amber);color:var(--teal-dark);}
   .action-btn-ghost{background:white;color:var(--teal-dark);border:2px solid var(--border);}
 
+  /* GROCERY GRID */
+  .grocery-scan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
+  .grocery-scan-btn{background:white;border:2px solid var(--border);border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .1s;font-family:'Nunito',sans-serif;}
+  .grocery-scan-btn:active{transform:scale(.94);background:var(--teal-light);border-color:var(--teal);}
+  .grocery-scan-btn .ge{font-size:1.8rem;}.grocery-scan-btn .gn{font-size:.72rem;font-weight:700;color:var(--text);text-align:center;}.grocery-scan-btn .gp{font-size:.8rem;color:var(--teal);font-weight:800;}
+
+  /* CAMERA SCANNER OVERLAY */
+  .scanner-overlay{display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;}
+  .scanner-overlay.open{display:flex;}
+  .scanner-header{background:var(--teal-dark);padding:16px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .scanner-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);flex:1;}
+  .scanner-close{background:rgba(255,255,255,.15);border:none;color:white;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.9rem;}
+  .scanner-video-wrap{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  #scanner-video{width:100%;height:100%;object-fit:cover;}
+  .scanner-frame{position:absolute;width:220px;height:220px;border:3px solid var(--amber);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.55);}
+  .scanner-frame::before,.scanner-frame::after{content:'';position:absolute;width:28px;height:28px;border-color:var(--amber);border-style:solid;}
+  .scanner-frame::before{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:4px 0 0 0;}
+  .scanner-frame::after{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 4px 4px;}
+  .scanner-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:white;padding:10px 20px;border-radius:20px;font-size:.85rem;font-weight:700;white-space:nowrap;}
+
+  /* PIN CONFIRM OVERLAY */
+  .pin-overlay{display:none;position:fixed;inset:0;background:rgba(4,52,44,.97);z-index:400;flex-direction:column;align-items:center;justify-content:center;padding:2rem;}
+  .pin-overlay.open{display:flex;}
+  .pin-overlay-title{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--amber);margin-bottom:.5rem;text-align:center;}
+  .pin-overlay-amount{font-family:'Fredoka One',cursive;font-size:2.5rem;color:white;margin-bottom:1.5rem;text-align:center;}
+  .pin-overlay-card{background:rgba(255,255,255,.1);border-radius:20px;padding:1.5rem;width:100%;max-width:320px;}
+  .pin-overlay-dots{display:flex;gap:14px;justify-content:center;margin:1rem 0;}
+  .pin-overlay-dot{width:20px;height:20px;border-radius:50%;border:3px solid rgba(255,255,255,.4);}
+  .pin-overlay-dot.filled{background:var(--amber);border-color:var(--amber);}
+  .pin-overlay-error{color:var(--coral-light);font-size:.85rem;font-weight:700;text-align:center;min-height:20px;margin-bottom:8px;}
+  .pin-overlay-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .pin-overlay-btn{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:16px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:white;cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center;}
+  .pin-overlay-btn:active{transform:scale(.9);background:rgba(255,255,255,.2);}
+  .pin-overlay-btn.del{font-size:1.1rem;color:rgba(255,255,255,.6);}
+  .pin-overlay-btn.empty{background:transparent;border:none;cursor:default;}
+  .pin-overlay-cancel{margin-top:1rem;background:transparent;border:2px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:12px 28px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.9rem;}
+
   /* PAYMENT OVERLAY */
   .payment-overlay{display:none;position:fixed;inset:0;background:rgba(4,52,44,.97);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:2rem;}
   .payment-overlay.open{display:flex;}
@@ -158,7 +192,7 @@ const firebaseConfig = {
   .close-payment-btn{background:rgba(255,255,255,.15);color:white;border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:14px 32px;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;}
 
   /* SUCCESS */
-  .success-overlay{display:none;position:fixed;inset:0;background:var(--teal-dark);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+  .success-overlay{display:none;position:fixed;inset:0;background:var(--teal-dark);z-index:600;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
   .success-overlay.open{display:flex;}
   .success-emoji{font-size:5rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
   @keyframes popIn{0%{transform:scale(0)}100%{transform:scale(1)}}
@@ -166,14 +200,6 @@ const firebaseConfig = {
   .success-amount{font-family:'Fredoka One',cursive;font-size:3rem;color:white;margin:.5rem 0;}
   .success-text{color:rgba(255,255,255,.8);font-size:1rem;font-weight:700;}
   .success-close{background:var(--amber);color:var(--teal-dark);border:none;border-radius:16px;padding:16px 40px;font-family:'Fredoka One',cursive;font-size:1.4rem;cursor:pointer;margin-top:2rem;}
-
-  /* GROCERY BUTTONS */
-  .grocery-scan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
-  .grocery-scan-btn{background:white;border:2px solid var(--border);border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .1s;font-family:'Nunito',sans-serif;}
-  .grocery-scan-btn:active{transform:scale(.94);background:var(--teal-light);border-color:var(--teal);}
-  .grocery-scan-btn .ge{font-size:1.8rem;}
-  .grocery-scan-btn .gn{font-size:.72rem;font-weight:700;color:var(--text);text-align:center;}
-  .grocery-scan-btn .gp{font-size:.8rem;color:var(--teal);font-weight:800;}
 
   .pay-instruction{background:var(--teal-light);border-radius:16px;padding:1.2rem;text-align:center;margin-bottom:1.5rem;border:2px solid #5DCAA5;}
   .pay-instruction-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:6px;}
@@ -200,10 +226,8 @@ const firebaseConfig = {
   <div style="width:100%;padding:0 1.5rem;flex:1;">
     <div class="login-card">
       <div class="pin-dots" id="pin-dots">
-        <div class="pin-dot" id="dot-0"></div>
-        <div class="pin-dot" id="dot-1"></div>
-        <div class="pin-dot" id="dot-2"></div>
-        <div class="pin-dot" id="dot-3"></div>
+        <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
       </div>
       <div id="login-error" style="color:var(--coral);font-size:.85rem;font-weight:700;min-height:20px;text-align:center;margin-bottom:8px;"></div>
       <div class="numpad">
@@ -261,22 +285,12 @@ const firebaseConfig = {
     </div>
     <div class="pay-instruction">
       <div class="pay-instruction-title">💳 Slik betaler du</div>
-      <div style="font-size:.88rem;color:var(--teal-dark);font-weight:700;">Kassen lager en QR-kode med beløpet.<br>Trykk «Scan & betal» for å betale! 📱</div>
-    </div>
-    <button class="action-btn action-btn-amber" onclick="simulatePaymentScan()">📷 Scan & betal</button>
-    <div style="background:var(--teal-light);border-radius:14px;padding:1rem;margin-top:1rem;">
-      <div style="font-size:.78rem;font-weight:800;color:var(--teal-dark);margin-bottom:8px;">⭐ SKANN BELØNNING</div>
-      <button class="action-btn action-btn-ghost" style="font-size:1.1rem;padding:14px;" onclick="simulateRewardScan()">📷 Scan belønnings-QR</button>
-    </div>
-    <div style="margin-top:1rem;background:var(--purple-light);border-radius:14px;padding:1rem;">
-      <div style="font-size:.75rem;font-weight:800;color:var(--purple);margin-bottom:8px;">🎮 DEMO (brukes i klasserommet)</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        <button style="background:white;border:1.5px solid var(--coral);color:var(--coral);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doPayment(15)">Betal 15🪙</button>
-        <button style="background:white;border:1.5px solid var(--coral);color:var(--coral);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doPayment(35)">Betal 35🪙</button>
-        <button style="background:white;border:1.5px solid var(--teal);color:var(--teal);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doReward(10)">+10🪙</button>
-        <button style="background:white;border:1.5px solid var(--teal);color:var(--teal);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doReward(50)">+50🪙</button>
+      <div style="font-size:.88rem;color:var(--teal-dark);font-weight:700;">
+        Kassen viser en QR-kode.<br>Scan den her for å betale! 📷
       </div>
     </div>
+    <button class="action-btn action-btn-amber" onclick="startScan('payment')">📷 Scan & betal</button>
+    <button class="action-btn action-btn-ghost" style="margin-top:.5rem;" onclick="startScan('reward')">⭐ Scan belønnings-QR</button>
   </div>
 
   <div class="bottom-nav">
@@ -295,53 +309,76 @@ const firebaseConfig = {
     <button class="back-btn" onclick="goToSplash()" style="display:block;margin-bottom:8px;">← Avslutt</button>
     <div class="cashier-top-title">🏪 Myntland Kasse</div>
   </div>
-  <div class="cashier-tabs">
-    <button class="cashier-tab active" onclick="switchCashierTab('register',this)">🛒 Kasse</button>
-    <button class="cashier-tab" onclick="switchCashierTab('rewards',this)">⭐ Belønning</button>
-  </div>
-
-  <div class="cashier-content" id="cashier-tab-register">
+  <div class="cashier-content">
     <div class="register-display">
       <div class="register-label">SUM Å BETALE</div>
       <div class="register-total" id="register-total">0 🪙</div>
     </div>
     <div id="cart-list"></div>
+
     <div style="background:var(--teal-light);border-radius:14px;padding:1rem;margin-bottom:1rem;">
-      <div style="font-size:.78rem;font-weight:800;color:var(--teal-dark);margin-bottom:8px;">🛒 LEGG TIL VARE (klikk = skann)</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:.78rem;font-weight:800;color:var(--teal-dark);">🛒 LEGG TIL VARE</div>
+        <button onclick="startCashierScan()" style="background:var(--teal);color:white;border:none;border-radius:10px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;">📷 Scan vare</button>
+      </div>
       <div class="grocery-scan-grid" id="grocery-btn-grid">
-        <div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;padding:.5rem;">Laster varer fra butikken…</div>
+        <div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;padding:.5rem;">Laster varer…</div>
       </div>
     </div>
+
     <button class="action-btn action-btn-amber" onclick="generatePaymentQR()" id="pay-btn" disabled style="opacity:.4;">💳 Generer betalings-QR</button>
     <button class="action-btn action-btn-ghost" onclick="clearCart()">🗑️ Tøm kassen</button>
   </div>
+</div>
 
-  <div class="cashier-content" id="cashier-tab-rewards" style="display:none;">
-    <div class="section-title">⭐ Gi belønning</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;font-weight:700;">Velg belønning – eleven scanner med bankkortet!</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
-      <button onclick="showRewardQR(10)" style="background:var(--teal-light);border:2px solid var(--teal);border-radius:16px;padding:16px;font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);cursor:pointer;">+10<br><span style="font-size:.85rem;">🪙</span></button>
-      <button onclick="showRewardQR(50)" style="background:var(--amber-light);border:2px solid var(--amber);border-radius:16px;padding:16px;font-family:'Fredoka One',cursive;font-size:1.5rem;color:#854F0B;cursor:pointer;">+50<br><span style="font-size:.85rem;">🪙</span></button>
-      <button onclick="showRewardQR(100)" style="background:var(--purple-light);border:2px solid var(--purple);border-radius:16px;padding:16px;font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--purple);cursor:pointer;">+100<br><span style="font-size:.85rem;">🪙</span></button>
-    </div>
-    <div id="reward-qr-display" style="display:none;background:white;border-radius:20px;padding:1.5rem;border:2px solid var(--border);text-align:center;">
-      <div class="section-title" style="text-align:center;">Vis til eleven 👇</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
-        <div style="background:white;padding:16px;border-radius:16px;border:3px solid var(--teal);" id="reward-display-qr"></div>
-        <div id="reward-display-amount" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:var(--teal-dark);"></div>
-        <div style="font-size:.82rem;color:var(--muted);font-weight:700;">Eleven scanner i «Bankkort»-fanen</div>
-      </div>
-    </div>
+<!-- CAMERA SCANNER -->
+<div class="scanner-overlay" id="scanner-overlay">
+  <div class="scanner-header">
+    <div class="scanner-title" id="scanner-title">Scan QR-kode</div>
+    <button class="scanner-close" onclick="stopScan()">✕ Lukk</button>
+  </div>
+  <div class="scanner-video-wrap">
+    <video id="scanner-video" playsinline muted autoplay></video>
+    <div class="scanner-frame"></div>
+    <div class="scanner-hint" id="scanner-hint">Hold QR-koden innenfor rammen</div>
   </div>
 </div>
 
-<!-- PAYMENT OVERLAY -->
+<!-- PIN CONFIRMATION OVERLAY (before payment) -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-overlay-title">🔐 Bekreft med PIN</div>
+  <div class="pin-overlay-amount" id="pin-overlay-amount"></div>
+  <div class="pin-overlay-card">
+    <div class="pin-overlay-dots" id="pin-overlay-dots">
+      <div class="pin-overlay-dot" id="pdot-0"></div><div class="pin-overlay-dot" id="pdot-1"></div>
+      <div class="pin-overlay-dot" id="pdot-2"></div><div class="pin-overlay-dot" id="pdot-3"></div>
+    </div>
+    <div class="pin-overlay-error" id="pin-overlay-error"></div>
+    <div class="pin-overlay-numpad">
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('1')">1</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('2')">2</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('3')">3</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('4')">4</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('5')">5</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('6')">6</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('7')">7</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('8')">8</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('9')">9</button>
+      <div class="pin-overlay-btn empty"></div>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('0')">0</button>
+      <button class="pin-overlay-btn del" onclick="pinConfirmPress('DEL')">⌫</button>
+    </div>
+  </div>
+  <button class="pin-overlay-cancel" onclick="cancelPinConfirm()">Avbryt</button>
+</div>
+
+<!-- PAYMENT QR OVERLAY (cashier) -->
 <div class="payment-overlay" id="payment-overlay">
   <div class="payment-qr-title">💳 Betalings-QR</div>
   <div class="payment-amount-display" id="payment-display-amount">0 🪙</div>
   <div class="payment-qr-wrap" id="payment-qr-wrap"></div>
-  <div class="payment-instruction">📱 Kunden scanner QR-koden i «Bankkort»-fanen</div>
-  <button class="close-payment-btn" onclick="document.getElementById('payment-overlay').classList.remove('open');clearCart();">Lukk kassen</button>
+  <div class="payment-instruction">📱 Kunden scanner QR-koden med bankkortet sitt</div>
+  <button class="close-payment-btn" onclick="document.getElementById('payment-overlay').classList.remove('open');clearCart();">Lukk</button>
 </div>
 
 <!-- SUCCESS -->
@@ -354,28 +391,40 @@ const firebaseConfig = {
 </div>
 
 <script>
-window._allStudents = [];
-window._groceries   = [];
+// ── State ──────────────────────────────────────────────────────────────────
+window._allStudents    = [];
+window._groceries      = [];
 window._currentStudent = null;
+window._groceriesReady = false;
+
 let currentPin = '', cart = [], cartTotal = 0;
 let transactions = [];
+let scanMode = null;       // 'payment' | 'reward' | 'cashier'
+let pendingPayAmount = 0;
+let confirmPin = '';
 
+let codeReader = null;
+let scanActive = false;
+
+// ── Screens ────────────────────────────────────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
+
 function goToSplash() {
-  window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0;
-  document.getElementById('reward-qr-display').style.display = 'none';
+  stopScan();
+  window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0; transactions = [];
   clearCart();
   showScreen('screen-splash');
 }
+
 function selectRole(role) {
   if (role === 'customer') showScreen('screen-login');
   else { renderGroceryButtons(); showScreen('screen-cashier'); }
 }
 
-// ── Numpad ────────────────────────────────────────────────────────────────
+// ── Login numpad ───────────────────────────────────────────────────────────
 function numpadPress(val) {
   if (val === 'DEL') currentPin = currentPin.slice(0,-1);
   else if (currentPin.length < 4) currentPin += val;
@@ -392,7 +441,7 @@ function tryLogin() {
     window._currentStudent = s;
     transactions = [];
     document.getElementById('customer-greeting').textContent = s.firstname;
-    document.getElementById('customer-balance').textContent = s.balance;
+    document.getElementById('customer-balance').textContent  = s.balance;
     document.getElementById('card-holder').textContent = (s.firstname+' '+s.lastname).toUpperCase();
     document.getElementById('card-number').textContent = '•••• ' + s.pin;
     renderTransactions();
@@ -404,13 +453,14 @@ function tryLogin() {
   currentPin = ''; updatePinDots();
 }
 
-// ── Customer ───────────────────────────────────────────────────────────────
+// ── Customer tabs ──────────────────────────────────────────────────────────
 function switchCustomerTab(tab, btn) {
   document.querySelectorAll('.customer-tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   btn.classList.add('active');
 }
+
 function renderTransactions() {
   const el = document.getElementById('transaction-list');
   if (!transactions.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>'; return; }
@@ -422,18 +472,139 @@ function renderTransactions() {
     </div>`).join('');
 }
 
-// ── Betaling (kunde) ───────────────────────────────────────────────────────
-function simulatePaymentScan() {
-  const amount = parseInt(prompt('Tast inn beløpet fra kassen sin QR-kode (mynter):') || '0');
-  if (!amount || amount <= 0) return;
-  doPayment(amount);
-}
-function simulateRewardScan() {
-  const amount = parseInt(prompt('Tast inn belønningsbeløpet fra QR-koden:') || '0');
-  if (!amount || amount <= 0) return;
-  doReward(amount);
+// ── Camera QR scanner ──────────────────────────────────────────────────────
+function startScan(mode) {
+  scanMode = mode;
+  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønnings-QR', cashier:'🛒 Scan varekode' };
+  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Hold belønnings-QR innenfor rammen', cashier:'Hold varekortet innenfor rammen' };
+  document.getElementById('scanner-title').textContent = titles[mode] || 'Scan QR-kode';
+  document.getElementById('scanner-hint').textContent  = hints[mode] || 'Hold QR-koden innenfor rammen';
+  document.getElementById('scanner-overlay').classList.add('open');
+  initCamera();
 }
 
+function startCashierScan() { startScan('cashier'); }
+
+async function initCamera() {
+  if (scanActive) return;
+  scanActive = true;
+  const video = document.getElementById('scanner-video');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    video.srcObject = stream;
+    await video.play();
+    requestAnimationFrame(scanFrame);
+  } catch(e) {
+    document.getElementById('scanner-hint').textContent = '⚠️ Kameratilgang nektet – sjekk nettleserinnstillinger';
+    scanActive = false;
+  }
+}
+
+async function scanFrame() {
+  if (!scanActive) return;
+  const video = document.getElementById('scanner-video');
+  if (video.readyState < 2) { requestAnimationFrame(scanFrame); return; }
+
+  // Use ZXing if available, otherwise canvas fallback
+  if (window.ZXing) {
+    try {
+      const hints = new Map();
+      const formats = [window.ZXing.BarcodeFormat.QR_CODE];
+      hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+      if (!codeReader) codeReader = new window.ZXing.BrowserQRCodeReader();
+
+      const canvas = document.createElement('canvas');
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const imgData = canvas.toDataURL('image/png');
+
+      codeReader.decodeFromImage(undefined, imgData).then(result => {
+        if (result && scanActive) handleScanResult(result.getText());
+      }).catch(() => { if (scanActive) requestAnimationFrame(scanFrame); });
+      return;
+    } catch(e) {}
+  }
+  // Fallback: try BarcodeDetector API (Chrome on Android)
+  if ('BarcodeDetector' in window) {
+    try {
+      if (!window._barcodeDetector) window._barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+      const codes = await window._barcodeDetector.detect(video);
+      if (codes.length > 0 && scanActive) { handleScanResult(codes[0].rawValue); return; }
+    } catch(e) {}
+  }
+  if (scanActive) requestAnimationFrame(scanFrame);
+}
+
+function handleScanResult(text) {
+  stopScan();
+  try {
+    const data = JSON.parse(text);
+    if (scanMode === 'cashier') {
+      // Kasse: legg vare i handlekurv
+      if (data.type === 'grocery') addToCart(data.name || '?', data.name || '?', data.price || 0, data.emoji || '🛒');
+    } else if (scanMode === 'payment') {
+      if (data.type === 'payment' && data.amount > 0) {
+        pendingPayAmount = data.amount;
+        openPinConfirm(data.amount);
+      }
+    } else if (scanMode === 'reward') {
+      if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
+    }
+  } catch(e) {
+    showSuccess('❌','Ugyldig kode','','Prøv å scanne igjen');
+  }
+}
+
+function stopScan() {
+  scanActive = false;
+  const video = document.getElementById('scanner-video');
+  if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+  document.getElementById('scanner-overlay').classList.remove('open');
+  codeReader = null;
+}
+
+// ── PIN confirmation before payment ───────────────────────────────────────
+function openPinConfirm(amount) {
+  confirmPin = '';
+  document.getElementById('pin-overlay-amount').textContent = amount + ' 🪙';
+  document.getElementById('pin-overlay-error').textContent  = '';
+  updateConfirmDots();
+  document.getElementById('pin-overlay').classList.add('open');
+}
+
+function cancelPinConfirm() {
+  document.getElementById('pin-overlay').classList.remove('open');
+  confirmPin = '';
+}
+
+function pinConfirmPress(val) {
+  if (val === 'DEL') confirmPin = confirmPin.slice(0,-1);
+  else if (confirmPin.length < 4) confirmPin += val;
+  updateConfirmDots();
+  document.getElementById('pin-overlay-error').textContent = '';
+  if (confirmPin.length === 4) setTimeout(checkConfirmPin, 150);
+}
+
+function updateConfirmDots() {
+  for (let i=0;i<4;i++) document.getElementById('pdot-'+i).classList.toggle('filled', i < confirmPin.length);
+}
+
+function checkConfirmPin() {
+  const s = window._currentStudent;
+  if (confirmPin === s.pin) {
+    document.getElementById('pin-overlay').classList.remove('open');
+    confirmPin = '';
+    doPayment(pendingPayAmount);
+  } else {
+    document.getElementById('pin-overlay-error').textContent = '❌ Feil PIN – prøv igjen';
+    confirmPin = ''; updateConfirmDots();
+  }
+}
+
+// ── Payment & reward ───────────────────────────────────────────────────────
 async function doPayment(amount) {
   const s = window._currentStudent;
   if (!s) return;
@@ -460,42 +631,29 @@ async function doReward(amount) {
 }
 
 // ── Cashier ────────────────────────────────────────────────────────────────
-function switchCashierTab(tab, btn) {
-  document.getElementById('cashier-tab-register').style.display = tab==='register'?'block':'none';
-  document.getElementById('cashier-tab-rewards').style.display = tab==='rewards'?'block':'none';
-  document.querySelectorAll('.cashier-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
 function renderGroceryButtons() {
-  const g = window._groceries;
+  const g  = window._groceries;
   const el = document.getElementById('grocery-btn-grid');
   if (!el) return;
-  if (!g.length) { el.innerHTML='<div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;padding:.5rem;">Ingen varer i butikken. Legg til via lærerportalen.</div>'; return; }
+  if (!g.length) { el.innerHTML='<div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;">Ingen varer. Legg til via lærerportalen.</div>'; return; }
   el.innerHTML = g.map(x => `
-    <button class="grocery-scan-btn" onclick="addToCart('${x.emoji}','${x.name}',${x.price})">
+    <button class="grocery-scan-btn" onclick="addToCart('${x.emoji}','${x.name.replace(/'/g,"\\'")}',${x.price},'${x.emoji}')">
       <div class="ge">${x.emoji}</div>
       <div class="gn">${x.name}</div>
       <div class="gp">🪙${x.price}</div>
     </button>`).join('');
 }
 
-// Oppdater kasse-knapper når varer lastes
-let _gbRendered = false;
-const _gbInterval = setInterval(() => {
-  if (window._groceries.length && !_gbRendered) { renderGroceryButtons(); _gbRendered=true; }
-}, 500);
-
-function addToCart(emoji, name, price) {
-  cart.push({ emoji, name, price });
+function addToCart(name, displayName, price, emoji) {
+  cart.push({ emoji: emoji || '🛒', name: displayName || name, price });
   cartTotal += price;
   renderCart();
 }
 function removeItem(i) { cartTotal -= cart[i].price; cart.splice(i,1); renderCart(); }
-function clearCart() { cart=[]; cartTotal=0; renderCart(); }
+function clearCart()   { cart=[]; cartTotal=0; renderCart(); }
 
 function renderCart() {
-  const el = document.getElementById('cart-list');
+  const el  = document.getElementById('cart-list');
   const btn = document.getElementById('pay-btn');
   if (!el) return;
   document.getElementById('register-total').textContent = cartTotal + ' 🪙';
@@ -519,19 +677,12 @@ function generatePaymentQR() {
   document.getElementById('payment-overlay').classList.add('open');
 }
 
-function showRewardQR(amount) {
-  const el = document.getElementById('reward-display-qr');
-  el.innerHTML = '';
-  try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount }), width:160, height:160, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
-  document.getElementById('reward-display-amount').textContent = '+' + amount + ' 🪙';
-  document.getElementById('reward-qr-display').style.display = 'block';
-}
-
+// ── Success ────────────────────────────────────────────────────────────────
 function showSuccess(emoji, title, amount, text) {
-  document.getElementById('success-emoji').textContent = emoji;
-  document.getElementById('success-title').textContent = title;
+  document.getElementById('success-emoji').textContent  = emoji;
+  document.getElementById('success-title').textContent  = title;
   document.getElementById('success-amount').textContent = amount;
-  document.getElementById('success-text').textContent = text;
+  document.getElementById('success-text').textContent   = text;
   document.getElementById('success-overlay').classList.add('open');
 }
 
