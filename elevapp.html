@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Myntland – Elevapp</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, onValue, update, push, set }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  // ── LIM INN SAMME FIREBASE-KONFIG SOM I LÆRERPORTALEN ───────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+  authDomain: "myntland.firebaseapp.com",
+  databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "myntland",
+  storageBucket: "myntland.firebasestorage.app",
+  messagingSenderId: "711264415533",
+  appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+  measurementId: "G-95QZNLQ6V9"
+};
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  window._db      = db;
+  window._ref     = ref;
+  window._onValue = onValue;
+  window._update  = update;
+  window._push    = push;
+  window._set     = set;
+  window._fbReady = true;
+
+  // Hent studenter og groceries én gang
+  onValue(ref(db, 'students'), snap => {
+    window._allStudents = snap.val()
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+      : [];
+    // Oppdater saldo live hvis innlogget
+    if (window._currentStudent) {
+      const updated = window._allStudents.find(s => s.fbKey === window._currentStudent.fbKey);
+      if (updated) {
+        window._currentStudent = updated;
+        document.getElementById('customer-balance').textContent = updated.balance;
+      }
+    }
+  });
+
+  onValue(ref(db, 'groceries'), snap => {
+    window._groceries = snap.val()
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+      : [];
+  });
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+  :root{--teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;--amber:#EF9F27;--amber-light:#FAEEDA;--coral:#D85A30;--coral-light:#FAECE7;--purple:#534AB7;--purple-light:#EEEDFE;--bg:#F0FAF5;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#b8dfc8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;}
+  .screen{display:none;min-height:100vh;flex-direction:column;}
+  .screen.active{display:flex;}
+
+  /* SPLASH */
+  #screen-splash{background:linear-gradient(160deg,var(--teal-dark) 0%,#1a6648 50%,var(--teal) 100%);align-items:center;justify-content:center;text-align:center;padding:2rem;}
+  .splash-coin{width:110px;height:110px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:4rem;color:var(--teal-dark);margin:0 auto 1rem;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:coinBounce 2.2s ease-in-out infinite;}
+  @keyframes coinBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  .splash-logo{font-family:'Fredoka One',cursive;font-size:3.5rem;color:var(--amber);}
+  .splash-tagline{color:rgba(255,255,255,.8);font-size:1rem;font-weight:700;margin-bottom:3rem;}
+  .role-btn{width:100%;padding:20px;border-radius:20px;border:none;font-family:'Fredoka One',cursive;font-size:1.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .15s;margin-bottom:14px;}
+  .role-btn:active{transform:scale(.97);}
+  .role-btn-customer{background:var(--amber);color:var(--teal-dark);box-shadow:0 4px 20px rgba(239,159,39,.4);}
+  .role-btn-cashier{background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);}
+
+  /* LOGIN */
+  #screen-login{background:var(--bg);padding:2rem;align-items:center;justify-content:center;}
+  .login-card{background:white;border-radius:24px;padding:2rem;width:100%;border:2px solid var(--border);}
+  .pin-dots{display:flex;gap:16px;justify-content:center;margin:1.5rem 0;}
+  .pin-dot{width:22px;height:22px;border-radius:50%;border:3px solid var(--border);transition:all .15s;}
+  .pin-dot.filled{background:var(--teal);border-color:var(--teal);}
+  .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .num-btn{background:var(--bg);border:2px solid var(--border);border-radius:16px;padding:18px;font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--teal-dark);cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center;}
+  .num-btn:active{transform:scale(.92);background:var(--teal-light);}
+  .num-btn.delete{font-size:1.3rem;color:var(--coral);}
+  .num-btn.empty{background:transparent;border:none;cursor:default;}
+
+  /* TOP BAR */
+  .top-bar{background:var(--teal-dark);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;color:white;}
+  .top-bar-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);}
+  .back-btn{background:rgba(255,255,255,.13);border:none;color:white;border-radius:10px;padding:8px 12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.85rem;}
+
+  /* BOTTOM NAV */
+  .bottom-nav{background:white;border-top:2px solid var(--border);display:flex;position:sticky;bottom:0;}
+  .nav-item{flex:1;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;transition:all .1s;}
+  .nav-item.active{color:var(--teal);}.nav-item:not(.active){color:var(--muted);}
+  .nav-icon{font-size:1.4rem;}.nav-label{font-size:.68rem;font-weight:800;}
+
+  /* CONTENT */
+  .content{flex:1;overflow-y:auto;padding:1.5rem;}
+  .customer-tab-content{display:none;}.customer-tab-content.active{display:block;}
+
+  /* BALANCE CARD */
+  .balance-card{background:linear-gradient(135deg,var(--teal-dark),var(--teal));border-radius:24px;padding:2rem;color:white;position:relative;overflow:hidden;margin-bottom:1.5rem;}
+  .balance-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);}
+  .balance-label{font-size:.85rem;opacity:.8;font-weight:700;margin-bottom:4px;}
+  .balance-amount{font-family:'Fredoka One',cursive;font-size:3.8rem;color:var(--amber);line-height:1;}
+  .balance-currency{font-size:1rem;opacity:.7;font-weight:700;}
+  .live-indicator{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:20px;margin-top:10px;}
+  .live-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* TRANSACTIONS */
+  .section-title{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--teal-dark);margin-bottom:1rem;}
+  .transaction-item{display:flex;align-items:center;gap:12px;padding:14px;background:white;border-radius:14px;margin-bottom:8px;border:1px solid var(--border);}
+  .tx-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+  .tx-icon.income{background:var(--teal-light);}.tx-icon.expense{background:var(--coral-light);}
+  .tx-desc{flex:1;}.tx-name{font-weight:700;font-size:.9rem;}.tx-date{font-size:.75rem;color:var(--muted);}
+  .tx-amount{font-family:'Fredoka One',cursive;font-size:1.1rem;}
+  .tx-amount.income{color:var(--teal);}.tx-amount.expense{color:var(--coral);}
+
+  /* BANK CARD */
+  .bank-card{background:linear-gradient(135deg,#2C2C2A,#444441);border-radius:20px;padding:1.5rem;color:white;position:relative;overflow:hidden;margin-bottom:1.5rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between;}
+  .bank-card::before{content:'';position:absolute;top:-30px;right:-30px;width:150px;height:150px;border-radius:50%;background:rgba(239,159,39,.12);}
+  .card-chip{width:36px;height:28px;background:var(--amber);border-radius:6px;position:relative;z-index:1;}
+  .card-number{font-family:'Fredoka One',cursive;font-size:1.4rem;letter-spacing:4px;opacity:.9;z-index:1;position:relative;}
+  .card-bottom{display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1;}
+  .card-holder{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+  .card-logo{font-family:'Fredoka One',cursive;color:var(--amber);font-size:1.1rem;}
+
+  /* CASHIER */
+  .cashier-top{background:var(--teal-dark);padding:16px 18px;color:white;}
+  .cashier-top-title{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--amber);text-align:center;}
+  .cashier-tabs{display:flex;gap:8px;padding:0 18px 16px;background:var(--teal-dark);}
+  .cashier-tab{flex:1;padding:12px;text-align:center;border:2px solid rgba(255,255,255,.2);border-radius:12px;background:transparent;color:rgba(255,255,255,.7);font-family:'Fredoka One',cursive;font-size:1.1rem;cursor:pointer;transition:all .15s;}
+  .cashier-tab.active{background:var(--amber);border-color:var(--amber);color:var(--teal-dark);}
+  .cashier-content{padding:1.5rem;flex:1;}
+  .register-display{background:var(--teal-dark);border-radius:20px;padding:1.5rem;margin-bottom:1.5rem;text-align:center;}
+  .register-total{font-family:'Fredoka One',cursive;font-size:3rem;color:var(--amber);}
+  .register-label{color:rgba(255,255,255,.7);font-size:.85rem;font-weight:700;}
+  .cart-item{display:flex;align-items:center;gap:12px;background:white;padding:12px;border-radius:12px;margin-bottom:8px;border:1px solid var(--border);}
+  .cart-emoji{font-size:1.8rem;}.cart-name{flex:1;font-weight:700;font-size:.9rem;}
+  .cart-price{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal);}
+  .cart-remove{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--coral);padding:4px;}
+  .action-btn{width:100%;padding:18px;border-radius:16px;border:none;font-family:'Fredoka One',cursive;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;margin-bottom:10px;}
+  .action-btn:active{transform:scale(.97);}
+  .action-btn-amber{background:var(--amber);color:var(--teal-dark);}
+  .action-btn-ghost{background:white;color:var(--teal-dark);border:2px solid var(--border);}
+
+  /* PAYMENT OVERLAY */
+  .payment-overlay{display:none;position:fixed;inset:0;background:rgba(4,52,44,.97);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:2rem;}
+  .payment-overlay.open{display:flex;}
+  .payment-qr-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--amber);text-align:center;margin-bottom:1rem;}
+  .payment-amount-display{font-family:'Fredoka One',cursive;font-size:2.5rem;color:white;text-align:center;margin-bottom:1.5rem;}
+  .payment-qr-wrap{background:white;padding:20px;border-radius:20px;margin-bottom:1.5rem;}
+  .payment-instruction{color:rgba(255,255,255,.8);text-align:center;font-size:.9rem;font-weight:700;margin-bottom:2rem;}
+  .close-payment-btn{background:rgba(255,255,255,.15);color:white;border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:14px 32px;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;}
+
+  /* SUCCESS */
+  .success-overlay{display:none;position:fixed;inset:0;background:var(--teal-dark);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+  .success-overlay.open{display:flex;}
+  .success-emoji{font-size:5rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
+  @keyframes popIn{0%{transform:scale(0)}100%{transform:scale(1)}}
+  .success-title{font-family:'Fredoka One',cursive;font-size:2.5rem;color:var(--amber);margin:1rem 0;}
+  .success-amount{font-family:'Fredoka One',cursive;font-size:3rem;color:white;margin:.5rem 0;}
+  .success-text{color:rgba(255,255,255,.8);font-size:1rem;font-weight:700;}
+  .success-close{background:var(--amber);color:var(--teal-dark);border:none;border-radius:16px;padding:16px 40px;font-family:'Fredoka One',cursive;font-size:1.4rem;cursor:pointer;margin-top:2rem;}
+
+  /* GROCERY BUTTONS */
+  .grocery-scan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
+  .grocery-scan-btn{background:white;border:2px solid var(--border);border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .1s;font-family:'Nunito',sans-serif;}
+  .grocery-scan-btn:active{transform:scale(.94);background:var(--teal-light);border-color:var(--teal);}
+  .grocery-scan-btn .ge{font-size:1.8rem;}
+  .grocery-scan-btn .gn{font-size:.72rem;font-weight:700;color:var(--text);text-align:center;}
+  .grocery-scan-btn .gp{font-size:.8rem;color:var(--teal);font-weight:800;}
+
+  .pay-instruction{background:var(--teal-light);border-radius:16px;padding:1.2rem;text-align:center;margin-bottom:1.5rem;border:2px solid #5DCAA5;}
+  .pay-instruction-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:6px;}
+  .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);}
+  .empty-icon{font-size:2.8rem;margin-bottom:.8rem;}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-coin">M</div>
+  <div class="splash-logo">Myntland</div>
+  <div class="splash-tagline">Din digitale butikk 🛒</div>
+  <button class="role-btn role-btn-customer" onclick="selectRole('customer')">👛 Jeg er kunde</button>
+  <button class="role-btn role-btn-cashier" onclick="selectRole('cashier')">🏪 Jeg er kasse</button>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div style="text-align:center;margin:3rem 0 1.5rem;font-size:3rem;">👛</div>
+  <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);margin-bottom:4px;">Logg inn</div>
+  <div style="text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;font-weight:700;">Tast inn din 4-sifrede PIN-kode</div>
+  <div style="width:100%;padding:0 1.5rem;flex:1;">
+    <div class="login-card">
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="login-error" style="color:var(--coral);font-size:.85rem;font-weight:700;min-height:20px;text-align:center;margin-bottom:8px;"></div>
+      <div class="numpad">
+        <button class="num-btn" onclick="numpadPress('1')">1</button>
+        <button class="num-btn" onclick="numpadPress('2')">2</button>
+        <button class="num-btn" onclick="numpadPress('3')">3</button>
+        <button class="num-btn" onclick="numpadPress('4')">4</button>
+        <button class="num-btn" onclick="numpadPress('5')">5</button>
+        <button class="num-btn" onclick="numpadPress('6')">6</button>
+        <button class="num-btn" onclick="numpadPress('7')">7</button>
+        <button class="num-btn" onclick="numpadPress('8')">8</button>
+        <button class="num-btn" onclick="numpadPress('9')">9</button>
+        <div class="num-btn empty"></div>
+        <button class="num-btn" onclick="numpadPress('0')">0</button>
+        <button class="num-btn delete" onclick="numpadPress('DEL')">⌫</button>
+      </div>
+    </div>
+    <button onclick="goToSplash()" style="width:100%;margin-top:1rem;background:transparent;border:2px solid var(--border);color:var(--muted);padding:12px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;">← Tilbake</button>
+  </div>
+</div>
+
+<!-- CUSTOMER -->
+<div class="screen" id="screen-customer">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goToSplash()">← Logg ut</button>
+    <div class="top-bar-title">👛 Myntland</div>
+    <div id="customer-greeting" style="font-size:.85rem;font-weight:700;color:rgba(255,255,255,.85);"></div>
+  </div>
+
+  <!-- BANK TAB -->
+  <div class="customer-tab-content active content" id="tab-bank">
+    <div class="balance-card">
+      <div class="balance-label">Din saldo</div>
+      <div class="balance-amount" id="customer-balance">0</div>
+      <div class="balance-currency">Mynter 🪙</div>
+      <div class="live-indicator"><div class="live-dot"></div> Oppdateres i sanntid</div>
+    </div>
+    <div class="section-title">📜 Siste transaksjoner</div>
+    <div id="transaction-list">
+      <div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>
+    </div>
+  </div>
+
+  <!-- CARD TAB -->
+  <div class="customer-tab-content content" id="tab-card">
+    <div class="bank-card">
+      <div>
+        <div class="card-chip"></div>
+        <div class="card-number" id="card-number">•••• ••••</div>
+      </div>
+      <div class="card-bottom">
+        <div class="card-holder" id="card-holder">Elev</div>
+        <div class="card-logo">Myntland</div>
+      </div>
+    </div>
+    <div class="pay-instruction">
+      <div class="pay-instruction-title">💳 Slik betaler du</div>
+      <div style="font-size:.88rem;color:var(--teal-dark);font-weight:700;">Kassen lager en QR-kode med beløpet.<br>Trykk «Scan & betal» for å betale! 📱</div>
+    </div>
+    <button class="action-btn action-btn-amber" onclick="simulatePaymentScan()">📷 Scan & betal</button>
+    <div style="background:var(--teal-light);border-radius:14px;padding:1rem;margin-top:1rem;">
+      <div style="font-size:.78rem;font-weight:800;color:var(--teal-dark);margin-bottom:8px;">⭐ SKANN BELØNNING</div>
+      <button class="action-btn action-btn-ghost" style="font-size:1.1rem;padding:14px;" onclick="simulateRewardScan()">📷 Scan belønnings-QR</button>
+    </div>
+    <div style="margin-top:1rem;background:var(--purple-light);border-radius:14px;padding:1rem;">
+      <div style="font-size:.75rem;font-weight:800;color:var(--purple);margin-bottom:8px;">🎮 DEMO (brukes i klasserommet)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button style="background:white;border:1.5px solid var(--coral);color:var(--coral);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doPayment(15)">Betal 15🪙</button>
+        <button style="background:white;border:1.5px solid var(--coral);color:var(--coral);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doPayment(35)">Betal 35🪙</button>
+        <button style="background:white;border:1.5px solid var(--teal);color:var(--teal);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doReward(10)">+10🪙</button>
+        <button style="background:white;border:1.5px solid var(--teal);color:var(--teal);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;" onclick="doReward(50)">+50🪙</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="switchCustomerTab('bank',this)">
+      <div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div>
+    </button>
+    <button class="nav-item" onclick="switchCustomerTab('card',this)">
+      <div class="nav-icon">💳</div><div class="nav-label">Bankkort</div>
+    </button>
+  </div>
+</div>
+
+<!-- CASHIER -->
+<div class="screen" id="screen-cashier">
+  <div class="cashier-top">
+    <button class="back-btn" onclick="goToSplash()" style="display:block;margin-bottom:8px;">← Avslutt</button>
+    <div class="cashier-top-title">🏪 Myntland Kasse</div>
+  </div>
+  <div class="cashier-tabs">
+    <button class="cashier-tab active" onclick="switchCashierTab('register',this)">🛒 Kasse</button>
+    <button class="cashier-tab" onclick="switchCashierTab('rewards',this)">⭐ Belønning</button>
+  </div>
+
+  <div class="cashier-content" id="cashier-tab-register">
+    <div class="register-display">
+      <div class="register-label">SUM Å BETALE</div>
+      <div class="register-total" id="register-total">0 🪙</div>
+    </div>
+    <div id="cart-list"></div>
+    <div style="background:var(--teal-light);border-radius:14px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:.78rem;font-weight:800;color:var(--teal-dark);margin-bottom:8px;">🛒 LEGG TIL VARE (klikk = skann)</div>
+      <div class="grocery-scan-grid" id="grocery-btn-grid">
+        <div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;padding:.5rem;">Laster varer fra butikken…</div>
+      </div>
+    </div>
+    <button class="action-btn action-btn-amber" onclick="generatePaymentQR()" id="pay-btn" disabled style="opacity:.4;">💳 Generer betalings-QR</button>
+    <button class="action-btn action-btn-ghost" onclick="clearCart()">🗑️ Tøm kassen</button>
+  </div>
+
+  <div class="cashier-content" id="cashier-tab-rewards" style="display:none;">
+    <div class="section-title">⭐ Gi belønning</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;font-weight:700;">Velg belønning – eleven scanner med bankkortet!</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
+      <button onclick="showRewardQR(10)" style="background:var(--teal-light);border:2px solid var(--teal);border-radius:16px;padding:16px;font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);cursor:pointer;">+10<br><span style="font-size:.85rem;">🪙</span></button>
+      <button onclick="showRewardQR(50)" style="background:var(--amber-light);border:2px solid var(--amber);border-radius:16px;padding:16px;font-family:'Fredoka One',cursive;font-size:1.5rem;color:#854F0B;cursor:pointer;">+50<br><span style="font-size:.85rem;">🪙</span></button>
+      <button onclick="showRewardQR(100)" style="background:var(--purple-light);border:2px solid var(--purple);border-radius:16px;padding:16px;font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--purple);cursor:pointer;">+100<br><span style="font-size:.85rem;">🪙</span></button>
+    </div>
+    <div id="reward-qr-display" style="display:none;background:white;border-radius:20px;padding:1.5rem;border:2px solid var(--border);text-align:center;">
+      <div class="section-title" style="text-align:center;">Vis til eleven 👇</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div style="background:white;padding:16px;border-radius:16px;border:3px solid var(--teal);" id="reward-display-qr"></div>
+        <div id="reward-display-amount" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:var(--teal-dark);"></div>
+        <div style="font-size:.82rem;color:var(--muted);font-weight:700;">Eleven scanner i «Bankkort»-fanen</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT OVERLAY -->
+<div class="payment-overlay" id="payment-overlay">
+  <div class="payment-qr-title">💳 Betalings-QR</div>
+  <div class="payment-amount-display" id="payment-display-amount">0 🪙</div>
+  <div class="payment-qr-wrap" id="payment-qr-wrap"></div>
+  <div class="payment-instruction">📱 Kunden scanner QR-koden i «Bankkort»-fanen</div>
+  <button class="close-payment-btn" onclick="document.getElementById('payment-overlay').classList.remove('open');clearCart();">Lukk kassen</button>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-emoji" id="success-emoji">✅</div>
+  <div class="success-title" id="success-title">Betalt!</div>
+  <div class="success-amount" id="success-amount"></div>
+  <div class="success-text" id="success-text"></div>
+  <button class="success-close" onclick="document.getElementById('success-overlay').classList.remove('open');">Fortsett</button>
+</div>
+
+<script>
+window._allStudents = [];
+window._groceries   = [];
+window._currentStudent = null;
+let currentPin = '', cart = [], cartTotal = 0;
+let transactions = [];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goToSplash() {
+  window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0;
+  document.getElementById('reward-qr-display').style.display = 'none';
+  clearCart();
+  showScreen('screen-splash');
+}
+function selectRole(role) {
+  if (role === 'customer') showScreen('screen-login');
+  else { renderGroceryButtons(); showScreen('screen-cashier'); }
+}
+
+// ── Numpad ────────────────────────────────────────────────────────────────
+function numpadPress(val) {
+  if (val === 'DEL') currentPin = currentPin.slice(0,-1);
+  else if (currentPin.length < 4) currentPin += val;
+  updatePinDots();
+  document.getElementById('login-error').textContent = '';
+  if (currentPin.length === 4) setTimeout(tryLogin, 200);
+}
+function updatePinDots() {
+  for (let i=0;i<4;i++) document.getElementById('dot-'+i).classList.toggle('filled', i < currentPin.length);
+}
+function tryLogin() {
+  const s = window._allStudents.find(s => s.pin === currentPin);
+  if (s) {
+    window._currentStudent = s;
+    transactions = [];
+    document.getElementById('customer-greeting').textContent = s.firstname;
+    document.getElementById('customer-balance').textContent = s.balance;
+    document.getElementById('card-holder').textContent = (s.firstname+' '+s.lastname).toUpperCase();
+    document.getElementById('card-number').textContent = '•••• ' + s.pin;
+    renderTransactions();
+    switchCustomerTab('bank', document.querySelector('.nav-item'));
+    showScreen('screen-customer');
+  } else {
+    document.getElementById('login-error').textContent = '❌ Feil PIN-kode!';
+  }
+  currentPin = ''; updatePinDots();
+}
+
+// ── Customer ───────────────────────────────────────────────────────────────
+function switchCustomerTab(tab, btn) {
+  document.querySelectorAll('.customer-tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
+function renderTransactions() {
+  const el = document.getElementById('transaction-list');
+  if (!transactions.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>'; return; }
+  el.innerHTML = transactions.slice(0,10).map(t => `
+    <div class="transaction-item">
+      <div class="tx-icon ${t.type}">${t.icon}</div>
+      <div class="tx-desc"><div class="tx-name">${t.desc}</div><div class="tx-date">${t.date}</div></div>
+      <div class="tx-amount ${t.type}">${t.amount>0?'+':''}${t.amount} 🪙</div>
+    </div>`).join('');
+}
+
+// ── Betaling (kunde) ───────────────────────────────────────────────────────
+function simulatePaymentScan() {
+  const amount = parseInt(prompt('Tast inn beløpet fra kassen sin QR-kode (mynter):') || '0');
+  if (!amount || amount <= 0) return;
+  doPayment(amount);
+}
+function simulateRewardScan() {
+  const amount = parseInt(prompt('Tast inn belønningsbeløpet fra QR-koden:') || '0');
+  if (!amount || amount <= 0) return;
+  doReward(amount);
+}
+
+async function doPayment(amount) {
+  const s = window._currentStudent;
+  if (!s) return;
+  if (s.balance < amount) { showSuccess('😕','Ikke nok mynter!','',`Du har bare ${s.balance} 🪙`); return; }
+  const newBal = s.balance - amount;
+  await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal });
+  window._currentStudent.balance = newBal;
+  document.getElementById('customer-balance').textContent = newBal;
+  transactions.unshift({ type:'expense', icon:'🛒', desc:'Betaling i kassen', date:'Nå', amount:-amount });
+  renderTransactions();
+  showSuccess('✅','Betalt!',`-${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
+}
+
+async function doReward(amount) {
+  const s = window._currentStudent;
+  if (!s) return;
+  const newBal = s.balance + amount;
+  await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal });
+  window._currentStudent.balance = newBal;
+  document.getElementById('customer-balance').textContent = newBal;
+  transactions.unshift({ type:'income', icon:'⭐', desc:'Belønning skannet', date:'Nå', amount:+amount });
+  renderTransactions();
+  showSuccess('🎉','Belønning!',`+${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
+}
+
+// ── Cashier ────────────────────────────────────────────────────────────────
+function switchCashierTab(tab, btn) {
+  document.getElementById('cashier-tab-register').style.display = tab==='register'?'block':'none';
+  document.getElementById('cashier-tab-rewards').style.display = tab==='rewards'?'block':'none';
+  document.querySelectorAll('.cashier-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function renderGroceryButtons() {
+  const g = window._groceries;
+  const el = document.getElementById('grocery-btn-grid');
+  if (!el) return;
+  if (!g.length) { el.innerHTML='<div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;padding:.5rem;">Ingen varer i butikken. Legg til via lærerportalen.</div>'; return; }
+  el.innerHTML = g.map(x => `
+    <button class="grocery-scan-btn" onclick="addToCart('${x.emoji}','${x.name}',${x.price})">
+      <div class="ge">${x.emoji}</div>
+      <div class="gn">${x.name}</div>
+      <div class="gp">🪙${x.price}</div>
+    </button>`).join('');
+}
+
+// Oppdater kasse-knapper når varer lastes
+let _gbRendered = false;
+const _gbInterval = setInterval(() => {
+  if (window._groceries.length && !_gbRendered) { renderGroceryButtons(); _gbRendered=true; }
+}, 500);
+
+function addToCart(emoji, name, price) {
+  cart.push({ emoji, name, price });
+  cartTotal += price;
+  renderCart();
+}
+function removeItem(i) { cartTotal -= cart[i].price; cart.splice(i,1); renderCart(); }
+function clearCart() { cart=[]; cartTotal=0; renderCart(); }
+
+function renderCart() {
+  const el = document.getElementById('cart-list');
+  const btn = document.getElementById('pay-btn');
+  if (!el) return;
+  document.getElementById('register-total').textContent = cartTotal + ' 🪙';
+  if (btn) { btn.disabled=!cart.length; btn.style.opacity=cart.length?'1':'0.4'; }
+  if (!cart.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🛒</div><div style="font-weight:700;">Ingen varer ennå</div></div>'; return; }
+  el.innerHTML = cart.map((item,i) => `
+    <div class="cart-item">
+      <div class="cart-emoji">${item.emoji}</div>
+      <div class="cart-name">${item.name}</div>
+      <div class="cart-price">🪙${item.price}</div>
+      <button class="cart-remove" onclick="removeItem(${i})">✕</button>
+    </div>`).join('');
+}
+
+function generatePaymentQR() {
+  if (!cart.length) return;
+  const wrap = document.getElementById('payment-qr-wrap');
+  wrap.innerHTML = '';
+  try { new QRCode(wrap, { text: JSON.stringify({ type:'payment', amount:cartTotal, ts:Date.now() }), width:200, height:200, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
+  document.getElementById('payment-display-amount').textContent = cartTotal + ' 🪙';
+  document.getElementById('payment-overlay').classList.add('open');
+}
+
+function showRewardQR(amount) {
+  const el = document.getElementById('reward-display-qr');
+  el.innerHTML = '';
+  try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount }), width:160, height:160, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
+  document.getElementById('reward-display-amount').textContent = '+' + amount + ' 🪙';
+  document.getElementById('reward-qr-display').style.display = 'block';
+}
+
+function showSuccess(emoji, title, amount, text) {
+  document.getElementById('success-emoji').textContent = emoji;
+  document.getElementById('success-title').textContent = title;
+  document.getElementById('success-amount').textContent = amount;
+  document.getElementById('success-text').textContent = text;
+  document.getElementById('success-overlay').classList.add('open');
+}
+
+renderCart();
+</script>
+</body>
+</html>
