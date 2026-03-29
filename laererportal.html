@@ -1480,23 +1480,23 @@ function generateCardPDF() {
   const students = window._students;
   if (!students.length) { alert('Ingen elever å skrive ut kort for.'); return; }
 
-  // Credit card standard: 85.6mm × 54mm. A4 portrait (210×297mm) minus 12mm margins = 198×285mm.
-  // 2 columns: each card 96mm wide. 5 rows: each card 55mm tall. = 10 cards per page.
+  // A4 portrait = 210×297mm, 0 margin.
+  // 2 cols × 4 rows = 8 cards per page. Each card: 105mm wide × 74mm tall.
+  // Name displayed as: Firstname L. (first letter of lastname)
   const cardsHTML = `<style>
-    @font-face{}
-    body { margin: 0; padding: 6mm; background: white; }
+    body { margin: 0; padding: 0; background: white; }
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(2, 85.6mm);
-      grid-template-rows: repeat(5, 54mm);
-      gap: 4mm;
+      grid-template-columns: repeat(2, 105mm);
+      grid-template-rows: repeat(4, 74mm);
+      gap: 0;
     }
     .card-item {
-      width: 85.6mm;
-      height: 54mm;
+      width: 105mm;
+      height: 74mm;
       background-color: #085041;
-      border-radius: 3mm;
-      padding: 4mm 5mm;
+      border-radius: 0;
+      padding: 6mm 7mm;
       color: white;
       display: flex;
       flex-direction: column;
@@ -1505,84 +1505,89 @@ function generateCardPDF() {
       overflow: hidden;
       page-break-inside: avoid;
       box-sizing: border-box;
+      border: 0.3mm solid #1D9E75;
     }
     .card-accent {
       position: absolute;
-      top: -10mm; right: -10mm;
-      width: 35mm; height: 35mm;
+      top: -14mm; right: -14mm;
+      width: 46mm; height: 46mm;
       border-radius: 50%;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.07);
     }
     .card-accent2 {
       position: absolute;
-      bottom: -8mm; left: -8mm;
-      width: 28mm; height: 28mm;
+      bottom: -12mm; left: -10mm;
+      width: 38mm; height: 38mm;
       border-radius: 50%;
-      background: rgba(239,159,39,0.12);
+      background: rgba(239,159,39,0.10);
     }
-    .card-top { position: relative; z-index: 1; }
+    .card-top { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; }
     .card-logo {
       font-family: 'Fredoka One', cursive;
-      font-size: 5mm;
+      font-size: 6.5mm;
       color: #EF9F27;
       letter-spacing: 0.3mm;
       line-height: 1;
     }
     .card-chip {
-      width: 8mm; height: 6mm;
+      width: 10mm; height: 7.5mm;
       background: #EF9F27;
-      border-radius: 1mm;
-      margin-top: 2mm;
+      border-radius: 1.5mm;
+      opacity: 0.9;
     }
     .card-bottom { position: relative; z-index: 1; }
     .card-label {
-      font-size: 2.2mm;
-      color: rgba(255,255,255,0.65);
+      font-size: 2.8mm;
+      color: rgba(255,255,255,0.60);
       font-weight: 700;
-      letter-spacing: 0.3mm;
+      letter-spacing: 0.4mm;
       text-transform: uppercase;
-      margin-bottom: 0.8mm;
+      margin-bottom: 1mm;
     }
     .card-name {
-      font-size: 4mm;
+      font-size: 5.5mm;
       font-weight: 800;
-      letter-spacing: 0.2mm;
+      letter-spacing: 0.1mm;
       text-transform: uppercase;
-      line-height: 1.2;
-      word-break: break-word;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .card-footer {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-top: 2mm;
+      margin-top: 3mm;
     }
-    .card-pin-block {}
     .card-pin-label {
-      font-size: 2.2mm;
-      color: rgba(255,255,255,0.65);
+      font-size: 2.8mm;
+      color: rgba(255,255,255,0.60);
       font-weight: 700;
       text-transform: uppercase;
-      margin-bottom: 0.5mm;
+      margin-bottom: 1mm;
     }
     .card-pin {
       font-family: 'Fredoka One', cursive;
-      font-size: 6mm;
+      font-size: 9mm;
       color: #EF9F27;
-      letter-spacing: 1.5mm;
+      letter-spacing: 2mm;
       line-height: 1;
     }
     .card-class {
       background: #EF9F27;
       color: #085041;
-      border-radius: 1mm;
-      padding: 1mm 2.5mm;
-      font-size: 3mm;
+      border-radius: 1.5mm;
+      padding: 1.5mm 3mm;
+      font-size: 4mm;
       font-weight: 800;
+      align-self: flex-end;
     }
   </style>
   <div class="card-grid">
-    ${students.map(s => `
+    ${students.map(s => {
+      const displayName = s.firstname + ' ' + s.lastname.charAt(0) + '.';
+      return `
       <div class="card-item">
         <div class="card-accent"></div>
         <div class="card-accent2"></div>
@@ -1592,22 +1597,23 @@ function generateCardPDF() {
         </div>
         <div class="card-bottom">
           <div class="card-label">Kortinnehaver</div>
-          <div class="card-name">${s.firstname} ${s.lastname}</div>
+          <div class="card-name">${displayName}</div>
           <div class="card-footer">
-            <div class="card-pin-block">
+            <div>
               <div class="card-pin-label">PIN-kode</div>
               <div class="card-pin">${s.pin}</div>
             </div>
             <div class="card-class">${s.class}</div>
           </div>
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
   </div>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
-    '<style>@media print{@page{size:A4 portrait;margin:0}body{margin:0;padding:6mm}}</style>' +
+    '<style>@media print{@page{size:A4 portrait;margin:0}}</style>' +
     '</head><body>' + cardsHTML + '</body></html>');
   win.document.close();
   setTimeout(() => { win.focus(); win.print(); }, 800);
