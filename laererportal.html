@@ -12,67 +12,117 @@
 
   // ── LIM INN DIN FIREBASE-KONFIG HER ──────────────────────────────────────
   const firebaseConfig = {
-  apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
-  authDomain: "myntland.firebaseapp.com",
-  databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "myntland",
-  storageBucket: "myntland.firebasestorage.app",
-  messagingSenderId: "711264415533",
-  appId: "1:711264415533:web:644a77a1e8b234667b2da4",
-  measurementId: "G-95QZNLQ6V9"
-};
+    apiKey:            "DIN_API_KEY",
+    authDomain:        "DIN_PROJECT.firebaseapp.com",
+    databaseURL:       "https://DIN_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "DIN_PROJECT",
+    storageBucket:     "DIN_PROJECT.appspot.com",
+    messagingSenderId: "DIN_SENDER_ID",
+    appId:             "DIN_APP_ID"
+  };
   // ─────────────────────────────────────────────────────────────────────────
 
   const app = initializeApp(firebaseConfig);
   const db  = getDatabase(app);
 
-  window._db  = db;
-  window._ref = ref;
-  window._set = set;
-  window._push = push;
-  window._onValue = onValue;
-  window._remove = remove;
-  window._update = update;
-  window._get = get;
-  window._fbReady = true;
+  window._db = db; window._ref = ref; window._set = set; window._push = push;
+  window._onValue = onValue; window._remove = remove; window._update = update;
+  window._get = get; window._fbReady = true;
 
-  // ── Live lyttere ──────────────────────────────────────────────────────────
-  onValue(ref(db, 'students'), snap => {
-    window._students = snap.val() ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k})) : [];
-    renderStudentTable();
-    renderSaldoTable();
-    updateStats();
-  });
+  // Live lyttere – bare aktive etter innlogging
+  function startListeners() {
+    const tid = window._currentTeacher?.fbKey;
 
-  onValue(ref(db, 'groceries'), snap => {
-    window._groceries = snap.val() ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k})) : [];
-    renderGroceryList();
-    renderGroceryPrintSelect();
-    renderHandlelisteSelect();
-  });
+    onValue(ref(db, 'students'), snap => {
+      const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      // Filtrer på lærerens klasse hvis ikke admin
+      window._students = (window._currentTeacher?.role === 'admin')
+        ? all
+        : all.filter(s => s.class === window._currentTeacher?.class);
+      renderStudentTable(); renderSaldoTable(); updateStats();
+    });
 
-  document.getElementById('fb-status').textContent = '🟢 Koblet til Firebase';
-  document.getElementById('fb-status').style.color = '#1D9E75';
+    onValue(ref(db, 'groceries'), snap => {
+      window._groceries = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      renderGroceryList(); renderGroceryPrintSelect(); renderHandlelisteSelect();
+    });
+
+    onValue(ref(db, 'groups'), snap => {
+      window._groups = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      if (document.getElementById('page-grupper').classList.contains('active')) renderGroupsPage();
+    });
+  }
+
+  window._startListeners = startListeners;
+
+  document.getElementById('fb-status').textContent = '🟢 Firebase klar';
+  document.getElementById('fb-status').style.color = '#9FE1CB';
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
-  :root{--teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;--amber:#EF9F27;--amber-light:#FAEEDA;--coral:#D85A30;--coral-light:#FAECE7;--purple:#534AB7;--purple-light:#EEEDFE;--bg:#F7F9F7;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#c8dfc8;}
+  :root{
+    --teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;
+    --amber:#EF9F27;--amber-light:#FAEEDA;
+    --coral:#D85A30;--coral-light:#FAECE7;
+    --purple:#534AB7;--purple-light:#EEEDFE;
+    --bg:#F7F9F7;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#c8dfc8;
+  }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* ── LOGIN SCREEN ─────────────────────────── */
+  #login-screen{display:flex;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--teal-dark),#1a6648,var(--teal));padding:2rem;}
+  .login-box{background:white;border-radius:24px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .login-logo{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--teal-dark);text-align:center;margin-bottom:.25rem;}
+  .login-sub{text-align:center;color:var(--muted);font-size:.9rem;font-weight:700;margin-bottom:2rem;}
+  .login-profiles{display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem;}
+  .profile-btn{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);border-radius:14px;cursor:pointer;background:var(--white);transition:all .15s;font-family:'Nunito',sans-serif;}
+  .profile-btn:hover{border-color:var(--teal);background:var(--teal-light);}
+  .profile-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
+  .profile-name{font-weight:800;font-size:1rem;color:var(--text);}
+  .profile-role{font-size:.75rem;color:var(--muted);}
+  .pin-section{display:none;margin-top:1rem;}
+  .pin-input-row{display:flex;gap:8px;justify-content:center;margin:1rem 0;}
+  .pin-char{width:48px;height:56px;border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);}
+  .pin-char.filled{border-color:var(--teal);background:var(--teal-light);}
+  .pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:.5rem;}
+  .pin-key{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);cursor:pointer;transition:all .1s;text-align:center;}
+  .pin-key:active{transform:scale(.92);background:var(--teal-light);}
+  .pin-key.del{font-size:1rem;color:var(--coral);}
+  .pin-key.empty{background:transparent;border:none;cursor:default;}
+  .login-error{color:var(--coral);font-size:.85rem;font-weight:700;text-align:center;min-height:20px;}
+
+  /* ── MAIN APP ─────────────────────────────── */
+  #app{display:none;}
   header{background:var(--teal-dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
   .logo{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--amber);letter-spacing:1px;display:flex;align-items:center;gap:8px;}
   .logo-coin{width:32px;height:32px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--teal-dark);font-weight:900;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .teacher-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:10px;}
+  .teacher-badge-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;}
+  .teacher-badge-name{color:white;font-size:.82rem;font-weight:700;}
+  .logout-btn{background:rgba(255,255,255,.13);border:none;color:rgba(255,255,255,.8);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;}
   header nav{display:flex;gap:4px;align-items:center;}
-  header nav button{background:none;border:none;color:rgba(255,255,255,.7);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;padding:8px 14px;border-radius:8px;cursor:pointer;transition:all .15s;}
+  header nav button{background:none;border:none;color:rgba(255,255,255,.7);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;transition:all .15s;}
   header nav button:hover{background:rgba(255,255,255,.1);color:#fff;}
   header nav button.active{background:var(--amber);color:var(--teal-dark);}
-  #fb-status{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.5);white-space:nowrap;}
+  #fb-status{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.5);}
   main{max-width:1200px;margin:0 auto;padding:2rem;}
   .page{display:none;}.page.active{display:block;}
   .page-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);margin-bottom:.25rem;}
   .page-subtitle{color:var(--muted);font-size:.95rem;margin-bottom:2rem;}
+
+  /* ── CARDS & LAYOUT ───────────────────────── */
   .card{background:var(--white);border-radius:16px;border:1.5px solid var(--border);padding:1.5rem;margin-bottom:1.5rem;}
   .card-title{font-size:1.1rem;font-weight:800;color:var(--teal-dark);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;}
+  .stat-row{display:flex;gap:1rem;margin-bottom:1.5rem;}
+  .stat-box{flex:1;background:var(--teal-light);border-radius:12px;padding:1rem;text-align:center;}
+  .stat-num{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);}
+  .stat-label{font-size:.8rem;color:var(--muted);font-weight:700;}
+
+  /* ── BUTTONS ──────────────────────────────── */
   .btn{font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
   .btn:hover{transform:translateY(-1px);}.btn:active{transform:translateY(0);}
   .btn-primary{background:var(--teal);color:#fff;}.btn-primary:hover{background:var(--teal-dark);}
@@ -81,122 +131,261 @@
   .btn-purple{background:var(--purple);color:#fff;}.btn-purple:hover{background:#3d3490;}
   .btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);}.btn-ghost:hover{background:var(--bg);}
   .btn-sm{padding:6px 12px;font-size:.82rem;}
+
+  /* ── FORMS ────────────────────────────────── */
   input[type=text],input[type=number],input[type=password],select{font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);color:var(--text);width:100%;outline:none;transition:border-color .15s;}
   input:focus,select:focus{border-color:var(--teal);}
   label{font-weight:700;font-size:.85rem;color:var(--muted);display:block;margin-bottom:6px;}
   .form-row{margin-bottom:1rem;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+
+  /* ── TABLE ────────────────────────────────── */
   table{width:100%;border-collapse:collapse;}
   th{font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);}
   td{padding:12px;border-bottom:1px solid var(--bg);font-size:.95rem;vertical-align:middle;}
   tr:hover td{background:var(--teal-light);}
   .balance-badge{display:inline-flex;align-items:center;gap:4px;background:var(--amber-light);color:#854F0B;font-weight:800;padding:4px 10px;border-radius:20px;font-size:.9rem;}
   .balance-actions{display:flex;gap:6px;align-items:center;}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
-  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;}
-  .qr-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:12px;}
-  .qr-card .amount-label{font-family:'Fredoka One',cursive;font-size:2rem;}
-  .qr-wrap{background:white;padding:12px;border-radius:12px;border:2px solid var(--border);}
+  .class-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);}
+  .group-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;border:1.5px solid;display:inline-flex;align-items:center;gap:4px;}
+
+  /* ── TABS ─────────────────────────────────── */
+  .tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--bg);padding:4px;border-radius:12px;border:1px solid var(--border);}
+  .tab{flex:1;padding:10px;text-align:center;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;color:var(--muted);transition:all .15s;}
+  .tab.active{background:var(--white);color:var(--teal-dark);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+
+  /* ── MODALS ───────────────────────────────── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--white);border-radius:20px;padding:2rem;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;}
+  .modal-title{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);margin-bottom:1.5rem;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+
+  /* ── ALERTS ───────────────────────────────── */
+  .alert{padding:12px 16px;border-radius:10px;font-size:.9rem;font-weight:600;margin-bottom:1rem;}
+  .alert-success{background:var(--teal-light);color:var(--teal-dark);border:1px solid #5DCAA5;}
+  .alert-error{background:var(--coral-light);color:#4A1B0C;border:1px solid #F0997B;}
+
+  /* ── GROCERY ──────────────────────────────── */
   .grocery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;}
   .grocery-item{border:1.5px solid var(--border);border-radius:12px;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .15s;background:var(--white);position:relative;}
   .grocery-item:hover{border-color:var(--teal);background:var(--teal-light);}
   .grocery-item.selected{border-color:var(--teal);background:var(--teal-light);}
   .grocery-item.selected::after{content:'✓';position:absolute;top:6px;right:8px;color:var(--teal);font-weight:900;font-size:1rem;}
   .grocery-emoji{font-size:2.5rem;}.grocery-name{font-weight:700;font-size:.85rem;color:var(--text);text-align:center;}.grocery-price{font-size:.8rem;color:var(--muted);font-weight:600;}
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
-  .modal-overlay.open{display:flex;}
-  .modal{background:var(--white);border-radius:20px;padding:2rem;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;}
-  .modal-title{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);margin-bottom:1.5rem;}
-  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
-  .alert{padding:12px 16px;border-radius:10px;font-size:.9rem;font-weight:600;margin-bottom:1rem;}
-  .alert-success{background:var(--teal-light);color:var(--teal-dark);border:1px solid #5DCAA5;}
-  .alert-error{background:var(--coral-light);color:#4A1B0C;border:1px solid #F0997B;}
-  .tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--bg);padding:4px;border-radius:12px;border:1px solid var(--border);}
-  .tab{flex:1;padding:10px;text-align:center;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;color:var(--muted);transition:all .15s;}
-  .tab.active{background:var(--white);color:var(--teal-dark);box-shadow:0 1px 4px rgba(0,0,0,.08);}
-  .stat-row{display:flex;gap:1rem;margin-bottom:1.5rem;}
-  .stat-box{flex:1;background:var(--teal-light);border-radius:12px;padding:1rem;text-align:center;}
-  .stat-num{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);}
-  .stat-label{font-size:.8rem;color:var(--muted);font-weight:700;}
-  .class-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);}
-  .pin-display{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal);letter-spacing:8px;background:var(--teal-light);padding:16px 24px;border-radius:12px;display:inline-block;margin:1rem 0;}
-  .setup-banner{background:#fff3cd;border:2px solid #EF9F27;border-radius:16px;padding:1.5rem;margin-bottom:2rem;}
-  .setup-banner h3{font-family:'Fredoka One',cursive;color:#854F0B;margin-bottom:.5rem;}
-  .setup-banner code{background:#085041;color:#EF9F27;padding:2px 8px;border-radius:6px;font-size:.85rem;}
-  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}}
+
+  /* ── QR ───────────────────────────────────── */
+  .qr-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .qr-card .amount-label{font-family:'Fredoka One',cursive;font-size:2rem;}
+  .qr-wrap{background:white;padding:12px;border-radius:12px;border:2px solid var(--border);}
+
+  /* ── GROUPS ───────────────────────────────── */
+  .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;}
+  .color-swatch.selected{border-color:var(--text);transform:scale(1.15);}
+  .group-card{background:var(--white);border-radius:16px;border:2px solid var(--border);padding:1.25rem;margin-bottom:1rem;transition:border-color .15s;}
+  .group-card:hover{border-color:var(--teal);}
+  .group-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+  .group-members{display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* ── CSV ──────────────────────────────────── */
+  .drop-zone{border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;color:var(--muted);cursor:pointer;transition:all .15s;}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--teal);background:var(--teal-light);}
+  .csv-preview{max-height:240px;overflow-y:auto;margin-top:1rem;}
+  .csv-preview table{font-size:.82rem;}
+  .csv-preview th{background:var(--teal-light);color:var(--teal-dark);padding:6px 8px;}
+
+  /* ── TEACHER ADMIN ────────────────────────── */
+  .teacher-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem 1.25rem;display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+  .teacher-card-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
+  .teacher-card-info{flex:1;}
+  .teacher-card-name{font-weight:800;font-size:.95rem;}
+  .teacher-card-meta{font-size:.78rem;color:var(--muted);}
+  .admin-only{background:var(--amber-light);border:1.5px solid var(--amber);border-radius:10px;padding:.75rem 1rem;font-size:.82rem;color:#854F0B;font-weight:700;margin-bottom:1rem;}
+
+  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}header{padding:0 1rem;}header nav button span{display:none;}}
 </style>
 </head>
 <body>
 
+<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🪙 Myntland</div>
+    <div class="login-sub">Lærerportal – velg din profil</div>
+    <div class="login-profiles" id="profile-list">
+      <div style="text-align:center;color:var(--muted);padding:1rem;font-size:.85rem;">Laster profiler…</div>
+    </div>
+    <div class="pin-section" id="pin-section">
+      <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.5rem;" id="pin-for-name"></div>
+      <div class="pin-input-row" id="pin-chars">
+        <div class="pin-char" id="pc-0">·</div><div class="pin-char" id="pc-1">·</div>
+        <div class="pin-char" id="pc-2">·</div><div class="pin-char" id="pc-3">·</div>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <div class="pin-numpad">
+        <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key empty"></button><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinKey('DEL')">⌫</button>
+      </div>
+      <button onclick="backToProfiles()" style="width:100%;margin-top:1rem;background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:10px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;">← Tilbake</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem;">
+      <span id="fb-status" style="font-size:.72rem;color:var(--muted);">⏳ Kobler til…</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="app">
 <header>
   <div class="logo"><div class="logo-coin">M</div>Myntland</div>
   <nav>
     <button class="active" onclick="showPage('elever')" id="nav-elever">👩‍🎓 Elever</button>
+    <button onclick="showPage('grupper')" id="nav-grupper">👥 Grupper</button>
     <button onclick="showPage('saldo')" id="nav-saldo">💰 Saldo</button>
     <button onclick="showPage('dagligvarer')" id="nav-dagligvarer">🛒 Dagligvarer</button>
     <button onclick="showPage('handleliste')" id="nav-handleliste">📋 Handleliste</button>
-    <button onclick="showPage('qrkoder')" id="nav-qrkoder">⬛ QR-koder</button>
-    <span id="fb-status">⏳ Kobler til…</span>
+    <button onclick="showPage('qrkoder')" id="nav-qrkoder">⬛ QR</button>
+    <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;">⚙️ Lærere</button>
   </nav>
+  <div class="header-right">
+    <div class="teacher-badge">
+      <div class="teacher-badge-avatar" id="header-avatar"></div>
+      <div class="teacher-badge-name" id="header-name"></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Logg ut</button>
+  </div>
 </header>
 
 <main>
 
-<!-- SETUP BANNER – vises til Firebase er konfigurert -->
-<div class="setup-banner" id="setup-banner">
-  <h3>⚙️ Firebase-konfig mangler</h3>
-  <p style="font-size:.9rem;color:#854F0B;margin-bottom:.5rem;">Åpne filen i en teksteditor og lim inn din Firebase-konfig øverst i <code>&lt;script type="module"&gt;</code>-blokken. Se <strong>OPPSETT.md</strong> for steg-for-steg.</p>
-</div>
-
 <!-- ===== ELEVER ===== -->
 <div class="page active" id="page-elever">
   <div class="page-title">👩‍🎓 Elevadministrasjon</div>
-  <div class="page-subtitle">Opprett og administrer elever i Myntland</div>
+  <div class="page-subtitle" id="elever-subtitle">Opprett og administrer elever</div>
+
   <div class="stat-row">
     <div class="stat-box"><div class="stat-num" id="stat-total">–</div><div class="stat-label">Elever totalt</div></div>
     <div class="stat-box" style="background:var(--amber-light);"><div class="stat-num" style="color:#854F0B;" id="stat-total-balance">–</div><div class="stat-label">Mynter i omløp</div></div>
   </div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">➕ Opprett ny elev</div>
-      <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Sofie"></div>
-      <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Hansen"></div>
-      <div class="form-row"><label>Klasse</label>
-        <select id="new-class"><option>1A</option><option>1B</option><option>2A</option><option>2B</option><option>3A</option><option>3B</option><option>4A</option><option>4B</option></select>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showElevTab('manuell',this)">✏️ Opprett manuelt</button>
+    <button class="tab" onclick="showElevTab('csv',this)">📥 Importer CSV</button>
+  </div>
+
+  <div id="elev-tab-manuell">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">➕ Opprett ny elev</div>
+        <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Sofie"></div>
+        <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Hansen"></div>
+        <div class="form-row"><label>Klasse</label><input type="text" id="new-class" placeholder="f.eks. 2A"></div>
+        <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="50" min="0"></div>
+        <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
+        <div id="create-alert" style="margin-top:1rem;"></div>
       </div>
-      <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="50" min="0"></div>
-      <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
-      <div id="create-alert" style="margin-top:1rem;"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">ℹ️ Slik fungerer innlogging</div>
-      <p style="font-size:.88rem;color:var(--muted);line-height:1.7;">Hver elev får automatisk en unik <strong>4-sifret PIN</strong>. PIN-koden vises i tabellen og brukes for å logge inn i elevappen.<br><br>Del PIN-koden med eleven – eller skriv ut bankkort til alle.</p>
-      <div style="margin-top:1rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;">
-        🔒 Dataene lagres i Firebase og synkroniseres øyeblikkelig på alle enheter.
-      </div>
-      <div style="margin-top:1rem;">
-        <button class="btn btn-amber btn-sm" onclick="generateCardPDF()">💳 Skriv ut bankkort til alle elever</button>
-      </div>
-      <div id="card-pdf-preview" style="display:none;margin-top:1.5rem;">
-        <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.75rem;">👁️ Forhåndsvisning – bankkort</div>
-        <div id="card-pdf-content"></div>
-        <button class="btn btn-primary" onclick="window.print()" style="margin-top:1rem;">🖨️ Skriv ut / Lagre som PDF</button>
+      <div class="card">
+        <div class="card-title">💳 Skriv ut bankkort</div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og PIN – 8 per A4-side.</p>
+        <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort til alle elever</button>
+        <div id="card-pdf-preview" style="display:none;margin-top:1.5rem;">
+          <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.75rem;">👁️ Forhåndsvisning</div>
+          <div id="card-pdf-content"></div>
+          <button class="btn btn-primary" onclick="window.print()" style="margin-top:1rem;">🖨️ Skriv ut / PDF</button>
+        </div>
+        <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Dataene lagres i Firebase og synkroniseres på alle enheter.</div>
       </div>
     </div>
   </div>
+
+  <div id="elev-tab-csv" style="display:none;">
+    <div class="card">
+      <div class="card-title">📥 Importer elever fra CSV</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
+        Kolonnene skal være <strong>fornavn, etternavn, klasse</strong> (med eller uten overskriftsrad).<br>
+        Eksempel: <code style="background:var(--bg);padding:2px 8px;border-radius:6px;font-size:.82rem;">Sofie,Hansen,2A</code>
+      </p>
+      <div class="drop-zone" id="csv-drop-zone" onclick="document.getElementById('csv-file-input').click()">
+        <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none;" onchange="handleCSVFile(this.files[0])">
+        <div style="font-size:2rem;margin-bottom:.5rem;">📂</div>
+        <div style="font-weight:700;margin-bottom:4px;">Dra og slipp CSV-fil her</div>
+        <div style="font-size:.82rem;">eller klikk for å velge fil</div>
+      </div>
+      <div id="csv-preview-area" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;margin-bottom:.75rem;">
+          <strong id="csv-preview-title" style="color:var(--teal-dark);"></strong>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="display:inline;margin:0;font-size:.85rem;color:var(--muted);">Startsaldo:</label>
+            <input type="number" id="csv-default-balance" value="50" min="0" style="width:80px;">
+          </div>
+        </div>
+        <div class="csv-preview">
+          <table><thead><tr><th>Fornavn</th><th>Etternavn</th><th>Klasse</th><th>Status</th></tr></thead>
+          <tbody id="csv-preview-body"></tbody></table>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:1rem;">
+          <button class="btn btn-primary" onclick="importCSV()">✅ Importer alle</button>
+          <button class="btn btn-ghost" onclick="resetCSV()">✕ Avbryt</button>
+        </div>
+        <div id="csv-import-alert" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span>📋 Elevliste</span>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" placeholder="Søk elev…" style="width:200px;" oninput="filterStudents(this.value)" id="search-input">
-        <select onchange="filterClass(this.value)" style="width:120px;">
+        <select onchange="filterClass(this.value)" style="width:130px;" id="filter-class-select">
           <option value="">Alle klasser</option>
-          <option>1A</option><option>1B</option><option>2A</option><option>2B</option><option>3A</option><option>3B</option><option>4A</option><option>4B</option>
         </select>
       </div>
     </div>
-    <table><thead><tr><th>Elev</th><th>Klasse</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
-    <tbody id="student-table-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Laster elever…</td></tr></tbody></table>
+    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Gruppe</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
+    <tbody id="student-table-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Laster elever…</td></tr></tbody></table>
   </div>
+</div>
+
+<!-- ===== GRUPPER ===== -->
+<div class="page" id="page-grupper">
+  <div class="page-title">👥 Grupper</div>
+  <div class="page-subtitle">Opprett og navngi grupper – knytt elever til grupper for aktiviteter</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" id="group-form-title">➕ Opprett ny gruppe</div>
+      <div class="form-row"><label>Gruppenavn</label><input type="text" id="new-group-name" placeholder="f.eks. Røde Ørner"></div>
+      <div class="form-row"><label>Emoji</label><input type="text" id="new-group-emoji" placeholder="🦅" maxlength="2"></div>
+      <div class="form-row"><label>Farge</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="color-picker">
+          <div class="color-swatch selected" data-color="#1D9E75" style="background:#1D9E75;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#EF9F27" style="background:#EF9F27;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#534AB7" style="background:#534AB7;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#D4537E" style="background:#D4537E;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#639922" style="background:#639922;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#888780" style="background:#888780;" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:.5rem;">
+        <button class="btn btn-primary" id="group-submit-btn" onclick="submitGroup()">Opprett gruppe</button>
+        <button class="btn btn-ghost" id="group-cancel-btn" onclick="cancelEditGroup()" style="display:none;">Avbryt</button>
+      </div>
+      <div id="group-create-alert" style="margin-top:1rem;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">👤 Legg elev til gruppe</div>
+      <div class="form-row"><label>Velg elev</label><select id="assign-student-select"><option value="">– Velg elev –</option></select></div>
+      <div class="form-row"><label>Velg gruppe</label><select id="assign-group-select"><option value="">– Velg gruppe –</option></select></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="assignStudentToGroup()">Legg til i gruppe</button>
+        <button class="btn btn-ghost" onclick="removeStudentFromGroup()">Fjern fra gruppe</button>
+      </div>
+    </div>
+  </div>
+  <div id="groups-list"></div>
 </div>
 
 <!-- ===== SALDO ===== -->
@@ -228,7 +417,7 @@
     <div class="card">
       <div class="card-title">➕ Legg til vare</div>
       <div class="form-grid">
-        <div class="form-row"><label>Emoji (varebilde)</label><input type="text" id="item-emoji" placeholder="🥛" maxlength="2"></div>
+        <div class="form-row"><label>Emoji</label><input type="text" id="item-emoji" placeholder="🥛" maxlength="2"></div>
         <div class="form-row"><label>Varenavn</label><input type="text" id="item-name" placeholder="Melk"></div>
         <div class="form-row"><label>Pris (mynter)</label><input type="number" id="item-price" placeholder="12" min="1"></div>
         <div class="form-row"><label>Kategori</label>
@@ -242,7 +431,7 @@
   <div id="butikk-skriv" style="display:none;">
     <div class="card">
       <div class="card-title">🖨️ Skriv ut handlelapper</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;">Velg varer som skal skrives ut med QR-kode og pris. QR-koden kan scannes i kasseappen.</p>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;">Velg varer å skrive ut (¼ A4 per vare med QR-kode).</p>
       <div class="grocery-grid" id="grocery-print-select"></div>
       <div style="margin-top:1.5rem;display:flex;gap:10px;">
         <button class="btn btn-primary" onclick="generateGroceryPDF()">🖨️ Generer utskrift</button>
@@ -252,7 +441,7 @@
     <div id="grocery-pdf-preview" style="display:none;" class="card">
       <div class="card-title">👁️ Forhåndsvisning</div>
       <div id="grocery-pdf-content"></div>
-      <button class="btn btn-amber" onclick="window.print()" style="margin-top:1rem;">🖨️ Skriv ut / Lagre som PDF</button>
+      <button class="btn btn-amber" onclick="window.print()" style="margin-top:1rem;">🖨️ Skriv ut / PDF</button>
     </div>
   </div>
 </div>
@@ -260,14 +449,14 @@
 <!-- ===== HANDLELISTE ===== -->
 <div class="page" id="page-handleliste">
   <div class="page-title">📋 Handlelister</div>
-  <div class="page-subtitle">Generer handlelister der elevene skal skrive inn pris og regne ut total</div>
+  <div class="page-subtitle">Generer handlelister der elevene skriver inn pris og regner ut total</div>
   <div class="card">
     <div class="card-title">🛍️ Lag handleliste</div>
     <div class="form-grid">
       <div class="form-row"><label>Elevens navn (valgfritt)</label><input type="text" id="list-student" placeholder="La stå tomt for blank liste"></div>
       <div class="form-row"><label>Antall varer</label><input type="number" id="list-count" value="5" min="2" max="15"></div>
     </div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig utvalg):</p>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig):</p>
     <div class="grocery-grid" id="handleliste-select"></div>
     <div style="margin-top:1.5rem;display:flex;gap:10px;">
       <button class="btn btn-primary" onclick="generateShoppingList()">📋 Generer handleliste</button>
@@ -275,9 +464,9 @@
     </div>
   </div>
   <div id="handleliste-preview" style="display:none;" class="card">
-    <div class="card-title">👁️ Forhåndsvisning</div>
+    <div class="card-title">👁️ Forhåndsvisning <span style="font-size:.75rem;color:var(--muted);font-weight:400;">(liggende A4 – 2 lister per side)</span></div>
     <div id="handleliste-content"></div>
-    <button class="btn btn-amber" onclick="window.print()" style="margin-top:1rem;">🖨️ Skriv ut / Lagre som PDF</button>
+    <button class="btn btn-amber" onclick="window.print()" style="margin-top:1rem;">🖨️ Skriv ut / PDF</button>
   </div>
 </div>
 
@@ -286,24 +475,9 @@
   <div class="page-title">⬛ QR-belønningskoder</div>
   <div class="page-subtitle">Generer QR-koder som elevene kan scanne for å tjene mynter</div>
   <div class="grid-3">
-    <div class="qr-card">
-      <div class="amount-label" style="color:#1D9E75;">+10 🪙</div>
-      <div class="qr-wrap" id="qr-10"></div>
-      <div style="font-size:.85rem;color:var(--muted);">Liten belønning</div>
-      <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Skriv ut</button>
-    </div>
-    <div class="qr-card">
-      <div class="amount-label" style="color:#EF9F27;">+50 🪙</div>
-      <div class="qr-wrap" id="qr-50"></div>
-      <div style="font-size:.85rem;color:var(--muted);">Medium belønning</div>
-      <button class="btn btn-amber btn-sm" onclick="window.print()">🖨️ Skriv ut</button>
-    </div>
-    <div class="qr-card">
-      <div class="amount-label" style="color:#534AB7;">+100 🪙</div>
-      <div class="qr-wrap" id="qr-100"></div>
-      <div style="font-size:.85rem;color:var(--muted);">Stor belønning</div>
-      <button class="btn btn-purple btn-sm" onclick="window.print()">🖨️ Skriv ut</button>
-    </div>
+    <div class="qr-card"><div class="amount-label" style="color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><div style="font-size:.85rem;color:var(--muted);">Liten belønning</div><button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Skriv ut</button></div>
+    <div class="qr-card"><div class="amount-label" style="color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><div style="font-size:.85rem;color:var(--muted);">Medium belønning</div><button class="btn btn-amber btn-sm" onclick="window.print()">🖨️ Skriv ut</button></div>
+    <div class="qr-card"><div class="amount-label" style="color:#534AB7;">+100 🪙</div><div class="qr-wrap" id="qr-100"></div><div style="font-size:.85rem;color:var(--muted);">Stor belønning</div><button class="btn btn-purple btn-sm" onclick="window.print()">🖨️ Skriv ut</button></div>
   </div>
   <div class="card">
     <div class="card-title">✏️ Egendefinert belønning</div>
@@ -319,7 +493,45 @@
   </div>
 </div>
 
+<!-- ===== LÆRERE (admin) ===== -->
+<div class="page" id="page-laerere">
+  <div class="page-title">⚙️ Lærerprofilene</div>
+  <div class="page-subtitle">Administrer lærerprofiler – kun tilgjengelig for administrator</div>
+  <div class="admin-only">🔐 Denne siden er kun synlig for administrator-kontoen.</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">➕ Opprett ny lærerprofil</div>
+      <div class="form-row"><label>Navn</label><input type="text" id="new-teacher-name" placeholder="f.eks. Kari Nordmann"></div>
+      <div class="form-row"><label>PIN-kode (4 siffer)</label><input type="text" id="new-teacher-pin" placeholder="1234" maxlength="4" pattern="\d{4}"></div>
+      <div class="form-row"><label>Klasse (valgfritt – tomt = ser alle)</label><input type="text" id="new-teacher-class" placeholder="f.eks. 2A"></div>
+      <div class="form-row"><label>Rolle</label>
+        <select id="new-teacher-role">
+          <option value="teacher">Lærer (ser kun sin klasse)</option>
+          <option value="admin">Administrator (ser alle klasser)</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Farge</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="teacher-color-picker">
+          <div class="color-swatch selected" data-color="#1D9E75" style="background:#1D9E75;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#534AB7" style="background:#534AB7;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#854F0B" style="background:#854F0B;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#D4537E" style="background:#D4537E;" onclick="selectTeacherColor(this)"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="createTeacher()">Opprett lærer</button>
+      <div id="teacher-create-alert" style="margin-top:1rem;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">👩‍🏫 Eksisterende profiler</div>
+      <div id="teacher-list"><p style="font-size:.85rem;color:var(--muted);">Laster…</p></div>
+    </div>
+  </div>
+</div>
+
 </main>
+</div><!-- /#app -->
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-saldo">
@@ -327,95 +539,290 @@
     <div class="modal-title" id="modal-saldo-title">Juster saldo</div>
     <div class="form-row"><label>Beløp (mynter)</label><input type="number" id="modal-saldo-amount" value="10" min="0"></div>
     <div id="modal-saldo-info" style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-saldo')">Avbryt</button>
-      <button class="btn btn-primary" onclick="confirmSaldoAction()">Bekreft</button>
-    </div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-saldo')">Avbryt</button><button class="btn btn-primary" onclick="confirmSaldoAction()">Bekreft</button></div>
   </div>
 </div>
-
 <div class="modal-overlay" id="modal-delete">
   <div class="modal">
     <div class="modal-title">⚠️ Slett elev?</div>
     <p id="modal-delete-text" style="color:var(--muted);margin-bottom:1rem;"></p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-delete')">Avbryt</button>
-      <button class="btn btn-coral" onclick="confirmDelete()">Slett</button>
-    </div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-delete')">Avbryt</button><button class="btn btn-coral" onclick="confirmDelete()">Slett</button></div>
   </div>
 </div>
-
 <div class="modal-overlay" id="modal-bulk">
   <div class="modal">
     <div class="modal-title" id="modal-bulk-title">Masseoppdater saldo</div>
-    <div class="form-row"><label>Velg klasse (tomt = alle)</label>
-      <select id="bulk-class"><option value="">Alle klasser</option><option>1A</option><option>1B</option><option>2A</option><option>2B</option><option>3A</option><option>3B</option><option>4A</option><option>4B</option></select>
-    </div>
+    <div class="form-row"><label>Velg klasse (tomt = alle)</label><select id="bulk-class"><option value="">Alle klasser</option></select></div>
     <div class="form-row" id="bulk-amount-row"><label>Beløp (mynter)</label><input type="number" id="bulk-amount" value="50" min="0"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-bulk')">Avbryt</button>
-      <button class="btn btn-primary" onclick="confirmBulkAction()">Bekreft</button>
-    </div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-bulk')">Avbryt</button><button class="btn btn-primary" onclick="confirmBulkAction()">Bekreft</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-delete-teacher">
+  <div class="modal">
+    <div class="modal-title">⚠️ Slett lærerprofil?</div>
+    <p id="modal-delete-teacher-text" style="color:var(--muted);margin-bottom:1rem;"></p>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-delete-teacher')">Avbryt</button><button class="btn btn-coral" onclick="confirmDeleteTeacher()">Slett</button></div>
   </div>
 </div>
 
 <script>
-// ── Lokale state-variabler (fylles av Firebase-lyttere) ────────────────────
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
 window._students  = [];
 window._groceries = [];
+window._groups    = [];
+window._teachers  = [];
+window._currentTeacher = null;
+
 let currentAction = null, currentStudentId = null, bulkAction = null;
+let currentDeleteTeacherId = null, currentEditGroupKey = null;
 let selectedPrintItems = new Set();
 let searchFilter = '', classFilter = '';
+let csvParsed = [];
+let selectedGroupColor = '#1D9E75';
+let selectedTeacherColor = '#1D9E75';
 
-// ── Hjelpere for Firebase ──────────────────────────────────────────────────
-function db()  { return window._db; }
 function fbRef(path) { return window._ref(window._db, path); }
-function ready() { return !!window._fbReady; }
+function ready()     { return !!window._fbReady; }
 
-// ── Navigation ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// LOGIN / TEACHER PROFILES
+// ══════════════════════════════════════════════════════════
+let loginPin = '', loginTarget = null;
+
+// Load teacher profiles for login screen
+function loadProfiles() {
+  if (!ready()) { setTimeout(loadProfiles, 500); return; }
+  window._onValue(fbRef('teachers'), snap => {
+    window._teachers = snap.val()
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+      : [];
+    renderLoginProfiles();
+    if (document.getElementById('page-laerere').classList.contains('active')) renderTeacherList();
+    // Seed default admin if no teachers exist
+    if (!window._teachers.length) seedDefaultAdmin();
+  });
+}
+
+function seedDefaultAdmin() {
+  window._set(window._push(fbRef('teachers')), {
+    name: 'Administrator', pin: '0000', role: 'admin', color: '#085041', class: ''
+  });
+}
+
+function renderLoginProfiles() {
+  const el = document.getElementById('profile-list');
+  if (!window._teachers.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;font-size:.85rem;">Ingen profiler ennå – første gangs PIN er 0000</div>';
+    return;
+  }
+  el.innerHTML = window._teachers.map(t => `
+    <button class="profile-btn" onclick="selectProfile('${t.fbKey}')">
+      <div class="profile-avatar" style="background:${t.color}22;color:${t.color};">${t.name[0].toUpperCase()}</div>
+      <div>
+        <div class="profile-name">${t.name}</div>
+        <div class="profile-role">${t.role === 'admin' ? '⚙️ Administrator' : `👩‍🏫 Lærer${t.class ? ' – klasse ' + t.class : ''}`}</div>
+      </div>
+    </button>`).join('');
+}
+
+function selectProfile(fbKey) {
+  loginTarget = window._teachers.find(t => t.fbKey === fbKey);
+  loginPin = '';
+  document.getElementById('pin-for-name').textContent = 'PIN for ' + loginTarget.name;
+  document.getElementById('login-error').textContent = '';
+  updateLoginDots();
+  document.getElementById('profile-list').style.display = 'none';
+  document.getElementById('pin-section').style.display = 'block';
+}
+
+function backToProfiles() {
+  loginPin = ''; loginTarget = null;
+  document.getElementById('pin-section').style.display = 'none';
+  document.getElementById('profile-list').style.display = 'flex';
+  document.getElementById('profile-list').style.flexDirection = 'column';
+}
+
+function pinKey(val) {
+  if (val === 'DEL') loginPin = loginPin.slice(0,-1);
+  else if (loginPin.length < 4) loginPin += val;
+  updateLoginDots();
+  document.getElementById('login-error').textContent = '';
+  if (loginPin.length === 4) setTimeout(tryTeacherLogin, 150);
+}
+
+function updateLoginDots() {
+  ['pc-0','pc-1','pc-2','pc-3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.textContent = i < loginPin.length ? '●' : '·';
+    el.classList.toggle('filled', i < loginPin.length);
+  });
+}
+
+function tryTeacherLogin() {
+  if (loginPin === loginTarget.pin) {
+    window._currentTeacher = loginTarget;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    // Set header
+    document.getElementById('header-name').textContent = loginTarget.name;
+    const av = document.getElementById('header-avatar');
+    av.textContent = loginTarget.name[0].toUpperCase();
+    av.style.background = loginTarget.color + '33';
+    av.style.color = loginTarget.color;
+    // Show admin nav if admin
+    if (loginTarget.role === 'admin') {
+      document.getElementById('nav-laerere').style.display = '';
+    }
+    // Update subtitle
+    const sub = document.getElementById('elever-subtitle');
+    sub.textContent = loginTarget.class
+      ? `Viser klasse ${loginTarget.class}`
+      : 'Alle klasser';
+    // Populate class filter with teacher's class pre-selected
+    if (loginTarget.class && loginTarget.role !== 'admin') {
+      classFilter = loginTarget.class;
+    }
+    window._startListeners();
+    showPage('elever');
+  } else {
+    document.getElementById('login-error').textContent = '❌ Feil PIN – prøv igjen';
+    loginPin = ''; updateLoginDots();
+  }
+}
+
+function doLogout() {
+  window._currentTeacher = null;
+  searchFilter = ''; classFilter = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pin-section').style.display = 'none';
+  document.getElementById('profile-list').style.display = 'flex';
+  document.getElementById('profile-list').style.flexDirection = 'column';
+  document.getElementById('nav-laerere').style.display = 'none';
+  loginPin = ''; loginTarget = null;
+}
+
+// ── Teacher CRUD (admin only) ──────────────────────────────────────────────
+function selectTeacherColor(el) {
+  document.querySelectorAll('#teacher-color-picker .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTeacherColor = el.dataset.color;
+}
+
+async function createTeacher() {
+  const name  = document.getElementById('new-teacher-name').value.trim();
+  const pin   = document.getElementById('new-teacher-pin').value.trim();
+  const cls   = document.getElementById('new-teacher-class').value.trim();
+  const role  = document.getElementById('new-teacher-role').value;
+  const alertEl = document.getElementById('teacher-create-alert');
+  if (!name || !pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn navn og en 4-sifret PIN.</div>'; return;
+  }
+  await window._set(window._push(fbRef('teachers')), { name, pin, role, class: cls, color: selectedTeacherColor });
+  document.getElementById('new-teacher-name').value = '';
+  document.getElementById('new-teacher-pin').value  = '';
+  document.getElementById('new-teacher-class').value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${name} er opprettet!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function renderTeacherList() {
+  const el = document.getElementById('teacher-list');
+  if (!el) return;
+  el.innerHTML = window._teachers.map(t => `
+    <div class="teacher-card">
+      <div class="teacher-card-avatar" style="background:${t.color}22;color:${t.color};">${t.name[0].toUpperCase()}</div>
+      <div class="teacher-card-info">
+        <div class="teacher-card-name">${t.name}</div>
+        <div class="teacher-card-meta">${t.role === 'admin' ? '⚙️ Admin' : '👩‍🏫 Lærer'}${t.class ? ' · klasse ' + t.class : ' · alle klasser'} · PIN: ${t.pin}</div>
+      </div>
+      ${t.fbKey !== window._currentTeacher?.fbKey ? `<button class="btn btn-coral btn-sm" onclick="openDeleteTeacherModal('${t.fbKey}','${t.name}')">🗑️</button>` : '<span style="font-size:.75rem;color:var(--muted);">(deg)</span>'}
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;">Ingen lærere ennå.</p>';
+}
+
+function openDeleteTeacherModal(fbKey, name) {
+  currentDeleteTeacherId = fbKey;
+  document.getElementById('modal-delete-teacher-text').textContent = `Slett lærerprofilen til ${name}?`;
+  document.getElementById('modal-delete-teacher').classList.add('open');
+}
+async function confirmDeleteTeacher() {
+  await window._remove(fbRef('teachers/' + currentDeleteTeacherId));
+  closeModal('modal-delete-teacher');
+}
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-' + page).classList.add('active');
   if (page === 'qrkoder') generateRewardQRCodes();
+  if (page === 'grupper') renderGroupsPage();
+  if (page === 'laerere') renderTeacherList();
 }
 
-// ── Students ───────────────────────────────────────────────────────────────
+function showElevTab(tab, btn) {
+  ['manuell','csv'].forEach(t => {
+    document.getElementById('elev-tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════
+// STUDENTS
+// ══════════════════════════════════════════════════════════
 function generatePIN() { return String(Math.floor(1000 + Math.random() * 9000)); }
 
 async function createStudent() {
-  if (!ready()) { alert('Firebase ikke klar – sjekk konfig!'); return; }
+  if (!ready()) { alert('Firebase ikke klar'); return; }
   const fn  = document.getElementById('new-firstname').value.trim();
   const ln  = document.getElementById('new-lastname').value.trim();
-  const cls = document.getElementById('new-class').value;
+  const cls = document.getElementById('new-class').value.trim() || (window._currentTeacher?.class || '1A');
   const bal = parseInt(document.getElementById('new-balance').value) || 0;
   const alertEl = document.getElementById('create-alert');
   if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
   const pin = generatePIN();
-  const newRef = window._push(fbRef('students'));
-  await window._set(newRef, { firstname:fn, lastname:ln, class:cls, pin, balance:bal, created:Date.now() });
+  await window._set(window._push(fbRef('students')), { firstname:fn, lastname:ln, class:cls, pin, balance:bal, created:Date.now() });
   document.getElementById('new-firstname').value = '';
-  document.getElementById('new-lastname').value = '';
-  document.getElementById('new-balance').value = '50';
+  document.getElementById('new-lastname').value  = '';
+  document.getElementById('new-balance').value   = '50';
   alertEl.innerHTML = `<div class="alert alert-success">✅ ${fn} ${ln} opprettet! PIN: <strong>${pin}</strong></div>`;
 }
 
 function renderStudentTable() {
-  const s = window._students;
   const tbody = document.getElementById('student-table-body');
   if (!tbody) return;
-  const filtered = s.filter(x => {
-    const name = (x.firstname+' '+x.lastname).toLowerCase();
+  // Update filter dropdown
+  const classes = [...new Set(window._students.map(s => s.class))].sort();
+  const sel = document.getElementById('filter-class-select');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Alle klasser</option>' + classes.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  }
+  const bulkSel = document.getElementById('bulk-class');
+  if (bulkSel) bulkSel.innerHTML = '<option value="">Alle klasser</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const filtered = window._students.filter(x => {
+    const name = (x.firstname + ' ' + x.lastname).toLowerCase();
     return name.includes(searchFilter.toLowerCase()) && (!classFilter || x.class === classFilter);
   });
-  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever funnet</td></tr>'; return; }
-  tbody.innerHTML = filtered.map(s => `
-    <tr>
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever funnet</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(s => {
+    const grp = s.groupKey ? window._groups.find(g => g.fbKey === s.groupKey) : null;
+    const grpBadge = grp
+      ? `<span class="group-badge" style="color:${grp.color};border-color:${grp.color};background:${grp.color}18;">${grp.emoji||'👥'} ${grp.name}</span>`
+      : `<span style="color:var(--muted);font-size:.8rem;">–</span>`;
+    return `<tr>
       <td><div style="display:flex;align-items:center;gap:8px;">
         <div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark);">${s.firstname[0]}${s.lastname[0]}</div>
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
       <td><span class="class-badge">${s.class}</span></td>
+      <td>${grpBadge}</td>
       <td><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
       <td><span class="balance-badge">🪙 ${s.balance}</span></td>
       <td><div class="balance-actions">
@@ -424,21 +831,206 @@ function renderStudentTable() {
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
         <button class="btn btn-coral btn-sm" onclick="openDeleteModal('${s.fbKey}','${s.firstname} ${s.lastname}')">🗑️</button>
       </div></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function filterStudents(v) { searchFilter = v; renderStudentTable(); }
-function filterClass(v) { classFilter = v; renderStudentTable(); }
+function filterClass(v)    { classFilter  = v; renderStudentTable(); }
 
 function updateStats() {
-  const s = window._students;
   const el1 = document.getElementById('stat-total');
   const el2 = document.getElementById('stat-total-balance');
-  if (el1) el1.textContent = s.length;
-  if (el2) el2.textContent = s.reduce((a,x) => a+x.balance, 0);
+  if (el1) el1.textContent = window._students.length;
+  if (el2) el2.textContent = window._students.reduce((a,x) => a + x.balance, 0);
 }
 
-// ── Saldo ──────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// CSV IMPORT
+// ══════════════════════════════════════════════════════════
+const dropZone = document.getElementById('csv-drop-zone');
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleCSVFile(e.dataTransfer.files[0]); });
+
+function handleCSVFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return;
+  const first = lines[0].toLowerCase();
+  const hasHeader = first.includes('fornavn') || first.includes('navn') || first.includes('firstname');
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+  csvParsed = dataLines.map(line => {
+    const parts = line.split(/[,;]/).map(p => p.trim().replace(/^"|"$/g, ''));
+    return { firstname: parts[0]||'', lastname: parts[1]||'', class: parts[2] || window._currentTeacher?.class || '1A' };
+  }).filter(r => r.firstname || r.lastname);
+
+  document.getElementById('csv-preview-body').innerHTML = csvParsed.map(r =>
+    `<tr><td style="padding:6px 8px;">${r.firstname}</td><td style="padding:6px 8px;">${r.lastname}</td><td style="padding:6px 8px;">${r.class}</td><td style="padding:6px 8px;color:var(--teal);">✓</td></tr>`
+  ).join('');
+  document.getElementById('csv-preview-title').textContent = `${csvParsed.length} elever funnet`;
+  document.getElementById('csv-preview-area').style.display = 'block';
+  document.getElementById('csv-import-alert').innerHTML = '';
+}
+
+async function importCSV() {
+  if (!ready() || !csvParsed.length) return;
+  const bal = parseInt(document.getElementById('csv-default-balance').value) || 50;
+  const alertEl = document.getElementById('csv-import-alert');
+  alertEl.innerHTML = '<div class="alert alert-success">⏳ Importerer…</div>';
+  let count = 0;
+  for (const r of csvParsed) {
+    if (!r.firstname && !r.lastname) continue;
+    await window._set(window._push(fbRef('students')), { firstname:r.firstname, lastname:r.lastname, class:r.class, pin:generatePIN(), balance:bal, created:Date.now() });
+    count++;
+  }
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${count} elever importert!</div>`;
+  csvParsed = [];
+  setTimeout(resetCSV, 2500);
+}
+
+function resetCSV() {
+  csvParsed = [];
+  document.getElementById('csv-preview-area').style.display = 'none';
+  document.getElementById('csv-preview-body').innerHTML = '';
+  document.getElementById('csv-import-alert').innerHTML = '';
+  document.getElementById('csv-file-input').value = '';
+}
+
+// ══════════════════════════════════════════════════════════
+// GROUPS
+// ══════════════════════════════════════════════════════════
+function selectColor(el) {
+  document.querySelectorAll('#color-picker .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedGroupColor = el.dataset.color;
+}
+
+async function submitGroup() {
+  if (!ready()) return;
+  const name  = document.getElementById('new-group-name').value.trim();
+  const emoji = document.getElementById('new-group-emoji').value || '👥';
+  const alertEl = document.getElementById('group-create-alert');
+  if (!name) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et gruppenavn.</div>'; return; }
+
+  if (currentEditGroupKey) {
+    await window._update(fbRef('groups/' + currentEditGroupKey), { name, emoji, color: selectedGroupColor });
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Gruppe oppdatert!</div>';
+    cancelEditGroup();
+  } else {
+    await window._set(window._push(fbRef('groups')), { name, emoji, color: selectedGroupColor, created: Date.now() });
+    alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» opprettet!</div>`;
+    document.getElementById('new-group-name').value  = '';
+    document.getElementById('new-group-emoji').value = '';
+  }
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function openEditGroup(fbKey) {
+  const g = window._groups.find(x => x.fbKey === fbKey);
+  if (!g) return;
+  currentEditGroupKey = fbKey;
+  document.getElementById('new-group-name').value  = g.name;
+  document.getElementById('new-group-emoji').value = g.emoji || '';
+  document.querySelectorAll('#color-picker .color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === g.color));
+  selectedGroupColor = g.color;
+  document.getElementById('group-form-title').textContent = '✏️ Rediger gruppe';
+  document.getElementById('group-submit-btn').textContent = 'Lagre endringer';
+  document.getElementById('group-cancel-btn').style.display = '';
+  document.getElementById('new-group-name').focus();
+}
+
+function cancelEditGroup() {
+  currentEditGroupKey = null;
+  document.getElementById('new-group-name').value  = '';
+  document.getElementById('new-group-emoji').value = '';
+  document.getElementById('group-form-title').textContent = '➕ Opprett ny gruppe';
+  document.getElementById('group-submit-btn').textContent = 'Opprett gruppe';
+  document.getElementById('group-cancel-btn').style.display = 'none';
+}
+
+async function deleteGroup(fbKey, name) {
+  if (!confirm(`Slett gruppen «${name}»? Elever beholdes men mister gruppemedlemskapet.`)) return;
+  const updates = {};
+  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students/'+s.fbKey+'/groupKey'] = null; });
+  if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
+  await window._remove(fbRef('groups/' + fbKey));
+}
+
+function renderGroupsPage() {
+  renderGroupsList();
+  renderAssignSelects();
+}
+
+function renderGroupsList() {
+  const el = document.getElementById('groups-list');
+  if (!el) return;
+  const groups = window._groups;
+  if (!groups.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:2.5rem;color:var(--muted);"><div style="font-size:2.5rem;margin-bottom:.75rem;">👥</div><div style="font-weight:700;">Ingen grupper ennå</div><div style="font-size:.85rem;margin-top:.25rem;">Opprett din første gruppe ovenfor!</div></div>`;
+    return;
+  }
+  el.innerHTML = groups.map(g => {
+    const members = window._students.filter(s => s.groupKey === g.fbKey);
+    const total   = members.reduce((a,s) => a + s.balance, 0);
+    return `<div class="group-card">
+      <div class="group-card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:${g.color}22;border:2px solid ${g.color};display:flex;align-items:center;justify-content:center;font-size:1.5rem;">${g.emoji||'👥'}</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:${g.color};">${g.name}</div>
+            <div style="font-size:.8rem;color:var(--muted);font-weight:700;">${members.length} elev${members.length!==1?'er':''} · 🪙 ${total} totalt</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="openEditGroup('${g.fbKey}')">✏️ Rediger</button>
+          <button class="btn btn-coral btn-sm" onclick="deleteGroup('${g.fbKey}','${g.name.replace(/'/g,"\\'")}')">🗑️</button>
+        </div>
+      </div>
+      <div class="group-members">
+        ${members.length ? members.map(s => `
+          <div style="display:flex;align-items:center;gap:6px;background:${g.color}12;border:1px solid ${g.color}44;border-radius:20px;padding:4px 10px;">
+            <div style="width:22px;height:22px;background:${g.color}33;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:${g.color};">${s.firstname[0]}${s.lastname[0]}</div>
+            <span style="font-size:.82rem;font-weight:700;">${s.firstname} ${s.lastname}</span>
+            <span style="font-size:.75rem;color:var(--muted);">🪙${s.balance}</span>
+            <button onclick="removeFromGroup('${s.fbKey}')" style="background:none;border:none;cursor:pointer;color:${g.color};font-size:.9rem;padding:0 2px;line-height:1;" title="Fjern">✕</button>
+          </div>`).join('')
+        : `<span style="font-size:.82rem;color:var(--muted);font-style:italic;">Ingen elever ennå</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAssignSelects() {
+  const ss = document.getElementById('assign-student-select');
+  const gs = document.getElementById('assign-group-select');
+  if (!ss || !gs) return;
+  ss.innerHTML = '<option value="">– Velg elev –</option>' + window._students.map(s => `<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('');
+  gs.innerHTML = '<option value="">– Velg gruppe –</option>' + window._groups.map(g => `<option value="${g.fbKey}">${g.emoji||'👥'} ${g.name}</option>`).join('');
+}
+
+async function assignStudentToGroup() {
+  const sk = document.getElementById('assign-student-select').value;
+  const gk = document.getElementById('assign-group-select').value;
+  if (!sk || !gk) { alert('Velg både elev og gruppe.'); return; }
+  await window._update(fbRef('students/' + sk), { groupKey: gk });
+}
+async function removeStudentFromGroup() {
+  const sk = document.getElementById('assign-student-select').value;
+  if (!sk) { alert('Velg en elev først.'); return; }
+  await window._update(fbRef('students/' + sk), { groupKey: null });
+}
+async function removeFromGroup(sk) { await window._update(fbRef('students/' + sk), { groupKey: null }); }
+
+// ══════════════════════════════════════════════════════════
+// SALDO
+// ══════════════════════════════════════════════════════════
 function renderSaldoTable() {
   const tbody = document.getElementById('saldo-table-body');
   if (!tbody) return;
@@ -449,8 +1041,8 @@ function renderSaldoTable() {
       <td><span class="balance-badge">🪙 ${s.balance}</span></td>
       <td><div class="balance-actions">
         <button class="btn btn-primary btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕ Legg til</button>
-        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖ Trekk fra</button>
-        <button class="btn btn-amber btn-sm" onclick="openSaldoModal('${s.fbKey}','reset')">🔄 Nullstill</button>
+        <button class="btn btn-ghost btn-sm"   onclick="openSaldoModal('${s.fbKey}','subtract')">➖ Trekk fra</button>
+        <button class="btn btn-amber btn-sm"   onclick="openSaldoModal('${s.fbKey}','reset')">🔄 Nullstill</button>
       </div></td>
     </tr>`).join('');
 }
@@ -460,77 +1052,64 @@ function openSaldoModal(fbKey, action) {
   const s = window._students.find(x => x.fbKey === fbKey);
   const labels = { add:'➕ Legg til mynter', subtract:'➖ Trekk fra mynter', set:'✏️ Sett saldo', reset:'🔄 Nullstill saldo' };
   document.getElementById('modal-saldo-title').textContent = labels[action] + ` – ${s.firstname}`;
-  document.getElementById('modal-saldo-info').textContent = `Nåværende saldo: 🪙 ${s.balance}`;
+  document.getElementById('modal-saldo-info').textContent  = `Nåværende saldo: 🪙 ${s.balance}`;
   document.getElementById('modal-saldo-amount').style.display = action === 'reset' ? 'none' : 'block';
   document.getElementById('modal-saldo').classList.add('open');
 }
-
 async function confirmSaldoAction() {
   const s = window._students.find(x => x.fbKey === currentStudentId);
   const amount = parseInt(document.getElementById('modal-saldo-amount').value) || 0;
   let newBal = s.balance;
-  if (currentAction === 'add')      newBal = s.balance + amount;
+  if (currentAction === 'add')           newBal = s.balance + amount;
   else if (currentAction === 'subtract') newBal = Math.max(0, s.balance - amount);
   else if (currentAction === 'set')      newBal = Math.max(0, amount);
   else if (currentAction === 'reset')    newBal = 0;
   await window._update(fbRef('students/' + currentStudentId), { balance: newBal });
   closeModal('modal-saldo');
 }
-
 function openBulkModal(action) {
   bulkAction = action;
-  const labels = { add:'➕ Legg til mynter – alle', reset:'🔄 Nullstill saldo – alle' };
-  document.getElementById('modal-bulk-title').textContent = labels[action];
+  document.getElementById('modal-bulk-title').textContent = action === 'add' ? '➕ Legg til mynter – alle' : '🔄 Nullstill saldo – alle';
   document.getElementById('bulk-amount-row').style.display = action === 'reset' ? 'none' : 'block';
   document.getElementById('modal-bulk').classList.add('open');
 }
-
 async function confirmBulkAction() {
   const cls = document.getElementById('bulk-class').value;
   const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
   const updates = {};
   window._students.forEach(s => {
-    if (!cls || s.class === cls) {
-      const newBal = bulkAction === 'reset' ? 0 : s.balance + amount;
-      updates['students/' + s.fbKey + '/balance'] = Math.max(0, newBal);
-    }
+    if (!cls || s.class === cls) updates['students/'+s.fbKey+'/balance'] = Math.max(0, bulkAction === 'reset' ? 0 : s.balance + amount);
   });
   await window._update(fbRef('/'), updates);
   closeModal('modal-bulk');
 }
-
-// ── Delete ─────────────────────────────────────────────────────────────────
 function openDeleteModal(fbKey, name) {
   currentStudentId = fbKey;
   document.getElementById('modal-delete-text').textContent = `Er du sikker på at du vil slette ${name}?`;
   document.getElementById('modal-delete').classList.add('open');
 }
-async function confirmDelete() {
-  await window._remove(fbRef('students/' + currentStudentId));
-  closeModal('modal-delete');
-}
+async function confirmDelete() { await window._remove(fbRef('students/' + currentStudentId)); closeModal('modal-delete'); }
 
-// ── Groceries ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// GROCERIES
+// ══════════════════════════════════════════════════════════
 async function addGroceryItem() {
-  if (!ready()) { alert('Firebase ikke klar'); return; }
-  const emoji    = document.getElementById('item-emoji').value || '📦';
-  const name     = document.getElementById('item-name').value.trim();
-  const price    = parseInt(document.getElementById('item-price').value) || 1;
-  const category = document.getElementById('item-category').value;
+  if (!ready()) return;
+  const emoji = document.getElementById('item-emoji').value || '📦';
+  const name  = document.getElementById('item-name').value.trim();
+  const price = parseInt(document.getElementById('item-price').value) || 1;
+  const cat   = document.getElementById('item-category').value;
   if (!name) return;
-  const newRef = window._push(fbRef('groceries'));
-  await window._set(newRef, { emoji, name, price, category });
+  await window._set(window._push(fbRef('groceries')), { emoji, name, price, category: cat });
   document.getElementById('item-emoji').value = '';
-  document.getElementById('item-name').value = '';
+  document.getElementById('item-name').value  = '';
   document.getElementById('item-price').value = '';
 }
-
 function renderGroceryList() {
   const el = document.getElementById('grocery-list');
   if (!el) return;
-  const g = window._groceries;
-  if (!g.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Ingen varer ennå. Legg til varer ovenfor.</p>'; return; }
-  el.innerHTML = g.map(x => `
+  if (!window._groceries.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Ingen varer ennå.</p>'; return; }
+  el.innerHTML = window._groceries.map(x => `
     <div class="grocery-item">
       <div class="grocery-emoji">${x.emoji}</div>
       <div class="grocery-name">${x.name}</div>
@@ -538,10 +1117,7 @@ function renderGroceryList() {
       <button class="btn btn-coral btn-sm" style="margin-top:4px;" onclick="removeGrocery('${x.fbKey}')">🗑️</button>
     </div>`).join('');
 }
-
-async function removeGrocery(fbKey) {
-  await window._remove(fbRef('groceries/' + fbKey));
-}
+async function removeGrocery(fbKey) { await window._remove(fbRef('groceries/' + fbKey)); }
 
 function renderGroceryPrintSelect() {
   const el = document.getElementById('grocery-print-select');
@@ -553,7 +1129,6 @@ function renderGroceryPrintSelect() {
       <div class="grocery-price">🪙 ${g.price}</div>
     </div>`).join('');
 }
-
 function togglePrintItem(key, el) {
   if (selectedPrintItems.has(key)) { selectedPrintItems.delete(key); el.classList.remove('selected'); }
   else { selectedPrintItems.add(key); el.classList.add('selected'); }
@@ -562,38 +1137,30 @@ function selectAllGroceries() { window._groceries.forEach(g => selectedPrintItem
 
 function generateGroceryPDF() {
   const items = selectedPrintItems.size > 0 ? window._groceries.filter(g => selectedPrintItems.has(g.fbKey)) : window._groceries;
-  const preview = document.getElementById('grocery-pdf-preview');
-  const content = document.getElementById('grocery-pdf-content');
-  preview.style.display = 'block';
-  // Quarter-A4 layout: 2 columns × 2 rows per A4 page (each cell ~½ page width, ¼ page height)
-  content.innerHTML = `
-    <style>
-      @media print {
-        .grocery-pdf-grid { page-break-inside: avoid; }
-        .grocery-pdf-item { page-break-inside: avoid; }
-      }
-    </style>
-    <div class="grocery-pdf-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-      ${items.map((g,idx) => \`
+  document.getElementById('grocery-pdf-preview').style.display = 'block';
+  document.getElementById('grocery-pdf-content').innerHTML = `
+    <style>@media print{@page{size:A4 portrait;margin:8mm;}.grocery-pdf-item{page-break-inside:avoid;}}</style>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+      ${items.map(g => `
         <div class="grocery-pdf-item" style="border:2px solid #1D9E75;margin:-1px 0 0 -1px;padding:20px;text-align:center;background:white;min-height:185px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-          <div style="font-size:3.2rem;line-height:1;">\${g.emoji}</div>
-          <div style="font-weight:800;font-size:1.15rem;">\${g.name}</div>
-          <div style="background:#E1F5EE;color:#085041;font-weight:800;padding:6px 16px;border-radius:8px;font-size:1.05rem;">🪙 \${g.price}</div>
-          <div id="qr-grocery-\${g.fbKey}" style="display:flex;justify-content:center;"></div>
-          <div style="font-size:.6rem;color:#5a7a5a;">\${g.category}</div>
-        </div>\`).join('')}
+          <div style="font-size:3.2rem;line-height:1;">${g.emoji}</div>
+          <div style="font-weight:800;font-size:1.15rem;">${g.name}</div>
+          <div style="background:#E1F5EE;color:#085041;font-weight:800;padding:6px 16px;border-radius:8px;font-size:1.05rem;">🪙 ${g.price}</div>
+          <div id="qr-grocery-${g.fbKey}" style="display:flex;justify-content:center;"></div>
+          <div style="font-size:.6rem;color:#5a7a5a;">${g.category}</div>
+        </div>`).join('')}
     </div>`;
   setTimeout(() => {
     items.forEach(g => {
       const el = document.getElementById('qr-grocery-' + g.fbKey);
-      if (el && !el.children.length) {
-        try { new QRCode(el, { text: JSON.stringify({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }), width:80, height:80, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
-      }
+      if (el && !el.children.length) try { new QRCode(el, { text:JSON.stringify({type:'grocery',fbKey:g.fbKey,name:g.name,price:g.price}), width:80, height:80, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
     });
   }, 100);
 }
 
-// ── Handleliste ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// HANDLELISTE
+// ══════════════════════════════════════════════════════════
 function renderHandlelisteSelect() {
   const el = document.getElementById('handleliste-select');
   if (!el) return;
@@ -603,110 +1170,94 @@ function renderHandlelisteSelect() {
       <div class="grocery-name">${g.name}</div>
     </div>`).join('');
 }
-
 function generateShoppingList() {
-  const selected = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(el => el.dataset.key);
+  const sel = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
   const count = parseInt(document.getElementById('list-count').value) || 5;
-  let items = selected.length ? window._groceries.filter(g => selected.includes(g.fbKey)).slice(0, count) : getRandom(window._groceries, count);
+  const items = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)).slice(0, count) : getRandom(window._groceries, count);
   renderListPreview(items);
 }
-function generateRandomList() { renderListPreview(getRandom(window._groceries, parseInt(document.getElementById('list-count').value) || 5)); }
-function getRandom(arr, n) { return [...arr].sort(() => Math.random()-.5).slice(0, Math.min(n, arr.length)); }
+function generateRandomList() { renderListPreview(getRandom(window._groceries, parseInt(document.getElementById('list-count').value)||5)); }
+function getRandom(arr, n)    { return [...arr].sort(() => Math.random()-.5).slice(0, Math.min(n, arr.length)); }
 
 function shoppingListHTML(items, studentName) {
-  return `
-    <div style="width:48%;padding:18px;border:2px solid #c8dfc8;border-radius:10px;background:white;display:inline-flex;flex-direction:column;vertical-align:top;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:3px solid #1D9E75;">
-        <div>
-          <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#085041;">🛒 Myntland</div>
-          ${studentName ? `<div style="font-size:.82rem;color:#5a7a5a;font-weight:700;">Elev: ${studentName}</div>` : '<div style="font-size:.78rem;color:#5a7a5a;">Navn: ___________________</div>'}
-          <div style="font-size:.72rem;color:#5a7a5a;">Dato: ___________</div>
-        </div>
-        <div style="background:#E1F5EE;border-radius:8px;padding:8px 12px;text-align:center;flex-shrink:0;">
-          <div style="font-size:.65rem;color:#5a7a5a;">Total:</div>
-          <div style="font-size:1.2rem;font-weight:800;color:#085041;">🪙 ______</div>
-        </div>
+  return `<div style="width:48%;padding:18px;border:2px solid #c8dfc8;border-radius:10px;background:white;display:inline-flex;flex-direction:column;vertical-align:top;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:3px solid #1D9E75;">
+      <div>
+        <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#085041;">🛒 Myntland</div>
+        ${studentName ? `<div style="font-size:.82rem;color:#5a7a5a;font-weight:700;">Elev: ${studentName}</div>` : '<div style="font-size:.78rem;color:#5a7a5a;">Navn: ___________________</div>'}
+        <div style="font-size:.72rem;color:#5a7a5a;">Dato: ___________</div>
       </div>
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr style="background:#E1F5EE;">
-          <th style="padding:6px 8px;text-align:left;font-size:.72rem;color:#085041;">#</th>
-          <th style="padding:6px 8px;text-align:left;font-size:.72rem;color:#085041;">Vare</th>
-          <th style="padding:6px 8px;text-align:center;font-size:.72rem;color:#085041;">Bilde</th>
-          <th style="padding:6px 8px;text-align:right;font-size:.72rem;color:#085041;">Pris</th>
-        </tr></thead>
-        <tbody>${items.map((g,i) => `
-          <tr style="border-bottom:1px solid #E1F5EE;">
-            <td style="padding:8px;font-size:.8rem;color:#5a7a5a;">${i+1}</td>
-            <td style="padding:8px;font-weight:700;font-size:.85rem;">${g.name}</td>
-            <td style="padding:8px;text-align:center;font-size:1.5rem;">${g.emoji}</td>
-            <td style="padding:8px;text-align:right;"><div style="border-bottom:2px solid #1D9E75;width:60px;margin-left:auto;">🪙 ____</div></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-      <div style="margin-top:12px;background:#FAEEDA;border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-weight:800;font-size:.85rem;color:#854F0B;">Sum totalt:</div>
-        <div style="font-size:1.05rem;font-weight:800;color:#085041;border-bottom:2px solid #EF9F27;">🪙 ________________</div>
+      <div style="background:#E1F5EE;border-radius:8px;padding:8px 12px;text-align:center;flex-shrink:0;">
+        <div style="font-size:.65rem;color:#5a7a5a;">Total:</div>
+        <div style="font-size:1.2rem;font-weight:800;color:#085041;">🪙 ______</div>
       </div>
-    </div>`;
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:#E1F5EE;">
+        <th style="padding:6px 8px;text-align:left;font-size:.72rem;color:#085041;">#</th>
+        <th style="padding:6px 8px;text-align:left;font-size:.72rem;color:#085041;">Vare</th>
+        <th style="padding:6px 8px;text-align:center;font-size:.72rem;color:#085041;">Bilde</th>
+        <th style="padding:6px 8px;text-align:right;font-size:.72rem;color:#085041;">Pris</th>
+      </tr></thead>
+      <tbody>${items.map((g,i) => `
+        <tr style="border-bottom:1px solid #E1F5EE;">
+          <td style="padding:8px;font-size:.8rem;color:#5a7a5a;">${i+1}</td>
+          <td style="padding:8px;font-weight:700;font-size:.85rem;">${g.name}</td>
+          <td style="padding:8px;text-align:center;font-size:1.5rem;">${g.emoji}</td>
+          <td style="padding:8px;text-align:right;"><div style="border-bottom:2px solid #1D9E75;width:60px;margin-left:auto;">🪙 ____</div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="margin-top:12px;background:#FAEEDA;border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-weight:800;font-size:.85rem;color:#854F0B;">Sum totalt:</div>
+      <div style="font-size:1.05rem;font-weight:800;color:#085041;border-bottom:2px solid #EF9F27;">🪙 ________________</div>
+    </div>
+  </div>`;
 }
 
 function renderListPreview(items) {
-  const studentName = document.getElementById('list-student').value;
+  const sn = document.getElementById('list-student').value;
   document.getElementById('handleliste-preview').style.display = 'block';
-  // Two identical lists side by side, landscape A4
   document.getElementById('handleliste-content').innerHTML = `
-    <style>
-      @media print {
-        @page { size: A4 landscape; margin: 10mm; }
-        .handleliste-print-wrap { width: 100% !important; }
-      }
-    </style>
-    <div class="handleliste-print-wrap" style="width:100%;display:flex;gap:2%;align-items:flex-start;">
-      ${shoppingListHTML(items, studentName)}
-      ${shoppingListHTML(items, studentName)}
+    <style>@media print{@page{size:A4 landscape;margin:10mm;}}</style>
+    <div style="width:100%;display:flex;gap:2%;align-items:flex-start;">
+      ${shoppingListHTML(items,sn)}${shoppingListHTML(items,sn)}
     </div>
-    <p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Siden skrives ut liggende med to identiske handlelister – klippes langs midten.</p>`;
+    <p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Skrives ut liggende – klipp langs midten for to handlelister.</p>`;
 }
 
-// ── QR Rewards ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// QR REWARDS
+// ══════════════════════════════════════════════════════════
 function generateRewardQRCodes() {
   [10,50,100].forEach(amount => {
     const el = document.getElementById('qr-' + amount);
-    if (el && !el.children.length) {
-      try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount }), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
-    }
+    if (el && !el.children.length) try { new QRCode(el, { text:JSON.stringify({type:'reward',amount}), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
   });
 }
-
 function generateCustomQR() {
   const amount = parseInt(document.getElementById('custom-qr-amount').value) || 25;
-  const desc = document.getElementById('custom-qr-desc').value || `+${amount} mynter`;
-  const el = document.getElementById('qr-custom');
+  const desc   = document.getElementById('custom-qr-desc').value || `+${amount} mynter`;
+  const el     = document.getElementById('qr-custom');
   el.innerHTML = ''; el.style.display = 'block';
-  try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount, desc }), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
+  try { new QRCode(el, { text:JSON.stringify({type:'reward',amount,desc}), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
   const info = document.getElementById('custom-qr-info');
   info.style.display = 'block';
   info.innerHTML = `<div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal);">+${amount} 🪙</div><div style="font-size:.9rem;color:var(--muted);">${desc}</div>`;
 }
 
-// ── Bank card PDF ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// BANK CARD PDF
+// ══════════════════════════════════════════════════════════
 function generateCardPDF() {
   const students = window._students;
   if (!students.length) { alert('Ingen elever å skrive ut kort for.'); return; }
   const preview = document.getElementById('card-pdf-preview');
   const content = document.getElementById('card-pdf-content');
   preview.style.display = 'block';
-
-  // 8 cards per A4 sheet (4 columns × 2 rows), each card credit-card proportions
   content.innerHTML = `
-    <style>
-      @media print {
-        @page { size: A4 portrait; margin: 8mm; }
-        .card-print-grid { width: 100% !important; }
-        .card-print-item { page-break-inside: avoid; }
-      }
-    </style>
-    <div class="card-print-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+    <style>@media print{@page{size:A4 portrait;margin:8mm;}.card-print-item{page-break-inside:avoid;}}</style>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
       ${students.map(s => `
         <div class="card-print-item" style="background:linear-gradient(135deg,#085041,#1D9E75);border-radius:10px;padding:14px 12px;color:white;aspect-ratio:1.586;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;">
           <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(239,159,39,.15);"></div>
@@ -730,20 +1281,25 @@ function generateCardPDF() {
   content.scrollIntoView({ behavior: 'smooth' });
 }
 
-// ── Tabs / Modals ──────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// TABS & MODALS
+// ══════════════════════════════════════════════════════════
 function showTab(tabId, btn) {
   btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  ['butikk-rediger','butikk-skriv'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = (id===tabId)?'block':'none'; });
-  if (tabId==='butikk-skriv') renderGroceryPrintSelect();
+  ['butikk-rediger','butikk-skriv'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === tabId ? 'block' : 'none';
+  });
+  if (tabId === 'butikk-skriv') renderGroceryPrintSelect();
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
 
-// Skjul setup-banner når Firebase er ferdig
-setTimeout(() => {
-  if (window._fbReady) document.getElementById('setup-banner').style.display = 'none';
-}, 3000);
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+loadProfiles();
 </script>
 </body>
 </html>
