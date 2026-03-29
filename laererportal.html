@@ -1663,6 +1663,47 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('cli
 // ══════════════════════════════════════════════════════════
 // loadProfiles() is called by the module script via setTimeout(0)
 // after Firebase is ready. Nothing needed here.
+
+// ── Seed 25 default groceries if store is empty ────────────────────────────
+const DEFAULT_GROCERIES = [
+  { emoji:'🥛', name:'Melk',          price: 18, category:'Meieri' },
+  { emoji:'🧀', name:'Ost',           price: 35, category:'Meieri' },
+  { emoji:'🥚', name:'Egg (6 stk)',   price: 28, category:'Meieri' },
+  { emoji:'🧈', name:'Smør',          price: 24, category:'Meieri' },
+  { emoji:'🍦', name:'Rømme',         price: 22, category:'Meieri' },
+  { emoji:'🍞', name:'Brød',          price: 25, category:'Brød & Bakeri' },
+  { emoji:'🥐', name:'Rundstykke',    price:  8, category:'Brød & Bakeri' },
+  { emoji:'🧁', name:'Skolebrød',     price: 12, category:'Brød & Bakeri' },
+  { emoji:'🍎', name:'Eple',          price:  6, category:'Frukt & Grønt' },
+  { emoji:'🍌', name:'Banan',         price:  5, category:'Frukt & Grønt' },
+  { emoji:'🍊', name:'Appelsin',      price:  7, category:'Frukt & Grønt' },
+  { emoji:'🍇', name:'Druer',         price: 30, category:'Frukt & Grønt' },
+  { emoji:'🥕', name:'Gulrot',        price: 10, category:'Frukt & Grønt' },
+  { emoji:'🥦', name:'Brokkoli',      price: 20, category:'Frukt & Grønt' },
+  { emoji:'🥔', name:'Poteter (1kg)', price: 18, category:'Frukt & Grønt' },
+  { emoji:'🍗', name:'Kyllingfilet',  price: 60, category:'Kjøtt & Fisk' },
+  { emoji:'🐟', name:'Laks',          price: 75, category:'Kjøtt & Fisk' },
+  { emoji:'🌭', name:'Pølser',        price: 35, category:'Kjøtt & Fisk' },
+  { emoji:'🧃', name:'Juice',         price: 28, category:'Drikke' },
+  { emoji:'🥤', name:'Brus (0,5l)',   price: 22, category:'Drikke' },
+  { emoji:'💧', name:'Vann (0,5l)',   price: 15, category:'Drikke' },
+  { emoji:'🍫', name:'Sjokolade',     price: 20, category:'Godteri & Snacks' },
+  { emoji:'🍬', name:'Drops',         price: 12, category:'Godteri & Snacks' },
+  { emoji:'🥜', name:'Nøtter',        price: 18, category:'Godteri & Snacks' },
+  { emoji:'🧇', name:'Frokostblanding', price: 32, category:'Annet' },
+];
+
+async function seedDefaultGroceries() {
+  if (!window._db || !window._get || !window._ref) return;
+  const snap = await window._get(window._ref(window._db, 'groceries'));
+  if (snap.val()) return; // already has groceries
+  for (const g of DEFAULT_GROCERIES) {
+    await window._set(window._push(window._ref(window._db, 'groceries')), g);
+  }
+}
+
+// Run seed after a short delay so Firebase listeners are ready
+setTimeout(seedDefaultGroceries, 1500);
 </script>
 </body>
 </html>
