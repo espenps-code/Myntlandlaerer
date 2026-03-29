@@ -1216,42 +1216,74 @@ function generateGroceryPDF() {
     : window._groceries;
   if (!items.length) { alert('Ingen varer valgt.'); return; }
 
+  // A4 portrait: 2 cols × 4 rows = 8 items per page, each card ¼ of A4
   const gridHTML = `<style>
-    .g-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-    .g-item{border:2px solid #1D9E75;margin:-1px 0 0 -1px;padding:20px;text-align:center;background:white;min-height:185px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;page-break-inside:avoid}
-    .g-emoji{font-size:3.2rem;line-height:1}.g-name{font-weight:800;font-size:1.15rem}
-    .g-price{background:#E1F5EE;color:#085041;font-weight:800;padding:6px 16px;border-radius:8px;font-size:1.05rem}
-    .g-cat{font-size:.6rem;color:#5a7a5a}
+    body { margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
+    .g-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 148.5mm;
+      gap: 0;
+    }
+    .g-item {
+      border: 1px solid #1D9E75;
+      padding: 8mm;
+      text-align: center;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4mm;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+    }
+    .g-emoji { font-size: 20mm; line-height: 1; }
+    .g-name { font-weight: 800; font-size: 7mm; color: #1a2e1a; }
+    .g-price {
+      background: #E1F5EE;
+      color: #085041;
+      font-weight: 800;
+      padding: 2mm 6mm;
+      border-radius: 3mm;
+      font-size: 6mm;
+    }
+    .g-qr { display: flex; justify-content: center; }
+    .g-cat { font-size: 3mm; color: #5a7a5a; }
   </style>
-  <div class="g-grid">${items.map(g =>
-    `<div class="g-item">
-      <div class="g-emoji">${g.emoji}</div>
-      <div class="g-name">${g.name}</div>
-      <div class="g-price">🪙 ${g.price}</div>
-      <div id="qrbox-${g.fbKey}" style="display:flex;justify-content:center"></div>
-      <div class="g-cat">${g.category}</div>
-    </div>`).join('')}
+  <div class="g-grid">
+    ${items.map(g => `
+      <div class="g-item">
+        <div class="g-emoji">${g.emoji}</div>
+        <div class="g-name">${g.name}</div>
+        <div class="g-price">🪙 ${g.price}</div>
+        <div class="g-qr" id="qrbox-${g.fbKey}"></div>
+        <div class="g-cat">${g.category}</div>
+      </div>`).join('')}
   </div>`;
 
-  const qrData = items.map(g => ({ id: g.fbKey, text: JSON.stringify({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }) }));
+  const qrData = items.map(g => ({
+    id: g.fbKey,
+    text: JSON.stringify({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price })
+  }));
 
   const win = window.open('', '_blank', 'width=900,height=700');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
     '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>' +
-    '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Nunito,sans-serif}' +
-    '@media print{@page{size:A4 portrait;margin:8mm}}</style>' +
+    '<style>@media print{@page{size:A4 portrait;margin:0}}</style>' +
     '</head><body>' + gridHTML + '</body></html>');
   win.document.close();
-  // Inject QR codes once popup scripts are loaded
   const tryQR = setInterval(() => {
     if (!win.QRCode) return;
     clearInterval(tryQR);
     qrData.forEach(({ id, text }) => {
       const el = win.document.getElementById('qrbox-' + id);
-      if (el) try { new win.QRCode(el, { text, width:80, height:80, correctLevel:win.QRCode.CorrectLevel.M }); } catch(e){}
+      if (el) try {
+        new win.QRCode(el, { text, width: 120, height: 120, correctLevel: win.QRCode.CorrectLevel.M });
+      } catch(e) {}
     });
-    setTimeout(() => { win.focus(); win.print(); }, 300);
+    setTimeout(() => { win.focus(); win.print(); }, 400);
   }, 100);
 }
 
@@ -1323,41 +1355,102 @@ function renderListPreview(items) {
 }
 
 function printShoppingList() {
-  const sn = document.getElementById('list-student').value;
-  const preview = document.getElementById('handleliste-content');
-  if (!preview || !preview.querySelector('table')) { alert('Generer en handleliste først.'); return; }
-  // Re-get the items from the current preview (re-parse from preview tables)
-  // Simpler: just get selected items / random again
-  const sel = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
+  const sn    = document.getElementById('list-student').value;
+  const sel   = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
   const count = parseInt(document.getElementById('list-count').value) || 5;
-  const items = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)).slice(0,count) : (() => {
-    // fallback: try to extract from existing preview
-    const existing = preview.querySelectorAll('tbody tr');
-    if (existing.length) {
-      const names = [...existing].map(r => r.cells[1]?.textContent?.trim()).filter(Boolean);
-      const matched = names.map(n => window._groceries.find(g => g.name === n)).filter(Boolean);
-      if (matched.length) return matched;
-    }
-    return getRandom(window._groceries, count);
-  })();
+  const items = sel.length
+    ? window._groceries.filter(g => sel.includes(g.fbKey)).slice(0, count)
+    : getRandom(window._groceries, count);
 
-  const body =
-    '<style>' +
-    'body{font-family:Nunito,sans-serif}' +
-    '@media print{@page{size:A4 landscape;margin:10mm}}' +
-    '</style>' +
-    '<div style="display:flex;gap:2%;align-items:flex-start;">' +
-    shoppingListHTML(items,sn) + shoppingListHTML(items,sn) +
-    '</div>';
+  if (!items.length) { alert('Ingen varer tilgjengelig. Legg til varer i butikken først.'); return; }
+
+  // Two identical lists side-by-side on landscape A4
+  // Each list = ~143mm wide (297mm - 2×10mm margin - 4mm gap = 273mm / 2 ≈ 136mm)
+  const listHTML = `<style>
+    body { margin: 0; padding: 8mm; font-family: 'Nunito', sans-serif; background: white; }
+    .page { display: flex; gap: 4mm; width: 100%; }
+    .list {
+      flex: 1;
+      border: 0.5mm solid #c8dfc8;
+      border-radius: 3mm;
+      padding: 5mm;
+      display: flex;
+      flex-direction: column;
+      min-height: 190mm;
+    }
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 0.8mm solid #1D9E75;
+      padding-bottom: 3mm;
+      margin-bottom: 3mm;
+    }
+    .list-title { font-family: 'Fredoka One', cursive; font-size: 6mm; color: #085041; line-height: 1.1; }
+    .list-meta  { font-size: 3mm; color: #5a7a5a; margin-top: 1mm; }
+    .total-box  { background: #E1F5EE; border-radius: 2mm; padding: 2mm 4mm; text-align: center; flex-shrink: 0; }
+    .total-label { font-size: 2.5mm; color: #5a7a5a; }
+    .total-val   { font-size: 5mm; font-weight: 800; color: #085041; }
+    table { width: 100%; border-collapse: collapse; flex: 1; }
+    th { background: #E1F5EE; color: #085041; font-size: 2.8mm; padding: 2mm 2.5mm; text-align: left; }
+    th.right { text-align: right; }
+    td { padding: 2.5mm 2.5mm; border-bottom: 0.3mm solid #E1F5EE; vertical-align: middle; font-size: 3.5mm; }
+    td.num   { color: #5a7a5a; width: 6mm; }
+    td.emoji { font-size: 6mm; text-align: center; width: 12mm; }
+    td.price { text-align: right; }
+    .price-line { border-bottom: 0.5mm solid #1D9E75; width: 22mm; margin-left: auto; padding: 1mm 0; }
+    .sum-row { margin-top: 3mm; background: #FAEEDA; border-radius: 2mm; padding: 3mm 4mm; display: flex; justify-content: space-between; align-items: center; }
+    .sum-label { font-weight: 800; font-size: 4mm; color: #854F0B; }
+    .sum-line  { border-bottom: 0.5mm solid #EF9F27; width: 40mm; font-size: 4mm; font-weight: 800; color: #085041; padding-bottom: 1mm; }
+    .divider { border: none; border-top: 0.5mm dashed #c8dfc8; margin: 0 -8mm; }
+  </style>
+  <div class="page">
+    ${[sn, sn].map(name => `
+    <div class="list">
+      <div class="list-header">
+        <div>
+          <div class="list-title">🛒 Myntland</div>
+          ${name
+            ? `<div class="list-meta">Elev: <strong>${name}</strong></div>`
+            : `<div class="list-meta">Navn: ________________________</div>`}
+          <div class="list-meta">Dato: ________________</div>
+        </div>
+        <div class="total-box">
+          <div class="total-label">Total</div>
+          <div class="total-val">🪙 ______</div>
+        </div>
+      </div>
+      <table>
+        <thead><tr>
+          <th class="num">#</th>
+          <th>Vare</th>
+          <th style="text-align:center">Bilde</th>
+          <th class="right">Pris</th>
+        </tr></thead>
+        <tbody>
+          ${items.map((g, i) => `
+          <tr>
+            <td class="num">${i+1}</td>
+            <td style="font-weight:700">${g.name}</td>
+            <td class="emoji">${g.emoji}</td>
+            <td class="price"><div class="price-line">🪙</div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="sum-row">
+        <div class="sum-label">Sum totalt:</div>
+        <div class="sum-line"></div>
+      </div>
+    </div>`).join('')}
+  </div>`;
 
   const win = window.open('', '_blank', 'width=1100,height=700');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
-    '<style>*{box-sizing:border-box;margin:0;padding:0}' +
-    '@media print{@page{size:A4 landscape;margin:10mm}}</style>' +
-    '</head><body>' + body + '</body></html>');
+    '<style>@media print{@page{size:A4 landscape;margin:0}}</style>' +
+    '</head><body>' + listHTML + '</body></html>');
   win.document.close();
-  setTimeout(() => { win.focus(); win.print(); }, 600);
+  setTimeout(() => { win.focus(); win.print(); }, 700);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1386,36 +1479,138 @@ function generateCustomQR() {
 function generateCardPDF() {
   const students = window._students;
   if (!students.length) { alert('Ingen elever å skrive ut kort for.'); return; }
-  const cardsHTML = `
-    <style>
-      .card-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
-      .card-item { background: linear-gradient(135deg,#085041,#1D9E75); border-radius: 10px; padding: 14px 12px; color: white; aspect-ratio: 1.586; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; page-break-inside: avoid; }
-      .card-circle { position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; background: rgba(239,159,39,.15); }
-      .card-logo { font-family: 'Fredoka One', cursive; font-size: .95rem; color: #EF9F27; letter-spacing: 1px; }
-      .card-chip { width: 22px; height: 16px; background: #EF9F27; border-radius: 3px; margin-top: 6px; }
-      .card-label { font-size: .65rem; opacity: .7; font-weight: 700; margin-bottom: 2px; }
-      .card-name { font-weight: 800; font-size: .82rem; letter-spacing: .5px; text-transform: uppercase; }
-      .card-pin-row { margin-top: 6px; display: flex; justify-content: space-between; align-items: flex-end; }
-      .card-pin-label { font-size: .6rem; opacity: .7; font-weight: 700; }
-      .card-pin { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: #EF9F27; letter-spacing: 4px; }
-      .card-class { background: #EF9F27; color: #085041; border-radius: 4px; padding: 2px 6px; font-size: .6rem; font-weight: 800; }
-    </style>
-    <div class="card-grid">
-      ${students.map(s => `
-        <div class="card-item">
-          <div class="card-circle"></div>
-          <div><div class="card-logo">Myntland</div><div class="card-chip"></div></div>
-          <div>
-            <div class="card-label">KORTINNEHAVER</div>
-            <div class="card-name">${s.firstname} ${s.lastname}</div>
-            <div class="card-pin-row">
-              <div><div class="card-pin-label">PIN</div><div class="card-pin">${s.pin}</div></div>
-              <div class="card-class">${s.class}</div>
+
+  // Credit card standard: 85.6mm × 54mm. A4 portrait (210×297mm) minus 12mm margins = 198×285mm.
+  // 2 columns: each card 96mm wide. 5 rows: each card 55mm tall. = 10 cards per page.
+  const cardsHTML = `<style>
+    @font-face{}
+    body { margin: 0; padding: 6mm; background: white; }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 85.6mm);
+      grid-template-rows: repeat(5, 54mm);
+      gap: 4mm;
+    }
+    .card-item {
+      width: 85.6mm;
+      height: 54mm;
+      background-color: #085041;
+      border-radius: 3mm;
+      padding: 4mm 5mm;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+    }
+    .card-accent {
+      position: absolute;
+      top: -10mm; right: -10mm;
+      width: 35mm; height: 35mm;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .card-accent2 {
+      position: absolute;
+      bottom: -8mm; left: -8mm;
+      width: 28mm; height: 28mm;
+      border-radius: 50%;
+      background: rgba(239,159,39,0.12);
+    }
+    .card-top { position: relative; z-index: 1; }
+    .card-logo {
+      font-family: 'Fredoka One', cursive;
+      font-size: 5mm;
+      color: #EF9F27;
+      letter-spacing: 0.3mm;
+      line-height: 1;
+    }
+    .card-chip {
+      width: 8mm; height: 6mm;
+      background: #EF9F27;
+      border-radius: 1mm;
+      margin-top: 2mm;
+    }
+    .card-bottom { position: relative; z-index: 1; }
+    .card-label {
+      font-size: 2.2mm;
+      color: rgba(255,255,255,0.65);
+      font-weight: 700;
+      letter-spacing: 0.3mm;
+      text-transform: uppercase;
+      margin-bottom: 0.8mm;
+    }
+    .card-name {
+      font-size: 4mm;
+      font-weight: 800;
+      letter-spacing: 0.2mm;
+      text-transform: uppercase;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 2mm;
+    }
+    .card-pin-block {}
+    .card-pin-label {
+      font-size: 2.2mm;
+      color: rgba(255,255,255,0.65);
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.5mm;
+    }
+    .card-pin {
+      font-family: 'Fredoka One', cursive;
+      font-size: 6mm;
+      color: #EF9F27;
+      letter-spacing: 1.5mm;
+      line-height: 1;
+    }
+    .card-class {
+      background: #EF9F27;
+      color: #085041;
+      border-radius: 1mm;
+      padding: 1mm 2.5mm;
+      font-size: 3mm;
+      font-weight: 800;
+    }
+  </style>
+  <div class="card-grid">
+    ${students.map(s => `
+      <div class="card-item">
+        <div class="card-accent"></div>
+        <div class="card-accent2"></div>
+        <div class="card-top">
+          <div class="card-logo">🪙 Myntland</div>
+          <div class="card-chip"></div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-label">Kortinnehaver</div>
+          <div class="card-name">${s.firstname} ${s.lastname}</div>
+          <div class="card-footer">
+            <div class="card-pin-block">
+              <div class="card-pin-label">PIN-kode</div>
+              <div class="card-pin">${s.pin}</div>
             </div>
+            <div class="card-class">${s.class}</div>
           </div>
-        </div>`).join('')}
-    </div>`;
-  printWindow(cardsHTML, 'A4 portrait');
+        </div>
+      </div>`).join('')}
+  </div>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
+    '<style>@media print{@page{size:A4 portrait;margin:0}body{margin:0;padding:6mm}}</style>' +
+    '</head><body>' + cardsHTML + '</body></html>');
+  win.document.close();
+  setTimeout(() => { win.focus(); win.print(); }, 800);
 }
 
 // ══════════════════════════════════════════════════════════
