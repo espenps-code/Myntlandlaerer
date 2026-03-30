@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Myntland – Min Nettbank</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, onValue, update, push, set, get }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:"AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain:"myntland.firebaseapp.com",
+    databaseURL:"https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"myntland",
+    storageBucket:"myntland.firebasestorage.app",
+    messagingSenderId:"711264415533",
+    appId:"1:711264415533:web:644a77a1e8b234667b2da4"
+  };
+  const app=initializeApp(firebaseConfig);
+  const db=getDatabase(app);
+  window._db=db; window._ref=ref; window._onValue=onValue;
+  window._update=update; window._push=push; window._set=set; window._get=get;
+
+  const UPPER=['5A','5B','5C','6A','6B','6C','7A','7B','7C'];
+
+  onValue(ref(db,'students'),snap=>{
+    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>UPPER.includes(s.class)):[];
+    if(window._currentStudent){
+      const up=window._allStudents.find(s=>s.fbKey===window._currentStudent.fbKey);
+      if(up){window._currentStudent=up;refreshAllDisplays();}
+    }
+  });
+  onValue(ref(db,'classGoals'),snap=>{
+    window._classGoals=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(g=>!g.completed):[];
+    if(document.getElementById('tab-sparemaal')?.classList.contains('active')) renderClassGoalsTab();
+    refreshGoalSelect();
+  });
+  onValue(ref(db,'jobs'),snap=>{
+    window._jobs=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(j=>j.active):[];
+    if(document.getElementById('tab-oppdrag')?.classList.contains('active')) renderJobs();
+  });
+  onValue(ref(db,'shop57'),snap=>{
+    window._shop57=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];
+    if(document.getElementById('tab-butikk')?.classList.contains('active')) renderShop57();
+  });
+
+  onValue(ref(db,'settings'),snap=>{
+    window._settings=snap.val()||{taxRate:20,savingsInterest:2,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
+  });
+  onValue(ref(db,'fundHistory'),snap=>{
+    window._fundHistory=snap.val()||{};
+    if(document.getElementById('tab-fond')?.classList.contains('active')) renderFond();
+  });
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+  :root{--teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;--amber:#EF9F27;--amber-light:#FAEEDA;--coral:#D85A30;--coral-light:#FAECE7;--purple:#534AB7;--purple-light:#EEEDFE;--blue:#185FA5;--blue-light:#E6F1FB;--green:#16a34a;--green-light:#dcfce7;--bg:#F0FAF5;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#b8dfc8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;}
+  .screen{display:none;min-height:100vh;flex-direction:column;}.screen.active{display:flex;}
+
+  /* SPLASH */
+  #screen-splash{background:linear-gradient(160deg,var(--teal-dark),#1a6648,var(--teal));align-items:center;justify-content:center;text-align:center;padding:2rem;}
+  .splash-coin{width:110px;height:110px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:3.5rem;color:var(--teal-dark);margin:0 auto 1rem;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:coinBounce 2.2s ease-in-out infinite;}
+  @keyframes coinBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  .splash-logo{font-family:'Fredoka One',cursive;font-size:2.8rem;color:var(--amber);}
+  .splash-tagline{color:rgba(255,255,255,.8);font-size:1rem;font-weight:700;margin:.4rem 0 2.5rem;}
+  .big-splash-btn{width:100%;padding:20px;border-radius:20px;border:none;font-family:'Fredoka One',cursive;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .15s;margin-bottom:14px;background:var(--amber);color:var(--teal-dark);box-shadow:0 4px 20px rgba(239,159,39,.4);}
+  .big-splash-btn:active{transform:scale(.97);}
+
+  /* LOGIN */
+  #screen-login{background:var(--bg);padding:2rem;align-items:center;justify-content:center;}
+  .login-card{background:white;border-radius:24px;padding:2rem;width:100%;border:2px solid var(--border);}
+  .pin-dots{display:flex;gap:16px;justify-content:center;margin:1.5rem 0;}
+  .pin-dot{width:22px;height:22px;border-radius:50%;border:3px solid var(--border);transition:all .15s;}
+  .pin-dot.filled{background:var(--teal);border-color:var(--teal);}
+  .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .num-btn{background:var(--bg);border:2px solid var(--border);border-radius:16px;padding:18px;font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--teal-dark);cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center;}
+  .num-btn:active{transform:scale(.92);background:var(--teal-light);}
+  .num-btn.delete{font-size:1.3rem;color:var(--coral);}
+  .num-btn.empty{background:transparent;border:none;cursor:default;}
+
+  /* TOP BAR */
+  .top-bar{background:var(--teal-dark);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .top-bar-title{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--amber);}
+  .top-bar-sub{font-size:.72rem;color:rgba(255,255,255,.7);font-weight:700;text-align:right;}
+  .back-btn{background:rgba(255,255,255,.13);border:none;color:white;border-radius:10px;padding:7px 12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.82rem;}
+
+  /* BOTTOM NAV */
+  .bottom-nav{background:white;border-top:2px solid var(--border);display:flex;position:sticky;bottom:0;z-index:50;}
+  .nav-item{flex:1;padding:9px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:transparent;cursor:pointer;}
+  .nav-item:not(.active){opacity:.4;}
+  .nav-icon{font-size:1.2rem;}.nav-label{font-size:.58rem;font-weight:800;color:var(--teal-dark);}
+
+  /* CONTENT */
+  .content{flex:1;overflow-y:auto;padding:1.1rem;}
+  .tab-content{display:none;}.tab-content.active{display:block;}
+  .section-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal-dark);margin-bottom:.85rem;margin-top:.25rem;}
+  .card-block{background:white;border-radius:14px;border:1.5px solid var(--border);padding:1.1rem;margin-bottom:.85rem;}
+
+  /* BALANCE CARDS */
+  .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.85rem;}
+  .account-card{border-radius:14px;padding:.9rem 1rem;color:white;position:relative;overflow:hidden;}
+  .account-card.bruk{background:linear-gradient(135deg,var(--teal-dark),var(--teal));}
+  .account-card.spare{background:linear-gradient(135deg,#1a5fa5,#2980d9);}
+  .account-card.fond{background:linear-gradient(135deg,#6d28d9,#7c3aed);}
+  .account-card.loan{background:linear-gradient(135deg,#9f1239,var(--coral));}
+  .account-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);}
+  .acc-label{font-size:.7rem;opacity:.8;font-weight:700;margin-bottom:2px;position:relative;z-index:1;}
+  .acc-val{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--amber);line-height:1;position:relative;z-index:1;}
+  .acc-sub{font-size:.65rem;opacity:.7;font-weight:700;position:relative;z-index:1;}
+
+  /* TRANSACTIONS */
+  .tx-item{display:flex;align-items:center;gap:9px;padding:11px;background:white;border-radius:11px;margin-bottom:6px;border:1px solid var(--border);}
+  .tx-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
+  .tx-icon.income{background:var(--teal-light);}  .tx-icon.expense{background:var(--coral-light);}
+  .tx-desc{flex:1;} .tx-name{font-weight:700;font-size:.82rem;} .tx-date{font-size:.68rem;color:var(--muted);}
+  .tx-amount{font-family:'Fredoka One',cursive;font-size:.95rem;}
+  .tx-amount.income{color:var(--teal);} .tx-amount.expense{color:var(--coral);}
+
+  /* GOAL SELECTOR */
+  .goal-select-wrap{background:var(--purple-light);border-radius:12px;padding:.85rem;margin-bottom:.85rem;border:1.5px solid #c4b5fd;}
+  .goal-select-label{font-size:.78rem;font-weight:800;color:var(--purple);margin-bottom:.4rem;}
+  .goal-select-inner select{border-color:#c4b5fd;font-size:.88rem;}
+
+  /* QUIZ */
+  .quiz-banner{background:linear-gradient(135deg,var(--purple),#3d3490);border-radius:14px;padding:1rem 1.1rem;margin-bottom:.85rem;color:white;position:relative;overflow:hidden;}
+  .quiz-banner::before{content:'';position:absolute;top:-15px;right:-15px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.08);}
+  .quiz-start-btn{width:100%;padding:11px;border-radius:11px;border:none;background:#EF9F27;color:#085041;font-family:'Fredoka One',cursive;font-size:1.05rem;cursor:pointer;margin-top:.55rem;}
+  .quiz-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:700;flex-direction:column;}
+  .quiz-overlay.open{display:flex;}
+  .quiz-hd{background:var(--purple);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .quiz-hd-title{font-family:'Fredoka One',cursive;font-size:1rem;color:#FAC775;}
+  .quiz-close-btn{background:rgba(255,255,255,.15);border:none;color:white;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;}
+  .quiz-prog{height:5px;background:var(--purple-light);}
+  .quiz-prog-bar{height:100%;background:var(--purple);transition:width .4s;}
+  .quiz-body{flex:1;overflow-y:auto;padding:1.1rem;display:flex;flex-direction:column;gap:.75rem;}
+  .quiz-q-num{font-size:.73rem;font-weight:800;color:var(--purple);text-transform:uppercase;}
+  .quiz-q-text{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--text);line-height:1.35;}
+  .quiz-opts{display:flex;flex-direction:column;gap:7px;}
+  .quiz-opt{padding:13px 15px;border-radius:11px;border:2px solid var(--border);background:white;font-family:'Nunito',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;text-align:left;color:var(--text);}
+  .quiz-opt.correct{background:var(--green-light);border-color:var(--green);color:#14532d;}
+  .quiz-opt.wrong{background:var(--coral-light);border-color:var(--coral);color:#4A1B0C;}
+  .quiz-opt:disabled{cursor:default;}
+  .quiz-fb{padding:11px 13px;border-radius:11px;font-weight:700;font-size:.85rem;text-align:center;display:none;}
+  .quiz-fb.show{display:block;} .quiz-fb.ok{background:var(--green-light);color:#14532d;} .quiz-fb.no{background:var(--coral-light);color:#4A1B0C;}
+  .quiz-nxt{padding:13px;border-radius:11px;border:none;background:var(--purple);color:white;font-family:'Fredoka One',cursive;font-size:1.05rem;cursor:pointer;display:none;width:100%;}
+  .quiz-nxt.show{display:block;}
+  .quiz-result{display:none;position:fixed;inset:0;background:var(--purple);z-index:710;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+  .quiz-result.open{display:flex;}
+  .qr-emoji{font-size:3.8rem;margin-bottom:.75rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
+  @keyframes popIn{0%{transform:scale(0)}100%{transform:scale(1)}}
+  .qr-title{font-family:'Fredoka One',cursive;font-size:2rem;color:#FAC775;margin-bottom:.4rem;}
+  .qr-earned{font-family:'Fredoka One',cursive;font-size:2.5rem;color:#FAC775;margin:1rem 0;}
+  .qr-close{background:#EF9F27;color:#085041;border:none;border-radius:14px;padding:14px 36px;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;margin-top:1rem;}
+
+  /* ACCOUNTS */
+  .acc-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.85rem;}
+  .acc-action-btn{padding:13px;border-radius:12px;border:none;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .15s;}
+  .acc-action-btn:active{transform:scale(.97);}
+  .aab-teal{background:var(--teal);color:white;}
+  .aab-blue{background:var(--blue);color:white;}
+  .aab-purple{background:var(--purple);color:white;}
+  .aab-ghost{background:white;color:var(--text);border:1.5px solid var(--border);}
+  .info-box{background:var(--amber-light);border-radius:11px;padding:.8rem .95rem;margin-bottom:.85rem;font-size:.82rem;color:#854F0B;font-weight:700;border:1px solid #f0c060;}
+  .warn-box{background:var(--coral-light);border-radius:11px;padding:.8rem .95rem;margin-bottom:.85rem;font-size:.82rem;color:#7f1d1d;font-weight:700;}
+
+  /* FOND */
+  .fond-card{border-radius:14px;padding:1rem;margin-bottom:.85rem;position:relative;overflow:hidden;}
+  .fond-card.low{background:linear-gradient(135deg,#1e3a5f,#2563eb);}
+  .fond-card.high{background:linear-gradient(135deg,#4c1d95,#7c3aed);}
+  .fond-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);}
+  .fond-title{font-family:'Fredoka One',cursive;font-size:1rem;color:rgba(255,255,255,.9);position:relative;z-index:1;}
+  .fond-risk{font-size:.7rem;color:rgba(255,255,255,.65);font-weight:700;position:relative;z-index:1;}
+  .fond-value{font-family:'Fredoka One',cursive;font-size:2rem;color:#FAC775;position:relative;z-index:1;margin:.4rem 0;}
+  .fond-change{font-size:.8rem;font-weight:700;position:relative;z-index:1;}
+  .chart-wrap{background:white;border-radius:12px;padding:.75rem;margin-bottom:.85rem;}
+
+  /* LOAN */
+  .loan-card{border-radius:14px;padding:1rem;margin-bottom:.85rem;}
+  .loan-active{background:var(--coral-light);border:1.5px solid var(--coral);}
+  .loan-none{background:var(--teal-light);border:1.5px solid #5DCAA5;}
+
+  /* GOALS TAB */
+  .class-goal-card{background:white;border-radius:14px;border:1.5px solid var(--border);padding:1rem;margin-bottom:.75rem;}
+  .cg-header{display:flex;align-items:center;gap:10px;margin-bottom:.65rem;}
+  .cg-emoji{font-size:1.7rem;}
+  .cg-name{font-weight:800;font-size:.9rem;}
+  .cg-target{font-size:.75rem;color:var(--muted);}
+  .prog-wrap{height:9px;background:var(--bg);border-radius:20px;overflow:hidden;margin-bottom:.4rem;}
+  .prog-fill{height:100%;background:var(--teal);border-radius:20px;transition:width .4s;}
+  .prog-meta{display:flex;justify-content:space-between;font-size:.75rem;font-weight:700;color:var(--muted);}
+
+  /* OPPDRAG */
+  .job-card-el{background:white;border-radius:12px;border:1.5px solid var(--border);padding:.9rem;margin-bottom:.7rem;display:flex;gap:10px;}
+  .job-emoji-el{font-size:1.7rem;flex-shrink:0;}
+  .job-title-el{font-weight:800;font-size:.88rem;} .job-desc-el{font-size:.75rem;color:var(--muted);margin-top:2px;}
+  .job-pay-el{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal);margin-top:3px;}
+
+  /* SCANNER */
+  .scanner-overlay{display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;}
+  .scanner-overlay.open{display:flex;}
+  .scanner-header{background:var(--teal-dark);padding:13px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .scanner-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--amber);flex:1;}
+  .scanner-close{background:rgba(255,255,255,.15);border:none;color:white;border-radius:9px;padding:7px 13px;font-weight:700;cursor:pointer;}
+  .scanner-video-wrap{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  #scanner-video{width:100%;height:100%;object-fit:cover;}
+  .scanner-frame{position:absolute;width:200px;height:200px;border:3px solid var(--amber);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.55);}
+  .scanner-hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:white;padding:9px 18px;border-radius:18px;font-size:.82rem;font-weight:700;white-space:nowrap;}
+
+  /* PIN OVERLAY */
+  .pin-overlay{display:none;position:fixed;inset:0;background:rgba(4,52,44,.97);z-index:400;flex-direction:column;align-items:center;justify-content:center;padding:2rem;}
+  .pin-overlay.open{display:flex;}
+  .pin-ov-title{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--amber);margin-bottom:.4rem;text-align:center;}
+  .pin-ov-amount{font-family:'Fredoka One',cursive;font-size:2rem;color:white;margin-bottom:1.1rem;text-align:center;}
+  .pin-ov-card{background:rgba(255,255,255,.1);border-radius:16px;padding:1.1rem;width:100%;max-width:290px;}
+  .pin-ov-dots{display:flex;gap:11px;justify-content:center;margin:.7rem 0;}
+  .pin-ov-dot{width:17px;height:17px;border-radius:50%;border:3px solid rgba(255,255,255,.35);}
+  .pin-ov-dot.filled{background:var(--amber);border-color:var(--amber);}
+  .pin-ov-err{color:var(--coral-light);font-size:.8rem;font-weight:700;text-align:center;min-height:17px;margin-bottom:5px;}
+  .pin-ov-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .pin-ov-btn{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.15);border-radius:11px;padding:13px;font-family:'Fredoka One',cursive;font-size:1.4rem;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .pin-ov-btn:active{transform:scale(.9);}
+  .pin-ov-btn.del{font-size:.95rem;color:rgba(255,255,255,.55);}
+  .pin-ov-btn.empty{background:transparent;border:none;cursor:default;}
+  .pin-ov-cancel{margin-top:.75rem;background:transparent;border:2px solid rgba(255,255,255,.2);color:rgba(255,255,255,.65);padding:9px 22px;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;}
+
+  /* INPUT SHEET */
+  .input-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;align-items:flex-end;justify-content:center;}
+  .input-overlay.open{display:flex;}
+  .input-sheet{background:white;border-radius:22px 22px 0 0;padding:1.75rem;width:100%;max-width:430px;}
+  .input-sheet-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:.3rem;}
+  .input-sheet-desc{font-size:.82rem;color:var(--muted);margin-bottom:1rem;font-weight:600;}
+  .input-sheet input{width:100%;font-family:'Nunito',sans-serif;font-size:1.1rem;padding:11px 14px;border:2px solid var(--border);border-radius:11px;outline:none;margin-bottom:.9rem;}
+  .input-sheet input:focus{border-color:var(--teal);}
+  .input-sheet-actions{display:flex;gap:9px;}
+  .input-sheet-actions button{flex:1;padding:13px;border-radius:11px;border:none;font-family:'Fredoka One',cursive;font-size:1.05rem;cursor:pointer;}
+  .isa-primary{background:var(--teal);color:white;}
+  .isa-ghost{background:transparent;border:1.5px solid var(--border)!important;color:var(--text);}
+
+  /* SUCCESS */
+  .success-overlay{display:none;position:fixed;inset:0;background:var(--teal-dark);z-index:600;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+  .success-overlay.open{display:flex;}
+  .success-emoji{font-size:4rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
+  .success-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--amber);margin:1rem 0 .4rem;}
+  .success-amount{font-family:'Fredoka One',cursive;font-size:2.5rem;color:white;margin:.3rem 0;}
+  .success-text{color:rgba(255,255,255,.8);font-size:.9rem;font-weight:700;}
+  .success-close{background:var(--amber);color:var(--teal-dark);border:none;border-radius:13px;padding:13px 34px;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;margin-top:1.25rem;}
+
+  .big-btn{width:100%;padding:14px;border-radius:13px;border:none;font-family:'Fredoka One',cursive;font-size:1.15rem;cursor:pointer;transition:all .15s;margin-bottom:8px;}
+  .big-btn:active{transform:scale(.97);}
+  .bb-teal{background:var(--teal);color:white;}
+  .bb-blue{background:var(--blue);color:white;}
+  .bb-coral{background:var(--coral);color:white;}
+  .bb-ghost{background:white;color:var(--text);border:1.5px solid var(--border);}
+  .empty-state{text-align:center;padding:1.75rem 1rem;color:var(--muted);}
+  .empty-icon{font-size:2.3rem;margin-bottom:.5rem;}
+  .live-dot{display:inline-block;width:7px;height:7px;background:#4ade80;border-radius:50%;animation:pulse 1.5s infinite;margin-right:4px;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-coin">M</div>
+  <div class="splash-logo">Myntland</div>
+  <button class="big-splash-btn" onclick="selectRole()">🏦 Min nettbank</button>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div style="text-align:center;margin:2.5rem 0 1rem;font-size:2.5rem">🏦</div>
+  <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--teal-dark);margin-bottom:3px">Logg inn</div>
+  <div style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Tast inn PIN-koden din</div>
+  <div style="width:100%;padding:0 1.25rem;flex:1">
+    <div class="login-card">
+      <div class="pin-dots">
+        <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="login-error" style="color:var(--coral);font-size:.85rem;font-weight:700;min-height:20px;text-align:center;margin-bottom:7px"></div>
+      <div class="numpad">
+        <button class="num-btn" onclick="np('1')">1</button><button class="num-btn" onclick="np('2')">2</button><button class="num-btn" onclick="np('3')">3</button>
+        <button class="num-btn" onclick="np('4')">4</button><button class="num-btn" onclick="np('5')">5</button><button class="num-btn" onclick="np('6')">6</button>
+        <button class="num-btn" onclick="np('7')">7</button><button class="num-btn" onclick="np('8')">8</button><button class="num-btn" onclick="np('9')">9</button>
+        <div class="num-btn empty"></div><button class="num-btn" onclick="np('0')">0</button><button class="num-btn delete" onclick="np('DEL')">⌫</button>
+      </div>
+    </div>
+    <button onclick="goToSplash()" style="width:100%;margin-top:.85rem;background:transparent;border:2px solid var(--border);color:var(--muted);padding:11px;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer">← Tilbake</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="screen-app">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goToSplash()">← Ut</button>
+    <div style="text-align:center"><div class="top-bar-title">🪙 Myntland Nettbank</div><div class="top-bar-sub" id="greeting-sub"></div></div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--amber)" id="top-total">–</div>
+  </div>
+
+  <!-- BANK TAB -->
+  <div class="tab-content active content" id="tab-bank">
+    <div class="account-grid">
+      <div class="account-card bruk" style="grid-column:1/-1">
+        <div class="acc-label"><span class="live-dot"></span>Brukskonto (0% rente)</div>
+        <div class="acc-val" id="bal-bruk">0</div>
+        <div class="acc-sub">🪙 Mynter · koblet til bankkort</div>
+      </div>
+      <div class="account-card spare">
+        <div class="acc-label">💰 Sparekonto</div>
+        <div class="acc-val" id="bal-spare">0</div>
+        <div class="acc-sub" id="spare-sub">2% ukentlig rente</div>
+      </div>
+      <div class="account-card fond">
+        <div class="acc-label">📊 Fondskonto</div>
+        <div class="acc-val" id="bal-fond">0</div>
+        <div class="acc-sub" id="fond-sub">Lav + Høy risiko</div>
+      </div>
+    </div>
+
+    <!-- Sparemål-velger -->
+    <div class="goal-select-wrap" id="goal-select-wrap">
+      <div class="goal-select-label">🏦 Skatt fra belønninger går til:</div>
+      <div class="goal-select-inner">
+        <select id="goal-selector" onchange="saveGoalChoice()" style="width:100%">
+          <option value="">Ingen valgt (fordeles likt)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div class="quiz-banner" id="quiz-banner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#FAC775;position:relative;z-index:1">🧠 Ukas økonomiquiz</div>
+        <div style="background:rgba(255,255,255,.15);padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;position:relative;z-index:1" id="quiz-badge">5 sp. · 20🪙 per svar</div>
+      </div>
+      <div id="quiz-card-body" style="position:relative;z-index:1">
+        <div style="font-size:.8rem;opacity:.85;margin-bottom:.5rem">Test dine kunnskaper om økonomi!</div>
+        <button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>
+      </div>
+    </div>
+
+    <div class="section-title">📜 Siste transaksjoner</div>
+    <div id="transaction-list"><div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700">Ingen transaksjoner ennå</div></div></div>
+  </div>
+
+  <!-- SPARE TAB -->
+  <div class="tab-content content" id="tab-spare">
+    <div class="account-card spare" style="border-radius:14px;padding:1.1rem;margin-bottom:.85rem;color:white">
+      <div class="acc-label">💰 Sparekonto</div>
+      <div class="acc-val" id="spare-main-val">0</div>
+      <div class="acc-sub" id="spare-rate-sub">2% ukentlig rente · maks 2 uttak/uke</div>
+    </div>
+    <div class="info-box" id="spare-info-box">💡 Penger på sparekonto vokser med 2% hver uke (betales ut mandag). Maks 2 uttak per uke.</div>
+    <div id="spare-withdrawal-warn" style="display:none" class="warn-box">⚠️ Du har brukt alle uttakene dine denne uken!</div>
+    <div class="acc-action-grid">
+      <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">➕ Sett inn fra brukskonto</button>
+      <button class="acc-action-btn aab-ghost" id="spare-withdraw-btn" onclick="openTransfer('spare-til-bruk')">➖ Ta ut til brukskonto</button>
+    </div>
+    <div class="section-title" style="margin-top:.5rem">📜 Sparehistorikk</div>
+    <div id="spare-tx-list"><div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen sparehistorikk</div></div></div>
+  </div>
+
+  <!-- FOND TAB -->
+  <div class="tab-content content" id="tab-fond">
+    <div id="fond-cards"></div>
+    <div class="chart-wrap">
+      <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);margin-bottom:.5rem">📈 Kursutvikling (siste 14 dager)</div>
+      <canvas id="fond-chart" height="140"></canvas>
+    </div>
+    <div class="info-box">💡 Fondet oppdateres daglig av læreren. Gevinst beskattes med <span id="fond-tax-pct">10</span>% ved uttak. Kan sette inn når som helst.</div>
+    <div class="acc-action-grid">
+      <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-low')">📈 Sett inn lav risiko</button>
+      <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-low-til-bruk')">📉 Ta ut lav risiko</button>
+      <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-high')">📈 Sett inn høy risiko</button>
+      <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-high-til-bruk')">📉 Ta ut høy risiko</button>
+    </div>
+  </div>
+
+  <!-- LÅN TAB -->
+  <div class="tab-content content" id="tab-laan">
+    <div id="loan-section"></div>
+  </div>
+
+  <!-- SPAREMÅL TAB -->
+  <div class="tab-content content" id="tab-sparemaal">
+    <div class="section-title">🏦 Klassens sparemål</div>
+    <div id="class-goals-list"><div class="empty-state"><div class="empty-icon">🏦</div><div style="font-weight:700">Ingen sparemål opprettet ennå</div></div></div>
+  </div>
+
+  <!-- OPPDRAG TAB -->
+  <div class="tab-content content" id="tab-oppdrag">
+    <div class="section-title">💼 Tilgjengelige oppdrag</div>
+    <div class="info-box">💡 Gjør oppdraget og be læreren godkjenne – eller scan QR-koden du får!</div>
+    <div id="jobs-list-el"><div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag nå</div></div></div>
+  </div>
+
+  <!-- BUTIKK TAB -->
+  <div class="tab-content content" id="tab-butikk">
+    <div class="section-title">🛒 Butikken</div>
+    <div class="info-box">Her finner du varene du kan kjøpe med mynter. Ta kontakt med læreren for å gjennomføre kjøp.</div>
+    <div id="butikk-search-wrap" style="margin-bottom:.85rem">
+      <input type="text" placeholder="Søk etter vare…" oninput="filterShop57El(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none">
+    </div>
+    <div id="shop57-el-list"><div class="empty-state"><div class="empty-icon">🛒</div><div style="font-weight:700">Ingen varer ennå</div><div style="font-size:.85rem">Læreren legger til varer i portalen</div></div></div>
+  </div>
+
+  <!-- KORT TAB -->
+  <div class="tab-content content" id="tab-kort">
+    <div style="background:linear-gradient(135deg,#1a1a18,#3a3a36);border-radius:20px;padding:1.4rem;color:white;position:relative;overflow:hidden;margin-bottom:1rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between">
+      <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;border-radius:50%;background:rgba(239,159,39,.12)"></div>
+      <div><div style="width:32px;height:24px;background:var(--amber);border-radius:5px;position:relative;z-index:1"></div><div style="font-family:'Fredoka One',cursive;font-size:1.2rem;letter-spacing:4px;opacity:.9;z-index:1;position:relative;margin-top:.5rem" id="card-number">•••• ••••</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1">
+        <div><div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.65;margin-bottom:2px">Kortinnehaver</div><div style="font-size:.82rem;font-weight:700;text-transform:uppercase" id="card-holder">–</div></div>
+        <div><div style="font-family:'Fredoka One',cursive;color:var(--amber);font-size:.95rem;text-align:right">Myntland</div><div style="font-size:.65rem;color:rgba(255,255,255,.5);text-align:right">Brukskonto</div></div>
+      </div>
+    </div>
+    <div style="background:var(--teal-light);border-radius:13px;padding:.9rem;text-align:center;margin-bottom:1rem;border:2px solid #5DCAA5">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);margin-bottom:3px">💳 Slik betaler du</div>
+      <div style="font-size:.82rem;color:var(--teal-dark);font-weight:700">Scan belønnings-QR for å motta mynter<br>eller scan betaling fra kassen 📷</div>
+    </div>
+    <button class="big-btn bb-teal" onclick="startScan('payment')">📷 Scan & betal</button>
+    <button class="big-btn bb-ghost" onclick="startScan('reward')">⭐ Scan belønnings-QR</button>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
+    <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab()"><div class="nav-icon">💰</div><div class="nav-label">Spare</div></button>
+    <button class="nav-item"        onclick="switchTab('fond',this);renderFond()"><div class="nav-icon">📊</div><div class="nav-label">Fond</div></button>
+    <button class="nav-item"        onclick="switchTab('laan',this);renderLoan()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
+    <button class="nav-item"        onclick="switchTab('sparemaal',this);renderClassGoalsTab()"><div class="nav-icon">🏦</div><div class="nav-label">Sparemål</div></button>
+    <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Oppdrag</div></button>
+    <button class="nav-item"        onclick="switchTab('butikk',this);renderShop57()"><div class="nav-icon">🛒</div><div class="nav-label">Butikk</div></button>
+    <button class="nav-item"        onclick="switchTab('kort',this)"><div class="nav-icon">💳</div><div class="nav-label">Kort</div></button>
+  </div>
+</div>
+
+<!-- OVERLAYS -->
+<div class="scanner-overlay" id="scanner-overlay">
+  <div class="scanner-header"><div class="scanner-title" id="scanner-title">Scan QR</div><button class="scanner-close" onclick="stopScan()">✕</button></div>
+  <div class="scanner-video-wrap"><video id="scanner-video" playsinline muted></video><div class="scanner-frame"></div><div class="scanner-hint" id="scanner-hint">Hold QR innenfor rammen</div></div>
+</div>
+
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-ov-title">Bekreft betaling</div>
+  <div class="pin-ov-amount" id="pin-overlay-amount"></div>
+  <div class="pin-ov-card">
+    <div class="pin-ov-dots"><div class="pin-ov-dot" id="pdot-0"></div><div class="pin-ov-dot" id="pdot-1"></div><div class="pin-ov-dot" id="pdot-2"></div><div class="pin-ov-dot" id="pdot-3"></div></div>
+    <div class="pin-ov-err" id="pin-overlay-error"></div>
+    <div class="pin-ov-numpad">
+      <button class="pin-ov-btn" onclick="pcp('1')">1</button><button class="pin-ov-btn" onclick="pcp('2')">2</button><button class="pin-ov-btn" onclick="pcp('3')">3</button>
+      <button class="pin-ov-btn" onclick="pcp('4')">4</button><button class="pin-ov-btn" onclick="pcp('5')">5</button><button class="pin-ov-btn" onclick="pcp('6')">6</button>
+      <button class="pin-ov-btn" onclick="pcp('7')">7</button><button class="pin-ov-btn" onclick="pcp('8')">8</button><button class="pin-ov-btn" onclick="pcp('9')">9</button>
+      <button class="pin-ov-btn empty"></button><button class="pin-ov-btn" onclick="pcp('0')">0</button><button class="pin-ov-btn del" onclick="pcp('DEL')">⌫</button>
+    </div>
+  </div>
+  <button class="pin-ov-cancel" onclick="cancelPinConfirm()">Avbryt</button>
+</div>
+
+<div class="input-overlay" id="input-overlay">
+  <div class="input-sheet">
+    <div class="input-sheet-title" id="input-sheet-title">Skriv inn beløp</div>
+    <div class="input-sheet-desc"  id="input-sheet-desc"></div>
+    <input type="number" id="input-sheet-val" placeholder="0" min="1">
+    <div class="input-sheet-actions">
+      <button class="isa-ghost" onclick="closeInputSheet()">Avbryt</button>
+      <button class="isa-primary" id="input-sheet-confirm">Bekreft</button>
+    </div>
+  </div>
+</div>
+
+<div class="success-overlay" id="success-overlay">
+  <div class="success-emoji" id="suc-emoji">✅</div>
+  <div class="success-title"  id="suc-title"></div>
+  <div class="success-amount" id="suc-amount"></div>
+  <div class="success-text"   id="suc-text"></div>
+  <button class="success-close" onclick="document.getElementById('success-overlay').classList.remove('open')">Fortsett</button>
+</div>
+
+<div class="quiz-overlay" id="quiz-overlay">
+  <div class="quiz-hd"><div class="quiz-hd-title">🧠 Ukas økonomiquiz</div><button class="quiz-close-btn" onclick="closeQuiz()">✕</button></div>
+  <div class="quiz-prog"><div class="quiz-prog-bar" id="quiz-prog-bar" style="width:0%"></div></div>
+  <div class="quiz-body">
+    <div class="quiz-q-num" id="quiz-q-num">Spørsmål 1 av 5</div>
+    <div class="quiz-q-text" id="quiz-q-text"></div>
+    <div class="quiz-opts" id="quiz-opts"></div>
+    <div class="quiz-fb" id="quiz-fb"></div>
+    <button class="quiz-nxt" id="quiz-nxt" onclick="nextQ()">Neste →</button>
+  </div>
+</div>
+<div class="quiz-result" id="quiz-result">
+  <div class="qr-emoji" id="qr-emoji">🏆</div>
+  <div class="qr-title" id="qr-title">Bra!</div>
+  <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:white" id="qr-score"></div>
+  <div class="qr-earned" id="qr-earned"></div>
+  <div style="font-size:.8rem;color:rgba(255,255,255,.75);margin-bottom:.5rem">Mynter lagt til brukskontoen!</div>
+  <button class="qr-close" onclick="closeQuizResult()">Tilbake</button>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+window._allStudents=[]; window._classGoals=[]; window._jobs=[]; window._fundHistory={};
+window._currentStudent=null; window._settings={taxRate:20,savingsInterest:2,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
+let currentPin='',confirmPin='',transactions=[];
+let scanMode=null,pendingPayAmount=0,scanActive=false,_scanCanvas=null,_scanCtx=null;
+let quizQs=[],quizIdx=0,quizOk=0,quizAnswered=false;
+let inputCb=null;
+let _fondChart=null;
+
+function fbRef(p){return window._ref(window._db,p);}
+function getTax(){return (window._settings?.taxRate||20)/100;}
+function getSavingsRate(){return (window._settings?.savingsInterest||2)/100;}
+function getFundTax(){return (window._settings?.fundTax||10)/100;}
+function getLoanRate(){return (window._settings?.loanInterest||10)/100;}
+function getLoanFactor(){return window._settings?.loanFactor||2;}
+function getMaxW(){return window._settings?.maxWithdrawals||2;}
+
+// ── SCREENS ────────────────────────────────────────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function goToSplash(){stopScan();window._currentStudent=null;currentPin='';transactions=[];showScreen('screen-splash');}
+function selectRole(){showScreen('screen-login');}
+
+// ── LOGIN ──────────────────────────────────────────────────────────────────
+function np(v){
+  if(v==='DEL') currentPin=currentPin.slice(0,-1);
+  else if(currentPin.length<4) currentPin+=v;
+  for(let i=0;i<4;i++) document.getElementById('dot-'+i).classList.toggle('filled',i<currentPin.length);
+  document.getElementById('login-error').textContent='';
+  if(currentPin.length===4) setTimeout(tryLogin,200);
+}
+function tryLogin(){
+  const s=window._allStudents.find(s=>s.pin===currentPin);
+  if(s){
+    window._currentStudent=s;transactions=[];
+    document.getElementById('greeting-sub').textContent=s.firstname+' '+s.class;
+    document.getElementById('card-holder').textContent=(s.firstname+' '+s.lastname).toUpperCase();
+    document.getElementById('card-number').textContent='•••• '+s.pin;
+    refreshAllDisplays();
+    refreshGoalSelect();
+    loadTransactions(s.fbKey);
+    checkQuizStatus();
+    renderLoan();
+    switchTab('bank',document.querySelector('.nav-item'));
+    showScreen('screen-app');
+  } else {
+    document.getElementById('login-error').textContent='❌ Feil PIN-kode!';
+  }
+  currentPin='';
+  for(let i=0;i<4;i++) document.getElementById('dot-'+i).classList.remove('filled');
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function switchTab(t,btn){
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ── DISPLAY ────────────────────────────────────────────────────────────────
+function refreshAllDisplays(){
+  const s=window._currentStudent;if(!s)return;
+  const bruk=s.balance||0,spare=s.savings||0,fl=s.fund_low||0,fh=s.fund_high||0;
+  const total=bruk+spare+fl+fh;
+  document.getElementById('bal-bruk').textContent=bruk;
+  document.getElementById('bal-spare').textContent=spare;
+  document.getElementById('bal-fond').textContent=fl+fh;
+  document.getElementById('top-total').textContent=total+'🪙';
+  document.getElementById('spare-main-val').textContent=spare;
+  const rate=Math.round(getSavingsRate()*100);
+  document.getElementById('spare-rate-sub').textContent=`${rate}% ukentlig rente · maks ${getMaxW()} uttak/uke`;
+  document.getElementById('spare-info-box').textContent=`💡 Sparekonto gir ${rate}% rente ukentlig (utbetales mandag). Maks ${getMaxW()} uttak per uke.`;
+  document.getElementById('fond-tax-pct').textContent=Math.round(getFundTax()*100);
+  const usedW=s.withdrawalsThisWeek||0;
+  const warnEl=document.getElementById('spare-withdrawal-warn');
+  if(warnEl)warnEl.style.display=usedW>=getMaxW()?'block':'none';
+  const wBtn=document.getElementById('spare-withdraw-btn');
+  if(wBtn)wBtn.disabled=usedW>=getMaxW();
+  const mini=document.getElementById('mini-loan');
+  if(mini)mini.textContent=(s.loan||0)+' 🪙';
+}
+
+// ── GOAL SELECT ────────────────────────────────────────────────────────────
+function refreshGoalSelect(){
+  const sel=document.getElementById('goal-selector');if(!sel)return;
+  const s=window._currentStudent;
+  sel.innerHTML='<option value="">Fordeles likt mellom aktive mål</option>'+(window._classGoals||[]).map(g=>`<option value="${g.fbKey}">${g.emoji||'🏦'} ${g.name}</option>`).join('');
+  if(s?.preferredGoal) sel.value=s.preferredGoal;
+  const wrap=document.getElementById('goal-select-wrap');
+  if(wrap)wrap.style.display=(window._classGoals?.length)?'block':'none';
+}
+async function saveGoalChoice(){
+  const s=window._currentStudent;if(!s)return;
+  const v=document.getElementById('goal-selector').value;
+  await window._update(fbRef('students/'+s.fbKey),{preferredGoal:v||null});
+  window._currentStudent.preferredGoal=v||null;
+}
+async function distributeToGoals(amount){
+  if(!amount||!window._classGoals?.length)return;
+  const pref=window._currentStudent?.preferredGoal;
+  const active=window._classGoals.filter(g=>!g.completed);if(!active.length)return;
+  const targets=pref?active.filter(g=>g.fbKey===pref):active;
+  const perGoal=Math.floor(amount/(targets.length||active.length));
+  const upd={};
+  (targets.length?targets:active).forEach(g=>{
+    const ns=(g.saved||0)+perGoal;
+    upd['classGoals/'+g.fbKey+'/saved']=ns;
+    if(ns>=g.target)upd['classGoals/'+g.fbKey+'/completed']=true;
+  });
+  await window._update(fbRef('/'),upd);
+}
+
+// ── TRANSACTIONS ───────────────────────────────────────────────────────────
+function fmtDate(ts){const d=new Date(ts),now=new Date(),diff=now-d;if(diff<60000)return 'Nå nettopp';if(diff<3600000)return Math.floor(diff/60000)+' min siden';if(diff<86400000)return 'I dag '+d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});if(diff<172800000)return 'I går';return d.toLocaleDateString('no',{day:'numeric',month:'short'});}
+async function saveTx(sk,type,icon,desc,amount){if(!window._push||!window._set)return;await window._set(window._push(fbRef('transactions/'+sk)),{type,icon,desc,amount,ts:Date.now()});}
+async function loadTransactions(sk){
+  if(!window._get)return;
+  try{const snap=await window._get(fbRef('transactions/'+sk));transactions=snap.val()?Object.values(snap.val()).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,30):[];renderTransactions();}catch(e){}
+}
+function renderTransactions(){
+  const el=document.getElementById('transaction-list');if(!el)return;
+  const all=transactions.slice(0,15);
+  if(!all.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700">Ingen transaksjoner ennå</div></div>';return;}
+  el.innerHTML=all.map(t=>`<div class="tx-item"><div class="tx-icon ${t.type}">${t.icon}</div><div class="tx-desc"><div class="tx-name">${t.desc}</div><div class="tx-date">${fmtDate(t.ts||0)}</div></div><div class="tx-amount ${t.type}">${t.amount>0?'+':''}${t.amount} 🪙</div></div>`).join('');
+  // spare history
+  const spEl=document.getElementById('spare-tx-list');if(!spEl)return;
+  const spareTx=transactions.filter(t=>t.desc?.toLowerCase().includes('spare'));
+  spEl.innerHTML=spareTx.length?spareTx.slice(0,8).map(t=>`<div class="tx-item"><div class="tx-icon ${t.type}">${t.icon}</div><div class="tx-desc"><div class="tx-name">${t.desc}</div><div class="tx-date">${fmtDate(t.ts||0)}</div></div><div class="tx-amount ${t.type}">${t.amount>0?'+':''}${t.amount} 🪙</div></div>`).join(''):'<div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen sparehistorikk</div></div>';
+}
+
+// ── TRANSFERS ──────────────────────────────────────────────────────────────
+function openTransfer(type){
+  const s=window._currentStudent;if(!s)return;
+  const configs={
+    'bruk-til-spare':{title:'Sett inn på sparekonto',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
+      if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
+      const upd={balance:(s.balance||0)-amt,savings:(s.savings||0)+amt};
+      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await saveTx(s.fbKey,'expense','💰',`Overført til sparekonto`,-amt);
+      await saveTx(s.fbKey,'income','💰',`Inn på sparekonto`,amt);
+      transactions.unshift({type:'income',icon:'💰',desc:'Inn på sparekonto',amount:amt,ts:Date.now()});
+      refreshAllDisplays();renderTransactions();showSuccess('💰','Overført!',`+${amt} 🪙 sparekonto`,`Brukskonto: ${window._currentStudent.balance}🪙`);}},
+    'spare-til-bruk':{title:'Ta ut fra sparekonto',desc:`Sparekonto: 🪙 ${s.savings||0} · ${getMaxW()-(s.withdrawalsThisWeek||0)} uttak igjen denne uken`,cb:async(amt)=>{
+      if(amt>(s.savings||0)){alert('Ikke nok på sparekonto.');return;}
+      const usedW=s.withdrawalsThisWeek||0;if(usedW>=getMaxW()){alert(`Maks ${getMaxW()} uttak per uke. Prøv igjen neste uke.`);return;}
+      const upd={balance:(s.balance||0)+amt,savings:(s.savings||0)-amt,withdrawalsThisWeek:usedW+1};
+      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await saveTx(s.fbKey,'income','💰',`Uttak fra sparekonto`,amt);
+      transactions.unshift({type:'income',icon:'💰',desc:'Uttak fra sparekonto',amount:amt,ts:Date.now()});
+      refreshAllDisplays();renderTransactions();showSuccess('💰','Tatt ut!',`+${amt} 🪙 brukskonto`,`Sparekonto: ${window._currentStudent.savings}🪙`);}},
+    'bruk-til-fond-low':{title:'Sett inn – Fond lav risiko',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
+      if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
+      const upd={balance:(s.balance||0)-amt,fund_low:(s.fund_low||0)+amt};
+      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await saveTx(s.fbKey,'expense','📊',`Inn i fond (lav risiko)`,-amt);
+      transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond lav risiko',amount:-amt,ts:Date.now()});
+      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Investert!',`${amt} 🪙 i fond`,``);}},
+    'fond-low-til-bruk':{title:'Ta ut – Fond lav risiko',desc:`Fond lav risiko: 🪙 ${s.fund_low||0} · 10% skatt på gevinst`,cb:async(amt)=>{
+      if(amt>(s.fund_low||0)){alert('Ikke nok i fond.');return;}
+      const hist=Object.values(window._fundHistory||{}).sort((a,b)=>a.ts-b.ts);
+      const initRate=hist.length?hist[0].low||100:100;const curRate=hist.length?hist[hist.length-1].low||100:100;
+      const gain=Math.max(0,Math.round(amt*(curRate-initRate)/initRate));
+      const tax=Math.round(gain*getFundTax());const net=amt-tax;
+      const upd={balance:(s.balance||0)+net,fund_low:(s.fund_low||0)-amt};
+      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await saveTx(s.fbKey,'income','📊',`Uttak fond lav risiko (${tax}🪙 fondskatt)`,net);
+      transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond lav (skatt: ${tax}🪙)`,amount:net,ts:Date.now()});
+      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt betalt: ${tax}🪙`);}},
+    'bruk-til-fond-high':{title:'Sett inn – Fond høy risiko',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
+      if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
+      const upd={balance:(s.balance||0)-amt,fund_high:(s.fund_high||0)+amt};
+      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await saveTx(s.fbKey,'expense','📊',`Inn i fond (høy risiko)`,-amt);
+      transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond høy risiko',amount:-amt,ts:Date.now()});
+      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Investert!',`${amt} 🪙 i fond`,``);}},
+    'fond-high-til-bruk':{title:'Ta ut – Fond høy risiko',desc:`Fond høy risiko: 🪙 ${s.fund_high||0} · 10% skatt på gevinst`,cb:async(amt)=>{
+      if(amt>(s.fund_high||0)){alert('Ikke nok i fond.');return;}
+      const hist=Object.values(window._fundHistory||{}).sort((a,b)=>a.ts-b.ts);
+      const initRate=hist.length?hist[0].high||100:100;const curRate=hist.length?hist[hist.length-1].high||100:100;
+      const gain=Math.max(0,Math.round(amt*(curRate-initRate)/initRate));
+      const tax=Math.round(gain*getFundTax());const net=amt-tax;
+      const upd={balance:(s.balance||0)+net,fund_high:(s.fund_high||0)-amt};
+      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await saveTx(s.fbKey,'income','📊',`Uttak fond høy risiko (${tax}🪙 fondskatt)`,net);
+      transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond høy (skatt: ${tax}🪙)`,amount:net,ts:Date.now()});
+      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt betalt: ${tax}🪙`);}},
+  };
+  const cfg=configs[type];if(!cfg)return;
+  showInputSheet(cfg.title,cfg.desc,cfg.cb);
+}
+function renderSpareTab(){refreshAllDisplays();renderTransactions();}
+
+// ── FOND ───────────────────────────────────────────────────────────────────
+function renderFond(){
+  const s=window._currentStudent;if(!s)return;
+  const hist=window._fundHistory||{};
+  const days=Object.keys(hist).sort();
+  const last=days.length?hist[days[days.length-1]]:{low:100,high:100};
+  const first=days.length?hist[days[0]]:{low:100,high:100};
+  const low=s.fund_low||0,high=s.fund_high||0;
+  const lowChange=Math.round((last.low-first.low)/first.low*100);
+  const highChange=Math.round((last.high-first.high)/first.high*100);
+  const lowValChange=low>0?Math.round(low*(last.low-first.low)/first.low):0;
+  const highValChange=high>0?Math.round(high*(last.high-first.high)/first.high):0;
+  document.getElementById('fond-cards').innerHTML=`
+    <div class="fond-card low">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div class="fond-title">📉 Fond lav risiko</div><div class="fond-risk">±${window._settings?.fundLowMax||5}% daglig variasjon</div></div>
+        <div style="text-align:right;position:relative;z-index:1"><div style="font-family:'Fredoka One',cursive;font-size:.85rem;color:rgba(255,255,255,.7)">Kurs</div><div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:#FAC775">${last.low?.toFixed(2)||100}</div></div>
+      </div>
+      <div class="fond-value">🪙 ${low}</div>
+      <div class="fond-change" style="color:${lowValChange>=0?'#86efac':'#fca5a5'}">${lowValChange>=0?'📈 Gevinst':'📉 Tap'}: ${lowValChange>=0?'+':''}${lowValChange} 🪙 (${lowChange>=0?'+':''}${lowChange}%)</div>
+    </div>
+    <div class="fond-card high">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div class="fond-title">📈 Fond høy risiko</div><div class="fond-risk">±${window._settings?.fundHighMax||10}% daglig variasjon</div></div>
+        <div style="text-align:right;position:relative;z-index:1"><div style="font-family:'Fredoka One',cursive;font-size:.85rem;color:rgba(255,255,255,.7)">Kurs</div><div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:#FAC775">${last.high?.toFixed(2)||100}</div></div>
+      </div>
+      <div class="fond-value">🪙 ${high}</div>
+      <div class="fond-change" style="color:${highValChange>=0?'#86efac':'#fca5a5'}">${highValChange>=0?'📈 Gevinst':'📉 Tap'}: ${highValChange>=0?'+':''}${highValChange} 🪙 (${highChange>=0?'+':''}${highChange}%)</div>
+    </div>`;
+  renderFondChart(hist,days);
+}
+function renderFondChart(hist,days){
+  const recent=days.slice(-14);
+  const labels=recent.map(d=>d.slice(5));
+  const lowData=recent.map(d=>hist[d]?.low||100);
+  const highData=recent.map(d=>hist[d]?.high||100);
+  if(_fondChart){_fondChart.destroy();_fondChart=null;}
+  const ctx=document.getElementById('fond-chart');if(!ctx)return;
+  _fondChart=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'Lav risiko',data:lowData,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',tension:.3,borderWidth:2,pointRadius:3},
+    {label:'Høy risiko',data:highData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.1)',tension:.3,borderWidth:2,pointRadius:3}
+  ]},options:{responsive:true,plugins:{legend:{labels:{font:{family:'Nunito',size:11},boxWidth:12}}},scales:{y:{beginAtZero:false,ticks:{font:{family:'Nunito',size:10}}},x:{ticks:{font:{family:'Nunito',size:10}}}}}});
+}
+
+// ── LOAN ───────────────────────────────────────────────────────────────────
+function renderLoan(){
+  const s=window._currentStudent;if(!s)return;
+  const el=document.getElementById('loan-section');if(!el)return;
+  const loan=s.loan||0;const rate=getLoanRate();const factor=getLoanFactor();
+  if(loan>0){
+    const interest=Math.ceil(loan*rate);const total=loan+interest;
+    el.innerHTML=`<div class="loan-card loan-active"><div style="font-weight:800;margin-bottom:.4rem">📉 Aktivt lån</div><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:var(--coral)">🪙 ${loan}</div><div style="font-size:.82rem;color:var(--coral);font-weight:700;margin-top:4px">Rente (${Math.round(rate*100)}%): 🪙 ${interest} · Total: 🪙 ${total}</div></div>
+    <div class="info-box">⚠️ Du skylder 🪙 ${total} totalt (lån + rente). Betal tilbake ASAP!</div>
+    <button class="big-btn bb-coral" onclick="repayLoan()">💳 Betal tilbake 🪙 ${total}</button>`;
+  } else {
+    const maxLoan=Math.max(50,Math.floor((s.balance||0)*factor));
+    el.innerHTML=`<div class="loan-card loan-none"><div style="font-weight:800;margin-bottom:.3rem">✅ Ingen aktive lån</div><div style="font-size:.85rem;color:var(--teal-dark);font-weight:700">Brukskonto: 🪙 ${s.balance||0}</div></div>
+    <div class="info-box">⚠️ Lån koster penger! ${Math.round(rate*100)}% rente betales ved tilbakebetaling. Maks lån: 🪙 ${maxLoan} (${factor}× brukskonto).</div>
+    <div class="card-block"><div style="font-weight:800;margin-bottom:.6rem">Lånevilkår</div>
+    <div style="font-size:.85rem;color:var(--muted);line-height:1.8">• Maks: 🪙 ${maxLoan}<br>• Rente: ${Math.round(rate*100)}%<br>• Betales i ett beløp<br>• Bare ett lån av gangen</div></div>
+    <button class="big-btn bb-blue" onclick="takeLoan(${maxLoan})">📋 Ta opp lån</button>`;
+  }
+}
+function takeLoan(max){
+  showInputSheet('Ta opp lån',`Maks 🪙 ${max} · Rente: ${Math.round(getLoanRate()*100)}%`,async(amt)=>{
+    if(amt>max){alert(`Maks lån er 🪙 ${max}.`);return;}
+    const s=window._currentStudent;const newBal=(s.balance||0)+amt;
+    await window._update(fbRef('students/'+s.fbKey),{balance:newBal,loan:amt});
+    window._currentStudent.balance=newBal;window._currentStudent.loan=amt;
+    await saveTx(s.fbKey,'income','📋','Lån opptatt',amt);
+    transactions.unshift({type:'income',icon:'📋',desc:'Lån opptatt',amount:amt,ts:Date.now()});
+    refreshAllDisplays();renderTransactions();renderLoan();showSuccess('💰','Lån innvilget!',`+${amt} 🪙`,'Husk å betale tilbake med renter!');
+  });
+}
+async function repayLoan(){
+  const s=window._currentStudent;if(!s)return;const loan=s.loan||0;if(!loan)return;
+  const interest=Math.ceil(loan*getLoanRate());const total=loan+interest;
+  if((s.balance||0)<total){alert(`Du trenger 🪙 ${total}. Du har 🪙 ${s.balance||0}.`);return;}
+  if(!confirm(`Betal tilbake 🪙 ${total} (lån + ${Math.round(getLoanRate()*100)}% rente)?`))return;
+  const newBal=(s.balance||0)-total;
+  await window._update(fbRef('students/'+s.fbKey),{balance:newBal,loan:0});
+  window._currentStudent.balance=newBal;window._currentStudent.loan=0;
+  await saveTx(s.fbKey,'expense','📋',`Lån nedbetalt (rente: ${interest}🪙)`,-total);
+  transactions.unshift({type:'expense',icon:'📋',desc:`Lån nedbetalt (rente: ${interest}🪙)`,amount:-total,ts:Date.now()});
+  refreshAllDisplays();renderTransactions();renderLoan();showSuccess('✅','Nedbetalt!',`-${total} 🪙`,`Rente betalt: ${interest}🪙`);
+}
+
+// ── CLASS GOALS ────────────────────────────────────────────────────────────
+function renderClassGoalsTab(){
+  const el=document.getElementById('class-goals-list');if(!el)return;
+  if(!window._classGoals?.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🏦</div><div style="font-weight:700">Ingen aktive sparemål</div><div style="font-size:.85rem">Læreren oppretter klassens sparemål</div></div>';return;}
+  el.innerHTML=window._classGoals.map(g=>{const pct=Math.min(100,Math.round((g.saved||0)/g.target*100));return`<div class="class-goal-card"><div class="cg-header"><div class="cg-emoji">${g.emoji||'🏦'}</div><div><div class="cg-name">${g.name}</div><div class="cg-target">Mål: 🪙 ${g.target}${g.desc?` · ${g.desc}`:''}</div></div></div><div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div><div class="prog-meta"><span>🪙 ${g.saved||0} spart</span><span>${pct}%</span><span>🪙 ${Math.max(0,g.target-(g.saved||0))} igjen</span></div></div>`;}).join('');
+}
+
+// ── JOBS ───────────────────────────────────────────────────────────────────
+function renderJobs(){
+  const el=document.getElementById('jobs-list-el');if(!el)return;
+  if(!window._jobs?.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag tilgjengelig</div></div>';return;}
+  const tax=getTax();
+  el.innerHTML=window._jobs.map(j=>{const net=Math.floor(j.pay*(1-tax));return`<div class="job-card-el"><div class="job-emoji-el">${j.emoji||'💼'}</div><div><div class="job-title-el">${j.title}</div><div class="job-desc-el">${j.desc||''}${j.deadline?` · Frist: ${j.deadline}`:''}</div><div class="job-pay-el">Brutto 🪙 ${j.pay} · netto 🪙 ${net}</div></div></div>`;}).join('');
+}
+
+// ── CAMERA / QR ────────────────────────────────────────────────────────────
+function startScan(mode){
+  scanMode=mode;
+  document.getElementById('scanner-title').textContent=mode==='payment'?'💳 Scan betalings-QR':'⭐ Scan belønnings-QR';
+  document.getElementById('scanner-hint').textContent=mode==='payment'?'Hold kassens QR innenfor rammen':'Hold belønnings-QR innenfor rammen';
+  document.getElementById('scanner-overlay').classList.add('open');
+  initCamera();
+}
+async function initCamera(){
+  if(scanActive)return;scanActive=true;
+  const video=document.getElementById('scanner-video');
+  try{const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});video.srcObject=stream;video.setAttribute('playsinline',true);await video.play();setTimeout(()=>{if(scanActive)requestAnimationFrame(scanFrame);},300);}
+  catch(e){document.getElementById('scanner-hint').textContent='⚠️ Kameratilgang nektet';scanActive=false;}
+}
+function scanFrame(){
+  if(!scanActive)return;const video=document.getElementById('scanner-video');
+  if(!video||video.readyState<2||video.videoWidth===0){requestAnimationFrame(scanFrame);return;}
+  if(!_scanCanvas){_scanCanvas=document.createElement('canvas');_scanCtx=_scanCanvas.getContext('2d',{willReadFrequently:true});}
+  _scanCanvas.width=video.videoWidth;_scanCanvas.height=video.videoHeight;_scanCtx.drawImage(video,0,0);
+  if('BarcodeDetector'in window){if(!window._bd)window._bd=new BarcodeDetector({formats:['qr_code']});window._bd.detect(_scanCanvas).then(c=>{if(!scanActive)return;if(c.length>0)handleScan(c[0].rawValue);else requestAnimationFrame(scanFrame);}).catch(()=>tryJsQR());return;}
+  tryJsQR();
+}
+function tryJsQR(){
+  if(!scanActive)return;if(!window.jsQR){setTimeout(()=>{if(scanActive)requestAnimationFrame(scanFrame);},100);return;}
+  try{const img=_scanCtx.getImageData(0,0,_scanCanvas.width,_scanCanvas.height);const c=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});if(c)handleScan(c.data);else requestAnimationFrame(scanFrame);}catch(e){requestAnimationFrame(scanFrame);}
+}
+function handleScan(text){
+  if(!scanActive)return;stopScan();
+  try{
+    const d=JSON.parse(text);
+    if(scanMode==='payment'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
+    else if(scanMode==='reward'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc);
+    else if(scanMode==='reward'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
+    else showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');
+  }catch(e){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');}
+}
+function stopScan(){
+  scanActive=false;_scanCanvas=null;_scanCtx=null;
+  const v=document.getElementById('scanner-video');
+  if(v?.srcObject){v.srcObject.getTracks().forEach(t=>t.stop());v.srcObject=null;}
+  document.getElementById('scanner-overlay').classList.remove('open');
+}
+
+// ── PIN CONFIRM ────────────────────────────────────────────────────────────
+function openPinConfirm(amount){
+  confirmPin='';document.getElementById('pin-overlay-amount').textContent=amount+' 🪙';
+  document.getElementById('pin-overlay-error').textContent='';
+  for(let i=0;i<4;i++)document.getElementById('pdot-'+i).classList.remove('filled');
+  document.getElementById('pin-overlay').classList.add('open');
+}
+function cancelPinConfirm(){document.getElementById('pin-overlay').classList.remove('open');confirmPin='';}
+function pcp(v){
+  if(v==='DEL')confirmPin=confirmPin.slice(0,-1);else if(confirmPin.length<4)confirmPin+=v;
+  for(let i=0;i<4;i++)document.getElementById('pdot-'+i).classList.toggle('filled',i<confirmPin.length);
+  document.getElementById('pin-overlay-error').textContent='';
+  if(confirmPin.length===4)setTimeout(checkPin,150);
+}
+function checkPin(){
+  if(confirmPin===window._currentStudent?.pin){document.getElementById('pin-overlay').classList.remove('open');confirmPin='';doPayment(pendingPayAmount);}
+  else{document.getElementById('pin-overlay-error').textContent='❌ Feil PIN';confirmPin='';for(let i=0;i<4;i++)document.getElementById('pdot-'+i).classList.remove('filled');}
+}
+
+// ── PAYMENTS & REWARDS ─────────────────────────────────────────────────────
+async function doPayment(amount){
+  const s=window._currentStudent;if(!s)return;
+  if((s.balance||0)<amount){showSuccess('😕','Ikke nok mynter!','',`Saldo: ${s.balance||0}🪙`);return;}
+  const newBal=(s.balance||0)-amount;
+  await window._update(fbRef('students/'+s.fbKey),{balance:newBal});
+  window._currentStudent.balance=newBal;
+  const tx={type:'expense',icon:'🛒',desc:'Betaling i kassen',amount:-amount,ts:Date.now()};
+  await saveTx(s.fbKey,'expense','🛒','Betaling i kassen',-amount);
+  transactions.unshift(tx);refreshAllDisplays();renderTransactions();
+  showSuccess('✅','Betalt!',`-${amount} 🪙`,`Saldo: ${newBal}🪙`);
+}
+async function doReward(amount,desc){
+  const s=window._currentStudent;if(!s)return;
+  const tax=getTax();const taxAmt=Math.floor(amount*tax);const net=amount-taxAmt;
+  const newBal=(s.balance||0)+net;
+  await window._update(fbRef('students/'+s.fbKey),{balance:newBal});
+  window._currentStudent.balance=newBal;
+  await distributeToGoals(taxAmt);
+  const tx={type:'income',icon:'⭐',desc:desc||`Belønning skannet (${taxAmt}🪙 til sparemål)`,amount:net,ts:Date.now()};
+  await saveTx(s.fbKey,'income','⭐',tx.desc,net);
+  transactions.unshift(tx);refreshAllDisplays();renderTransactions();
+  showSuccess('🎉','Belønning!',`+${net} 🪙`,`${taxAmt}🪙 til klassens sparemål`);
+}
+async function doJobReward(grossPay,title){
+  const s=window._currentStudent;if(!s)return;
+  const tax=getTax();const taxAmt=Math.floor(grossPay*tax);const net=grossPay-taxAmt;
+  const newBal=(s.balance||0)+net;
+  await window._update(fbRef('students/'+s.fbKey),{balance:newBal});
+  window._currentStudent.balance=newBal;
+  await distributeToGoals(taxAmt);
+  const tx={type:'income',icon:'💼',desc:`Oppdrag: ${title||'Fullført'} (netto etter skatt)`,amount:net,ts:Date.now()};
+  await saveTx(s.fbKey,'income','💼',tx.desc,net);
+  transactions.unshift(tx);refreshAllDisplays();renderTransactions();
+  showSuccess('💼','Oppdrag fullført!',`+${net} 🪙`,`${taxAmt}🪙 til klassens sparemål`);
+}
+
+// ── SHOP 5-7 ──────────────────────────────────────────────────────────────
+window._shop57 = [];
+let shop57ElFilter = '';
+
+function filterShop57El(v){ shop57ElFilter=v.toLowerCase(); renderShop57(); }
+
+function renderShop57(){
+  const el = document.getElementById('shop57-el-list');
+  if(!el) return;
+  const items = (window._shop57||[]).filter(x =>
+    !shop57ElFilter || x.name.toLowerCase().includes(shop57ElFilter) || x.category?.toLowerCase().includes(shop57ElFilter)
+  );
+  if(!items.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🛒</div><div style="font-weight:700">Ingen varer ennå</div></div>';
+    return;
+  }
+  // Group by category
+  const cats = {};
+  items.forEach(x=>{ if(!cats[x.category])cats[x.category]=[]; cats[x.category].push(x); });
+  el.innerHTML = Object.entries(cats).map(([cat,vars])=>`
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">${cat}</div>
+      ${vars.map(x=>`
+        <div style="display:flex;align-items:center;gap:12px;background:white;padding:12px;border-radius:12px;margin-bottom:6px;border:1px solid var(--border)">
+          <span style="font-size:1.8rem;flex-shrink:0">${x.emoji}</span>
+          <span style="font-weight:700;flex:1;font-size:.92rem">${x.name}</span>
+          <span style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);background:var(--amber-light);padding:3px 10px;border-radius:20px;font-weight:800">🪙 ${x.price}</span>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+// ── QUIZ ───────────────────────────────────────────────────────────────────
+const QUIZ_POOL=[
+  {q:'Hva er rente?',opts:['Penger du får gratis','En kostnad for å låne penger','Et annet ord for lønn','En type skatt'],a:1},
+  {q:'Du låner 200🪙 med 10% rente. Hva betaler du tilbake totalt?',opts:['200🪙','210🪙','220🪙','190🪙'],a:2},
+  {q:'Hva betyr budsjett?',opts:['En type bank','En plan for inntekter og utgifter','Penger du har i lomma','En type rente'],a:1},
+  {q:'Hva er inflasjon?',opts:['At penger vokser','At priser stiger over tid','At renter synker','At lønn alltid øker'],a:1},
+  {q:'Inntekt minus skatt kalles:',opts:['Bruttolønn','Nettolønn','Kapital','Rente'],a:1},
+  {q:'Hva er en sparekonto?',opts:['En konto med høy risiko','En konto som vokser med rente','En gjeldskonto','Et lån fra banken'],a:1},
+  {q:'Hva skjer om du ikke betaler tilbake et lån?',opts:['Ingenting','Du får mer penger','Gjelden og renter vokser','Banken glemmer det'],a:2},
+  {q:'Hva er forskjell på fast og variabel utgift?',opts:['Ingen forskjell','Fast er likt hver måned, variabel endrer seg','Fast er dyrest','Variabel er billigst'],a:1},
+  {q:'Du tjener 1000🪙 og betaler 22% skatt. Hva sitter du igjen med?',opts:['880🪙','780🪙','800🪙','780🪙'],a:1},
+  {q:'Hva er en fordel med å spare tidlig?',opts:['Pengene kan brukes med en gang','Renter legges til over tid og pengene vokser mer','Det er ikke noen fordel','Du mister pengene'],a:1},
+  {q:'Hva er risiko i investering?',opts:['Du tjener alltid penger','Du kan både tjene og tape','Det er ingen risiko','Penger vokser alltid'],a:1},
+  {q:'Hva menes med diversifisering?',opts:['Investere alt ett sted','Spre investeringene for å redusere risiko','Ta opp så mye lån som mulig','Spare uten rente'],a:1},
+  {q:'Hva er et fond?',opts:['Et lån','En samling av mange investeringer','En type skatt','Et sparemål'],a:1},
+  {q:'Hvorfor er det lurt å lage et budsjett?',opts:['Det er ikke lurt','For å ha oversikt og unngå å bruke mer enn du har','Bare rike lager budsjett','For å spare tid'],a:1},
+  {q:'Hva betyr det å ha gjeld?',opts:['Du har mye penger','Du skylder penger til noen','Du er rik','Du har spart mye'],a:1},
+  {q:'Hva er skatt?',opts:['Penger staten gir deg','Penger du betaler til staten for å finansiere fellesgoder','En type gave','Et lån'],a:1},
+  {q:'Du setter 500🪙 i sparebank med 2% rente per uke. Hva har du etter én uke?',opts:['502🪙','510🪙','490🪙','520🪙'],a:1},
+  {q:'Hva kalles det når en aksje stiger i verdi?',opts:['Tap','Kursfall','Kursøkning','Gjeld'],a:2},
+  {q:'Hva er en brukskonto?',opts:['En konto du ikke kan bruke','En dagligkonto for inn og utbetalinger','En investeringskonto','En gjeldskonto'],a:1},
+  {q:'Hva menes med "netto" lønn?',opts:['Lønn før skatt','Lønn etter skatt','Lønn + bonus','Lønn + renter'],a:1},
+  {q:'Du har 300🪙 og bruker 40% på mat. Hva er igjen?',opts:['120🪙','180🪙','140🪙','200🪙'],a:1},
+  {q:'Hva er fondsskatt?',opts:['Skatt du betaler for å opprette fond','Skatt på gevinst når du tar ut av fond','En avgift for å eie aksjer','Skatt på renter'],a:1},
+  {q:'Hva skjer med pengene dine om du ikke investerer dem?',opts:['De vokser av seg selv','De holder seg stabile','De kan miste kjøpekraft pga. inflasjon','De dobles'],a:2},
+  {q:'Hva er en fordel med høy risiko-investering?',opts:['Aldri tap','Mulighet for høyere gevinst','Garantert avkastning','Ingen skatt'],a:1},
+  {q:'Hva er en ulempe med høy risiko-investering?',opts:['Du tjener alltid mer','Mulighet for større tap','Pengene er alltid trygge','Du slipper skatt'],a:1},
+  {q:'Hva er meningen med klassens sparemål?',opts:['Å gi læreren penger','Å spare som klasse til noe alle kan glede seg over','Å betale skatt','Å kjøpe aksjer'],a:1},
+  {q:'Hva er renten på brukskontoen din?',opts:['10%','5%','2%','0%'],a:3},
+  {q:'Hvem bestemmer fondets kursendring?',opts:['Eleven selv','Banken','Læreren','Myntet'],a:2},
+  {q:'Du har 400🪙 og vil ta opp maks lån (2× saldo). Hva er maks lån?',opts:['400🪙','200🪙','800🪙','600🪙'],a:2},
+  {q:'Hva skjer med sparekontoen din på mandag?',opts:['Den nullstilles','Renter legges til','Den låses','Ingenting'],a:1},
+];
+function getWeekKey(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+3-(d.getDay()+6)%7);const w1=new Date(d.getFullYear(),0,4);return`${d.getFullYear()}-W${String(1+Math.round(((d-w1)/86400000-3+(w1.getDay()+6)%7)/7)).padStart(2,'0')}`;}
+function getWeekQs(){const seed=parseInt(getWeekKey().replace(/\D/g,''))*137;return[...QUIZ_POOL].sort((a,b)=>{const ha=(seed*(QUIZ_POOL.indexOf(a)+1)*1103515245)%1000;const hb=(seed*(QUIZ_POOL.indexOf(b)+1)*1103515245)%1000;return ha-hb;}).slice(0,5);}
+function checkQuizStatus(){
+  const s=window._currentStudent;if(!s)return;
+  const done=s.quizWeek===getWeekKey();
+  document.getElementById('quiz-badge').textContent=done?'✅ Fullført':'5 sp. · 20🪙 per svar';
+  document.getElementById('quiz-card-body').innerHTML=done
+    ?'<div style="text-align:center;padding:.3rem 0"><div style="font-size:1.6rem">🏆</div><div style="font-size:.8rem;font-weight:700;opacity:.85">Fullført! Ny quiz på mandag.</div></div>'
+    :'<div style="font-size:.8rem;opacity:.85;margin-bottom:.5rem">Test dine kunnskaper om økonomi!</div><button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>';
+}
+function startQuiz(){
+  const s=window._currentStudent;if(!s)return;
+  if(s.quizWeek===getWeekKey()){alert('Du har allerede tatt quizen!');return;}
+  quizQs=getWeekQs();quizIdx=0;quizOk=0;
+  document.getElementById('quiz-overlay').classList.add('open');showQuizQ();
+}
+function showQuizQ(){
+  const q=quizQs[quizIdx],tot=quizQs.length;
+  document.getElementById('quiz-q-num').textContent=`Spørsmål ${quizIdx+1} av ${tot}`;
+  document.getElementById('quiz-q-text').textContent=q.q;
+  document.getElementById('quiz-prog-bar').style.width=(quizIdx/tot*100)+'%';
+  document.getElementById('quiz-fb').className='quiz-fb';
+  document.getElementById('quiz-nxt').className='quiz-nxt';
+  quizAnswered=false;
+  document.getElementById('quiz-opts').innerHTML=q.opts.map((o,i)=>`<button class="quiz-opt" onclick="answerQ(${i})" id="qo-${i}">${o}</button>`).join('');
+}
+function answerQ(c){
+  if(quizAnswered)return;quizAnswered=true;
+  const q=quizQs[quizIdx],ok=c===q.a;if(ok)quizOk++;
+  q.opts.forEach((_,i)=>{const b=document.getElementById('qo-'+i);b.disabled=true;if(i===q.a)b.classList.add('correct');if(i===c&&!ok)b.classList.add('wrong');});
+  const fb=document.getElementById('quiz-fb');fb.textContent=ok?'✅ Riktig!':'❌ Riktig: '+q.opts[q.a];fb.className='quiz-fb show '+(ok?'ok':'no');
+  const nxt=document.getElementById('quiz-nxt');nxt.className='quiz-nxt show';nxt.textContent=quizIdx<quizQs.length-1?'Neste →':'Se resultatet 🏆';
+}
+async function nextQ(){quizIdx++;if(quizIdx<quizQs.length)showQuizQ();else await finishQuiz();}
+async function finishQuiz(){
+  document.getElementById('quiz-overlay').classList.remove('open');
+  const earned=quizOk*20;const s=window._currentStudent;
+  const newBal=(s.balance||0)+earned;
+  await window._update(fbRef('students/'+s.fbKey),{balance:newBal,quizWeek:getWeekKey()});
+  window._currentStudent.balance=newBal;window._currentStudent.quizWeek=getWeekKey();
+  refreshAllDisplays();
+  if(earned>0){const tx={type:'income',icon:'🧠',desc:`Quiz – ${quizOk}/5 riktige`,amount:earned,ts:Date.now()};await saveTx(s.fbKey,'income','🧠',tx.desc,earned);transactions.unshift(tx);renderTransactions();}
+  const pct=quizOk/quizQs.length;
+  document.getElementById('qr-emoji').textContent=pct===1?'🏆':pct>=.6?'🌟':'💪';
+  document.getElementById('qr-title').textContent=pct===1?'Perfekt!':pct>=.6?'Bra!':'Øv videre!';
+  document.getElementById('qr-score').textContent=`${quizOk} av ${quizQs.length} riktige`;
+  document.getElementById('qr-earned').textContent=earned>0?`+${earned} 🪙`:'0 🪙';
+  document.getElementById('quiz-result').classList.add('open');checkQuizStatus();
+}
+function closeQuiz(){document.getElementById('quiz-overlay').classList.remove('open');}
+function closeQuizResult(){document.getElementById('quiz-result').classList.remove('open');}
+
+// ── INPUT SHEET ────────────────────────────────────────────────────────────
+function showInputSheet(title,desc,cb){
+  document.getElementById('input-sheet-title').textContent=title;
+  document.getElementById('input-sheet-desc').textContent=desc;
+  document.getElementById('input-sheet-val').value='';
+  inputCb=cb;
+  document.getElementById('input-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('input-sheet-val').focus(),150);
+  document.getElementById('input-sheet-confirm').onclick=()=>{
+    const v=parseInt(document.getElementById('input-sheet-val').value)||0;
+    if(v<1){document.getElementById('input-sheet-val').style.borderColor='var(--coral)';return;}
+    document.getElementById('input-overlay').classList.remove('open');cb(v);
+  };
+}
+function closeInputSheet(){document.getElementById('input-overlay').classList.remove('open');inputCb=null;}
+
+// ── SUCCESS ────────────────────────────────────────────────────────────────
+function showSuccess(emoji,title,amount,text){
+  document.getElementById('suc-emoji').textContent=emoji;document.getElementById('suc-title').textContent=title;
+  document.getElementById('suc-amount').textContent=amount;document.getElementById('suc-text').textContent=text;
+  document.getElementById('success-overlay').classList.add('open');
+}
+</script>
+</body>
+</html>
