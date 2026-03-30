@@ -60,6 +60,13 @@
       renderShop57List();
     });
 
+    onValue(ref(db, 'customRewards57'), snap => {
+      window._customRewards57 = snap.val()
+        ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+        : [];
+      if (document.getElementById('page-qrkoder')?.classList.contains('active')) renderCustomRewards57();
+    });
+
     onValue(ref(db, 'classGoals'), snap => {
       window._classGoals = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
       if (document.getElementById('page-sparemaal')?.classList.contains('active')) renderClassGoalsPage();
@@ -577,20 +584,28 @@
   <div class="page-title">⬛ QR-belønningskoder</div>
   <div class="page-subtitle">Elevene scanner og får mynter (minus 20% skatt til klassens sparemål)</div>
   <div class="grid-3">
-    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><button class="btn btn-primary btn-sm" onclick="window.print()">🖨️</button></div>
-    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><button class="btn btn-amber btn-sm" onclick="window.print()">🖨️</button></div>
-    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#534AB7;">+100 🪙</div><div class="qr-wrap" id="qr-100"></div><button class="btn btn-purple btn-sm" onclick="window.print()">🖨️</button></div>
+    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><button class="btn btn-primary btn-sm" onclick="printSingleQR('qr-10','10 🪙')">🖨️ Skriv ut</button></div>
+    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><button class="btn btn-amber btn-sm" onclick="printSingleQR('qr-50','50 🪙')">🖨️ Skriv ut</button></div>
+    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#534AB7;">+100 🪙</div><div class="qr-wrap" id="qr-100"></div><button class="btn btn-purple btn-sm" onclick="printSingleQR('qr-100','100 🪙')">🖨️ Skriv ut</button></div>
   </div>
+
   <div class="card">
-    <div class="card-title">✏️ Egendefinert</div>
-    <div style="display:flex;gap:12px;align-items:flex-end;">
-      <div style="flex:1;" class="form-row"><label>Beløp</label><input type="number" id="custom-qr-amount" value="75" min="1" max="9999"></div>
-      <div style="flex:2;" class="form-row"><label>Beskrivelse</label><input type="text" id="custom-qr-desc" placeholder="f.eks. Prosjektoppgave"></div>
-      <button class="btn btn-primary" onclick="generateCustomQR()" style="margin-bottom:1rem;">Generer</button>
+    <div class="card-title">✏️ Opprett egendefinert belønning</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Beløp (mynter)</label><input type="number" id="custom-qr-amount" value="75" min="1" max="9999"></div>
+      <div class="form-row"><label>Beskrivelse</label><input type="text" id="custom-qr-desc" placeholder="f.eks. Prosjektoppgave"></div>
     </div>
-    <div style="display:flex;gap:2rem;align-items:center;margin-top:1rem;">
-      <div class="qr-wrap" id="qr-custom" style="display:none;"></div>
-      <div id="custom-qr-info" style="display:none;"></div>
+    <button class="btn btn-primary" onclick="addCustomReward57()">➕ Legg til belønning</button>
+    <div id="custom-reward-alert" style="margin-top:.75rem;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>📋 Egendefinerte belønninger</span>
+      <button class="btn btn-amber btn-sm" onclick="printAllCustomRewards57()">🖨️ Skriv ut alle</button>
+    </div>
+    <div id="custom-rewards-list">
+      <p style="color:var(--muted);font-size:.85rem;">Ingen egendefinerte belønninger ennå.</p>
     </div>
   </div>
 </div>
@@ -643,19 +658,6 @@
 </div><!-- /#app -->
 
 <!-- MODALS -->
-<div class="modal-overlay" id="modal-revoke-loan">
-  <div class="modal">
-    <div class="modal-title">🚫 Inndra lån</div>
-    <p id="modal-revoke-loan-text" style="color:var(--muted);margin-bottom:1rem;"></p>
-    <div style="background:var(--coral-light);border:1px solid var(--coral);border-radius:10px;padding:.85rem;font-size:.85rem;color:#7f1d1d;margin-bottom:1rem;">
-      ⚠️ Lånebeløpet trekkes direkte fra elevens brukskonto. Er brukskontoen for lav, settes den til 0.
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-revoke-loan')">Avbryt</button>
-      <button class="btn btn-coral" onclick="executeRevokeLoan()">🚫 Bekreft inndragelse</button>
-    </div>
-  </div>
-</div>
 <div class="modal-overlay" id="modal-saldo">
   <div class="modal">
     <div class="modal-title" id="modal-saldo-title">Juster saldo</div>
@@ -711,7 +713,7 @@
 // STATE
 // ════════════════════════════════════════════════════════════
 window._students = []; window._groups = []; window._jobs = [];
-window._shop57 = []; window._teachers = [];
+window._shop57 = []; window._teachers = []; window._customRewards57 = [];
 window._currentTeacher = null;
 
 let currentAction = null, currentStudentId = null, bulkAction = null;
@@ -888,7 +890,7 @@ function showPage(page) {
   document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-'  + page).classList.add('active');
-  if (page === 'qrkoder')  generateRewardQRCodes();
+  if (page === 'qrkoder')  { generateRewardQRCodes(); renderCustomRewards57(); }
   if (page === 'grupper')  renderGroupsPage();
   if (page === 'oppdrag')  refreshJobSelects();
   if (page === 'butikk57') renderShop57List();
@@ -1121,11 +1123,7 @@ function renderSaldoTable() {
       <td><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
       <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fl}</span></td>
       <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fh}</span></td>
-      <td>${loan > 0 ? `
-        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
-          <span class="badge badge-coral">📉 ${loan}</span>
-          <button class="btn btn-coral btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="confirmRevokeLoan('${s.fbKey}','${s.firstname} ${s.lastname}',${loan})">🚫 Inndra</button>
-        </div>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
+      <td>${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
       <td><div class="balance-actions">
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')" title="Legg til">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')" title="Trekk fra">➖</button>
@@ -1457,22 +1455,40 @@ function renderShop57List() {
 async function removeShop57(fbKey) { await window._remove(fbRef('shop57/' + fbKey)); }
 
 function showShopItemQR(fbKey) {
+  // Åpner alltid i popup-vindu – QRCode.js krever synlig DOM-element
   const item = window._shop57.find(x => x.fbKey === fbKey); if (!item) return;
-  // Open modal first so the element is visible (QRCode requires visible DOM node)
-  document.getElementById('modal-shop-qr').classList.add('open');
-  document.getElementById('modal-shop-qr-title').textContent = `${item.emoji} ${item.name}`;
-  document.getElementById('modal-shop-qr-desc').textContent  = `Pris: 🪙 ${item.price} · Eleven scanner med bankkortet`;
-  // Clear and render QR in next tick (ensures element is rendered + visible)
-  const box = document.getElementById('modal-shop-qr-box');
-  box.innerHTML = '';
-  setTimeout(() => {
-    try {
-      new QRCode(box, {
-        text: JSON.stringify({ type: 'purchase', fbKey: item.fbKey, name: item.name, emoji: item.emoji, price: item.price }),
-        width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
+  const payload = JSON.stringify({ type: 'purchase', fbKey: item.fbKey, name: item.name, emoji: item.emoji, price: item.price });
+  const win = window.open('', '_blank', 'width=420,height=520');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <style>
+      @media print{@page{size:A5 portrait;margin:6mm}}
+      body{font-family:'Nunito',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:.8rem;background:white;margin:0;padding:1.5rem;box-sizing:border-box;}
+      .logo{font-family:'Fredoka One',cursive;font-size:1.1rem;color:#085041;}
+      .emoji{font-size:3.5rem;line-height:1;}
+      .name{font-family:'Fredoka One',cursive;font-size:1.8rem;color:#085041;text-align:center;}
+      .price{background:#E1F5EE;color:#085041;font-weight:800;padding:6px 18px;border-radius:20px;font-size:1.3rem;}
+      #qrbox{padding:10px;border:2px solid #c8dfc8;border-radius:12px;background:white;}
+      .hint{font-size:.78rem;color:#5a7a5a;text-align:center;font-weight:700;}
+      .btn{margin-top:.5rem;background:#1D9E75;color:white;border:none;padding:10px 24px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;}
+    </style>
+  </head><body>
+    <div class="logo">🪙 Myntland Butikk</div>
+    <div class="emoji">${item.emoji}</div>
+    <div class="name">${item.name}</div>
+    <div class="price">🪙 ${item.price}</div>
+    <div id="qrbox"></div>
+    <div class="hint">Eleven scanner med bankkortet</div>
+    <button class="btn" onclick="window.print()">🖨️ Skriv ut</button>
+    <script>
+      new QRCode(document.getElementById('qrbox'),{
+        text:${JSON.stringify(payload)},
+        width:200,height:200,correctLevel:QRCode.CorrectLevel.M
       });
-    } catch(e) { box.innerHTML = '<p style="color:var(--coral);font-size:.82rem;">Kunne ikke generere QR</p>'; }
-  }, 50);
+    <\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1485,15 +1501,133 @@ function generateRewardQRCodes() {
   });
 }
 
-function generateCustomQR() {
-  const amount = parseInt(document.getElementById('custom-qr-amount').value) || 75;
-  const desc   = document.getElementById('custom-qr-desc').value || `+${amount} mynter`;
-  const el = document.getElementById('qr-custom');
-  el.innerHTML = ''; el.style.display = 'block';
-  try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount, desc }), width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M }); } catch(e) {}
-  const info = document.getElementById('custom-qr-info');
-  info.style.display = 'block';
-  info.innerHTML = `<div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal);">+${amount} 🪙</div><div style="font-size:.9rem;color:var(--muted);">${desc}</div>`;
+// ── Egendefinerte belønninger (57) ──────────────────────────────────────────
+async function addCustomReward57() {
+  const amount  = parseInt(document.getElementById('custom-qr-amount').value) || 0;
+  const desc    = document.getElementById('custom-qr-desc').value.trim();
+  const alertEl = document.getElementById('custom-reward-alert');
+  if (!amount || amount < 1) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et gyldig beløp.</div>'; return;
+  }
+  if (!ready()) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Firebase ikke klar.</div>'; return; }
+  await window._set(window._push(fbRef('customRewards57')), {
+    amount, desc: desc || `+${amount} mynter`, created: Date.now()
+  });
+  document.getElementById('custom-qr-amount').value = '75';
+  document.getElementById('custom-qr-desc').value   = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ Belønning på 🪙 ${amount} lagt til!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 2500);
+}
+
+function renderCustomRewards57() {
+  const el = document.getElementById('custom-rewards-list'); if (!el) return;
+  if (!window._customRewards57.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Ingen egendefinerte belønninger ennå.</p>';
+    return;
+  }
+  el.innerHTML = window._customRewards57.map(r => `
+    <div style="display:flex;align-items:center;gap:12px;padding:.9rem 1rem;background:var(--bg);border-radius:12px;margin-bottom:8px;">
+      <div style="width:36px;height:36px;background:var(--teal-light);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:.8rem;flex-shrink:0;">🪙${r.amount}</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:.9rem;">+${r.amount} 🪙</div>
+        <div style="font-size:.78rem;color:var(--muted);">${r.desc}</div>
+      </div>
+      <div id="mini-qr57-${r.fbKey}" style="width:60px;height:60px;flex-shrink:0;"></div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="btn btn-primary btn-sm" onclick="printCustomReward57('${r.fbKey}')">🖨️</button>
+        <button class="btn btn-coral btn-sm"   onclick="deleteCustomReward57('${r.fbKey}')">🗑️</button>
+      </div>
+    </div>`).join('');
+  // Render mini QRs – bruk popup-teknikken for inline via canvas-data
+  window._customRewards57.forEach(r => {
+    const el = document.getElementById('mini-qr57-' + r.fbKey);
+    if (el && !el.children.length) {
+      try {
+        new QRCode(el, {
+          text: JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }),
+          width: 60, height: 60, correctLevel: QRCode.CorrectLevel.L
+        });
+      } catch(e) {}
+    }
+  });
+}
+
+async function deleteCustomReward57(fbKey) {
+  if (!confirm('Slett denne belønningen?')) return;
+  await window._remove(fbRef('customRewards57/' + fbKey));
+}
+
+function printCustomReward57(fbKey) {
+  const r = window._customRewards57.find(x => x.fbKey === fbKey); if (!r) return;
+  _printRewardCards57([r]);
+}
+
+function printAllCustomRewards57() {
+  if (!window._customRewards57.length) { alert('Ingen belønninger å skrive ut.'); return; }
+  _printRewardCards57(window._customRewards57);
+}
+
+function printSingleQR(elId, label) {
+  const src = document.getElementById(elId); if (!src) return;
+  const img = src.querySelector('img') || src.querySelector('canvas');
+  if (!img) return;
+  const dataUrl = img.tagName === 'CANVAS' ? img.toDataURL() : img.src;
+  const win = window.open('', '_blank', 'width=600,height=500');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <style>@media print{@page{size:A5 portrait;margin:8mm}}body{font-family:'Nunito',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1rem;}
+    .label{font-family:'Fredoka One',cursive;font-size:2rem;color:#085041;}</style>
+  </head><body>
+    <div class="logo" style="font-family:'Fredoka One',cursive;font-size:1rem;color:#085041;">🪙 Myntland</div>
+    <div class="label">+${label}</div>
+    <img src="${dataUrl}" style="width:200px;height:200px;">
+    <script>setTimeout(()=>{window.focus();window.print();},300);<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+function _printRewardCards57(rewards) {
+  const payloads = rewards.map(r => JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }));
+  const cardsHTML = rewards.map((r, i) =>
+    `<div class="card">
+      <div class="logo">🪙 Myntland</div>
+      <div class="amount">+${r.amount} 🪙</div>
+      <div class="qr-wrap" id="pqr${i}"></div>
+      <div class="desc">${r.desc}</div>
+    </div>`
+  ).join('');
+  const win = window.open('', '_blank', 'width=800,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <style>
+      @media print{@page{size:A4 portrait;margin:0}}
+      body{margin:0;padding:8mm;font-family:'Nunito',sans-serif;background:white;}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
+      .card{border:1.5mm solid #1D9E75;border-radius:5mm;padding:7mm;display:flex;flex-direction:column;align-items:center;gap:4mm;page-break-inside:avoid;}
+      .logo{font-family:'Fredoka One',cursive;font-size:5mm;color:#085041;}
+      .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
+      .desc{font-size:3.5mm;color:#5a7a5a;text-align:center;font-weight:700;}
+      .qr-wrap{display:flex;justify-content:center;align-items:center;}
+    </style>
+  </head><body>
+    <div class="grid">${cardsHTML}</div>
+    <script>
+      var payloads=${JSON.stringify(payloads)};
+      function makeAll(){
+        var done=true;
+        for(var i=0;i<payloads.length;i++){
+          var el=document.getElementById('pqr'+i);
+          if(!el){done=false;continue;}
+          if(el.children.length>0)continue;
+          try{new QRCode(el,{text:payloads[i],width:130,height:130,correctLevel:QRCode.CorrectLevel.M});}catch(e){done=false;}
+        }
+        return done;
+      }
+      var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>40){clearInterval(poll);setTimeout(function(){window.focus();window.print();},400);}},150);
+    <\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1822,30 +1956,6 @@ async function checkAndPayWeeklySalary(db, ref, set, get, update) {
     await set(ref(db, 'salaryLastPaid'), today);
     console.log(`✅ Ukentlig lønn og sparerente utbetalt for ${allStudents.length} elever`);
   } catch(e) { console.log('Salary check skipped:', e.message); }
-}
-
-// ════════════════════════════════════════════════════════════
-// LÅN – INNDRAGELSE
-// ════════════════════════════════════════════════════════════
-let _revokeLoanStudentId = null;
-let _revokeLoanAmount = 0;
-
-function confirmRevokeLoan(fbKey, name, loanAmount) {
-  _revokeLoanStudentId = fbKey;
-  _revokeLoanAmount = loanAmount;
-  document.getElementById('modal-revoke-loan-text').textContent =
-    `Inndra lån på 🪙 ${loanAmount} fra ${name}? Beløpet trekkes fra brukskontoen.`;
-  document.getElementById('modal-revoke-loan').classList.add('open');
-}
-
-async function executeRevokeLoan() {
-  const s = window._students.find(x => x.fbKey === _revokeLoanStudentId);
-  if (!s) { closeModal('modal-revoke-loan'); return; }
-  const newBal = Math.max(0, (s.balance||0) - _revokeLoanAmount);
-  await window._update(fbRef('students57/' + _revokeLoanStudentId), { loan: 0, balance: newBal });
-  await logTx(_revokeLoanStudentId, 'expense', '🚫',
-    `Lån inndratt av lærer (🪙 ${_revokeLoanAmount} trukket fra brukskonto)`, -_revokeLoanAmount);
-  closeModal('modal-revoke-loan');
 }
 
 // ════════════════════════════════════════════════════════════
