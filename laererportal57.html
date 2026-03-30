@@ -30,14 +30,16 @@
 
   // ── Lyttere – startes etter innlogging ─────────────────────────────────────
   function startListeners() {
-    const UPPER = ['5A','5B','5C','6A','6B','6C','7A','7B','7C'];
+    // 1-4-klasser (fast liste) ekskluderes fra admin-visning
+    const LOWER = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C'];
 
     onValue(ref(db, 'students'), snap => {
       const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-      // Admin ser alle 5–7-klasser, lærer ser kun sin klasse (blant 5–7)
       if (window._currentTeacher?.role === 'admin') {
-        window._students = all.filter(s => UPPER.includes(s.class));
+        // Admin ser alle elever UNNTATT de som er i kjente 1-4-klasser
+        window._students = all.filter(s => !LOWER.includes(s.class));
       } else {
+        // Lærer ser kun sin egen klasse
         window._students = all.filter(s => s.class === window._currentTeacher?.class);
       }
       renderStudentTable(); renderSaldoTable(); updateStats();
@@ -820,7 +822,7 @@ async function createStudent() {
   if (!ready()) { alert('Firebase ikke klar – prøv igjen om et øyeblikk.'); return; }
   const fn  = document.getElementById('new-firstname').value.trim();
   const ln  = document.getElementById('new-lastname').value.trim();
-  const cls = document.getElementById('new-class').value.trim() || (window._currentTeacher?.class || '5A');
+  const cls = document.getElementById('new-class').value.trim().toUpperCase() || (window._currentTeacher?.class || '5A');
   const bal = parseInt(document.getElementById('new-balance').value) || 0;
   const alertEl = document.getElementById('create-alert');
   if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
@@ -948,7 +950,7 @@ function parseCSV(text) {
   const dataLines = hasHeader ? lines.slice(1) : lines;
   csvParsed = dataLines.map(line => {
     const parts = line.split(/[,;]/).map(p => p.trim().replace(/^"|"$/g, ''));
-    return { firstname: parts[0]||'', lastname: parts[1]||'', class: parts[2] || window._currentTeacher?.class || '5A' };
+    return { firstname: parts[0]||'', lastname: parts[1]||'', class: (parts[2] || window._currentTeacher?.class || '5A').trim().toUpperCase() };
   }).filter(r => r.firstname || r.lastname);
 
   document.getElementById('csv-preview-body').innerHTML = csvParsed.map(r =>
