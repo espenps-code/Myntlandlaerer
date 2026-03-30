@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, onValue, update }
+  import { getDatabase, ref, onValue, update, push, set, get }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   // ── LIM INN SAMME FIREBASE-KONFIG SOM I LÆRERPORTALEN ───────────────────
@@ -32,6 +32,9 @@
   window._ref     = ref;
   window._onValue = onValue;
   window._update  = update;
+  window._push    = push;
+  window._set     = set;
+  window._get     = get;
   window._fbReady = true;
 
   onValue(ref(db, 'students'), snap => {
@@ -44,6 +47,8 @@
         window._currentStudent = updated;
         const el = document.getElementById('customer-balance');
         if (el) el.textContent = updated.balance;
+        // Refresh transactions live
+        loadTransactions(updated.fbKey);
       }
     }
   });
@@ -206,6 +211,49 @@
   .pay-instruction-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:6px;}
   .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);}
   .empty-icon{font-size:2.8rem;margin-bottom:.8rem;}
+
+  /* QUIZ */
+  .quiz-card{background:linear-gradient(135deg,#534AB7,#3d3490);border-radius:20px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;color:white;position:relative;overflow:hidden;}
+  .quiz-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08);}
+  .quiz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+  .quiz-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:#FAC775;}
+  .quiz-badge{background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;}
+  .quiz-start-btn{width:100%;padding:14px;border-radius:14px;border:none;background:#EF9F27;color:#085041;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;transition:all .15s;margin-top:.5rem;}
+  .quiz-start-btn:active{transform:scale(.97);}
+  .quiz-done{text-align:center;padding:.5rem 0;}
+  .quiz-done-icon{font-size:2rem;margin-bottom:.25rem;}
+  .quiz-done-text{font-size:.85rem;font-weight:700;opacity:.85;}
+
+  .quiz-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:700;flex-direction:column;}
+  .quiz-overlay.open{display:flex;}
+  .quiz-q-header{background:var(--purple);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .quiz-q-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:#FAC775;}
+  .quiz-q-close{background:rgba(255,255,255,.15);border:none;color:white;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;}
+  .quiz-progress{height:6px;background:rgba(255,255,255,.2);}
+  .quiz-progress-bar{height:100%;background:#FAC775;transition:width .4s;}
+  .quiz-body{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;}
+  .quiz-q-num{font-size:.78rem;font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;}
+  .quiz-q-text{font-family:'Fredoka One',cursive;font-size:1.35rem;color:var(--text);line-height:1.35;}
+  .quiz-options{display:flex;flex-direction:column;gap:10px;margin-top:.5rem;}
+  .quiz-opt{padding:16px;border-radius:14px;border:2px solid var(--border);background:white;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;text-align:left;transition:all .15s;color:var(--text);}
+  .quiz-opt:active{transform:scale(.98);}
+  .quiz-opt.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041;}
+  .quiz-opt.wrong{background:var(--coral-light);border-color:var(--coral);color:#4A1B0C;}
+  .quiz-opt:disabled{cursor:default;}
+  .quiz-feedback{padding:14px 16px;border-radius:14px;font-weight:700;font-size:.9rem;text-align:center;display:none;}
+  .quiz-feedback.show{display:block;}
+  .quiz-feedback.ok{background:#E1F5EE;color:#085041;}
+  .quiz-feedback.no{background:var(--coral-light);color:#4A1B0C;}
+  .quiz-next-btn{padding:16px;border-radius:14px;border:none;background:var(--purple);color:white;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;display:none;width:100%;}
+  .quiz-next-btn.show{display:block;}
+
+  .quiz-result-overlay{display:none;position:fixed;inset:0;background:var(--purple);z-index:710;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+  .quiz-result-overlay.open{display:flex;}
+  .quiz-result-emoji{font-size:4.5rem;margin-bottom:1rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
+  .quiz-result-title{font-family:'Fredoka One',cursive;font-size:2.2rem;color:#FAC775;margin-bottom:.5rem;}
+  .quiz-result-score{font-family:'Fredoka One',cursive;font-size:1.4rem;color:white;margin-bottom:.5rem;}
+  .quiz-result-earned{font-family:'Fredoka One',cursive;font-size:2.8rem;color:#FAC775;margin:1rem 0;}
+  .quiz-result-close{background:#EF9F27;color:#085041;border:none;border-radius:16px;padding:16px 40px;font-family:'Fredoka One',cursive;font-size:1.3rem;cursor:pointer;margin-top:1rem;}
 </style>
 </head>
 <body>
@@ -266,6 +314,18 @@
       <div class="balance-currency">Mynter 🪙</div>
       <div class="live-indicator"><div class="live-dot"></div> Oppdateres i sanntid</div>
     </div>
+    <!-- QUIZ CARD -->
+    <div class="quiz-card" id="quiz-card">
+      <div class="quiz-header">
+        <div class="quiz-title">🧠 Ukas økonomiquiz</div>
+        <div class="quiz-badge" id="quiz-badge">5 spørsmål · 20🪙 per svar</div>
+      </div>
+      <div id="quiz-card-body">
+        <div style="font-size:.85rem;opacity:.85;margin-bottom:.75rem;">Test hva du vet om penger og økonomi!</div>
+        <button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>
+      </div>
+    </div>
+
     <div class="section-title">📜 Siste transaksjoner</div>
     <div id="transaction-list">
       <div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>
@@ -382,6 +442,32 @@
   <button class="close-payment-btn" onclick="document.getElementById('payment-overlay').classList.remove('open');clearCart();">Lukk</button>
 </div>
 
+<!-- QUIZ QUESTION OVERLAY -->
+<div class="quiz-overlay" id="quiz-overlay">
+  <div class="quiz-q-header">
+    <div class="quiz-q-title">🧠 Ukas økonomiquiz</div>
+    <button class="quiz-q-close" onclick="closeQuiz()">✕ Avslutt</button>
+  </div>
+  <div class="quiz-progress"><div class="quiz-progress-bar" id="quiz-progress-bar" style="width:0%"></div></div>
+  <div class="quiz-body">
+    <div class="quiz-q-num" id="quiz-q-num">Spørsmål 1 av 5</div>
+    <div class="quiz-q-text" id="quiz-q-text"></div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-feedback" id="quiz-feedback"></div>
+    <button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuestion()">Neste spørsmål →</button>
+  </div>
+</div>
+
+<!-- QUIZ RESULT OVERLAY -->
+<div class="quiz-result-overlay" id="quiz-result-overlay">
+  <div class="quiz-result-emoji" id="quiz-result-emoji">🏆</div>
+  <div class="quiz-result-title" id="quiz-result-title">Bra jobbet!</div>
+  <div class="quiz-result-score" id="quiz-result-score"></div>
+  <div class="quiz-result-earned" id="quiz-result-earned"></div>
+  <div style="font-size:.85rem;color:rgba(255,255,255,.75);margin-bottom:.5rem;">Mynter lagt til kontoen din!</div>
+  <button class="quiz-result-close" onclick="closeQuizResult()">Tilbake til nettbank</button>
+</div>
+
 <!-- SUCCESS -->
 <div class="success-overlay" id="success-overlay">
   <div class="success-emoji" id="success-emoji">✅</div>
@@ -445,7 +531,8 @@ function tryLogin() {
     document.getElementById('customer-balance').textContent  = s.balance;
     document.getElementById('card-holder').textContent = (s.firstname+' '+s.lastname).toUpperCase();
     document.getElementById('card-number').textContent = '•••• ' + s.pin;
-    renderTransactions();
+    loadTransactions(s.fbKey);
+    checkQuizStatus();
     switchCustomerTab('bank', document.querySelector('.nav-item'));
     showScreen('screen-customer');
   } else {
@@ -462,13 +549,53 @@ function switchCustomerTab(tab, btn) {
   btn.classList.add('active');
 }
 
+// ── Transactions (persistent in Firebase) ─────────────────────────────────
+function fmtDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000)     return 'Nå nettopp';
+  if (diff < 3600000)   return Math.floor(diff/60000) + ' min siden';
+  if (diff < 86400000)  return 'I dag ' + d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});
+  if (diff < 172800000) return 'I går ' + d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('no',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function saveTransaction(studentFbKey, tx) {
+  // tx = { type, icon, desc, amount, ts }
+  if (!window._push || !window._set || !window._ref || !window._db) return;
+  const r = window._push(window._ref(window._db, 'transactions/' + studentFbKey));
+  await window._set(r, tx);
+}
+
+async function loadTransactions(studentFbKey) {
+  if (!window._get || !window._ref || !window._db) return;
+  try {
+    const snap = await window._get(window._ref(window._db, 'transactions/' + studentFbKey));
+    if (!snap.val()) { transactions = []; }
+    else {
+      transactions = Object.values(snap.val())
+        .sort((a,b) => (b.ts||0) - (a.ts||0))
+        .slice(0, 30);
+    }
+    renderTransactions();
+  } catch(e) {}
+}
+
 function renderTransactions() {
   const el = document.getElementById('transaction-list');
-  if (!transactions.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>'; return; }
-  el.innerHTML = transactions.slice(0,10).map(t => `
+  if (!el) return;
+  if (!transactions.length) {
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>';
+    return;
+  }
+  el.innerHTML = transactions.slice(0,15).map(t => `
     <div class="transaction-item">
       <div class="tx-icon ${t.type}">${t.icon}</div>
-      <div class="tx-desc"><div class="tx-name">${t.desc}</div><div class="tx-date">${t.date}</div></div>
+      <div class="tx-desc">
+        <div class="tx-name">${t.desc}</div>
+        <div class="tx-date">${fmtDate(t.ts||0)}</div>
+      </div>
       <div class="tx-amount ${t.type}">${t.amount>0?'+':''}${t.amount} 🪙</div>
     </div>`).join('');
 }
@@ -649,10 +776,12 @@ async function doPayment(amount) {
   if (!s) return;
   if (s.balance < amount) { showSuccess('😕','Ikke nok mynter!','',`Du har bare ${s.balance} 🪙`); return; }
   const newBal = s.balance - amount;
+  const tx = { type:'expense', icon:'🛒', desc:'Betaling i kassen', amount:-amount, ts:Date.now() };
   await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal });
+  await saveTransaction(s.fbKey, tx);
   window._currentStudent.balance = newBal;
   document.getElementById('customer-balance').textContent = newBal;
-  transactions.unshift({ type:'expense', icon:'🛒', desc:'Betaling i kassen', date:'Nå', amount:-amount });
+  transactions.unshift(tx);
   renderTransactions();
   showSuccess('✅','Betalt!',`-${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
 }
@@ -661,12 +790,194 @@ async function doReward(amount) {
   const s = window._currentStudent;
   if (!s) return;
   const newBal = s.balance + amount;
+  const tx = { type:'income', icon:'⭐', desc:'Belønning skannet', amount:+amount, ts:Date.now() };
   await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal });
+  await saveTransaction(s.fbKey, tx);
   window._currentStudent.balance = newBal;
   document.getElementById('customer-balance').textContent = newBal;
-  transactions.unshift({ type:'income', icon:'⭐', desc:'Belønning skannet', date:'Nå', amount:+amount });
+  transactions.unshift(tx);
   renderTransactions();
   showSuccess('🎉','Belønning!',`+${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
+}
+
+// ── QUIZ ───────────────────────────────────────────────────────────────────
+
+// 10 question pools (5 drawn per week, seeded by week number)
+const QUIZ_POOL = [
+  // Grunnleggende om penger
+  { q:'Hva bruker vi penger til?', opts:['Bare godteri','Kjøpe ting vi trenger og vil ha','Mate fisker','Lage mat til læreren'], a:1 },
+  { q:'Hva kalles pengene du har spart opp?', opts:['Gjeld','Lønn','Sparepenger','Regninger'], a:2 },
+  { q:'Hvis du har 10 mynter og bruker 4, hvor mange har du igjen?', opts:['14','6','4','2'], a:1 },
+  { q:'Hva er en butikk?', opts:['Et sted du sover','Et sted du kjøper ting','Et sted du bare ser på ting gratis','En type skole'], a:1 },
+  { q:'Hva betyr det å spare penger?', opts:['Bruke alle pengene med en gang','Gi bort alle pengene','Legge til side penger for å bruke senere','Finne penger på gaten'], a:2 },
+  // Budsjett og planlegging
+  { q:'Du har 20 mynter. Et eple koster 6 og en banan koster 5. Har du nok til begge?', opts:['Nei, det koster 12 totalt','Ja, det koster 11 totalt','Nei, du mangler 1 mynt','Ja, det koster 10 totalt'], a:1 },
+  { q:'Hva er et budsjett?', opts:['Et spill med penger','En plan for hvordan du bruker pengene dine','Et annet ord for lommebok','En type sparegris'], a:1 },
+  { q:'Melk koster 18 mynter og brød koster 25 mynter. Hva koster begge deler til sammen?', opts:['33 mynter','41 mynter','43 mynter','38 mynter'], a:2 },
+  { q:'Hva bør du gjøre hvis du vil kjøpe noe dyrt?', opts:['Låne penger fra alle','Spare litt hver uke til du har nok','Stjele det','Ta det uten å betale'], a:1 },
+  { q:'Du tjener 50 mynter i uka. Du bruker 30 mynter. Hvor mye sparer du?', opts:['80 mynter','10 mynter','20 mynter','30 mynter'], a:2 },
+  // Valg og økonomi
+  { q:'Hva er forskjellen på noe du trenger og noe du vil ha?', opts:['Det er ingen forskjell','Mat er noe du trenger, godteri er noe du vil ha','Alt er noe du vil ha','Alt er noe du trenger'], a:1 },
+  { q:'Hva skjer hvis du bruker mer penger enn du har?', opts:['Du får mer penger automatisk','Du kan ha underskudd og skylder penger','Ingenting skjer','Pengene vokser tilbake'], a:1 },
+  { q:'Hvorfor er det lurt å sammenligne priser i butikken?', opts:['Det er ikke lurt','For å finne den dyreste varen','For å finne den billigste og spare penger','For å bruke mer tid i butikken'], a:2 },
+  { q:'Hva kalles penger du får for å jobbe?', opts:['Gave','Lønn','Lån','Premie'], a:1 },
+  { q:'Du har 100 mynter. Du kjøper noe for 35 mynter. Hva er vekslepenger du skal ha tilbake?', opts:['35 mynter','75 mynter','65 mynter','45 mynter'], a:2 },
+];
+
+// Get ISO week number for seeding
+function getWeekNumber() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 3 - (d.getDay()+6)%7);
+  const week1 = new Date(d.getFullYear(),0,4);
+  return 1 + Math.round(((d-week1)/86400000 - 3 + (week1.getDay()+6)%7)/7);
+}
+
+function getWeekKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-W${String(getWeekNumber()).padStart(2,'0')}`;
+}
+
+// Seeded shuffle: same 5 questions every week for all students
+function getWeekQuestions() {
+  const seed = getWeekNumber() * 137 + new Date().getFullYear() * 31;
+  const shuffled = [...QUIZ_POOL].sort((a,b) => {
+    const ha = (seed * (QUIZ_POOL.indexOf(a)+1) * 1103515245) % 1000;
+    const hb = (seed * (QUIZ_POOL.indexOf(b)+1) * 1103515245) % 1000;
+    return ha - hb;
+  });
+  return shuffled.slice(0, 5);
+}
+
+let quizQuestions = [];
+let quizIndex     = 0;
+let quizCorrect   = 0;
+let quizAnswered  = false;
+
+function checkQuizStatus() {
+  const s = window._currentStudent;
+  if (!s) return;
+  const weekKey  = getWeekKey();
+  const done     = s.quizWeek === weekKey;
+  const cardBody = document.getElementById('quiz-card-body');
+  const badge    = document.getElementById('quiz-badge');
+  if (done) {
+    badge.textContent = '✅ Fullført denne uken';
+    cardBody.innerHTML = `<div class="quiz-done">
+      <div class="quiz-done-icon">🏆</div>
+      <div class="quiz-done-text">Du har tatt quizen denne uken!<br>Ny quiz kommer på mandag.</div>
+    </div>`;
+  } else {
+    badge.textContent = '5 spørsmål · 20🪙 per svar';
+    cardBody.innerHTML = `<div style="font-size:.85rem;opacity:.85;margin-bottom:.75rem;">Test hva du vet om penger og økonomi!</div>
+      <button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>`;
+  }
+}
+
+function startQuiz() {
+  const s = window._currentStudent;
+  if (!s) return;
+  if (s.quizWeek === getWeekKey()) { alert('Du har allerede tatt quizen denne uken!'); return; }
+  quizQuestions = getWeekQuestions();
+  quizIndex     = 0;
+  quizCorrect   = 0;
+  document.getElementById('quiz-overlay').classList.add('open');
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  const q   = quizQuestions[quizIndex];
+  const num = quizIndex + 1;
+  const tot = quizQuestions.length;
+  document.getElementById('quiz-q-num').textContent  = `Spørsmål ${num} av ${tot}`;
+  document.getElementById('quiz-q-text').textContent = q.q;
+  document.getElementById('quiz-progress-bar').style.width = ((num-1)/tot*100) + '%';
+  document.getElementById('quiz-feedback').className = 'quiz-feedback';
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('quiz-next-btn').className = 'quiz-next-btn';
+  quizAnswered = false;
+
+  const optsEl = document.getElementById('quiz-options');
+  optsEl.innerHTML = q.opts.map((opt,i) => `
+    <button class="quiz-opt" onclick="answerQuiz(${i})" id="qopt-${i}">${opt}</button>
+  `).join('');
+}
+
+function answerQuiz(chosen) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizQuestions[quizIndex];
+  const correct = chosen === q.a;
+  if (correct) quizCorrect++;
+
+  // Style buttons
+  q.opts.forEach((_,i) => {
+    const btn = document.getElementById('qopt-'+i);
+    btn.disabled = true;
+    if (i === q.a)   btn.classList.add('correct');
+    if (i === chosen && !correct) btn.classList.add('wrong');
+  });
+
+  // Feedback
+  const fb = document.getElementById('quiz-feedback');
+  fb.textContent  = correct ? '✅ Riktig! Bra jobbet!' : `❌ Ikke helt riktig. Riktig svar: ${q.opts[q.a]}`;
+  fb.className    = 'quiz-feedback show ' + (correct ? 'ok' : 'no');
+
+  // Next/finish button
+  const nxt = document.getElementById('quiz-next-btn');
+  nxt.className  = 'quiz-next-btn show';
+  nxt.textContent = quizIndex < quizQuestions.length - 1 ? 'Neste spørsmål →' : 'Se resultatet 🏆';
+}
+
+async function nextQuestion() {
+  quizIndex++;
+  if (quizIndex < quizQuestions.length) {
+    showQuizQuestion();
+  } else {
+    await finishQuiz();
+  }
+}
+
+async function finishQuiz() {
+  document.getElementById('quiz-overlay').classList.remove('open');
+  const earned   = quizCorrect * 20;
+  const s        = window._currentStudent;
+  const weekKey  = getWeekKey();
+
+  // Update balance + mark quiz done for this week
+  const newBal = s.balance + earned;
+  await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal, quizWeek: weekKey });
+  window._currentStudent.balance  = newBal;
+  window._currentStudent.quizWeek = weekKey;
+  document.getElementById('customer-balance').textContent = newBal;
+
+  // Save transaction
+  if (earned > 0) {
+    const tx = { type:'income', icon:'🧠', desc:`Økonomiquiz – ${quizCorrect}/5 riktige`, amount:earned, ts:Date.now() };
+    await saveTransaction(s.fbKey, tx);
+    transactions.unshift(tx);
+    renderTransactions();
+  }
+
+  // Show result screen
+  const pct = quizCorrect / quizQuestions.length;
+  const emoji = pct === 1 ? '🏆' : pct >= 0.6 ? '🌟' : '💪';
+  const title = pct === 1 ? 'Perfekt score!' : pct >= 0.6 ? 'Bra jobbet!' : 'Fortsett å øve!';
+  document.getElementById('quiz-result-emoji').textContent  = emoji;
+  document.getElementById('quiz-result-title').textContent  = title;
+  document.getElementById('quiz-result-score').textContent  = `${quizCorrect} av ${quizQuestions.length} riktige`;
+  document.getElementById('quiz-result-earned').textContent = earned > 0 ? `+${earned} 🪙` : 'Ingen mynter denne gangen';
+  document.getElementById('quiz-result-overlay').classList.add('open');
+
+  checkQuizStatus();
+}
+
+function closeQuiz() {
+  document.getElementById('quiz-overlay').classList.remove('open');
+}
+
+function closeQuizResult() {
+  document.getElementById('quiz-result-overlay').classList.remove('open');
 }
 
 // ── Cashier ────────────────────────────────────────────────────────────────
