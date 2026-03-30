@@ -256,7 +256,7 @@
   .success-emoji{font-size:4rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
   .success-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--amber);margin:1rem 0 .4rem;}
   .success-amount{font-family:'Fredoka One',cursive;font-size:2.5rem;color:white;margin:.3rem 0;}
-  .success-text{color:rgba(255,255,255,.8);font-size:.9rem;font-weight:700;}
+  .success-text{color:rgba(255,255,255,.9);font-size:1.05rem;font-weight:700;line-height:1.5;text-align:center;padding:0 .5rem;}
   .success-close{background:var(--amber);color:var(--teal-dark);border:none;border-radius:13px;padding:13px 34px;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;margin-top:1.25rem;}
 
   .big-btn{width:100%;padding:14px;border-radius:13px;border:none;font-family:'Fredoka One',cursive;font-size:1.15rem;cursor:pointer;transition:all .15s;margin-bottom:8px;}
@@ -480,15 +480,7 @@
     <div id="jobs-list-el"><div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag nå</div></div></div>
   </div>
 
-  <!-- BUTIKK TAB -->
-  <div class="tab-content content" id="tab-butikk">
-    <div class="section-title">🛒 Butikken</div>
-    <div class="info-box">Trykk på + for å legge i handlekurv. Bekreft kjøp med PIN-kode.</div>
-    <div id="butikk-search-wrap" style="margin-bottom:.85rem">
-      <input type="text" placeholder="Søk etter vare…" oninput="filterShop57El(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none">
-    </div>
-    <div id="shop57-el-list"><div class="empty-state"><div class="empty-icon">🛒</div><div style="font-weight:700">Ingen varer ennå</div><div style="font-size:.85rem">Læreren legger til varer i portalen</div></div></div>
-  </div>
+
 
   <!-- KORT TAB -->
   <div class="tab-content content" id="tab-kort">
@@ -512,10 +504,9 @@
     <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
     <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab()"><div class="nav-icon">💰</div><div class="nav-label">Spare</div></button>
     <button class="nav-item"        onclick="switchTab('fond',this);renderFond()"><div class="nav-icon">📊</div><div class="nav-label">Fond</div></button>
-    <button class="nav-item"        onclick="switchTab('laan',this);renderLoan()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
+    <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
     <button class="nav-item"        onclick="switchTab('sparemaal',this);renderClassGoalsTab()"><div class="nav-icon">🏦</div><div class="nav-label">Sparemål</div></button>
     <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Oppdrag</div></button>
-    <button class="nav-item"        onclick="switchTab('butikk',this);renderShop57()" ><div class="nav-icon">🛒</div><div class="nav-label">Butikk</div></button>
     <button class="nav-item"        onclick="switchTab('kort',this)"><div class="nav-icon">💳</div><div class="nav-label">Kort</div></button>
   </div>
 </div>
@@ -646,6 +637,7 @@ function tryLogin(){
     checkAndResetQuiz(s);
     checkQuizStatus();
     renderLoan();
+    checkLoanExpiry();
     switchTab('bank',document.querySelector('.nav-item'));
     showScreen('screen-app');
   } else {
@@ -902,21 +894,54 @@ function renderFondChart(hist,days){
 }
 
 // ── LOAN ───────────────────────────────────────────────────────────────────
+async function checkLoanExpiry() {
+  const s = window._currentStudent; if (!s || !s.loan || !s.loanDate) return;
+  const daysSince = (Date.now() - s.loanDate) / 86400000;
+  if (daysSince >= 14) {
+    // Auto-inndra: trekk lånet fra brukskonto
+    const newBal = Math.max(0, (s.balance||0) - s.loan);
+    await window._update(fbRef('students57/'+s.fbKey), { loan: 0, loanDate: null, balance: newBal });
+    patchStudent(s.fbKey, { loan: 0, loanDate: null, balance: newBal });
+    await saveTx(s.fbKey, 'expense', '🚫',
+      `Lån automatisk inndratt etter 14 dager (🪙 ${s.loan} trukket fra brukskonto)`, -s.loan);
+    transactions.unshift({type:'expense',icon:'🚫',desc:'Lån automatisk inndratt etter 14 dager',amount:-s.loan,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions();
+    showSuccess('⚠️', 'Lån inndratt!', `-${s.loan} 🪙`,
+      'Lånet ble automatisk inndratt etter 14 dager.');
+  }
+}
+
 function renderLoan(){
   const s=window._currentStudent;if(!s)return;
   const el=document.getElementById('loan-section');if(!el)return;
   const loan=s.loan||0;const rate=getLoanRate();const factor=getLoanFactor();
   if(loan>0){
     const interest=Math.ceil(loan*rate);const total=loan+interest;
-    el.innerHTML=`<div class="loan-card loan-active"><div style="font-weight:800;margin-bottom:.4rem">📉 Aktivt lån</div><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:var(--coral)">🪙 ${loan}</div><div style="font-size:.82rem;color:var(--coral);font-weight:700;margin-top:4px">Rente (${Math.round(rate*100)}%): 🪙 ${interest} · Total: 🪙 ${total}</div></div>
-    <div class="info-box">⚠️ Du skylder 🪙 ${total} totalt (lån + rente). Betal tilbake ASAP!</div>
+    // Calculate days remaining
+    const daysSince = s.loanDate ? (Date.now()-s.loanDate)/86400000 : 0;
+    const daysLeft  = Math.max(0, Math.ceil(14 - daysSince));
+    const urgent    = daysLeft <= 3;
+    const deadlineColor = urgent ? 'var(--coral)' : '#854F0B';
+    const deadlineIcon  = urgent ? '🔴' : '🟡';
+    el.innerHTML=`
+    <div class="loan-card loan-active">
+      <div style="font-weight:800;margin-bottom:.4rem">📉 Aktivt lån</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:var(--coral)">🪙 ${loan}</div>
+      <div style="font-size:.82rem;color:var(--coral);font-weight:700;margin-top:4px">
+        Rente (${Math.round(rate*100)}%): 🪙 ${interest} · Total: 🪙 ${total}
+      </div>
+      <div style="margin-top:.5rem;font-size:.82rem;font-weight:700;color:${deadlineColor}">
+        ${deadlineIcon} Frist: ${daysLeft} dag${daysLeft!==1?'er':''} igjen (14 dagers frist)
+      </div>
+    </div>
+    ${urgent ? `<div class="warn-box">🔴 Mindre enn 3 dager igjen! Betal tilbake nå for å unngå automatisk inndragelse.</div>` : `<div class="info-box">⏳ Du har ${daysLeft} dager på å betale tilbake. Etter 14 dager inndras lånet automatisk.</div>`}
     <button class="big-btn bb-coral" onclick="repayLoan()">💳 Betal tilbake 🪙 ${total}</button>`;
   } else {
     const maxLoan=Math.max(50,Math.floor((s.balance||0)*factor));
     el.innerHTML=`<div class="loan-card loan-none"><div style="font-weight:800;margin-bottom:.3rem">✅ Ingen aktive lån</div><div style="font-size:.85rem;color:var(--teal-dark);font-weight:700">Brukskonto: 🪙 ${s.balance||0}</div></div>
     <div class="info-box">⚠️ Lån koster penger! ${Math.round(rate*100)}% rente betales ved tilbakebetaling. Maks lån: 🪙 ${maxLoan} (${factor}× brukskonto).</div>
     <div class="card-block"><div style="font-weight:800;margin-bottom:.6rem">Lånevilkår</div>
-    <div style="font-size:.85rem;color:var(--muted);line-height:1.8">• Maks: 🪙 ${maxLoan}<br>• Rente: ${Math.round(rate*100)}%<br>• Betales i ett beløp<br>• Bare ett lån av gangen</div></div>
+    <div style="font-size:.85rem;color:var(--muted);line-height:1.8">• Maks: 🪙 ${maxLoan}<br>• Rente: ${Math.round(rate*100)}%<br>• Betales i ett beløp<br>• Bare ett lån av gangen<br>• ⏳ Tilbakebetaling innen 14 dager</div></div>
     <button class="big-btn bb-blue" onclick="takeLoan(${maxLoan})">📋 Ta opp lån</button>`;
   }
 }
@@ -924,8 +949,9 @@ function takeLoan(max){
   showInputSheet('Ta opp lån',`Maks 🪙 ${max} · Rente: ${Math.round(getLoanRate()*100)}%`,async(amt)=>{
     if(amt>max){alert(`Maks lån er 🪙 ${max}.`);return;}
     const s=window._currentStudent;const newBal=(s.balance||0)+amt;
-    await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:amt});
-    patchStudent(s.fbKey,{balance:newBal,loan:amt});
+    const loanDate=Date.now();
+    await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:amt,loanDate:loanDate});
+    patchStudent(s.fbKey,{balance:newBal,loan:amt,loanDate:loanDate});
     await saveTx(s.fbKey,'income','📋','Lån opptatt',amt);
     transactions.unshift({type:'income',icon:'📋',desc:'Lån opptatt',amount:amt,ts:Date.now()});
     refreshAllDisplays();renderTransactions();renderLoan();showSuccess('💰','Lån innvilget!',`+${amt} 🪙`,'Husk å betale tilbake med renter!');
@@ -937,8 +963,8 @@ async function repayLoan(){
   if((s.balance||0)<total){alert(`Du trenger 🪙 ${total}. Du har 🪙 ${s.balance||0}.`);return;}
   if(!confirm(`Betal tilbake 🪙 ${total} (lån + ${Math.round(getLoanRate()*100)}% rente)?`))return;
   const newBal=(s.balance||0)-total;
-  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:0});
-  patchStudent(s.fbKey,{balance:newBal,loan:0});
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:0,loanDate:null});
+  patchStudent(s.fbKey,{balance:newBal,loan:0,loanDate:null});
   await saveTx(s.fbKey,'expense','📋',`Lån nedbetalt (rente: ${interest}🪙)`,-total);
   transactions.unshift({type:'expense',icon:'📋',desc:`Lån nedbetalt (rente: ${interest}🪙)`,amount:-total,ts:Date.now()});
   refreshAllDisplays();renderTransactions();renderLoan();showSuccess('✅','Nedbetalt!',`-${total} 🪙`,`Rente betalt: ${interest}🪙`);

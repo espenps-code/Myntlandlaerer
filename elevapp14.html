@@ -45,11 +45,11 @@
     if (window._currentStudent) {
       const updated = window._allStudents.find(s => s.fbKey === window._currentStudent.fbKey);
       if (updated) {
-        window._currentStudent = updated;
+        // MERGE inn i eksisterende objekt – bevarer lokale felter (quizWeek etc.)
+        // frem til Firebase bekrefter skrivingen
+        Object.assign(window._currentStudent, updated);
         const el = document.getElementById('customer-balance');
-        if (el) el.textContent = updated.balance;
-        // Refresh transactions live
-        loadTransactions(updated.fbKey);
+        if (el) el.textContent = window._currentStudent.balance;
       }
     }
   });
@@ -491,6 +491,65 @@ let scanMode = null;       // 'payment' | 'reward' | 'cashier'
 let pendingPayAmount = 0;
 let confirmPin = '';
 
+
+// ── KASSALYD (Web Audio API – ingen ekstern fil nødvendig) ─────────────────
+let _audioCtx = null;
+
+function getAudioCtx() {
+  if (!_audioCtx) {
+    try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  return _audioCtx;
+}
+
+// Kort, klar pip – typisk butikkscanner
+function playScanBeep() {
+  const ctx = getAudioCtx(); if (!ctx) return;
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type      = 'sine';
+  osc.frequency.setValueAtTime(1760, ctx.currentTime);          // A6 – høy og klar
+  osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.07); // litt fall
+  gain.gain.setValueAtTime(0.4, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.12);
+}
+
+// Kort feil-lyd (lavere, mørk pip) for ukjent/feil QR
+function playErrorBeep() {
+  const ctx = getAudioCtx(); if (!ctx) return;
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type      = 'sawtooth';
+  osc.frequency.setValueAtTime(220, ctx.currentTime);
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.2);
+}
+
+// Lys suksess-jingle (3 stigende toner) – vellykket betaling / belønning
+function playSuccessChime() {
+  const ctx = getAudioCtx(); if (!ctx) return;
+  [523, 659, 784].forEach((freq, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    const t = ctx.currentTime + i * 0.1;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    osc.start(t); osc.stop(t + 0.18);
+  });
+}
+
+// Warm up AudioContext on first user interaction (required by browsers)
+document.addEventListener('click', () => { getAudioCtx(); }, { once: true });
+
 let codeReader = null;
 let scanActive = false;
 
@@ -703,11 +762,17 @@ function tryJsQR(video) {
 
 function handleScanResult(text) {
   if (!scanActive) return; // guard against double-fire
-  stopScan();
   try {
     const data = JSON.parse(text);
     if (scanMode === 'cashier') {
-      if (data.type === 'grocery') addToCart(data.name || '?', data.name || '?', data.price || 0, data.emoji || '🛒');
+      if (data.type === 'grocery') {
+        playScanBeep();
+        addToCart(data.name || '?', data.name || '?', data.price || 0, data.emoji || '🛒');
+        // In cashier mode: keep scanner open for next item, just pause briefly
+        stopScan();
+        setTimeout(() => startScan('cashier'), 800);
+        return;
+      }
     } else if (scanMode === 'payment') {
       if (data.type === 'payment' && data.amount > 0) {
         pendingPayAmount = data.amount;
@@ -716,7 +781,10 @@ function handleScanResult(text) {
     } else if (scanMode === 'reward') {
       if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
     }
+    stopScan();
   } catch(e) {
+    stopScan();
+    playErrorBeep();
     showSuccess('❌','Ugyldig kode','','Prøv å scanne igjen');
   }
 }
@@ -778,12 +846,14 @@ async function doPayment(amount) {
   if (s.balance < amount) { showSuccess('😕','Ikke nok mynter!','',`Du har bare ${s.balance} 🪙`); return; }
   const newBal = s.balance - amount;
   const tx = { type:'expense', icon:'🛒', desc:'Betaling i kassen', amount:-amount, ts:Date.now() };
-  await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal });
-  await saveTransaction(s.fbKey, tx);
+  await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newBal });
   window._currentStudent.balance = newBal;
+  const idxP = window._allStudents.findIndex(x=>x.fbKey===s.fbKey); if(idxP!==-1) window._allStudents[idxP].balance=newBal;
+  await saveTransaction(s.fbKey, tx);
   document.getElementById('customer-balance').textContent = newBal;
   transactions.unshift(tx);
   renderTransactions();
+  playSuccessChime();
   showSuccess('✅','Betalt!',`-${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
 }
 
@@ -792,12 +862,14 @@ async function doReward(amount) {
   if (!s) return;
   const newBal = s.balance + amount;
   const tx = { type:'income', icon:'⭐', desc:'Belønning skannet', amount:+amount, ts:Date.now() };
-  await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal });
-  await saveTransaction(s.fbKey, tx);
+  await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newBal });
   window._currentStudent.balance = newBal;
+  const idxR = window._allStudents.findIndex(x=>x.fbKey===s.fbKey); if(idxR!==-1) window._allStudents[idxR].balance=newBal;
+  await saveTransaction(s.fbKey, tx);
   document.getElementById('customer-balance').textContent = newBal;
   transactions.unshift(tx);
   renderTransactions();
+  playSuccessChime();
   showSuccess('🎉','Belønning!',`+${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
 }
 
@@ -947,9 +1019,12 @@ async function finishQuiz() {
 
   // Update balance + mark quiz done for this week
   const newBal = s.balance + earned;
-  await window._update(window._ref(window._db,'students/'+s.fbKey), { balance: newBal, quizWeek: weekKey });
+  await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newBal, quizWeek: weekKey });
+  // Oppdater BEGGE – currentStudent og allStudents-innslaget – for å unngå race
   window._currentStudent.balance  = newBal;
   window._currentStudent.quizWeek = weekKey;
+  const idx14 = window._allStudents.findIndex(x => x.fbKey === s.fbKey);
+  if (idx14 !== -1) { window._allStudents[idx14].balance = newBal; window._allStudents[idx14].quizWeek = weekKey; }
   document.getElementById('customer-balance').textContent = newBal;
 
   // Save transaction

@@ -643,6 +643,19 @@
 </div><!-- /#app -->
 
 <!-- MODALS -->
+<div class="modal-overlay" id="modal-revoke-loan">
+  <div class="modal">
+    <div class="modal-title">🚫 Inndra lån</div>
+    <p id="modal-revoke-loan-text" style="color:var(--muted);margin-bottom:1rem;"></p>
+    <div style="background:var(--coral-light);border:1px solid var(--coral);border-radius:10px;padding:.85rem;font-size:.85rem;color:#7f1d1d;margin-bottom:1rem;">
+      ⚠️ Lånebeløpet trekkes direkte fra elevens brukskonto. Er brukskontoen for lav, settes den til 0.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-revoke-loan')">Avbryt</button>
+      <button class="btn btn-coral" onclick="executeRevokeLoan()">🚫 Bekreft inndragelse</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-saldo">
   <div class="modal">
     <div class="modal-title" id="modal-saldo-title">Juster saldo</div>
@@ -1108,7 +1121,11 @@ function renderSaldoTable() {
       <td><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
       <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fl}</span></td>
       <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fh}</span></td>
-      <td>${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
+      <td>${loan > 0 ? `
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
+          <span class="badge badge-coral">📉 ${loan}</span>
+          <button class="btn btn-coral btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="confirmRevokeLoan('${s.fbKey}','${s.firstname} ${s.lastname}',${loan})">🚫 Inndra</button>
+        </div>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
       <td><div class="balance-actions">
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')" title="Legg til">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')" title="Trekk fra">➖</button>
@@ -1441,17 +1458,21 @@ async function removeShop57(fbKey) { await window._remove(fbRef('shop57/' + fbKe
 
 function showShopItemQR(fbKey) {
   const item = window._shop57.find(x => x.fbKey === fbKey); if (!item) return;
-  const box = document.getElementById('modal-shop-qr-box'); box.innerHTML = '';
+  // Open modal first so the element is visible (QRCode requires visible DOM node)
+  document.getElementById('modal-shop-qr').classList.add('open');
   document.getElementById('modal-shop-qr-title').textContent = `${item.emoji} ${item.name}`;
   document.getElementById('modal-shop-qr-desc').textContent  = `Pris: 🪙 ${item.price} · Eleven scanner med bankkortet`;
-  // QR payload: type=purchase so elevapp deducts from balance
-  try {
-    new QRCode(box, {
-      text: JSON.stringify({ type: 'purchase', fbKey: item.fbKey, name: item.name, emoji: item.emoji, price: item.price }),
-      width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch(e) {}
-  document.getElementById('modal-shop-qr').classList.add('open');
+  // Clear and render QR in next tick (ensures element is rendered + visible)
+  const box = document.getElementById('modal-shop-qr-box');
+  box.innerHTML = '';
+  setTimeout(() => {
+    try {
+      new QRCode(box, {
+        text: JSON.stringify({ type: 'purchase', fbKey: item.fbKey, name: item.name, emoji: item.emoji, price: item.price }),
+        width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) { box.innerHTML = '<p style="color:var(--coral);font-size:.82rem;">Kunne ikke generere QR</p>'; }
+  }, 50);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1801,6 +1822,30 @@ async function checkAndPayWeeklySalary(db, ref, set, get, update) {
     await set(ref(db, 'salaryLastPaid'), today);
     console.log(`✅ Ukentlig lønn og sparerente utbetalt for ${allStudents.length} elever`);
   } catch(e) { console.log('Salary check skipped:', e.message); }
+}
+
+// ════════════════════════════════════════════════════════════
+// LÅN – INNDRAGELSE
+// ════════════════════════════════════════════════════════════
+let _revokeLoanStudentId = null;
+let _revokeLoanAmount = 0;
+
+function confirmRevokeLoan(fbKey, name, loanAmount) {
+  _revokeLoanStudentId = fbKey;
+  _revokeLoanAmount = loanAmount;
+  document.getElementById('modal-revoke-loan-text').textContent =
+    `Inndra lån på 🪙 ${loanAmount} fra ${name}? Beløpet trekkes fra brukskontoen.`;
+  document.getElementById('modal-revoke-loan').classList.add('open');
+}
+
+async function executeRevokeLoan() {
+  const s = window._students.find(x => x.fbKey === _revokeLoanStudentId);
+  if (!s) { closeModal('modal-revoke-loan'); return; }
+  const newBal = Math.max(0, (s.balance||0) - _revokeLoanAmount);
+  await window._update(fbRef('students57/' + _revokeLoanStudentId), { loan: 0, balance: newBal });
+  await logTx(_revokeLoanStudentId, 'expense', '🚫',
+    `Lån inndratt av lærer (🪙 ${_revokeLoanAmount} trukket fra brukskonto)`, -_revokeLoanAmount);
+  closeModal('modal-revoke-loan');
 }
 
 // ════════════════════════════════════════════════════════════

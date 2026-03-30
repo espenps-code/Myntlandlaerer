@@ -49,6 +49,13 @@
       renderGroceryList(); renderGroceryPrintSelect(); renderHandlelisteSelect();
     });
 
+    onValue(ref(db, 'customRewards14'), snap => {
+      window._customRewards = snap.val()
+        ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+        : [];
+      if (document.getElementById('page-qrkoder').classList.contains('active')) renderCustomRewards();
+    });
+
     onValue(ref(db, 'groups'), snap => {
       window._groups = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
       if (document.getElementById('page-grupper').classList.contains('active')) renderGroupsPage();
@@ -500,12 +507,13 @@
     <div class="card-title">🛍️ Lag handleliste</div>
     <div class="form-grid">
       <div class="form-row"><label>Elevens navn (valgfritt)</label><input type="text" id="list-student" placeholder="La stå tomt for blank liste"></div>
-      <div class="form-row"><label>Antall varer</label><input type="number" id="list-count" value="5" min="2" max="15"></div>
+      <div class="form-row"><label>Antall varer per liste</label><input type="number" id="list-count" value="5" min="2" max="15"></div>
     </div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig):</p>
+    <div class="form-row" style="max-width:280px;"><label>Antall sider (handlelistesider)</label><input type="number" id="list-pages" value="1" min="1" max="20"></div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig per side):</p>
     <div class="grocery-grid" id="handleliste-select"></div>
     <div style="margin-top:1.5rem;display:flex;gap:10px;">
-      <button class="btn btn-primary" onclick="generateShoppingList()">📋 Generer handleliste</button>
+      <button class="btn btn-primary" onclick="generateShoppingList()">📋 Generer handlelister</button>
       <button class="btn btn-ghost" onclick="generateRandomList()">🎲 Tilfeldig</button>
     </div>
   </div>
@@ -521,20 +529,30 @@
   <div class="page-title">⬛ QR-belønningskoder</div>
   <div class="page-subtitle">Generer QR-koder som elevene kan scanne for å tjene mynter</div>
   <div class="grid-3">
-    <div class="qr-card"><div class="amount-label" style="color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><div style="font-size:.85rem;color:var(--muted);">Liten belønning</div><button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Skriv ut</button></div>
-    <div class="qr-card"><div class="amount-label" style="color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><div style="font-size:.85rem;color:var(--muted);">Medium belønning</div><button class="btn btn-amber btn-sm" onclick="window.print()">🖨️ Skriv ut</button></div>
-    <div class="qr-card"><div class="amount-label" style="color:#534AB7;">+100 🪙</div><div class="qr-wrap" id="qr-100"></div><div style="font-size:.85rem;color:var(--muted);">Stor belønning</div><button class="btn btn-purple btn-sm" onclick="window.print()">🖨️ Skriv ut</button></div>
+    <div class="qr-card"><div class="amount-label" style="color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><div style="font-size:.85rem;color:var(--muted);">Liten belønning</div><button class="btn btn-primary btn-sm" onclick="printSingleQR('qr-10','10 🪙')">🖨️ Skriv ut</button></div>
+    <div class="qr-card"><div class="amount-label" style="color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><div style="font-size:.85rem;color:var(--muted);">Medium belønning</div><button class="btn btn-amber btn-sm" onclick="printSingleQR('qr-50','50 🪙')">🖨️ Skriv ut</button></div>
+    <div class="qr-card"><div class="amount-label" style="color:#534AB7;">+100 🪙</div><div class="qr-wrap" id="qr-100"></div><div style="font-size:.85rem;color:var(--muted);">Stor belønning</div><button class="btn btn-purple btn-sm" onclick="printSingleQR('qr-100','100 🪙')">🖨️ Skriv ut</button></div>
   </div>
+
   <div class="card">
-    <div class="card-title">✏️ Egendefinert belønning</div>
-    <div style="display:flex;gap:12px;align-items:flex-end;">
-      <div style="flex:1;" class="form-row"><label>Beløp</label><input type="number" id="custom-qr-amount" value="25" min="1" max="999"></div>
-      <div style="flex:2;" class="form-row"><label>Beskrivelse</label><input type="text" id="custom-qr-desc" placeholder="f.eks. Ryddet klasserommet"></div>
-      <button class="btn btn-primary" onclick="generateCustomQR()" style="margin-bottom:1rem;">Generer</button>
+    <div class="card-title">✏️ Opprett egendefinert belønning</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Beløp (mynter)</label><input type="number" id="custom-qr-amount" value="25" min="1" max="9999"></div>
+      <div class="form-row"><label>Beskrivelse</label><input type="text" id="custom-qr-desc" placeholder="f.eks. Ryddet klasserommet"></div>
     </div>
-    <div style="display:flex;gap:2rem;align-items:center;margin-top:1rem;">
-      <div class="qr-wrap" id="qr-custom" style="display:none;"></div>
-      <div id="custom-qr-info" style="display:none;"></div>
+    <button class="btn btn-primary" onclick="addCustomReward()">➕ Legg til belønning</button>
+    <div id="custom-reward-alert" style="margin-top:.75rem;"></div>
+  </div>
+
+  <div class="card" id="custom-rewards-card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>📋 Egendefinerte belønninger</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-amber btn-sm" onclick="printAllCustomRewards()">🖨️ Skriv ut alle</button>
+      </div>
+    </div>
+    <div id="custom-rewards-list">
+      <p style="color:var(--muted);font-size:.85rem;">Ingen egendefinerte belønninger ennå.</p>
     </div>
   </div>
 </div>
@@ -627,6 +645,7 @@ window._students  = [];
 window._groceries = [];
 window._groups    = [];
 window._teachers  = [];
+window._customRewards = [];
 window._currentTeacher = null;
 
 let currentAction = null, currentStudentId = null, bulkAction = null;
@@ -813,7 +832,7 @@ function showPage(page) {
   document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-' + page).classList.add('active');
-  if (page === 'qrkoder') generateRewardQRCodes();
+  if (page === 'qrkoder') { generateRewardQRCodes(); renderCustomRewards(); }
   if (page === 'grupper') renderGroupsPage();
   if (page === 'laerere') renderTeacherList();
 }
@@ -1383,47 +1402,21 @@ function shoppingListHTML(items, studentName) {
 }
 
 function renderListPreview(items) {
-  const sn = document.getElementById('list-student').value;
-  // Show a preview in the page
+  const sn    = document.getElementById('list-student').value;
+  const pages = parseInt(document.getElementById('list-pages').value) || 1;
   document.getElementById('handleliste-preview').style.display = 'block';
   document.getElementById('handleliste-content').innerHTML =
     '<div style="display:flex;gap:2%;align-items:flex-start;">' +
-    shoppingListHTML(items,sn) + shoppingListHTML(items,sn) + '</div>' +
-    '<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Trykk «Skriv ut» for å åpne utskriftsdokument (liggende A4 – 2 lister per side).</p>';
+    shoppingListHTML(items, sn) + shoppingListHTML(getRandom(window._groceries, parseInt(document.getElementById('list-count').value)||5), sn) + '</div>' +
+    `<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Forhåndsvisning av side 1. Totalt ${pages} side${pages>1?'r':''} genereres med unike, tilfeldige lister. Trykk «Skriv ut» for full utskrift.</p>`;
 }
 
-function printShoppingList() {
-  const sn    = document.getElementById('list-student').value;
-  const sel   = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
-  const count = parseInt(document.getElementById('list-count').value) || 5;
-  const items = sel.length
-    ? window._groceries.filter(g => sel.includes(g.fbKey)).slice(0, count)
-    : getRandom(window._groceries, count);
-
-  if (!items.length) { alert('Ingen varer tilgjengelig. Legg til varer i butikken først.'); return; }
-
-  // Two identical lists side-by-side on landscape A4
-  // Each list = ~143mm wide (297mm - 2×10mm margin - 4mm gap = 273mm / 2 ≈ 136mm)
-  const listHTML = `<style>
+function makeOneListPageHTML(sn, items, pageNum) {
+  const CSS = `<style>
     body { margin: 0; padding: 8mm; font-family: 'Nunito', sans-serif; background: white; }
-    .page { display: flex; gap: 4mm; width: 100%; }
-    .list {
-      flex: 1;
-      border: 0.5mm solid #c8dfc8;
-      border-radius: 3mm;
-      padding: 5mm;
-      display: flex;
-      flex-direction: column;
-      min-height: 190mm;
-    }
-    .list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 0.8mm solid #1D9E75;
-      padding-bottom: 3mm;
-      margin-bottom: 3mm;
-    }
+    .page { display: flex; gap: 4mm; width: 100%; page-break-after: always; box-sizing: border-box; }
+    .list { flex: 1; border: 0.5mm solid #c8dfc8; border-radius: 3mm; padding: 5mm; display: flex; flex-direction: column; min-height: 190mm; }
+    .list-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 0.8mm solid #1D9E75; padding-bottom: 3mm; margin-bottom: 3mm; }
     .list-title { font-family: 'Fredoka One', cursive; font-size: 6mm; color: #085041; line-height: 1.1; }
     .list-meta  { font-size: 3mm; color: #5a7a5a; margin-top: 1mm; }
     .total-box  { background: #E1F5EE; border-radius: 2mm; padding: 2mm 4mm; text-align: center; flex-shrink: 0; }
@@ -1440,33 +1433,23 @@ function printShoppingList() {
     .sum-row { margin-top: 3mm; background: #FAEEDA; border-radius: 2mm; padding: 3mm 4mm; display: flex; justify-content: space-between; align-items: center; }
     .sum-label { font-weight: 800; font-size: 4mm; color: #854F0B; }
     .sum-line  { border-bottom: 0.5mm solid #EF9F27; width: 40mm; font-size: 4mm; font-weight: 800; color: #085041; padding-bottom: 1mm; }
-    .divider { border: none; border-top: 0.5mm dashed #c8dfc8; margin: 0 -8mm; }
-  </style>
-  <div class="page">
-    ${[sn, sn].map(name => `
+  </style>`;
+  // Each page has 2 lists, each with its own unique random set of items
+  const listA = getRandom(items, items.length); // shuffle
+  const listB = getRandom(items, items.length); // different shuffle
+  const listHTML = (arr, name) => `
     <div class="list">
       <div class="list-header">
         <div>
           <div class="list-title">🛒 Myntland</div>
-          ${name
-            ? `<div class="list-meta">Elev: <strong>${name}</strong></div>`
-            : `<div class="list-meta">Navn: ________________________</div>`}
+          ${name ? `<div class="list-meta">Elev: <strong>${name}</strong></div>` : `<div class="list-meta">Navn: ________________________</div>`}
           <div class="list-meta">Dato: ________________</div>
         </div>
-        <div class="total-box">
-          <div class="total-label">Total</div>
-          <div class="total-val">🪙 ______</div>
-        </div>
+        <div class="total-box"><div class="total-label">Total</div><div class="total-val">🪙 ______</div></div>
       </div>
       <table>
-        <thead><tr>
-          <th class="num">#</th>
-          <th>Vare</th>
-          <th style="text-align:center">Bilde</th>
-          <th class="right">Pris</th>
-        </tr></thead>
-        <tbody>
-          ${items.map((g, i) => `
+        <thead><tr><th class="num">#</th><th>Vare</th><th style="text-align:center">Bilde</th><th class="right">Pris</th></tr></thead>
+        <tbody>${arr.map((g,i) => `
           <tr>
             <td class="num">${i+1}</td>
             <td style="font-weight:700">${g.name}</td>
@@ -1475,18 +1458,82 @@ function printShoppingList() {
           </tr>`).join('')}
         </tbody>
       </table>
-      <div class="sum-row">
-        <div class="sum-label">Sum totalt:</div>
-        <div class="sum-line"></div>
+      <div class="sum-row"><div class="sum-label">Sum totalt:</div><div class="sum-line"></div></div>
+    </div>`;
+  return `<div class="page">${listHTML(listA, sn)}${listHTML(listB, sn)}</div>`;
+}
+
+function printShoppingList() {
+  const sn      = document.getElementById('list-student').value;
+  const sel     = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
+  const count   = parseInt(document.getElementById('list-count').value) || 5;
+  const pages   = Math.max(1, Math.min(20, parseInt(document.getElementById('list-pages').value) || 1));
+  // Pool of items to draw from (selected or all)
+  const pool = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)) : window._groceries;
+
+  if (!pool.length) { alert('Ingen varer tilgjengelig. Legg til varer i butikken først.'); return; }
+
+  // Build all pages – each page has 2 independently shuffled lists drawn from pool
+  let allPages = '';
+  for (let pg = 0; pg < pages; pg++) {
+    // For each list, pick 'count' random items from pool
+    const itemsA = getRandom(pool, count);
+    const itemsB = getRandom(pool, count);
+    // Build page with listA on left, listB on right
+    const listHTML = (arr, name) => `
+    <div class="list">
+      <div class="list-header">
+        <div>
+          <div class="list-title">🛒 Myntland</div>
+          ${name ? `<div class="list-meta">Elev: <strong>${name}</strong></div>` : `<div class="list-meta">Navn: ________________________</div>`}
+          <div class="list-meta">Dato: ________________</div>
+        </div>
+        <div class="total-box"><div class="total-label">Total</div><div class="total-val">🪙 ______</div></div>
       </div>
-    </div>`).join('')}
-  </div>`;
+      <table>
+        <thead><tr><th class="num">#</th><th>Vare</th><th style="text-align:center">Bilde</th><th class="right">Pris</th></tr></thead>
+        <tbody>${arr.map((g,i) => `
+          <tr>
+            <td class="num">${i+1}</td>
+            <td style="font-weight:700">${g.name}</td>
+            <td class="emoji">${g.emoji}</td>
+            <td class="price"><div class="price-line">🪙</div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="sum-row"><div class="sum-label">Sum totalt:</div><div class="sum-line"></div></div>
+    </div>`;
+    allPages += `<div class="page">${listHTML(itemsA, sn)}${listHTML(itemsB, sn)}</div>`;
+  }
+
+  const css = `<style>
+    body { margin: 0; padding: 8mm; font-family: 'Nunito', sans-serif; background: white; }
+    @media print { @page { size: A4 landscape; margin: 0; } body { padding: 0; } }
+    .page { display: flex; gap: 4mm; width: 100%; page-break-after: always; box-sizing: border-box; padding: 8mm; }
+    .list { flex: 1; border: 0.5mm solid #c8dfc8; border-radius: 3mm; padding: 5mm; display: flex; flex-direction: column; min-height: 180mm; }
+    .list-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 0.8mm solid #1D9E75; padding-bottom: 3mm; margin-bottom: 3mm; }
+    .list-title { font-family: 'Fredoka One', cursive; font-size: 6mm; color: #085041; line-height: 1.1; }
+    .list-meta  { font-size: 3mm; color: #5a7a5a; margin-top: 1mm; }
+    .total-box  { background: #E1F5EE; border-radius: 2mm; padding: 2mm 4mm; text-align: center; flex-shrink: 0; }
+    .total-label { font-size: 2.5mm; color: #5a7a5a; }
+    .total-val   { font-size: 5mm; font-weight: 800; color: #085041; }
+    table { width: 100%; border-collapse: collapse; flex: 1; }
+    th { background: #E1F5EE; color: #085041; font-size: 2.8mm; padding: 2mm 2.5mm; text-align: left; }
+    th.right { text-align: right; }
+    td { padding: 2.5mm 2.5mm; border-bottom: 0.3mm solid #E1F5EE; vertical-align: middle; font-size: 3.5mm; }
+    td.num   { color: #5a7a5a; width: 6mm; }
+    td.emoji { font-size: 6mm; text-align: center; width: 12mm; }
+    td.price { text-align: right; }
+    .price-line { border-bottom: 0.5mm solid #1D9E75; width: 22mm; margin-left: auto; padding: 1mm 0; }
+    .sum-row { margin-top: 3mm; background: #FAEEDA; border-radius: 2mm; padding: 3mm 4mm; display: flex; justify-content: space-between; align-items: center; }
+    .sum-label { font-weight: 800; font-size: 4mm; color: #854F0B; }
+    .sum-line  { border-bottom: 0.5mm solid #EF9F27; width: 40mm; font-size: 4mm; font-weight: 800; color: #085041; padding-bottom: 1mm; }
+  </style>`;
 
   const win = window.open('', '_blank', 'width=1100,height=700');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
-    '<style>@media print{@page{size:A4 landscape;margin:0}}</style>' +
-    '</head><body>' + listHTML + '</body></html>');
+    css + '</head><body>' + allPages + '</body></html>');
   win.document.close();
   setTimeout(() => { win.focus(); win.print(); }, 700);
 }
@@ -1500,15 +1547,136 @@ function generateRewardQRCodes() {
     if (el && !el.children.length) try { new QRCode(el, { text:JSON.stringify({type:'reward',amount}), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
   });
 }
-function generateCustomQR() {
-  const amount = parseInt(document.getElementById('custom-qr-amount').value) || 25;
-  const desc   = document.getElementById('custom-qr-desc').value || `+${amount} mynter`;
-  const el     = document.getElementById('qr-custom');
-  el.innerHTML = ''; el.style.display = 'block';
-  try { new QRCode(el, { text:JSON.stringify({type:'reward',amount,desc}), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
-  const info = document.getElementById('custom-qr-info');
-  info.style.display = 'block';
-  info.innerHTML = `<div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal);">+${amount} 🪙</div><div style="font-size:.9rem;color:var(--muted);">${desc}</div>`;
+// ── Custom Rewards ─────────────────────────────────────────────────────────
+async function addCustomReward() {
+  const amount = parseInt(document.getElementById('custom-qr-amount').value) || 0;
+  const desc   = document.getElementById('custom-qr-desc').value.trim();
+  const alertEl = document.getElementById('custom-reward-alert');
+  if (!amount || amount < 1) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et gyldig beløp.</div>'; return;
+  }
+  if (!ready()) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Firebase ikke klar.</div>'; return; }
+  await window._set(window._push(fbRef('customRewards14')), {
+    amount, desc: desc || `+${amount} mynter`, created: Date.now()
+  });
+  document.getElementById('custom-qr-amount').value = '25';
+  document.getElementById('custom-qr-desc').value   = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ Belønning på 🪙 ${amount} lagt til!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 2500);
+}
+
+function renderCustomRewards() {
+  const el = document.getElementById('custom-rewards-list');
+  if (!el) return;
+  if (!window._customRewards.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Ingen egendefinerte belønninger ennå.</p>';
+    return;
+  }
+  el.innerHTML = window._customRewards.map((r, idx) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:.9rem 1rem;background:var(--bg);border-radius:12px;margin-bottom:8px;">
+      <div style="width:36px;height:36px;background:var(--teal-light);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:.8rem;flex-shrink:0;">🪙${r.amount}</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:.9rem;">+${r.amount} 🪙</div>
+        <div style="font-size:.78rem;color:var(--muted);">${r.desc}</div>
+      </div>
+      <div id="mini-qr-${r.fbKey}" style="width:60px;height:60px;flex-shrink:0;"></div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="btn btn-primary btn-sm" onclick="printCustomReward('${r.fbKey}')">🖨️</button>
+        <button class="btn btn-coral btn-sm"   onclick="deleteCustomReward('${r.fbKey}')">🗑️</button>
+      </div>
+    </div>`).join('');
+  // Render mini QRs
+  window._customRewards.forEach(r => {
+    const el = document.getElementById('mini-qr-' + r.fbKey);
+    if (el && !el.children.length) {
+      try { new QRCode(el, { text: JSON.stringify({type:'reward', amount:r.amount, desc:r.desc}), width:60, height:60, correctLevel:QRCode.CorrectLevel.L }); } catch(e){}
+    }
+  });
+}
+
+async function deleteCustomReward(fbKey) {
+  if (!confirm('Slett denne belønningen?')) return;
+  await window._remove(fbRef('customRewards14/' + fbKey));
+}
+
+function printCustomReward(fbKey) {
+  const r = window._customRewards.find(x => x.fbKey === fbKey);
+  if (!r) return;
+  _printRewardCards([r]);
+}
+
+function printAllCustomRewards() {
+  if (!window._customRewards.length) { alert('Ingen belønninger å skrive ut.'); return; }
+  _printRewardCards(window._customRewards);
+}
+
+function printSingleQR(elId, label) {
+  // Get the QR canvas/image from the existing element
+  const src = document.getElementById(elId);
+  if (!src) return;
+  const img = src.querySelector('img') || src.querySelector('canvas');
+  if (!img) return;
+  const dataUrl = img.tagName === 'CANVAS' ? img.toDataURL() : img.src;
+  const win = window.open('', '_blank', 'width=600,height=500');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <style>@media print{@page{size:A5 portrait;margin:8mm}}body{font-family:'Nunito',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1rem;}
+    .label{font-family:'Fredoka One',cursive;font-size:2rem;color:#085041;}</style>
+  </head><body>
+    <div class="label">+${label}</div>
+    <img src="${dataUrl}" style="width:200px;height:200px;">
+    <script>setTimeout(()=>{window.focus();window.print();},300);<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+function _printRewardCards(rewards) {
+  // 2 cards per row, styled A4 portrait
+  const cardStyle = `<style>
+    body{margin:0;padding:8mm;font-family:'Nunito',sans-serif;background:white;}
+    @media print{@page{size:A4 portrait;margin:0}}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
+    .card{border:1.5mm solid #1D9E75;border-radius:5mm;padding:7mm;display:flex;flex-direction:column;align-items:center;gap:4mm;page-break-inside:avoid;}
+    .logo{font-family:'Fredoka One',cursive;font-size:5mm;color:#085041;}
+    .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
+    .desc{font-size:3.5mm;color:#5a7a5a;text-align:center;font-weight:700;}
+    .qr-wrap{display:flex;justify-content:center;align-items:center;}
+  </style>`;
+
+  const payloads = rewards.map(r => JSON.stringify({type:'reward', amount:r.amount, desc:r.desc}));
+
+  let cardsHTML = rewards.map((r, i) =>
+    `<div class="card">
+      <div class="logo">🪙 Myntland</div>
+      <div class="amount">+${r.amount} 🪙</div>
+      <div class="qr-wrap" id="pqr${i}"></div>
+      <div class="desc">${r.desc}</div>
+    </div>`
+  ).join('');
+
+  const win = window.open('', '_blank', 'width=800,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    ${cardStyle}
+  </head><body>
+    <div class="grid">${cardsHTML}</div>
+    <script>
+      var payloads=${JSON.stringify(payloads)};
+      function makeAll(){
+        var done=true;
+        for(var i=0;i<payloads.length;i++){
+          var el=document.getElementById('pqr'+i);
+          if(!el){done=false;continue;}
+          if(el.children.length>0)continue;
+          try{new QRCode(el,{text:payloads[i],width:130,height:130,correctLevel:QRCode.CorrectLevel.M});}catch(e){done=false;}
+        }
+        return done;
+      }
+      var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>40){clearInterval(poll);setTimeout(function(){window.focus();window.print();},400);}},150);
+    <\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 // ══════════════════════════════════════════════════════════
