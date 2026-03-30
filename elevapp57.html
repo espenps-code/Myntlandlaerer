@@ -26,11 +26,10 @@
   window._db=db; window._ref=ref; window._onValue=onValue;
   window._update=update; window._push=push; window._set=set; window._get=get;
 
-  // Ekskluder kjente 1-4-klasser; alle andre kan logge inn her
-  const LOWER=['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C'];
+  const VALID57=['5. klasse','6. klasse','7. klasse'];
 
-  onValue(ref(db,'students'),snap=>{
-    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>!LOWER.includes(s.class)):[];
+  onValue(ref(db,'students57'),snap=>{
+    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>VALID57.includes(s.class)):[];
     if(window._currentStudent){
       const up=window._allStudents.find(s=>s.fbKey===window._currentStudent.fbKey);
       if(up){window._currentStudent=up;refreshAllDisplays();}
@@ -661,10 +660,10 @@ async function distributeToGoals(amount){
 
 // ── TRANSACTIONS ───────────────────────────────────────────────────────────
 function fmtDate(ts){const d=new Date(ts),now=new Date(),diff=now-d;if(diff<60000)return 'Nå nettopp';if(diff<3600000)return Math.floor(diff/60000)+' min siden';if(diff<86400000)return 'I dag '+d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});if(diff<172800000)return 'I går';return d.toLocaleDateString('no',{day:'numeric',month:'short'});}
-async function saveTx(sk,type,icon,desc,amount){if(!window._push||!window._set)return;await window._set(window._push(fbRef('transactions/'+sk)),{type,icon,desc,amount,ts:Date.now()});}
+async function saveTx(sk,type,icon,desc,amount){if(!window._push||!window._set)return;await window._set(window._push(fbRef('transactions57/'+sk)),{type,icon,desc,amount,ts:Date.now()});}
 async function loadTransactions(sk){
   if(!window._get)return;
-  try{const snap=await window._get(fbRef('transactions/'+sk));transactions=snap.val()?Object.values(snap.val()).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,30):[];renderTransactions();}catch(e){}
+  try{const snap=await window._get(fbRef('transactions57/'+sk));transactions=snap.val()?Object.values(snap.val()).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,30):[];renderTransactions();}catch(e){}
 }
 function renderTransactions(){
   const el=document.getElementById('transaction-list');if(!el)return;

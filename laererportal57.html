@@ -30,16 +30,15 @@
 
   // ── Lyttere – startes etter innlogging ─────────────────────────────────────
   function startListeners() {
-    // 1-4-klasser (fast liste) ekskluderes fra admin-visning
-    const LOWER = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C'];
+    const VALID57 = ['5. klasse','6. klasse','7. klasse'];
 
-    onValue(ref(db, 'students'), snap => {
+    onValue(ref(db, 'students57'), snap => {
       const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
       if (window._currentTeacher?.role === 'admin') {
-        // Admin ser alle elever UNNTATT de som er i kjente 1-4-klasser
-        window._students = all.filter(s => !LOWER.includes(s.class));
+        // Admin ser alle 5-7-elever
+        window._students = all.filter(s => VALID57.includes(s.class));
       } else {
-        // Lærer ser kun sin egen klasse
+        // Lærer ser kun sin klasse
         window._students = all.filter(s => s.class === window._currentTeacher?.class);
       }
       renderStudentTable(); renderSaldoTable(); updateStats();
@@ -312,7 +311,16 @@
       <div class="card">
         <div class="card-title">💳 Skriv ut bankkort</div>
         <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og PIN – 8 per A4-side.</p>
-        <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort til alle elever</button>
+        <div class="form-row">
+          <label>Velg klasse</label>
+          <select id="card-class-filter">
+            <option value="">Alle klasser</option>
+            <option value="5. klasse">5. klasse</option>
+            <option value="6. klasse">6. klasse</option>
+            <option value="7. klasse">7. klasse</option>
+          </select>
+        </div>
+        <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort</button>
         <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Dataene lagres i Firebase og synkroniseres på alle enheter.</div>
       </div>
     </div>
@@ -849,7 +857,7 @@ async function createStudent() {
   const alertEl = document.getElementById('create-alert');
   if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
   const pin = generatePIN();
-  await window._set(window._push(fbRef('students')), {
+  await window._set(window._push(fbRef('students57')), {
     firstname: fn, lastname: ln, class: cls, pin, balance: bal,
     loan: 0, savings: 0, fund_low: 0, fund_high: 0, created: Date.now()
   });
@@ -942,7 +950,7 @@ async function renameClass() {
   if (from === to) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Nytt navn er det samme som det gamle.</div>'; return; }
   alertEl.innerHTML = '<div class="alert alert-success">⏳ Oppdaterer…</div>';
   const updates = {};
-  window._students.filter(s => s.class === from).forEach(s => { updates['students/' + s.fbKey + '/class'] = to; });
+  window._students.filter(s => s.class === from).forEach(s => { updates['students57/' + s.fbKey + '/class'] = to; });
   if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
   document.getElementById('rename-class-to').value = '';
   alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}»</div>`;
@@ -991,7 +999,7 @@ async function importCSV() {
   let count = 0;
   for (const r of csvParsed) {
     if (!r.firstname && !r.lastname) continue;
-    await window._set(window._push(fbRef('students')), {
+    await window._set(window._push(fbRef('students57')), {
       firstname: r.firstname, lastname: r.lastname, class: r.class,
       pin: generatePIN(), balance: bal,
       loan: 0, savings: 0, fund_low: 0, fund_high: 0, created: Date.now()
@@ -1048,7 +1056,7 @@ async function confirmSaldoAction() {
   else if (currentAction === 'subtract') newBal = Math.max(0, newBal - amount);
   else if (currentAction === 'set') newBal = Math.max(0, amount);
   else if (currentAction === 'reset') newBal = 0;
-  await window._update(fbRef('students/' + currentStudentId), { balance: newBal });
+  await window._update(fbRef('students57/' + currentStudentId), { balance: newBal });
   await logTx(currentStudentId, newBal > (s.balance||0) ? 'income' : 'expense', '💰',
     'Saldo justert av lærer', newBal - (s.balance||0));
   closeModal('modal-saldo');
@@ -1077,7 +1085,7 @@ async function confirmBulkAction() {
     if (bulkAction === 'salary') { newBal = cur + amount;                       txDesc = 'Ukentlig lønn';          txAmt = amount; }
     if (bulkAction === 'tax')    { const t = Math.floor(cur * TAX_RATE); newBal = cur - t; txDesc = 'Skattetrekk 22%'; txAmt = -t; }
     if (bulkAction === 'reset')  { newBal = 0;                                  txDesc = 'Saldo nullstilt';        txAmt = -cur; }
-    updates['students/' + s.fbKey + '/balance'] = Math.max(0, newBal);
+    updates['students57/' + s.fbKey + '/balance'] = Math.max(0, newBal);
     if (txAmt !== 0) await logTx(s.fbKey, txAmt > 0 ? 'income' : 'expense', '💰', txDesc, txAmt);
   }
   await window._update(fbRef('/'), updates);
@@ -1089,14 +1097,14 @@ function openDeleteModal(fbKey, name) {
   document.getElementById('modal-delete-text').textContent = `Slett ${name}?`;
   document.getElementById('modal-delete').classList.add('open');
 }
-async function confirmDelete() { await window._remove(fbRef('students/' + currentStudentId)); closeModal('modal-delete'); }
+async function confirmDelete() { await window._remove(fbRef('students57/' + currentStudentId)); closeModal('modal-delete'); }
 
 // ════════════════════════════════════════════════════════════
 // TRANSAKSJON-LOGGER
 // ════════════════════════════════════════════════════════════
 async function logTx(sk, type, icon, desc, amount) {
   if (!window._push || !window._set) return;
-  await window._set(window._push(fbRef('transactions/' + sk)), { type, icon, desc, amount, ts: Date.now() });
+  await window._set(window._push(fbRef('transactions57/' + sk)), { type, icon, desc, amount, ts: Date.now() });
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1152,7 +1160,7 @@ function cancelEditGroup() {
 async function deleteGroup(fbKey, name) {
   if (!confirm(`Slett gruppen «${name}»? Elever beholdes.`)) return;
   const updates = {};
-  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students/' + s.fbKey + '/groupKey'] = null; });
+  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students57/' + s.fbKey + '/groupKey'] = null; });
   if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
   await window._remove(fbRef('groups/' + fbKey));
 }
@@ -1208,14 +1216,14 @@ async function assignStudentToGroup() {
   const sk = document.getElementById('assign-student-select').value;
   const gk = document.getElementById('assign-group-select').value;
   if (!sk || !gk) { alert('Velg både elev og gruppe.'); return; }
-  await window._update(fbRef('students/' + sk), { groupKey: gk });
+  await window._update(fbRef('students57/' + sk), { groupKey: gk });
 }
 async function removeStudentFromGroup() {
   const sk = document.getElementById('assign-student-select').value;
   if (!sk) { alert('Velg en elev først.'); return; }
-  await window._update(fbRef('students/' + sk), { groupKey: null });
+  await window._update(fbRef('students57/' + sk), { groupKey: null });
 }
-async function removeFromGroup(sk) { await window._update(fbRef('students/' + sk), { groupKey: null }); }
+async function removeFromGroup(sk) { await window._update(fbRef('students57/' + sk), { groupKey: null }); }
 
 // ════════════════════════════════════════════════════════════
 // OPPDRAG
@@ -1271,7 +1279,7 @@ async function approveJob() {
   const s = window._students.find(x => x.fbKey === sk);
   if (!j || !s) return;
   const net = Math.floor(j.pay * 0.8);
-  await window._update(fbRef('students/' + sk), { balance: (s.balance||0) + net });
+  await window._update(fbRef('students57/' + sk), { balance: (s.balance||0) + net });
   await logTx(sk, 'income', '💼', `Oppdrag: ${j.title} (netto etter 20% skatt)`, net);
   alertEl.innerHTML = `<div class="alert alert-success">✅ 🪙 ${net} utbetalt til ${s.firstname}!</div>`;
   setTimeout(() => alertEl.innerHTML = '', 3000);
@@ -1384,7 +1392,7 @@ function generateCustomQR() {
 function generateCardPDF() {
   if (!window._students.length) { alert('Ingen elever å skrive ut.'); return; }
   const cardsHTML = `<style>body{margin:0;padding:0;background:white}.cg{display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,74mm);gap:0}.ci{width:105mm;height:74mm;background-color:#085041;padding:6mm 7mm;color:white;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;page-break-inside:avoid;box-sizing:border-box;border:.3mm solid #1D9E75}.ca{position:absolute;top:-14mm;right:-14mm;width:46mm;height:46mm;border-radius:50%;background:rgba(255,255,255,.07)}.cl{font-family:'Fredoka One',cursive;font-size:6.5mm;color:#EF9F27;line-height:1}.cc{width:10mm;height:7.5mm;background:#EF9F27;border-radius:1.5mm}.cn{font-size:5.5mm;font-weight:800;text-transform:uppercase;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cf{display:flex;justify-content:space-between;align-items:flex-end;margin-top:3mm}.cpl{font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-bottom:1mm}.cpv{font-family:'Fredoka One',cursive;font-size:9mm;color:#EF9F27;letter-spacing:2mm;line-height:1}.cb{background:#EF9F27;color:#085041;border-radius:1.5mm;padding:1.5mm 3mm;font-size:4mm;font-weight:800}</style>
-  <div class="cg">${window._students.map(s => {
+  <div class="cg">${cardsHTML_students.map(s => {
     const dn = s.firstname + ' ' + s.lastname.charAt(0) + '.';
     return `<div class="ci"><div class="ca"></div><div style="display:flex;align-items:flex-start;justify-content:space-between;"><div class="cl">🪙 Myntland</div><div class="cc"></div></div><div><div style="font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-bottom:1mm;">Kortinnehaver</div><div class="cn">${dn}</div><div class="cf"><div><div class="cpl">PIN</div><div class="cpv">${s.pin}</div></div><div class="cb">${s.class}</div></div></div></div>`;
   }).join('')}</div>`;

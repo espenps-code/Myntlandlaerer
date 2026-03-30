@@ -34,11 +34,12 @@
   function startListeners() {
     const tid = window._currentTeacher?.fbKey;
 
-    onValue(ref(db, 'students'), snap => {
+    onValue(ref(db, 'students14'), snap => {
       const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
       // Filtrer på lærerens klasse hvis ikke admin
+      const VALID14 = ['1. klasse','2. klasse','3. klasse','4. klasse'];
       window._students = (window._currentTeacher?.role === 'admin')
-        ? all
+        ? all.filter(s => VALID14.includes(s.class))
         : all.filter(s => s.class === window._currentTeacher?.class);
       renderStudentTable(); renderSaldoTable(); updateStats();
     });
@@ -866,7 +867,7 @@ async function renameClass() {
   if (!toUpdate.length) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Ingen elever i den valgte klassen.</div>'; return; }
   alertEl.innerHTML = '<div class="alert alert-success">⏳ Oppdaterer…</div>';
   const updates = {};
-  toUpdate.forEach(s => { updates['students/' + s.fbKey + '/class'] = to; });
+  toUpdate.forEach(s => { updates['students14/' + s.fbKey + '/class'] = to; });
   await window._update(fbRef('/'), updates);
   document.getElementById('rename-class-to').value = '';
   alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}» for ${toUpdate.length} elev${toUpdate.length!==1?'er':''}.</div>`;
@@ -887,7 +888,7 @@ async function createStudent() {
   const alertEl = document.getElementById('create-alert');
   if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
   const pin = generatePIN();
-  await window._set(window._push(fbRef('students')), { firstname:fn, lastname:ln, class:cls, pin, balance:bal, created:Date.now() });
+  await window._set(window._push(fbRef('students14')), { firstname:fn, lastname:ln, class:cls, pin, balance:bal, created:Date.now() });
   document.getElementById('new-firstname').value = '';
   document.getElementById('new-lastname').value  = '';
   document.getElementById('new-balance').value   = '50';
@@ -987,7 +988,7 @@ async function importCSV() {
   let count = 0;
   for (const r of csvParsed) {
     if (!r.firstname && !r.lastname) continue;
-    await window._set(window._push(fbRef('students')), { firstname:r.firstname, lastname:r.lastname, class:r.class, pin:generatePIN(), balance:bal, created:Date.now() });
+    await window._set(window._push(fbRef('students14')), { firstname:r.firstname, lastname:r.lastname, class:r.class, pin:generatePIN(), balance:bal, created:Date.now() });
     count++;
   }
   alertEl.innerHTML = `<div class="alert alert-success">✅ ${count} elever importert!</div>`;
@@ -1058,7 +1059,7 @@ function cancelEditGroup() {
 async function deleteGroup(fbKey, name) {
   if (!confirm(`Slett gruppen «${name}»? Elever beholdes men mister gruppemedlemskapet.`)) return;
   const updates = {};
-  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students/'+s.fbKey+'/groupKey'] = null; });
+  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students14/'+s.fbKey+'/groupKey'] = null; });
   if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
   await window._remove(fbRef('groups/' + fbKey));
 }
@@ -1119,14 +1120,14 @@ async function assignStudentToGroup() {
   const sk = document.getElementById('assign-student-select').value;
   const gk = document.getElementById('assign-group-select').value;
   if (!sk || !gk) { alert('Velg både elev og gruppe.'); return; }
-  await window._update(fbRef('students/' + sk), { groupKey: gk });
+  await window._update(fbRef('students14/' + sk), { groupKey: gk });
 }
 async function removeStudentFromGroup() {
   const sk = document.getElementById('assign-student-select').value;
   if (!sk) { alert('Velg en elev først.'); return; }
-  await window._update(fbRef('students/' + sk), { groupKey: null });
+  await window._update(fbRef('students14/' + sk), { groupKey: null });
 }
-async function removeFromGroup(sk) { await window._update(fbRef('students/' + sk), { groupKey: null }); }
+async function removeFromGroup(sk) { await window._update(fbRef('students14/' + sk), { groupKey: null }); }
 
 // ══════════════════════════════════════════════════════════
 // SALDO
@@ -1164,7 +1165,7 @@ async function confirmSaldoAction() {
   else if (currentAction === 'subtract') newBal = Math.max(0, s.balance - amount);
   else if (currentAction === 'set')      newBal = Math.max(0, amount);
   else if (currentAction === 'reset')    newBal = 0;
-  await window._update(fbRef('students/' + currentStudentId), { balance: newBal });
+  await window._update(fbRef('students14/' + currentStudentId), { balance: newBal });
   closeModal('modal-saldo');
 }
 function openBulkModal(action) {
@@ -1178,7 +1179,7 @@ async function confirmBulkAction() {
   const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
   const updates = {};
   window._students.forEach(s => {
-    if (!cls || s.class === cls) updates['students/'+s.fbKey+'/balance'] = Math.max(0, bulkAction === 'reset' ? 0 : s.balance + amount);
+    if (!cls || s.class === cls) updates['students14/'+s.fbKey+'/balance'] = Math.max(0, bulkAction === 'reset' ? 0 : s.balance + amount);
   });
   await window._update(fbRef('/'), updates);
   closeModal('modal-bulk');
@@ -1188,7 +1189,7 @@ function openDeleteModal(fbKey, name) {
   document.getElementById('modal-delete-text').textContent = `Er du sikker på at du vil slette ${name}?`;
   document.getElementById('modal-delete').classList.add('open');
 }
-async function confirmDelete() { await window._remove(fbRef('students/' + currentStudentId)); closeModal('modal-delete'); }
+async function confirmDelete() { await window._remove(fbRef('students14/' + currentStudentId)); closeModal('modal-delete'); }
 
 // ══════════════════════════════════════════════════════════
 // GROCERIES

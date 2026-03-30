@@ -37,9 +37,10 @@
   window._get     = get;
   window._fbReady = true;
 
-  onValue(ref(db, 'students'), snap => {
+  const VALID14 = ['1. klasse','2. klasse','3. klasse','4. klasse'];
+  onValue(ref(db, 'students14'), snap => {
     window._allStudents = snap.val()
-      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k})).filter(s => VALID14.includes(s.class))
       : [];
     if (window._currentStudent) {
       const updated = window._allStudents.find(s => s.fbKey === window._currentStudent.fbKey);
@@ -564,14 +565,14 @@ function fmtDate(ts) {
 async function saveTransaction(studentFbKey, tx) {
   // tx = { type, icon, desc, amount, ts }
   if (!window._push || !window._set || !window._ref || !window._db) return;
-  const r = window._push(window._ref(window._db, 'transactions/' + studentFbKey));
+  const r = window._push(window._ref(window._db, 'transactions14/' + studentFbKey));
   await window._set(r, tx);
 }
 
 async function loadTransactions(studentFbKey) {
   if (!window._get || !window._ref || !window._db) return;
   try {
-    const snap = await window._get(window._ref(window._db, 'transactions/' + studentFbKey));
+    const snap = await window._get(window._ref(window._db, 'transactions14/' + studentFbKey));
     if (!snap.val()) { transactions = []; }
     else {
       transactions = Object.values(snap.val())
