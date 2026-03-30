@@ -127,6 +127,14 @@
   .csv-preview th{background:var(--teal-light);color:var(--teal-dark);padding:6px 8px;}
   .qr-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:12px;}
   .qr-wrap{background:white;padding:12px;border-radius:12px;border:2px solid var(--border);}
+  .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;}
+  .color-swatch:hover{transform:scale(1.1);}
+  .color-swatch.selected{border-color:var(--text);transform:scale(1.15);}
+  .group-card{background:var(--white);border-radius:16px;border:2px solid var(--border);padding:1.25rem;margin-bottom:1rem;transition:border-color .15s;}
+  .group-card:hover{border-color:var(--teal);}
+  .group-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+  .group-members{display:flex;flex-wrap:wrap;gap:6px;}
+  .group-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;border:1.5px solid;display:inline-flex;align-items:center;gap:4px;}
   .class-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;}
   .class-row-count{font-size:.8rem;color:var(--muted);margin-left:auto;}
   .setup-banner{background:#fff3cd;border:2px solid var(--amber);border-radius:16px;padding:1.5rem;margin-bottom:2rem;}
@@ -140,6 +148,7 @@
   <div class="logo">🪙 Myntland <span class="logo-badge">5–7. trinn</span></div>
   <nav>
     <button class="active" onclick="showPage('elever')"  id="nav-elever">👩‍🎓 Elever</button>
+    <button onclick="showPage('grupper')"                 id="nav-grupper">👥 Grupper</button>
     <button onclick="showPage('saldo')"                   id="nav-saldo">💰 Saldo</button>
     <button onclick="showPage('oppdrag')"                 id="nav-oppdrag">💼 Oppdrag</button>
     <button onclick="showPage('butikk57')"                id="nav-butikk57">🛒 Butikk</button>
@@ -176,13 +185,7 @@
         <div class="card-title">➕ Opprett ny elev</div>
         <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Jonas"></div>
         <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Larsen"></div>
-        <div class="form-row"><label>Klasse</label>
-          <select id="new-class">
-            <option>5A</option><option>5B</option><option>5C</option>
-            <option>6A</option><option>6B</option><option>6C</option>
-            <option>7A</option><option>7B</option><option>7C</option>
-          </select>
-        </div>
+        <div class="form-row"><label>Klasse</label><input type="text" id="new-class" placeholder="f.eks. 6A"></div>
         <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="100" min="0"></div>
         <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
         <div id="create-alert" style="margin-top:1rem"></div>
@@ -252,9 +255,50 @@
         <select onchange="filterClass(this.value)" style="width:120px" id="filter-class-select"><option value="">Alle klasser</option></select>
       </div>
     </div>
-    <table><thead><tr><th>Elev</th><th>Klasse</th><th>PIN</th><th>Saldo</th><th>Lån</th><th>Handlinger</th></tr></thead>
+    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Gruppe</th><th>PIN</th><th>Saldo</th><th>Lån</th><th>Handlinger</th></tr></thead>
     <tbody id="student-table-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Laster…</td></tr></tbody></table>
   </div>
+</div>
+
+
+<!-- ═══════ GRUPPER ═══════ -->
+<div class="page" id="page-grupper">
+  <div class="page-title">👥 Grupper</div>
+  <div class="page-subtitle">Opprett og navngi grupper – knytt elever til grupper for aktiviteter</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" id="group-form-title">➕ Opprett ny gruppe</div>
+      <div class="form-row"><label>Gruppenavn</label><input type="text" id="new-group-name" placeholder="f.eks. Røde Ørner"></div>
+      <div class="form-row"><label>Emoji</label><input type="text" id="new-group-emoji" placeholder="🦅" maxlength="2"></div>
+      <div class="form-row"><label>Farge</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="color-picker">
+          <div class="color-swatch selected" data-color="#1D9E75" style="background:#1D9E75" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#EF9F27" style="background:#EF9F27" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#534AB7" style="background:#534AB7" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#D4537E" style="background:#D4537E" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#639922" style="background:#639922" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#888780" style="background:#888780" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:.5rem">
+        <button class="btn btn-primary" id="group-submit-btn" onclick="submitGroup()">Opprett gruppe</button>
+        <button class="btn btn-ghost" id="group-cancel-btn" onclick="cancelEditGroup()" style="display:none">Avbryt</button>
+      </div>
+      <div id="group-create-alert" style="margin-top:1rem"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">👤 Legg elev til gruppe</div>
+      <div class="form-row"><label>Velg elev</label><select id="assign-student-select"><option value="">– Velg elev –</option></select></div>
+      <div class="form-row"><label>Velg gruppe</label><select id="assign-group-select"><option value="">– Velg gruppe –</option></select></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="assignStudentToGroup()">Legg til i gruppe</button>
+        <button class="btn btn-ghost"   onclick="removeStudentFromGroup()">Fjern fra gruppe</button>
+      </div>
+    </div>
+  </div>
+  <div id="groups-list"></div>
 </div>
 
 <!-- ═══════ SALDO ═══════ -->
@@ -423,6 +467,7 @@ function showPage(page){
   if(page==='qrkoder')  generateRewardQRCodes();
   if(page==='oppdrag')  refreshJobSelects();
   if(page==='butikk57') renderShop57List();
+  if(page==='grupper')  renderGroupsPage();
 }
 function showElevTab(tab,btn){
   ['manuell','csv','klasser'].forEach(t=>{
@@ -739,6 +784,126 @@ function refreshJobSelects(){
 }
 
 
+
+// ── Groups ────────────────────────────────────────────────────────────────
+window._groups = [];
+let currentEditGroupKey = null;
+let selectedGroupColor = '#1D9E75';
+
+function selectColor(el) {
+  document.querySelectorAll('#color-picker .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedGroupColor = el.dataset.color;
+}
+
+async function submitGroup() {
+  const name  = document.getElementById('new-group-name').value.trim();
+  const emoji = document.getElementById('new-group-emoji').value || '👥';
+  const alertEl = document.getElementById('group-create-alert');
+  if (!name) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et gruppenavn.</div>'; return; }
+  if (currentEditGroupKey) {
+    await window._update(fbRef('groups/' + currentEditGroupKey), { name, emoji, color: selectedGroupColor });
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Gruppe oppdatert!</div>';
+    cancelEditGroup();
+  } else {
+    await window._set(window._push(fbRef('groups')), { name, emoji, color: selectedGroupColor, created: Date.now() });
+    alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» opprettet!</div>`;
+    document.getElementById('new-group-name').value  = '';
+    document.getElementById('new-group-emoji').value = '';
+  }
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function openEditGroup(fbKey) {
+  const g = window._groups.find(x => x.fbKey === fbKey); if (!g) return;
+  currentEditGroupKey = fbKey;
+  document.getElementById('new-group-name').value  = g.name;
+  document.getElementById('new-group-emoji').value = g.emoji || '';
+  document.querySelectorAll('#color-picker .color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === g.color));
+  selectedGroupColor = g.color;
+  document.getElementById('group-form-title').textContent = '✏️ Rediger gruppe';
+  document.getElementById('group-submit-btn').textContent = 'Lagre endringer';
+  document.getElementById('group-cancel-btn').style.display = '';
+  document.getElementById('new-group-name').focus();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelEditGroup() {
+  currentEditGroupKey = null;
+  document.getElementById('new-group-name').value  = '';
+  document.getElementById('new-group-emoji').value = '';
+  document.getElementById('group-form-title').textContent = '➕ Opprett ny gruppe';
+  document.getElementById('group-submit-btn').textContent = 'Opprett gruppe';
+  document.getElementById('group-cancel-btn').style.display = 'none';
+}
+
+async function deleteGroup(fbKey, name) {
+  if (!confirm(`Slett gruppen «${name}»? Elever beholdes men mister gruppemedlemskapet.`)) return;
+  const updates = {};
+  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students/'+s.fbKey+'/groupKey'] = null; });
+  if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
+  await window._remove(fbRef('groups/' + fbKey));
+}
+
+function renderGroupsPage() { renderGroupsList(); renderAssignSelects(); }
+
+function renderGroupsList() {
+  const el = document.getElementById('groups-list'); if (!el) return;
+  if (!window._groups.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:2.5rem;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:.75rem">👥</div><div style="font-weight:700">Ingen grupper ennå</div><div style="font-size:.85rem;margin-top:.25rem">Opprett din første gruppe ovenfor!</div></div>`;
+    return;
+  }
+  el.innerHTML = window._groups.map(g => {
+    const members = window._students.filter(s => s.groupKey === g.fbKey);
+    const total   = members.reduce((a,s) => a + (s.balance||0), 0);
+    return `<div class="group-card">
+      <div class="group-card-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:44px;height:44px;border-radius:12px;background:${g.color}22;border:2px solid ${g.color};display:flex;align-items:center;justify-content:center;font-size:1.5rem">${g.emoji||'👥'}</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:${g.color}">${g.name}</div>
+            <div style="font-size:.8rem;color:var(--muted);font-weight:700">${members.length} elev${members.length!==1?'er':''} · 🪙 ${total} totalt</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditGroup('${g.fbKey}')">✏️ Rediger</button>
+          <button class="btn btn-coral btn-sm" onclick="deleteGroup('${g.fbKey}','${g.name.replace(/'/g,"\'")}')">🗑️</button>
+        </div>
+      </div>
+      <div class="group-members">
+        ${members.length ? members.map(s => `
+          <div style="display:flex;align-items:center;gap:6px;background:${g.color}12;border:1px solid ${g.color}44;border-radius:20px;padding:4px 10px">
+            <div style="width:22px;height:22px;background:${g.color}33;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:${g.color}">${s.firstname[0]}${s.lastname[0]}</div>
+            <span style="font-size:.82rem;font-weight:700">${s.firstname} ${s.lastname}</span>
+            <span style="font-size:.75rem;color:var(--muted)">🪙${s.balance||0}</span>
+            <button onclick="removeFromGroup('${s.fbKey}')" style="background:none;border:none;cursor:pointer;color:${g.color};font-size:.9rem;padding:0 2px;line-height:1" title="Fjern">✕</button>
+          </div>`).join('')
+        : `<span style="font-size:.82rem;color:var(--muted);font-style:italic">Ingen elever ennå</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAssignSelects() {
+  const ss = document.getElementById('assign-student-select');
+  const gs = document.getElementById('assign-group-select');
+  if (!ss || !gs) return;
+  ss.innerHTML = '<option value="">– Velg elev –</option>' + window._students.map(s => `<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('');
+  gs.innerHTML = '<option value="">– Velg gruppe –</option>' + window._groups.map(g => `<option value="${g.fbKey}">${g.emoji||'👥'} ${g.name}</option>`).join('');
+}
+
+async function assignStudentToGroup() {
+  const sk = document.getElementById('assign-student-select').value;
+  const gk = document.getElementById('assign-group-select').value;
+  if (!sk || !gk) { alert('Velg både elev og gruppe.'); return; }
+  await window._update(fbRef('students/' + sk), { groupKey: gk });
+}
+async function removeStudentFromGroup() {
+  const sk = document.getElementById('assign-student-select').value;
+  if (!sk) { alert('Velg en elev først.'); return; }
+  await window._update(fbRef('students/' + sk), { groupKey: null });
+}
+async function removeFromGroup(sk) { await window._update(fbRef('students/' + sk), { groupKey: null }); }
 
 // ── Shop 5-7 ──────────────────────────────────────────────────────────────
 let shop57Filter = '';
