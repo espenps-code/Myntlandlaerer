@@ -59,6 +59,16 @@
       window._shop57 = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
       renderShop57List();
     });
+
+    onValue(ref(db, 'classGoals'), snap => {
+      window._classGoals = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      if (document.getElementById('page-sparemaal')?.classList.contains('active')) renderClassGoalsPage();
+    });
+
+    // ── Automatisk fond-oppdatering ──────────────────────────────────────
+    checkAndUpdateFund(db, ref, set, get, update);
+    // ── Automatisk ukentlig lønn (mandag) ──────────────────────────────
+    checkAndPayWeeklySalary(db, ref, set, get, update);
   }
 
   window._startListeners = startListeners;
@@ -261,6 +271,7 @@
     <button onclick="showPage('saldo')"                   id="nav-saldo">💰 Saldo</button>
     <button onclick="showPage('oppdrag')"                 id="nav-oppdrag">💼 Oppdrag</button>
     <button onclick="showPage('butikk57')"                id="nav-butikk57">🛒 Butikk</button>
+    <button onclick="showPage('sparemaal')"               id="nav-sparemaal">🏦 Sparemål</button>
     <button onclick="showPage('qrkoder')"                 id="nav-qrkoder">⬛ QR</button>
     <button onclick="showPage('laerere')" id="nav-laerere" style="display:none">⚙️ Lærere</button>
   </nav>
@@ -442,7 +453,7 @@
       <span>Alle elevers saldo</span>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('add')">➕ Legg til alle</button>
-        <button class="btn btn-ghost btn-sm" onclick="openBulkModal('salary')">💼 Ukentlig lønn</button>
+        <button class="btn btn-ghost btn-sm" onclick="openBulkModal('salary')">💼 Utbetal lønn nå</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('tax')">🏛️ Trekk skatt</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('reset')">🔄 Nullstill</button>
       </div>
@@ -466,6 +477,7 @@
         <div class="form-row"><label>Betaling (mynter)</label><input type="number" id="job-pay" value="50" min="1"></div>
         <div class="form-row"><label>Frist (valgfritt)</label><input type="text" id="job-deadline" placeholder="f.eks. Fredag"></div>
       </div>
+      <div class="form-row"><label>Maks antall ganger</label><input type="number" id="job-max-uses" value="" min="1" placeholder="Ubegrenset"></div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-primary" id="job-submit-btn" onclick="submitJob()">Opprett oppdrag</button>
         <button class="btn btn-ghost" id="job-cancel-btn" onclick="cancelJobEdit()" style="display:none;">Avbryt</button>
@@ -515,12 +527,34 @@
     </div>
   </div>
   <div class="card">
+    <div style="display:flex;gap:10px;margin-bottom:1rem;">
+      <button class="btn btn-amber" onclick="printShopPDF()">🖨️ Skriv ut varekort (PDF)</button>
+    </div>
     <div class="card-title" style="justify-content:space-between;">
       <span>🏪 Alle varer</span>
       <input type="text" placeholder="Søk vare…" style="width:180px;" oninput="filterShop57(this.value)">
     </div>
     <table><thead><tr><th>Vare</th><th>Kategori</th><th>Pris</th><th>QR</th><th></th></tr></thead>
     <tbody id="shop57-table-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Laster…</td></tr></tbody></table>
+  </div>
+</div>
+
+
+<!-- ═══════ KLASSENS SPAREMÅL ═══════ -->
+<div class="page" id="page-sparemaal">
+  <div class="page-title">🏦 Klassens sparemål</div>
+  <div class="page-subtitle">Maks 3 aktive sparemål. Skatt fra elever fordeles automatisk.</div>
+  <div id="class-goals-container"></div>
+  <div class="card" id="new-goal-card">
+    <div class="card-title">➕ Nytt sparemål</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Emoji</label><input type="text" id="goal-emoji" placeholder="🚀" maxlength="2"></div>
+      <div class="form-row"><label>Navn</label><input type="text" id="goal-name" placeholder="f.eks. Klassetur til Oslo"></div>
+    </div>
+    <div class="form-row"><label>Målbeløp (mynter)</label><input type="number" id="goal-target" value="1000" min="1"></div>
+    <div class="form-row"><label>Beskrivelse (valgfritt)</label><input type="text" id="goal-desc" placeholder="Hva sparer vi til?"></div>
+    <button class="btn btn-primary" onclick="createClassGoal()">Opprett sparemål</button>
+    <div id="goal-alert" style="margin-top:1rem;"></div>
   </div>
 </div>
 
@@ -832,6 +866,7 @@ function showPage(page) {
   if (page === 'oppdrag')  refreshJobSelects();
   if (page === 'butikk57') renderShop57List();
   if (page === 'laerere')  renderTeacherList();
+  if (page === 'sparemaal') renderClassGoalsPage();
 }
 
 function showElevTab(tab, btn) {
@@ -1081,9 +1116,17 @@ async function confirmBulkAction() {
   for (const s of targets) {
     const cur = s.balance || 0;
     let newBal = cur, txDesc = '', txAmt = 0;
-    if (bulkAction === 'add')    { newBal = cur + amount;                       txDesc = 'Ekstra fra lærer';       txAmt = amount; }
-    if (bulkAction === 'salary') { newBal = cur + amount;                       txDesc = 'Ukentlig lønn';          txAmt = amount; }
-    if (bulkAction === 'tax')    { const t = Math.floor(cur * TAX_RATE); newBal = cur - t; txDesc = 'Skattetrekk 22%'; txAmt = -t; }
+    if (bulkAction === 'add')    { newBal = cur + amount; txDesc = 'Ekstra fra lærer'; txAmt = amount; }
+    if (bulkAction === 'salary') {
+      const taxAmt = Math.floor(amount * TAX_RATE);
+      const net = amount - taxAmt;
+      newBal = cur + net;
+      txDesc = `Ukentlig lønn (netto etter ${Math.round(TAX_RATE*100)}% skatt)`;
+      txAmt = net;
+      // Distribute tax to classGoals
+      await distributeToGoalsPortal(taxAmt);
+    }
+    if (bulkAction === 'tax')    { const t = Math.floor(cur * TAX_RATE); newBal = cur - t; txDesc = 'Skattetrekk 20%'; txAmt = -t; await distributeToGoalsPortal(t); }
     if (bulkAction === 'reset')  { newBal = 0;                                  txDesc = 'Saldo nullstilt';        txAmt = -cur; }
     updates['students57/' + s.fbKey + '/balance'] = Math.max(0, newBal);
     if (txAmt !== 0) await logTx(s.fbKey, txAmt > 0 ? 'income' : 'expense', '💰', txDesc, txAmt);
@@ -1390,16 +1433,328 @@ function generateCustomQR() {
 // BANKKORT PDF
 // ════════════════════════════════════════════════════════════
 function generateCardPDF() {
-  if (!window._students.length) { alert('Ingen elever å skrive ut.'); return; }
-  const cardsHTML = `<style>body{margin:0;padding:0;background:white}.cg{display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,74mm);gap:0}.ci{width:105mm;height:74mm;background-color:#085041;padding:6mm 7mm;color:white;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;page-break-inside:avoid;box-sizing:border-box;border:.3mm solid #1D9E75}.ca{position:absolute;top:-14mm;right:-14mm;width:46mm;height:46mm;border-radius:50%;background:rgba(255,255,255,.07)}.cl{font-family:'Fredoka One',cursive;font-size:6.5mm;color:#EF9F27;line-height:1}.cc{width:10mm;height:7.5mm;background:#EF9F27;border-radius:1.5mm}.cn{font-size:5.5mm;font-weight:800;text-transform:uppercase;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cf{display:flex;justify-content:space-between;align-items:flex-end;margin-top:3mm}.cpl{font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-bottom:1mm}.cpv{font-family:'Fredoka One',cursive;font-size:9mm;color:#EF9F27;letter-spacing:2mm;line-height:1}.cb{background:#EF9F27;color:#085041;border-radius:1.5mm;padding:1.5mm 3mm;font-size:4mm;font-weight:800}</style>
-  <div class="cg">${cardsHTML_students.map(s => {
-    const dn = s.firstname + ' ' + s.lastname.charAt(0) + '.';
-    return `<div class="ci"><div class="ca"></div><div style="display:flex;align-items:flex-start;justify-content:space-between;"><div class="cl">🪙 Myntland</div><div class="cc"></div></div><div><div style="font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-bottom:1mm;">Kortinnehaver</div><div class="cn">${dn}</div><div class="cf"><div><div class="cpl">PIN</div><div class="cpv">${s.pin}</div></div><div class="cb">${s.class}</div></div></div></div>`;
-  }).join('')}</div>`;
+  const cardClassFilter = document.getElementById('card-class-filter')?.value || '';
+  const printStudents = cardClassFilter
+    ? window._students.filter(s => s.class === cardClassFilter)
+    : window._students;
+  if (!printStudents.length) {
+    alert(cardClassFilter ? `Ingen elever i ${cardClassFilter}.` : 'Ingen elever å skrive ut.');
+    return;
+  }
+  const cardsHTML = `<style>
+    body { margin: 0; padding: 0; background: white; }
+    .card-grid { display: grid; grid-template-columns: repeat(2, 105mm); grid-template-rows: repeat(4, 74mm); gap: 0; }
+    .card-item { width: 105mm; height: 74mm; background-color: #085041; border-radius: 0; padding: 6mm 7mm; color: white; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; page-break-inside: avoid; box-sizing: border-box; border: 0.3mm solid #1D9E75; }
+    .card-accent { position: absolute; top: -14mm; right: -14mm; width: 46mm; height: 46mm; border-radius: 50%; background: rgba(255,255,255,0.07); }
+    .card-accent2 { position: absolute; bottom: -12mm; left: -10mm; width: 38mm; height: 38mm; border-radius: 50%; background: rgba(239,159,39,0.10); }
+    .card-top { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; }
+    .card-logo { font-family: 'Fredoka One', cursive; font-size: 6.5mm; color: #EF9F27; letter-spacing: 0.3mm; line-height: 1; }
+    .card-chip { width: 10mm; height: 7.5mm; background: #EF9F27; border-radius: 1.5mm; opacity: 0.9; }
+    .card-bottom { position: relative; z-index: 1; }
+    .card-label { font-size: 2.8mm; color: rgba(255,255,255,0.60); font-weight: 700; letter-spacing: 0.4mm; text-transform: uppercase; margin-bottom: 1mm; }
+    .card-name { font-size: 5.5mm; font-weight: 800; letter-spacing: 0.1mm; text-transform: uppercase; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 3mm; }
+    .card-pin-label { font-size: 2.8mm; color: rgba(255,255,255,0.60); font-weight: 700; text-transform: uppercase; margin-bottom: 1mm; }
+    .card-pin { font-family: 'Fredoka One', cursive; font-size: 9mm; color: #EF9F27; letter-spacing: 2mm; line-height: 1; }
+    .card-class { background: #EF9F27; color: #085041; border-radius: 1.5mm; padding: 1.5mm 3mm; font-size: 4mm; font-weight: 800; align-self: flex-end; }
+  </style>
+  <div class="card-grid">
+    ${printStudents.map(s => {
+      const displayName = s.firstname + ' ' + s.lastname.charAt(0) + '.';
+      return `<div class="card-item">
+        <div class="card-accent"></div><div class="card-accent2"></div>
+        <div class="card-top"><div class="card-logo">🪙 Myntland</div><div class="card-chip"></div></div>
+        <div class="card-bottom">
+          <div class="card-label">Kortinnehaver</div>
+          <div class="card-name">${displayName}</div>
+          <div class="card-footer">
+            <div><div class="card-pin-label">PIN-kode</div><div class="card-pin">${s.pin}</div></div>
+            <div class="card-class">${s.class}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
   const win = window.open('', '_blank', 'width=900,height=700');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet"><style>@media print{@page{size:A4 portrait;margin:0}}</style></head><body>' + cardsHTML + '</body></html>');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
+    '<style>@media print{@page{size:A4 portrait;margin:0}}</style>' +
+    '</head><body>' + cardsHTML + '</body></html>');
   win.document.close();
   setTimeout(() => { win.focus(); win.print(); }, 800);
+}
+
+
+// ════════════════════════════════════════════════════════════
+// KLASSENS SPAREMÅL (portal)
+// ════════════════════════════════════════════════════════════
+window._classGoals = [];
+
+async function distributeToGoalsPortal(amount) {
+  if (!amount || !window._classGoals?.length) return;
+  const active = window._classGoals.filter(g => !g.completed);
+  if (!active.length) return;
+  const perGoal = Math.floor(amount / active.length);
+  const upd = {};
+  active.forEach(g => {
+    const ns = (g.saved||0) + perGoal;
+    upd['classGoals/' + g.fbKey + '/saved'] = ns;
+    if (ns >= g.target) upd['classGoals/' + g.fbKey + '/completed'] = true;
+  });
+  await window._update(fbRef('/'), upd);
+}
+
+async function createClassGoal() {
+  if (!ready()) return;
+  const active = window._classGoals.filter(g => !g.completed);
+  if (active.length >= 3) {
+    document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Maks 3 aktive sparemål.</div>'; return;
+  }
+  const emoji  = document.getElementById('goal-emoji').value || '🏦';
+  const name   = document.getElementById('goal-name').value.trim();
+  const target = parseInt(document.getElementById('goal-target').value) || 1000;
+  const desc   = document.getElementById('goal-desc').value.trim();
+  if (!name) { document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Skriv inn navn.</div>'; return; }
+  await window._set(window._push(fbRef('classGoals')), { emoji, name, target, desc, saved: 0, completed: false, created: Date.now() });
+  ['goal-emoji','goal-name','goal-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('goal-target').value = '1000';
+  document.getElementById('goal-alert').innerHTML = `<div class="alert alert-success">✅ «${name}» opprettet!</div>`;
+  setTimeout(() => document.getElementById('goal-alert').innerHTML = '', 3000);
+}
+
+async function deleteClassGoal(fbKey) {
+  if (!confirm('Slett sparemål?')) return;
+  await window._remove(fbRef('classGoals/' + fbKey));
+}
+
+function renderClassGoalsPage() {
+  const el = document.getElementById('class-goals-container'); if (!el) return;
+  const active  = window._classGoals.filter(g => !g.completed);
+  const done    = window._classGoals.filter(g =>  g.completed);
+  const newCard = document.getElementById('new-goal-card');
+  if (newCard) newCard.style.display = active.length >= 3 ? 'none' : 'block';
+  if (!window._classGoals.length) { el.innerHTML = ''; return; }
+  el.innerHTML = [...active, ...done].map(g => {
+    const pct = Math.min(100, Math.round((g.saved||0) / g.target * 100));
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:.75rem;">
+        <div style="font-size:1.8rem;">${g.emoji||'🏦'}</div>
+        <div style="flex:1;"><div style="font-weight:800;">${g.name}${g.completed?' ✅':''}</div><div style="font-size:.8rem;color:var(--muted);">Mål: 🪙 ${g.target}${g.desc?' · '+g.desc:''}</div></div>
+        <button onclick="deleteClassGoal('${g.fbKey}')" style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:1.1rem;">🗑️</button>
+      </div>
+      <div style="height:10px;background:var(--bg);border-radius:20px;overflow:hidden;margin-bottom:.5rem;">
+        <div style="height:100%;background:${g.completed?'#16a34a':'var(--teal)'};border-radius:20px;width:${pct}%;transition:width .4s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;color:var(--muted);">
+        <span>🪙 ${g.saved||0} spart</span><span>${pct}%</span><span>🪙 ${Math.max(0,g.target-(g.saved||0))} igjen</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// OPPDRAG – MAX USES
+// ════════════════════════════════════════════════════════════
+// Override submitJob to include maxUses
+const _origSubmitJob = submitJob;
+async function submitJob() {
+  if (!ready()) return;
+  const title    = document.getElementById('job-title').value.trim();
+  const emoji    = document.getElementById('job-emoji').value || '💼';
+  const desc     = document.getElementById('job-desc').value.trim();
+  const pay      = parseInt(document.getElementById('job-pay').value) || 50;
+  const deadline = document.getElementById('job-deadline').value.trim();
+  const maxUses  = parseInt(document.getElementById('job-max-uses')?.value) || 0;
+  const alertEl  = document.getElementById('job-alert');
+  if (!title) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn tittel.</div>'; return; }
+  const data = { title, emoji, desc, pay, deadline, active: true, created: Date.now(), usesLeft: maxUses || null, maxUses: maxUses || null };
+  if (currentEditJobKey) {
+    await window._update(fbRef('jobs/' + currentEditJobKey), { title, emoji, desc, pay, deadline, maxUses: maxUses||null });
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Oppdatert!</div>';
+    cancelJobEdit();
+  } else {
+    await window._set(window._push(fbRef('jobs')), data);
+    alertEl.innerHTML = `<div class="alert alert-success">✅ «${title}» opprettet!</div>`;
+    ['job-title','job-emoji','job-desc','job-deadline'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('job-pay').value = '50';
+    const mu = document.getElementById('job-max-uses'); if(mu) mu.value='';
+  }
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+// ════════════════════════════════════════════════════════════
+// BUTIKK PDF – 2 varer per A4, liggende
+// ════════════════════════════════════════════════════════════
+function printShopPDF() {
+  if (!window._shop57?.length) { alert('Ingen varer i butikken.'); return; }
+  const items = window._shop57;
+  const qrPayloads = items.map(x =>
+    JSON.stringify({ type: 'purchase', fbKey: x.fbKey, name: x.name, emoji: x.emoji, price: x.price })
+  );
+  const cardStyle = `<style>
+    body { margin: 0; padding: 0; font-family: 'Nunito', sans-serif; background: white; }
+    @media print { @page { size: A4 landscape; margin: 0; } }
+    .page { display: flex; width: 297mm; height: 210mm; page-break-after: always; box-sizing: border-box; }
+    .item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6mm;
+            border: 0.5mm solid #1D9E75; padding: 10mm; box-sizing: border-box; }
+    .item-emoji { font-size: 30mm; line-height: 1; }
+    .item-name  { font-family: 'Fredoka One', cursive; font-size: 12mm; color: #085041; text-align: center; }
+    .item-price { background: #E1F5EE; color: #085041; font-weight: 800; padding: 2mm 8mm; border-radius: 4mm; font-size: 9mm; }
+    .item-qr    { display: flex; justify-content: center; align-items: center; min-height: 35mm; }
+    .item-cat   { font-size: 4mm; color: #5a7a5a; }
+  </style>`;
+  // Build pages: 2 items per page
+  let pagesHTML = '';
+  for (let i = 0; i < items.length; i += 2) {
+    const pair = items.slice(i, i+2);
+    while (pair.length < 2) pair.push(null); // pad if odd number
+    pagesHTML += `<div class="page">${pair.map((x, idx) => x
+      ? `<div class="item"><div class="item-emoji">${x.emoji}</div><div class="item-name">${x.name}</div><div class="item-price">🪙 ${x.price}</div><div class="item-qr" id="shopqr${i+idx}"></div><div class="item-cat">${x.category}</div></div>`
+      : `<div class="item"></div>`
+    ).join('')}</div>`;
+  }
+  const win = window.open('', '_blank', 'width=1100,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    ${cardStyle}
+  </head><body>${pagesHTML}<script>
+    var payloads=${JSON.stringify(qrPayloads)};
+    function makeQRs(){
+      var done=true;
+      for(var i=0;i<payloads.length;i++){
+        var el=document.getElementById('shopqr'+i);
+        if(!el){done=false;continue;}
+        if(el.children.length>0)continue;
+        try{new QRCode(el,{text:payloads[i],width:120,height:120,correctLevel:QRCode.CorrectLevel.M});}catch(e){done=false;}
+      }
+      return done;
+    }
+    var attempts=0;
+    var poll=setInterval(function(){
+      attempts++;
+      if(makeQRs()||attempts>30){clearInterval(poll);setTimeout(function(){window.focus();window.print();},400);}
+    },150);
+  <\/script></body></html>`);
+  win.document.close();
+}
+
+// ════════════════════════════════════════════════════════════
+// AUTOMATISK FOND-OPPDATERING (kjører ved innlogging, maks 1/dag)
+// ════════════════════════════════════════════════════════════
+async function checkAndUpdateFund(db, ref, set, get, update) {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const snap  = await get(ref(db, 'fundHistory'));
+    const hist  = snap.val() || {};
+    const days  = Object.keys(hist).sort();
+    if (days[days.length-1] === today) return; // already updated today
+
+    const settSnap = await get(ref(db, 'settings'));
+    const sett = settSnap.val() || {};
+    const lowMax  = (sett.fundLowMax  || 5)  / 100;
+    const highMax = (sett.fundHighMax || 10) / 100;
+
+    const last    = hist[days[days.length-1]] || { low: 100, high: 100 };
+    let   lowRate  = last.low  || 100;
+    let   highRate = last.high || 100;
+
+    // Check for 4-week bonus (every 4th Monday add 10-15%)
+    const d = new Date();
+    const weekNum = Math.ceil((d - new Date(d.getFullYear(), 0, 1)) / 604800000);
+    const isBonus = d.getDay() === 1 && weekNum % 4 === 0; // Monday every 4 weeks
+
+    const lowChange  = isBonus
+      ? 1 + 0.10 + Math.random() * 0.05
+      : 1 + (Math.random() * 2 - 1) * lowMax;
+    const highChange = isBonus
+      ? 1 + 0.10 + Math.random() * 0.05
+      : 1 + (Math.random() * 2 - 1) * highMax;
+
+    lowRate  = Math.max(1, Math.round(lowRate  * lowChange  * 100) / 100);
+    highRate = Math.max(1, Math.round(highRate * highChange * 100) / 100);
+
+    await update(ref(db, 'fundHistory'), { [today]: { low: lowRate, high: highRate, bonus: isBonus } });
+    console.log(`✅ Fond oppdatert: lav=${lowRate} høy=${highRate}${isBonus?' (bonus!)':''}`);
+  } catch(e) { console.log('Fund update skipped:', e.message); }
+}
+
+// ════════════════════════════════════════════════════════════
+// AUTOMATISK UKENTLIG LØNN (mandager)
+// ════════════════════════════════════════════════════════════
+async function checkAndPayWeeklySalary(db, ref, set, get, update) {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const dayOfWeek = new Date().getDay(); // 1 = Monday
+    if (dayOfWeek !== 1) return; // only on Mondays
+
+    const snap = await get(ref(db, 'salaryLastPaid'));
+    const lastPaid = snap.val();
+    if (lastPaid === today) return; // already paid today
+
+    const settSnap = await get(ref(db, 'settings'));
+    const sett = settSnap.val() || {};
+    const salaryAmount = sett.weeklysalary || 0;
+    if (!salaryAmount) return;
+
+    const studSnap = await get(ref(db, 'students57'));
+    if (!studSnap.val()) return;
+    const allStudents = Object.entries(studSnap.val()).map(([k,v])=>({...v,fbKey:k}));
+
+    const tax = (sett.taxRate || 20) / 100;
+    const taxGoals = [];
+    const updates = {};
+
+    for (const s of allStudents) {
+      const net = Math.floor(salaryAmount * (1 - tax));
+      const taxAmt = salaryAmount - net;
+      updates['students57/' + s.fbKey + '/balance'] = (s.balance||0) + net;
+      // log tx
+      await set(ref(db, 'transactions57/' + s.fbKey + '/' + Date.now()), {
+        type: 'income', icon: '💼', desc: `Ukentlig lønn (netto etter ${Math.round(tax*100)}% skatt)`, amount: net, ts: Date.now()
+      });
+      taxGoals.push(taxAmt);
+    }
+    await update(ref(db, '/'), updates);
+
+    // Distribute total tax to classGoals
+    const totalTax = taxGoals.reduce((a,b)=>a+b, 0);
+    const goalsSnap = await get(ref(db, 'classGoals'));
+    if (goalsSnap.val() && totalTax > 0) {
+      const goals = Object.entries(goalsSnap.val()).map(([k,v])=>({...v,fbKey:k})).filter(g=>!g.completed);
+      if (goals.length) {
+        const perGoal = Math.floor(totalTax / goals.length);
+        const goalUpdates = {};
+        goals.forEach(g => {
+          const ns = (g.saved||0) + perGoal;
+          goalUpdates['classGoals/' + g.fbKey + '/saved'] = ns;
+          if (ns >= g.target) goalUpdates['classGoals/' + g.fbKey + '/completed'] = true;
+        });
+        await update(ref(db, '/'), goalUpdates);
+      }
+    }
+
+    // Also pay savings interest
+    const interestRate = (sett.savingsInterest || 2) / 100;
+    const interestUpdates = {};
+    for (const s of allStudents) {
+      if ((s.savings||0) > 0) {
+        const interest = Math.floor((s.savings||0) * interestRate);
+        if (interest > 0) {
+          interestUpdates['students57/' + s.fbKey + '/savings'] = (s.savings||0) + interest;
+          interestUpdates['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0; // reset weekly withdrawals
+        }
+      }
+      // Always reset weekly withdrawals on Monday
+      if (!interestUpdates['students57/' + s.fbKey + '/withdrawalsThisWeek']) {
+        interestUpdates['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
+      }
+    }
+    if (Object.keys(interestUpdates).length) await update(ref(db, '/'), interestUpdates);
+
+    await set(ref(db, 'salaryLastPaid'), today);
+    console.log(`✅ Ukentlig lønn og sparerente utbetalt for ${allStudents.length} elever`);
+  } catch(e) { console.log('Salary check skipped:', e.message); }
 }
 
 // ════════════════════════════════════════════════════════════

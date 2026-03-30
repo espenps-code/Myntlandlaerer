@@ -274,23 +274,73 @@
   <button class="big-splash-btn" onclick="showShopScreen()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🛒 Butikken</button>
 </div>
 
-<!-- BUTIKK (public, no login) -->
+<!-- BUTIKK – PIN LOGIN -->
 <div class="screen" id="screen-shop">
   <div style="background:var(--teal-dark);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0">
     <button onclick="showScreen('screen-splash')" style="background:rgba(255,255,255,.13);border:none;color:white;border-radius:10px;padding:7px 12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">← Tilbake</button>
     <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);flex:1">🛒 Butikken</div>
+    <div id="shop-student-badge" style="font-size:.8rem;color:rgba(255,255,255,.8);font-weight:700;display:none"></div>
   </div>
-  <div style="flex:1;overflow-y:auto;padding:1.25rem">
-    <div style="background:var(--teal-light);border-radius:12px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;border:1px solid #5DCAA5">
-      🛒 Scan QR-koden på varen med bankkortet, eller logg inn for å kjøpe direkte i appen.
-    </div>
-    <input type="text" placeholder="Søk etter vare…" oninput="filterShop57Public(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:1rem">
-    <div id="shop-public-list">
-      <div style="text-align:center;padding:2rem;color:var(--muted)">
-        <div style="font-size:2rem;margin-bottom:.5rem">🛒</div>
-        <div style="font-weight:700">Laster varer…</div>
+
+  <!-- Shop PIN login -->
+  <div id="shop-login-section" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem">
+    <div style="text-align:center;font-size:2rem;margin-bottom:.5rem">🛒</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);margin-bottom:.3rem">Logg inn i butikken</div>
+    <div style="color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Tast inn din PIN-kode</div>
+    <div class="login-card" style="width:100%">
+      <div class="pin-dots">
+        <div class="pin-dot" id="shop-dot-0"></div><div class="pin-dot" id="shop-dot-1"></div>
+        <div class="pin-dot" id="shop-dot-2"></div><div class="pin-dot" id="shop-dot-3"></div>
+      </div>
+      <div id="shop-login-error" style="color:var(--coral);font-size:.85rem;font-weight:700;min-height:20px;text-align:center;margin-bottom:7px"></div>
+      <div class="numpad">
+        <button class="num-btn" onclick="shopNp('1')">1</button><button class="num-btn" onclick="shopNp('2')">2</button><button class="num-btn" onclick="shopNp('3')">3</button>
+        <button class="num-btn" onclick="shopNp('4')">4</button><button class="num-btn" onclick="shopNp('5')">5</button><button class="num-btn" onclick="shopNp('6')">6</button>
+        <button class="num-btn" onclick="shopNp('7')">7</button><button class="num-btn" onclick="shopNp('8')">8</button><button class="num-btn" onclick="shopNp('9')">9</button>
+        <div class="num-btn empty"></div><button class="num-btn" onclick="shopNp('0')">0</button><button class="num-btn delete" onclick="shopNp('DEL')">⌫</button>
       </div>
     </div>
+  </div>
+
+  <!-- Shop content (shown after login) -->
+  <div id="shop-content-section" style="flex:1;overflow-y:auto;padding:1.25rem;display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
+      <div id="shop-balance-display" style="background:var(--teal-light);border-radius:10px;padding:.5rem .85rem;font-size:.85rem;color:var(--teal-dark);font-weight:700"></div>
+      <button onclick="shopLogout()" style="background:var(--coral-light);border:none;color:var(--coral);border-radius:8px;padding:6px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer">Logg ut</button>
+    </div>
+
+    <!-- Cart summary -->
+    <div id="shop-cart-bar" style="display:none;background:var(--teal-dark);border-radius:12px;padding:.75rem 1rem;margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between">
+      <div style="color:white;font-size:.9rem;font-weight:700">🛒 Handlekurv: <span id="cart-total-display">0 🪙</span></div>
+      <button onclick="openShopCart()" style="background:var(--amber);border:none;color:var(--teal-dark);border-radius:8px;padding:6px 14px;font-family:'Fredoka One',cursive;font-size:.95rem;cursor:pointer">Se kurv</button>
+    </div>
+
+    <input type="text" placeholder="Søk etter vare…" oninput="filterShopLogged(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:.85rem">
+    <div id="shop-logged-list"></div>
+  </div>
+</div>
+
+<!-- HANDLEKURV OVERLAY -->
+<div class="pin-overlay" id="shop-cart-overlay" style="z-index:600">
+  <div style="background:white;border-radius:20px;padding:1.5rem;width:100%;max-width:380px;max-height:70vh;overflow-y:auto">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:1rem">🛒 Handlekurv</div>
+    <div id="cart-items-list"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:1rem;border-top:2px solid var(--border)">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--teal-dark)">Total: <span id="cart-total-big">0</span> 🪙</div>
+    </div>
+  </div>
+  <!-- PIN confirm for cart checkout -->
+  <div style="margin-top:1rem;width:100%;max-width:380px">
+    <div style="font-size:.85rem;color:rgba(255,255,255,.8);text-align:center;margin-bottom:.5rem;font-weight:700">Tast PIN for å betale</div>
+    <div class="pin-ov-dots"><div class="pin-ov-dot" id="cart-pdot-0"></div><div class="pin-ov-dot" id="cart-pdot-1"></div><div class="pin-ov-dot" id="cart-pdot-2"></div><div class="pin-ov-dot" id="cart-pdot-3"></div></div>
+    <div class="pin-ov-err" id="cart-pin-error"></div>
+    <div class="pin-ov-numpad">
+      <button class="pin-ov-btn" onclick="cartPinPress('1')">1</button><button class="pin-ov-btn" onclick="cartPinPress('2')">2</button><button class="pin-ov-btn" onclick="cartPinPress('3')">3</button>
+      <button class="pin-ov-btn" onclick="cartPinPress('4')">4</button><button class="pin-ov-btn" onclick="cartPinPress('5')">5</button><button class="pin-ov-btn" onclick="cartPinPress('6')">6</button>
+      <button class="pin-ov-btn" onclick="cartPinPress('7')">7</button><button class="pin-ov-btn" onclick="cartPinPress('8')">8</button><button class="pin-ov-btn" onclick="cartPinPress('9')">9</button>
+      <button class="pin-ov-btn empty"></button><button class="pin-ov-btn" onclick="cartPinPress('0')">0</button><button class="pin-ov-btn del" onclick="cartPinPress('DEL')">⌫</button>
+    </div>
+    <button onclick="closeShopCart()" class="pin-ov-cancel" style="margin-top:.75rem">Avbryt</button>
   </div>
 </div>
 
@@ -426,7 +476,7 @@
   <!-- BUTIKK TAB -->
   <div class="tab-content content" id="tab-butikk">
     <div class="section-title">🛒 Butikken</div>
-    <div class="info-box">Her finner du varene du kan kjøpe med mynter. Ta kontakt med læreren for å gjennomføre kjøp.</div>
+    <div class="info-box">Trykk på + for å legge i handlekurv. Bekreft kjøp med PIN-kode.</div>
     <div id="butikk-search-wrap" style="margin-bottom:.85rem">
       <input type="text" placeholder="Søk etter vare…" oninput="filterShop57El(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none">
     </div>
@@ -458,6 +508,7 @@
     <button class="nav-item"        onclick="switchTab('laan',this);renderLoan()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
     <button class="nav-item"        onclick="switchTab('sparemaal',this);renderClassGoalsTab()"><div class="nav-icon">🏦</div><div class="nav-label">Sparemål</div></button>
     <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Oppdrag</div></button>
+    <button class="nav-item"        onclick="switchTab('butikk',this);renderShop57()" ><div class="nav-icon">🛒</div><div class="nav-label">Butikk</div></button>
     <button class="nav-item"        onclick="switchTab('kort',this)"><div class="nav-icon">💳</div><div class="nav-label">Kort</div></button>
   </div>
 </div>
@@ -585,6 +636,7 @@ function tryLogin(){
     refreshAllDisplays();
     refreshGoalSelect();
     loadTransactions(s.fbKey);
+    checkAndResetQuiz(s);
     checkQuizStatus();
     renderLoan();
     switchTab('bank',document.querySelector('.nav-item'));
@@ -640,7 +692,7 @@ function refreshGoalSelect(){
 async function saveGoalChoice(){
   const s=window._currentStudent;if(!s)return;
   const v=document.getElementById('goal-selector').value;
-  await window._update(fbRef('students/'+s.fbKey),{preferredGoal:v||null});
+  await window._update(fbRef('students57/'+s.fbKey),{preferredGoal:v||null});
   window._currentStudent.preferredGoal=v||null;
 }
 async function distributeToGoals(amount){
@@ -683,7 +735,7 @@ function openTransfer(type){
     'bruk-til-spare':{title:'Sett inn på sparekonto',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
       if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
       const upd={balance:(s.balance||0)-amt,savings:(s.savings||0)+amt};
-      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
       await saveTx(s.fbKey,'expense','💰',`Overført til sparekonto`,-amt);
       await saveTx(s.fbKey,'income','💰',`Inn på sparekonto`,amt);
       transactions.unshift({type:'income',icon:'💰',desc:'Inn på sparekonto',amount:amt,ts:Date.now()});
@@ -692,14 +744,14 @@ function openTransfer(type){
       if(amt>(s.savings||0)){alert('Ikke nok på sparekonto.');return;}
       const usedW=s.withdrawalsThisWeek||0;if(usedW>=getMaxW()){alert(`Maks ${getMaxW()} uttak per uke. Prøv igjen neste uke.`);return;}
       const upd={balance:(s.balance||0)+amt,savings:(s.savings||0)-amt,withdrawalsThisWeek:usedW+1};
-      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
       await saveTx(s.fbKey,'income','💰',`Uttak fra sparekonto`,amt);
       transactions.unshift({type:'income',icon:'💰',desc:'Uttak fra sparekonto',amount:amt,ts:Date.now()});
       refreshAllDisplays();renderTransactions();showSuccess('💰','Tatt ut!',`+${amt} 🪙 brukskonto`,`Sparekonto: ${window._currentStudent.savings}🪙`);}},
     'bruk-til-fond-low':{title:'Sett inn – Fond lav risiko',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
       if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
       const upd={balance:(s.balance||0)-amt,fund_low:(s.fund_low||0)+amt};
-      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
       await saveTx(s.fbKey,'expense','📊',`Inn i fond (lav risiko)`,-amt);
       transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond lav risiko',amount:-amt,ts:Date.now()});
       refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Investert!',`${amt} 🪙 i fond`,``);}},
@@ -710,14 +762,14 @@ function openTransfer(type){
       const gain=Math.max(0,Math.round(amt*(curRate-initRate)/initRate));
       const tax=Math.round(gain*getFundTax());const net=amt-tax;
       const upd={balance:(s.balance||0)+net,fund_low:(s.fund_low||0)-amt};
-      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
       await saveTx(s.fbKey,'income','📊',`Uttak fond lav risiko (${tax}🪙 fondskatt)`,net);
       transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond lav (skatt: ${tax}🪙)`,amount:net,ts:Date.now()});
       refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt betalt: ${tax}🪙`);}},
     'bruk-til-fond-high':{title:'Sett inn – Fond høy risiko',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
       if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
       const upd={balance:(s.balance||0)-amt,fund_high:(s.fund_high||0)+amt};
-      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
       await saveTx(s.fbKey,'expense','📊',`Inn i fond (høy risiko)`,-amt);
       transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond høy risiko',amount:-amt,ts:Date.now()});
       refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Investert!',`${amt} 🪙 i fond`,``);}},
@@ -728,7 +780,7 @@ function openTransfer(type){
       const gain=Math.max(0,Math.round(amt*(curRate-initRate)/initRate));
       const tax=Math.round(gain*getFundTax());const net=amt-tax;
       const upd={balance:(s.balance||0)+net,fund_high:(s.fund_high||0)-amt};
-      await window._update(fbRef('students/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
+      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
       await saveTx(s.fbKey,'income','📊',`Uttak fond høy risiko (${tax}🪙 fondskatt)`,net);
       transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond høy (skatt: ${tax}🪙)`,amount:net,ts:Date.now()});
       refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt betalt: ${tax}🪙`);}},
@@ -805,7 +857,7 @@ function takeLoan(max){
   showInputSheet('Ta opp lån',`Maks 🪙 ${max} · Rente: ${Math.round(getLoanRate()*100)}%`,async(amt)=>{
     if(amt>max){alert(`Maks lån er 🪙 ${max}.`);return;}
     const s=window._currentStudent;const newBal=(s.balance||0)+amt;
-    await window._update(fbRef('students/'+s.fbKey),{balance:newBal,loan:amt});
+    await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:amt});
     window._currentStudent.balance=newBal;window._currentStudent.loan=amt;
     await saveTx(s.fbKey,'income','📋','Lån opptatt',amt);
     transactions.unshift({type:'income',icon:'📋',desc:'Lån opptatt',amount:amt,ts:Date.now()});
@@ -818,7 +870,7 @@ async function repayLoan(){
   if((s.balance||0)<total){alert(`Du trenger 🪙 ${total}. Du har 🪙 ${s.balance||0}.`);return;}
   if(!confirm(`Betal tilbake 🪙 ${total} (lån + ${Math.round(getLoanRate()*100)}% rente)?`))return;
   const newBal=(s.balance||0)-total;
-  await window._update(fbRef('students/'+s.fbKey),{balance:newBal,loan:0});
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:0});
   window._currentStudent.balance=newBal;window._currentStudent.loan=0;
   await saveTx(s.fbKey,'expense','📋',`Lån nedbetalt (rente: ${interest}🪙)`,-total);
   transactions.unshift({type:'expense',icon:'📋',desc:`Lån nedbetalt (rente: ${interest}🪙)`,amount:-total,ts:Date.now()});
@@ -908,7 +960,7 @@ async function doPayment(amount){
   const s=window._currentStudent;if(!s)return;
   if((s.balance||0)<amount){showSuccess('😕','Ikke nok mynter!','',`Saldo: ${s.balance||0}🪙`);return;}
   const newBal=(s.balance||0)-amount;
-  await window._update(fbRef('students/'+s.fbKey),{balance:newBal});
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
   window._currentStudent.balance=newBal;
   const tx={type:'expense',icon:'🛒',desc:'Betaling i kassen',amount:-amount,ts:Date.now()};
   await saveTx(s.fbKey,'expense','🛒','Betaling i kassen',-amount);
@@ -919,7 +971,7 @@ async function doReward(amount,desc){
   const s=window._currentStudent;if(!s)return;
   const tax=getTax();const taxAmt=Math.floor(amount*tax);const net=amount-taxAmt;
   const newBal=(s.balance||0)+net;
-  await window._update(fbRef('students/'+s.fbKey),{balance:newBal});
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
   window._currentStudent.balance=newBal;
   await distributeToGoals(taxAmt);
   const tx={type:'income',icon:'⭐',desc:desc||`Belønning skannet (${taxAmt}🪙 til sparemål)`,amount:net,ts:Date.now()};
@@ -931,13 +983,205 @@ async function doJobReward(grossPay,title){
   const s=window._currentStudent;if(!s)return;
   const tax=getTax();const taxAmt=Math.floor(grossPay*tax);const net=grossPay-taxAmt;
   const newBal=(s.balance||0)+net;
-  await window._update(fbRef('students/'+s.fbKey),{balance:newBal});
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
   window._currentStudent.balance=newBal;
   await distributeToGoals(taxAmt);
   const tx={type:'income',icon:'💼',desc:`Oppdrag: ${title||'Fullført'} (netto etter skatt)`,amount:net,ts:Date.now()};
   await saveTx(s.fbKey,'income','💼',tx.desc,net);
   transactions.unshift(tx);refreshAllDisplays();renderTransactions();
   showSuccess('💼','Oppdrag fullført!',`+${net} 🪙`,`${taxAmt}🪙 til klassens sparemål`);
+}
+
+
+// ── SHOP PIN LOGIN & CART ──────────────────────────────────────────────────
+let _shopStudent = null;
+let _shopPin = '';
+let _shopCart = []; // [{fbKey, name, emoji, price}]
+let _shopFilter = '';
+let _cartPin = '';
+
+function shopNp(v) {
+  if (v === 'DEL') _shopPin = _shopPin.slice(0,-1);
+  else if (_shopPin.length < 4) _shopPin += v;
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('shop-dot-'+i);
+    if(d) d.classList.toggle('filled', i < _shopPin.length);
+  }
+  document.getElementById('shop-login-error').textContent = '';
+  if (_shopPin.length === 4) setTimeout(tryShopLogin, 200);
+}
+
+function tryShopLogin() {
+  const s = window._allStudents.find(s => s.pin === _shopPin);
+  if (s) {
+    _shopStudent = s;
+    document.getElementById('shop-login-section').style.display = 'none';
+    document.getElementById('shop-content-section').style.display = 'block';
+    document.getElementById('shop-student-badge').style.display = 'block';
+    document.getElementById('shop-student-badge').textContent = s.firstname + ' ' + s.class;
+    updateShopBalance();
+    renderShopLogged();
+  } else {
+    document.getElementById('shop-login-error').textContent = '❌ Feil PIN-kode!';
+  }
+  _shopPin = '';
+  for (let i=0;i<4;i++) { const d=document.getElementById('shop-dot-'+i); if(d) d.classList.remove('filled'); }
+}
+
+function shopLogout() {
+  _shopStudent = null; _shopCart = []; _shopPin = '';
+  document.getElementById('shop-login-section').style.display = 'flex';
+  document.getElementById('shop-content-section').style.display = 'none';
+  document.getElementById('shop-student-badge').style.display = 'none';
+  for (let i=0;i<4;i++) { const d=document.getElementById('shop-dot-'+i); if(d) d.classList.remove('filled'); }
+}
+
+function updateShopBalance() {
+  if (!_shopStudent) return;
+  // Refresh from allStudents
+  const fresh = window._allStudents.find(s => s.fbKey === _shopStudent.fbKey);
+  if (fresh) _shopStudent = fresh;
+  const el = document.getElementById('shop-balance-display');
+  if (el) el.textContent = `💰 Brukskonto: 🪙 ${_shopStudent.balance||0}`;
+}
+
+function filterShopLogged(v) { _shopFilter = v.toLowerCase(); renderShopLogged(); }
+
+function renderShopLogged() {
+  const el = document.getElementById('shop-logged-list'); if (!el) return;
+  const items = (window._shop57||[]).filter(x =>
+    !_shopFilter || x.name.toLowerCase().includes(_shopFilter) || x.category?.toLowerCase().includes(_shopFilter)
+  );
+  if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:2rem">🛒</div><div style="font-weight:700">Ingen varer ennå</div></div>'; return; }
+  const cats = {};
+  items.forEach(x => { if (!cats[x.category]) cats[x.category] = []; cats[x.category].push(x); });
+  el.innerHTML = Object.entries(cats).map(([cat, vars]) => `
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">${cat}</div>
+      ${vars.map(x => {
+        const inCart = _shopCart.filter(c => c.fbKey === x.fbKey).length;
+        return `<div style="display:flex;align-items:center;gap:10px;background:white;padding:12px;border-radius:12px;margin-bottom:7px;border:1px solid var(--border)">
+          <span style="font-size:1.7rem;flex-shrink:0">${x.emoji}</span>
+          <span style="font-weight:700;flex:1;font-size:.92rem">${x.name}</span>
+          <span style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);background:var(--amber-light);padding:3px 10px;border-radius:20px;white-space:nowrap">🪙 ${x.price}</span>
+          <button onclick="addToShopCart('${x.fbKey}','${x.name.replace(/'/g,"\'")}',${x.price},'${x.emoji}')"
+            style="background:var(--teal);color:white;border:none;border-radius:9px;width:32px;height:32px;font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">+</button>
+          ${inCart > 0 ? `<span style="background:var(--coral);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;flex-shrink:0">${inCart}</span>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+  updateCartBar();
+}
+
+function addToShopCart(fbKey, name, price, emoji) {
+  _shopCart.push({ fbKey, name, price, emoji });
+  renderShopLogged();
+}
+
+function updateCartBar() {
+  const total = _shopCart.reduce((a,x) => a+x.price, 0);
+  const bar = document.getElementById('shop-cart-bar');
+  const td  = document.getElementById('cart-total-display');
+  if (bar) bar.style.display = _shopCart.length ? 'flex' : 'none';
+  if (td)  td.textContent = total + ' 🪙';
+}
+
+function openShopCart() {
+  _cartPin = '';
+  for (let i=0;i<4;i++) { const d=document.getElementById('cart-pdot-'+i); if(d) d.classList.remove('filled'); }
+  document.getElementById('cart-pin-error').textContent = '';
+  const total = _shopCart.reduce((a,x) => a+x.price, 0);
+  document.getElementById('cart-total-big').textContent = total;
+  // Render cart items
+  const el = document.getElementById('cart-items-list');
+  if (el) {
+    // Group by item
+    const grouped = {};
+    _shopCart.forEach(x => { if (!grouped[x.fbKey]) grouped[x.fbKey] = {...x, qty:0}; grouped[x.fbKey].qty++; });
+    el.innerHTML = Object.values(grouped).map(x => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:1.4rem">${x.emoji}</span>
+        <span style="flex:1;font-weight:700;font-size:.9rem">${x.name}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="removeFromCart('${x.fbKey}')" style="background:var(--coral-light);border:none;color:var(--coral);border-radius:6px;width:26px;height:26px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">-</button>
+          <span style="font-weight:700;min-width:16px;text-align:center">${x.qty}</span>
+          <button onclick="addToShopCart('${x.fbKey}','${x.name.replace(/'/g,"\'")}',${x.price},'${x.emoji}')" style="background:var(--teal-light);border:none;color:var(--teal-dark);border-radius:6px;width:26px;height:26px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+        </div>
+        <span style="font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:.9rem;min-width:48px;text-align:right">🪙 ${x.price*x.qty}</span>
+      </div>`).join('');
+  }
+  document.getElementById('shop-cart-overlay').classList.add('open');
+}
+
+function removeFromCart(fbKey) {
+  const idx = _shopCart.findIndex(x => x.fbKey === fbKey);
+  if (idx !== -1) _shopCart.splice(idx,1);
+  openShopCart(); // re-render
+  updateCartBar();
+}
+
+function closeShopCart() {
+  document.getElementById('shop-cart-overlay').classList.remove('open');
+  _cartPin = '';
+}
+
+function cartPinPress(v) {
+  if (v === 'DEL') _cartPin = _cartPin.slice(0,-1);
+  else if (_cartPin.length < 4) _cartPin += v;
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('cart-pdot-'+i);
+    if (d) d.classList.toggle('filled', i < _cartPin.length);
+  }
+  document.getElementById('cart-pin-error').textContent = '';
+  if (_cartPin.length === 4) setTimeout(checkCartPin, 150);
+}
+
+async function checkCartPin() {
+  if (!_shopStudent) return;
+  if (_cartPin !== _shopStudent.pin) {
+    document.getElementById('cart-pin-error').textContent = '❌ Feil PIN – prøv igjen';
+    _cartPin = '';
+    for (let i=0;i<4;i++) { const d=document.getElementById('cart-pdot-'+i); if(d) d.classList.remove('filled'); }
+    return;
+  }
+  // Pay!
+  const total = _shopCart.reduce((a,x) => a+x.price, 0);
+  if ((_shopStudent.balance||0) < total) {
+    document.getElementById('cart-pin-error').textContent = `❌ Ikke nok mynter (trenger 🪙 ${total})`;
+    _cartPin = '';
+    return;
+  }
+  closeShopCart();
+  const newBal = (_shopStudent.balance||0) - total;
+  await window._update(fbRef('students57/'+_shopStudent.fbKey), { balance: newBal });
+  _shopStudent.balance = newBal;
+  // Log transaction
+  const itemNames = _shopCart.map(x=>x.emoji+x.name).join(', ');
+  await window._set(window._push(fbRef('transactions57/'+_shopStudent.fbKey)), {
+    type: 'expense', icon: '🛒', desc: `Kjøpt: ${itemNames}`, amount: -total, ts: Date.now()
+  });
+  _shopCart = [];
+  updateShopBalance();
+  renderShopLogged();
+  // Show success
+  const badge = document.getElementById('shop-student-badge');
+  if (badge) badge.textContent = _shopStudent.firstname + ' · 🪙' + newBal;
+  // Brief success flash
+  const bar = document.getElementById('shop-cart-bar');
+  if (bar) { bar.style.background='var(--teal)'; setTimeout(()=>{bar.style.background='var(--teal-dark)';}, 1500); }
+  _cartPin = '';
+}
+
+// ── QUIZ MONDAY RESET ─────────────────────────────────────────────────────
+async function checkAndResetQuiz(s) {
+  const d = new Date();
+  if (d.getDay() !== 1) return; // only Monday
+  // If student's quizWeek is from last week, clear it so they can retake
+  const currentWeek = getWeekKey();
+  if (s.quizWeek && s.quizWeek !== currentWeek) {
+    // Already expired – just in case clear locally (Firebase will show new week)
+    window._currentStudent.quizWeek = null;
+  }
 }
 
 // ── SHOP 5-7 ──────────────────────────────────────────────────────────────
@@ -1046,7 +1290,7 @@ async function confirmPurchase() {
   const p = _pendingPurchase; if (!p) return;
   document.getElementById('purchase-pin-overlay').classList.remove('open');
   const newBal = (s.balance||0) - p.price;
-  await window._update(fbRef('students/'+s.fbKey), { balance: newBal });
+  await window._update(fbRef('students57/'+s.fbKey), { balance: newBal });
   window._currentStudent.balance = newBal;
   const tx = { type:'expense', icon:'🛒', desc:`Kjøpte: ${p.name}`, amount: -p.price, ts: Date.now() };
   await saveTx(s.fbKey, 'expense', '🛒', `Kjøpte: ${p.name}`, -p.price);
@@ -1090,7 +1334,17 @@ const QUIZ_POOL=[
   {q:'Hva skjer med sparekontoen din på mandag?',opts:['Den nullstilles','Renter legges til','Den låses','Ingenting'],a:1},
 ];
 function getWeekKey(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+3-(d.getDay()+6)%7);const w1=new Date(d.getFullYear(),0,4);return`${d.getFullYear()}-W${String(1+Math.round(((d-w1)/86400000-3+(w1.getDay()+6)%7)/7)).padStart(2,'0')}`;}
-function getWeekQs(){const seed=parseInt(getWeekKey().replace(/\D/g,''))*137;return[...QUIZ_POOL].sort((a,b)=>{const ha=(seed*(QUIZ_POOL.indexOf(a)+1)*1103515245)%1000;const hb=(seed*(QUIZ_POOL.indexOf(b)+1)*1103515245)%1000;return ha-hb;}).slice(0,5);}
+function getWeekQs(){
+  // Individual per student: combine week key with student PIN for unique shuffle
+  const s = window._currentStudent;
+  const studentSeed = s ? parseInt(s.pin||'1234') : 1234;
+  const seed = (parseInt(getWeekKey().replace(/\D/g,'')) + studentSeed) * 137;
+  return [...QUIZ_POOL].sort((a,b)=>{
+    const ha=(seed*(QUIZ_POOL.indexOf(a)+1)*1103515245)%1000;
+    const hb=(seed*(QUIZ_POOL.indexOf(b)+1)*1103515245)%1000;
+    return ha-hb;
+  }).slice(0,5);
+}
 function checkQuizStatus(){
   const s=window._currentStudent;if(!s)return;
   const done=s.quizWeek===getWeekKey();
@@ -1127,7 +1381,7 @@ async function finishQuiz(){
   document.getElementById('quiz-overlay').classList.remove('open');
   const earned=quizOk*20;const s=window._currentStudent;
   const newBal=(s.balance||0)+earned;
-  await window._update(fbRef('students/'+s.fbKey),{balance:newBal,quizWeek:getWeekKey()});
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,quizWeek:getWeekKey()});
   window._currentStudent.balance=newBal;window._currentStudent.quizWeek=getWeekKey();
   refreshAllDisplays();
   if(earned>0){const tx={type:'income',icon:'🧠',desc:`Quiz – ${quizOk}/5 riktige`,amount:earned,ts:Date.now()};await saveTx(s.fbKey,'income','🧠',tx.desc,earned);transactions.unshift(tx);renderTransactions();}
