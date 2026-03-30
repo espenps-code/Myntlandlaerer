@@ -10,57 +10,113 @@
   import { getDatabase, ref, set, push, onValue, remove, update, get }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-  // ── LIM INN SAMME FIREBASE-KONFIG SOM I 1-4-PORTALEN ────────────────────
   const firebaseConfig = {
-  apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
-  authDomain: "myntland.firebaseapp.com",
-  databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "myntland",
-  storageBucket: "myntland.firebasestorage.app",
-  messagingSenderId: "711264415533",
-  appId: "1:711264415533:web:644a77a1e8b234667b2da4",
-  measurementId: "G-95QZNLQ6V9"
-};
-  // ─────────────────────────────────────────────────────────────────────────
+    apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain: "myntland.firebaseapp.com",
+    databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "myntland",
+    storageBucket: "myntland.firebasestorage.app",
+    messagingSenderId: "711264415533",
+    appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+    measurementId: "G-95QZNLQ6V9"
+  };
 
   const app = initializeApp(firebaseConfig);
   const db  = getDatabase(app);
 
   window._db = db; window._ref = ref; window._set = set; window._push = push;
   window._onValue = onValue; window._remove = remove; window._update = update;
-  window._get = get;
+  window._get = get; window._fbReady = true;
 
-  const UPPER_CLASSES = ['5A','5B','5C','6A','6B','6C','7A','7B','7C'];
+  // ── Lyttere – startes etter innlogging ─────────────────────────────────────
+  function startListeners() {
+    const UPPER = ['5A','5B','5C','6A','6B','6C','7A','7B','7C'];
 
-  onValue(ref(db, 'students'), snap => {
-    const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-    window._students = all.filter(s => UPPER_CLASSES.includes(s.class));
-    renderStudentTable(); renderSaldoTable(); updateStats();
-  });
+    onValue(ref(db, 'students'), snap => {
+      const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      // Admin ser alle 5–7-klasser, lærer ser kun sin klasse (blant 5–7)
+      if (window._currentTeacher?.role === 'admin') {
+        window._students = all.filter(s => UPPER.includes(s.class));
+      } else {
+        window._students = all.filter(s => s.class === window._currentTeacher?.class);
+      }
+      renderStudentTable(); renderSaldoTable(); updateStats();
+    });
 
-  onValue(ref(db, 'jobs'), snap => {
-    window._jobs = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-    renderJobsList();
-  });
+    onValue(ref(db, 'groups'), snap => {
+      window._groups = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      if (document.getElementById('page-grupper')?.classList.contains('active')) renderGroupsPage();
+      renderStudentTable();
+    });
 
-  onValue(ref(db, 'shop57'), snap => {
-    window._shop57 = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-    renderShop57List();
-  });
+    onValue(ref(db, 'jobs'), snap => {
+      window._jobs = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      renderJobsList();
+    });
 
+    onValue(ref(db, 'shop57'), snap => {
+      window._shop57 = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      renderShop57List();
+    });
+  }
+
+  window._startListeners = startListeners;
+
+  // ── Firebase klar – last lærerprofiler ────────────────────────────────────
+  window._firebaseReady = true;
   setTimeout(() => {
     const el = document.getElementById('fb-status');
-    if (el) { el.textContent = '🟢 Tilkoblet'; el.style.color = '#9FE1CB'; }
+    if (el) { el.textContent = '🟢 Firebase klar'; el.style.color = '#9FE1CB'; }
+    if (typeof loadProfiles === 'function') loadProfiles();
   }, 0);
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
-  :root{--teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;--amber:#EF9F27;--amber-light:#FAEEDA;--coral:#D85A30;--coral-light:#FAECE7;--purple:#534AB7;--purple-light:#EEEDFE;--blue:#185FA5;--blue-light:#E6F1FB;--bg:#F7F9F7;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#c8dfc8;}
+  :root{
+    --teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;
+    --amber:#EF9F27;--amber-light:#FAEEDA;
+    --coral:#D85A30;--coral-light:#FAECE7;
+    --purple:#534AB7;--purple-light:#EEEDFE;
+    --blue:#185FA5;--blue-light:#E6F1FB;
+    --bg:#F7F9F7;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#c8dfc8;
+  }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* ── LOGIN ── */
+  #login-screen{display:flex;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--teal-dark),#1a6648,var(--teal));padding:2rem;}
+  .login-box{background:white;border-radius:24px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .login-logo{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--teal-dark);text-align:center;margin-bottom:.25rem;}
+  .login-sub{text-align:center;color:var(--muted);font-size:.9rem;font-weight:700;margin-bottom:.5rem;}
+  .login-badge{text-align:center;margin-bottom:2rem;}
+  .login-badge span{background:var(--amber);color:var(--teal-dark);font-size:.72rem;font-weight:900;padding:3px 12px;border-radius:20px;}
+  .login-profiles{display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem;}
+  .profile-btn{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);border-radius:14px;cursor:pointer;background:var(--white);transition:all .15s;font-family:'Nunito',sans-serif;width:100%;}
+  .profile-btn:hover{border-color:var(--teal);background:var(--teal-light);}
+  .profile-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
+  .profile-name{font-weight:800;font-size:1rem;color:var(--text);}
+  .profile-role{font-size:.75rem;color:var(--muted);}
+  .pin-section{display:none;margin-top:1rem;}
+  .pin-input-row{display:flex;gap:8px;justify-content:center;margin:1rem 0;}
+  .pin-char{width:48px;height:56px;border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);}
+  .pin-char.filled{border-color:var(--teal);background:var(--teal-light);}
+  .pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:.5rem;}
+  .pin-key{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);cursor:pointer;transition:all .1s;text-align:center;}
+  .pin-key:active{transform:scale(.92);background:var(--teal-light);}
+  .pin-key.del{font-size:1rem;color:var(--coral);}
+  .pin-key.empty{background:transparent;border:none;cursor:default;}
+  .login-error{color:var(--coral);font-size:.85rem;font-weight:700;text-align:center;min-height:20px;}
+
+  /* ── APP ── */
+  #app{display:none;}
   header{background:var(--teal-dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
   .logo{font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--amber);display:flex;align-items:center;gap:8px;}
-  .logo-badge{background:var(--amber);color:var(--teal-dark);font-size:.65rem;font-weight:900;padding:2px 7px;border-radius:20px;font-family:'Nunito',sans-serif;}
+  .logo-badge{background:var(--amber);color:var(--teal-dark);font-size:.65rem;font-weight:900;padding:2px 8px;border-radius:20px;font-family:'Nunito',sans-serif;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .teacher-badge-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:10px;}
+  .teacher-badge-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;}
+  .teacher-badge-name{color:white;font-size:.82rem;font-weight:700;}
+  .logout-btn{background:rgba(255,255,255,.13);border:none;color:rgba(255,255,255,.8);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;}
   header nav{display:flex;gap:3px;align-items:center;flex-wrap:wrap;}
   header nav button{background:none;border:none;color:rgba(255,255,255,.7);font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;padding:7px 11px;border-radius:8px;cursor:pointer;transition:all .15s;}
   header nav button:hover{background:rgba(255,255,255,.1);color:#fff;}
@@ -70,6 +126,8 @@
   .page{display:none;}.page.active{display:block;}
   .page-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);margin-bottom:.25rem;}
   .page-subtitle{color:var(--muted);font-size:.95rem;margin-bottom:2rem;}
+
+  /* ── CARDS ── */
   .card{background:var(--white);border-radius:16px;border:1.5px solid var(--border);padding:1.5rem;margin-bottom:1.5rem;}
   .card-title{font-size:1.1rem;font-weight:800;color:var(--teal-dark);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
@@ -78,56 +136,57 @@
   .stat-box{flex:1;background:var(--teal-light);border-radius:12px;padding:1rem;text-align:center;}
   .stat-num{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);}
   .stat-label{font-size:.8rem;color:var(--muted);font-weight:700;}
+
+  /* ── BUTTONS ── */
   .btn{font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
   .btn:hover{transform:translateY(-1px);}.btn:active{transform:translateY(0);}
   .btn-primary{background:var(--teal);color:#fff;}.btn-primary:hover{background:var(--teal-dark);}
   .btn-amber{background:var(--amber);color:var(--teal-dark);}
   .btn-coral{background:var(--coral);color:#fff;}
-  .btn-blue{background:var(--blue);color:#fff;}
   .btn-purple{background:var(--purple);color:#fff;}
-  .btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);}
-  .btn-ghost:hover{background:var(--bg);}
+  .btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);}.btn-ghost:hover{background:var(--bg);}
   .btn-sm{padding:6px 12px;font-size:.82rem;}
-  input[type=text],input[type=number],select,textarea{font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);color:var(--text);width:100%;outline:none;transition:border-color .15s;}
+
+  /* ── FORMS ── */
+  input[type=text],input[type=number],input[type=password],select,textarea{font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);color:var(--text);width:100%;outline:none;transition:border-color .15s;}
   input:focus,select:focus,textarea:focus{border-color:var(--teal);}
-  textarea{resize:vertical;min-height:80px;}
+  textarea{resize:vertical;min-height:70px;}
   label{font-weight:700;font-size:.85rem;color:var(--muted);display:block;margin-bottom:6px;}
   .form-row{margin-bottom:1rem;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+
+  /* ── TABLE ── */
   table{width:100%;border-collapse:collapse;}
   th{font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);}
   td{padding:12px;border-bottom:1px solid var(--bg);font-size:.95rem;vertical-align:middle;}
   tr:hover td{background:var(--teal-light);}
-  .badge{display:inline-flex;align-items:center;gap:4px;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.8rem;}
+  .balance-badge{display:inline-flex;align-items:center;gap:4px;background:var(--amber-light);color:#854F0B;font-weight:800;padding:4px 10px;border-radius:20px;font-size:.9rem;}
+  .balance-actions{display:flex;gap:6px;align-items:center;}
+  .class-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);}
+  .badge{display:inline-flex;align-items:center;gap:4px;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.78rem;}
   .badge-purple{background:var(--purple-light);color:var(--purple);}
   .badge-amber{background:var(--amber-light);color:#854F0B;}
   .badge-teal{background:var(--teal-light);color:var(--teal-dark);}
-  .badge-blue{background:var(--blue-light);color:var(--blue);}
   .badge-coral{background:var(--coral-light);color:var(--coral);}
-  .balance-actions{display:flex;gap:6px;align-items:center;}
+  .group-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;border:1.5px solid;display:inline-flex;align-items:center;gap:4px;}
+
+  /* ── TABS ── */
   .tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--bg);padding:4px;border-radius:12px;border:1px solid var(--border);}
   .tab{flex:1;padding:10px;text-align:center;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;color:var(--muted);transition:all .15s;}
   .tab.active{background:var(--white);color:var(--teal-dark);box-shadow:0 1px 4px rgba(0,0,0,.08);}
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+
+  /* ── MODALS ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
   .modal{background:var(--white);border-radius:20px;padding:2rem;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;}
   .modal-title{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);margin-bottom:1.5rem;}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+
+  /* ── ALERTS ── */
   .alert{padding:12px 16px;border-radius:10px;font-size:.9rem;font-weight:600;margin-bottom:1rem;}
   .alert-success{background:var(--teal-light);color:var(--teal-dark);border:1px solid #5DCAA5;}
   .alert-error{background:var(--coral-light);color:#4A1B0C;border:1px solid #F0997B;}
-  .job-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;}
-  .job-icon{width:48px;height:48px;border-radius:12px;background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;}
-  .job-info{flex:1;}
-  .job-title{font-weight:800;font-size:.95rem;}
-  .job-desc{font-size:.82rem;color:var(--muted);margin-top:2px;}
-  .job-pay{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal);}
-  .drop-zone{border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;color:var(--muted);cursor:pointer;transition:all .15s;}
-  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--teal);background:var(--teal-light);}
-  .csv-preview{max-height:240px;overflow-y:auto;margin-top:1rem;}
-  .csv-preview table{font-size:.82rem;}
-  .csv-preview th{background:var(--teal-light);color:var(--teal-dark);padding:6px 8px;}
-  .qr-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:12px;}
-  .qr-wrap{background:white;padding:12px;border-radius:12px;border:2px solid var(--border);}
+
+  /* ── GROUPS ── */
   .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;}
   .color-swatch:hover{transform:scale(1.1);}
   .color-swatch.selected{border-color:var(--text);transform:scale(1.15);}
@@ -135,39 +194,89 @@
   .group-card:hover{border-color:var(--teal);}
   .group-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
   .group-members{display:flex;flex-wrap:wrap;gap:6px;}
-  .group-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;border:1.5px solid;display:inline-flex;align-items:center;gap:4px;}
+
+  /* ── CSV ── */
+  .drop-zone{border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;color:var(--muted);cursor:pointer;transition:all .15s;}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--teal);background:var(--teal-light);}
+  .csv-preview{max-height:240px;overflow-y:auto;margin-top:1rem;}
+  .csv-preview table{font-size:.82rem;}
+  .csv-preview th{background:var(--teal-light);color:var(--teal-dark);padding:6px 8px;}
+
+  /* ── TEACHER ADMIN ── */
+  .teacher-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem 1.25rem;display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+  .teacher-card-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
+  .teacher-card-info{flex:1;}
+  .teacher-card-name{font-weight:800;font-size:.95rem;}
+  .teacher-card-meta{font-size:.78rem;color:var(--muted);}
+  .admin-only{background:var(--amber-light);border:1.5px solid var(--amber);border-radius:10px;padding:.75rem 1rem;font-size:.82rem;color:#854F0B;font-weight:700;margin-bottom:1rem;}
+
+  /* ── QR ── */
+  .qr-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .qr-wrap{background:white;padding:12px;border-radius:12px;border:2px solid var(--border);}
   .class-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;}
-  .class-row-count{font-size:.8rem;color:var(--muted);margin-left:auto;}
-  .setup-banner{background:#fff3cd;border:2px solid var(--amber);border-radius:16px;padding:1.5rem;margin-bottom:2rem;}
-  .setup-banner h3{font-family:'Fredoka One',cursive;color:#854F0B;margin-bottom:.5rem;}
-  .setup-banner code{background:#085041;color:var(--amber);padding:2px 8px;border-radius:6px;font-size:.85rem;}
-  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}}
+
+  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}header{padding:0 1rem;}}
 </style>
 </head>
 <body>
+
+<!-- ═══════ LOGIN ═══════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🪙 Myntland</div>
+    <div class="login-sub">Lærerportal – velg din profil</div>
+    <div class="login-badge"><span>5.–7. trinn</span></div>
+    <div class="login-profiles" id="profile-list">
+      <div style="text-align:center;color:var(--muted);padding:1rem;font-size:.85rem;">Laster profiler…</div>
+    </div>
+    <div class="pin-section" id="pin-section">
+      <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.5rem;" id="pin-for-name"></div>
+      <div class="pin-input-row" id="pin-chars">
+        <div class="pin-char" id="pc-0">·</div><div class="pin-char" id="pc-1">·</div>
+        <div class="pin-char" id="pc-2">·</div><div class="pin-char" id="pc-3">·</div>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <div class="pin-numpad">
+        <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key empty"></button><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinKey('DEL')">⌫</button>
+      </div>
+      <button onclick="backToProfiles()" style="width:100%;margin-top:1rem;background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:10px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;">← Tilbake</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem;">
+      <span id="fb-status" style="font-size:.72rem;color:var(--muted);">⏳ Kobler til…</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ APP ═══════ -->
+<div id="app">
 <header>
   <div class="logo">🪙 Myntland <span class="logo-badge">5–7. trinn</span></div>
   <nav>
-    <button class="active" onclick="showPage('elever')"  id="nav-elever">👩‍🎓 Elever</button>
+    <button class="active" onclick="showPage('elever')"   id="nav-elever">👩‍🎓 Elever</button>
     <button onclick="showPage('grupper')"                 id="nav-grupper">👥 Grupper</button>
     <button onclick="showPage('saldo')"                   id="nav-saldo">💰 Saldo</button>
     <button onclick="showPage('oppdrag')"                 id="nav-oppdrag">💼 Oppdrag</button>
     <button onclick="showPage('butikk57')"                id="nav-butikk57">🛒 Butikk</button>
     <button onclick="showPage('qrkoder')"                 id="nav-qrkoder">⬛ QR</button>
+    <button onclick="showPage('laerere')" id="nav-laerere" style="display:none">⚙️ Lærere</button>
   </nav>
-  <span id="fb-status">⏳ Kobler til…</span>
+  <div class="header-right">
+    <div class="teacher-badge-wrap">
+      <div class="teacher-badge-avatar" id="header-avatar"></div>
+      <div class="teacher-badge-name"   id="header-name"></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Logg ut</button>
+  </div>
 </header>
 <main>
 
-<div class="setup-banner" id="setup-banner">
-  <h3>⚙️ Firebase-konfig mangler</h3>
-  <p style="font-size:.9rem;color:#854F0B;">Lim inn din Firebase-konfig i <code>&lt;script type="module"&gt;</code>-blokken øverst. Samme konfig som i 1–4-portalen.</p>
-</div>
-
 <!-- ═══════ ELEVER ═══════ -->
 <div class="page active" id="page-elever">
-  <div class="page-title">👩‍🎓 Elever – 5. til 7. trinn</div>
-  <div class="page-subtitle">Administrer elever. Kun klasser 5A–7C vises her.</div>
+  <div class="page-title">👩‍🎓 Elever – 5.–7. trinn</div>
+  <div class="page-subtitle" id="elever-subtitle">Alle klasser</div>
   <div class="stat-row">
     <div class="stat-box"><div class="stat-num" id="stat-total">–</div><div class="stat-label">Elever totalt</div></div>
     <div class="stat-box" style="background:var(--amber-light)"><div class="stat-num" style="color:#854F0B" id="stat-balance">–</div><div class="stat-label">Mynter i omløp</div></div>
@@ -176,10 +285,11 @@
 
   <div class="tabs">
     <button class="tab active" onclick="showElevTab('manuell',this)">✏️ Manuelt</button>
-    <button class="tab"        onclick="showElevTab('csv',this)">📥 CSV</button>
+    <button class="tab"        onclick="showElevTab('csv',this)">📥 Importer CSV</button>
     <button class="tab"        onclick="showElevTab('klasser',this)">🏷️ Klasser</button>
   </div>
 
+  <!-- Manuell -->
   <div id="elev-tab-manuell">
     <div class="grid-2">
       <div class="card">
@@ -189,78 +299,83 @@
         <div class="form-row"><label>Klasse</label><input type="text" id="new-class" placeholder="f.eks. 6A"></div>
         <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="100" min="0"></div>
         <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
-        <div id="create-alert" style="margin-top:1rem"></div>
+        <div id="create-alert" style="margin-top:1rem;"></div>
       </div>
       <div class="card">
-        <div class="card-title">💳 Bankkort-PDF</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">8 kort per A4 med navn, klasse og PIN.</p>
-        <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort</button>
-        <div id="card-pdf-preview" style="display:none;margin-top:1.5rem">
-          <div id="card-pdf-content"></div>
-          <button class="btn btn-primary" onclick="window._cardPrintWin&&window._cardPrintWin.print()" style="margin-top:1rem">🖨️ Skriv ut</button>
-        </div>
-        <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700">🔒 Deler Firebase med 1–4. Kun 5–7-klasser vises her.</div>
+        <div class="card-title">💳 Skriv ut bankkort</div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og PIN – 8 per A4-side.</p>
+        <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort til alle elever</button>
+        <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Dataene lagres i Firebase og synkroniseres på alle enheter.</div>
       </div>
     </div>
   </div>
 
-  <div id="elev-tab-csv" style="display:none">
+  <!-- CSV -->
+  <div id="elev-tab-csv" style="display:none;">
     <div class="card">
-      <div class="card-title">📥 Importer fra CSV</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Kolonner: <strong>fornavn, etternavn, klasse</strong> – f.eks. <code style="background:var(--bg);padding:2px 8px;border-radius:6px">Jonas,Larsen,6A</code></p>
+      <div class="card-title">📥 Importer elever fra CSV</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
+        Kolonner: <strong>fornavn, etternavn, klasse</strong> (med eller uten overskriftsrad).<br>
+        Eksempel: <code style="background:var(--bg);padding:2px 8px;border-radius:6px;font-size:.82rem;">Jonas,Larsen,6A</code>
+      </p>
       <div class="drop-zone" id="csv-drop-zone" onclick="document.getElementById('csv-file-input').click()">
-        <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVFile(this.files[0])">
-        <div style="font-size:2rem;margin-bottom:.5rem">📂</div>
-        <div style="font-weight:700;margin-bottom:4px">Dra og slipp CSV her</div>
-        <div style="font-size:.82rem">eller klikk for å velge</div>
+        <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none;" onchange="handleCSVFile(this.files[0])">
+        <div style="font-size:2rem;margin-bottom:.5rem;">📂</div>
+        <div style="font-weight:700;margin-bottom:4px;">Dra og slipp CSV-fil her</div>
+        <div style="font-size:.82rem;">eller klikk for å velge fil</div>
       </div>
-      <div id="csv-preview-area" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;margin-bottom:.75rem">
-          <strong id="csv-preview-title" style="color:var(--teal-dark)"></strong>
-          <div style="display:flex;align-items:center;gap:8px">
-            <label style="display:inline;margin:0;font-size:.85rem;color:var(--muted)">Startsaldo:</label>
-            <input type="number" id="csv-balance" value="100" min="0" style="width:80px">
+      <div id="csv-preview-area" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;margin-bottom:.75rem;">
+          <strong id="csv-preview-title" style="color:var(--teal-dark);"></strong>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="display:inline;margin:0;font-size:.85rem;color:var(--muted);">Startsaldo:</label>
+            <input type="number" id="csv-default-balance" value="100" min="0" style="width:80px;">
           </div>
         </div>
         <div class="csv-preview">
           <table><thead><tr><th>Fornavn</th><th>Etternavn</th><th>Klasse</th><th>Status</th></tr></thead>
           <tbody id="csv-preview-body"></tbody></table>
         </div>
-        <div style="display:flex;gap:10px;margin-top:1rem">
-          <button class="btn btn-primary" onclick="importCSV()">✅ Importer</button>
-          <button class="btn btn-ghost" onclick="resetCSV()">✕ Avbryt</button>
+        <div style="display:flex;gap:10px;margin-top:1rem;">
+          <button class="btn btn-primary" onclick="importCSV()">✅ Importer alle</button>
+          <button class="btn btn-ghost"   onclick="resetCSV()">✕ Avbryt</button>
         </div>
-        <div id="csv-alert" style="margin-top:1rem"></div>
+        <div id="csv-import-alert" style="margin-top:1rem;"></div>
       </div>
     </div>
   </div>
 
-  <div id="elev-tab-klasser" style="display:none">
+  <!-- Klasser -->
+  <div id="elev-tab-klasser" style="display:none;">
     <div class="grid-2">
       <div class="card">
         <div class="card-title">🏷️ Gi klasse nytt navn</div>
-        <div class="form-row"><label>Klasse som endres</label><select id="rename-from"></select></div>
-        <div class="form-row"><label>Nytt navn</label><input type="text" id="rename-to" placeholder="f.eks. 6C"></div>
-        <button class="btn btn-primary" onclick="renameClass()">Endre navn</button>
-        <div id="rename-alert" style="margin-top:1rem"></div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Alle elever i klassen oppdateres automatisk.</p>
+        <div class="form-row"><label>Klasse som endres</label><select id="rename-class-from"><option value="">– Velg klasse –</option></select></div>
+        <div class="form-row"><label>Nytt klassenavn</label><input type="text" id="rename-class-to" placeholder="f.eks. 6C"></div>
+        <button class="btn btn-primary" onclick="renameClass()">Endre klassenavn</button>
+        <div id="rename-alert" style="margin-top:1rem;"></div>
       </div>
-      <div class="card"><div class="card-title">📋 Klasser</div><div id="class-list-display"><p style="font-size:.85rem;color:var(--muted)">Laster…</p></div></div>
+      <div class="card">
+        <div class="card-title">📋 Alle klasser</div>
+        <div id="class-list-display"><p style="font-size:.85rem;color:var(--muted);">Laster klasser…</p></div>
+      </div>
     </div>
   </div>
 
+  <!-- Elevliste -->
   <div class="card">
-    <div class="card-title" style="justify-content:space-between">
+    <div class="card-title" style="justify-content:space-between;">
       <span>📋 Elevliste</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" placeholder="Søk…" style="width:180px" oninput="filterStudents(this.value)" id="search-input">
-        <select onchange="filterClass(this.value)" style="width:120px" id="filter-class-select"><option value="">Alle klasser</option></select>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" placeholder="Søk elev…" style="width:200px;" oninput="filterStudents(this.value)" id="search-input">
+        <select onchange="filterClass(this.value)" style="width:130px;" id="filter-class-select"><option value="">Alle klasser</option></select>
       </div>
     </div>
-    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Gruppe</th><th>PIN</th><th>Saldo</th><th>Lån</th><th>Handlinger</th></tr></thead>
-    <tbody id="student-table-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Laster…</td></tr></tbody></table>
+    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Gruppe</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
+    <tbody id="student-table-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Laster…</td></tr></tbody></table>
   </div>
 </div>
-
 
 <!-- ═══════ GRUPPER ═══════ -->
 <div class="page" id="page-grupper">
@@ -272,28 +387,28 @@
       <div class="form-row"><label>Gruppenavn</label><input type="text" id="new-group-name" placeholder="f.eks. Røde Ørner"></div>
       <div class="form-row"><label>Emoji</label><input type="text" id="new-group-emoji" placeholder="🦅" maxlength="2"></div>
       <div class="form-row"><label>Farge</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="color-picker">
-          <div class="color-swatch selected" data-color="#1D9E75" style="background:#1D9E75" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#EF9F27" style="background:#EF9F27" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#534AB7" style="background:#534AB7" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#D4537E" style="background:#D4537E" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#639922" style="background:#639922" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#888780" style="background:#888780" onclick="selectColor(this)"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="color-picker">
+          <div class="color-swatch selected" data-color="#1D9E75" style="background:#1D9E75;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#EF9F27" style="background:#EF9F27;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#534AB7" style="background:#534AB7;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#D4537E" style="background:#D4537E;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#639922" style="background:#639922;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" data-color="#888780" style="background:#888780;" onclick="selectColor(this)"></div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:.5rem">
+      <div style="display:flex;gap:8px;margin-top:.5rem;">
         <button class="btn btn-primary" id="group-submit-btn" onclick="submitGroup()">Opprett gruppe</button>
-        <button class="btn btn-ghost" id="group-cancel-btn" onclick="cancelEditGroup()" style="display:none">Avbryt</button>
+        <button class="btn btn-ghost" id="group-cancel-btn" onclick="cancelEditGroup()" style="display:none;">Avbryt</button>
       </div>
-      <div id="group-create-alert" style="margin-top:1rem"></div>
+      <div id="group-create-alert" style="margin-top:1rem;"></div>
     </div>
     <div class="card">
       <div class="card-title">👤 Legg elev til gruppe</div>
       <div class="form-row"><label>Velg elev</label><select id="assign-student-select"><option value="">– Velg elev –</option></select></div>
       <div class="form-row"><label>Velg gruppe</label><select id="assign-group-select"><option value="">– Velg gruppe –</option></select></div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;">
         <button class="btn btn-primary" onclick="assignStudentToGroup()">Legg til i gruppe</button>
         <button class="btn btn-ghost"   onclick="removeStudentFromGroup()">Fjern fra gruppe</button>
       </div>
@@ -307,9 +422,9 @@
   <div class="page-title">💰 Saldooversikt</div>
   <div class="page-subtitle">Juster saldo og gi ukentlig lønn</div>
   <div class="card">
-    <div class="card-title" style="justify-content:space-between">
-      <span>Alle elever</span>
-      <div style="display:flex;gap:8px">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>Alle elevers saldo</span>
+      <div style="display:flex;gap:8px;">
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('add')">➕ Legg til alle</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('salary')">💼 Ukentlig lønn</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('tax')">🏛️ Trekk skatt</button>
@@ -333,34 +448,33 @@
       <div class="form-row"><label>Beskrivelse</label><textarea id="job-desc" placeholder="Hva skal gjøres?"></textarea></div>
       <div class="form-grid">
         <div class="form-row"><label>Betaling (mynter)</label><input type="number" id="job-pay" value="50" min="1"></div>
-        <div class="form-row"><label>Maks antall elever</label><input type="number" id="job-slots" value="1" min="1" max="30"></div>
+        <div class="form-row"><label>Frist (valgfritt)</label><input type="text" id="job-deadline" placeholder="f.eks. Fredag"></div>
       </div>
-      <div class="form-row"><label>Frist (valgfritt)</label><input type="text" id="job-deadline" placeholder="f.eks. Fredag"></div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;">
         <button class="btn btn-primary" id="job-submit-btn" onclick="submitJob()">Opprett oppdrag</button>
-        <button class="btn btn-ghost" id="job-cancel-btn" onclick="cancelJobEdit()" style="display:none">Avbryt</button>
+        <button class="btn btn-ghost" id="job-cancel-btn" onclick="cancelJobEdit()" style="display:none;">Avbryt</button>
       </div>
-      <div id="job-alert" style="margin-top:1rem"></div>
+      <div id="job-alert" style="margin-top:1rem;"></div>
     </div>
     <div class="card">
       <div class="card-title">✅ Godkjenn utførelse</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Når en elev har utført et oppdrag, godkjenner du og betaler ut.</p>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Alternativ til QR: godkjenn manuelt og betal ut.</p>
       <div class="form-row"><label>Velg elev</label><select id="job-approve-student"><option value="">– Velg elev –</option></select></div>
       <div class="form-row"><label>Velg oppdrag</label><select id="job-approve-job"><option value="">– Velg oppdrag –</option></select></div>
       <button class="btn btn-primary" onclick="approveJob()">✅ Godkjenn og betal ut</button>
-      <div id="job-approve-alert" style="margin-top:1rem"></div>
+      <div id="job-approve-alert" style="margin-top:1rem;"></div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">📋 Aktive oppdrag</div>
-    <div id="jobs-list"><p style="color:var(--muted);font-size:.9rem">Ingen oppdrag ennå.</p></div>
+    <div class="card-title">📋 Aktive oppdrag (med QR)</div>
+    <div id="jobs-list"><p style="color:var(--muted);font-size:.9rem;">Ingen oppdrag ennå.</p></div>
   </div>
 </div>
 
 <!-- ═══════ BUTIKK 5-7 ═══════ -->
 <div class="page" id="page-butikk57">
   <div class="page-title">🛒 Butikk – 5.–7. trinn</div>
-  <div class="page-subtitle">Egne varer for 5–7. Vises i elevappen under «Butikk». Lagres separat fra 1–4-butikken.</div>
+  <div class="page-subtitle">Egne varer for 5–7. Vises i elevappen under «Butikk».</div>
   <div class="grid-2">
     <div class="card">
       <div class="card-title">➕ Legg til vare</div>
@@ -374,423 +488,596 @@
         </select>
       </div>
       <button class="btn btn-primary" onclick="addShop57Item()">Legg til vare</button>
-      <div id="s57-alert" style="margin-top:1rem"></div>
+      <div id="s57-alert" style="margin-top:1rem;"></div>
     </div>
     <div class="card">
       <div class="card-title">ℹ️ Om butikken</div>
-      <p style="font-size:.88rem;color:var(--muted);line-height:1.7">Varer her er <strong>kun for 5–7-elever</strong> og lagres i Firebase under <code style="background:var(--bg);padding:2px 6px;border-radius:4px">shop57</code> – atskilt fra 1–4-butikken.<br><br>Elevene finner butikken under <strong>«Butikk»</strong>-fanen i appen. De kan se varer og priser, men kjøp skjer utenfor appen (f.eks. i klasserommet).</p>
-      <div style="margin-top:1rem;background:var(--teal-light);border-radius:10px;padding:.85rem;font-size:.82rem;color:var(--teal-dark);font-weight:700">
+      <p style="font-size:.88rem;color:var(--muted);line-height:1.7;">Varer lagres i Firebase under <code style="background:var(--bg);padding:2px 6px;border-radius:4px;">shop57</code> – atskilt fra 1–4-butikken.<br><br>Elevene finner butikken på forsiden av appen.</p>
+      <div style="margin-top:1rem;background:var(--teal-light);border-radius:10px;padding:.85rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">
         🛒 <span id="s57-count">0</span> varer i butikken
       </div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title" style="justify-content:space-between">
+    <div class="card-title" style="justify-content:space-between;">
       <span>🏪 Alle varer</span>
-      <input type="text" placeholder="Søk vare…" style="width:180px" oninput="filterShop57(this.value)">
+      <input type="text" placeholder="Søk vare…" style="width:180px;" oninput="filterShop57(this.value)">
     </div>
-    <div id="shop57-table-wrap">
-      <table>
-        <thead><tr><th>Vare</th><th>Kategori</th><th>Pris</th><th></th></tr></thead>
-        <tbody id="shop57-table-body"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem">Laster…</td></tr></tbody>
-      </table>
-    </div>
+    <table><thead><tr><th>Vare</th><th>Kategori</th><th>Pris</th><th></th></tr></thead>
+    <tbody id="shop57-table-body"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">Laster…</td></tr></tbody></table>
   </div>
 </div>
 
 <!-- ═══════ QR KODER ═══════ -->
 <div class="page" id="page-qrkoder">
   <div class="page-title">⬛ QR-belønningskoder</div>
-  <div class="page-subtitle">Fungerer i begge elevapper</div>
+  <div class="page-subtitle">Elevene scanner og får mynter (minus 20% skatt til klassens sparemål)</div>
   <div class="grid-3">
-    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#1D9E75">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><button class="btn btn-primary btn-sm" onclick="window.print()">🖨️</button></div>
-    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#EF9F27">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><button class="btn btn-amber btn-sm" onclick="window.print()">🖨️</button></div>
-    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#534AB7">+100 🪙</div><div class="qr-wrap" id="qr-100"></div><button class="btn btn-purple btn-sm" onclick="window.print()">🖨️</button></div>
+    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><button class="btn btn-primary btn-sm" onclick="window.print()">🖨️</button></div>
+    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><button class="btn btn-amber btn-sm" onclick="window.print()">🖨️</button></div>
+    <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#534AB7;">+100 🪙</div><div class="qr-wrap" id="qr-100"></div><button class="btn btn-purple btn-sm" onclick="window.print()">🖨️</button></div>
   </div>
   <div class="card">
     <div class="card-title">✏️ Egendefinert</div>
-    <div style="display:flex;gap:12px;align-items:flex-end">
-      <div style="flex:1" class="form-row"><label>Beløp</label><input type="number" id="custom-qr-amount" value="75" min="1" max="9999"></div>
-      <div style="flex:2" class="form-row"><label>Beskrivelse</label><input type="text" id="custom-qr-desc" placeholder="f.eks. Prosjektoppgave"></div>
-      <button class="btn btn-primary" onclick="generateCustomQR()" style="margin-bottom:1rem">Generer</button>
+    <div style="display:flex;gap:12px;align-items:flex-end;">
+      <div style="flex:1;" class="form-row"><label>Beløp</label><input type="number" id="custom-qr-amount" value="75" min="1" max="9999"></div>
+      <div style="flex:2;" class="form-row"><label>Beskrivelse</label><input type="text" id="custom-qr-desc" placeholder="f.eks. Prosjektoppgave"></div>
+      <button class="btn btn-primary" onclick="generateCustomQR()" style="margin-bottom:1rem;">Generer</button>
     </div>
-    <div style="display:flex;gap:2rem;align-items:center;margin-top:1rem">
-      <div class="qr-wrap" id="qr-custom" style="display:none"></div>
-      <div id="custom-qr-info" style="display:none"></div>
+    <div style="display:flex;gap:2rem;align-items:center;margin-top:1rem;">
+      <div class="qr-wrap" id="qr-custom" style="display:none;"></div>
+      <div id="custom-qr-info" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ LÆRERE (admin) ═══════ -->
+<div class="page" id="page-laerere">
+  <div class="page-title">⚙️ Lærerprofilene</div>
+  <div class="page-subtitle">Administrer lærerprofiler – kun tilgjengelig for administrator</div>
+  <div class="admin-only">🔐 Denne siden er kun synlig for administrator-kontoen.</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">➕ Opprett ny lærerprofil</div>
+      <div class="form-row"><label>Navn</label><input type="text" id="new-teacher-name" placeholder="f.eks. Kari Nordmann"></div>
+      <div class="form-row"><label>PIN-kode (4 siffer)</label><input type="text" id="new-teacher-pin" placeholder="1234" maxlength="4" pattern="\d{4}"></div>
+      <div class="form-row"><label>Klasse (valgfritt – tomt = ser alle 5–7-klasser)</label><input type="text" id="new-teacher-class" placeholder="f.eks. 6A"></div>
+      <div class="form-row"><label>Rolle</label>
+        <select id="new-teacher-role">
+          <option value="teacher">Lærer (ser kun sin klasse)</option>
+          <option value="admin">Administrator (ser alle klasser)</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Farge</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="teacher-color-picker">
+          <div class="color-swatch selected" data-color="#1D9E75" style="background:#1D9E75;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#534AB7" style="background:#534AB7;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#854F0B" style="background:#854F0B;" onclick="selectTeacherColor(this)"></div>
+          <div class="color-swatch" data-color="#D4537E" style="background:#D4537E;" onclick="selectTeacherColor(this)"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="createTeacher()">Opprett lærer</button>
+      <div id="teacher-create-alert" style="margin-top:1rem;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">👩‍🏫 Eksisterende profiler</div>
+      <div id="teacher-list"><p style="font-size:.85rem;color:var(--muted);">Laster…</p></div>
     </div>
   </div>
 </div>
 
 </main>
+</div><!-- /#app -->
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-saldo">
   <div class="modal">
     <div class="modal-title" id="modal-saldo-title">Juster saldo</div>
-    <div class="form-row"><label>Beløp</label><input type="number" id="modal-saldo-amount" value="50" min="0"></div>
-    <div id="modal-saldo-info" style="font-size:.9rem;color:var(--muted);margin-bottom:1rem"></div>
+    <div class="form-row"><label>Beløp (mynter)</label><input type="number" id="modal-saldo-amount" value="50" min="0"></div>
+    <div id="modal-saldo-info" style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;"></div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-saldo')">Avbryt</button><button class="btn btn-primary" onclick="confirmSaldoAction()">Bekreft</button></div>
   </div>
 </div>
 <div class="modal-overlay" id="modal-delete">
   <div class="modal">
     <div class="modal-title">⚠️ Slett elev?</div>
-    <p id="modal-delete-text" style="color:var(--muted);margin-bottom:1rem"></p>
+    <p id="modal-delete-text" style="color:var(--muted);margin-bottom:1rem;"></p>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-delete')">Avbryt</button><button class="btn btn-coral" onclick="confirmDelete()">Slett</button></div>
   </div>
 </div>
 <div class="modal-overlay" id="modal-bulk">
   <div class="modal">
-    <div class="modal-title" id="modal-bulk-title">Masseoppdater</div>
-    <div class="form-row"><label>Klasse (tomt = alle)</label><select id="bulk-class"><option value="">Alle</option></select></div>
-    <div class="form-row" id="bulk-amount-row"><label>Beløp</label><input type="number" id="bulk-amount" value="50" min="0"></div>
-    <div id="bulk-tax-info" style="display:none;font-size:.88rem;color:var(--muted);margin-bottom:1rem"></div>
+    <div class="modal-title" id="modal-bulk-title">Masseoppdater saldo</div>
+    <div class="form-row"><label>Velg klasse (tomt = alle)</label><select id="bulk-class"><option value="">Alle klasser</option></select></div>
+    <div class="form-row" id="bulk-amount-row"><label>Beløp (mynter)</label><input type="number" id="bulk-amount" value="50" min="0"></div>
+    <div id="bulk-tax-info" style="display:none;font-size:.88rem;color:var(--muted);margin-bottom:1rem;"></div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-bulk')">Avbryt</button><button class="btn btn-primary" onclick="confirmBulkAction()">Bekreft</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-job-qr">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-title" id="modal-job-qr-title">QR – Oppdrag</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;" id="modal-job-qr-desc"></p>
+    <div style="display:flex;justify-content:center;"><div class="qr-wrap" id="modal-job-qr-box"></div></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-top:1rem;">Eleven scanner QR-koden for å motta betaling.<br>20% går automatisk til klassens sparemål.</p>
+    <div class="modal-actions" style="justify-content:center;"><button class="btn btn-ghost" onclick="closeModal('modal-job-qr')">Lukk</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-delete-teacher">
+  <div class="modal">
+    <div class="modal-title">⚠️ Slett lærerprofil?</div>
+    <p id="modal-delete-teacher-text" style="color:var(--muted);margin-bottom:1rem;"></p>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-delete-teacher')">Avbryt</button><button class="btn btn-coral" onclick="confirmDeleteTeacher()">Slett</button></div>
   </div>
 </div>
 
 <script>
-window._students = []; window._jobs = []; window._shop57 = [];
-let currentAction=null, currentStudentId=null, bulkAction=null;
-let currentEditJobKey=null;
-let searchFilter='', classFilter='';
-let csvParsed=[];
-const TAX_RATE = 0.22; // 22% skatt
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+window._students = []; window._groups = []; window._jobs = [];
+window._shop57 = []; window._teachers = [];
+window._currentTeacher = null;
 
-function fbRef(path){ return window._ref(window._db, path); }
+let currentAction = null, currentStudentId = null, bulkAction = null;
+let currentEditJobKey = null, currentEditGroupKey = null;
+let currentDeleteTeacherId = null;
+let searchFilter = '', classFilter = '';
+let csvParsed = [];
+let selectedGroupColor = '#1D9E75';
+let selectedTeacherColor = '#1D9E75';
+const TAX_RATE = 0.22;
 
-// ── Navigation ─────────────────────────────────────────────────────────────
-function showPage(page){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('header nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  document.getElementById('nav-'+page).classList.add('active');
-  if(page==='qrkoder')  generateRewardQRCodes();
-  if(page==='oppdrag')  refreshJobSelects();
-  if(page==='butikk57') renderShop57List();
-  if(page==='grupper')  renderGroupsPage();
-}
-function showElevTab(tab,btn){
-  ['manuell','csv','klasser'].forEach(t=>{
-    document.getElementById('elev-tab-'+t).style.display=t===tab?'block':'none';
+function fbRef(p) { return window._ref(window._db, p); }
+function ready()  { return !!(window._fbReady && window._db && window._ref); }
+
+// ════════════════════════════════════════════════════════════
+// LOGIN / LÆRERPROFILER  (identisk med 1–4-portalen)
+// ════════════════════════════════════════════════════════════
+let loginPin = '', loginTarget = null;
+
+function loadProfiles() {
+  window._onValue(fbRef('teachers57'), snap => {
+    window._teachers = snap.val()
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+      : [];
+    renderLoginProfiles();
+    if (document.getElementById('page-laerere')?.classList.contains('active')) renderTeacherList();
+    if (!window._teachers.length) seedDefaultAdmin();
   });
-  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+}
+
+function seedDefaultAdmin() {
+  window._set(window._push(fbRef('teachers57')), {
+    name: 'Administrator', pin: '0000', role: 'admin', color: '#085041', class: ''
+  });
+}
+
+function renderLoginProfiles() {
+  const el = document.getElementById('profile-list');
+  if (!window._teachers.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;font-size:.85rem;">Ingen profiler ennå – første gangs PIN er 0000</div>';
+    return;
+  }
+  el.innerHTML = window._teachers.map(t => `
+    <button class="profile-btn" onclick="selectProfile('${t.fbKey}')">
+      <div class="profile-avatar" style="background:${t.color}22;color:${t.color};">${t.name[0].toUpperCase()}</div>
+      <div>
+        <div class="profile-name">${t.name}</div>
+        <div class="profile-role">${t.role === 'admin' ? '⚙️ Administrator' : `👩‍🏫 Lærer${t.class ? ' – klasse ' + t.class : ''}`}</div>
+      </div>
+    </button>`).join('');
+}
+
+function selectProfile(fbKey) {
+  loginTarget = window._teachers.find(t => t.fbKey === fbKey);
+  loginPin = '';
+  document.getElementById('pin-for-name').textContent = 'PIN for ' + loginTarget.name;
+  document.getElementById('login-error').textContent = '';
+  updateLoginDots();
+  document.getElementById('profile-list').style.display = 'none';
+  document.getElementById('pin-section').style.display = 'block';
+}
+
+function backToProfiles() {
+  loginPin = ''; loginTarget = null;
+  document.getElementById('pin-section').style.display = 'none';
+  document.getElementById('profile-list').style.display = 'flex';
+  document.getElementById('profile-list').style.flexDirection = 'column';
+}
+
+function pinKey(val) {
+  if (val === 'DEL') loginPin = loginPin.slice(0,-1);
+  else if (loginPin.length < 4) loginPin += val;
+  updateLoginDots();
+  document.getElementById('login-error').textContent = '';
+  if (loginPin.length === 4) setTimeout(tryTeacherLogin, 150);
+}
+
+function updateLoginDots() {
+  ['pc-0','pc-1','pc-2','pc-3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.textContent = i < loginPin.length ? '●' : '·';
+    el.classList.toggle('filled', i < loginPin.length);
+  });
+}
+
+function tryTeacherLogin() {
+  if (loginPin === loginTarget.pin) {
+    window._currentTeacher = loginTarget;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('header-name').textContent = loginTarget.name;
+    const av = document.getElementById('header-avatar');
+    av.textContent = loginTarget.name[0].toUpperCase();
+    av.style.background = loginTarget.color + '33';
+    av.style.color = loginTarget.color;
+    if (loginTarget.role === 'admin') document.getElementById('nav-laerere').style.display = '';
+    const sub = document.getElementById('elever-subtitle');
+    sub.textContent = loginTarget.class ? `Viser klasse ${loginTarget.class}` : 'Alle 5–7-klasser';
+    if (loginTarget.class && loginTarget.role !== 'admin') classFilter = loginTarget.class;
+    window._startListeners();
+    showPage('elever');
+  } else {
+    document.getElementById('login-error').textContent = '❌ Feil PIN – prøv igjen';
+    loginPin = ''; updateLoginDots();
+  }
+}
+
+function doLogout() {
+  window._currentTeacher = null;
+  searchFilter = ''; classFilter = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pin-section').style.display = 'none';
+  document.getElementById('profile-list').style.display = 'flex';
+  document.getElementById('profile-list').style.flexDirection = 'column';
+  document.getElementById('nav-laerere').style.display = 'none';
+  loginPin = ''; loginTarget = null;
+}
+
+// ── Teacher CRUD (admin only) ──────────────────────────────────────────────
+function selectTeacherColor(el) {
+  document.querySelectorAll('#teacher-color-picker .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTeacherColor = el.dataset.color;
+}
+
+async function createTeacher() {
+  const name  = document.getElementById('new-teacher-name').value.trim();
+  const pin   = document.getElementById('new-teacher-pin').value.trim();
+  const cls   = document.getElementById('new-teacher-class').value.trim();
+  const role  = document.getElementById('new-teacher-role').value;
+  const alertEl = document.getElementById('teacher-create-alert');
+  if (!name || !pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn navn og en 4-sifret PIN.</div>'; return;
+  }
+  await window._set(window._push(fbRef('teachers57')), { name, pin, role, class: cls, color: selectedTeacherColor });
+  document.getElementById('new-teacher-name').value = '';
+  document.getElementById('new-teacher-pin').value  = '';
+  document.getElementById('new-teacher-class').value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${name} er opprettet!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function renderTeacherList() {
+  const el = document.getElementById('teacher-list'); if (!el) return;
+  el.innerHTML = window._teachers.map(t => `
+    <div class="teacher-card">
+      <div class="teacher-card-avatar" style="background:${t.color}22;color:${t.color};">${t.name[0].toUpperCase()}</div>
+      <div class="teacher-card-info">
+        <div class="teacher-card-name">${t.name}</div>
+        <div class="teacher-card-meta">${t.role === 'admin' ? '⚙️ Admin' : '👩‍🏫 Lærer'}${t.class ? ' · klasse ' + t.class : ' · alle klasser'} · PIN: ${t.pin}</div>
+      </div>
+      ${t.fbKey !== window._currentTeacher?.fbKey
+        ? `<button class="btn btn-coral btn-sm" onclick="openDeleteTeacherModal('${t.fbKey}','${t.name}')">🗑️</button>`
+        : '<span style="font-size:.75rem;color:var(--muted);">(deg)</span>'}
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;">Ingen lærere ennå.</p>';
+}
+
+function openDeleteTeacherModal(fbKey, name) {
+  currentDeleteTeacherId = fbKey;
+  document.getElementById('modal-delete-teacher-text').textContent = `Slett lærerprofilen til ${name}?`;
+  document.getElementById('modal-delete-teacher').classList.add('open');
+}
+async function confirmDeleteTeacher() {
+  await window._remove(fbRef('teachers57/' + currentDeleteTeacherId));
+  closeModal('modal-delete-teacher');
+}
+
+// ════════════════════════════════════════════════════════════
+// NAVIGASJON
+// ════════════════════════════════════════════════════════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-'  + page).classList.add('active');
+  if (page === 'qrkoder')  generateRewardQRCodes();
+  if (page === 'grupper')  renderGroupsPage();
+  if (page === 'oppdrag')  refreshJobSelects();
+  if (page === 'butikk57') renderShop57List();
+  if (page === 'laerere')  renderTeacherList();
+}
+
+function showElevTab(tab, btn) {
+  ['manuell','csv','klasser'].forEach(t => {
+    document.getElementById('elev-tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if(tab==='klasser') renderClassManager();
+  if (tab === 'klasser') renderClassManager();
 }
-function showTab(tabId,btn){
-  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  ['butikk-rediger','butikk-skriv'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.style.display=id===tabId?'block':'none';
+
+// ════════════════════════════════════════════════════════════
+// ELEVER  (identisk med 1–4-portalen)
+// ════════════════════════════════════════════════════════════
+function generatePIN() { return String(Math.floor(1000 + Math.random() * 9000)); }
+
+async function createStudent() {
+  if (!ready()) { alert('Firebase ikke klar – prøv igjen om et øyeblikk.'); return; }
+  const fn  = document.getElementById('new-firstname').value.trim();
+  const ln  = document.getElementById('new-lastname').value.trim();
+  const cls = document.getElementById('new-class').value.trim() || (window._currentTeacher?.class || '5A');
+  const bal = parseInt(document.getElementById('new-balance').value) || 0;
+  const alertEl = document.getElementById('create-alert');
+  if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
+  const pin = generatePIN();
+  await window._set(window._push(fbRef('students')), {
+    firstname: fn, lastname: ln, class: cls, pin, balance: bal,
+    loan: 0, savings: 0, fund_low: 0, fund_high: 0, created: Date.now()
   });
-  if(tabId==='butikk-skriv') renderGroceryPrintSelect();
+  document.getElementById('new-firstname').value = '';
+  document.getElementById('new-lastname').value  = '';
+  document.getElementById('new-balance').value   = '100';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${fn} ${ln} opprettet! PIN: <strong>${pin}</strong></div>`;
 }
 
-// ── Students ───────────────────────────────────────────────────────────────
-function generatePIN(){ return String(Math.floor(1000+Math.random()*9000)); }
-
-async function createStudent(){
-  const fn=document.getElementById('new-firstname').value.trim();
-  const ln=document.getElementById('new-lastname').value.trim();
-  const cls=document.getElementById('new-class').value;
-  const bal=parseInt(document.getElementById('new-balance').value)||0;
-  const alertEl=document.getElementById('create-alert');
-  if(!fn||!ln){alertEl.innerHTML='<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>';return;}
-  const pin=generatePIN();
-  await window._set(window._push(fbRef('students')),{firstname:fn,lastname:ln,class:cls,pin,balance:bal,loan:0,created:Date.now()});
-  document.getElementById('new-firstname').value='';
-  document.getElementById('new-lastname').value='';
-  document.getElementById('new-balance').value='100';
-  alertEl.innerHTML=`<div class="alert alert-success">✅ ${fn} ${ln} opprettet! PIN: <strong>${pin}</strong></div>`;
+function getClassNames() {
+  return [...new Set(window._students.map(s => s.class))].filter(Boolean).sort();
 }
 
-function getClassNames(){ return [...new Set(window._students.map(s=>s.class))].filter(Boolean).sort(); }
+function renderStudentTable() {
+  const tbody = document.getElementById('student-table-body'); if (!tbody) return;
+  // Oppdater filter-select og bulk-select
+  const classes = getClassNames();
+  const sel = document.getElementById('filter-class-select');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Alle klasser</option>' + classes.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  }
+  const bulkSel = document.getElementById('bulk-class');
+  if (bulkSel) bulkSel.innerHTML = '<option value="">Alle klasser</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+  const rf = document.getElementById('rename-class-from');
+  if (rf) {
+    const cur2 = rf.value;
+    rf.innerHTML = '<option value="">– Velg klasse –</option>' + classes.map(c => `<option value="${c}"${c===cur2?' selected':''}>${c}</option>`).join('');
+  }
 
-function refreshClassSelects(){
-  const names=getClassNames();
-  const opts=names.map(n=>`<option value="${n}">${n}</option>`).join('');
-  const allOpt='<option value="">Alle klasser</option>';
-  ['filter-class-select','bulk-class'].forEach(id=>{const el=document.getElementById(id);if(el){const cur=el.value;el.innerHTML=allOpt+opts;el.value=cur;}});
-  const rf=document.getElementById('rename-from');
-  if(rf){const cur=rf.value;rf.innerHTML='<option value="">– Velg –</option>'+opts;rf.value=cur;}
-}
-
-function renderStudentTable(){
-  const tbody=document.getElementById('student-table-body');
-  if(!tbody) return;
-  refreshClassSelects();
-  const filtered=window._students.filter(s=>{
-    const name=(s.firstname+' '+s.lastname).toLowerCase();
-    return name.includes(searchFilter.toLowerCase())&&(!classFilter||s.class===classFilter);
+  const filtered = window._students.filter(s => {
+    const name = (s.firstname + ' ' + s.lastname).toLowerCase();
+    return name.includes(searchFilter.toLowerCase()) && (!classFilter || s.class === classFilter);
   });
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Ingen elever funnet</td></tr>';return;}
-  tbody.innerHTML=filtered.map(s=>`
-    <tr>
-      <td><div style="display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark)">${s.firstname[0]}${s.lastname[0]}</div>
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever funnet</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(s => {
+    const grp = s.groupKey ? window._groups.find(g => g.fbKey === s.groupKey) : null;
+    const grpBadge = grp
+      ? `<span class="group-badge" style="color:${grp.color};border-color:${grp.color};background:${grp.color}18;">${grp.emoji||'👥'} ${grp.name}</span>`
+      : `<span style="color:var(--muted);font-size:.8rem;">–</span>`;
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark);">${s.firstname[0]}${s.lastname[0]}</div>
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
-      <td><span class="badge badge-purple">${s.class}</span></td>
-      <td><code style="background:var(--bg);padding:4px 8px;border-radius:6px">${s.pin}</code></td>
-      <td><span class="badge badge-amber">🪙 ${s.balance||0}</span></td>
-      <td>${(s.loan&&s.loan>0)?`<span class="badge badge-coral">📉 ${s.loan}</span>`:'<span style="color:var(--muted);font-size:.8rem">–</span>'}</td>
+      <td><span class="class-badge">${s.class}</span></td>
+      <td>${grpBadge}</td>
+      <td><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
+      <td><span class="balance-badge">🪙 ${s.balance||0}</span></td>
       <td><div class="balance-actions">
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
         <button class="btn btn-coral btn-sm" onclick="openDeleteModal('${s.fbKey}','${s.firstname} ${s.lastname}')">🗑️</button>
       </div></td>
-    </tr>`).join('');
-}
-function filterStudents(v){searchFilter=v;renderStudentTable();}
-function filterClass(v){classFilter=v;renderStudentTable();}
-function updateStats(){
-  const el1=document.getElementById('stat-total');
-  const el2=document.getElementById('stat-balance');
-  const el3=document.getElementById('stat-loans');
-  if(el1) el1.textContent=window._students.length;
-  if(el2) el2.textContent=window._students.reduce((a,s)=>a+(s.balance||0),0);
-  if(el3) el3.textContent=window._students.reduce((a,s)=>a+(s.loan||0),0);
-}
-
-// ── Class rename ───────────────────────────────────────────────────────────
-function renderClassManager(){
-  refreshClassSelects();
-  const el=document.getElementById('class-list-display');
-  if(!el) return;
-  const classes=getClassNames();
-  if(!classes.length){el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">Ingen klasser ennå.</p>';return;}
-  el.innerHTML=classes.map(c=>{
-    const count=window._students.filter(s=>s.class===c).length;
-    return `<div class="class-row"><span class="badge badge-purple">${c}</span><span class="class-row-count">${count} elev${count!==1?'er':''}</span></div>`;
+    </tr>`;
   }).join('');
 }
-async function renameClass(){
-  const from=document.getElementById('rename-from').value;
-  const to=document.getElementById('rename-to').value.trim();
-  const alertEl=document.getElementById('rename-alert');
-  if(!from){alertEl.innerHTML='<div class="alert alert-error">⚠️ Velg klasse.</div>';return;}
-  if(!to){alertEl.innerHTML='<div class="alert alert-error">⚠️ Skriv nytt navn.</div>';return;}
-  if(from===to){alertEl.innerHTML='<div class="alert alert-error">⚠️ Samme navn.</div>';return;}
-  alertEl.innerHTML='<div class="alert alert-success">⏳ Oppdaterer…</div>';
-  const updates={};
-  window._students.filter(s=>s.class===from).forEach(s=>{updates['students/'+s.fbKey+'/class']=to;});
-  if(Object.keys(updates).length) await window._update(fbRef('/'),updates);
-  document.getElementById('rename-to').value='';
-  alertEl.innerHTML=`<div class="alert alert-success">✅ «${from}» → «${to}»</div>`;
-  setTimeout(()=>renderClassManager(),500);
+
+function filterStudents(v) { searchFilter = v; renderStudentTable(); }
+function filterClass(v)    { classFilter  = v; renderStudentTable(); }
+
+function updateStats() {
+  const e1 = document.getElementById('stat-total');
+  const e2 = document.getElementById('stat-balance');
+  const e3 = document.getElementById('stat-loans');
+  if (e1) e1.textContent = window._students.length;
+  if (e2) e2.textContent = window._students.reduce((a,s) => a + (s.balance||0), 0);
+  if (e3) e3.textContent = window._students.reduce((a,s) => a + (s.loan||0), 0);
 }
 
-// ── CSV Import ─────────────────────────────────────────────────────────────
-const dropZone=document.getElementById('csv-drop-zone');
-dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
-dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');handleCSVFile(e.dataTransfer.files[0]);});
-function handleCSVFile(file){if(!file)return;const r=new FileReader();r.onload=e=>parseCSV(e.target.result);r.readAsText(file,'UTF-8');}
-function parseCSV(text){
-  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
-  if(!lines.length)return;
-  const first=lines[0].toLowerCase();
-  const hasHeader=first.includes('fornavn')||first.includes('navn')||first.includes('firstname');
-  csvParsed=(hasHeader?lines.slice(1):lines).map(line=>{
-    const parts=line.split(/[,;]/).map(p=>p.trim().replace(/^"|"$/g,''));
-    return{firstname:parts[0]||'',lastname:parts[1]||'',class:parts[2]||'5A'};
-  }).filter(r=>r.firstname||r.lastname);
-  document.getElementById('csv-preview-body').innerHTML=csvParsed.map(r=>`<tr><td style="padding:6px 8px">${r.firstname}</td><td style="padding:6px 8px">${r.lastname}</td><td style="padding:6px 8px">${r.class}</td><td style="padding:6px 8px;color:var(--teal)">✓</td></tr>`).join('');
-  document.getElementById('csv-preview-title').textContent=`${csvParsed.length} elever funnet`;
-  document.getElementById('csv-preview-area').style.display='block';
+// ════════════════════════════════════════════════════════════
+// KLASSER
+// ════════════════════════════════════════════════════════════
+function renderClassManager() {
+  const classes = getClassNames();
+  const el = document.getElementById('class-list-display'); if (!el) return;
+  if (!classes.length) { el.innerHTML = '<p style="font-size:.85rem;color:var(--muted);">Ingen klasser ennå – opprett elever først.</p>'; return; }
+  el.innerHTML = classes.map(c => {
+    const count = window._students.filter(s => s.class === c).length;
+    return `<div class="class-row"><span class="class-badge">${c}</span><span style="font-size:.8rem;color:var(--muted);margin-left:auto;">${count} elev${count!==1?'er':''}</span></div>`;
+  }).join('');
 }
-async function importCSV(){
-  if(!csvParsed.length)return;
-  const bal=parseInt(document.getElementById('csv-balance').value)||100;
-  document.getElementById('csv-alert').innerHTML='<div class="alert alert-success">⏳ Importerer…</div>';
-  for(const r of csvParsed){
-    if(!r.firstname&&!r.lastname)continue;
-    await window._set(window._push(fbRef('students')),{firstname:r.firstname,lastname:r.lastname,class:r.class,pin:generatePIN(),balance:bal,loan:0,created:Date.now()});
+
+async function renameClass() {
+  const from    = document.getElementById('rename-class-from').value;
+  const to      = document.getElementById('rename-class-to').value.trim();
+  const alertEl = document.getElementById('rename-alert');
+  if (!from) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Velg klassen som skal endres.</div>'; return; }
+  if (!to)   { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn det nye klassenavnet.</div>'; return; }
+  if (from === to) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Nytt navn er det samme som det gamle.</div>'; return; }
+  alertEl.innerHTML = '<div class="alert alert-success">⏳ Oppdaterer…</div>';
+  const updates = {};
+  window._students.filter(s => s.class === from).forEach(s => { updates['students/' + s.fbKey + '/class'] = to; });
+  if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
+  document.getElementById('rename-class-to').value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}»</div>`;
+  setTimeout(() => renderClassManager(), 600);
+}
+
+// ════════════════════════════════════════════════════════════
+// CSV IMPORT  (identisk med 1–4-portalen)
+// ════════════════════════════════════════════════════════════
+const dropZone = document.getElementById('csv-drop-zone');
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleCSVFile(e.dataTransfer.files[0]); });
+
+function handleCSVFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return;
+  const first = lines[0].toLowerCase();
+  const hasHeader = first.includes('fornavn') || first.includes('navn') || first.includes('firstname');
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+  csvParsed = dataLines.map(line => {
+    const parts = line.split(/[,;]/).map(p => p.trim().replace(/^"|"$/g, ''));
+    return { firstname: parts[0]||'', lastname: parts[1]||'', class: parts[2] || window._currentTeacher?.class || '5A' };
+  }).filter(r => r.firstname || r.lastname);
+
+  document.getElementById('csv-preview-body').innerHTML = csvParsed.map(r =>
+    `<tr><td style="padding:6px 8px;">${r.firstname}</td><td style="padding:6px 8px;">${r.lastname}</td><td style="padding:6px 8px;">${r.class}</td><td style="padding:6px 8px;color:var(--teal);">✓</td></tr>`
+  ).join('');
+  document.getElementById('csv-preview-title').textContent = `${csvParsed.length} elever funnet`;
+  document.getElementById('csv-preview-area').style.display = 'block';
+  document.getElementById('csv-import-alert').innerHTML = '';
+}
+
+async function importCSV() {
+  if (!ready() || !csvParsed.length) return;
+  const bal = parseInt(document.getElementById('csv-default-balance').value) || 100;
+  const alertEl = document.getElementById('csv-import-alert');
+  alertEl.innerHTML = '<div class="alert alert-success">⏳ Importerer…</div>';
+  let count = 0;
+  for (const r of csvParsed) {
+    if (!r.firstname && !r.lastname) continue;
+    await window._set(window._push(fbRef('students')), {
+      firstname: r.firstname, lastname: r.lastname, class: r.class,
+      pin: generatePIN(), balance: bal,
+      loan: 0, savings: 0, fund_low: 0, fund_high: 0, created: Date.now()
+    });
+    count++;
   }
-  document.getElementById('csv-alert').innerHTML=`<div class="alert alert-success">✅ ${csvParsed.length} elever importert!</div>`;
-  csvParsed=[];setTimeout(resetCSV,2500);
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${count} elever importert!</div>`;
+  csvParsed = [];
+  setTimeout(resetCSV, 2500);
 }
-function resetCSV(){csvParsed=[];document.getElementById('csv-preview-area').style.display='none';document.getElementById('csv-preview-body').innerHTML='';document.getElementById('csv-alert').innerHTML='';document.getElementById('csv-file-input').value='';}
 
-// ── Saldo ──────────────────────────────────────────────────────────────────
-function renderSaldoTable(){
-  const tbody=document.getElementById('saldo-table-body');
-  if(!tbody)return;
-  tbody.innerHTML=window._students.map(s=>`
-    <tr>
-      <td><strong>${s.firstname} ${s.lastname}</strong></td>
-      <td><span class="badge badge-purple">${s.class}</span></td>
-      <td><span class="badge badge-amber">🪙 ${s.balance||0}</span></td>
-      <td>${(s.loan&&s.loan>0)?`<span class="badge badge-coral">📉 ${s.loan}</span>`:'–'}</td>
-      <td><div class="balance-actions">
-        <button class="btn btn-primary btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
-        <button class="btn btn-ghost btn-sm"   onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
-        <button class="btn btn-amber btn-sm"   onclick="openSaldoModal('${s.fbKey}','reset')">🔄</button>
-      </div></td>
-    </tr>`).join('');
+function resetCSV() {
+  csvParsed = [];
+  document.getElementById('csv-preview-area').style.display = 'none';
+  document.getElementById('csv-preview-body').innerHTML = '';
+  document.getElementById('csv-import-alert').innerHTML = '';
+  document.getElementById('csv-file-input').value = '';
 }
-function openSaldoModal(fbKey,action){
-  currentStudentId=fbKey;currentAction=action;
-  const s=window._students.find(x=>x.fbKey===fbKey);
-  const labels={add:'➕ Legg til',subtract:'➖ Trekk fra',set:'✏️ Sett saldo',reset:'🔄 Nullstill'};
-  document.getElementById('modal-saldo-title').textContent=labels[action]+` – ${s.firstname}`;
-  document.getElementById('modal-saldo-info').textContent=`Saldo: 🪙 ${s.balance||0}`;
-  document.getElementById('modal-saldo-amount').style.display=action==='reset'?'none':'block';
+
+// ════════════════════════════════════════════════════════════
+// SALDO
+// ════════════════════════════════════════════════════════════
+function renderSaldoTable() {
+  const tbody = document.getElementById('saldo-table-body'); if (!tbody) return;
+  tbody.innerHTML = window._students.map(s => `<tr>
+    <td><strong>${s.firstname} ${s.lastname}</strong></td>
+    <td><span class="class-badge">${s.class}</span></td>
+    <td><span class="balance-badge">🪙 ${s.balance||0}</span></td>
+    <td>${(s.loan&&s.loan>0) ? `<span class="badge badge-coral">📉 ${s.loan}</span>` : '–'}</td>
+    <td><div class="balance-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','reset')">🔄</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function openSaldoModal(fbKey, action) {
+  currentStudentId = fbKey; currentAction = action;
+  const s = window._students.find(x => x.fbKey === fbKey);
+  const labels = { add:'➕ Legg til', subtract:'➖ Trekk fra', set:'✏️ Sett saldo', reset:'🔄 Nullstill' };
+  document.getElementById('modal-saldo-title').textContent = labels[action] + ` – ${s.firstname}`;
+  document.getElementById('modal-saldo-info').textContent  = `Nåværende saldo: 🪙 ${s.balance||0}`;
+  document.getElementById('modal-saldo-amount').style.display = action === 'reset' ? 'none' : 'block';
   document.getElementById('modal-saldo').classList.add('open');
 }
-async function confirmSaldoAction(){
-  const s=window._students.find(x=>x.fbKey===currentStudentId);
-  const amount=parseInt(document.getElementById('modal-saldo-amount').value)||0;
-  let newBal=s.balance||0;
-  if(currentAction==='add') newBal+=amount;
-  else if(currentAction==='subtract') newBal=Math.max(0,newBal-amount);
-  else if(currentAction==='set') newBal=Math.max(0,amount);
-  else if(currentAction==='reset') newBal=0;
-  await window._update(fbRef('students/'+currentStudentId),{balance:newBal});
-  await logTx(currentStudentId,currentAction==='add'?'income':'expense','💰',
-    currentAction==='add'?'Saldo justert av lærer':'Saldo trukket av lærer',
-    currentAction==='add'?amount:-amount);
+
+async function confirmSaldoAction() {
+  const s = window._students.find(x => x.fbKey === currentStudentId);
+  const amount = parseInt(document.getElementById('modal-saldo-amount').value) || 0;
+  let newBal = s.balance || 0;
+  if (currentAction === 'add')      newBal = newBal + amount;
+  else if (currentAction === 'subtract') newBal = Math.max(0, newBal - amount);
+  else if (currentAction === 'set') newBal = Math.max(0, amount);
+  else if (currentAction === 'reset') newBal = 0;
+  await window._update(fbRef('students/' + currentStudentId), { balance: newBal });
+  await logTx(currentStudentId, newBal > (s.balance||0) ? 'income' : 'expense', '💰',
+    'Saldo justert av lærer', newBal - (s.balance||0));
   closeModal('modal-saldo');
 }
-function openBulkModal(action){
-  bulkAction=action;
-  const labels={add:'➕ Legg til – alle',salary:'💼 Utbetal ukentlig lønn',tax:'🏛️ Trekk skatt (22%)',reset:'🔄 Nullstill – alle'};
-  document.getElementById('modal-bulk-title').textContent=labels[action];
-  document.getElementById('bulk-amount-row').style.display=(action==='reset'||action==='tax')?'none':'block';
-  document.getElementById('bulk-tax-info').style.display=action==='tax'?'block':'none';
-  if(action==='tax') document.getElementById('bulk-tax-info').textContent=`22% trekkes fra alle elevers saldo og går "til staten".`;
+
+function openBulkModal(action) {
+  bulkAction = action;
+  const labels = { add:'➕ Legg til – alle', salary:'💼 Utbetal ukentlig lønn', tax:'🏛️ Trekk skatt (22%)', reset:'🔄 Nullstill – alle' };
+  document.getElementById('modal-bulk-title').textContent = labels[action];
+  document.getElementById('bulk-amount-row').style.display = (action === 'reset' || action === 'tax') ? 'none' : 'block';
+  const ti = document.getElementById('bulk-tax-info');
+  ti.style.display = action === 'tax' ? 'block' : 'none';
+  if (action === 'tax') ti.textContent = '22% trekkes fra saldo for valgt klasse.';
   document.getElementById('modal-bulk').classList.add('open');
 }
-async function confirmBulkAction(){
-  const cls=document.getElementById('bulk-class').value;
-  const amount=parseInt(document.getElementById('bulk-amount').value)||0;
-  const updates={};
-  const targets=window._students.filter(s=>!cls||s.class===cls);
-  for(const s of targets){
-    const cur=s.balance||0;
-    let newBal=cur;
-    let txDesc='',txAmt=0,txType='income';
-    if(bulkAction==='add'){newBal=cur+amount;txDesc='Ekstra fra lærer';txAmt=amount;}
-    else if(bulkAction==='salary'){newBal=cur+amount;txDesc='Ukentlig lønn';txAmt=amount;}
-    else if(bulkAction==='tax'){const tax=Math.floor(cur*TAX_RATE);newBal=cur-tax;txDesc=`Skattetrekk 22% (-${tax})`;txAmt=-tax;txType='expense';}
-    else if(bulkAction==='reset'){newBal=0;txDesc='Saldo nullstilt';txAmt=-cur;txType='expense';}
-    updates['students/'+s.fbKey+'/balance']=Math.max(0,newBal);
-    if(txAmt!==0) await logTx(s.fbKey,txType,'💰',txDesc,txAmt);
+
+async function confirmBulkAction() {
+  const cls    = document.getElementById('bulk-class').value;
+  const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
+  const updates = {};
+  const targets = window._students.filter(s => !cls || s.class === cls);
+  for (const s of targets) {
+    const cur = s.balance || 0;
+    let newBal = cur, txDesc = '', txAmt = 0;
+    if (bulkAction === 'add')    { newBal = cur + amount;                       txDesc = 'Ekstra fra lærer';       txAmt = amount; }
+    if (bulkAction === 'salary') { newBal = cur + amount;                       txDesc = 'Ukentlig lønn';          txAmt = amount; }
+    if (bulkAction === 'tax')    { const t = Math.floor(cur * TAX_RATE); newBal = cur - t; txDesc = 'Skattetrekk 22%'; txAmt = -t; }
+    if (bulkAction === 'reset')  { newBal = 0;                                  txDesc = 'Saldo nullstilt';        txAmt = -cur; }
+    updates['students/' + s.fbKey + '/balance'] = Math.max(0, newBal);
+    if (txAmt !== 0) await logTx(s.fbKey, txAmt > 0 ? 'income' : 'expense', '💰', txDesc, txAmt);
   }
-  await window._update(fbRef('/'),updates);
+  await window._update(fbRef('/'), updates);
   closeModal('modal-bulk');
 }
-function openDeleteModal(fbKey,name){
-  currentStudentId=fbKey;
-  document.getElementById('modal-delete-text').textContent=`Slett ${name}?`;
+
+function openDeleteModal(fbKey, name) {
+  currentStudentId = fbKey;
+  document.getElementById('modal-delete-text').textContent = `Slett ${name}?`;
   document.getElementById('modal-delete').classList.add('open');
 }
-async function confirmDelete(){await window._remove(fbRef('students/'+currentStudentId));closeModal('modal-delete');}
+async function confirmDelete() { await window._remove(fbRef('students/' + currentStudentId)); closeModal('modal-delete'); }
 
-// ── Transaction logger ─────────────────────────────────────────────────────
-async function logTx(studentFbKey,type,icon,desc,amount){
-  if(!window._push||!window._set) return;
-  await window._set(window._push(fbRef('transactions/'+studentFbKey)),{type,icon,desc,amount,ts:Date.now()});
-}
-
-// ── Jobs / Oppdrag ─────────────────────────────────────────────────────────
-async function submitJob(){
-  const title=document.getElementById('job-title').value.trim();
-  const emoji=document.getElementById('job-emoji').value||'💼';
-  const desc=document.getElementById('job-desc').value.trim();
-  const pay=parseInt(document.getElementById('job-pay').value)||50;
-  const slots=parseInt(document.getElementById('job-slots').value)||1;
-  const deadline=document.getElementById('job-deadline').value.trim();
-  const alertEl=document.getElementById('job-alert');
-  if(!title){alertEl.innerHTML='<div class="alert alert-error">⚠️ Skriv inn tittel.</div>';return;}
-  if(currentEditJobKey){
-    await window._update(fbRef('jobs/'+currentEditJobKey),{title,emoji,desc,pay,slots,deadline,active:true});
-    alertEl.innerHTML='<div class="alert alert-success">✅ Oppdatert!</div>';
-    cancelJobEdit();
-  } else {
-    await window._set(window._push(fbRef('jobs')),{title,emoji,desc,pay,slots,deadline,active:true,created:Date.now()});
-    alertEl.innerHTML=`<div class="alert alert-success">✅ «${title}» opprettet!</div>`;
-    ['job-title','job-emoji','job-desc','job-deadline'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('job-pay').value='50';
-    document.getElementById('job-slots').value='1';
-  }
-  setTimeout(()=>alertEl.innerHTML='',3000);
-}
-function openJobEdit(fbKey){
-  const j=window._jobs.find(x=>x.fbKey===fbKey);if(!j)return;
-  currentEditJobKey=fbKey;
-  document.getElementById('job-emoji').value=j.emoji||'';
-  document.getElementById('job-title').value=j.title||'';
-  document.getElementById('job-desc').value=j.desc||'';
-  document.getElementById('job-pay').value=j.pay||50;
-  document.getElementById('job-slots').value=j.slots||1;
-  document.getElementById('job-deadline').value=j.deadline||'';
-  document.getElementById('job-form-title').textContent='✏️ Rediger oppdrag';
-  document.getElementById('job-submit-btn').textContent='Lagre';
-  document.getElementById('job-cancel-btn').style.display='';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function cancelJobEdit(){
-  currentEditJobKey=null;
-  ['job-title','job-emoji','job-desc','job-deadline'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('job-pay').value='50';document.getElementById('job-slots').value='1';
-  document.getElementById('job-form-title').textContent='➕ Nytt oppdrag';
-  document.getElementById('job-submit-btn').textContent='Opprett oppdrag';
-  document.getElementById('job-cancel-btn').style.display='none';
-}
-async function deleteJob(fbKey){if(!confirm('Slett oppdrag?'))return;await window._remove(fbRef('jobs/'+fbKey));}
-async function approveJob(){
-  const sk=document.getElementById('job-approve-student').value;
-  const jk=document.getElementById('job-approve-job').value;
-  const alertEl=document.getElementById('job-approve-alert');
-  if(!sk||!jk){alertEl.innerHTML='<div class="alert alert-error">⚠️ Velg elev og oppdrag.</div>';return;}
-  const j=window._jobs.find(x=>x.fbKey===jk);
-  const s=window._students.find(x=>x.fbKey===sk);
-  if(!j||!s) return;
-  const newBal=(s.balance||0)+j.pay;
-  await window._update(fbRef('students/'+sk),{balance:newBal});
-  await logTx(sk,'income','💼',`Oppdrag: ${j.title}`,j.pay);
-  alertEl.innerHTML=`<div class="alert alert-success">✅ ${j.pay} 🪙 utbetalt til ${s.firstname}!</div>`;
-  setTimeout(()=>alertEl.innerHTML='',3000);
-}
-function renderJobsList(){
-  const el=document.getElementById('jobs-list');
-  if(!el)return;
-  if(!window._jobs.length){el.innerHTML='<p style="color:var(--muted);font-size:.9rem">Ingen oppdrag ennå.</p>';return;}
-  el.innerHTML=window._jobs.map(j=>`
-    <div class="job-card">
-      <div class="job-icon">${j.emoji||'💼'}</div>
-      <div class="job-info">
-        <div class="job-title">${j.title}</div>
-        <div class="job-desc">${j.desc||''}${j.deadline?` · Frist: ${j.deadline}`:''} · Maks ${j.slots||1} elev${(j.slots||1)!==1?'er':''}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-        <div class="job-pay">🪙 ${j.pay}</div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-sm" onclick="openJobEdit('${j.fbKey}')">✏️</button>
-          <button class="btn btn-coral btn-sm" onclick="deleteJob('${j.fbKey}')">🗑️</button>
-        </div>
-      </div>
-    </div>`).join('');
-  refreshJobSelects();
-}
-function refreshJobSelects(){
-  const ss=document.getElementById('job-approve-student');
-  const js=document.getElementById('job-approve-job');
-  if(!ss||!js) return;
-  ss.innerHTML='<option value="">– Velg elev –</option>'+window._students.map(s=>`<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('');
-  js.innerHTML='<option value="">– Velg oppdrag –</option>'+window._jobs.map(j=>`<option value="${j.fbKey}">${j.emoji||'💼'} ${j.title} (${j.pay}🪙)</option>`).join('');
+// ════════════════════════════════════════════════════════════
+// TRANSAKSJON-LOGGER
+// ════════════════════════════════════════════════════════════
+async function logTx(sk, type, icon, desc, amount) {
+  if (!window._push || !window._set) return;
+  await window._set(window._push(fbRef('transactions/' + sk)), { type, icon, desc, amount, ts: Date.now() });
 }
 
-
-
-// ── Groups ────────────────────────────────────────────────────────────────
-window._groups = [];
-let currentEditGroupKey = null;
-let selectedGroupColor = '#1D9E75';
-
+// ════════════════════════════════════════════════════════════
+// GRUPPER
+// ════════════════════════════════════════════════════════════
 function selectColor(el) {
   document.querySelectorAll('#color-picker .color-swatch').forEach(s => s.classList.remove('selected'));
   el.classList.add('selected');
@@ -798,6 +1085,7 @@ function selectColor(el) {
 }
 
 async function submitGroup() {
+  if (!ready()) return;
   const name  = document.getElementById('new-group-name').value.trim();
   const emoji = document.getElementById('new-group-emoji').value || '👥';
   const alertEl = document.getElementById('group-create-alert');
@@ -826,7 +1114,6 @@ function openEditGroup(fbKey) {
   document.getElementById('group-submit-btn').textContent = 'Lagre endringer';
   document.getElementById('group-cancel-btn').style.display = '';
   document.getElementById('new-group-name').focus();
-  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function cancelEditGroup() {
@@ -839,9 +1126,9 @@ function cancelEditGroup() {
 }
 
 async function deleteGroup(fbKey, name) {
-  if (!confirm(`Slett gruppen «${name}»? Elever beholdes men mister gruppemedlemskapet.`)) return;
+  if (!confirm(`Slett gruppen «${name}»? Elever beholdes.`)) return;
   const updates = {};
-  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students/'+s.fbKey+'/groupKey'] = null; });
+  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students/' + s.fbKey + '/groupKey'] = null; });
   if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
   await window._remove(fbRef('groups/' + fbKey));
 }
@@ -851,7 +1138,7 @@ function renderGroupsPage() { renderGroupsList(); renderAssignSelects(); }
 function renderGroupsList() {
   const el = document.getElementById('groups-list'); if (!el) return;
   if (!window._groups.length) {
-    el.innerHTML = `<div class="card" style="text-align:center;padding:2.5rem;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:.75rem">👥</div><div style="font-weight:700">Ingen grupper ennå</div><div style="font-size:.85rem;margin-top:.25rem">Opprett din første gruppe ovenfor!</div></div>`;
+    el.innerHTML = `<div class="card" style="text-align:center;padding:2.5rem;color:var(--muted);"><div style="font-size:2.5rem;margin-bottom:.75rem;">👥</div><div style="font-weight:700;">Ingen grupper ennå</div><div style="font-size:.85rem;margin-top:.25rem;">Opprett din første gruppe ovenfor!</div></div>`;
     return;
   }
   el.innerHTML = window._groups.map(g => {
@@ -859,27 +1146,27 @@ function renderGroupsList() {
     const total   = members.reduce((a,s) => a + (s.balance||0), 0);
     return `<div class="group-card">
       <div class="group-card-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:44px;height:44px;border-radius:12px;background:${g.color}22;border:2px solid ${g.color};display:flex;align-items:center;justify-content:center;font-size:1.5rem">${g.emoji||'👥'}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:${g.color}22;border:2px solid ${g.color};display:flex;align-items:center;justify-content:center;font-size:1.5rem;">${g.emoji||'👥'}</div>
           <div>
-            <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:${g.color}">${g.name}</div>
-            <div style="font-size:.8rem;color:var(--muted);font-weight:700">${members.length} elev${members.length!==1?'er':''} · 🪙 ${total} totalt</div>
+            <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:${g.color};">${g.name}</div>
+            <div style="font-size:.8rem;color:var(--muted);font-weight:700;">${members.length} elev${members.length!==1?'er':''} · 🪙 ${total} totalt</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;gap:6px;">
           <button class="btn btn-ghost btn-sm" onclick="openEditGroup('${g.fbKey}')">✏️ Rediger</button>
-          <button class="btn btn-coral btn-sm" onclick="deleteGroup('${g.fbKey}','${g.name.replace(/'/g,"\'")}')">🗑️</button>
+          <button class="btn btn-coral btn-sm" onclick="deleteGroup('${g.fbKey}','${g.name.replace(/'/g,"\\'")}')">🗑️</button>
         </div>
       </div>
       <div class="group-members">
         ${members.length ? members.map(s => `
-          <div style="display:flex;align-items:center;gap:6px;background:${g.color}12;border:1px solid ${g.color}44;border-radius:20px;padding:4px 10px">
-            <div style="width:22px;height:22px;background:${g.color}33;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:${g.color}">${s.firstname[0]}${s.lastname[0]}</div>
-            <span style="font-size:.82rem;font-weight:700">${s.firstname} ${s.lastname}</span>
-            <span style="font-size:.75rem;color:var(--muted)">🪙${s.balance||0}</span>
-            <button onclick="removeFromGroup('${s.fbKey}')" style="background:none;border:none;cursor:pointer;color:${g.color};font-size:.9rem;padding:0 2px;line-height:1" title="Fjern">✕</button>
+          <div style="display:flex;align-items:center;gap:6px;background:${g.color}12;border:1px solid ${g.color}44;border-radius:20px;padding:4px 10px;">
+            <div style="width:22px;height:22px;background:${g.color}33;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:${g.color};">${s.firstname[0]}${s.lastname[0]}</div>
+            <span style="font-size:.82rem;font-weight:700;">${s.firstname} ${s.lastname}</span>
+            <span style="font-size:.75rem;color:var(--muted);">🪙${s.balance||0}</span>
+            <button onclick="removeFromGroup('${s.fbKey}')" style="background:none;border:none;cursor:pointer;color:${g.color};font-size:.9rem;padding:0 2px;" title="Fjern">✕</button>
           </div>`).join('')
-        : `<span style="font-size:.82rem;color:var(--muted);font-style:italic">Ingen elever ennå</span>`}
+        : '<span style="font-size:.82rem;color:var(--muted);font-style:italic;">Ingen elever ennå</span>'}
       </div>
     </div>`;
   }).join('');
@@ -906,86 +1193,172 @@ async function removeStudentFromGroup() {
 }
 async function removeFromGroup(sk) { await window._update(fbRef('students/' + sk), { groupKey: null }); }
 
-// ── Shop 5-7 ──────────────────────────────────────────────────────────────
-let shop57Filter = '';
-
-async function addShop57Item(){
-  const emoji  = document.getElementById('s57-emoji').value || '🛒';
-  const name   = document.getElementById('s57-name').value.trim();
-  const price  = parseInt(document.getElementById('s57-price').value) || 1;
-  const cat    = document.getElementById('s57-category').value;
-  const alertEl = document.getElementById('s57-alert');
-  if(!name){ alertEl.innerHTML='<div class="alert alert-error">⚠️ Skriv inn varenavn.</div>'; return; }
-  await window._set(window._push(fbRef('shop57')), {emoji, name, price, category:cat, created:Date.now()});
-  ['s57-emoji','s57-name','s57-price'].forEach(id=>document.getElementById(id).value='');
-  alertEl.innerHTML=`<div class="alert alert-success">✅ «${name}» lagt til!</div>`;
-  setTimeout(()=>alertEl.innerHTML='', 3000);
+// ════════════════════════════════════════════════════════════
+// OPPDRAG
+// ════════════════════════════════════════════════════════════
+async function submitJob() {
+  if (!ready()) return;
+  const title    = document.getElementById('job-title').value.trim();
+  const emoji    = document.getElementById('job-emoji').value || '💼';
+  const desc     = document.getElementById('job-desc').value.trim();
+  const pay      = parseInt(document.getElementById('job-pay').value) || 50;
+  const deadline = document.getElementById('job-deadline').value.trim();
+  const alertEl  = document.getElementById('job-alert');
+  if (!title) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn tittel.</div>'; return; }
+  if (currentEditJobKey) {
+    await window._update(fbRef('jobs/' + currentEditJobKey), { title, emoji, desc, pay, deadline });
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Oppdatert!</div>';
+    cancelJobEdit();
+  } else {
+    await window._set(window._push(fbRef('jobs')), { title, emoji, desc, pay, deadline, active: true, created: Date.now() });
+    alertEl.innerHTML = `<div class="alert alert-success">✅ «${title}» opprettet!</div>`;
+    ['job-title','job-emoji','job-desc','job-deadline'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('job-pay').value = '50';
+  }
+  setTimeout(() => alertEl.innerHTML = '', 3000);
 }
 
-function filterShop57(v){ shop57Filter=v.toLowerCase(); renderShop57List(); }
+function cancelJobEdit() {
+  currentEditJobKey = null;
+  ['job-title','job-emoji','job-desc','job-deadline'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('job-pay').value = '50';
+  document.getElementById('job-form-title').textContent  = '➕ Nytt oppdrag';
+  document.getElementById('job-submit-btn').textContent  = 'Opprett oppdrag';
+  document.getElementById('job-cancel-btn').style.display = 'none';
+}
 
-function renderShop57List(){
-  const tbody = document.getElementById('shop57-table-body');
-  if(!tbody) return;
+async function deleteJob(fbKey) { if (!confirm('Slett oppdrag?')) return; await window._remove(fbRef('jobs/' + fbKey)); }
+
+function showJobQR(fbKey) {
+  const j = window._jobs.find(x => x.fbKey === fbKey); if (!j) return;
+  const box = document.getElementById('modal-job-qr-box'); box.innerHTML = '';
+  document.getElementById('modal-job-qr-title').textContent = `${j.emoji||'💼'} ${j.title}`;
+  document.getElementById('modal-job-qr-desc').textContent  = `Brutto: 🪙 ${j.pay} · Elev får netto: 🪙 ${Math.floor(j.pay * 0.8)} (20% til sparemål)`;
+  try { new QRCode(box, { text: JSON.stringify({ type:'job', jobKey: fbKey, title: j.title, pay: j.pay }), width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M }); } catch(e){}
+  document.getElementById('modal-job-qr').classList.add('open');
+}
+
+async function approveJob() {
+  const sk = document.getElementById('job-approve-student').value;
+  const jk = document.getElementById('job-approve-job').value;
+  const alertEl = document.getElementById('job-approve-alert');
+  if (!sk || !jk) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Velg elev og oppdrag.</div>'; return; }
+  const j = window._jobs.find(x => x.fbKey === jk);
+  const s = window._students.find(x => x.fbKey === sk);
+  if (!j || !s) return;
+  const net = Math.floor(j.pay * 0.8);
+  await window._update(fbRef('students/' + sk), { balance: (s.balance||0) + net });
+  await logTx(sk, 'income', '💼', `Oppdrag: ${j.title} (netto etter 20% skatt)`, net);
+  alertEl.innerHTML = `<div class="alert alert-success">✅ 🪙 ${net} utbetalt til ${s.firstname}!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function renderJobsList() {
+  const el = document.getElementById('jobs-list'); if (!el) return;
+  if (!window._jobs.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Ingen oppdrag.</p>'; refreshJobSelects(); return; }
+  el.innerHTML = window._jobs.map(j => `
+    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:48px;height:48px;border-radius:12px;background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">${j.emoji||'💼'}</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:.95rem;">${j.title}</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:2px;">${j.desc||''}${j.deadline?' · Frist: '+j.deadline:''}</div>
+        <div style="margin-top:4px;"><span class="badge badge-amber">Brutto 🪙 ${j.pay}</span> <span class="badge" style="background:var(--teal-light);color:var(--teal-dark);">Netto 🪙 ${Math.floor(j.pay*.8)}</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="btn btn-primary btn-sm" onclick="showJobQR('${j.fbKey}')">⬛ QR</button>
+        <button class="btn btn-coral btn-sm"   onclick="deleteJob('${j.fbKey}')">🗑️</button>
+      </div>
+    </div>`).join('');
+  refreshJobSelects();
+}
+
+function refreshJobSelects() {
+  const ss = document.getElementById('job-approve-student');
+  const js = document.getElementById('job-approve-job');
+  if (!ss || !js) return;
+  ss.innerHTML = '<option value="">– Velg elev –</option>' + window._students.map(s => `<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('');
+  js.innerHTML = '<option value="">– Velg oppdrag –</option>' + window._jobs.map(j => `<option value="${j.fbKey}">${j.emoji||'💼'} ${j.title} (${j.pay}🪙)</option>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// BUTIKK 5-7
+// ════════════════════════════════════════════════════════════
+let shop57Filter = '';
+
+async function addShop57Item() {
+  if (!ready()) return;
+  const emoji   = document.getElementById('s57-emoji').value || '🛒';
+  const name    = document.getElementById('s57-name').value.trim();
+  const price   = parseInt(document.getElementById('s57-price').value) || 1;
+  const cat     = document.getElementById('s57-category').value;
+  const alertEl = document.getElementById('s57-alert');
+  if (!name) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn varenavn.</div>'; return; }
+  await window._set(window._push(fbRef('shop57')), { emoji, name, price, category: cat, created: Date.now() });
+  ['s57-emoji','s57-name','s57-price'].forEach(id => document.getElementById(id).value = '');
+  alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» lagt til!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function filterShop57(v) { shop57Filter = v.toLowerCase(); renderShop57List(); }
+
+function renderShop57List() {
+  const tbody = document.getElementById('shop57-table-body'); if (!tbody) return;
   const countEl = document.getElementById('s57-count');
-  if(countEl) countEl.textContent = window._shop57.length;
-  const items = window._shop57.filter(x =>
-    !shop57Filter || x.name.toLowerCase().includes(shop57Filter) || x.category.toLowerCase().includes(shop57Filter)
-  );
-  if(!items.length){
-    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem">Ingen varer ennå.</td></tr>';
-    return;
-  }
+  if (countEl) countEl.textContent = window._shop57.length;
+  const items = window._shop57.filter(x => !shop57Filter || x.name.toLowerCase().includes(shop57Filter) || (x.category||'').toLowerCase().includes(shop57Filter));
+  if (!items.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">Ingen varer ennå.</td></tr>'; return; }
   tbody.innerHTML = items.map(x => `<tr>
-    <td><div style="display:flex;align-items:center;gap:10px">
-      <span style="font-size:1.8rem">${x.emoji}</span>
-      <strong>${x.name}</strong>
-    </div></td>
+    <td><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.8rem;">${x.emoji}</span><strong>${x.name}</strong></div></td>
     <td><span class="badge badge-teal">${x.category}</span></td>
-    <td><span class="badge badge-amber">🪙 ${x.price}</span></td>
+    <td><span class="balance-badge">🪙 ${x.price}</span></td>
     <td><button class="btn btn-coral btn-sm" onclick="removeShop57('${x.fbKey}')">🗑️</button></td>
   </tr>`).join('');
 }
 
-async function removeShop57(fbKey){ await window._remove(fbRef('shop57/'+fbKey)); }
+async function removeShop57(fbKey) { await window._remove(fbRef('shop57/' + fbKey)); }
 
-// ── QR Rewards ─────────────────────────────────────────────────────────────
-function generateRewardQRCodes(){
-  [10,50,100].forEach(amount=>{
-    const el=document.getElementById('qr-'+amount);
-    if(el&&!el.children.length)try{new QRCode(el,{text:JSON.stringify({type:'reward',amount}),width:120,height:120,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
+// ════════════════════════════════════════════════════════════
+// QR KODER
+// ════════════════════════════════════════════════════════════
+function generateRewardQRCodes() {
+  [10,50,100].forEach(amount => {
+    const el = document.getElementById('qr-' + amount);
+    if (el && !el.children.length) try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount }), width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M }); } catch(e) {}
   });
 }
-function generateCustomQR(){
-  const amount=parseInt(document.getElementById('custom-qr-amount').value)||75;
-  const desc=document.getElementById('custom-qr-desc').value||`+${amount} mynter`;
-  const el=document.getElementById('qr-custom');
-  el.innerHTML='';el.style.display='block';
-  try{new QRCode(el,{text:JSON.stringify({type:'reward',amount,desc}),width:120,height:120,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
-  const info=document.getElementById('custom-qr-info');
-  info.style.display='block';
-  info.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal)">+${amount} 🪙</div><div style="font-size:.9rem;color:var(--muted)">${desc}</div>`;
+
+function generateCustomQR() {
+  const amount = parseInt(document.getElementById('custom-qr-amount').value) || 75;
+  const desc   = document.getElementById('custom-qr-desc').value || `+${amount} mynter`;
+  const el = document.getElementById('qr-custom');
+  el.innerHTML = ''; el.style.display = 'block';
+  try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount, desc }), width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M }); } catch(e) {}
+  const info = document.getElementById('custom-qr-info');
+  info.style.display = 'block';
+  info.innerHTML = `<div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal);">+${amount} 🪙</div><div style="font-size:.9rem;color:var(--muted);">${desc}</div>`;
 }
 
-// ── Bank card PDF ──────────────────────────────────────────────────────────
-function generateCardPDF(){
-  if(!window._students.length){alert('Ingen elever å skrive ut.');return;}
-  const cardsHTML=`<style>body{margin:0;padding:0;background:white}.card-grid{display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,74mm);gap:0}.card-item{width:105mm;height:74mm;background-color:#085041;border-radius:0;padding:6mm 7mm;color:white;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;page-break-inside:avoid;box-sizing:border-box;border:.3mm solid #1D9E75}.card-accent{position:absolute;top:-14mm;right:-14mm;width:46mm;height:46mm;border-radius:50%;background:rgba(255,255,255,.07)}.card-logo{font-family:'Fredoka One',cursive;font-size:6.5mm;color:#EF9F27;letter-spacing:.3mm;line-height:1}.card-chip{width:10mm;height:7.5mm;background:#EF9F27;border-radius:1.5mm}.card-label{font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:.4mm;text-transform:uppercase;margin-bottom:1mm}.card-name{font-size:5.5mm;font-weight:800;letter-spacing:.1mm;text-transform:uppercase;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:3mm}.card-pin-label{font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-bottom:1mm}.card-pin{font-family:'Fredoka One',cursive;font-size:9mm;color:#EF9F27;letter-spacing:2mm;line-height:1}.card-class{background:#EF9F27;color:#085041;border-radius:1.5mm;padding:1.5mm 3mm;font-size:4mm;font-weight:800;align-self:flex-end}</style>
-  <div class="card-grid">${window._students.map(s=>{const dn=s.firstname+' '+s.lastname.charAt(0)+'.';return`<div class="card-item"><div class="card-accent"></div><div style="display:flex;align-items:flex-start;justify-content:space-between"><div class="card-logo">🪙 Myntland</div><div class="card-chip"></div></div><div><div class="card-label">Kortinnehaver</div><div class="card-name">${dn}</div><div class="card-footer"><div><div class="card-pin-label">PIN-kode</div><div class="card-pin">${s.pin}</div></div><div class="card-class">${s.class}</div></div></div></div>`;}).join('')}</div>`;
-  const win=window.open('','_blank','width=900,height=700');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet"><style>@media print{@page{size:A4 portrait;margin:0}}</style></head><body>'+cardsHTML+'</body></html>');
+// ════════════════════════════════════════════════════════════
+// BANKKORT PDF
+// ════════════════════════════════════════════════════════════
+function generateCardPDF() {
+  if (!window._students.length) { alert('Ingen elever å skrive ut.'); return; }
+  const cardsHTML = `<style>body{margin:0;padding:0;background:white}.cg{display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,74mm);gap:0}.ci{width:105mm;height:74mm;background-color:#085041;padding:6mm 7mm;color:white;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;page-break-inside:avoid;box-sizing:border-box;border:.3mm solid #1D9E75}.ca{position:absolute;top:-14mm;right:-14mm;width:46mm;height:46mm;border-radius:50%;background:rgba(255,255,255,.07)}.cl{font-family:'Fredoka One',cursive;font-size:6.5mm;color:#EF9F27;line-height:1}.cc{width:10mm;height:7.5mm;background:#EF9F27;border-radius:1.5mm}.cn{font-size:5.5mm;font-weight:800;text-transform:uppercase;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cf{display:flex;justify-content:space-between;align-items:flex-end;margin-top:3mm}.cpl{font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-bottom:1mm}.cpv{font-family:'Fredoka One',cursive;font-size:9mm;color:#EF9F27;letter-spacing:2mm;line-height:1}.cb{background:#EF9F27;color:#085041;border-radius:1.5mm;padding:1.5mm 3mm;font-size:4mm;font-weight:800}</style>
+  <div class="cg">${window._students.map(s => {
+    const dn = s.firstname + ' ' + s.lastname.charAt(0) + '.';
+    return `<div class="ci"><div class="ca"></div><div style="display:flex;align-items:flex-start;justify-content:space-between;"><div class="cl">🪙 Myntland</div><div class="cc"></div></div><div><div style="font-size:2.8mm;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-bottom:1mm;">Kortinnehaver</div><div class="cn">${dn}</div><div class="cf"><div><div class="cpl">PIN</div><div class="cpv">${s.pin}</div></div><div class="cb">${s.class}</div></div></div></div>`;
+  }).join('')}</div>`;
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet"><style>@media print{@page{size:A4 portrait;margin:0}}</style></head><body>' + cardsHTML + '</body></html>');
   win.document.close();
-  setTimeout(()=>{win.focus();win.print();},800);
+  setTimeout(() => { win.focus(); win.print(); }, 800);
 }
 
-// ── Modals ─────────────────────────────────────────────────────────────────
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
-
-// ── Init ───────────────────────────────────────────────────────────────────
-setTimeout(()=>{
-  if(window._db) document.getElementById('setup-banner').style.display='none';
-},3000);
+// ════════════════════════════════════════════════════════════
+// MODALS & UTILS
+// ════════════════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
 </script>
 </body>
 </html>
