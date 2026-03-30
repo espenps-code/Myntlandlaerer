@@ -448,17 +448,31 @@
 <div class="page" id="page-saldo">
   <div class="page-title">💰 Saldooversikt</div>
   <div class="page-subtitle">Juster saldo og gi ukentlig lønn</div>
+  <div class="stat-row" id="saldo-summary-row" style="display:none;">
+    <div class="stat-box"><div class="stat-num" id="sum-bruk" style="font-size:1.4rem;">–</div><div class="stat-label">💳 Brukskonto totalt</div></div>
+    <div class="stat-box" style="background:#dbeafe;"><div class="stat-num" id="sum-spare" style="color:#1e40af;font-size:1.4rem;">–</div><div class="stat-label">💰 Sparekonto totalt</div></div>
+    <div class="stat-box" style="background:#ede9fe;"><div class="stat-num" id="sum-fond" style="color:#5b21b6;font-size:1.4rem;">–</div><div class="stat-label">📊 Fond totalt</div></div>
+    <div class="stat-box" style="background:var(--coral-light);"><div class="stat-num" id="sum-loan" style="color:var(--coral);font-size:1.4rem;">–</div><div class="stat-label">📉 Lån totalt</div></div>
+  </div>
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span>Alle elevers saldo</span>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('add')">➕ Legg til alle</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('salary')">💼 Utbetal lønn nå</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('tax')">🏛️ Trekk skatt</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('reset')">🔄 Nullstill</button>
       </div>
     </div>
-    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Saldo</th><th>Lån</th><th>Juster</th></tr></thead>
+    <table><thead><tr>
+      <th>Elev</th><th>Klasse</th>
+      <th style="color:var(--teal-dark)">💳 Brukskonto</th>
+      <th style="color:#1a5fa5">💰 Sparekonto</th>
+      <th style="color:#6d28d9">📊 Fond (lav)</th>
+      <th style="color:#6d28d9">📊 Fond (høy)</th>
+      <th style="color:var(--coral)">📉 Lån</th>
+      <th>Juster</th>
+    </tr></thead>
     <tbody id="saldo-table-body"></tbody></table>
   </div>
 </div>
@@ -1059,18 +1073,50 @@ function resetCSV() {
 // ════════════════════════════════════════════════════════════
 function renderSaldoTable() {
   const tbody = document.getElementById('saldo-table-body'); if (!tbody) return;
-  tbody.innerHTML = window._students.map(s => `<tr>
-    <td><strong>${s.firstname} ${s.lastname}</strong></td>
-    <td><span class="class-badge">${s.class}</span></td>
-    <td><span class="balance-badge">🪙 ${s.balance||0}</span></td>
-    <td>${(s.loan&&s.loan>0) ? `<span class="badge badge-coral">📉 ${s.loan}</span>` : '–'}</td>
-    <td><div class="balance-actions">
-      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
-      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
-      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
-      <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','reset')">🔄</button>
-    </div></td>
-  </tr>`).join('');
+  // Update summary
+  const sumRow = document.getElementById('saldo-summary-row');
+  if (sumRow && window._students.length) {
+    sumRow.style.display = 'flex';
+    document.getElementById('sum-bruk').textContent  = '🪙 ' + window._students.reduce((a,s)=>a+(s.balance||0),0);
+    document.getElementById('sum-spare').textContent = '🪙 ' + window._students.reduce((a,s)=>a+(s.savings||0),0);
+    document.getElementById('sum-fond').textContent  = '🪙 ' + window._students.reduce((a,s)=>a+(s.fund_low||0)+(s.fund_high||0),0);
+    document.getElementById('sum-loan').textContent  = '🪙 ' + window._students.reduce((a,s)=>a+(s.loan||0),0);
+  }
+  if (!window._students.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever</td></tr>';
+    return;
+  }
+  tbody.innerHTML = window._students.map(s => {
+    const bruk  = s.balance   || 0;
+    const spare = s.savings   || 0;
+    const fl    = s.fund_low  || 0;
+    const fh    = s.fund_high || 0;
+    const loan  = s.loan      || 0;
+    const total = bruk + spare + fl + fh;
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:30px;height:30px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;color:var(--teal-dark);flex-shrink:0;">${s.firstname[0]}${s.lastname[0]}</div>
+          <div>
+            <div style="font-weight:800;font-size:.88rem;">${s.firstname} ${s.lastname}</div>
+            <div style="font-size:.72rem;color:var(--muted);">Total: 🪙 ${total}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="class-badge">${s.class}</span></td>
+      <td><span class="balance-badge">🪙 ${bruk}</span></td>
+      <td><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
+      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fl}</span></td>
+      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fh}</span></td>
+      <td>${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
+      <td><div class="balance-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')" title="Legg til">➕</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')" title="Trekk fra">➖</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')" title="Sett saldo">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','reset')" title="Nullstill">🔄</button>
+      </div></td>
+    </tr>`;
+  }).join('');
 }
 
 function openSaldoModal(fbKey, action) {

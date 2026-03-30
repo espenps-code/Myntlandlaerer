@@ -32,7 +32,14 @@
     window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>VALID57.includes(s.class)):[];
     if(window._currentStudent){
       const up=window._allStudents.find(s=>s.fbKey===window._currentStudent.fbKey);
-      if(up){window._currentStudent=up;refreshAllDisplays();}
+      // MERGE into the existing object so local mutations are not lost.
+      // This prevents the race where we write to Firebase then onValue
+      // immediately replaces the object before the write has propagated.
+      if(up){
+        Object.assign(window._currentStudent, up);
+        refreshAllDisplays();
+        checkQuizStatus();
+      }
     }
   });
   onValue(ref(db,'classGoals'),snap=>{
@@ -693,7 +700,7 @@ async function saveGoalChoice(){
   const s=window._currentStudent;if(!s)return;
   const v=document.getElementById('goal-selector').value;
   await window._update(fbRef('students57/'+s.fbKey),{preferredGoal:v||null});
-  window._currentStudent.preferredGoal=v||null;
+  patchStudent(s.fbKey,{preferredGoal:v||null});
 }
 async function distributeToGoals(amount){
   if(!amount||!window._classGoals?.length)return;
@@ -729,64 +736,124 @@ function renderTransactions(){
 }
 
 // ── TRANSFERS ──────────────────────────────────────────────────────────────
-function openTransfer(type){
-  const s=window._currentStudent;if(!s)return;
-  const configs={
-    'bruk-til-spare':{title:'Sett inn på sparekonto',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
-      if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
-      const upd={balance:(s.balance||0)-amt,savings:(s.savings||0)+amt};
-      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
-      await saveTx(s.fbKey,'expense','💰',`Overført til sparekonto`,-amt);
-      await saveTx(s.fbKey,'income','💰',`Inn på sparekonto`,amt);
-      transactions.unshift({type:'income',icon:'💰',desc:'Inn på sparekonto',amount:amt,ts:Date.now()});
-      refreshAllDisplays();renderTransactions();showSuccess('💰','Overført!',`+${amt} 🪙 sparekonto`,`Brukskonto: ${window._currentStudent.balance}🪙`);}},
-    'spare-til-bruk':{title:'Ta ut fra sparekonto',desc:`Sparekonto: 🪙 ${s.savings||0} · ${getMaxW()-(s.withdrawalsThisWeek||0)} uttak igjen denne uken`,cb:async(amt)=>{
-      if(amt>(s.savings||0)){alert('Ikke nok på sparekonto.');return;}
-      const usedW=s.withdrawalsThisWeek||0;if(usedW>=getMaxW()){alert(`Maks ${getMaxW()} uttak per uke. Prøv igjen neste uke.`);return;}
-      const upd={balance:(s.balance||0)+amt,savings:(s.savings||0)-amt,withdrawalsThisWeek:usedW+1};
-      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
-      await saveTx(s.fbKey,'income','💰',`Uttak fra sparekonto`,amt);
-      transactions.unshift({type:'income',icon:'💰',desc:'Uttak fra sparekonto',amount:amt,ts:Date.now()});
-      refreshAllDisplays();renderTransactions();showSuccess('💰','Tatt ut!',`+${amt} 🪙 brukskonto`,`Sparekonto: ${window._currentStudent.savings}🪙`);}},
-    'bruk-til-fond-low':{title:'Sett inn – Fond lav risiko',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
-      if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
-      const upd={balance:(s.balance||0)-amt,fund_low:(s.fund_low||0)+amt};
-      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
-      await saveTx(s.fbKey,'expense','📊',`Inn i fond (lav risiko)`,-amt);
-      transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond lav risiko',amount:-amt,ts:Date.now()});
-      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Investert!',`${amt} 🪙 i fond`,``);}},
-    'fond-low-til-bruk':{title:'Ta ut – Fond lav risiko',desc:`Fond lav risiko: 🪙 ${s.fund_low||0} · 10% skatt på gevinst`,cb:async(amt)=>{
-      if(amt>(s.fund_low||0)){alert('Ikke nok i fond.');return;}
-      const hist=Object.values(window._fundHistory||{}).sort((a,b)=>a.ts-b.ts);
-      const initRate=hist.length?hist[0].low||100:100;const curRate=hist.length?hist[hist.length-1].low||100:100;
-      const gain=Math.max(0,Math.round(amt*(curRate-initRate)/initRate));
-      const tax=Math.round(gain*getFundTax());const net=amt-tax;
-      const upd={balance:(s.balance||0)+net,fund_low:(s.fund_low||0)-amt};
-      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
-      await saveTx(s.fbKey,'income','📊',`Uttak fond lav risiko (${tax}🪙 fondskatt)`,net);
-      transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond lav (skatt: ${tax}🪙)`,amount:net,ts:Date.now()});
-      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt betalt: ${tax}🪙`);}},
-    'bruk-til-fond-high':{title:'Sett inn – Fond høy risiko',desc:`Brukskonto: 🪙 ${s.balance||0}`,cb:async(amt)=>{
-      if(amt>(s.balance||0)){alert('Ikke nok på brukskonto.');return;}
-      const upd={balance:(s.balance||0)-amt,fund_high:(s.fund_high||0)+amt};
-      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
-      await saveTx(s.fbKey,'expense','📊',`Inn i fond (høy risiko)`,-amt);
-      transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond høy risiko',amount:-amt,ts:Date.now()});
-      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Investert!',`${amt} 🪙 i fond`,``);}},
-    'fond-high-til-bruk':{title:'Ta ut – Fond høy risiko',desc:`Fond høy risiko: 🪙 ${s.fund_high||0} · 10% skatt på gevinst`,cb:async(amt)=>{
-      if(amt>(s.fund_high||0)){alert('Ikke nok i fond.');return;}
-      const hist=Object.values(window._fundHistory||{}).sort((a,b)=>a.ts-b.ts);
-      const initRate=hist.length?hist[0].high||100:100;const curRate=hist.length?hist[hist.length-1].high||100:100;
-      const gain=Math.max(0,Math.round(amt*(curRate-initRate)/initRate));
-      const tax=Math.round(gain*getFundTax());const net=amt-tax;
-      const upd={balance:(s.balance||0)+net,fund_high:(s.fund_high||0)-amt};
-      await window._update(fbRef('students57/'+s.fbKey),upd);Object.assign(window._currentStudent,upd);
-      await saveTx(s.fbKey,'income','📊',`Uttak fond høy risiko (${tax}🪙 fondskatt)`,net);
-      transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond høy (skatt: ${tax}🪙)`,amount:net,ts:Date.now()});
-      refreshAllDisplays();renderTransactions();renderFond();showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt betalt: ${tax}🪙`);}},
+// ── TRANSFERS – alltid les window._currentStudent live inne i callback ──────
+function getTitle(type) {
+  const s = window._currentStudent;
+  const titles = {
+    'bruk-til-spare':    `Sett inn på sparekonto`,
+    'spare-til-bruk':    `Ta ut fra sparekonto`,
+    'bruk-til-fond-low': `Sett inn – Fond lav risiko`,
+    'fond-low-til-bruk': `Ta ut – Fond lav risiko`,
+    'bruk-til-fond-high':`Sett inn – Fond høy risiko`,
+    'fond-high-til-bruk':`Ta ut – Fond høy risiko`,
   };
-  const cfg=configs[type];if(!cfg)return;
-  showInputSheet(cfg.title,cfg.desc,cfg.cb);
+  const descs = {
+    'bruk-til-spare':    ()=>`Brukskonto: 🪙 ${window._currentStudent?.balance||0}`,
+    'spare-til-bruk':    ()=>`Sparekonto: 🪙 ${window._currentStudent?.savings||0} · ${getMaxW()-(window._currentStudent?.withdrawalsThisWeek||0)} uttak igjen`,
+    'bruk-til-fond-low': ()=>`Brukskonto: 🪙 ${window._currentStudent?.balance||0}`,
+    'fond-low-til-bruk': ()=>`Fond lav: 🪙 ${window._currentStudent?.fund_low||0} · ${Math.round(getFundTax()*100)}% skatt på gevinst`,
+    'bruk-til-fond-high':()=>`Brukskonto: 🪙 ${window._currentStudent?.balance||0}`,
+    'fond-high-til-bruk':()=>`Fond høy: 🪙 ${window._currentStudent?.fund_high||0} · ${Math.round(getFundTax()*100)}% skatt på gevinst`,
+  };
+  return { title: titles[type]||'', desc: (descs[type]||(() => ''))() };
+}
+
+
+// ── PATCH STUDENT – updates both window._currentStudent AND the _allStudents entry ──
+function patchStudent(fbKey, fields) {
+  // Patch in _allStudents so onValue merge sees correct data
+  const idx = window._allStudents.findIndex(s => s.fbKey === fbKey);
+  if (idx !== -1) Object.assign(window._allStudents[idx], fields);
+  // Patch currentStudent if it's the same person
+  if (window._currentStudent?.fbKey === fbKey) Object.assign(window._currentStudent, fields);
+}
+
+async function doTransfer(type, amt) {
+  // ALWAYS read fresh from window._currentStudent at execution time
+  const s = window._currentStudent;
+  if (!s) return;
+  const fbKey = s.fbKey;
+
+  if (type === 'bruk-til-spare') {
+    if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
+    const upd = { balance: (s.balance||0)-amt, savings: (s.savings||0)+amt };
+    await window._update(fbRef('students57/'+fbKey), upd);
+    patchStudent(fbKey, upd);
+    await saveTx(fbKey,'expense','💰','Overført til sparekonto',-amt);
+    transactions.unshift({type:'income',icon:'💰',desc:'Inn på sparekonto',amount:amt,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions();
+    showSuccess('💰','Overført!',`+${amt} 🪙 sparekonto`,`Brukskonto: ${window._currentStudent.balance}🪙`);
+
+  } else if (type === 'spare-til-bruk') {
+    if (amt > (s.savings||0)) { alert('Ikke nok på sparekonto.'); return; }
+    const usedW = s.withdrawalsThisWeek||0;
+    if (usedW >= getMaxW()) { alert(`Maks ${getMaxW()} uttak per uke. Prøv igjen neste uke.`); return; }
+    const upd = { balance: (s.balance||0)+amt, savings: (s.savings||0)-amt, withdrawalsThisWeek: usedW+1 };
+    await window._update(fbRef('students57/'+fbKey), upd);
+    patchStudent(fbKey, upd);
+    await saveTx(fbKey,'income','💰','Uttak fra sparekonto',amt);
+    transactions.unshift({type:'income',icon:'💰',desc:'Uttak fra sparekonto',amount:amt,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions();
+    showSuccess('💰','Tatt ut!',`+${amt} 🪙 brukskonto`,`Sparekonto: ${window._currentStudent.savings}🪙`);
+
+  } else if (type === 'bruk-til-fond-low') {
+    if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
+    const upd = { balance: (s.balance||0)-amt, fund_low: (s.fund_low||0)+amt };
+    await window._update(fbRef('students57/'+fbKey), upd);
+    patchStudent(fbKey, upd);
+    await saveTx(fbKey,'expense','📊','Inn i fond (lav risiko)',-amt);
+    transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond lav risiko',amount:-amt,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions(); renderFond();
+    showSuccess('📊','Investert!',`${amt} 🪙 i fond lav risiko`,'');
+
+  } else if (type === 'fond-low-til-bruk') {
+    if (amt > (s.fund_low||0)) { alert('Ikke nok i fond.'); return; }
+    const days = Object.keys(window._fundHistory||{}).sort();
+    const first = days.length ? (window._fundHistory[days[0]]?.low||100) : 100;
+    const last  = days.length ? (window._fundHistory[days[days.length-1]]?.low||100) : 100;
+    const gain  = Math.max(0, Math.round(amt * (last - first) / first));
+    const taxAmt = Math.round(gain * getFundTax());
+    const net   = amt - taxAmt;
+    const upd   = { balance: (s.balance||0)+net, fund_low: (s.fund_low||0)-amt };
+    await window._update(fbRef('students57/'+fbKey), upd);
+    patchStudent(fbKey, upd);
+    await saveTx(fbKey,'income','📊',`Uttak fond lav (${taxAmt}🪙 fondskatt)`,net);
+    transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond lav (skatt: ${taxAmt}🪙)`,amount:net,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions(); renderFond();
+    showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt: ${taxAmt}🪙`);
+
+  } else if (type === 'bruk-til-fond-high') {
+    if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
+    const upd = { balance: (s.balance||0)-amt, fund_high: (s.fund_high||0)+amt };
+    await window._update(fbRef('students57/'+fbKey), upd);
+    patchStudent(fbKey, upd);
+    await saveTx(fbKey,'expense','📊','Inn i fond (høy risiko)',-amt);
+    transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond høy risiko',amount:-amt,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions(); renderFond();
+    showSuccess('📊','Investert!',`${amt} 🪙 i fond høy risiko`,'');
+
+  } else if (type === 'fond-high-til-bruk') {
+    if (amt > (s.fund_high||0)) { alert('Ikke nok i fond.'); return; }
+    const days = Object.keys(window._fundHistory||{}).sort();
+    const first = days.length ? (window._fundHistory[days[0]]?.high||100) : 100;
+    const last  = days.length ? (window._fundHistory[days[days.length-1]]?.high||100) : 100;
+    const gain  = Math.max(0, Math.round(amt * (last - first) / first));
+    const taxAmt = Math.round(gain * getFundTax());
+    const net   = amt - taxAmt;
+    const upd   = { balance: (s.balance||0)+net, fund_high: (s.fund_high||0)-amt };
+    await window._update(fbRef('students57/'+fbKey), upd);
+    patchStudent(fbKey, upd);
+    await saveTx(fbKey,'income','📊',`Uttak fond høy (${taxAmt}🪙 fondskatt)`,net);
+    transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond høy (skatt: ${taxAmt}🪙)`,amount:net,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions(); renderFond();
+    showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt: ${taxAmt}🪙`);
+  }
+}
+
+function openTransfer(type){
+  if (!window._currentStudent) return;
+  const {title, desc} = getTitle(type);
+  showInputSheet(title, desc, (amt) => doTransfer(type, amt));
 }
 function renderSpareTab(){refreshAllDisplays();renderTransactions();}
 
@@ -858,7 +925,7 @@ function takeLoan(max){
     if(amt>max){alert(`Maks lån er 🪙 ${max}.`);return;}
     const s=window._currentStudent;const newBal=(s.balance||0)+amt;
     await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:amt});
-    window._currentStudent.balance=newBal;window._currentStudent.loan=amt;
+    patchStudent(s.fbKey,{balance:newBal,loan:amt});
     await saveTx(s.fbKey,'income','📋','Lån opptatt',amt);
     transactions.unshift({type:'income',icon:'📋',desc:'Lån opptatt',amount:amt,ts:Date.now()});
     refreshAllDisplays();renderTransactions();renderLoan();showSuccess('💰','Lån innvilget!',`+${amt} 🪙`,'Husk å betale tilbake med renter!');
@@ -871,7 +938,7 @@ async function repayLoan(){
   if(!confirm(`Betal tilbake 🪙 ${total} (lån + ${Math.round(getLoanRate()*100)}% rente)?`))return;
   const newBal=(s.balance||0)-total;
   await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:0});
-  window._currentStudent.balance=newBal;window._currentStudent.loan=0;
+  patchStudent(s.fbKey,{balance:newBal,loan:0});
   await saveTx(s.fbKey,'expense','📋',`Lån nedbetalt (rente: ${interest}🪙)`,-total);
   transactions.unshift({type:'expense',icon:'📋',desc:`Lån nedbetalt (rente: ${interest}🪙)`,amount:-total,ts:Date.now()});
   refreshAllDisplays();renderTransactions();renderLoan();showSuccess('✅','Nedbetalt!',`-${total} 🪙`,`Rente betalt: ${interest}🪙`);
@@ -961,7 +1028,7 @@ async function doPayment(amount){
   if((s.balance||0)<amount){showSuccess('😕','Ikke nok mynter!','',`Saldo: ${s.balance||0}🪙`);return;}
   const newBal=(s.balance||0)-amount;
   await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
-  window._currentStudent.balance=newBal;
+  patchStudent(s.fbKey,{balance:newBal});
   const tx={type:'expense',icon:'🛒',desc:'Betaling i kassen',amount:-amount,ts:Date.now()};
   await saveTx(s.fbKey,'expense','🛒','Betaling i kassen',-amount);
   transactions.unshift(tx);refreshAllDisplays();renderTransactions();
@@ -972,7 +1039,7 @@ async function doReward(amount,desc){
   const tax=getTax();const taxAmt=Math.floor(amount*tax);const net=amount-taxAmt;
   const newBal=(s.balance||0)+net;
   await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
-  window._currentStudent.balance=newBal;
+  patchStudent(s.fbKey,{balance:newBal});
   await distributeToGoals(taxAmt);
   const tx={type:'income',icon:'⭐',desc:desc||`Belønning skannet (${taxAmt}🪙 til sparemål)`,amount:net,ts:Date.now()};
   await saveTx(s.fbKey,'income','⭐',tx.desc,net);
@@ -984,7 +1051,7 @@ async function doJobReward(grossPay,title){
   const tax=getTax();const taxAmt=Math.floor(grossPay*tax);const net=grossPay-taxAmt;
   const newBal=(s.balance||0)+net;
   await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
-  window._currentStudent.balance=newBal;
+  patchStudent(s.fbKey,{balance:newBal});
   await distributeToGoals(taxAmt);
   const tx={type:'income',icon:'💼',desc:`Oppdrag: ${title||'Fullført'} (netto etter skatt)`,amount:net,ts:Date.now()};
   await saveTx(s.fbKey,'income','💼',tx.desc,net);
@@ -1154,6 +1221,7 @@ async function checkCartPin() {
   closeShopCart();
   const newBal = (_shopStudent.balance||0) - total;
   await window._update(fbRef('students57/'+_shopStudent.fbKey), { balance: newBal });
+  patchStudent(_shopStudent.fbKey, { balance: newBal });
   _shopStudent.balance = newBal;
   // Log transaction
   const itemNames = _shopCart.map(x=>x.emoji+x.name).join(', ');
@@ -1291,7 +1359,7 @@ async function confirmPurchase() {
   document.getElementById('purchase-pin-overlay').classList.remove('open');
   const newBal = (s.balance||0) - p.price;
   await window._update(fbRef('students57/'+s.fbKey), { balance: newBal });
-  window._currentStudent.balance = newBal;
+  patchStudent(s.fbKey, { balance: newBal });
   const tx = { type:'expense', icon:'🛒', desc:`Kjøpte: ${p.name}`, amount: -p.price, ts: Date.now() };
   await saveTx(s.fbKey, 'expense', '🛒', `Kjøpte: ${p.name}`, -p.price);
   transactions.unshift(tx);
@@ -1382,7 +1450,7 @@ async function finishQuiz(){
   const earned=quizOk*20;const s=window._currentStudent;
   const newBal=(s.balance||0)+earned;
   await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,quizWeek:getWeekKey()});
-  window._currentStudent.balance=newBal;window._currentStudent.quizWeek=getWeekKey();
+  patchStudent(s.fbKey,{balance:newBal,quizWeek:getWeekKey()});
   refreshAllDisplays();
   if(earned>0){const tx={type:'income',icon:'🧠',desc:`Quiz – ${quizOk}/5 riktige`,amount:earned,ts:Date.now()};await saveTx(s.fbKey,'income','🧠',tx.desc,earned);transactions.unshift(tx);renderTransactions();}
   const pct=quizOk/quizQs.length;
