@@ -26,10 +26,11 @@
   window._db=db; window._ref=ref; window._onValue=onValue;
   window._update=update; window._push=push; window._set=set; window._get=get;
 
-  const UPPER=['5A','5B','5C','6A','6B','6C','7A','7B','7C'];
+  // Ekskluder kjente 1-4-klasser; alle andre kan logge inn her
+  const LOWER=['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C'];
 
   onValue(ref(db,'students'),snap=>{
-    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>UPPER.includes(s.class)):[];
+    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>!LOWER.includes(s.class)):[];
     if(window._currentStudent){
       const up=window._allStudents.find(s=>s.fbKey===window._currentStudent.fbKey);
       if(up){window._currentStudent=up;refreshAllDisplays();}
@@ -282,7 +283,7 @@
   </div>
   <div style="flex:1;overflow-y:auto;padding:1.25rem">
     <div style="background:var(--teal-light);border-radius:12px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;border:1px solid #5DCAA5">
-      💡 Her finner du varene du kan kjøpe med mynter. Kontakt læreren for å gjennomføre kjøp.
+      🛒 Scan QR-koden på varen med bankkortet, eller logg inn for å kjøpe direkte i appen.
     </div>
     <input type="text" placeholder="Søk etter vare…" oninput="filterShop57Public(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:1rem">
     <div id="shop-public-list">
@@ -466,6 +467,26 @@
 <div class="scanner-overlay" id="scanner-overlay">
   <div class="scanner-header"><div class="scanner-title" id="scanner-title">Scan QR</div><button class="scanner-close" onclick="stopScan()">✕</button></div>
   <div class="scanner-video-wrap"><video id="scanner-video" playsinline muted></video><div class="scanner-frame"></div><div class="scanner-hint" id="scanner-hint">Hold QR innenfor rammen</div></div>
+</div>
+
+
+<!-- PURCHASE PIN OVERLAY -->
+<div class="pin-overlay" id="purchase-pin-overlay">
+  <div class="pin-ov-title">Bekreft kjøp</div>
+  <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:rgba(255,255,255,.9);margin-bottom:.2rem;text-align:center" id="purchase-item-name"></div>
+  <div class="pin-ov-amount" id="purchase-item-price"></div>
+  <div class="pin-ov-card">
+    <div style="font-size:.78rem;color:rgba(255,255,255,.6);text-align:center;margin-bottom:.4rem">Tast inn PIN for å bekrefte</div>
+    <div class="pin-ov-dots"><div class="pin-ov-dot" id="bpdot-0"></div><div class="pin-ov-dot" id="bpdot-1"></div><div class="pin-ov-dot" id="bpdot-2"></div><div class="pin-ov-dot" id="bpdot-3"></div></div>
+    <div class="pin-ov-err" id="purchase-pin-error"></div>
+    <div class="pin-ov-numpad">
+      <button class="pin-ov-btn" onclick="bpp('1')">1</button><button class="pin-ov-btn" onclick="bpp('2')">2</button><button class="pin-ov-btn" onclick="bpp('3')">3</button>
+      <button class="pin-ov-btn" onclick="bpp('4')">4</button><button class="pin-ov-btn" onclick="bpp('5')">5</button><button class="pin-ov-btn" onclick="bpp('6')">6</button>
+      <button class="pin-ov-btn" onclick="bpp('7')">7</button><button class="pin-ov-btn" onclick="bpp('8')">8</button><button class="pin-ov-btn" onclick="bpp('9')">9</button>
+      <button class="pin-ov-btn empty"></button><button class="pin-ov-btn" onclick="bpp('0')">0</button><button class="pin-ov-btn del" onclick="bpp('DEL')">⌫</button>
+    </div>
+  </div>
+  <button class="pin-ov-cancel" onclick="cancelPurchase()">Avbryt</button>
 </div>
 
 <div class="pin-overlay" id="pin-overlay">
@@ -853,6 +874,7 @@ function handleScan(text){
     if(scanMode==='payment'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
     else if(scanMode==='reward'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc);
     else if(scanMode==='reward'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
+    else if((scanMode==='payment'||scanMode==='reward')&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
     else showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');
   }catch(e){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');}
 }
@@ -948,10 +970,11 @@ function renderShopPublic(){
     <div style="margin-bottom:1.1rem">
       <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">${cat}</div>
       ${vars.map(x=>`
-        <div style="display:flex;align-items:center;gap:12px;background:white;padding:13px;border-radius:12px;margin-bottom:7px;border:1px solid var(--border)">
-          <span style="font-size:1.9rem;flex-shrink:0">${x.emoji}</span>
-          <span style="font-weight:700;flex:1;font-size:.95rem;color:var(--text)">${x.name}</span>
-          <span style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal-dark);background:var(--amber-light);padding:4px 12px;border-radius:20px;font-weight:800">🪙 ${x.price}</span>
+        <div style="display:flex;align-items:center;gap:10px;background:white;padding:12px;border-radius:12px;margin-bottom:7px;border:1px solid var(--border)">
+          <span style="font-size:1.7rem;flex-shrink:0">${x.emoji}</span>
+          <span style="font-weight:700;flex:1;font-size:.92rem;color:var(--text)">${x.name}</span>
+          <span style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);background:var(--amber-light);padding:3px 10px;border-radius:20px;white-space:nowrap">🪙 ${x.price}</span>
+          ${window._currentStudent ? `<button onclick="initPurchase('${x.fbKey}','${x.name.replace(/'/g,"\'")}',${x.price},'${x.emoji}')" style="background:var(--teal);color:white;border:none;border-radius:10px;padding:8px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;flex-shrink:0">Kjøp</button>` : ''}
         </div>`).join('')}
     </div>`).join('');
 }
@@ -979,6 +1002,59 @@ function renderShop57(){
           <span style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);background:var(--amber-light);padding:3px 10px;border-radius:20px;font-weight:800">🪙 ${x.price}</span>
         </div>`).join('')}
     </div>`).join('');
+}
+
+// ── IN-APP PURCHASE ────────────────────────────────────────────────────────
+let _pendingPurchase = null;
+let _buyPin = '';
+
+function initPurchase(fbKey, name, price, emoji) {
+  const s = window._currentStudent; if (!s) return;
+  if ((s.balance||0) < price) {
+    showSuccess('😕', 'Ikke nok mynter!', `Saldo: ${s.balance||0} 🪙`, `Trenger ${price} 🪙`);
+    return;
+  }
+  _pendingPurchase = { fbKey, name, price, emoji };
+  _buyPin = '';
+  document.getElementById('purchase-item-name').textContent = emoji + ' ' + name;
+  document.getElementById('purchase-item-price').textContent = price + ' 🪙';
+  document.getElementById('purchase-pin-error').textContent = '';
+  for (let i=0;i<4;i++) document.getElementById('bpdot-'+i).classList.remove('filled');
+  document.getElementById('purchase-pin-overlay').classList.add('open');
+}
+
+function bpp(v) {
+  if (v === 'DEL') _buyPin = _buyPin.slice(0,-1);
+  else if (_buyPin.length < 4) _buyPin += v;
+  for (let i=0;i<4;i++) document.getElementById('bpdot-'+i).classList.toggle('filled', i<_buyPin.length);
+  document.getElementById('purchase-pin-error').textContent = '';
+  if (_buyPin.length === 4) setTimeout(confirmPurchase, 150);
+}
+
+function cancelPurchase() {
+  _pendingPurchase = null; _buyPin = '';
+  document.getElementById('purchase-pin-overlay').classList.remove('open');
+}
+
+async function confirmPurchase() {
+  const s = window._currentStudent;
+  if (_buyPin !== s.pin) {
+    document.getElementById('purchase-pin-error').textContent = '❌ Feil PIN – prøv igjen';
+    _buyPin = '';
+    for (let i=0;i<4;i++) document.getElementById('bpdot-'+i).classList.remove('filled');
+    return;
+  }
+  const p = _pendingPurchase; if (!p) return;
+  document.getElementById('purchase-pin-overlay').classList.remove('open');
+  const newBal = (s.balance||0) - p.price;
+  await window._update(fbRef('students/'+s.fbKey), { balance: newBal });
+  window._currentStudent.balance = newBal;
+  const tx = { type:'expense', icon:'🛒', desc:`Kjøpte: ${p.name}`, amount: -p.price, ts: Date.now() };
+  await saveTx(s.fbKey, 'expense', '🛒', `Kjøpte: ${p.name}`, -p.price);
+  transactions.unshift(tx);
+  refreshAllDisplays(); renderTransactions(); renderShop57();
+  showSuccess('✅', 'Kjøpt!', `-${p.price} 🪙`, `${p.emoji} ${p.name} er ditt!`);
+  _pendingPurchase = null; _buyPin = '';
 }
 
 // ── QUIZ ───────────────────────────────────────────────────────────────────

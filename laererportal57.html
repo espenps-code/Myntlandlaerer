@@ -298,7 +298,13 @@
         <div class="card-title">➕ Opprett ny elev</div>
         <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Jonas"></div>
         <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Larsen"></div>
-        <div class="form-row"><label>Klasse</label><input type="text" id="new-class" placeholder="f.eks. 6A"></div>
+        <div class="form-row"><label>Klasse</label>
+          <select id="new-class">
+            <option value="5. klasse">5. klasse</option>
+            <option value="6. klasse">6. klasse</option>
+            <option value="7. klasse">7. klasse</option>
+          </select>
+        </div>
         <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="100" min="0"></div>
         <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
         <div id="create-alert" style="margin-top:1rem;"></div>
@@ -505,8 +511,8 @@
       <span>🏪 Alle varer</span>
       <input type="text" placeholder="Søk vare…" style="width:180px;" oninput="filterShop57(this.value)">
     </div>
-    <table><thead><tr><th>Vare</th><th>Kategori</th><th>Pris</th><th></th></tr></thead>
-    <tbody id="shop57-table-body"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">Laster…</td></tr></tbody></table>
+    <table><thead><tr><th>Vare</th><th>Kategori</th><th>Pris</th><th>QR</th><th></th></tr></thead>
+    <tbody id="shop57-table-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Laster…</td></tr></tbody></table>
   </div>
 </div>
 
@@ -543,7 +549,14 @@
       <div class="card-title">➕ Opprett ny lærerprofil</div>
       <div class="form-row"><label>Navn</label><input type="text" id="new-teacher-name" placeholder="f.eks. Kari Nordmann"></div>
       <div class="form-row"><label>PIN-kode (4 siffer)</label><input type="text" id="new-teacher-pin" placeholder="1234" maxlength="4" pattern="\d{4}"></div>
-      <div class="form-row"><label>Klasse (valgfritt – tomt = ser alle 5–7-klasser)</label><input type="text" id="new-teacher-class" placeholder="f.eks. 6A"></div>
+      <div class="form-row"><label>Klasse (valgfritt – tomt = ser alle)</label>
+          <select id="new-teacher-class">
+            <option value="">Alle klasser</option>
+            <option value="5. klasse">5. klasse</option>
+            <option value="6. klasse">6. klasse</option>
+            <option value="7. klasse">7. klasse</option>
+          </select>
+        </div>
       <div class="form-row"><label>Rolle</label>
         <select id="new-teacher-role">
           <option value="teacher">Lærer (ser kun sin klasse)</option>
@@ -605,6 +618,15 @@
     <div style="display:flex;justify-content:center;"><div class="qr-wrap" id="modal-job-qr-box"></div></div>
     <p style="font-size:.82rem;color:var(--muted);margin-top:1rem;">Eleven scanner QR-koden for å motta betaling.<br>20% går automatisk til klassens sparemål.</p>
     <div class="modal-actions" style="justify-content:center;"><button class="btn btn-ghost" onclick="closeModal('modal-job-qr')">Lukk</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-shop-qr">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-title" id="modal-shop-qr-title">QR – Kjøp vare</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;" id="modal-shop-qr-desc"></p>
+    <div style="display:flex;justify-content:center;margin-bottom:1rem;"><div class="qr-wrap" id="modal-shop-qr-box"></div></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-top:.5rem;">Eleven scanner med bankkortet.<br>Beløpet trekkes direkte fra brukskontoen.</p>
+    <div class="modal-actions" style="justify-content:center;"><button class="btn btn-ghost" onclick="closeModal('modal-shop-qr')">Lukk</button></div>
   </div>
 </div>
 <div class="modal-overlay" id="modal-delete-teacher">
@@ -822,7 +844,7 @@ async function createStudent() {
   if (!ready()) { alert('Firebase ikke klar – prøv igjen om et øyeblikk.'); return; }
   const fn  = document.getElementById('new-firstname').value.trim();
   const ln  = document.getElementById('new-lastname').value.trim();
-  const cls = document.getElementById('new-class').value.trim().toUpperCase() || (window._currentTeacher?.class || '5A');
+  const cls = document.getElementById('new-class').value || (window._currentTeacher?.class || '5. klasse');
   const bal = parseInt(document.getElementById('new-balance').value) || 0;
   const alertEl = document.getElementById('create-alert');
   if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
@@ -950,7 +972,7 @@ function parseCSV(text) {
   const dataLines = hasHeader ? lines.slice(1) : lines;
   csvParsed = dataLines.map(line => {
     const parts = line.split(/[,;]/).map(p => p.trim().replace(/^"|"$/g, ''));
-    return { firstname: parts[0]||'', lastname: parts[1]||'', class: (parts[2] || window._currentTeacher?.class || '5A').trim().toUpperCase() };
+    return { firstname: parts[0]||'', lastname: parts[1]||'', class: (parts[2] || window._currentTeacher?.class || '5. klasse').trim() };
   }).filter(r => r.firstname || r.lastname);
 
   document.getElementById('csv-preview-body').innerHTML = csvParsed.map(r =>
@@ -1313,11 +1335,27 @@ function renderShop57List() {
     <td><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.8rem;">${x.emoji}</span><strong>${x.name}</strong></div></td>
     <td><span class="badge badge-teal">${x.category}</span></td>
     <td><span class="balance-badge">🪙 ${x.price}</span></td>
+    <td><button class="btn btn-primary btn-sm" onclick="showShopItemQR('${x.fbKey}')">⬛ QR</button></td>
     <td><button class="btn btn-coral btn-sm" onclick="removeShop57('${x.fbKey}')">🗑️</button></td>
   </tr>`).join('');
 }
 
 async function removeShop57(fbKey) { await window._remove(fbRef('shop57/' + fbKey)); }
+
+function showShopItemQR(fbKey) {
+  const item = window._shop57.find(x => x.fbKey === fbKey); if (!item) return;
+  const box = document.getElementById('modal-shop-qr-box'); box.innerHTML = '';
+  document.getElementById('modal-shop-qr-title').textContent = `${item.emoji} ${item.name}`;
+  document.getElementById('modal-shop-qr-desc').textContent  = `Pris: 🪙 ${item.price} · Eleven scanner med bankkortet`;
+  // QR payload: type=purchase so elevapp deducts from balance
+  try {
+    new QRCode(box, {
+      text: JSON.stringify({ type: 'purchase', fbKey: item.fbKey, name: item.name, emoji: item.emoji, price: item.price }),
+      width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {}
+  document.getElementById('modal-shop-qr').classList.add('open');
+}
 
 // ════════════════════════════════════════════════════════════
 // QR KODER
