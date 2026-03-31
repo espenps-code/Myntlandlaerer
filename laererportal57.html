@@ -1443,24 +1443,21 @@ async function removeShop57(fbKey) { await window._remove(fbRef('shop57/' + fbKe
 function showShopItemQR(fbKey) {
   const item = window._shop57.find(x => x.fbKey === fbKey); if (!item) return;
   const payload = JSON.stringify({ type: 'purchase', fbKey: item.fbKey, name: item.name, emoji: item.emoji, price: item.price });
-  // Offscreen div: synlig for browser, utenfor skjerm – QRCode.js trenger dette
-  const tmp = document.createElement('div');
-  tmp.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:220px;height:220px;background:white;z-index:-1;';
-  document.body.appendChild(tmp);
-  let dataUrl = '';
-  try {
-    new QRCode(tmp, { text: payload, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
-    const canvas = tmp.querySelector('canvas');
-    const img    = tmp.querySelector('img');
-    if (canvas)   dataUrl = canvas.toDataURL('image/png');
-    else if (img) dataUrl = img.src;
-  } catch(e) {}
-  document.body.removeChild(tmp);
-  if (!dataUrl) { alert('Kunne ikke generere QR-kode. Prøv igjen.'); return; }
+
+  // Bruker QR Server API – returnerer ferdig PNG, ingen canvas/synlighetsproblemer
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=' + encodeURIComponent(payload);
+
   const box = document.getElementById('modal-shop-qr-box');
-  box.innerHTML = `<img src="${dataUrl}" style="width:200px;height:200px;border:2px solid var(--border);border-radius:8px;padding:6px;background:white;">`;
+  box.innerHTML = `
+    <div style="text-align:center">
+      <img id="shop-qr-img" src="${qrUrl}"
+           style="width:200px;height:200px;border:2px solid var(--border);border-radius:8px;padding:6px;background:white;"
+           onerror="this.parentElement.innerHTML='<div style=color:var(--coral);font-size:.85rem;padding:1rem>Ingen internettforbindelse – QR kan ikke genereres</div>'">
+    </div>`;
+
   document.getElementById('modal-shop-qr-title').textContent = `${item.emoji} ${item.name}`;
   document.getElementById('modal-shop-qr-desc').textContent  = `Pris: 🪙 ${item.price} · Eleven scanner med bankkortet`;
+
   const printBtn = document.getElementById('modal-shop-qr-print');
   if (printBtn) {
     printBtn.onclick = () => {
@@ -1471,9 +1468,9 @@ function showShopItemQR(fbKey) {
         '</style></head><body>' +
         '<p style="font-size:13px;font-weight:700;color:#085041">🪙 Myntland Butikk</p>' +
         `<h2>${item.emoji} ${item.name}</h2><div class="price">🪙 ${item.price}</div>` +
-        `<img src="${dataUrl}" style="width:160px;height:160px;margin:.5rem auto;display:block;">` +
+        `<img src="${qrUrl}" style="width:180px;height:180px;margin:.5rem auto;display:block;" crossorigin="anonymous">` +
         '<div class="hint">Scan med bankkortet</div>' +
-        '<script>setTimeout(function(){window.print();},300);<\/script></body></html>');
+        '<script>setTimeout(function(){window.print();},400);<\/script></body></html>');
       win.document.close();
     };
   }
