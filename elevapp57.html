@@ -666,12 +666,12 @@ function switchTab(t,btn){
 function refreshAllDisplays(){
   const s=window._currentStudent;if(!s)return;
   const bruk=s.balance||0,spare=s.savings||0;
-  // Markedsverdi fond
+  // Fondsverdi = andeler × nåværende kurs
   const histD=Object.keys(window._fundHistory||{}).sort();
   const curRL=histD.length?(window._fundHistory[histD[histD.length-1]]?.low||100):100;
   const curRH=histD.length?(window._fundHistory[histD[histD.length-1]]?.high||100):100;
-  const fl=getFondMarketValue(s.fund_low||0,s.fund_low_rate||100,curRL);
-  const fh=getFondMarketValue(s.fund_high||0,s.fund_high_rate||100,curRH);
+  const fl=getFondValue(s.fund_low_units||0,curRL);
+  const fh=getFondValue(s.fund_high_units||0,curRH);
   const total=bruk+spare+fl+fh;
   document.getElementById('bal-bruk').textContent=bruk;
   document.getElementById('bal-spare').textContent=spare;
@@ -754,10 +754,10 @@ function getTitle(type) {
   const descs = {
     'bruk-til-spare':    ()=>`Brukskonto: 🪙 ${window._currentStudent?.balance||0}`,
     'spare-til-bruk':    ()=>`Sparekonto: 🪙 ${window._currentStudent?.savings||0} · ${getMaxW()-(window._currentStudent?.withdrawalsThisWeek||0)} uttak igjen`,
-    'bruk-til-fond-low': ()=>`Brukskonto: 🪙 ${window._currentStudent?.balance||0}`,
-    'fond-low-til-bruk': ()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.low||100):100; const mv=getFondMarketValue(s?.fund_low||0,s?.fund_low_rate||100,r); return `Fond lav: 🪙 ${mv} (markedsverdi) · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
-    'bruk-til-fond-high':()=>`Brukskonto: 🪙 ${window._currentStudent?.balance||0}`,
-    'fond-high-til-bruk':()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.high||100):100; const mv=getFondMarketValue(s?.fund_high||0,s?.fund_high_rate||100,r); return `Fond høy: 🪙 ${mv} (markedsverdi) · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
+    'bruk-til-fond-low': ()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.low||100):100; return `Investér i fond lav risiko · Kurs: 🪙 ${r.toFixed(2)} · Du har: 🪙 ${s?.balance||0}`; },
+    'fond-low-til-bruk': ()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.low||100):100; const v=getFondValue(s?.fund_low_units||0,r); return `Fond lav: 🪙 ${v} · ${(s?.fund_low_units||0).toFixed(4)} andeler · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
+    'bruk-til-fond-high':()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.high||100):100; return `Investér i fond høy risiko · Kurs: 🪙 ${r.toFixed(2)} · Du har: 🪙 ${s?.balance||0}`; },
+    'fond-high-til-bruk':()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.high||100):100; const v=getFondValue(s?.fund_high_units||0,r); return `Fond høy: 🪙 ${v} · ${(s?.fund_high_units||0).toFixed(4)} andeler · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
   };
   return { title: titles[type]||'', desc: (descs[type]||(() => ''))() };
 }
@@ -802,73 +802,91 @@ async function doTransfer(type, amt) {
 
   } else if (type === 'bruk-til-fond-low') {
     if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
-    // Beregn vektet gjennomsnittlig kjøpsrate ved tilleggsinnskudd
     const days_ld = Object.keys(window._fundHistory||{}).sort();
     const curRate_ld = days_ld.length ? (window._fundHistory[days_ld[days_ld.length-1]]?.low||100) : 100;
-    const prevInv = s.fund_low||0; const prevRate = s.fund_low_rate||curRate_ld;
-    const newAvgRate = prevInv > 0 ? (prevInv*prevRate + amt*curRate_ld)/(prevInv+amt) : curRate_ld;
-    const upd = { balance: (s.balance||0)-amt, fund_low: prevInv+amt, fund_low_rate: Math.round(newAvgRate*100)/100 };
+    // Kjøp andeler: andeler = beløp / kurs
+    const newUnits = getUnitsFromAmt(amt, curRate_ld);
+    const upd = {
+      balance: (s.balance||0) - amt,
+      fund_low_units:    Math.round(((s.fund_low_units||0) + newUnits) * 10000) / 10000,
+      fund_low_invested: (s.fund_low_invested||0) + amt
+    };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'expense','📊','Inn i fond (lav risiko)',-amt);
-    transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond lav risiko',amount:-amt,ts:Date.now()});
+    await saveTx(fbKey,'expense','📊',`Kjøpte ${newUnits.toFixed(4)} andeler lav risiko @ 🪙${curRate_ld.toFixed(2)}`,-amt);
+    transactions.unshift({type:'expense',icon:'📊',desc:`Kjøpte ${newUnits.toFixed(4)} andeler lav fond`,amount:-amt,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Investert!',`${amt} 🪙 i fond lav risiko`,'');
+    showSuccess('📊','Investert!',`${newUnits.toFixed(4)} andeler`,`Kurs: 🪙 ${curRate_ld.toFixed(2)} · Kostnad: 🪙 ${amt}`);
 
   } else if (type === 'fond-low-til-bruk') {
-    // Beregn markedsverdi for det beløpet eleven vil ta ut
     const days_lw = Object.keys(window._fundHistory||{}).sort();
     const curRate_lw = days_lw.length ? (window._fundHistory[days_lw[days_lw.length-1]]?.low||100) : 100;
-    const buyRate_lw = s.fund_low_rate || 100;
-    const marketVal_lw = getFondMarketValue(s.fund_low||0, buyRate_lw, curRate_lw);
-    if (amt > marketVal_lw) { alert(`Markedsverdi er 🪙 ${marketVal_lw}. Kan ikke ta ut mer.`); return; }
-    // Gevinst = det over investert beløp
-    const gain_lw  = Math.max(0, marketVal_lw - (s.fund_low||0));
-    const taxAmt = Math.round(gain_lw * getFundTax());
-    const net   = amt - (amt === marketVal_lw ? taxAmt : Math.round((amt/marketVal_lw)*taxAmt));
-    // Reduser investert beløp proporsjonalt
-    const ratio_lw = amt / marketVal_lw;
-    const newInv_lw = Math.max(0, Math.round((s.fund_low||0) * (1 - ratio_lw)));
-    const upd   = { balance: (s.balance||0)+net, fund_low: newInv_lw };
+    const totalUnits_lw = s.fund_low_units || 0;
+    const totalValue_lw = getFondValue(totalUnits_lw, curRate_lw);
+    if (totalUnits_lw <= 0) { alert('Du har ingen andeler i fond lav risiko.'); return; }
+    if (amt > totalValue_lw) { alert(`Markedsverdi er 🪙 ${totalValue_lw}. Kan ikke ta ut mer.`); return; }
+    // Selg proporsjonalt med andeler
+    const ratio_lw     = amt / totalValue_lw;
+    const unitsSold_lw = Math.round(totalUnits_lw * ratio_lw * 10000) / 10000;
+    const invested_lw  = s.fund_low_invested || 0;
+    const costBasis_lw = Math.round(invested_lw * ratio_lw); // andel av opprinnelig kostnad
+    const gain_lw      = Math.max(0, amt - costBasis_lw);
+    const taxAmt_lw    = Math.round(gain_lw * getFundTax());
+    const net_lw       = amt - taxAmt_lw;
+    const upd = {
+      balance:            (s.balance||0) + net_lw,
+      fund_low_units:     Math.max(0, Math.round((totalUnits_lw - unitsSold_lw) * 10000) / 10000),
+      fund_low_invested:  Math.max(0, invested_lw - costBasis_lw)
+    };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'income','📊',`Uttak fond lav (${taxAmt}🪙 fondskatt)`,net);
-    transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond lav (skatt: ${taxAmt}🪙)`,amount:net,ts:Date.now()});
+    await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_lw.toFixed(4)} andeler lav fond (${taxAmt_lw}🪙 skatt)`,net_lw);
+    transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_lw.toFixed(4)} andeler lav fond`,amount:net_lw,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt: ${taxAmt}🪙`);
+    showSuccess('📊','Solgt!',`+${net_lw} 🪙`,`Solgte ${unitsSold_lw.toFixed(4)} andeler · Fondskatt: ${taxAmt_lw}🪙`);
 
   } else if (type === 'bruk-til-fond-high') {
     if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
     const days_hd = Object.keys(window._fundHistory||{}).sort();
     const curRate_hd = days_hd.length ? (window._fundHistory[days_hd[days_hd.length-1]]?.high||100) : 100;
-    const prevInvH = s.fund_high||0; const prevRateH = s.fund_high_rate||curRate_hd;
-    const newAvgRateH = prevInvH > 0 ? (prevInvH*prevRateH + amt*curRate_hd)/(prevInvH+amt) : curRate_hd;
-    const upd = { balance: (s.balance||0)-amt, fund_high: prevInvH+amt, fund_high_rate: Math.round(newAvgRateH*100)/100 };
+    const newUnitsH = getUnitsFromAmt(amt, curRate_hd);
+    const upd = {
+      balance: (s.balance||0) - amt,
+      fund_high_units:    Math.round(((s.fund_high_units||0) + newUnitsH) * 10000) / 10000,
+      fund_high_invested: (s.fund_high_invested||0) + amt
+    };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'expense','📊','Inn i fond (høy risiko)',-amt);
-    transactions.unshift({type:'expense',icon:'📊',desc:'Inn i fond høy risiko',amount:-amt,ts:Date.now()});
+    await saveTx(fbKey,'expense','📊',`Kjøpte ${newUnitsH.toFixed(4)} andeler høy risiko @ 🪙${curRate_hd.toFixed(2)}`,-amt);
+    transactions.unshift({type:'expense',icon:'📊',desc:`Kjøpte ${newUnitsH.toFixed(4)} andeler høy fond`,amount:-amt,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Investert!',`${amt} 🪙 i fond høy risiko`,'');
+    showSuccess('📊','Investert!',`${newUnitsH.toFixed(4)} andeler`,`Kurs: 🪙 ${curRate_hd.toFixed(2)} · Kostnad: 🪙 ${amt}`);
 
   } else if (type === 'fond-high-til-bruk') {
     const days_hw = Object.keys(window._fundHistory||{}).sort();
     const curRate_hw = days_hw.length ? (window._fundHistory[days_hw[days_hw.length-1]]?.high||100) : 100;
-    const buyRate_hw = s.fund_high_rate || 100;
-    const marketVal_hw = getFondMarketValue(s.fund_high||0, buyRate_hw, curRate_hw);
-    if (amt > marketVal_hw) { alert(`Markedsverdi er 🪙 ${marketVal_hw}. Kan ikke ta ut mer.`); return; }
-    const gain_hw  = Math.max(0, marketVal_hw - (s.fund_high||0));
-    const taxAmt = Math.round(gain_hw * getFundTax());
-    const net   = amt - (amt === marketVal_hw ? taxAmt : Math.round((amt/marketVal_hw)*taxAmt));
-    const ratio_hw = amt / marketVal_hw;
-    const newInv_hw = Math.max(0, Math.round((s.fund_high||0) * (1 - ratio_hw)));
-    const upd   = { balance: (s.balance||0)+net, fund_high: newInv_hw };
+    const totalUnits_hw = s.fund_high_units || 0;
+    const totalValue_hw = getFondValue(totalUnits_hw, curRate_hw);
+    if (totalUnits_hw <= 0) { alert('Du har ingen andeler i fond høy risiko.'); return; }
+    if (amt > totalValue_hw) { alert(`Markedsverdi er 🪙 ${totalValue_hw}. Kan ikke ta ut mer.`); return; }
+    const ratio_hw      = amt / totalValue_hw;
+    const unitsSold_hw  = Math.round(totalUnits_hw * ratio_hw * 10000) / 10000;
+    const invested_hw   = s.fund_high_invested || 0;
+    const costBasis_hw  = Math.round(invested_hw * ratio_hw);
+    const gain_hw       = Math.max(0, amt - costBasis_hw);
+    const taxAmt_hw     = Math.round(gain_hw * getFundTax());
+    const net_hw        = amt - taxAmt_hw;
+    const upd = {
+      balance:             (s.balance||0) + net_hw,
+      fund_high_units:     Math.max(0, Math.round((totalUnits_hw - unitsSold_hw) * 10000) / 10000),
+      fund_high_invested:  Math.max(0, invested_hw - costBasis_hw)
+    };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'income','📊',`Uttak fond høy (${taxAmt}🪙 fondskatt)`,net);
-    transactions.unshift({type:'income',icon:'📊',desc:`Uttak fond høy (skatt: ${taxAmt}🪙)`,amount:net,ts:Date.now()});
+    await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_hw.toFixed(4)} andeler høy fond (${taxAmt_hw}🪙 skatt)`,net_hw);
+    transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_hw.toFixed(4)} andeler høy fond`,amount:net_hw,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Tatt ut!',`+${net} 🪙`,`Fondskatt: ${taxAmt}🪙`);
+    showSuccess('📊','Solgt!',`+${net_hw} 🪙`,`Solgte ${unitsSold_hw.toFixed(4)} andeler · Fondskatt: ${taxAmt_hw}🪙`);
   }
 }
 
@@ -880,14 +898,25 @@ function openTransfer(type){
 function renderSpareTab(){refreshAllDisplays();renderTransactions();}
 
 // ── FOND ───────────────────────────────────────────────────────────────────
-// ── Hjelpefunksjon: beregn markedsverdi av fond
-// Eleven kjøpte "andeler" til kursverdien på kjøpstidspunktet.
-// Vi lagrer kjøpsrate i fund_low_rate / fund_high_rate ved innskudd.
-// Markedsverdi = (investert_beløp / kjøpsrate) * nåværende_rate
-// = investert_beløp * (nåværende_rate / kjøpsrate)
+// Fondsandel-modell:
+//   fund_low_units  = antall andeler i fond lav risiko
+//   fund_high_units = antall andeler i fond høy risiko
+//   Verdi = andeler × nåværende kurs
+//   Kjøp:  andeler += investering / kurs  (avrundet til 4 desimaler)
+//   Salg:  selg X andeler → mottar X × kurs (minus skatt på gevinst)
+//
+// Bakoverkompatibilitet: fund_low / fund_high (gamle felt) ignoreres.
+// Nye felt: fund_low_units, fund_high_units
+
+function getFondValue(units, currentRate) {
+  return Math.round((units||0) * (currentRate||100));
+}
+function getUnitsFromAmt(amt, rate) {
+  return Math.round(amt / (rate||100) * 10000) / 10000; // 4 desimaler
+}
+// Beholder getFondMarketValue som alias for bakoverkompatibilitet
 function getFondMarketValue(invested, buyRate, currentRate) {
-  if (!invested || !buyRate || !currentRate) return invested || 0;
-  return Math.round(invested * currentRate / buyRate);
+  return Math.round((invested||0) * (currentRate||100) / (buyRate||100));
 }
 
 function renderFond(){
@@ -896,52 +925,68 @@ function renderFond(){
   const days=Object.keys(hist).sort();
   const curRates = days.length ? hist[days[days.length-1]] : {low:100,high:100};
 
-  const lowInvested  = s.fund_low  || 0;
-  const highInvested = s.fund_high || 0;
-  // Kjøpsrate lagres når innskudd gjøres (fund_low_rate / fund_high_rate)
-  // Fallback til 100 (startindeks) hvis ikke lagret
-  const lowBuyRate   = s.fund_low_rate  || 100;
-  const highBuyRate  = s.fund_high_rate || 100;
+  const lowUnits  = s.fund_low_units  || 0;
+  const highUnits = s.fund_high_units || 0;
+  const curLow    = curRates.low  || 100;
+  const curHigh   = curRates.high || 100;
 
-  const lowMarket  = getFondMarketValue(lowInvested,  lowBuyRate,  curRates.low  || 100);
-  const highMarket = getFondMarketValue(highInvested, highBuyRate, curRates.high || 100);
+  const lowValue  = getFondValue(lowUnits,  curLow);
+  const highValue = getFondValue(highUnits, curHigh);
 
-  const lowGain  = lowMarket  - lowInvested;
-  const highGain = highMarket - highInvested;
+  // Gevinst: verdi minus totalt investert (fund_low_invested / fund_high_invested)
+  const lowInvested  = s.fund_low_invested  || 0;
+  const highInvested = s.fund_high_invested || 0;
+  const lowGain  = lowValue  - lowInvested;
+  const highGain = highValue - highInvested;
   const lowPct   = lowInvested  > 0 ? Math.round(lowGain  / lowInvested  * 100) : 0;
   const highPct  = highInvested > 0 ? Math.round(highGain / highInvested * 100) : 0;
 
   document.getElementById('fond-cards').innerHTML=`
     <div class="fond-card low">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="fond-title">📉 Fond lav risiko</div><div class="fond-risk">±${window._settings?.fundLowMax||5}% daglig variasjon</div></div>
+        <div>
+          <div class="fond-title">📉 Fond lav risiko</div>
+          <div class="fond-risk">±${window._settings?.fundLowMax||5}% daglig variasjon</div>
+        </div>
         <div style="text-align:right;position:relative;z-index:1">
-          <div style="font-family:'Fredoka One',cursive;font-size:.8rem;color:rgba(255,255,255,.7)">Kurs nå</div>
-          <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:#FAC775">${(curRates.low||100).toFixed(1)}</div>
+          <div style="font-family:'Fredoka One',cursive;font-size:.78rem;color:rgba(255,255,255,.65)">Kurs per andel</div>
+          <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:#FAC775">🪙 ${curLow.toFixed(2)}</div>
         </div>
       </div>
-      <div class="fond-value">🪙 ${lowMarket}</div>
-      <div style="font-size:.72rem;color:rgba(255,255,255,.6);position:relative;z-index:1">Investert: 🪙 ${lowInvested} · Kjøpsrate: ${lowBuyRate.toFixed(1)}</div>
+      <div class="fond-value">🪙 ${lowValue}</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.7);position:relative;z-index:1;margin:.2rem 0">
+        📦 ${lowUnits.toFixed(4)} andeler × 🪙 ${curLow.toFixed(2)} = 🪙 ${lowValue}
+      </div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.55);position:relative;z-index:1">
+        Investert totalt: 🪙 ${lowInvested}
+      </div>
       <div class="fond-change" style="color:${lowGain>=0?'#86efac':'#fca5a5'}">
         ${lowGain>=0?'📈 Gevinst':'📉 Tap'}: ${lowGain>=0?'+':''}${lowGain} 🪙 (${lowPct>=0?'+':''}${lowPct}%)
       </div>
     </div>
     <div class="fond-card high">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="fond-title">📈 Fond høy risiko</div><div class="fond-risk">±${window._settings?.fundHighMax||10}% daglig variasjon</div></div>
+        <div>
+          <div class="fond-title">📈 Fond høy risiko</div>
+          <div class="fond-risk">±${window._settings?.fundHighMax||10}% daglig variasjon</div>
+        </div>
         <div style="text-align:right;position:relative;z-index:1">
-          <div style="font-family:'Fredoka One',cursive;font-size:.8rem;color:rgba(255,255,255,.7)">Kurs nå</div>
-          <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:#FAC775">${(curRates.high||100).toFixed(1)}</div>
+          <div style="font-family:'Fredoka One',cursive;font-size:.78rem;color:rgba(255,255,255,.65)">Kurs per andel</div>
+          <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:#FAC775">🪙 ${curHigh.toFixed(2)}</div>
         </div>
       </div>
-      <div class="fond-value">🪙 ${highMarket}</div>
-      <div style="font-size:.72rem;color:rgba(255,255,255,.6);position:relative;z-index:1">Investert: 🪙 ${highInvested} · Kjøpsrate: ${highBuyRate.toFixed(1)}</div>
+      <div class="fond-value">🪙 ${highValue}</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.7);position:relative;z-index:1;margin:.2rem 0">
+        📦 ${highUnits.toFixed(4)} andeler × 🪙 ${curHigh.toFixed(2)} = 🪙 ${highValue}
+      </div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.55);position:relative;z-index:1">
+        Investert totalt: 🪙 ${highInvested}
+      </div>
       <div class="fond-change" style="color:${highGain>=0?'#86efac':'#fca5a5'}">
         ${highGain>=0?'📈 Gevinst':'📉 Tap'}: ${highGain>=0?'+':''}${highGain} 🪙 (${highPct>=0?'+':''}${highPct}%)
       </div>
     </div>`;
-  // Oppdater total fondverdi i kontooversikten
-  const totalFond = lowMarket + highMarket;
+  const totalFond = lowValue + highValue;
   const balFond = document.getElementById('bal-fond');
   if (balFond) balFond.textContent = totalFond;
   renderFondChart(hist,days);
