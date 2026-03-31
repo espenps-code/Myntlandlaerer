@@ -739,7 +739,7 @@ function updateLoginDots() {
 }
 
 function tryTeacherLogin() {
-  if (loginPin === loginTarget.pin) {
+  if (loginPin === String(loginTarget.pin)) {
     window._currentTeacher = loginTarget;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';

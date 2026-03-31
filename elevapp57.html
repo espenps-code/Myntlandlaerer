@@ -631,7 +631,7 @@ function np(v){
   if(currentPin.length===4) setTimeout(tryLogin,200);
 }
 function tryLogin(){
-  const s=window._allStudents.find(s=>s.pin===currentPin);
+  const s=window._allStudents.find(s=>String(s.pin)===String(currentPin));
   if(s){
     window._currentStudent=s;transactions=[];
     document.getElementById('greeting-sub').textContent=s.firstname+' '+s.class;
@@ -755,9 +755,9 @@ function getTitle(type) {
     'bruk-til-spare':    ()=>`Brukskonto: 🪙 ${window._currentStudent?.balance||0}`,
     'spare-til-bruk':    ()=>`Sparekonto: 🪙 ${window._currentStudent?.savings||0} · ${getMaxW()-(window._currentStudent?.withdrawalsThisWeek||0)} uttak igjen`,
     'bruk-til-fond-low': ()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.low||100):100; return `Investér i fond lav risiko · Kurs: 🪙 ${r.toFixed(2)} · Du har: 🪙 ${s?.balance||0}`; },
-    'fond-low-til-bruk': ()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.low||100):100; const v=getFondValue(s?.fund_low_units||0,r); return `Fond lav: 🪙 ${v} · ${(s?.fund_low_units||0).toFixed(4)} andeler · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
+    'fond-low-til-bruk': ()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.low||100):100; const v=getFondValue(s?.fund_low_units||0,r); return `Fond lav: 🪙 ${v} · ${(s?.fund_low_units||0).toFixed(2)} andeler · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
     'bruk-til-fond-high':()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.high||100):100; return `Investér i fond høy risiko · Kurs: 🪙 ${r.toFixed(2)} · Du har: 🪙 ${s?.balance||0}`; },
-    'fond-high-til-bruk':()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.high||100):100; const v=getFondValue(s?.fund_high_units||0,r); return `Fond høy: 🪙 ${v} · ${(s?.fund_high_units||0).toFixed(4)} andeler · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
+    'fond-high-til-bruk':()=>{ const s=window._currentStudent; const d=Object.keys(window._fundHistory||{}).sort(); const r=d.length?(window._fundHistory[d[d.length-1]]?.high||100):100; const v=getFondValue(s?.fund_high_units||0,r); return `Fond høy: 🪙 ${v} · ${(s?.fund_high_units||0).toFixed(2)} andeler · ${Math.round(getFundTax()*100)}% skatt på gevinst`; },
   };
   return { title: titles[type]||'', desc: (descs[type]||(() => ''))() };
 }
@@ -808,15 +808,15 @@ async function doTransfer(type, amt) {
     const newUnits = getUnitsFromAmt(amt, curRate_ld);
     const upd = {
       balance: (s.balance||0) - amt,
-      fund_low_units:    Math.round(((s.fund_low_units||0) + newUnits) * 10000) / 10000,
+      fund_low_units:    Math.round(((s.fund_low_units||0) + newUnits) * 100) / 100,
       fund_low_invested: (s.fund_low_invested||0) + amt
     };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'expense','📊',`Kjøpte ${newUnits.toFixed(4)} andeler lav risiko @ 🪙${curRate_ld.toFixed(2)}`,-amt);
-    transactions.unshift({type:'expense',icon:'📊',desc:`Kjøpte ${newUnits.toFixed(4)} andeler lav fond`,amount:-amt,ts:Date.now()});
+    await saveTx(fbKey,'expense','📊',`Kjøpte ${newUnits.toFixed(2)} andeler lav risiko @ 🪙${curRate_ld.toFixed(2)}`,-amt);
+    transactions.unshift({type:'expense',icon:'📊',desc:`Kjøpte ${newUnits.toFixed(2)} andeler lav fond`,amount:-amt,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Investert!',`${newUnits.toFixed(4)} andeler`,`Kurs: 🪙 ${curRate_ld.toFixed(2)} · Kostnad: 🪙 ${amt}`);
+    showSuccess('📊','Investert!',`${newUnits.toFixed(2)} andeler`,`Kurs: 🪙 ${curRate_ld.toFixed(2)} · Kostnad: 🪙 ${amt}`);
 
   } else if (type === 'fond-low-til-bruk') {
     const days_lw = Object.keys(window._fundHistory||{}).sort();
@@ -827,7 +827,7 @@ async function doTransfer(type, amt) {
     if (amt > totalValue_lw) { alert(`Markedsverdi er 🪙 ${totalValue_lw}. Kan ikke ta ut mer.`); return; }
     // Selg proporsjonalt med andeler
     const ratio_lw     = amt / totalValue_lw;
-    const unitsSold_lw = Math.round(totalUnits_lw * ratio_lw * 10000) / 10000;
+    const unitsSold_lw = Math.round(totalUnits_lw * ratio_lw * 100) / 100;
     const invested_lw  = s.fund_low_invested || 0;
     const costBasis_lw = Math.round(invested_lw * ratio_lw); // andel av opprinnelig kostnad
     const gain_lw      = Math.max(0, amt - costBasis_lw);
@@ -835,15 +835,15 @@ async function doTransfer(type, amt) {
     const net_lw       = amt - taxAmt_lw;
     const upd = {
       balance:            (s.balance||0) + net_lw,
-      fund_low_units:     Math.max(0, Math.round((totalUnits_lw - unitsSold_lw) * 10000) / 10000),
+      fund_low_units:     Math.max(0, Math.round((totalUnits_lw - unitsSold_lw) * 100) / 100),
       fund_low_invested:  Math.max(0, invested_lw - costBasis_lw)
     };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_lw.toFixed(4)} andeler lav fond (${taxAmt_lw}🪙 skatt)`,net_lw);
-    transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_lw.toFixed(4)} andeler lav fond`,amount:net_lw,ts:Date.now()});
+    await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_lw.toFixed(2)} andeler lav fond (${taxAmt_lw}🪙 skatt)`,net_lw);
+    transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_lw.toFixed(2)} andeler lav fond`,amount:net_lw,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Solgt!',`+${net_lw} 🪙`,`Solgte ${unitsSold_lw.toFixed(4)} andeler · Fondskatt: ${taxAmt_lw}🪙`);
+    showSuccess('📊','Solgt!',`+${net_lw} 🪙`,`Solgte ${unitsSold_lw.toFixed(2)} andeler · Fondskatt: ${taxAmt_lw}🪙`);
 
   } else if (type === 'bruk-til-fond-high') {
     if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
@@ -852,15 +852,15 @@ async function doTransfer(type, amt) {
     const newUnitsH = getUnitsFromAmt(amt, curRate_hd);
     const upd = {
       balance: (s.balance||0) - amt,
-      fund_high_units:    Math.round(((s.fund_high_units||0) + newUnitsH) * 10000) / 10000,
+      fund_high_units:    Math.round(((s.fund_high_units||0) + newUnitsH) * 100) / 100,
       fund_high_invested: (s.fund_high_invested||0) + amt
     };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'expense','📊',`Kjøpte ${newUnitsH.toFixed(4)} andeler høy risiko @ 🪙${curRate_hd.toFixed(2)}`,-amt);
-    transactions.unshift({type:'expense',icon:'📊',desc:`Kjøpte ${newUnitsH.toFixed(4)} andeler høy fond`,amount:-amt,ts:Date.now()});
+    await saveTx(fbKey,'expense','📊',`Kjøpte ${newUnitsH.toFixed(2)} andeler høy risiko @ 🪙${curRate_hd.toFixed(2)}`,-amt);
+    transactions.unshift({type:'expense',icon:'📊',desc:`Kjøpte ${newUnitsH.toFixed(2)} andeler høy fond`,amount:-amt,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Investert!',`${newUnitsH.toFixed(4)} andeler`,`Kurs: 🪙 ${curRate_hd.toFixed(2)} · Kostnad: 🪙 ${amt}`);
+    showSuccess('📊','Investert!',`${newUnitsH.toFixed(2)} andeler`,`Kurs: 🪙 ${curRate_hd.toFixed(2)} · Kostnad: 🪙 ${amt}`);
 
   } else if (type === 'fond-high-til-bruk') {
     const days_hw = Object.keys(window._fundHistory||{}).sort();
@@ -870,7 +870,7 @@ async function doTransfer(type, amt) {
     if (totalUnits_hw <= 0) { alert('Du har ingen andeler i fond høy risiko.'); return; }
     if (amt > totalValue_hw) { alert(`Markedsverdi er 🪙 ${totalValue_hw}. Kan ikke ta ut mer.`); return; }
     const ratio_hw      = amt / totalValue_hw;
-    const unitsSold_hw  = Math.round(totalUnits_hw * ratio_hw * 10000) / 10000;
+    const unitsSold_hw  = Math.round(totalUnits_hw * ratio_hw * 100) / 100;
     const invested_hw   = s.fund_high_invested || 0;
     const costBasis_hw  = Math.round(invested_hw * ratio_hw);
     const gain_hw       = Math.max(0, amt - costBasis_hw);
@@ -878,15 +878,15 @@ async function doTransfer(type, amt) {
     const net_hw        = amt - taxAmt_hw;
     const upd = {
       balance:             (s.balance||0) + net_hw,
-      fund_high_units:     Math.max(0, Math.round((totalUnits_hw - unitsSold_hw) * 10000) / 10000),
+      fund_high_units:     Math.max(0, Math.round((totalUnits_hw - unitsSold_hw) * 100) / 100),
       fund_high_invested:  Math.max(0, invested_hw - costBasis_hw)
     };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
-    await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_hw.toFixed(4)} andeler høy fond (${taxAmt_hw}🪙 skatt)`,net_hw);
-    transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_hw.toFixed(4)} andeler høy fond`,amount:net_hw,ts:Date.now()});
+    await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_hw.toFixed(2)} andeler høy fond (${taxAmt_hw}🪙 skatt)`,net_hw);
+    transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_hw.toFixed(2)} andeler høy fond`,amount:net_hw,ts:Date.now()});
     refreshAllDisplays(); renderTransactions(); renderFond();
-    showSuccess('📊','Solgt!',`+${net_hw} 🪙`,`Solgte ${unitsSold_hw.toFixed(4)} andeler · Fondskatt: ${taxAmt_hw}🪙`);
+    showSuccess('📊','Solgt!',`+${net_hw} 🪙`,`Solgte ${unitsSold_hw.toFixed(2)} andeler · Fondskatt: ${taxAmt_hw}🪙`);
   }
 }
 
@@ -912,7 +912,7 @@ function getFondValue(units, currentRate) {
   return Math.round((units||0) * (currentRate||100));
 }
 function getUnitsFromAmt(amt, rate) {
-  return Math.round(amt / (rate||100) * 10000) / 10000; // 4 desimaler
+  return Math.round(amt / (rate||100) * 100) / 100; // 2 desimaler
 }
 // Beholder getFondMarketValue som alias for bakoverkompatibilitet
 function getFondMarketValue(invested, buyRate, currentRate) {
@@ -943,47 +943,48 @@ function renderFond(){
 
   document.getElementById('fond-cards').innerHTML=`
     <div class="fond-card low">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
         <div>
           <div class="fond-title">📉 Fond lav risiko</div>
           <div class="fond-risk">±${window._settings?.fundLowMax||5}% daglig variasjon</div>
         </div>
-        <div style="text-align:right;position:relative;z-index:1">
-          <div style="font-family:'Fredoka One',cursive;font-size:.78rem;color:rgba(255,255,255,.65)">Kurs per andel</div>
-          <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:#FAC775">🪙 ${curLow.toFixed(2)}</div>
+        <div style="text-align:right;position:relative;z-index:1;background:rgba(0,0,0,.2);border-radius:8px;padding:4px 10px">
+          <div style="font-size:.68rem;color:rgba(255,255,255,.65);font-weight:700">KURS PER ANDEL</div>
+          <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:#FAC775">🪙 ${curLow.toFixed(2)}</div>
         </div>
       </div>
-      <div class="fond-value">🪙 ${lowValue}</div>
-      <div style="font-size:.75rem;color:rgba(255,255,255,.7);position:relative;z-index:1;margin:.2rem 0">
-        📦 ${lowUnits.toFixed(4)} andeler × 🪙 ${curLow.toFixed(2)} = 🪙 ${lowValue}
+      <!-- Andeler – tydelig boks -->
+      <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:.6rem .85rem;margin-bottom:.5rem;position:relative;z-index:1">
+        <div style="font-size:.68rem;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Mine andeler</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:white;line-height:1">${lowUnits.toFixed(2)}</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.65);margin-top:2px">${lowUnits.toFixed(2)} andeler × 🪙${curLow.toFixed(2)} = <strong style="color:#FAC775">🪙 ${lowValue}</strong></div>
       </div>
-      <div style="font-size:.7rem;color:rgba(255,255,255,.55);position:relative;z-index:1">
-        Investert totalt: 🪙 ${lowInvested}
-      </div>
-      <div class="fond-change" style="color:${lowGain>=0?'#86efac':'#fca5a5'}">
-        ${lowGain>=0?'📈 Gevinst':'📉 Tap'}: ${lowGain>=0?'+':''}${lowGain} 🪙 (${lowPct>=0?'+':''}${lowPct}%)
+      <div class="fond-value" style="font-size:1.8rem">🪙 ${lowValue}</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.5);position:relative;z-index:1;margin-top:2px">Investert: 🪙 ${lowInvested}</div>
+      <div class="fond-change" style="color:${lowGain>=0?'#86efac':'#fca5a5'};margin-top:.4rem">
+        ${lowGain>=0?'📈':'📉'} ${lowGain>=0?'+':''}${lowGain} 🪙 (${lowPct>=0?'+':''}${lowPct}%)
       </div>
     </div>
     <div class="fond-card high">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
         <div>
           <div class="fond-title">📈 Fond høy risiko</div>
           <div class="fond-risk">±${window._settings?.fundHighMax||10}% daglig variasjon</div>
         </div>
-        <div style="text-align:right;position:relative;z-index:1">
-          <div style="font-family:'Fredoka One',cursive;font-size:.78rem;color:rgba(255,255,255,.65)">Kurs per andel</div>
-          <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:#FAC775">🪙 ${curHigh.toFixed(2)}</div>
+        <div style="text-align:right;position:relative;z-index:1;background:rgba(0,0,0,.2);border-radius:8px;padding:4px 10px">
+          <div style="font-size:.68rem;color:rgba(255,255,255,.65);font-weight:700">KURS PER ANDEL</div>
+          <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:#FAC775">🪙 ${curHigh.toFixed(2)}</div>
         </div>
       </div>
-      <div class="fond-value">🪙 ${highValue}</div>
-      <div style="font-size:.75rem;color:rgba(255,255,255,.7);position:relative;z-index:1;margin:.2rem 0">
-        📦 ${highUnits.toFixed(4)} andeler × 🪙 ${curHigh.toFixed(2)} = 🪙 ${highValue}
+      <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:.6rem .85rem;margin-bottom:.5rem;position:relative;z-index:1">
+        <div style="font-size:.68rem;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Mine andeler</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:white;line-height:1">${highUnits.toFixed(2)}</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.65);margin-top:2px">${highUnits.toFixed(2)} andeler × 🪙${curHigh.toFixed(2)} = <strong style="color:#FAC775">🪙 ${highValue}</strong></div>
       </div>
-      <div style="font-size:.7rem;color:rgba(255,255,255,.55);position:relative;z-index:1">
-        Investert totalt: 🪙 ${highInvested}
-      </div>
-      <div class="fond-change" style="color:${highGain>=0?'#86efac':'#fca5a5'}">
-        ${highGain>=0?'📈 Gevinst':'📉 Tap'}: ${highGain>=0?'+':''}${highGain} 🪙 (${highPct>=0?'+':''}${highPct}%)
+      <div class="fond-value" style="font-size:1.8rem">🪙 ${highValue}</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.5);position:relative;z-index:1;margin-top:2px">Investert: 🪙 ${highInvested}</div>
+      <div class="fond-change" style="color:${highGain>=0?'#86efac':'#fca5a5'};margin-top:.4rem">
+        ${highGain>=0?'📈':'📉'} ${highGain>=0?'+':''}${highGain} 🪙 (${highPct>=0?'+':''}${highPct}%)
       </div>
     </div>`;
   const totalFond = lowValue + highValue;
@@ -1155,7 +1156,7 @@ function pcp(v){
   if(confirmPin.length===4)setTimeout(checkPin,150);
 }
 function checkPin(){
-  if(confirmPin===window._currentStudent?.pin){document.getElementById('pin-overlay').classList.remove('open');confirmPin='';doPayment(pendingPayAmount);}
+  if(String(confirmPin)===String(window._currentStudent?.pin)){document.getElementById('pin-overlay').classList.remove('open');confirmPin='';doPayment(pendingPayAmount);}
   else{document.getElementById('pin-overlay-error').textContent='❌ Feil PIN';confirmPin='';for(let i=0;i<4;i++)document.getElementById('pdot-'+i).classList.remove('filled');}
 }
 
@@ -1216,7 +1217,7 @@ function shopNp(v) {
 }
 
 function tryShopLogin() {
-  const s = window._allStudents.find(s => s.pin === _shopPin);
+  const s = window._allStudents.find(s => String(s.pin) === String(_shopPin));
   if (s) {
     _shopStudent = s;
     document.getElementById('shop-login-section').style.display = 'none';
@@ -1342,7 +1343,7 @@ function cartPinPress(v) {
 
 async function checkCartPin() {
   if (!_shopStudent) return;
-  if (_cartPin !== _shopStudent.pin) {
+  if (String(_cartPin) !== String(_shopStudent.pin)) {
     document.getElementById('cart-pin-error').textContent = '❌ Feil PIN – prøv igjen';
     _cartPin = '';
     for (let i=0;i<4;i++) { const d=document.getElementById('cart-pdot-'+i); if(d) d.classList.remove('filled'); }
@@ -1486,7 +1487,7 @@ function cancelPurchase() {
 
 async function confirmPurchase() {
   const s = window._currentStudent;
-  if (_buyPin !== s.pin) {
+  if (String(_buyPin) !== String(s.pin)) {
     document.getElementById('purchase-pin-error').textContent = '❌ Feil PIN – prøv igjen';
     _buyPin = '';
     for (let i=0;i<4;i++) document.getElementById('bpdot-'+i).classList.remove('filled');

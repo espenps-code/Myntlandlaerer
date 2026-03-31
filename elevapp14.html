@@ -589,7 +589,7 @@ function updatePinDots() {
   for (let i=0;i<4;i++) document.getElementById('dot-'+i).classList.toggle('filled', i < currentPin.length);
 }
 function tryLogin() {
-  const s = window._allStudents.find(s => s.pin === currentPin);
+  const s = window._allStudents.find(s => String(s.pin) === String(currentPin));
   if (s) {
     window._currentStudent = s;
     transactions = [];
@@ -835,7 +835,7 @@ function updateConfirmDots() {
 
 function checkConfirmPin() {
   const s = window._currentStudent;
-  if (confirmPin === s.pin) {
+  if (String(confirmPin) === String(s.pin)) {
     document.getElementById('pin-overlay').classList.remove('open');
     confirmPin = '';
     doPayment(pendingPayAmount);
