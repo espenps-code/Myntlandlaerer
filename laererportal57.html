@@ -1841,8 +1841,7 @@ function printShopPDF() {
 // ════════════════════════════════════════════════════════════
 async function checkAndUpdateFund(db, ref, set, get, update) {
   try {
-    const now   = new Date();
-    const today = now.toISOString().slice(0, 10);
+    const now = new Date();
 
     // Kun etter kl. 08:00 lokal tid
     if (now.getHours() < 8) {
@@ -1850,13 +1849,19 @@ async function checkAndUpdateFund(db, ref, set, get, update) {
       return;
     }
 
+    // Lokal dato – IKKE toISOString() (som gir UTC og kan gi feil dato)
+    const yr  = now.getFullYear();
+    const mo  = String(now.getMonth() + 1).padStart(2, '0');
+    const dy  = String(now.getDate()).padStart(2, '0');
+    const today = `${yr}-${mo}-${dy}`;
+
     const snap = await get(ref(db, 'fundHistory'));
     const hist = snap.val() || {};
     const days = Object.keys(hist).sort();
 
     // Allerede oppdatert i dag?
     if (days[days.length - 1] === today) {
-      console.log('ℹ️ Fond: allerede oppdatert i dag');
+      console.log('ℹ️ Fond: allerede oppdatert i dag (' + today + ')');
       return;
     }
 
@@ -1865,30 +1870,28 @@ async function checkAndUpdateFund(db, ref, set, get, update) {
     const highRate = last.high || 100;
 
     // ── Lav risiko: drift +0.50%/dag, tilfeldig ±5% ──────────────────────
-    const LOW_DRIFT = 0.005;   // +0.5% per dag
-    const LOW_RANGE = 0.05;    // ±5%
+    const LOW_DRIFT  = 0.005;
+    const LOW_RANGE  = 0.05;
     const lowRandom  = (Math.random() * 2 - 1) * LOW_RANGE;
-    const lowFactor  = 1 + LOW_DRIFT + lowRandom;
-    const newLow     = Math.max(1, Math.round(lowRate  * lowFactor  * 100) / 100);
+    const newLow     = Math.max(1, Math.round(lowRate  * (1 + LOW_DRIFT  + lowRandom)  * 100) / 100);
 
     // ── Høy risiko: drift +0.90%/dag, tilfeldig ±10% ─────────────────────
-    const HIGH_DRIFT = 0.009;  // +0.9% per dag
-    const HIGH_RANGE = 0.10;   // ±10%
+    const HIGH_DRIFT = 0.009;
+    const HIGH_RANGE = 0.10;
     const highRandom = (Math.random() * 2 - 1) * HIGH_RANGE;
-    const highFactor = 1 + HIGH_DRIFT + highRandom;
-    const newHigh    = Math.max(1, Math.round(highRate * highFactor * 100) / 100);
+    const newHigh    = Math.max(1, Math.round(highRate * (1 + HIGH_DRIFT + highRandom) * 100) / 100);
 
-    const lowChange  = ((newLow  - lowRate)  / lowRate  * 100).toFixed(2);
-    const highChange = ((newHigh - highRate) / highRate * 100).toFixed(2);
+    const lowPct  = ((newLow  - lowRate)  / lowRate  * 100).toFixed(2);
+    const highPct = ((newHigh - highRate) / highRate * 100).toFixed(2);
 
     await update(ref(db, 'fundHistory'), {
       [today]: { low: newLow, high: newHigh, ts: now.getTime() }
     });
 
     console.log(
-      `✅ Fond oppdatert kl. ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} – ` +
-      `lav: ${lowRate} → ${newLow} (${lowChange>0?'+':''}${lowChange}%) · ` +
-      `høy: ${highRate} → ${newHigh} (${highChange>0?'+':''}${highChange}%)`
+      `✅ Fond oppdatert ${today} kl. ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} – ` +
+      `lav: ${lowRate} → ${newLow} (${lowPct > 0 ? '+' : ''}${lowPct}%) · ` +
+      `høy: ${highRate} → ${newHigh} (${highPct > 0 ? '+' : ''}${highPct}%)`
     );
   } catch(e) {
     console.log('⚠️ Fond-oppdatering feilet:', e.message);
@@ -1900,7 +1903,8 @@ async function checkAndUpdateFund(db, ref, set, get, update) {
 // ════════════════════════════════════════════════════════════
 async function checkAndPayWeeklySalary(db, ref, set, get, update) {
   try {
-    const today = new Date().toISOString().slice(0,10);
+    const _d = new Date();
+    const today = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
     const dayOfWeek = new Date().getDay(); // 1 = Monday
     if (dayOfWeek !== 1) return; // only on Mondays
 
