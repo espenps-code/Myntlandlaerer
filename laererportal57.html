@@ -79,12 +79,118 @@
     });
 
     // ── Automatisk fond-oppdatering ──────────────────────────────────────
-    checkAndUpdateFund(db, ref, set, get, update);
+    checkAndUpdateFund();
     // ── Automatisk ukentlig lønn (mandag) ──────────────────────────────
-    checkAndPayWeeklySalary(db, ref, set, get, update);
+    checkAndPayWeeklySalary();
   }
 
-  window._startListeners = startListeners;
+
+  // ── Automatisk fond-oppdatering – kl. 08:00 hver dag ──────────────────────
+  async function checkAndUpdateFund() {
+    try {
+      const now = new Date();
+      if (now.getHours() < 8) return; // før kl. 08:00
+
+      const yr  = now.getFullYear();
+      const mo  = String(now.getMonth() + 1).padStart(2, '0');
+      const dy  = String(now.getDate()).padStart(2, '0');
+      const today = `${yr}-${mo}-${dy}`;
+
+      const snap = await get(ref(db, 'fundHistory'));
+      const hist = snap.val() || {};
+      const days = Object.keys(hist).sort();
+      if (days[days.length - 1] === today) return; // allerede oppdatert i dag
+
+      const last     = hist[days[days.length - 1]] || { low: 100, high: 100 };
+      const lowRate  = last.low  || 100;
+      const highRate = last.high || 100;
+
+      // Lav risiko: drift +0.50%/dag, tilfeldig ±5%
+      const newLow  = Math.max(1, Math.round(lowRate  * (1 + 0.005 + (Math.random()*2-1)*0.05)  * 100) / 100);
+      // Høy risiko: drift +0.90%/dag, tilfeldig ±10%
+      const newHigh = Math.max(1, Math.round(highRate * (1 + 0.009 + (Math.random()*2-1)*0.10) * 100) / 100);
+
+      await update(ref(db, 'fundHistory'), {
+        [today]: { low: newLow, high: newHigh, ts: now.getTime() }
+      });
+      console.log(`✅ Fond oppdatert ${today}: lav ${lowRate}→${newLow}, høy ${highRate}→${newHigh}`);
+    } catch(e) { console.log('⚠️ Fond feilet:', e.message); }
+  }
+
+
+  // ── Automatisk ukentlig lønn – mandager ────────────────────────────────────
+  async function checkAndPayWeeklySalary() {
+    try {
+      const now = new Date();
+      if (now.getDay() !== 1) return; // kun mandag
+
+      const yr  = now.getFullYear();
+      const mo  = String(now.getMonth() + 1).padStart(2, '0');
+      const dy  = String(now.getDate()).padStart(2, '0');
+      const today = `${yr}-${mo}-${dy}`;
+
+      const snap = await get(ref(db, 'salaryLastPaid'));
+      if (snap.val() === today) return;
+
+      const settSnap = await get(ref(db, 'settings'));
+      const sett = settSnap.val() || {};
+      const salaryAmount = sett.weeklysalary || 0;
+      if (!salaryAmount) return;
+
+      const studSnap = await get(ref(db, 'students57'));
+      if (!studSnap.val()) return;
+      const allStudents = Object.entries(studSnap.val()).map(([k,v])=>({...v,fbKey:k}));
+
+      const tax = (sett.taxRate || 20) / 100;
+      const updates = {};
+      let totalTax = 0;
+      for (const s of allStudents) {
+        const net = Math.floor(salaryAmount * (1 - tax));
+        const taxAmt = salaryAmount - net;
+        updates['students57/' + s.fbKey + '/balance'] = (s.balance||0) + net;
+        await set(ref(db, 'transactions57/' + s.fbKey + '/' + Date.now()), {
+          type:'income', icon:'💼', desc:`Ukentlig lønn (netto etter ${Math.round(tax*100)}% skatt)`, amount:net, ts:Date.now()
+        });
+        totalTax += taxAmt;
+      }
+      await update(ref(db, '/'), updates);
+
+      // Sparerente + nullstill uttaksteller
+      const interestRate = (sett.savingsInterest || 2) / 100;
+      const intUpd = {};
+      for (const s of allStudents) {
+        if ((s.savings||0) > 0) {
+          const interest = Math.floor((s.savings||0) * interestRate);
+          if (interest > 0) intUpd['students57/' + s.fbKey + '/savings'] = (s.savings||0) + interest;
+        }
+        intUpd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
+      }
+      if (Object.keys(intUpd).length) await update(ref(db, '/'), intUpd);
+
+      // Skatt til sparemål
+      if (totalTax > 0) {
+        const goalsSnap = await get(ref(db, 'classGoals'));
+        if (goalsSnap.val()) {
+          const goals = Object.entries(goalsSnap.val()).map(([k,v])=>({...v,fbKey:k})).filter(g=>!g.completed);
+          if (goals.length) {
+            const perGoal = Math.floor(totalTax / goals.length);
+            const gUpd = {};
+            goals.forEach(g => {
+              const ns = (g.saved||0) + perGoal;
+              gUpd['classGoals/' + g.fbKey + '/saved'] = ns;
+              if (ns >= g.target) gUpd['classGoals/' + g.fbKey + '/completed'] = true;
+            });
+            await update(ref(db, '/'), gUpd);
+          }
+        }
+      }
+
+      await set(ref(db, 'salaryLastPaid'), today);
+      console.log(`✅ Ukentlig lønn utbetalt for ${allStudents.length} elever`);
+    } catch(e) { console.log('⚠️ Lønn feilet:', e.message); }
+  }
+
+    window._startListeners = startListeners;
 
   // ── Firebase klar – last lærerprofiler ────────────────────────────────────
   window._firebaseReady = true;
@@ -1838,144 +1944,11 @@ function printShopPDF() {
 // Kjøres ved innlogging. Skriver kun hvis:
 //   1. Dagens dato ikke allerede finnes i fundHistory
 //   2. Lokal tid er 08:00 eller senere
-// ════════════════════════════════════════════════════════════
-async function checkAndUpdateFund(db, ref, set, get, update) {
-  try {
-    const now = new Date();
 
-    // Kun etter kl. 08:00 lokal tid
-    if (now.getHours() < 8) {
-      console.log('⏰ Fond: ikke kl. 08 ennå, hopper over');
-      return;
-    }
-
-    // Lokal dato – IKKE toISOString() (som gir UTC og kan gi feil dato)
-    const yr  = now.getFullYear();
-    const mo  = String(now.getMonth() + 1).padStart(2, '0');
-    const dy  = String(now.getDate()).padStart(2, '0');
-    const today = `${yr}-${mo}-${dy}`;
-
-    const snap = await get(ref(db, 'fundHistory'));
-    const hist = snap.val() || {};
-    const days = Object.keys(hist).sort();
-
-    // Allerede oppdatert i dag?
-    if (days[days.length - 1] === today) {
-      console.log('ℹ️ Fond: allerede oppdatert i dag (' + today + ')');
-      return;
-    }
-
-    const last     = hist[days[days.length - 1]] || { low: 100, high: 100 };
-    const lowRate  = last.low  || 100;
-    const highRate = last.high || 100;
-
-    // ── Lav risiko: drift +0.50%/dag, tilfeldig ±5% ──────────────────────
-    const LOW_DRIFT  = 0.005;
-    const LOW_RANGE  = 0.05;
-    const lowRandom  = (Math.random() * 2 - 1) * LOW_RANGE;
-    const newLow     = Math.max(1, Math.round(lowRate  * (1 + LOW_DRIFT  + lowRandom)  * 100) / 100);
-
-    // ── Høy risiko: drift +0.90%/dag, tilfeldig ±10% ─────────────────────
-    const HIGH_DRIFT = 0.009;
-    const HIGH_RANGE = 0.10;
-    const highRandom = (Math.random() * 2 - 1) * HIGH_RANGE;
-    const newHigh    = Math.max(1, Math.round(highRate * (1 + HIGH_DRIFT + highRandom) * 100) / 100);
-
-    const lowPct  = ((newLow  - lowRate)  / lowRate  * 100).toFixed(2);
-    const highPct = ((newHigh - highRate) / highRate * 100).toFixed(2);
-
-    await update(ref(db, 'fundHistory'), {
-      [today]: { low: newLow, high: newHigh, ts: now.getTime() }
-    });
-
-    console.log(
-      `✅ Fond oppdatert ${today} kl. ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} – ` +
-      `lav: ${lowRate} → ${newLow} (${lowPct > 0 ? '+' : ''}${lowPct}%) · ` +
-      `høy: ${highRate} → ${newHigh} (${highPct > 0 ? '+' : ''}${highPct}%)`
-    );
-  } catch(e) {
-    console.log('⚠️ Fond-oppdatering feilet:', e.message);
-  }
-}
 
 // ════════════════════════════════════════════════════════════
 // AUTOMATISK UKENTLIG LØNN (mandager)
-// ════════════════════════════════════════════════════════════
-async function checkAndPayWeeklySalary(db, ref, set, get, update) {
-  try {
-    const _d = new Date();
-    const today = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
-    const dayOfWeek = new Date().getDay(); // 1 = Monday
-    if (dayOfWeek !== 1) return; // only on Mondays
 
-    const snap = await get(ref(db, 'salaryLastPaid'));
-    const lastPaid = snap.val();
-    if (lastPaid === today) return; // already paid today
-
-    const settSnap = await get(ref(db, 'settings'));
-    const sett = settSnap.val() || {};
-    const salaryAmount = sett.weeklysalary || 0;
-    if (!salaryAmount) return;
-
-    const studSnap = await get(ref(db, 'students57'));
-    if (!studSnap.val()) return;
-    const allStudents = Object.entries(studSnap.val()).map(([k,v])=>({...v,fbKey:k}));
-
-    const tax = (sett.taxRate || 20) / 100;
-    const taxGoals = [];
-    const updates = {};
-
-    for (const s of allStudents) {
-      const net = Math.floor(salaryAmount * (1 - tax));
-      const taxAmt = salaryAmount - net;
-      updates['students57/' + s.fbKey + '/balance'] = (s.balance||0) + net;
-      // log tx
-      await set(ref(db, 'transactions57/' + s.fbKey + '/' + Date.now()), {
-        type: 'income', icon: '💼', desc: `Ukentlig lønn (netto etter ${Math.round(tax*100)}% skatt)`, amount: net, ts: Date.now()
-      });
-      taxGoals.push(taxAmt);
-    }
-    await update(ref(db, '/'), updates);
-
-    // Distribute total tax to classGoals
-    const totalTax = taxGoals.reduce((a,b)=>a+b, 0);
-    const goalsSnap = await get(ref(db, 'classGoals'));
-    if (goalsSnap.val() && totalTax > 0) {
-      const goals = Object.entries(goalsSnap.val()).map(([k,v])=>({...v,fbKey:k})).filter(g=>!g.completed);
-      if (goals.length) {
-        const perGoal = Math.floor(totalTax / goals.length);
-        const goalUpdates = {};
-        goals.forEach(g => {
-          const ns = (g.saved||0) + perGoal;
-          goalUpdates['classGoals/' + g.fbKey + '/saved'] = ns;
-          if (ns >= g.target) goalUpdates['classGoals/' + g.fbKey + '/completed'] = true;
-        });
-        await update(ref(db, '/'), goalUpdates);
-      }
-    }
-
-    // Also pay savings interest
-    const interestRate = (sett.savingsInterest || 2) / 100;
-    const interestUpdates = {};
-    for (const s of allStudents) {
-      if ((s.savings||0) > 0) {
-        const interest = Math.floor((s.savings||0) * interestRate);
-        if (interest > 0) {
-          interestUpdates['students57/' + s.fbKey + '/savings'] = (s.savings||0) + interest;
-          interestUpdates['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0; // reset weekly withdrawals
-        }
-      }
-      // Always reset weekly withdrawals on Monday
-      if (!interestUpdates['students57/' + s.fbKey + '/withdrawalsThisWeek']) {
-        interestUpdates['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
-      }
-    }
-    if (Object.keys(interestUpdates).length) await update(ref(db, '/'), interestUpdates);
-
-    await set(ref(db, 'salaryLastPaid'), today);
-    console.log(`✅ Ukentlig lønn og sparerente utbetalt for ${allStudents.length} elever`);
-  } catch(e) { console.log('Salary check skipped:', e.message); }
-}
 
 // ════════════════════════════════════════════════════════════
 // MODALS & UTILS
