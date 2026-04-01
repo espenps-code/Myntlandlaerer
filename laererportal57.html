@@ -1826,43 +1826,73 @@ function printShopPDF() {
 }
 
 // ════════════════════════════════════════════════════════════
-// AUTOMATISK FOND-OPPDATERING (kjører ved innlogging, maks 1/dag)
+// AUTOMATISK FOND-OPPDATERING – kjører kl. 08:00 hver dag
+//
+// Modell:
+//   Daglig endring = drift + tilfeldig(−range, +range)
+//   Lav risiko:  drift = +0.50%/dag, range = ±5%
+//                → gjennomsnitt ~+7% over 14 dager (mål: +5% til +10%)
+//   Høy risiko:  drift = +0.90%/dag, range = ±10%
+//                → gjennomsnitt ~+14% over 14 dager (mål: +10% til +15%)
+//
+// Kjøres ved innlogging. Skriver kun hvis:
+//   1. Dagens dato ikke allerede finnes i fundHistory
+//   2. Lokal tid er 08:00 eller senere
 // ════════════════════════════════════════════════════════════
 async function checkAndUpdateFund(db, ref, set, get, update) {
   try {
-    const today = new Date().toISOString().slice(0,10);
-    const snap  = await get(ref(db, 'fundHistory'));
-    const hist  = snap.val() || {};
-    const days  = Object.keys(hist).sort();
-    if (days[days.length-1] === today) return; // already updated today
+    const now   = new Date();
+    const today = now.toISOString().slice(0, 10);
 
-    const settSnap = await get(ref(db, 'settings'));
-    const sett = settSnap.val() || {};
-    const lowMax  = (sett.fundLowMax  || 5)  / 100;
-    const highMax = (sett.fundHighMax || 10) / 100;
+    // Kun etter kl. 08:00 lokal tid
+    if (now.getHours() < 8) {
+      console.log('⏰ Fond: ikke kl. 08 ennå, hopper over');
+      return;
+    }
 
-    const last    = hist[days[days.length-1]] || { low: 100, high: 100 };
-    let   lowRate  = last.low  || 100;
-    let   highRate = last.high || 100;
+    const snap = await get(ref(db, 'fundHistory'));
+    const hist = snap.val() || {};
+    const days = Object.keys(hist).sort();
 
-    // Check for 4-week bonus (every 4th Monday add 10-15%)
-    const d = new Date();
-    const weekNum = Math.ceil((d - new Date(d.getFullYear(), 0, 1)) / 604800000);
-    const isBonus = d.getDay() === 1 && weekNum % 4 === 0; // Monday every 4 weeks
+    // Allerede oppdatert i dag?
+    if (days[days.length - 1] === today) {
+      console.log('ℹ️ Fond: allerede oppdatert i dag');
+      return;
+    }
 
-    const lowChange  = isBonus
-      ? 1 + 0.10 + Math.random() * 0.05
-      : 1 + (Math.random() * 2 - 1) * lowMax;
-    const highChange = isBonus
-      ? 1 + 0.10 + Math.random() * 0.05
-      : 1 + (Math.random() * 2 - 1) * highMax;
+    const last     = hist[days[days.length - 1]] || { low: 100, high: 100 };
+    const lowRate  = last.low  || 100;
+    const highRate = last.high || 100;
 
-    lowRate  = Math.max(1, Math.round(lowRate  * lowChange  * 100) / 100);
-    highRate = Math.max(1, Math.round(highRate * highChange * 100) / 100);
+    // ── Lav risiko: drift +0.50%/dag, tilfeldig ±5% ──────────────────────
+    const LOW_DRIFT = 0.005;   // +0.5% per dag
+    const LOW_RANGE = 0.05;    // ±5%
+    const lowRandom  = (Math.random() * 2 - 1) * LOW_RANGE;
+    const lowFactor  = 1 + LOW_DRIFT + lowRandom;
+    const newLow     = Math.max(1, Math.round(lowRate  * lowFactor  * 100) / 100);
 
-    await update(ref(db, 'fundHistory'), { [today]: { low: lowRate, high: highRate, bonus: isBonus } });
-    console.log(`✅ Fond oppdatert: lav=${lowRate} høy=${highRate}${isBonus?' (bonus!)':''}`);
-  } catch(e) { console.log('Fund update skipped:', e.message); }
+    // ── Høy risiko: drift +0.90%/dag, tilfeldig ±10% ─────────────────────
+    const HIGH_DRIFT = 0.009;  // +0.9% per dag
+    const HIGH_RANGE = 0.10;   // ±10%
+    const highRandom = (Math.random() * 2 - 1) * HIGH_RANGE;
+    const highFactor = 1 + HIGH_DRIFT + highRandom;
+    const newHigh    = Math.max(1, Math.round(highRate * highFactor * 100) / 100);
+
+    const lowChange  = ((newLow  - lowRate)  / lowRate  * 100).toFixed(2);
+    const highChange = ((newHigh - highRate) / highRate * 100).toFixed(2);
+
+    await update(ref(db, 'fundHistory'), {
+      [today]: { low: newLow, high: newHigh, ts: now.getTime() }
+    });
+
+    console.log(
+      `✅ Fond oppdatert kl. ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} – ` +
+      `lav: ${lowRate} → ${newLow} (${lowChange>0?'+':''}${lowChange}%) · ` +
+      `høy: ${highRate} → ${newHigh} (${highChange>0?'+':''}${highChange}%)`
+    );
+  } catch(e) {
+    console.log('⚠️ Fond-oppdatering feilet:', e.message);
+  }
 }
 
 // ════════════════════════════════════════════════════════════
