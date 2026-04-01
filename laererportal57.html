@@ -239,18 +239,18 @@
 
   /* ── APP ── */
   #app{display:none;}
-  header{background:var(--teal-dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
-  .logo{font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--amber);display:flex;align-items:center;gap:8px;}
+  header{background:var(--teal-dark);padding:.5rem 1.5rem .35rem;position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(0,0,0,.2);display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;align-items:center;gap:0 1rem;}
+  .logo{font-family:'Fredoka One',cursive;font-size:1.55rem;color:var(--amber);display:flex;align-items:center;gap:8px;white-space:nowrap;grid-column:1;grid-row:1;}
   .logo-badge{background:var(--amber);color:var(--teal-dark);font-size:.65rem;font-weight:900;padding:2px 8px;border-radius:20px;font-family:'Nunito',sans-serif;}
-  .header-right{display:flex;align-items:center;gap:10px;}
+  .header-right{display:flex;align-items:center;gap:8px;grid-column:3;grid-row:1;}
   .teacher-badge-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:10px;}
-  .teacher-badge-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;}
-  .teacher-badge-name{color:white;font-size:.82rem;font-weight:700;}
-  .logout-btn{background:rgba(255,255,255,.13);border:none;color:rgba(255,255,255,.8);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;}
-  header nav{display:flex;gap:3px;align-items:center;flex-wrap:wrap;}
-  header nav button{background:none;border:none;color:rgba(255,255,255,.7);font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;padding:7px 11px;border-radius:8px;cursor:pointer;transition:all .15s;}
-  header nav button:hover{background:rgba(255,255,255,.1);color:#fff;}
-  header nav button.active{background:var(--amber);color:var(--teal-dark);}
+  .teacher-badge-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem;}
+  .teacher-badge-name{color:white;font-size:.9rem;font-weight:700;}
+  .logout-btn{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);padding:8px 15px;border-radius:9px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;transition:background .15s;white-space:nowrap;}
+  header nav{grid-column:1/-1;grid-row:2;display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:.3rem 0 .2rem;}
+  header nav button{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.85);font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;padding:.55rem 1.1rem;border-radius:10px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  header nav button:hover{background:rgba(255,255,255,.2);color:#fff;transform:translateY(-1px);}
+  header nav button.active{background:var(--amber);color:var(--teal-dark);box-shadow:0 2px 6px rgba(0,0,0,.2);}  .nav-icon{font-size:1.2rem;line-height:1;}
   #fb-status{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.4);white-space:nowrap;}
   main{max-width:1200px;margin:0 auto;padding:2rem;}
   .page{display:none;}.page.active{display:block;}
@@ -345,7 +345,8 @@
   .qr-wrap{background:white;padding:12px;border-radius:12px;border:2px solid var(--border);}
   .class-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;}
 
-  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}header{padding:0 1rem;}}
+  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}header{padding:.4rem .75rem .3rem;}header nav button{font-size:.82rem;padding:.42rem .7rem;}}
+  @media(min-width:900px){header nav button{font-size:1.05rem;padding:.6rem 1.25rem;}.nav-icon{font-size:1.3rem;}}
 </style>
 </head>
 <body>
@@ -385,14 +386,14 @@
 <header>
   <div class="logo">🪙 Myntland <span class="logo-badge">5–7. trinn</span></div>
   <nav>
-    <button class="active" onclick="showPage('elever')"   id="nav-elever">👩‍🎓 Elever</button>
-    <button onclick="showPage('grupper')"                 id="nav-grupper">👥 Grupper</button>
-    <button onclick="showPage('saldo')"                   id="nav-saldo">💰 Saldo</button>
-    <button onclick="showPage('oppdrag')"                 id="nav-oppdrag">💼 Oppdrag</button>
-    <button onclick="showPage('butikk57')"                id="nav-butikk57">🛒 Butikk</button>
-    <button onclick="showPage('sparemaal')"               id="nav-sparemaal">🏦 Sparemål</button>
-    <button onclick="showPage('qrkoder')"                 id="nav-qrkoder">⬛ QR</button>
-    <button onclick="showPage('laerere')" id="nav-laerere" style="display:none">⚙️ Lærere</button>
+    <button class="active" onclick="showPage('elever')" id="nav-elever"><span class="nav-icon">👩‍🎓</span> Elever</button>
+    <button onclick="showPage('grupper')" id="nav-grupper"><span class="nav-icon">👥</span> Grupper</button>
+    <button onclick="showPage('saldo')" id="nav-saldo"><span class="nav-icon">💰</span> Saldo</button>
+    <button onclick="showPage('oppdrag')" id="nav-oppdrag"><span class="nav-icon">💼</span> Oppdrag</button>
+    <button onclick="showPage('butikk57')" id="nav-butikk57"><span class="nav-icon">🛒</span> Butikk</button>
+    <button onclick="showPage('sparemaal')" id="nav-sparemaal"><span class="nav-icon">🏦</span> Sparemål</button>
+    <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
+    <button onclick="showPage('laerere')" id="nav-laerere" style="display:none"><span class="nav-icon">⚙️</span> Lærere</button>
   </nav>
   <div class="header-right">
     <div class="teacher-badge-wrap">

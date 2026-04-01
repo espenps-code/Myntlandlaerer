@@ -116,18 +116,18 @@
 
   /* ── MAIN APP ─────────────────────────────── */
   #app{display:none;}
-  header{background:var(--teal-dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
-  .logo{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--amber);letter-spacing:1px;display:flex;align-items:center;gap:8px;}
+  header{background:var(--teal-dark);padding:.5rem 1.5rem .35rem;position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(0,0,0,.2);display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;align-items:center;gap:0 1rem;}
+  .logo{font-family:'Fredoka One',cursive;font-size:1.55rem;color:var(--amber);letter-spacing:.5px;display:flex;align-items:center;gap:8px;white-space:nowrap;grid-column:1;grid-row:1;}
   .logo-coin{width:32px;height:32px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--teal-dark);font-weight:900;}
-  .header-right{display:flex;align-items:center;gap:10px;}
+  .header-right{display:flex;align-items:center;gap:8px;grid-column:3;grid-row:1;}
   .teacher-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:10px;}
-  .teacher-badge-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;}
-  .teacher-badge-name{color:white;font-size:.82rem;font-weight:700;}
-  .logout-btn{background:rgba(255,255,255,.13);border:none;color:rgba(255,255,255,.8);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;}
-  header nav{display:flex;gap:4px;align-items:center;}
-  header nav button{background:none;border:none;color:rgba(255,255,255,.7);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;transition:all .15s;}
-  header nav button:hover{background:rgba(255,255,255,.1);color:#fff;}
-  header nav button.active{background:var(--amber);color:var(--teal-dark);}
+  .teacher-badge-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem;}
+  .teacher-badge-name{color:white;font-size:.9rem;font-weight:700;}
+  .logout-btn{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);padding:8px 15px;border-radius:9px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;transition:background .15s;white-space:nowrap;}
+  header nav{grid-column:1/-1;grid-row:2;display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:.3rem 0 .2rem;}
+  header nav button{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.85);font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;padding:.55rem 1.1rem;border-radius:10px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  header nav button:hover{background:rgba(255,255,255,.2);color:#fff;transform:translateY(-1px);}
+  header nav button.active{background:var(--amber);color:var(--teal-dark);box-shadow:0 2px 6px rgba(0,0,0,.2);}  .nav-icon{font-size:1.2rem;line-height:1;}
   #fb-status{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.5);}
   main{max-width:1200px;margin:0 auto;padding:2rem;}
   .page{display:none;}.page.active{display:block;}
@@ -223,7 +223,8 @@
   .teacher-card-meta{font-size:.78rem;color:var(--muted);}
   .admin-only{background:var(--amber-light);border:1.5px solid var(--amber);border-radius:10px;padding:.75rem 1rem;font-size:.82rem;color:#854F0B;font-weight:700;margin-bottom:1rem;}
 
-  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}header{padding:0 1rem;}header nav button span{display:none;}}
+  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}header{padding:.4rem .75rem .3rem;}header nav button{font-size:.82rem;padding:.42rem .7rem;}}
+  @media(min-width:900px){header nav button{font-size:1.05rem;padding:.6rem 1.25rem;}.nav-icon{font-size:1.3rem;}}
 </style>
 </head>
 <body>
@@ -262,13 +263,13 @@
 <header>
   <div class="logo"><div class="logo-coin">M</div>Myntland <span style="background:var(--amber);color:var(--teal-dark);font-size:.6rem;font-weight:900;padding:2px 8px;border-radius:20px;font-family:'Nunito',sans-serif;margin-left:4px;">1–4. trinn</span></div>
   <nav>
-    <button class="active" onclick="showPage('elever')" id="nav-elever">👩‍🎓 Elever</button>
-    <button onclick="showPage('grupper')" id="nav-grupper">👥 Grupper</button>
-    <button onclick="showPage('saldo')" id="nav-saldo">💰 Saldo</button>
-    <button onclick="showPage('dagligvarer')" id="nav-dagligvarer">🛒 Dagligvarer</button>
-    <button onclick="showPage('handleliste')" id="nav-handleliste">📋 Handleliste</button>
-    <button onclick="showPage('qrkoder')" id="nav-qrkoder">⬛ QR</button>
-    <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;">⚙️ Lærere</button>
+    <button class="active" onclick="showPage('elever')" id="nav-elever"><span class="nav-icon">👩‍🎓</span> Elever</button>
+    <button onclick="showPage('grupper')" id="nav-grupper"><span class="nav-icon">👥</span> Grupper</button>
+    <button onclick="showPage('saldo')" id="nav-saldo"><span class="nav-icon">💰</span> Saldo</button>
+    <button onclick="showPage('dagligvarer')" id="nav-dagligvarer"><span class="nav-icon">🛒</span> Dagligvarer</button>
+    <button onclick="showPage('handleliste')" id="nav-handleliste"><span class="nav-icon">📋</span> Handleliste</button>
+    <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
+    <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;"><span class="nav-icon">⚙️</span> Lærere</button>
   </nav>
   <div class="header-right">
     <div class="teacher-badge">
