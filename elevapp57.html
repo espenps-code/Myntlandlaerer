@@ -722,7 +722,7 @@ async function distributeToGoals(amount){
 }
 
 // ── TRANSACTIONS ───────────────────────────────────────────────────────────
-function fmtDate(ts){const d=new Date(ts),now=new Date(),diff=now-d;if(diff<60000)return 'Nå nettopp';if(diff<3600000)return Math.floor(diff/60000)+' min siden';if(diff<86400000)return 'I dag '+d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});if(diff<172800000)return 'I går';return d.toLocaleDateString('no',{day:'numeric',month:'short'});}
+function fmtDate(ts){const d=new Date(ts),now=new Date(),diff=now-d;if(diff<60000)return 'Nå nettopp';if(diff<3600000)return Math.floor(diff/60000)+' min siden';if(diff<86400000)return 'I dag '+d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});if(diff<172800000)return 'I går '+d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0');}
 async function saveTx(sk,type,icon,desc,amount){if(!window._push||!window._set)return;await window._set(window._push(fbRef('transactions57/'+sk)),{type,icon,desc,amount,ts:Date.now()});}
 async function loadTransactions(sk){
   if(!window._get)return;
@@ -994,7 +994,7 @@ function renderFond(){
 }
 function renderFondChart(hist,days){
   const recent=days.slice(-14);
-  const labels=recent.map(d=>d.slice(5));
+  const labels=recent.map(d=>{ const p=d.split('-'); return p[2]+'.'+p[1]; });
   const lowData=recent.map(d=>hist[d]?.low||100);
   const highData=recent.map(d=>hist[d]?.high||100);
   if(_fondChart){_fondChart.destroy();_fondChart=null;}
