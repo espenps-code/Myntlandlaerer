@@ -1268,55 +1268,130 @@ function generateGroceryPDF() {
     : window._groceries;
   if (!items.length) { alert('Ingen varer valgt.'); return; }
 
-  // Use numeric index as element id to avoid any special chars in fbKey
+  // Kategorifarger – fargekodet ramme per kategori
+  const catColors = {
+    'Meieri':           { border: '#2563EB', bg: '#EFF6FF', label: '#1E40AF', badge: '#DBEAFE' },
+    'Brød & Bakeri':    { border: '#D97706', bg: '#FFFBEB', label: '#92400E', badge: '#FDE68A' },
+    'Frukt & Grønt':    { border: '#16A34A', bg: '#F0FDF4', label: '#14532D', badge: '#BBF7D0' },
+    'Kjøtt & Fisk':     { border: '#DC2626', bg: '#FEF2F2', label: '#991B1B', badge: '#FECACA' },
+    'Drikke':           { border: '#0891B2', bg: '#ECFEFF', label: '#164E63', badge: '#A5F3FC' },
+    'Godteri & Snacks': { border: '#9333EA', bg: '#FAF5FF', label: '#581C87', badge: '#E9D5FF' },
+    'Annet':            { border: '#6B7280', bg: '#F9FAFB', label: '#374151', badge: '#E5E7EB' },
+  };
+
+  const qrPayloads = items.map(g =>
+    JSON.stringify({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price })
+  );
+
   const gridHTML = `<style>
-    body { margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+    body { margin: 0; padding: 0; font-family: 'Nunito', sans-serif; background: white; }
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      body { margin: 0; }
+    }
     .g-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-auto-rows: 148.5mm;
       gap: 0;
     }
+    /* Grønne kuttelinjer – beholdt */
     .g-item {
-      border: 1px solid #1D9E75;
-      padding: 8mm;
+      padding: 6mm 7mm;
       text-align: center;
-      background: white;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4mm;
+      gap: 3mm;
       page-break-inside: avoid;
       box-sizing: border-box;
+      position: relative;
+      /* Grønn kutteline ytterst */
+      outline: 1.5px dashed #1D9E75;
+      outline-offset: -1px;
     }
-    .g-emoji { font-size: 20mm; line-height: 1; }
-    .g-name  { font-weight: 800; font-size: 7mm; color: #1a2e1a; }
-    .g-price { background: #E1F5EE; color: #085041; font-weight: 800; padding: 2mm 6mm; border-radius: 3mm; font-size: 6mm; }
-    .g-qr    { display: flex; justify-content: center; min-height: 25mm; align-items: center; }
-    .g-cat   { font-size: 3mm; color: #5a7a5a; }
+    /* Fargekodet ramme inni kuttlinja */
+    .g-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 5mm;
+      border: 3.5px solid var(--cat-border, #1D9E75);
+      background: var(--cat-bg, #ffffff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3mm;
+      padding: 5mm 5mm 4mm;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Kategori-stripe øverst i kortet */
+    .g-cat-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 9mm;
+      background: var(--cat-badge, #E1F5EE);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3.5mm 3.5mm 0 0;
+    }
+    .g-cat {
+      font-size: 5mm;
+      font-weight: 900;
+      color: var(--cat-label, #085041);
+      letter-spacing: 0.3mm;
+      text-transform: uppercase;
+    }
+    /* Innhold (under kategori-stripa) */
+    .g-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3mm;
+      margin-top: 9mm; /* høyde til cat-bar */
+    }
+    .g-emoji { font-size: 30mm; line-height: 1.05; }
+    .g-name  { font-weight: 900; font-size: 9mm; color: #1a2e1a; line-height: 1.15; }
+    .g-price {
+      background: var(--cat-badge, #E1F5EE);
+      color: var(--cat-label, #085041);
+      font-weight: 900;
+      padding: 2.5mm 8mm;
+      border-radius: 4mm;
+      font-size: 10mm;
+      display: flex;
+      align-items: center;
+      gap: 2mm;
+      line-height: 1;
+    }
+    .g-coin { font-size: 9mm; }
+    .g-qr   { display: flex; justify-content: center; align-items: center; }
   </style>
   <div class="g-grid">
-    ${items.map((g, i) => `
-      <div class="g-item">
-        <div class="g-emoji">${g.emoji}</div>
-        <div class="g-name">${g.name}</div>
-        <div class="g-price">🪙 ${g.price}</div>
-        <div class="g-qr" id="qr${i}"></div>
-        <div class="g-cat">${g.category}</div>
-      </div>`).join('')}
+    ${items.map((g, i) => {
+      const cc = catColors[g.category] || catColors['Annet'];
+      return `<div class="g-item">
+        <div class="g-inner" style="--cat-border:${cc.border};--cat-bg:${cc.bg};--cat-label:${cc.label};--cat-badge:${cc.badge}">
+          <div class="g-cat-bar"><div class="g-cat">${g.category}</div></div>
+          <div class="g-content">
+            <div class="g-emoji">${g.emoji}</div>
+            <div class="g-name">${g.name}</div>
+            <div class="g-price"><span class="g-coin">🪙</span>${g.price}</div>
+            <div class="g-qr" id="qr${i}"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
   </div>`;
-
-  // Encode QR data as JSON in a script tag so the popup can read it safely
-  const qrPayloads = items.map(g =>
-    JSON.stringify({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price })
-  );
 
   const win = window.open('', '_blank', 'width=900,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-    <style>@media print{@page{size:A4 portrait;margin:0}}</style>
   </head><body>
     ${gridHTML}
     <script>
@@ -1326,18 +1401,17 @@ function generateGroceryPDF() {
         for (var i = 0; i < payloads.length; i++) {
           var el = document.getElementById('qr' + i);
           if (!el) { allDone = false; continue; }
-          if (el.children.length > 0) continue; // already done
+          if (el.children.length > 0) continue;
           try {
             new QRCode(el, {
               text: payloads[i],
-              width: 120, height: 120,
+              width: 110, height: 110,
               correctLevel: QRCode.CorrectLevel.M
             });
           } catch(e) { allDone = false; }
         }
         return allDone;
       }
-      // Poll until every QR slot has content, then print
       var attempts = 0;
       var poll = setInterval(function() {
         attempts++;
