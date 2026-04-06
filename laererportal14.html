@@ -1673,25 +1673,38 @@ function printAllCustomRewards() {
 }
 
 function printSingleQR(elId, label) {
-  // Get the QR canvas/image from the existing element
-  const src = document.getElementById(elId);
-  if (!src) return;
-  const img = src.querySelector('img') || src.querySelector('canvas');
-  if (!img) return;
-  const dataUrl = img.tagName === 'CANVAS' ? img.toDataURL() : img.src;
-  const win = window.open('', '_blank', 'width=600,height=500');
+  const src = document.getElementById(elId); if (!src) return;
+  const canvas = src.querySelector('canvas');
+  const img    = src.querySelector('img');
+  const dataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
+  if (!dataUrl) { alert('QR ikke klar – vent litt og prøv igjen.'); return; }
+  const amount = parseInt(label);
+  const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
-    <style>@media print{@page{size:A5 portrait;margin:8mm}}body{font-family:'Nunito',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1rem;}
-    .label{font-family:'Fredoka One',cursive;font-size:2rem;color:#085041;}</style>
+    <style>
+      @media print{@page{size:A4 portrait;margin:0}}
+      body{margin:0;padding:8mm;font-family:'Nunito',sans-serif;background:white;}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
+      .card{border:1.5mm solid #1D9E75;border-radius:5mm;padding:7mm;display:flex;flex-direction:column;align-items:center;gap:4mm;page-break-inside:avoid;}
+      .logo{font-family:'Fredoka One',cursive;font-size:5mm;color:#085041;}
+      .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
+      .desc{font-size:3.5mm;color:#5a7a5a;text-align:center;font-weight:700;}
+      .qr-wrap{display:flex;justify-content:center;align-items:center;}
+    </style>
   </head><body>
-    <div class="label">+${label}</div>
-    <img src="${dataUrl}" style="width:200px;height:200px;">
+    <div class="grid">
+      ${[0,1,2,3].map(()=>`<div class="card">
+        <div class="logo">🪙 Myntland</div>
+        <div class="amount">+${amount} 🪙</div>
+        <div class="qr-wrap"><img src="${dataUrl}" style="width:130px;height:130px;"></div>
+        <div class="desc">Belønning</div>
+      </div>`).join('')}
+    </div>
     <script>setTimeout(()=>{window.focus();window.print();},300);<\/script>
   </body></html>`);
   win.document.close();
 }
-
 function _printRewardCards(rewards) {
   const payloads = rewards.map(r => JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }));
   const cardsHTML = rewards.map((r, i) =>
@@ -1927,12 +1940,12 @@ function showTab(tabId, btn) {
 
 // ── Tastatur-PIN (for PC-nettleser) ───────────────────────────────────────
 document.addEventListener('keydown', function(e) {
-  const loginActive = document.getElementById('login-screen')?.style?.display !== 'none'
-                   && document.getElementById('pin-section')?.style?.display !== 'none';
-  if (!loginActive) return;
-  if (e.key >= '0' && e.key <= '9') { loginNumpad(e.key); e.preventDefault(); }
-  if (e.key === 'Backspace') { loginNumpad('DEL'); e.preventDefault(); }
-  if (e.key === 'Enter') { /* PIN submits automatically at 4 digits */ }
+  const loginScreen = document.getElementById('login-screen');
+  const pinSection  = document.getElementById('pin-section');
+  if (!loginScreen || loginScreen.style.display === 'none') return;
+  if (!pinSection  || pinSection.style.display  === 'none') return;
+  if (e.key >= '0' && e.key <= '9') { pinKey(e.key); e.preventDefault(); }
+  if (e.key === 'Backspace') { pinKey('DEL'); e.preventDefault(); }
 });
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
