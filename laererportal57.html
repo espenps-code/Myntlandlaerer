@@ -847,7 +847,7 @@
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;" id="modal-job-qr-desc"></p>
     <div style="display:flex;justify-content:center;"><div class="qr-wrap" id="modal-job-qr-box"></div></div>
     <p style="font-size:.82rem;color:var(--muted);margin-top:1rem;">Eleven scanner QR-koden for å motta betaling.<br>20% går automatisk til klassens sparemål.</p>
-    <div class="modal-actions" style="justify-content:center;"><button class="btn btn-ghost" onclick="closeModal('modal-job-qr')">Lukk</button></div>
+    <div class="modal-actions" style="justify-content:center;"><button class="btn btn-primary" id="job-qr-print-btn" onclick="printJobQRCard()">🖨️ Skriv ut</button><button class="btn btn-ghost" onclick="closeModal('modal-job-qr')">Lukk</button></div>
   </div>
 </div>
 <div class="modal-overlay" id="modal-shop-qr">
@@ -1506,29 +1506,34 @@ async function deleteJob(fbKey) { if (!confirm('Slett oppdrag?')) return; await 
 
 function showJobQR(fbKey) {
   const j = window._jobs.find(x => x.fbKey === fbKey); if (!j) return;
+  // Payload elevappen forventer: type='job', jobKey, title, pay
   const payload = JSON.stringify({ type:'job', jobKey: fbKey, title: j.title, pay: j.pay });
-  // Offscreen teknikk – QRCode.js trenger synlig DOM-element
-  const tmp = document.createElement('div');
-  tmp.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:200px;height:200px;background:white;z-index:-1;';
-  document.body.appendChild(tmp);
-  let dataUrl = '';
-  try {
-    new QRCode(tmp, { text: payload, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
-    const canvas = tmp.querySelector('canvas');
-    const img    = tmp.querySelector('img');
-    if (canvas)   dataUrl = canvas.toDataURL('image/png');
-    else if (img) dataUrl = img.src;
-  } catch(e) {}
-  document.body.removeChild(tmp);
+  // Bruk api.qrserver.com – ingen canvas/synlighetsproblemer
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=' + encodeURIComponent(payload);
   const box = document.getElementById('modal-job-qr-box');
-  if (dataUrl) {
-    box.innerHTML = `<img src="${dataUrl}" style="width:180px;height:180px;border-radius:6px;">`;
-  } else {
-    box.innerHTML = '<p style="color:var(--coral)">Kunne ikke generere QR</p>';
-  }
+  box.innerHTML = `<img src="${qrUrl}" style="width:200px;height:200px;border-radius:6px;border:2px solid var(--border);"
+    onerror="this.parentElement.innerHTML='<p style=color:var(--coral);font-size:.82rem>Ingen internettforbindelse</p>'">`;
   document.getElementById('modal-job-qr-title').textContent = `${j.emoji||'💼'} ${j.title}`;
   document.getElementById('modal-job-qr-desc').textContent  = `Brutto: 🪙 ${j.pay} · Elev får netto: 🪙 ${Math.floor(j.pay * 0.8)} (20% til sparemål)`;
   document.getElementById('modal-job-qr').classList.add('open');
+}
+
+function printJobQRCard() {
+  const title = document.getElementById('modal-job-qr-title').textContent;
+  const desc  = document.getElementById('modal-job-qr-desc').textContent;
+  const img   = document.getElementById('modal-job-qr-box').querySelector('img');
+  if (!img) return;
+  const win = window.open('', '', 'width=500,height=600');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+    '@media print{@page{size:A6;margin:5mm}}body{font-family:sans-serif;text-align:center;padding:8mm;margin:0;}' +
+    'h2{font-size:16px;margin:.4rem 0}.desc{font-size:12px;color:#555}.logo{font-size:13px;font-weight:700;color:#1e0f52}' +
+    '</style></head><body>' +
+    '<div class="logo">🪙 Myntland – Oppdrag</div>' +
+    `<h2>${title}</h2>` +
+    `<img src="${img.src}" style="width:180px;height:180px;margin:.5rem auto;display:block;">` +
+    `<div class="desc">${desc}</div>` +
+    '<script>setTimeout(function(){window.print();},300);<\/script></body></html>');
+  win.document.close();
 }
 
 async function approveJob() {
