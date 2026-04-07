@@ -1138,6 +1138,7 @@ function handleScan(text){
     else if(scanMode==='reward'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc);
     else if(scanMode==='reward'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
     else if((scanMode==='payment'||scanMode==='reward')&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
+    else if(scanMode==='reward'&&d.type==='event')doEventHendelse(d.subtype,d.amount,d.desc);
     else showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');
   }catch(e){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');}
 }
@@ -1414,6 +1415,35 @@ function checkAndResetQuiz(s) {
     } else {
       patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
     }
+  }
+}
+
+async function doEventHendelse(subtype, amount, desc) {
+  const s = window._currentStudent; if (!s) return;
+  if (subtype === 'income') {
+    const tax = getTax();
+    const taxAmt = Math.floor(amount * tax);
+    const net = amount - taxAmt;
+    const newBal = (s.balance||0) + net;
+    await window._update(fbRef('students57/'+s.fbKey), {balance:newBal});
+    patchStudent(s.fbKey, {balance:newBal});
+    await distributeToGoals(taxAmt);
+    await saveTx(s.fbKey,'income','🎲', desc || 'Hendelse', net);
+    transactions.unshift({type:'income',icon:'🎲',desc:desc||'Hendelse',amount:net,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions();
+    showSuccess('🎲','Hendelse!','+'+net+' 🪙', taxAmt > 0 ? taxAmt+'🪙 til sparemål':'');
+  } else {
+    if ((s.balance||0) < amount) {
+      showSuccess('😕','Ikke nok mynter!','',`Saldo: ${s.balance||0}🪙 – trenger ${amount}🪙`);
+      return;
+    }
+    const newBal = (s.balance||0) - amount;
+    await window._update(fbRef('students57/'+s.fbKey), {balance:newBal});
+    patchStudent(s.fbKey, {balance:newBal});
+    await saveTx(s.fbKey,'expense','🎲', desc || 'Hendelse (utgift)', -amount);
+    transactions.unshift({type:'expense',icon:'🎲',desc:desc||'Hendelse (utgift)',amount:-amount,ts:Date.now()});
+    refreshAllDisplays(); renderTransactions();
+    showSuccess('🎲','Hendelse!','-'+amount+' 🪙','Saldo: '+newBal+'🪙');
   }
 }
 
