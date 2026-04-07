@@ -923,6 +923,26 @@
 </div><!-- /#app -->
 
 <!-- MODALS -->
+
+<div class="modal-overlay" id="modal-pin">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-title">🔑 Endre PIN</div>
+    <p id="modal-pin-name" style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;"></p>
+    <div class="form-row">
+      <label>Ny PIN (4 siffer)</label>
+      <input type="number" id="modal-pin-input" min="1000" max="9999"
+             placeholder="f.eks. 2847"
+             style="font-size:1.4rem;font-weight:800;letter-spacing:.3rem;text-align:center;width:100%;padding:10px;"
+             oninput="this.value=this.value.slice(0,4)">
+    </div>
+    <div id="modal-pin-alert" style="margin-bottom:.5rem;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pin')">Avbryt</button>
+      <button class="btn btn-primary" onclick="confirmPinChange()">💾 Lagre PIN</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-saldo">
   <div class="modal">
     <div class="modal-title" id="modal-saldo-title">Juster saldo</div>
@@ -1240,6 +1260,7 @@ function renderStudentTable() {
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="openPinModal('${s.fbKey}')" title="Endre PIN">🔑</button>
         <button class="btn btn-coral btn-sm" onclick="openDeleteModal('${s.fbKey}','${s.firstname} ${s.lastname}')">🗑️</button>
       </div></td>
     </tr>`;
@@ -1473,6 +1494,30 @@ function openDeleteModal(fbKey, name) {
   document.getElementById('modal-delete').classList.add('open');
 }
 async function confirmDelete() { await window._remove(fbRef('students57/' + currentStudentId)); closeModal('modal-delete'); }
+
+function openPinModal(fbKey) {
+  const s = window._students.find(x => x.fbKey === fbKey); if (!s) return;
+  currentStudentId = fbKey;
+  document.getElementById('modal-pin-name').textContent =
+    s.firstname + ' ' + s.lastname + ' · Nåværende PIN: ' + s.pin;
+  document.getElementById('modal-pin-input').value = '';
+  document.getElementById('modal-pin-alert').innerHTML = '';
+  document.getElementById('modal-pin').classList.add('open');
+  setTimeout(() => document.getElementById('modal-pin-input').focus(), 100);
+}
+
+async function confirmPinChange() {
+  const val    = document.getElementById('modal-pin-input').value.trim();
+  const alertEl = document.getElementById('modal-pin-alert');
+  if (!/^\d{4}$/.test(val)) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ PIN må være nøyaktig 4 siffer.</div>';
+    return;
+  }
+  await window._update(fbRef('students57/' + currentStudentId), { pin: val });
+  closeModal('modal-pin');
+  alertEl.innerHTML = '';
+}
+
 
 // ════════════════════════════════════════════════════════════
 // TRANSAKSJON-LOGGER
