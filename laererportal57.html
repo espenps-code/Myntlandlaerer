@@ -85,6 +85,15 @@
       if (document.getElementById('page-sparemaal')?.classList.contains('active')) renderClassGoalsPage();
     });
 
+    onValue(ref(db, 'fundHistory'), snap => {
+      const hist = snap.val() || {};
+      const days = Object.keys(hist).sort();
+      const last = days.length ? hist[days[days.length-1]] : { low: 100, high: 100 };
+      window._curFundLow  = last.low  || 100;
+      window._curFundHigh = last.high || 100;
+      renderSaldoTable(); // oppdater når fondkurs endres
+    });
+
     // ── Automatisk fond-oppdatering ──────────────────────────────────────
     checkAndUpdateFund();
     // ── Automatisk ukentlig lønn (mandag) ──────────────────────────────
@@ -1245,15 +1254,20 @@ function resetCSV() {
 // ════════════════════════════════════════════════════════════
 // SALDO
 // ════════════════════════════════════════════════════════════
+function fondVerdi(units, rate) { return Math.round((units||0) * (rate||100)); }
+
 function renderSaldoTable() {
   const tbody = document.getElementById('saldo-table-body'); if (!tbody) return;
+  const rateLow  = window._curFundLow  || 100;
+  const rateHigh = window._curFundHigh || 100;
   // Update summary
   const sumRow = document.getElementById('saldo-summary-row');
   if (sumRow && window._students.length) {
     sumRow.style.display = 'flex';
     document.getElementById('sum-bruk').textContent  = '🪙 ' + window._students.reduce((a,s)=>a+(s.balance||0),0);
     document.getElementById('sum-spare').textContent = '🪙 ' + window._students.reduce((a,s)=>a+(s.savings||0),0);
-    document.getElementById('sum-fond').textContent  = '🪙 ' + window._students.reduce((a,s)=>a+(s.fund_low||0)+(s.fund_high||0),0);
+    document.getElementById('sum-fond').textContent  = '🪙 ' + window._students.reduce((a,s)=>
+      a + fondVerdi(s.fund_low_units,rateLow) + fondVerdi(s.fund_high_units,rateHigh), 0);
     document.getElementById('sum-loan').textContent  = '🪙 ' + window._students.reduce((a,s)=>a+(s.loan||0),0);
   }
   if (!window._students.length) {
@@ -1263,8 +1277,8 @@ function renderSaldoTable() {
   tbody.innerHTML = window._students.map(s => {
     const bruk  = s.balance   || 0;
     const spare = s.savings   || 0;
-    const fl    = s.fund_low  || 0;
-    const fh    = s.fund_high || 0;
+    const fl    = fondVerdi(s.fund_low_units,  rateLow);
+    const fh    = fondVerdi(s.fund_high_units, rateHigh);
     const loan  = s.loan      || 0;
     const total = bruk + spare + fl + fh;
     return `<tr>
@@ -1280,8 +1294,8 @@ function renderSaldoTable() {
       <td><span class="class-badge">${s.class}</span></td>
       <td><span class="balance-badge">🪙 ${bruk}</span></td>
       <td><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
-      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fl}</span></td>
-      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${fh}</span></td>
+      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_low_units||0).toFixed(2)} andeler × 🪙${rateLow}">🪙 ${fl}</span></td>
+      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_high_units||0).toFixed(2)} andeler × 🪙${rateHigh}">🪙 ${fh}</span></td>
       <td>${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
       <td><div class="balance-actions">
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')" title="Legg til">➕</button>

@@ -1386,14 +1386,34 @@ async function checkCartPin() {
 }
 
 // ── QUIZ MONDAY RESET ─────────────────────────────────────────────────────
-async function checkAndResetQuiz(s) {
+function checkAndResetQuiz(s) {
   const d = new Date();
   if (d.getDay() !== 1) return; // only Monday
-  // If student's quizWeek is from last week, clear it so they can retake
+
+  // ── Nullstill quiz hvis gammel uke ───────────────────────────────────────
   const currentWeek = getWeekKey();
   if (s.quizWeek && s.quizWeek !== currentWeek) {
-    // Already expired – just in case clear locally (Firebase will show new week)
     window._currentStudent.quizWeek = null;
+  }
+
+  // ── Nullstill uttaksteller på mandag ─────────────────────────────────────
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth()+1).padStart(2,'0');
+  const dy = String(d.getDate()).padStart(2,'0');
+  const today = yr + '-' + mo + '-' + dy;
+  const resetKey = 'withdrawalReset_' + s.fbKey;
+  const lastReset = localStorage.getItem(resetKey);
+
+  if (lastReset !== today) {
+    localStorage.setItem(resetKey, today);
+    if ((s.withdrawalsThisWeek || 0) > 0) {
+      const upd = {}; upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
+      window._update(window._ref(window._db, '/'), upd)
+        .then(function() { patchStudent(s.fbKey, { withdrawalsThisWeek: 0 }); })
+        .catch(function(err) { console.log('Uttaksteller-reset feilet:', err.message); });
+    } else {
+      patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
+    }
   }
 }
 
