@@ -2292,15 +2292,26 @@ async function clearAllHendelser() {
 async function seedDefaultHendelser() {
   if (!ready()) return;
   if (window._hendelser.length > 0) {
-    if (!confirm(`Du har allerede ${window._hendelser.length} hendelser. Legg til 30 standard i tillegg?`)) return;
+    if (!confirm('Du har allerede ' + window._hendelser.length + ' hendelser. Legg til 30 standard i tillegg?')) return;
   }
-  for (const h of DEFAULT_HENDELSER) {
-    await window._set(window._push(fbRef('hendelser')), { ...h, created: Date.now() });
-  }
+
   const alertEl = document.getElementById('hend-alert');
-  if (alertEl) {
-    alertEl.innerHTML = '<div class="alert alert-success">✅ 30 standard hendelser lagt til!</div>';
-    setTimeout(() => alertEl.innerHTML = '', 3000);
+  if (alertEl) alertEl.innerHTML = '<div class="alert alert-info">⏳ Laster inn 30 hendelser…</div>';
+
+  try {
+    // Skriv alle 30 parallelt via Promise.all – langt raskere enn sekvensiell loop
+    await Promise.all(DEFAULT_HENDELSER.map(function(h) {
+      return window._set(window._push(fbRef('hendelser')), Object.assign({}, h, { created: Date.now() }));
+    }));
+    if (alertEl) {
+      alertEl.innerHTML = '<div class="alert alert-success">✅ 30 standard hendelser lagt til!</div>';
+      setTimeout(function() { alertEl.innerHTML = ''; }, 3000);
+    }
+  } catch(err) {
+    console.error('seedDefaultHendelser feilet:', err);
+    if (alertEl) {
+      alertEl.innerHTML = '<div class="alert alert-error">❌ Feil: ' + err.message + '. Sjekk Firebase-regler.</div>';
+    }
   }
 }
 
