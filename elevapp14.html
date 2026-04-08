@@ -358,6 +358,17 @@
         <div class="card-logo">Myntland</div>
       </div>
     </div>
+    <!-- PIN-visning -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;border:1.5px solid var(--border);">
+      <div>
+        <div style="font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">PIN-kode</div>
+        <div id="pin-display-14" style="font-family:'Fredoka One',cursive;font-size:1.4rem;letter-spacing:.4rem;color:var(--teal-dark);">••••</div>
+      </div>
+      <button id="pin-toggle-btn-14" onclick="togglePinDisplay14()"
+        style="background:var(--teal-light);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--teal-dark);cursor:pointer;">
+        👁 Vis PIN
+      </button>
+    </div>
     <div class="pay-instruction">
       <div class="pay-instruction-title">💳 Slik betaler du</div>
       <div style="font-size:.88rem;color:var(--teal-dark);font-weight:700;">
@@ -396,12 +407,16 @@
         <div style="font-size:.78rem;font-weight:800;color:var(--teal-dark);">🛒 LEGG TIL VARE</div>
         <button onclick="startCashierScan()" style="background:var(--teal);color:white;border:none;border-radius:10px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;">📷 Scan vare</button>
       </div>
-      <div class="grocery-scan-grid" id="grocery-btn-grid">
-        <div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;padding:.5rem;">Laster varer…</div>
+      <div style="position:relative;margin-bottom:8px;">
+        <input id="grocery-search" type="text" placeholder="🔍 Søk etter vare…"
+               oninput="filterGrocerySearch(this.value)"
+               style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--teal);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;box-sizing:border-box;outline:none;background:white;">
+      </div>
+      <div id="grocery-search-results" style="display:none;background:white;border-radius:10px;border:2px solid var(--teal);max-height:220px;overflow-y:auto;margin-bottom:4px;">
       </div>
     </div>
 
-    <button class="action-btn action-btn-amber" onclick="generatePaymentQR()" id="pay-btn" disabled style="opacity:.4;">💳 Generer betalings-QR</button>
+    <button class="action-btn action-btn-amber" onclick="generatePaymentQR()" id="pay-btn" disabled style="opacity:.4;">💳 Betal</button>
     <button class="action-btn action-btn-ghost" onclick="clearCart()">🗑️ Tøm kassen</button>
   </div>
 </div>
@@ -574,7 +589,7 @@ function showScreen(id) {
 
 function goToSplash() {
   stopScan();
-  window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0; transactions = [];
+  window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0; transactions = []; _pinVisible14 = false;
   clearCart();
   showScreen('screen-splash');
 }
@@ -603,7 +618,7 @@ function tryLogin() {
     document.getElementById('customer-greeting').textContent = s.firstname;
     document.getElementById('customer-balance').textContent  = s.balance;
     document.getElementById('card-holder').textContent = (s.firstname+' '+s.lastname).toUpperCase();
-    document.getElementById('card-number').textContent = '•••• ' + s.pin;
+    document.getElementById('card-number').textContent = '•••• ••••';
     loadTransactions(s.fbKey);
     checkQuizStatus();
     switchCustomerTab('bank', document.querySelector('.nav-item'));
@@ -1071,16 +1086,43 @@ function closeQuizResult() {
 
 // ── Cashier ────────────────────────────────────────────────────────────────
 function renderGroceryButtons() {
-  const g  = window._groceries;
-  const el = document.getElementById('grocery-btn-grid');
-  if (!el) return;
-  if (!g.length) { el.innerHTML='<div style="color:var(--muted);font-size:.8rem;grid-column:1/-1;">Ingen varer. Legg til via lærerportalen.</div>'; return; }
-  el.innerHTML = g.map(x => `
-    <button class="grocery-scan-btn" onclick="addToCart('${x.emoji}','${x.name.replace(/'/g,"\\'")}',${x.price},'${x.emoji}')">
-      <div class="ge">${x.emoji}</div>
-      <div class="gn">${x.name}</div>
-      <div class="gp">🪙${x.price}</div>
-    </button>`).join('');
+  // Ikke lenger i bruk – søk brukes i stedet
+}
+
+function filterGrocerySearch(query) {
+  const res = document.getElementById('grocery-search-results');
+  if (!res) return;
+  const q = query.trim().toLowerCase();
+  if (!q) { res.style.display = 'none'; res.innerHTML = ''; return; }
+  const matches = (window._groceries || []).filter(function(x) {
+    return x.name.toLowerCase().includes(q) ||
+           (x.category || '').toLowerCase().includes(q) ||
+           x.emoji.includes(q);
+  });
+  if (!matches.length) {
+    res.style.display = 'block';
+    res.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:.85rem;text-align:center;">Ingen varer funnet</div>';
+    return;
+  }
+  res.style.display = 'block';
+  res.innerHTML = matches.map(function(x) {
+    var safeName = x.name.replace(/'/g, "\'");
+    return '<button onclick="addToCartFromSearch(\''+x.emoji+'\',\''+safeName+'\','+x.price+')"'+
+      ' style="width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;border:none;background:none;'+
+      'border-bottom:1px solid #e0ede0;cursor:pointer;font-family:Nunito,sans-serif;text-align:left;">'+
+      '<span style="font-size:1.6rem;">'+x.emoji+'</span>'+
+      '<span style="flex:1;font-weight:700;font-size:.88rem;">'+x.name+'</span>'+
+      '<span style="font-family:Fredoka One,cursive;color:var(--teal);font-size:.95rem;">🪙'+x.price+'</span>'+
+      '</button>';
+  }).join('');
+}
+
+function addToCartFromSearch(emoji, name, price) {
+  addToCart(emoji, name, price, emoji);
+  var inp = document.getElementById('grocery-search');
+  var res = document.getElementById('grocery-search-results');
+  if (inp) inp.value = '';
+  if (res) { res.style.display = 'none'; res.innerHTML = ''; }
 }
 
 function addToCart(name, displayName, price, emoji) {

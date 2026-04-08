@@ -505,6 +505,17 @@
         <div><div style="font-family:'Fredoka One',cursive;color:var(--amber);font-size:.95rem;text-align:right">Myntland</div><div style="font-size:.65rem;color:rgba(255,255,255,.5);text-align:right">Brukskonto</div></div>
       </div>
     </div>
+    <!-- PIN-visning -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;border:1.5px solid var(--border);">
+      <div>
+        <div style="font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">PIN-kode</div>
+        <div id="pin-display-57" style="font-family:'Fredoka One',cursive;font-size:1.4rem;letter-spacing:.4rem;color:var(--teal-dark);">••••</div>
+      </div>
+      <button id="pin-toggle-btn-57" onclick="togglePinDisplay57()"
+        style="background:var(--teal-light);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--teal-dark);cursor:pointer;">
+        👁 Vis PIN
+      </button>
+    </div>
     <div style="background:var(--teal-light);border-radius:13px;padding:.9rem;text-align:center;margin-bottom:1rem;border:2px solid #5DCAA5">
       <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);margin-bottom:3px">💳 Slik betaler du</div>
       <div style="font-size:.82rem;color:var(--teal-dark);font-weight:700">Scan belønnings-QR for å motta mynter<br>eller scan betaling fra kassen 📷</div>
@@ -643,7 +654,7 @@ function tryLogin(){
     window._currentStudent=s;transactions=[];
     document.getElementById('greeting-sub').textContent=s.firstname+' '+s.class;
     document.getElementById('card-holder').textContent=(s.firstname+' '+s.lastname).toUpperCase();
-    document.getElementById('card-number').textContent='•••• '+s.pin;
+    document.getElementById('card-number').textContent='•••• ••••';
     refreshAllDisplays();
     refreshGoalSelect();
     loadTransactions(s.fbKey);
@@ -1698,6 +1709,24 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
+var _pinVisible57 = false;
+function togglePinDisplay57() {
+  _pinVisible57 = !_pinVisible57;
+  var s = window._currentStudent;
+  var disp = document.getElementById('pin-display-57');
+  var btn  = document.getElementById('pin-toggle-btn-57');
+  if (!disp || !btn || !s) return;
+  if (_pinVisible57) {
+    disp.textContent = s.pin;
+    disp.style.letterSpacing = '.5rem';
+    disp.style.color = 'var(--teal-dark)';
+    btn.textContent = '🙈 Skjul PIN';
+  } else {
+    disp.textContent = '••••';
+    disp.style.letterSpacing = '.4rem';
+    btn.textContent = '👁 Vis PIN';
+  }
+}
 function showSuccess(emoji,title,amount,text){
   document.getElementById('suc-emoji').textContent=emoji;document.getElementById('suc-title').textContent=title;
   document.getElementById('suc-amount').textContent=amount;document.getElementById('suc-text').textContent=text;
