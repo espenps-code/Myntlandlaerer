@@ -228,22 +228,20 @@
       const upd = {};
       let count = 0;
       for (const s of students) {
+        // Alltid nullstill uttaksteller for ALLE elever på mandag
+        upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
+        // Legg til rente kun for elever med sparepenger
         if ((s.savings||0) > 0) {
           const interest = Math.floor((s.savings||0) * interestRate);
           if (interest > 0) {
             upd['students57/' + s.fbKey + '/savings'] = (s.savings||0) + interest;
-            upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
             count++;
           }
-        }
-        // Alltid nullstill uttaksteller på mandag
-        if (!upd['students57/' + s.fbKey + '/withdrawalsThisWeek']) {
-          upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
         }
       }
       if (Object.keys(upd).length) await update(ref(db, '/'), upd);
       await set(ref(db, 'interestLastPaid'), today);
-      console.log(`✅ Sparerente (${Math.round(interestRate*100)}%) lagt til for ${count} elever`);
+      console.log(`✅ Sparerente (${Math.round(interestRate*100)}%) lagt til for ${count} elever · uttaksteller nullstilt for alle`);
     } catch(e) { console.log('⚠️ Sparerente-sjekk feilet:', e.message); }
   }
 

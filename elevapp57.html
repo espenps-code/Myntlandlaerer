@@ -1418,14 +1418,27 @@ function checkAndResetQuiz(s) {
 
   if (lastReset !== today) {
     localStorage.setItem(resetKey, today);
-    if ((s.withdrawalsThisWeek || 0) > 0) {
-      const upd = {}; upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
-      window._update(window._ref(window._db, '/'), upd)
-        .then(function() { patchStudent(s.fbKey, { withdrawalsThisWeek: 0 }); })
-        .catch(function(err) { console.log('Uttaksteller-reset feilet:', err.message); });
+    var upd = {};
+    upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
+
+    // Legg til sparerente direkte fra elevappen (uavhengig av portal)
+    var interestRate = (window._settings && window._settings.savingsInterest || 2) / 100;
+    var savings = s.savings || 0;
+    if (savings > 0) {
+      var interest = Math.floor(savings * interestRate);
+      if (interest > 0) {
+        upd['students57/' + s.fbKey + '/savings'] = savings + interest;
+        patchStudent(s.fbKey, { savings: savings + interest, withdrawalsThisWeek: 0 });
+      } else {
+        patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
+      }
     } else {
       patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
     }
+
+    window._update(window._ref(window._db, '/'), upd)
+      .then(function() { refreshAllDisplays(); })
+      .catch(function(err) { console.log('Sparerente/uttaksteller-reset feilet:', err.message); });
   }
 }
 
