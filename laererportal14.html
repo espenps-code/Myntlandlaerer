@@ -54,7 +54,7 @@
       window._students = (window._currentTeacher?.role === 'admin')
         ? all.filter(s => VALID14.includes(s.class))
         : all.filter(s => s.class === window._currentTeacher?.class);
-      renderStudentTable(); renderSaldoTable(); updateStats();
+      renderStudentTable(); renderSaldoTable(); updateStats(); renderTableAvatars();
     });
 
     onValue(ref(db, 'groceries'), snap => {
@@ -309,8 +309,19 @@
     <div class="grid-2">
       <div class="card">
         <div class="card-title">➕ Opprett ny elev</div>
-        <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Sofie"></div>
-        <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Hansen"></div>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;background:var(--teal-light);border-radius:12px;padding:.75rem;">
+          <div id="avatar-preview-wrap" style="flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div id="avatar-preview-label" style="font-size:.75rem;font-weight:800;color:var(--teal-dark);margin-bottom:4px;">Ingen avatar ennå</div>
+            <input type="hidden" id="avatar-seed-input" value="">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="randomFictiveName()">🎲 Fiktivt navn + avatar</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="rerollAvatar()">🔄 Ny avatar</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Bjørk"></div>
+        <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Skog"></div>
         <div class="form-row"><label>Klasse</label>
           <select id="new-class">
             <option value="1. klasse">1. klasse</option>
@@ -910,6 +921,251 @@ async function renameClass() {
 // ══════════════════════════════════════════════════════════
 // STUDENTS
 // ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// DYREAVATAR ENGINE – lokal SVG-generator (ingen ekstern API)
+// Seed-basert: samme seed → samme avatar alltid
+// ════════════════════════════════════════════════════════════
+(function() {
+  const PALETTES = [
+    { body:'#E8895A', dark:'#C4623A', light:'#FAD4B0', eye:'#3D2010', bg:'#FFF3EC' },
+    { body:'#7BC67E', dark:'#4E9A52', light:'#C8EAC9', eye:'#1A3D1C', bg:'#F0FAF0' },
+    { body:'#7BAED4', dark:'#4A82B0', light:'#C5DFF2', eye:'#0D2F4A', bg:'#EDF5FC' },
+    { body:'#C47DB8', dark:'#9A508E', light:'#EDD5E9', eye:'#3D1040', bg:'#FAF0F8' },
+    { body:'#E8C85A', dark:'#C4A030', light:'#FAF0C0', eye:'#3D2E08', bg:'#FFFBEC' },
+    { body:'#E87A7A', dark:'#C44A4A', light:'#FAC5C5', eye:'#3D0808', bg:'#FFF0F0' },
+    { body:'#6ECECE', dark:'#3A9898', light:'#C0EAEA', eye:'#0A3030', bg:'#EDFAFA' },
+    { body:'#A0917A', dark:'#7A6A55', light:'#DDD0BE', eye:'#2A1E0A', bg:'#F8F4EE' },
+  ];
+  const NAMES = ['Rev','Bjørn','Frosk','Ugle','Katt','Hund','Kanin','Pinnsvin','Sjiraff','Pingvin','Løve','Koala'];
+
+  function sr(seed, max) {
+    let x = Math.sin(seed * 9301 + 49297) * 233280;
+    return Math.floor((x - Math.floor(x)) * max);
+  }
+  function ns(tag, attrs, parent) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function eyes(g, p, cx, y, r=4) {
+    for (const dx of [-8,8]) {
+      ns('circle',{cx:cx+dx,cy:y,r,fill:'white'},g);
+      ns('circle',{cx:cx+dx+.5,cy:y+.5,r:r*.55,fill:p.eye},g);
+      ns('circle',{cx:cx+dx+1,cy:y-.5,r:r*.2,fill:'white'},g);
+    }
+  }
+  function smile(g,cx,y,w=10){ ns('path',{d:`M${cx-w} ${y} Q${cx} ${y+w*.7} ${cx+w} ${y}`,fill:'none',stroke:'#3D1A08','stroke-width':'1.5','stroke-linecap':'round'},g); }
+  function nose(g,p,cx,y){ ns('ellipse',{cx,cy:y,rx:4,ry:2.5,fill:p.dark},g); }
+
+  const DRAWERS = [
+    function drawFox(g,p){ // Rev
+      ns('ellipse',{cx:50,cy:65,rx:28,ry:24,fill:p.body},g);
+      ns('polygon',{points:'35,42 22,15 42,38',fill:p.body},g);
+      ns('polygon',{points:'27,18 32,12 40,37',fill:p.dark},g);
+      ns('polygon',{points:'65,42 78,15 58,38',fill:p.body},g);
+      ns('polygon',{points:'73,18 68,12 60,37',fill:p.dark},g);
+      ns('ellipse',{cx:50,cy:52,rx:25,ry:22,fill:p.body},g);
+      ns('ellipse',{cx:50,cy:62,rx:16,ry:12,fill:p.light},g);
+      eyes(g,p,50,48); nose(g,p,50,58); smile(g,50,63);
+    },
+    function drawBear(g,p){ // Bjørn
+      ns('circle',{cx:30,cy:40,r:14,fill:p.body},g);
+      ns('circle',{cx:70,cy:40,r:14,fill:p.body},g);
+      ns('circle',{cx:30,cy:40,r:8,fill:p.dark},g);
+      ns('circle',{cx:70,cy:40,r:8,fill:p.dark},g);
+      ns('circle',{cx:50,cy:58,r:28,fill:p.body},g);
+      ns('ellipse',{cx:50,cy:68,rx:14,ry:10,fill:p.light},g);
+      eyes(g,p,50,52,4.5); nose(g,p,50,62); smile(g,50,68);
+    },
+    function drawFrog(g,p){ // Frosk
+      ns('circle',{cx:34,cy:36,r:12,fill:p.body},g);
+      ns('circle',{cx:66,cy:36,r:12,fill:p.body},g);
+      ns('circle',{cx:34,cy:36,r:7,fill:'white'},g);
+      ns('circle',{cx:66,cy:36,r:7,fill:'white'},g);
+      ns('circle',{cx:35,cy:37,r:4,fill:p.eye},g);
+      ns('circle',{cx:67,cy:37,r:4,fill:p.eye},g);
+      ns('circle',{cx:36,cy:36,r:1.5,fill:'white'},g);
+      ns('circle',{cx:68,cy:36,r:1.5,fill:'white'},g);
+      ns('ellipse',{cx:50,cy:65,rx:26,ry:22,fill:p.body},g);
+      ns('ellipse',{cx:50,cy:70,rx:16,ry:12,fill:p.light},g);
+      nose(g,p,50,60); smile(g,50,68,12);
+    },
+    function drawOwl(g,p){ // Ugle
+      ns('ellipse',{cx:50,cy:60,rx:26,ry:28,fill:p.body},g);
+      ns('polygon',{points:'38,30 32,16 44,32',fill:p.body},g);
+      ns('polygon',{points:'62,30 68,16 56,32',fill:p.body},g);
+      ns('ellipse',{cx:50,cy:55,rx:18,ry:20,fill:p.light},g);
+      for(const dx of[-10,10]){
+        ns('circle',{cx:50+dx,cy:50,r:9,fill:'white'},g);
+        ns('circle',{cx:50+dx,cy:50,r:7,fill:p.body},g);
+        ns('circle',{cx:50.5+dx,cy:50.5,r:4,fill:p.eye},g);
+        ns('circle',{cx:51.5+dx,cy:49.5,r:1.5,fill:'white'},g);
+      }
+      ns('polygon',{points:'50,60 46,55 54,55',fill:'#E8A830'},g);
+    },
+    function drawCat(g,p){ // Katt
+      ns('polygon',{points:'33,40 24,16 42,36',fill:p.body},g);
+      ns('polygon',{points:'28,18 33,13 41,35',fill:p.light},g);
+      ns('polygon',{points:'67,40 76,16 58,36',fill:p.body},g);
+      ns('polygon',{points:'72,18 67,13 59,35',fill:p.light},g);
+      ns('circle',{cx:50,cy:56,r:26,fill:p.body},g);
+      eyes(g,p,50,50,5); nose(g,p,50,60); smile(g,50,65);
+      for(const[x1,x2,y]of[[20,40,58],[20,40,63],[20,40,68],[80,60,58],[80,60,63],[80,60,68]])
+        ns('line',{x1,y1:y,x2,y2:y,stroke:p.dark,'stroke-width':'1','stroke-linecap':'round'},g);
+    },
+    function drawDog(g,p){ // Hund
+      ns('ellipse',{cx:28,cy:55,rx:10,ry:18,fill:p.body,transform:'rotate(-15,28,55)'},g);
+      ns('ellipse',{cx:72,cy:55,rx:10,ry:18,fill:p.body,transform:'rotate(15,72,55)'},g);
+      ns('circle',{cx:50,cy:54,r:27,fill:p.body},g);
+      ns('ellipse',{cx:50,cy:64,rx:14,ry:10,fill:p.light},g);
+      eyes(g,p,50,48,5);
+      ns('ellipse',{cx:50,cy:59,rx:7,ry:5,fill:p.dark},g);
+      ns('circle',{cx:50,cy:59,r:3,fill:'#E87A7A'},g);
+      smile(g,50,66,8);
+    },
+    function drawRabbit(g,p){ // Kanin
+      ns('ellipse',{cx:37,cy:28,rx:7,ry:20,fill:p.body},g);
+      ns('ellipse',{cx:37,cy:28,rx:4,ry:16,fill:'#F4C0D1'},g);
+      ns('ellipse',{cx:63,cy:28,rx:7,ry:20,fill:p.body},g);
+      ns('ellipse',{cx:63,cy:28,rx:4,ry:16,fill:'#F4C0D1'},g);
+      ns('circle',{cx:50,cy:60,r:26,fill:p.body},g);
+      ns('ellipse',{cx:50,cy:65,rx:13,ry:10,fill:p.light},g);
+      eyes(g,p,50,53,5); nose(g,p,50,62); smile(g,50,67);
+    },
+    function drawHedgehog(g,p){ // Pinnsvin
+      for(let i=0;i<12;i++){
+        const a=(i/12)*Math.PI*2-Math.PI*.4;
+        if(a>.6&&a<Math.PI*1.4)continue;
+        ns('ellipse',{cx:50+Math.cos(a)*30,cy:55+Math.sin(a)*28,rx:4,ry:9,fill:p.dark,transform:`rotate(${a*180/Math.PI+90},${50+Math.cos(a)*30},${55+Math.sin(a)*28})`},g);
+      }
+      ns('ellipse',{cx:50,cy:60,rx:26,ry:22,fill:p.body},g);
+      ns('ellipse',{cx:38,cy:64,rx:14,ry:11,fill:p.light},g);
+      eyes(g,p,42,57,4);
+      ns('circle',{cx:34,cy:64,r:3,fill:p.dark},g);
+      smile(g,40,68,8);
+    },
+    function drawGiraffe(g,p){ // Sjiraff
+      ns('ellipse',{cx:50,cy:38,rx:8,ry:22,fill:p.body},g);
+      ns('circle',{cx:50,cy:22,r:16,fill:p.body},g);
+      for(let i=0;i<8;i++){const x=35+(i%3)*10,y=30+Math.floor(i/3)*12;ns('circle',{cx:x,cy:y,r:4,fill:p.dark,opacity:.5},g);}
+      ns('ellipse',{cx:50,cy:20,rx:13,ry:11,fill:p.body},g);
+      for(const dx of[-6,6])ns('ellipse',{cx:50+dx,cy:12,rx:3,ry:5,fill:p.dark},g);
+      eyes(g,p,50,17,4); nose(g,p,50,24); smile(g,50,28);
+    },
+    function drawPenguin(g,p){ // Pingvin
+      ns('ellipse',{cx:50,cy:62,rx:24,ry:28,fill:'#2C2C2A'},g);
+      ns('ellipse',{cx:50,cy:65,rx:15,ry:20,fill:'white'},g);
+      ns('circle',{cx:50,cy:44,r:18,fill:'#2C2C2A'},g);
+      ns('circle',{cx:50,cy:43,r:12,fill:'white'},g);
+      eyes(g,{...p,eye:'#1A1A18'},50,40,4);
+      ns('polygon',{points:'50,49 46,44 54,44',fill:'#E8A830'},g);
+      for(const dx of[-1,1])ns('ellipse',{cx:50+dx*22,cy:65,rx:8,ry:14,fill:'#2C2C2A',transform:`rotate(${dx*20},${50+dx*22},65)`},g);
+      ns('ellipse',{cx:38,cy:90,rx:10,ry:5,fill:'#E8A830'},g);
+      ns('ellipse',{cx:62,cy:90,rx:10,ry:5,fill:'#E8A830'},g);
+    },
+    function drawLion(g,p){ // Løve
+      ns('circle',{cx:50,cy:54,r:34,fill:'#C4803A'},g);
+      ns('circle',{cx:50,cy:52,r:25,fill:p.body},g);
+      ns('ellipse',{cx:50,cy:62,rx:14,ry:10,fill:p.light},g);
+      eyes(g,p,50,46,5); nose(g,p,50,57); smile(g,50,64,10);
+      for(const[x1,x2,y]of[[18,38,60],[18,38,65],[18,38,70],[82,62,60],[82,62,65],[82,62,70]])
+        ns('line',{x1,y1:y,x2,y2:y,stroke:p.dark,'stroke-width':'1','stroke-linecap':'round'},g);
+    },
+    function drawKoala(g,p){ // Koala
+      ns('ellipse',{cx:25,cy:52,rx:16,ry:14,fill:p.body},g);
+      ns('ellipse',{cx:75,cy:52,rx:16,ry:14,fill:p.body},g);
+      ns('ellipse',{cx:25,cy:52,rx:10,ry:9,fill:p.light},g);
+      ns('ellipse',{cx:75,cy:52,rx:10,ry:9,fill:p.light},g);
+      ns('circle',{cx:50,cy:58,r:28,fill:p.body},g);
+      ns('ellipse',{cx:50,cy:60,rx:18,ry:14,fill:p.light},g);
+      ns('ellipse',{cx:50,cy:57,rx:10,ry:7,fill:p.dark},g);
+      eyes(g,p,50,50,5); smile(g,50,66,9);
+    },
+  ];
+
+  window.makeAnimalSVG = function(seed, size=80) {
+    const p  = PALETTES[sr(seed, PALETTES.length)];
+    const di = sr(seed+7, DRAWERS.length);
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 100 100');
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    svg.style.borderRadius = '50%';
+    svg.style.display = 'block';
+    svg.style.background = p.bg;
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    DRAWERS[di](g, p);
+    svg.appendChild(g);
+    return svg;
+  };
+
+  window.getAnimalName = function(seed) {
+    return NAMES[sr(seed+7, NAMES.length)];
+  };
+
+  window.animalSVGString = function(seed, size=80) {
+    const p  = PALETTES[sr(seed, PALETTES.length)];
+    const di = sr(seed+7, DRAWERS.length);
+    const W=100;
+    const lines = [];
+    lines.push(`<svg viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;background:${p.bg};display:block;">`);
+    lines.push('<g>');
+    // We can't easily serialize, so we'll use makeAnimalSVG + XMLSerializer
+    lines.push('</g></svg>');
+    // Actually just return the DOM element's outerHTML after rendering
+    const el = window.makeAnimalSVG(seed, size);
+    return el.outerHTML;
+  };
+})();
+
+
+// ── Fiktive navn ─────────────────────────────────────────────────────────────
+const FICTIVE_FIRST = ['Bjørk','Elg','Fjord','Granit','Hassel','Iris','Jade','Kvist',
+  'Lyng','Mose','Nøtt','Osp','Pil','Rime','Snø','Tind','Urte','Vind','Aks','Blom',
+  'Dav','Ert','Furu','Gro','Hei','Iver','Jul','Kai','Lov','Mar','Nils','Orm','Pål',
+  'Roi','Sel','Tim','Ulf','Val','Wil','Åge'];
+const FICTIVE_LAST  = ['Skog','Dal','Fjell','Eng','Vik','Nes','Mo','Li','Haug','Berg',
+  'Stein','Sand','Elv','Holt','Lund','Myr','Røys','Åker','Bø','Grend','Havn','Ø',
+  'Bekk','Eid','Foss','Gard','Høy','Kil','Lei','Mol'];
+
+function generateFictiveName(seed) {
+  function r(s, max) { let x = Math.sin(s*9301+49297)*233280; return Math.floor((x-Math.floor(x))*max); }
+  const ts = seed || (Date.now() % 99999);
+  return {
+    firstname: FICTIVE_FIRST[r(ts, FICTIVE_FIRST.length)],
+    lastname:  FICTIVE_LAST [r(ts+1, FICTIVE_LAST.length)],
+    seed: ts
+  };
+}
+
+function randomFictiveName() {
+  const s = Math.floor(Math.random() * 99999);
+  const n = generateFictiveName(s);
+  document.getElementById('new-firstname').value = n.firstname;
+  document.getElementById('new-lastname').value  = n.lastname;
+  window._pendingAvatarSeed = s;
+  renderPortalAvatarPreview(s);
+}
+
+function renderPortalAvatarPreview(seed) {
+  const wrap = document.getElementById('avatar-preview-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const svg = window.makeAnimalSVG(seed, 64);
+  wrap.appendChild(svg);
+  const label = document.getElementById('avatar-preview-label');
+  if (label) label.textContent = window.getAnimalName(seed);
+  document.getElementById('avatar-seed-input').value = seed;
+}
+
+function rerollAvatar() {
+  const s = Math.floor(Math.random() * 99999);
+  window._pendingAvatarSeed = s;
+  renderPortalAvatarPreview(s);
+}
+
 function generatePIN() { return String(Math.floor(1000 + Math.random() * 9000)); }
 
 async function createStudent() {
@@ -921,11 +1177,18 @@ async function createStudent() {
   const alertEl = document.getElementById('create-alert');
   if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
   const pin = generatePIN();
-  await window._set(window._push(fbRef('students14')), { firstname:fn, lastname:ln, class:cls, pin, balance:bal, created:Date.now() });
+  const avatarSeed = window._pendingAvatarSeed || Math.floor(Math.random()*99999);
+  await window._set(window._push(fbRef('students14')), {
+    firstname:fn, lastname:ln, class:cls, pin, balance:bal,
+    avatarSeed, created:Date.now()
+  });
   document.getElementById('new-firstname').value = '';
   document.getElementById('new-lastname').value  = '';
   document.getElementById('new-balance').value   = '50';
-  alertEl.innerHTML = `<div class="alert alert-success">✅ ${fn} ${ln} opprettet! PIN: <strong>${pin}</strong></div>`;
+  window._pendingAvatarSeed = null;
+  const wrap = document.getElementById('avatar-preview-wrap');
+  if (wrap) wrap.innerHTML = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${fn} ${ln} (${window.getAnimalName(avatarSeed)}) opprettet! PIN: <strong>${pin}</strong></div>`;
 }
 
 function renderStudentTable() {
@@ -953,7 +1216,7 @@ function renderStudentTable() {
       : `<span style="color:var(--muted);font-size:.8rem;">–</span>`;
     return `<tr>
       <td><div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark);">${s.firstname[0]}${s.lastname[0]}</div>
+        <div id="av-${s.fbKey}" style="width:36px;height:36px;flex-shrink:0;" data-seed="${s.avatarSeed||0}"></div>
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
       <td><span class="class-badge">${s.class}</span></td>
       <td>${grpBadge}</td>
@@ -969,7 +1232,14 @@ function renderStudentTable() {
   }).join('');
 }
 
-function filterStudents(v) { searchFilter = v; renderStudentTable(); }
+function renderTableAvatars() {
+  document.querySelectorAll('[id^="av-"]').forEach(el => {
+    const seed = parseInt(el.dataset.seed) || 0;
+    el.innerHTML = '';
+    el.appendChild(window.makeAnimalSVG(seed, 36));
+  });
+}
+function filterStudents(v) { searchFilter = v; renderStudentTable(); renderTableAvatars(); }
 function filterClass(v)    { classFilter  = v; renderStudentTable(); }
 
 function updateStats() {
@@ -1878,8 +2148,17 @@ function generateCardPDF() {
           <div class="card-chip"></div>
         </div>
         <div class="card-bottom">
-          <div class="card-label">Kortinnehaver</div>
-          <div class="card-name">${displayName}</div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+            <div>
+              <div class="card-label">Kortinnehaver</div>
+              <div class="card-name">${displayName}</div>
+            </div>
+            ${(function(){
+              var seed = s.avatarSeed||0;
+              var svgEl = window.makeAnimalSVG(seed, 38);
+              return svgEl ? svgEl.outerHTML : '';
+            })()}
+          </div>
           <div class="card-footer">
             <div>
               <div class="card-pin-label">PIN-kode</div>
