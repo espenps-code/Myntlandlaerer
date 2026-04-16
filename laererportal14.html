@@ -301,6 +301,7 @@
 
   <div class="tabs">
     <button class="tab active" onclick="showElevTab('manuell',this)">✏️ Opprett manuelt</button>
+    <button class="tab" onclick="showElevTab('klasse',this)">🏫 Opprett klasse</button>
     <button class="tab" onclick="showElevTab('csv',this)">📥 Importer CSV</button>
     <button class="tab" onclick="showElevTab('klasser',this)">🏷️ Klasser</button>
   </div>
@@ -349,6 +350,75 @@
         </div>
         <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort</button>
         <div style="margin-top:1.25rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Dataene lagres i Firebase og synkroniseres på alle enheter.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="elev-tab-klasse" style="display:none;">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🏫 Opprett hel klasse</div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
+          Generer en hel klasse med fiktive navn og dyreavatarer automatisk.
+          Du får en liste med ekte navn ↔ fiktivt navn etterpå.
+        </p>
+        <div class="form-row">
+          <label>Klasse</label>
+          <select id="bulk-class-select">
+            <option value="1. klasse">1. klasse</option>
+            <option value="2. klasse">2. klasse</option>
+            <option value="3. klasse">3. klasse</option>
+            <option value="4. klasse">4. klasse</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Antall elever</label>
+          <input type="number" id="bulk-count" value="25" min="1" max="70">
+        </div>
+        <div class="form-row">
+          <label>Startsaldo (mynter)</label>
+          <input type="number" id="bulk-balance" value="50" min="0">
+        </div>
+        <button class="btn btn-primary" onclick="generateWholeClass()">🎲 Generer klasse</button>
+        <div id="bulk-class-alert" style="margin-top:.75rem;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👁 Forhåndsvisning</div>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
+          Klikk «Generer klasse» for å se og redigere listen før du oppretter elevene.
+        </p>
+        <div id="bulk-preview-list" style="max-height:320px;overflow-y:auto;"></div>
+        <div id="bulk-actions" style="display:none;margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="bulk-create-btn" onclick="createWholeClass()">✅ Opprett alle</button>
+          <button class="btn btn-ghost" onclick="clearBulkPreview()">✕ Avbryt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kodeliste for utskrift -->
+    <div class="card" id="bulk-codelist-card" style="display:none;">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>📋 Kodeliste – ekte navn ↔ fiktivt navn</span>
+        <button class="btn btn-amber btn-sm" onclick="printCodeList()">🖨️ Skriv ut kodeliste</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
+        Fyll inn ekte elevnavn i høyre kolonne. Oppbevar denne listen på din egen PC – ikke i Firebase.
+      </p>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;font-size:.85rem;">
+          <thead>
+            <tr style="background:var(--teal-light);">
+              <th style="padding:8px 12px;text-align:left;">Avatar</th>
+              <th style="padding:8px 12px;text-align:left;">Fiktivt navn</th>
+              <th style="padding:8px 12px;text-align:left;">PIN</th>
+              <th style="padding:8px 12px;text-align:left;">Klasse</th>
+              <th style="padding:8px 12px;text-align:left;">Ekte navn (fyll inn)</th>
+            </tr>
+          </thead>
+          <tbody id="bulk-codelist-body"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -863,7 +933,7 @@ function showPage(page) {
 }
 
 function showElevTab(tab, btn) {
-  ['manuell','csv','klasser'].forEach(t => {
+  ['manuell','klasse','csv','klasser'].forEach(t => {
     document.getElementById('elev-tab-' + t).style.display = t === tab ? 'block' : 'none';
   });
   btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -1230,6 +1300,203 @@ function renderStudentTable() {
       </div></td>
     </tr>`;
   }).join('');
+}
+
+
+// ── Opprett hel klasse ─────────────────────────────────────────────────────
+var _bulkClassData = []; // {firstname, lastname, avatarSeed, pin, class, balance}
+
+function generateWholeClass() {
+  const cls   = document.getElementById('bulk-class-select').value;
+  const count = Math.min(70, Math.max(1, parseInt(document.getElementById('bulk-count').value) || 25));
+  const bal   = parseInt(document.getElementById('bulk-balance').value) || 50;
+  const alertEl = document.getElementById('bulk-class-alert');
+
+  // Generate unique names – avoid duplicates
+  const usedSeeds = new Set();
+  const usedNames = new Set();
+  _bulkClassData = [];
+
+  let attempts = 0;
+  while (_bulkClassData.length < count && attempts < 9999) {
+    attempts++;
+    const seed = Math.floor(Math.random() * 99999);
+    if (usedSeeds.has(seed)) continue;
+    const n = generateFictiveName(seed);
+    const nameKey = n.firstname + ' ' + n.lastname;
+    if (usedNames.has(nameKey)) continue;
+    usedSeeds.add(seed);
+    usedNames.add(nameKey);
+    _bulkClassData.push({
+      firstname: n.firstname, lastname: n.lastname,
+      avatarSeed: seed, pin: generatePIN(),
+      class: cls, balance: bal
+    });
+  }
+
+  renderBulkPreview();
+  alertEl.innerHTML = '<div class="alert alert-success">✅ ' + _bulkClassData.length + ' elever generert – sjekk listen og klikk «Opprett alle»</div>';
+  setTimeout(() => alertEl.innerHTML = '', 4000);
+}
+
+function renderBulkPreview() {
+  const list = document.getElementById('bulk-preview-list');
+  const actions = document.getElementById('bulk-actions');
+  if (!list) return;
+
+  if (!_bulkClassData.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Ingen elever generert ennå.</p>';
+    if (actions) actions.style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = _bulkClassData.map((s, i) => {
+    const animalName = window.getAnimalName(s.avatarSeed);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">' +
+      '<div id="bpav-' + i + '" style="width:34px;height:34px;flex-shrink:0;"></div>' +
+      '<div style="flex:1;">' +
+        '<div style="font-weight:800;font-size:.88rem;">' + s.firstname + ' ' + s.lastname + '</div>' +
+        '<div style="font-size:.72rem;color:var(--muted);">' + animalName + ' · PIN: ' + s.pin + ' · ' + s.class + '</div>' +
+      '</div>' +
+      '<button onclick="rerollBulkStudent(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:1rem;" title="Generer nytt navn/avatar">🔄</button>' +
+      '<button onclick="removeBulkStudent(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:1rem;" title="Fjern">✕</button>' +
+    '</div>';
+  }).join('');
+
+  if (actions) actions.style.display = 'flex';
+
+  // Render avatars
+  setTimeout(function() {
+    _bulkClassData.forEach(function(s, i) {
+      var el = document.getElementById('bpav-' + i);
+      if (el && window.makeAnimalSVG) {
+        el.innerHTML = '';
+        el.appendChild(window.makeAnimalSVG(s.avatarSeed, 34));
+      }
+    });
+  }, 50);
+}
+
+function rerollBulkStudent(i) {
+  var seed = Math.floor(Math.random() * 99999);
+  var n = generateFictiveName(seed);
+  _bulkClassData[i].firstname   = n.firstname;
+  _bulkClassData[i].lastname    = n.lastname;
+  _bulkClassData[i].avatarSeed  = seed;
+  renderBulkPreview();
+}
+
+function removeBulkStudent(i) {
+  _bulkClassData.splice(i, 1);
+  renderBulkPreview();
+}
+
+function clearBulkPreview() {
+  _bulkClassData = [];
+  renderBulkPreview();
+  document.getElementById('bulk-codelist-card').style.display = 'none';
+}
+
+async function createWholeClass() {
+  if (!ready() || !_bulkClassData.length) return;
+  const btn = document.getElementById('bulk-create-btn');
+  btn.textContent = '⏳ Oppretter…';
+  btn.disabled = true;
+
+  // Write all to Firebase in parallel
+  const createdStudents = [];
+  await Promise.all(_bulkClassData.map(async function(s) {
+    await window._set(window._push(fbRef('students14')), {
+      firstname: s.firstname, lastname: s.lastname,
+      class: s.class, pin: s.pin,
+      balance: s.balance, avatarSeed: s.avatarSeed,
+      created: Date.now()
+    });
+    createdStudents.push(s);
+  }));
+
+  btn.textContent = '✅ Opprett alle';
+  btn.disabled = false;
+
+  // Show codelist
+  showBulkCodeList(createdStudents);
+
+  document.getElementById('bulk-class-alert').innerHTML =
+    '<div class="alert alert-success">✅ ' + createdStudents.length + ' elever opprettet! Skriv ut kodelisten nedenfor.</div>';
+}
+
+function showBulkCodeList(students) {
+  const card = document.getElementById('bulk-codelist-card');
+  const tbody = document.getElementById('bulk-codelist-body');
+  if (!card || !tbody) return;
+  card.style.display = 'block';
+
+  tbody.innerHTML = students.map(function(s, i) {
+    return '<tr style="border-bottom:1px solid var(--border);">' +
+      '<td style="padding:6px 12px;" id="cl-av-' + i + '"></td>' +
+      '<td style="padding:6px 12px;font-weight:800;">' + s.firstname + ' ' + s.lastname + '</td>' +
+      '<td style="padding:6px 12px;"><code style="background:var(--bg);padding:2px 8px;border-radius:6px;">' + s.pin + '</code></td>' +
+      '<td style="padding:6px 12px;">' + s.class + '</td>' +
+      '<td style="padding:6px 12px;"><input type="text" placeholder="Skriv inn ekte navn…" style="width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:Nunito,sans-serif;font-size:.85rem;"></td>' +
+    '</tr>';
+  }).join('');
+
+  setTimeout(function() {
+    students.forEach(function(s, i) {
+      var el = document.getElementById('cl-av-' + i);
+      if (el && window.makeAnimalSVG) {
+        el.innerHTML = '';
+        el.appendChild(window.makeAnimalSVG(s.avatarSeed, 32));
+      }
+    });
+  }, 50);
+
+  card.scrollIntoView({ behavior: 'smooth' });
+}
+
+function printCodeList() {
+  const rows = document.querySelectorAll('#bulk-codelist-body tr');
+  if (!rows.length) return;
+
+  const tableHTML = Array.from(rows).map(function(row) {
+    const cells = row.querySelectorAll('td');
+    const avatarSeed = parseInt(row.querySelector('[id^="cl-av-"]')?.dataset?.seed || 0);
+    const fictional = cells[1]?.textContent || '';
+    const pin       = cells[2]?.textContent || '';
+    const cls       = cells[3]?.textContent || '';
+    const real      = cells[4]?.querySelector('input')?.value || '';
+    const svgEl = window.makeAnimalSVG(avatarSeed || Math.floor(Math.random()*99999), 30);
+    const svgStr = svgEl ? svgEl.outerHTML : '';
+    return '<tr>' +
+      '<td style="padding:5px 8px;">' + svgStr + '</td>' +
+      '<td style="padding:5px 8px;font-weight:700;">' + fictional + '</td>' +
+      '<td style="padding:5px 8px;font-family:monospace;">' + pin + '</td>' +
+      '<td style="padding:5px 8px;">' + cls + '</td>' +
+      '<td style="padding:5px 8px;border-bottom:1px solid #ccc;min-width:120px;">' + (real || '') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
+    '<style>' +
+    '@media print{@page{size:A4 portrait;margin:12mm}}' +
+    'body{font-family:Nunito,sans-serif;padding:12mm;}' +
+    'h2{font-family:"Fredoka One",cursive;color:#085041;margin-bottom:8mm;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{background:#E1F5EE;color:#085041;padding:6px 8px;text-align:left;font-size:11px;}' +
+    'td{padding:5px 8px;border-bottom:1px solid #e0ede0;font-size:11px;vertical-align:middle;}' +
+    '.real-col{border-bottom:1px solid #999;min-width:120px;}' +
+    '</style>' +
+    '</head><body>' +
+    '<h2>🪙 Myntland – Kodeliste</h2>' +
+    '<p style="font-size:11px;color:#666;margin-bottom:6mm;">Fyll inn ekte elevnavn i høyre kolonne. Oppbevar denne listen lokalt.</p>' +
+    '<table><thead><tr>' +
+    '<th>Avatar</th><th>Fiktivt navn</th><th>PIN</th><th>Klasse</th><th>Ekte navn</th>' +
+    '</tr></thead><tbody>' + tableHTML + '</tbody></table>' +
+    '<script>setTimeout(function(){window.print();},400);<\/script>' +
+    '</body></html>');
+  win.document.close();
 }
 
 function renderTableAvatars() {
