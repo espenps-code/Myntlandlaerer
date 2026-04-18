@@ -400,6 +400,22 @@
       </div>
     </div>
 
+    <!-- Frittstående klasseliste-utskrift -->
+    <div class="card">
+      <div class="card-title">📋 Skriv ut klasseliste</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
+        Skriv ut en liste for en eksisterende klasse med plass til å fylle inn elevenes virkelige navn.
+      </p>
+      <div class="form-row">
+        <label>Velg klasse</label>
+        <select id="print-class-select">
+          <option value="">Alle klasser</option>
+        </select>
+      </div>
+      <button class="btn btn-amber" onclick="printExistingClassList()">🖨️ Skriv ut klasseliste</button>
+    </div>
+  </div>
+
     <!-- Kodeliste for utskrift -->
     <div class="card" id="bulk-codelist-card" style="display:none;">
       <div class="card-title" style="justify-content:space-between;">
@@ -907,6 +923,7 @@ function showElevTab(tab, btn) {
   btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (tab === 'klasser') renderClassManager();
+  if (tab === 'klasse') populatePrintClassSelect();
 }
 
 function getClassNames() {
@@ -1472,6 +1489,89 @@ function showBulkCodeList(students) {
   }, 50);
 
   card.scrollIntoView({ behavior: 'smooth' });
+}
+
+
+function populatePrintClassSelect() {
+  const sel = document.getElementById('print-class-select');
+  if (!sel) return;
+  const classes = [...new Set(window._students.map(s => s.class))].sort();
+  sel.innerHTML = '<option value="">Alle klasser</option>' +
+    classes.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+}
+
+function printExistingClassList() {
+  const cls = document.getElementById('print-class-select').value;
+  const students = cls
+    ? window._students.filter(s => s.class === cls)
+    : window._students;
+
+  if (!students.length) {
+    alert(cls ? 'Ingen elever i ' + cls + '.' : 'Ingen elever funnet.'); return;
+  }
+
+  // Sort alphabetically by firstname
+  const sorted = [...students].sort((a,b) => a.firstname.localeCompare(b.firstname, 'no'));
+  const className = cls || 'Alle klasser';
+
+  const rowsHTML = sorted.map(function(s, i) {
+    const svgEl = window.makeAnimalSVG(s.avatarSeed || 0, 32);
+    const svgStr = svgEl ? svgEl.outerHTML : '';
+    const animal = window.getAnimalName(s.avatarSeed || 0);
+    return '<tr>' +
+      '<td class="num">' + (i+1) + '</td>' +
+      '<td class="av">' + svgStr + '</td>' +
+      '<td class="fiktivt">' + s.firstname + ' ' + s.lastname + '<br><span class="animal">' + animal + '</span></td>' +
+      '<td class="pin"><code>' + s.pin + '</code></td>' +
+      '<td class="ekte"></td>' +
+    '</tr>';
+  }).join('');
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">' +
+    '<style>' +
+    '@media print{@page{size:A4 portrait;margin:10mm} .no-print{display:none}}' +
+    'body{font-family:Nunito,sans-serif;padding:10mm;color:#1a2e1a;}' +
+    '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #1D9E75;padding-bottom:5mm;margin-bottom:6mm;}' +
+    '.title{font-family:"Fredoka One",cursive;font-size:18px;color:#085041;}' +
+    '.subtitle{font-size:11px;color:#5a7a5a;margin-top:2px;}' +
+    '.badge{background:#E1F5EE;color:#085041;font-weight:800;padding:3px 10px;border-radius:20px;font-size:11px;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'thead tr{background:#E1F5EE;}' +
+    'th{padding:6px 8px;text-align:left;font-size:10px;color:#085041;font-weight:800;text-transform:uppercase;letter-spacing:.3px;}' +
+    'td{padding:5px 8px;border-bottom:1px solid #e8f0e8;vertical-align:middle;}' +
+    'td.num{color:#aaa;font-size:10px;width:22px;}' +
+    'td.av{width:38px;}' +
+    'td.fiktivt{font-weight:700;font-size:11px;}' +
+    '.animal{font-size:9px;color:#5a7a5a;font-weight:600;}' +
+    'td.pin{font-size:11px;width:60px;}' +
+    'td.pin code{background:#f0faf0;padding:2px 6px;border-radius:4px;font-family:monospace;color:#085041;}' +
+    'td.ekte{border-bottom:1.5px solid #1D9E75;min-width:160px;font-size:11px;}' +
+    'tr:nth-child(even){background:#f8fcf8;}' +
+    '.footer{margin-top:8mm;font-size:9px;color:#aaa;border-top:1px solid #e8f0e8;padding-top:3mm;display:flex;justify-content:space-between;}' +
+    '</style>' +
+    '</head><body>' +
+    '<div class="header">' +
+      '<div>' +
+        '<div class="title">🪙 Myntland – Klasseliste</div>' +
+        '<div class="subtitle">Fyll inn elevenes virkelige navn i høyre kolonne. Oppbevar lokalt – ikke last opp til Firebase.</div>' +
+      '</div>' +
+      '<div class="badge">' + className + ' · ' + sorted.length + ' elever</div>' +
+    '</div>' +
+    '<table>' +
+    '<thead><tr>' +
+      '<th>#</th><th>Avatar</th><th>Fiktivt navn</th><th>PIN</th><th>Virkelig navn (fyll inn)</th>' +
+    '</tr></thead>' +
+    '<tbody>' + rowsHTML + '</tbody>' +
+    '</table>' +
+    '<div class="footer">' +
+      '<span>🪙 Myntland – Pedagogisk økonomi</span>' +
+      '<span>Dato: _______________</span>' +
+    '</div>' +
+    '<script>setTimeout(function(){window.print();},500);<\/script>' +
+    '</body></html>');
+  win.document.close();
 }
 
 function printCodeList() {
