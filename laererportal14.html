@@ -302,27 +302,31 @@
   <div class="tabs">
     <button class="tab active" onclick="showElevTab('manuell',this)">✏️ Opprett manuelt</button>
     <button class="tab" onclick="showElevTab('klasse',this)">🏫 Opprett klasse</button>
-    <button class="tab" onclick="showElevTab('csv',this)">📥 Importer CSV</button>
     <button class="tab" onclick="showElevTab('klasser',this)">🏷️ Klasser</button>
   </div>
 
   <div id="elev-tab-manuell">
     <div class="grid-2">
       <div class="card">
-        <div class="card-title">➕ Opprett ny elev</div>
+        <div class="card-title">➕ Opprett én elev</div>
         <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;background:var(--teal-light);border-radius:12px;padding:.75rem;">
           <div id="avatar-preview-wrap" style="flex-shrink:0;"></div>
           <div style="flex:1;">
             <div id="avatar-preview-label" style="font-size:.75rem;font-weight:800;color:var(--teal-dark);margin-bottom:4px;">Ingen avatar ennå</div>
             <input type="hidden" id="avatar-seed-input" value="">
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-              <button type="button" class="btn btn-primary btn-sm" onclick="randomFictiveName()">🎲 Fiktivt navn + avatar</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="randomFictiveName()">🎲 Generer navn + avatar</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="rerollAvatar()">🔄 Ny avatar</button>
             </div>
           </div>
         </div>
-        <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Bjørk"></div>
-        <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Skog"></div>
+        <div class="form-row">
+          <label>Fiktivt navn</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="new-firstname" placeholder="Fornavn" style="flex:1;">
+            <input type="text" id="new-lastname" placeholder="Etternavn" style="flex:1;">
+          </div>
+        </div>
         <div class="form-row"><label>Klasse</label>
           <select id="new-class">
             <option value="1. klasse">1. klasse</option>
@@ -337,7 +341,7 @@
       </div>
       <div class="card">
         <div class="card-title">💳 Skriv ut bankkort</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort (8 per A4) med navn, klasse og PIN.</p>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort (8 per A4) med avatar, navn, klasse og PIN.</p>
         <div class="form-row">
           <label>Velg klasse</label>
           <select id="card-class-filter">
@@ -349,11 +353,10 @@
           </select>
         </div>
         <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort</button>
-        <div style="margin-top:1.25rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Dataene lagres i Firebase og synkroniseres på alle enheter.</div>
+        <div style="margin-top:1.25rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
       </div>
     </div>
   </div>
-
 
   <div id="elev-tab-klasse" style="display:none;">
     <div class="grid-2">
@@ -419,40 +422,6 @@
           </thead>
           <tbody id="bulk-codelist-body"></tbody>
         </table>
-      </div>
-    </div>
-  </div>
-
-  <div id="elev-tab-csv" style="display:none;">
-    <div class="card">
-      <div class="card-title">📥 Importer elever fra CSV</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
-        Kolonnene skal være <strong>fornavn, etternavn, klasse</strong> (med eller uten overskriftsrad).<br>
-        Eksempel: <code style="background:var(--bg);padding:2px 8px;border-radius:6px;font-size:.82rem;">Sofie,Hansen,2A</code>
-      </p>
-      <div class="drop-zone" id="csv-drop-zone" onclick="document.getElementById('csv-file-input').click()">
-        <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none;" onchange="handleCSVFile(this.files[0])">
-        <div style="font-size:2rem;margin-bottom:.5rem;">📂</div>
-        <div style="font-weight:700;margin-bottom:4px;">Dra og slipp CSV-fil her</div>
-        <div style="font-size:.82rem;">eller klikk for å velge fil</div>
-      </div>
-      <div id="csv-preview-area" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;margin-bottom:.75rem;">
-          <strong id="csv-preview-title" style="color:var(--teal-dark);"></strong>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <label style="display:inline;margin:0;font-size:.85rem;color:var(--muted);">Startsaldo:</label>
-            <input type="number" id="csv-default-balance" value="50" min="0" style="width:80px;">
-          </div>
-        </div>
-        <div class="csv-preview">
-          <table><thead><tr><th>Fornavn</th><th>Etternavn</th><th>Klasse</th><th>Status</th></tr></thead>
-          <tbody id="csv-preview-body"></tbody></table>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:1rem;">
-          <button class="btn btn-primary" onclick="importCSV()">✅ Importer alle</button>
-          <button class="btn btn-ghost" onclick="resetCSV()">✕ Avbryt</button>
-        </div>
-        <div id="csv-import-alert" style="margin-top:1rem;"></div>
       </div>
     </div>
   </div>
@@ -747,7 +716,6 @@ let currentAction = null, currentStudentId = null, bulkAction = null;
 let currentDeleteTeacherId = null, currentEditGroupKey = null;
 let selectedPrintItems = new Set();
 let searchFilter = '', classFilter = '';
-let csvParsed = [];
 let selectedGroupColor = '#1D9E75';
 let selectedTeacherColor = '#1D9E75';
 
@@ -933,7 +901,7 @@ function showPage(page) {
 }
 
 function showElevTab(tab, btn) {
-  ['manuell','klasse','csv','klasser'].forEach(t => {
+  ['manuell','klasse','klasser'].forEach(t => {
     document.getElementById('elev-tab-' + t).style.display = t === tab ? 'block' : 'none';
   });
   btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -1086,14 +1054,28 @@ async function renameClass() {
         ns('line',{x1,y1:y,x2,y2:y,stroke:p.dark,'stroke-width':'1','stroke-linecap':'round'},g);
     },
     function drawDog(g,p){ // Hund
-      ns('ellipse',{cx:28,cy:55,rx:10,ry:18,fill:p.body,transform:'rotate(-15,28,55)'},g);
-      ns('ellipse',{cx:72,cy:55,rx:10,ry:18,fill:p.body,transform:'rotate(15,72,55)'},g);
-      ns('circle',{cx:50,cy:54,r:27,fill:p.body},g);
-      ns('ellipse',{cx:50,cy:64,rx:14,ry:10,fill:p.light},g);
-      eyes(g,p,50,48,5);
-      ns('ellipse',{cx:50,cy:59,rx:7,ry:5,fill:p.dark},g);
-      ns('circle',{cx:50,cy:59,r:3,fill:'#E87A7A'},g);
-      smile(g,50,66,8);
+      // Kropp
+      ns('ellipse',{cx:50,cy:68,rx:22,ry:18,fill:p.body},g);
+      // Hode
+      ns('circle',{cx:50,cy:46,r:24,fill:p.body},g);
+      // Floppy-ører
+      ns('ellipse',{cx:28,cy:52,rx:9,ry:18,fill:p.dark,transform:'rotate(10,28,52)'},g);
+      ns('ellipse',{cx:72,cy:52,rx:9,ry:18,fill:p.dark,transform:'rotate(-10,72,52)'},g);
+      // Indre øre
+      ns('ellipse',{cx:28,cy:52,rx:5,ry:13,fill:p.light,transform:'rotate(10,28,52)'},g);
+      ns('ellipse',{cx:72,cy:52,rx:5,ry:13,fill:p.light,transform:'rotate(-10,72,52)'},g);
+      // Hode igjen (over ørene)
+      ns('circle',{cx:50,cy:44,r:22,fill:p.body},g);
+      // Mule
+      ns('ellipse',{cx:50,cy:56,rx:13,ry:9,fill:p.light},g);
+      eyes(g,p,50,40,5);
+      // Nese
+      ns('ellipse',{cx:50,cy:52,rx:6,ry:4,fill:p.dark},g);
+      ns('ellipse',{cx:48,cy:51,rx:1.5,ry:1,fill:'rgba(255,255,255,.4)'},g);
+      // Munn
+      smile(g,50,58,9);
+      // Hale
+      ns('path',{d:'M72 68 Q88 58 84 48',fill:'none',stroke:p.body,'stroke-width':'7','stroke-linecap':'round'},g);
     },
     function drawRabbit(g,p){ // Kanin
       ns('ellipse',{cx:37,cy:28,rx:7,ry:20,fill:p.body},g);
@@ -1117,12 +1099,25 @@ async function renameClass() {
       smile(g,40,68,8);
     },
     function drawGiraffe(g,p){ // Sjiraff
-      ns('ellipse',{cx:50,cy:38,rx:8,ry:22,fill:p.body},g);
-      ns('circle',{cx:50,cy:22,r:16,fill:p.body},g);
-      for(let i=0;i<8;i++){const x=35+(i%3)*10,y=30+Math.floor(i/3)*12;ns('circle',{cx:x,cy:y,r:4,fill:p.dark,opacity:.5},g);}
-      ns('ellipse',{cx:50,cy:20,rx:13,ry:11,fill:p.body},g);
-      for(const dx of[-6,6])ns('ellipse',{cx:50+dx,cy:12,rx:3,ry:5,fill:p.dark},g);
-      eyes(g,p,50,17,4); nose(g,p,50,24); smile(g,50,28);
+      // Hals
+      ns('rect',{x:42,y:30,width:16,height:38,rx:7,fill:p.body},g);
+      // Kropp (nedre del)
+      ns('ellipse',{cx:50,cy:80,rx:20,ry:14,fill:p.body},g);
+      // Flekker på hals
+      for(const[cx,cy,r]of[[46,38,4],[54,46,4],[46,54,3.5],[54,62,3.5],[50,70,3]])
+        ns('circle',{cx,cy,r,fill:p.dark,opacity:.55},g);
+      // Hode
+      ns('ellipse',{cx:50,cy:22,rx:14,ry:12,fill:p.body},g);
+      // Horn
+      for(const dx of[-6,6]){
+        ns('rect',{x:50+dx-2,y:8,width:4,height:10,rx:2,fill:p.dark},g);
+        ns('circle',{cx:50+dx,cy:8,r:3,fill:p.dark},g);
+      }
+      // Snute
+      ns('ellipse',{cx:50,cy:27,rx:8,ry:5,fill:p.light},g);
+      eyes(g,p,50,18,4);
+      nose(g,p,50,27);
+      smile(g,50,31,6);
     },
     function drawPenguin(g,p){ // Pingvin
       ns('ellipse',{cx:50,cy:62,rx:24,ry:28,fill:'#2C2C2A'},g);
@@ -1136,12 +1131,31 @@ async function renameClass() {
       ns('ellipse',{cx:62,cy:90,rx:10,ry:5,fill:'#E8A830'},g);
     },
     function drawLion(g,p){ // Løve
-      ns('circle',{cx:50,cy:54,r:34,fill:'#C4803A'},g);
-      ns('circle',{cx:50,cy:52,r:25,fill:p.body},g);
-      ns('ellipse',{cx:50,cy:62,rx:14,ry:10,fill:p.light},g);
-      eyes(g,p,50,46,5); nose(g,p,50,57); smile(g,50,64,10);
-      for(const[x1,x2,y]of[[18,38,60],[18,38,65],[18,38,70],[82,62,60],[82,62,65],[82,62,70]])
-        ns('line',{x1,y1:y,x2,y2:y,stroke:p.dark,'stroke-width':'1','stroke-linecap':'round'},g);
+      // Manke – ytre lag med dusker
+      const mane='#C4803A', maneDark='#9A5A18';
+      for(let i=0;i<12;i++){
+        const a=(i/12)*Math.PI*2;
+        ns('ellipse',{cx:50+Math.cos(a)*28,cy:54+Math.sin(a)*26,rx:9,ry:14,
+          fill:i%2===0?mane:maneDark,
+          transform:`rotate(${a*180/Math.PI},${50+Math.cos(a)*28},${54+Math.sin(a)*26})`},g);
+      }
+      // Indre manke
+      ns('circle',{cx:50,cy:54,r:26,fill:mane},g);
+      // Ansikt
+      ns('circle',{cx:50,cy:52,r:22,fill:p.body},g);
+      // Kinn-poser
+      ns('ellipse',{cx:36,cy:60,rx:10,ry:7,fill:p.light},g);
+      ns('ellipse',{cx:64,cy:60,rx:10,ry:7,fill:p.light},g);
+      // Øyne
+      eyes(g,p,50,45,5);
+      // Nese
+      ns('path',{d:'M47 55 L50 52 L53 55',fill:p.dark},g);
+      ns('ellipse',{cx:50,cy:56,rx:4,ry:2.5,fill:p.dark},g);
+      // Munn
+      ns('path',{d:'M44 62 Q50 68 56 62',fill:'none',stroke:'#3D1A08','stroke-width':'2','stroke-linecap':'round'},g);
+      // Værhår
+      for(const[x1,x2,y]of[[16,34,58],[16,34,64],[84,66,58],[84,66,64]])
+        ns('line',{x1,y1:y,x2,y2:y,stroke:p.dark,'stroke-width':'1.2','stroke-linecap':'round'},g);
     },
     function drawKoala(g,p){ // Koala
       ns('ellipse',{cx:25,cy:52,rx:16,ry:14,fill:p.body},g);
@@ -1439,7 +1453,7 @@ function showBulkCodeList(students) {
 
   tbody.innerHTML = students.map(function(s, i) {
     return '<tr style="border-bottom:1px solid var(--border);">' +
-      '<td style="padding:6px 12px;" id="cl-av-' + i + '"></td>' +
+      '<td style="padding:6px 12px;" id="cl-av-' + i + '" data-seed="' + s.avatarSeed + '"></td>' +
       '<td style="padding:6px 12px;font-weight:800;">' + s.firstname + ' ' + s.lastname + '</td>' +
       '<td style="padding:6px 12px;"><code style="background:var(--bg);padding:2px 8px;border-radius:6px;">' + s.pin + '</code></td>' +
       '<td style="padding:6px 12px;">' + s.class + '</td>' +
@@ -1466,7 +1480,8 @@ function printCodeList() {
 
   const tableHTML = Array.from(rows).map(function(row) {
     const cells = row.querySelectorAll('td');
-    const avatarSeed = parseInt(row.querySelector('[id^="cl-av-"]')?.dataset?.seed || 0);
+    const avEl = row.querySelector('[id^="cl-av-"]');
+    const avatarSeed = avEl ? (parseInt(avEl.dataset.seed) || 0) : 0;
     const fictional = cells[1]?.textContent || '';
     const pin       = cells[2]?.textContent || '';
     const cls       = cells[3]?.textContent || '';
@@ -1525,60 +1540,9 @@ function updateStats() {
 // ══════════════════════════════════════════════════════════
 // CSV IMPORT
 // ══════════════════════════════════════════════════════════
-const dropZone = document.getElementById('csv-drop-zone');
-dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleCSVFile(e.dataTransfer.files[0]); });
 
-function handleCSVFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => parseCSV(e.target.result);
-  reader.readAsText(file, 'UTF-8');
-}
 
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
-  if (!lines.length) return;
-  const first = lines[0].toLowerCase();
-  const hasHeader = first.includes('fornavn') || first.includes('navn') || first.includes('firstname');
-  const dataLines = hasHeader ? lines.slice(1) : lines;
-  csvParsed = dataLines.map(line => {
-    const parts = line.split(/[,;]/).map(p => p.trim().replace(/^"|"$/g, ''));
-    return { firstname: parts[0]||'', lastname: parts[1]||'', class: (parts[2] || window._currentTeacher?.class || '1. klasse').trim() };
-  }).filter(r => r.firstname || r.lastname);
 
-  document.getElementById('csv-preview-body').innerHTML = csvParsed.map(r =>
-    `<tr><td style="padding:6px 8px;">${r.firstname}</td><td style="padding:6px 8px;">${r.lastname}</td><td style="padding:6px 8px;">${r.class}</td><td style="padding:6px 8px;color:var(--teal);">✓</td></tr>`
-  ).join('');
-  document.getElementById('csv-preview-title').textContent = `${csvParsed.length} elever funnet`;
-  document.getElementById('csv-preview-area').style.display = 'block';
-  document.getElementById('csv-import-alert').innerHTML = '';
-}
-
-async function importCSV() {
-  if (!ready() || !csvParsed.length) return;
-  const bal = parseInt(document.getElementById('csv-default-balance').value) || 50;
-  const alertEl = document.getElementById('csv-import-alert');
-  alertEl.innerHTML = '<div class="alert alert-success">⏳ Importerer…</div>';
-  let count = 0;
-  for (const r of csvParsed) {
-    if (!r.firstname && !r.lastname) continue;
-    await window._set(window._push(fbRef('students14')), { firstname:r.firstname, lastname:r.lastname, class:r.class, pin:generatePIN(), balance:bal, created:Date.now() });
-    count++;
-  }
-  alertEl.innerHTML = `<div class="alert alert-success">✅ ${count} elever importert!</div>`;
-  csvParsed = [];
-  setTimeout(resetCSV, 2500);
-}
-
-function resetCSV() {
-  csvParsed = [];
-  document.getElementById('csv-preview-area').style.display = 'none';
-  document.getElementById('csv-preview-body').innerHTML = '';
-  document.getElementById('csv-import-alert').innerHTML = '';
-  document.getElementById('csv-file-input').value = '';
-}
 
 // ══════════════════════════════════════════════════════════
 // GROUPS
@@ -2418,19 +2382,19 @@ function generateCardPDF() {
         <div class="card-accent2"></div>
         <div class="card-top">
           <div class="card-logo">🪙 Myntland</div>
-          <div class="card-chip"></div>
-        </div>
-        <div class="card-bottom">
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;">
-            <div>
-              <div class="card-label">Kortinnehaver</div>
-              <div class="card-name">${displayName}</div>
-            </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1mm;">
+            <div class="card-chip"></div>
             ${(function(){
               var seed = s.avatarSeed||0;
-              var svgEl = window.makeAnimalSVG(seed, 38);
+              var svgEl = window.makeAnimalSVG(seed, 60);
               return svgEl ? svgEl.outerHTML : '';
             })()}
+          </div>
+        </div>
+        <div class="card-bottom">
+          <div>
+            <div class="card-label">Kortinnehaver</div>
+            <div class="card-name">${displayName}</div>
           </div>
           <div class="card-footer">
             <div>
