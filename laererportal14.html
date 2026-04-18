@@ -413,31 +413,29 @@
         </select>
       </div>
       <button class="btn btn-amber" onclick="printExistingClassList()">🖨️ Skriv ut klasseliste</button>
-    </div>
-  </div>
-
-    <!-- Kodeliste for utskrift -->
-    <div class="card" id="bulk-codelist-card" style="display:none;">
-      <div class="card-title" style="justify-content:space-between;">
-        <span>📋 Kodeliste – ekte navn ↔ fiktivt navn</span>
-        <button class="btn btn-amber btn-sm" onclick="printCodeList()">🖨️ Skriv ut kodeliste</button>
-      </div>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
-        Fyll inn ekte elevnavn i høyre kolonne. Oppbevar denne listen på din egen PC – ikke i Firebase.
-      </p>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;font-size:.85rem;">
-          <thead>
-            <tr style="background:var(--teal-light);">
-              <th style="padding:8px 12px;text-align:left;">Avatar</th>
-              <th style="padding:8px 12px;text-align:left;">Fiktivt navn</th>
-              <th style="padding:8px 12px;text-align:left;">PIN</th>
-              <th style="padding:8px 12px;text-align:left;">Klasse</th>
-              <th style="padding:8px 12px;text-align:left;">Ekte navn (fyll inn)</th>
-            </tr>
-          </thead>
-          <tbody id="bulk-codelist-body"></tbody>
-        </table>
+      <!-- Kodeliste for utskrift -->
+      <div class="card" id="bulk-codelist-card" style="display:none;">
+        <div class="card-title" style="justify-content:space-between;">
+          <span>📋 Kodeliste – ekte navn ↔ fiktivt navn</span>
+          <button class="btn btn-amber btn-sm" onclick="printCodeList()">🖨️ Skriv ut kodeliste</button>
+        </div>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
+          Fyll inn ekte elevnavn i høyre kolonne. Oppbevar denne listen på din egen PC – ikke i Firebase.
+        </p>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;font-size:.85rem;">
+            <thead>
+              <tr style="background:var(--teal-light);">
+                <th style="padding:8px 12px;text-align:left;">Avatar</th>
+                <th style="padding:8px 12px;text-align:left;">Fiktivt navn</th>
+                <th style="padding:8px 12px;text-align:left;">PIN</th>
+                <th style="padding:8px 12px;text-align:left;">Klasse</th>
+                <th style="padding:8px 12px;text-align:left;">Ekte navn (fyll inn)</th>
+              </tr>
+            </thead>
+            <tbody id="bulk-codelist-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -466,7 +464,6 @@
     </div>
   </div>
 
-</div>
 
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
@@ -481,6 +478,7 @@
     <table><thead><tr><th>Elev</th><th>Klasse</th><th>Gruppe</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
     <tbody id="student-table-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Laster elever…</td></tr></tbody></table>
   </div>
+
 </div>
 
 <!-- ===== GRUPPER ===== -->
