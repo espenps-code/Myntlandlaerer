@@ -719,7 +719,31 @@
 
 <script>
 // ══════════════════════════════════════════════════════════
-// ════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+window._students  = [];
+window._groceries = [];
+window._groups    = [];
+window._teachers  = [];
+window._customRewards = [];
+window._currentTeacher = null;
+
+let currentAction = null, currentStudentId = null, bulkAction = null;
+let currentDeleteTeacherId = null, currentEditGroupKey = null;
+let selectedPrintItems = new Set();
+let searchFilter = '', classFilter = '';
+let selectedGroupColor = '#1D9E75';
+let selectedTeacherColor = '#1D9E75';
+
+function fbRef(path) { return window._ref(window._db, path); }
+function ready()     { return !!(window._fbReady && window._db && window._ref); }
+
+// ══════════════════════════════════════════════════════════
+// LOGIN / TEACHER PROFILES
+// ══════════════════════════════════════════════════════════
+let loginPin = '', loginTarget = null;
+
+// Load teacher profiles for login screen
 function loadProfiles() {
   window._onValue(fbRef('teachers'), snap => {
     window._teachers = snap.val()
@@ -951,7 +975,8 @@ async function renameClass() {
 
 // ══════════════════════════════════════════════════════════
 // STUDENTS
-
+// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // MONSTERAVATAR ENGINE – bruker monster-bilder (ingen ekstern API)
 // Seed-basert: samme seed → samme monster alltid
 // ════════════════════════════════════════════════════════════
