@@ -720,6 +720,238 @@
 <script>
 // ══════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════
+function loadProfiles() {
+  window._onValue(fbRef('teachers'), snap => {
+    window._teachers = snap.val()
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+      : [];
+    renderLoginProfiles();
+    if (document.getElementById('page-laerere').classList.contains('active')) renderTeacherList();
+    // Seed default admin if no teachers exist
+    if (!window._teachers.length) seedDefaultAdmin();
+  });
+}
+
+function seedDefaultAdmin() {
+  window._set(window._push(fbRef('teachers')), {
+    name: 'Administrator', pin: '1379', role: 'admin', color: '#085041', class: ''
+  });
+}
+
+function renderLoginProfiles() {
+  const el = document.getElementById('profile-list');
+  if (!window._teachers.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;font-size:.85rem;">Ingen profiler ennå – første gangs PIN er 1379</div>';
+    return;
+  }
+  el.innerHTML = window._teachers.map(t => `
+    <button class="profile-btn" onclick="selectProfile('${t.fbKey}')">
+      <div class="profile-avatar" style="background:${t.color}22;color:${t.color};">${t.name[0].toUpperCase()}</div>
+      <div>
+        <div class="profile-name">${t.name}</div>
+        <div class="profile-role">${t.role === 'admin' ? '⚙️ Administrator' : `👩‍🏫 Lærer${t.class ? ' – klasse ' + t.class : ''}`}</div>
+      </div>
+    </button>`).join('');
+}
+
+function selectProfile(fbKey) {
+  loginTarget = window._teachers.find(t => t.fbKey === fbKey);
+  loginPin = '';
+  document.getElementById('pin-for-name').textContent = 'PIN for ' + loginTarget.name;
+  document.getElementById('login-error').textContent = '';
+  updateLoginDots();
+  document.getElementById('profile-list').style.display = 'none';
+  document.getElementById('pin-section').style.display = 'block';
+}
+
+function backToProfiles() {
+  loginPin = ''; loginTarget = null;
+  document.getElementById('pin-section').style.display = 'none';
+  document.getElementById('profile-list').style.display = 'flex';
+  document.getElementById('profile-list').style.flexDirection = 'column';
+}
+
+function pinKey(val) {
+  if (val === 'DEL') loginPin = loginPin.slice(0,-1);
+  else if (loginPin.length < 4) loginPin += val;
+  updateLoginDots();
+  document.getElementById('login-error').textContent = '';
+  if (loginPin.length === 4) setTimeout(tryTeacherLogin, 150);
+}
+
+function updateLoginDots() {
+  ['pc-0','pc-1','pc-2','pc-3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.textContent = i < loginPin.length ? '●' : '·';
+    el.classList.toggle('filled', i < loginPin.length);
+  });
+}
+
+function tryTeacherLogin() {
+  if (loginPin === String(loginTarget.pin)) {
+    window._currentTeacher = loginTarget;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    // Set header
+    document.getElementById('header-name').textContent = loginTarget.name;
+    const av = document.getElementById('header-avatar');
+    av.textContent = loginTarget.name[0].toUpperCase();
+    av.style.background = loginTarget.color + '33';
+    av.style.color = loginTarget.color;
+    // Show admin nav if admin
+    if (loginTarget.role === 'admin') {
+      document.getElementById('nav-laerere').style.display = '';
+    }
+    // Update subtitle
+    const sub = document.getElementById('elever-subtitle');
+    sub.textContent = loginTarget.class
+      ? `Viser klasse ${loginTarget.class}`
+      : 'Alle klasser';
+    // Populate class filter with teacher's class pre-selected
+    if (loginTarget.class && loginTarget.role !== 'admin') {
+      classFilter = loginTarget.class;
+    }
+    window._startListeners();
+    showPage('elever');
+  } else {
+    document.getElementById('login-error').textContent = '❌ Feil PIN – prøv igjen';
+    loginPin = ''; updateLoginDots();
+  }
+}
+
+function doLogout() {
+  window._currentTeacher = null;
+  searchFilter = ''; classFilter = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pin-section').style.display = 'none';
+  document.getElementById('profile-list').style.display = 'flex';
+  document.getElementById('profile-list').style.flexDirection = 'column';
+  document.getElementById('nav-laerere').style.display = 'none';
+  loginPin = ''; loginTarget = null;
+}
+
+// ── Teacher CRUD (admin only) ──────────────────────────────────────────────
+function selectTeacherColor(el) {
+  document.querySelectorAll('#teacher-color-picker .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTeacherColor = el.dataset.color;
+}
+
+async function createTeacher() {
+  const name  = document.getElementById('new-teacher-name').value.trim();
+  const pin   = document.getElementById('new-teacher-pin').value.trim();
+  const cls   = document.getElementById('new-teacher-class').value.trim();
+  const role  = document.getElementById('new-teacher-role').value;
+  const alertEl = document.getElementById('teacher-create-alert');
+  if (!name || !pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn navn og en 4-sifret PIN.</div>'; return;
+  }
+  await window._set(window._push(fbRef('teachers')), { name, pin, role, class: cls, color: selectedTeacherColor });
+  document.getElementById('new-teacher-name').value = '';
+  document.getElementById('new-teacher-pin').value  = '';
+  document.getElementById('new-teacher-class').value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${name} er opprettet!</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function renderTeacherList() {
+  const el = document.getElementById('teacher-list');
+  if (!el) return;
+  el.innerHTML = window._teachers.map(t => `
+    <div class="teacher-card">
+      <div class="teacher-card-avatar" style="background:${t.color}22;color:${t.color};">${t.name[0].toUpperCase()}</div>
+      <div class="teacher-card-info">
+        <div class="teacher-card-name">${t.name}</div>
+        <div class="teacher-card-meta">${t.role === 'admin' ? '⚙️ Admin' : '👩‍🏫 Lærer'}${t.class ? ' · klasse ' + t.class : ' · alle klasser'} · PIN: ${t.pin}</div>
+      </div>
+      ${t.fbKey !== window._currentTeacher?.fbKey ? `<button class="btn btn-coral btn-sm" onclick="openDeleteTeacherModal('${t.fbKey}','${t.name}')">🗑️</button>` : '<span style="font-size:.75rem;color:var(--muted);">(deg)</span>'}
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;">Ingen lærere ennå.</p>';
+}
+
+function openDeleteTeacherModal(fbKey, name) {
+  currentDeleteTeacherId = fbKey;
+  document.getElementById('modal-delete-teacher-text').textContent = `Slett lærerprofilen til ${name}?`;
+  document.getElementById('modal-delete-teacher').classList.add('open');
+}
+async function confirmDeleteTeacher() {
+  await window._remove(fbRef('teachers/' + currentDeleteTeacherId));
+  closeModal('modal-delete-teacher');
+}
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  if (page === 'qrkoder') { generateRewardQRCodes(); renderCustomRewards(); }
+  if (page === 'grupper') renderGroupsPage();
+  if (page === 'laerere') renderTeacherList();
+}
+
+function showElevTab(tab, btn) {
+  ['manuell','klasse','klasser'].forEach(t => {
+    document.getElementById('elev-tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (tab === 'klasser') renderClassManager();
+  if (tab === 'klasse') populatePrintClassSelect();
+}
+
+function getClassNames() {
+  return [...new Set(window._students.map(s => s.class))].filter(Boolean).sort();
+}
+
+function renderClassManager() {
+  // Populate the rename dropdown with current classes
+  const classes = getClassNames();
+  const rf = document.getElementById('rename-class-from');
+  if (rf) {
+    const cur = rf.value;
+    rf.innerHTML = '<option value="">– Velg klasse –</option>' +
+      classes.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  }
+  // Show class list with student counts
+  const el = document.getElementById('class-list-display');
+  if (!el) return;
+  if (!classes.length) {
+    el.innerHTML = '<p style="font-size:.85rem;color:var(--muted);">Ingen klasser ennå – opprett elever først.</p>';
+    return;
+  }
+  el.innerHTML = classes.map(c => {
+    const count = window._students.filter(s => s.class === c).length;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;">
+      <span style="font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);">${c}</span>
+      <span style="font-size:.8rem;color:var(--muted);margin-left:auto;">${count} elev${count!==1?'er':''}</span>
+    </div>`;
+  }).join('');
+}
+
+async function renameClass() {
+  const from    = document.getElementById('rename-class-from').value;
+  const to      = document.getElementById('rename-class-to').value.trim();
+  const alertEl = document.getElementById('rename-alert');
+  if (!from) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Velg hvilken klasse du vil endre.</div>'; return; }
+  if (!to)   { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn det nye klassenavnet.</div>'; return; }
+  if (from === to) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Nytt navn er det samme som det gamle.</div>'; return; }
+  const toUpdate = window._students.filter(s => s.class === from);
+  if (!toUpdate.length) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Ingen elever i den valgte klassen.</div>'; return; }
+  alertEl.innerHTML = '<div class="alert alert-success">⏳ Oppdaterer…</div>';
+  const updates = {};
+  toUpdate.forEach(s => { updates['students14/' + s.fbKey + '/class'] = to; });
+  await window._update(fbRef('/'), updates);
+  document.getElementById('rename-class-to').value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}» for ${toUpdate.length} elev${toUpdate.length!==1?'er':''}.</div>`;
+  setTimeout(() => renderClassManager(), 600);
+}
+
+// ══════════════════════════════════════════════════════════
+// STUDENTS
+
 // MONSTERAVATAR ENGINE – bruker monster-bilder (ingen ekstern API)
 // Seed-basert: samme seed → samme monster alltid
 // ════════════════════════════════════════════════════════════
