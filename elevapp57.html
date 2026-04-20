@@ -1429,6 +1429,11 @@ function checkAndResetQuiz(s) {
       if (interest > 0) {
         upd['students57/' + s.fbKey + '/savings'] = savings + interest;
         patchStudent(s.fbKey, { savings: savings + interest, withdrawalsThisWeek: 0 });
+        // Logg utbetalt rente som egen transaksjon (vises i sparehistorikken)
+        var rentePct = Math.round(interestRate * 100);
+        var renteDesc = 'Sparerente (' + rentePct + '%)';
+        saveTx(s.fbKey, 'income', '✨', renteDesc, interest);
+        transactions.unshift({ type:'income', icon:'✨', desc:renteDesc, amount:interest, ts:Date.now() });
       } else {
         patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
       }
