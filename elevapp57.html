@@ -368,7 +368,7 @@
 <div class="screen" id="screen-login">
   <div style="text-align:center;margin:2.5rem 0 1rem;font-size:2.5rem">🏦</div>
   <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--teal-dark);margin-bottom:3px">Logg inn</div>
-  <div id="login-subtitle" style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Tast inn PIN-koden din</div>
+  <div id="login-subtitle" style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Scan bankkortet ditt for å logge inn</div>
   <div style="width:100%;padding:0 1.25rem;flex:1">
     <div id="login-preselect" style="display:none;background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:10px 14px;margin-bottom:12px;text-align:center;">
       <div style="font-size:.72rem;color:var(--teal-dark);font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px">Logger inn som</div>
@@ -376,7 +376,7 @@
       <button onclick="clearPreselected()" style="margin-top:4px;background:transparent;border:none;color:var(--muted);font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:underline">Ikke meg? Bytt kort</button>
     </div>
     <button onclick="startScan('loginCard')" id="login-scan-btn" style="width:100%;background:var(--amber);border:none;color:white;padding:14px;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 rgba(0,0,0,.08)">📷 Scan kortet mitt</button>
-    <div class="login-card">
+    <div class="login-card" id="login-card" style="display:none">
       <div class="pin-dots">
         <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
         <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
@@ -643,12 +643,11 @@ function getMaxW(){return window._settings?.maxWithdrawals||2;}
 
 // ── SCREENS ────────────────────────────────────────────────────────────────
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goToSplash(){stopScan();window._currentStudent=null;window._preselectedStudent=null;currentPin='';transactions=[];const pre=document.getElementById('login-preselect');if(pre)pre.style.display='none';const btn=document.getElementById('login-scan-btn');if(btn)btn.style.display='block';const sub=document.getElementById('login-subtitle');if(sub)sub.textContent='Tast inn PIN-koden din';showScreen('screen-splash');}
+function goToSplash(){stopScan();window._currentStudent=null;window._preselectedStudent=null;currentPin='';transactions=[];const pre=document.getElementById('login-preselect');if(pre)pre.style.display='none';const btn=document.getElementById('login-scan-btn');if(btn)btn.style.display='block';const card=document.getElementById('login-card');if(card)card.style.display='none';const sub=document.getElementById('login-subtitle');if(sub)sub.textContent='Scan bankkortet ditt for å logge inn';showScreen('screen-splash');}
 function selectRole(){showScreen('screen-login');}
 
 // ── LOGIN ──────────────────────────────────────────────────────────────────
-// Hvis _preselectedStudent er satt (via kort-scan), må PIN-en matche nøyaktig den eleven.
-// Uten kort-scan: gammel oppførsel – PIN-en finner hvilken elev det er.
+// Kort-scan er påkrevd. PIN-en må matche nøyaktig den eleven kortet tilhører.
 window._preselectedStudent=null;
 
 function handleLoginCardScan(fbKey){
@@ -658,6 +657,7 @@ function handleLoginCardScan(fbKey){
   document.getElementById('login-preselect-name').textContent=s.firstname+' '+s.lastname.charAt(0)+'.';
   document.getElementById('login-preselect').style.display='block';
   document.getElementById('login-scan-btn').style.display='none';
+  document.getElementById('login-card').style.display='block';
   document.getElementById('login-subtitle').textContent='Bekreft med PIN-koden din';
   document.getElementById('login-error').textContent='';
   currentPin='';
@@ -668,7 +668,8 @@ function clearPreselected(){
   window._preselectedStudent=null;
   document.getElementById('login-preselect').style.display='none';
   document.getElementById('login-scan-btn').style.display='block';
-  document.getElementById('login-subtitle').textContent='Tast inn PIN-koden din';
+  document.getElementById('login-card').style.display='none';
+  document.getElementById('login-subtitle').textContent='Scan bankkortet ditt for å logge inn';
   document.getElementById('login-error').textContent='';
   currentPin='';
   for(let i=0;i<4;i++)document.getElementById('dot-'+i).classList.remove('filled');
@@ -682,22 +683,24 @@ function np(v){
   if(currentPin.length===4) setTimeout(tryLogin,200);
 }
 function tryLogin(){
-  let s=null;
-  if(window._preselectedStudent){
-    // Kort er skannet – PIN må matche NØYAKTIG den eleven
-    const pre=window._preselectedStudent;
-    const fresh=(window._allStudents||[]).find(x=>x.fbKey===pre.fbKey)||pre;
-    if(String(fresh.pin)===String(currentPin)) s=fresh;
-  } else {
-    // Ingen kort-scan – gammel oppførsel (PIN identifiserer eleven)
-    s=(window._allStudents||[]).find(x=>String(x.pin)===String(currentPin));
+  // Kort-scan er påkrevd – uten forhåndsvalgt elev er det ingenting å matche mot
+  if(!window._preselectedStudent){
+    document.getElementById('login-error').textContent='❌ Scan kortet først';
+    currentPin='';
+    for(let i=0;i<4;i++) document.getElementById('dot-'+i).classList.remove('filled');
+    return;
   }
+  const pre=window._preselectedStudent;
+  const fresh=(window._allStudents||[]).find(x=>x.fbKey===pre.fbKey)||pre;
+  let s=null;
+  if(String(fresh.pin)===String(currentPin)) s=fresh;
   if(s){
     window._currentStudent=s;transactions=[];
     window._preselectedStudent=null;
     document.getElementById('login-preselect').style.display='none';
     document.getElementById('login-scan-btn').style.display='block';
-    document.getElementById('login-subtitle').textContent='Tast inn PIN-koden din';
+    document.getElementById('login-card').style.display='none';
+    document.getElementById('login-subtitle').textContent='Scan bankkortet ditt for å logge inn';
     document.getElementById('greeting-sub').textContent=s.firstname+' '+s.class;
     document.getElementById('card-holder').textContent=(s.firstname+' '+s.lastname).toUpperCase();
     document.getElementById('card-number').textContent='•••• ••••';
