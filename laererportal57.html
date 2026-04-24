@@ -497,7 +497,7 @@
       </div>
       <div class="card">
         <div class="card-title">💳 Skriv ut bankkort</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og PIN – 8 per A4-side.</p>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og QR-kode – 8 per A4-side.</p>
         <div class="form-row">
           <label>Velg klasse</label>
           <select id="card-class-filter">
@@ -2013,13 +2013,15 @@ function generateCardPDF() {
     .card-label { font-size: 2.8mm; color: rgba(255,255,255,0.60); font-weight: 700; letter-spacing: 0.4mm; text-transform: uppercase; margin-bottom: 1mm; }
     .card-name { font-size: 5.5mm; font-weight: 800; letter-spacing: 0.1mm; text-transform: uppercase; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 3mm; }
-    .card-pin-label { font-size: 2.8mm; color: rgba(255,255,255,0.60); font-weight: 700; text-transform: uppercase; margin-bottom: 1mm; }
-    .card-pin { font-family: 'Fredoka One', cursive; font-size: 9mm; color: #EF9F27; letter-spacing: 2mm; line-height: 1; }
+    .card-qr-wrap { background: white; padding: 1.2mm; border-radius: 1.5mm; line-height: 0; }
+    .card-qr-wrap img { display: block; width: 17mm; height: 17mm; }
     .card-class { background: #EF9F27; color: #085041; border-radius: 1.5mm; padding: 1.5mm 3mm; font-size: 4mm; font-weight: 800; align-self: flex-end; }
   </style>
   <div class="card-grid">
     ${printStudents.map(s => {
       const displayName = s.firstname + ' ' + s.lastname.charAt(0) + '.';
+      const qrPayload = JSON.stringify({ type: 'login', fbKey: s.fbKey });
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' + encodeURIComponent(qrPayload);
       return `<div class="card-item">
         <div class="card-accent"></div><div class="card-accent2"></div>
         <div class="card-top"><div class="card-logo">🪙 Myntland</div><div class="card-chip"></div></div>
@@ -2027,7 +2029,7 @@ function generateCardPDF() {
           <div class="card-label">Kortinnehaver</div>
           <div class="card-name">${displayName}</div>
           <div class="card-footer">
-            <div><div class="card-pin-label">PIN-kode</div><div class="card-pin">${s.pin}</div></div>
+            <div class="card-qr-wrap"><img src="${qrUrl}" alt="Innloggings-QR"></div>
             <div class="card-class">${s.class}</div>
           </div>
         </div>
@@ -2040,7 +2042,17 @@ function generateCardPDF() {
     '<style>@media print{@page{size:A4 portrait;margin:0}}</style>' +
     '</head><body>' + cardsHTML + '</body></html>');
   win.document.close();
-  setTimeout(() => { win.focus(); win.print(); }, 800);
+  // Vent til alle QR-bildene har lastet før utskrift
+  const waitForImages = () => {
+    const imgs = Array.from(win.document.images);
+    if (!imgs.length) return Promise.resolve();
+    return Promise.all(imgs.map(img => img.complete
+      ? Promise.resolve()
+      : new Promise(res => { img.onload = img.onerror = res; })));
+  };
+  setTimeout(() => {
+    waitForImages().then(() => { win.focus(); win.print(); });
+  }, 400);
 }
 
 
