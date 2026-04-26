@@ -73,6 +73,25 @@
       window._groups = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
       if (document.getElementById('page-grupper').classList.contains('active')) renderGroupsPage();
     });
+
+    onValue(ref(db, 'classGoals14'), snap => {
+      window._classGoals = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      if (document.getElementById('page-sparemaal')?.classList.contains('active')) renderClassGoalsPage();
+    });
+
+    onValue(ref(db, 'hendelser14'), snap => {
+      window._hendelser = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      if (document.getElementById('page-hendelser')?.classList.contains('active')) renderHendelser();
+    });
+
+    onValue(ref(db, 'savings14'), snap => {
+      const all = snap.val() || {};
+      window._savings = {};
+      Object.entries(all).forEach(([k, v]) => {
+        window._savings[k] = { balance: v?.balance || 0 };
+      });
+      if (document.getElementById('page-saldo').classList.contains('active')) renderSaldoTable();
+    });
   }
 
   window._startListeners = startListeners;
@@ -281,6 +300,8 @@
     <button onclick="showPage('dagligvarer')" id="nav-dagligvarer"><span class="nav-icon">🛒</span> Dagligvarer</button>
     <button onclick="showPage('handleliste')" id="nav-handleliste"><span class="nav-icon">📋</span> Handleliste</button>
     <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
+    <button onclick="showPage('sparemaal')" id="nav-sparemaal"><span class="nav-icon">🏦</span> Sparemål</button>
+    <button onclick="showPage('hendelser')" id="nav-hendelser"><span class="nav-icon">🎲</span> Hendelser</button>
     <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;"><span class="nav-icon">⚙️</span> Lærere</button>
   </nav>
   <div class="header-right">
@@ -529,16 +550,17 @@
 <!-- ===== SALDO ===== -->
 <div class="page" id="page-saldo">
   <div class="page-title">💰 Saldooversikt</div>
-  <div class="page-subtitle">Se og juster elevenes myntsaldo i sanntid</div>
+  <div class="page-subtitle">Se og juster elevenes mynter – hovedkonto og sparekonto</div>
   <div class="card">
-    <div class="card-title" style="justify-content:space-between;">
+    <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
       <span>Alle elevers saldo</span>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="openBulkModal('salary')">💼 Utbetal lønn (20 % skatt)</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('add')">➕ Legg til alle</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('reset')">🔄 Nullstill alle</button>
       </div>
     </div>
-    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Saldo</th><th>Juster</th></tr></thead>
+    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Hovedkonto</th><th>Sparekonto</th><th>Juster</th></tr></thead>
     <tbody id="saldo-table-body"></tbody></table>
   </div>
 </div>
@@ -642,6 +664,113 @@
   </div>
 </div>
 
+<!-- ===== SPAREMÅL ===== -->
+<div class="page" id="page-sparemaal">
+  <div class="page-title">🏦 Klassens sparemål</div>
+  <div class="page-subtitle">Maks 3 aktive sparemål. Skatt fra elevene fordeles automatisk på tvers av aktive sparemål.</div>
+  <div id="class-goals-container"></div>
+  <div class="card" id="new-goal-card">
+    <div class="card-title">➕ Nytt sparemål</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Emoji</label><input type="text" id="goal-emoji" placeholder="🚀" maxlength="2"></div>
+      <div class="form-row"><label>Navn</label><input type="text" id="goal-name" placeholder="f.eks. Klassetur til dyrehagen"></div>
+    </div>
+    <div class="form-row"><label>Målbeløp (mynter)</label><input type="number" id="goal-target" value="1000" min="1"></div>
+    <div class="form-row"><label>Beskrivelse (valgfritt)</label><input type="text" id="goal-desc" placeholder="Hva sparer vi til?"></div>
+    <button class="btn btn-primary" onclick="createClassGoal()">Opprett sparemål</button>
+    <div id="goal-alert" style="margin-top:1rem;"></div>
+  </div>
+</div>
+
+<!-- ===== HENDELSER ===== -->
+<div class="page" id="page-hendelser">
+  <div class="page-title">🎲 Hendelser</div>
+  <div class="page-subtitle">Tilfeldige livshendelser med økonomikonsekvenser – del ut QR-kort til elevene</div>
+
+  <div class="grid-2" style="margin-bottom:1.5rem;">
+    <div class="card">
+      <div class="card-title">✏️ Opprett egendefinert hendelse</div>
+      <div class="form-row">
+        <label>Emoji</label>
+        <input type="text" id="hend-emoji" placeholder="🎉" maxlength="2" style="width:60px;">
+      </div>
+      <div class="form-row">
+        <label>Beskrivelse</label>
+        <input type="text" id="hend-desc" placeholder="f.eks. Du fant en 50-lapp på gaten">
+      </div>
+      <div class="form-row" style="display:flex;gap:1rem;align-items:flex-end;">
+        <div style="flex:1">
+          <label>Type</label>
+          <select id="hend-type">
+            <option value="income">💰 Inntekt (belønning)</option>
+            <option value="expense">💸 Utgift (trekk)</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <label>Beløp (🪙)</label>
+          <input type="number" id="hend-amount" placeholder="50" min="1" max="999">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addHendelse()">➕ Legg til hendelse</button>
+      <div id="hend-alert" style="margin-top:.75rem;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Oversikt</div>
+      <div id="hend-stats" style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div style="background:var(--teal-light);border-radius:10px;padding:.6rem 1rem;flex:1;min-width:100px;">
+          <div style="font-size:.72rem;color:var(--muted);font-weight:700;">TOTALT</div>
+          <div id="hend-count-total" style="font-size:1.4rem;font-weight:900;color:var(--teal-dark);">0</div>
+        </div>
+        <div style="background:#dcfce7;border-radius:10px;padding:.6rem 1rem;flex:1;min-width:100px;">
+          <div style="font-size:.72rem;color:#15803d;font-weight:700;">INNTEKTER</div>
+          <div id="hend-count-income" style="font-size:1.4rem;font-weight:900;color:#15803d;">0</div>
+        </div>
+        <div style="background:#fee2e2;border-radius:10px;padding:.6rem 1rem;flex:1;min-width:100px;">
+          <div style="font-size:.72rem;color:#dc2626;font-weight:700;">UTGIFTER</div>
+          <div id="hend-count-expense" style="font-size:1.4rem;font-weight:900;color:#dc2626;">0</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="printHendelser()">🖨️ Skriv ut alle (4 per A4)</button>
+        <button class="btn btn-amber" onclick="seedDefaultHendelser()">🎲 Last inn 30 standard</button>
+        <button class="btn btn-coral" onclick="clearAllHendelser()">🗑️ Slett alle</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>🗂️ Alle hendelser</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <select id="hend-filter" onchange="renderHendelser()" style="font-size:.82rem;padding:5px 10px;border-radius:8px;border:1.5px solid var(--border);">
+          <option value="all">Alle typer</option>
+          <option value="income">💰 Inntekter</option>
+          <option value="expense">💸 Utgifter</option>
+        </select>
+      </div>
+    </div>
+    <div id="hendelser-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem;margin-top:.5rem;">
+      <div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen hendelser ennå. Trykk «Last inn 30 standard» for å komme i gang.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Hendelse QR -->
+<div class="modal-overlay" id="modal-hend-qr">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-title" id="modal-hend-qr-title">🎲 Hendelse QR</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;" id="modal-hend-qr-desc"></p>
+    <div style="display:flex;justify-content:center;margin-bottom:.75rem;">
+      <div id="modal-hend-qr-box" style="background:white;padding:8px;border-radius:8px;border:2px solid var(--border);display:inline-block;"></div>
+    </div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" id="hend-qr-print-btn" onclick="printHendelseQRCard()">🖨️ Skriv ut</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-hend-qr')">Lukk</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== LÆRERE (admin) ===== -->
 <div class="page" id="page-laerere">
   <div class="page-title">⚙️ Lærerprofilene</div>
@@ -711,6 +840,7 @@
     <div class="modal-title" id="modal-bulk-title">Masseoppdater saldo</div>
     <div class="form-row"><label>Velg klasse (tomt = alle)</label><select id="bulk-class"><option value="">Alle klasser</option></select></div>
     <div class="form-row" id="bulk-amount-row"><label>Beløp (mynter)</label><input type="number" id="bulk-amount" value="50" min="0"></div>
+    <div id="bulk-tax-info" style="display:none;font-size:.88rem;color:var(--muted);margin-bottom:1rem;background:var(--amber-light);padding:.7rem;border-radius:8px;"></div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-bulk')">Avbryt</button><button class="btn btn-primary" onclick="confirmBulkAction()">Bekreft</button></div>
   </div>
 </div>
@@ -919,6 +1049,9 @@ function showPage(page) {
   if (page === 'qrkoder') { generateRewardQRCodes(); renderCustomRewards(); }
   if (page === 'grupper') renderGroupsPage();
   if (page === 'laerere') renderTeacherList();
+  if (page === 'sparemaal') renderClassGoalsPage();
+  if (page === 'hendelser') renderHendelser();
+  if (page === 'saldo') renderSaldoTable();
 }
 
 function showElevTab(tab, btn) {
@@ -1596,17 +1729,22 @@ async function removeFromGroup(sk) { await window._update(fbRef('students14/' + 
 function renderSaldoTable() {
   const tbody = document.getElementById('saldo-table-body');
   if (!tbody) return;
-  tbody.innerHTML = window._students.map(s => `
+  const sav = window._savings || {};
+  tbody.innerHTML = window._students.map(s => {
+    const savBal = sav[s.fbKey]?.balance || 0;
+    return `
     <tr>
       <td><strong>${s.firstname} ${s.lastname}</strong></td>
       <td><span class="class-badge">${s.class}</span></td>
       <td><span class="balance-badge">🪙 ${s.balance}</span></td>
+      <td><span class="balance-badge" style="background:#dcfce7;color:#15803d;">🏦 ${savBal}</span></td>
       <td><div class="balance-actions">
         <button class="btn btn-primary btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕ Legg til</button>
         <button class="btn btn-ghost btn-sm"   onclick="openSaldoModal('${s.fbKey}','subtract')">➖ Trekk fra</button>
         <button class="btn btn-amber btn-sm"   onclick="openSaldoModal('${s.fbKey}','reset')">🔄 Nullstill</button>
       </div></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function openSaldoModal(fbKey, action) {
@@ -1631,18 +1769,67 @@ async function confirmSaldoAction() {
 }
 function openBulkModal(action) {
   bulkAction = action;
-  document.getElementById('modal-bulk-title').textContent = action === 'add' ? '➕ Legg til mynter – alle' : '🔄 Nullstill saldo – alle';
+  const labels = {
+    add:    '➕ Legg til mynter – alle',
+    salary: '💼 Utbetal ukentlig lønn – 20 % skatt',
+    reset:  '🔄 Nullstill saldo – alle'
+  };
+  document.getElementById('modal-bulk-title').textContent = labels[action] || action;
   document.getElementById('bulk-amount-row').style.display = action === 'reset' ? 'none' : 'block';
+  const ti = document.getElementById('bulk-tax-info');
+  if (action === 'salary') {
+    const active = (window._classGoals || []).filter(g => !g.completed);
+    ti.innerHTML = active.length
+      ? '🏛️ <strong>20 % skatt</strong> trekkes fra brutto og fordeles likt på <strong>' + active.length + '</strong> aktive sparemål. Eksempel: 100 mynter brutto → 80 til eleven, 20 til klassens sparemål.'
+      : '⚠️ Ingen aktive sparemål – skatten <strong>holdes tilbake</strong>, men ingenting fordeles. Opprett et sparemål først for å bruke skattepengene.';
+    ti.style.display = 'block';
+  } else {
+    ti.style.display = 'none';
+  }
   document.getElementById('modal-bulk').classList.add('open');
 }
 async function confirmBulkAction() {
-  const cls = document.getElementById('bulk-class').value;
+  const cls    = document.getElementById('bulk-class').value;
   const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
   const updates = {};
-  window._students.forEach(s => {
-    if (!cls || s.class === cls) updates['students14/'+s.fbKey+'/balance'] = Math.max(0, bulkAction === 'reset' ? 0 : s.balance + amount);
-  });
+  const targets = window._students.filter(s => !cls || s.class === cls);
+
+  let totalTaxCollected = 0;
+
+  for (const s of targets) {
+    const cur = s.balance || 0;
+    let newBal = cur, txDesc = '', txAmt = 0, txIcon = '💰';
+    if (bulkAction === 'add') {
+      newBal = cur + amount;
+      txDesc = 'Ekstra fra lærer';
+      txAmt  = amount;
+      txIcon = '🎁';
+    } else if (bulkAction === 'salary') {
+      const taxAmt = Math.floor(amount * 0.20);
+      const net    = amount - taxAmt;
+      newBal = cur + net;
+      txDesc = 'Ukentlig lønn (netto etter 20 % skatt)';
+      txAmt  = net;
+      txIcon = '💼';
+      totalTaxCollected += taxAmt;
+    } else if (bulkAction === 'reset') {
+      newBal = 0;
+      txDesc = 'Saldo nullstilt';
+      txAmt  = -cur;
+      txIcon = '🔄';
+    }
+    updates['students14/'+s.fbKey+'/balance'] = Math.max(0, newBal);
+    if (txAmt !== 0) {
+      await logTx14(s.fbKey, txAmt > 0 ? 'income' : 'expense', txIcon, txDesc, txAmt);
+    }
+  }
   await window._update(fbRef('/'), updates);
+
+  // Distribuer total skatt til aktive sparemål
+  if (totalTaxCollected > 0) {
+    await distributeToGoals14(totalTaxCollected);
+  }
+
   closeModal('modal-bulk');
 }
 function openDeleteModal(fbKey, name) {
@@ -2434,6 +2621,319 @@ async function seedDefaultGroceries() {
 
 // Run seed after a short delay so Firebase listeners are ready
 setTimeout(seedDefaultGroceries, 1500);
+
+// ════════════════════════════════════════════════════════════
+// TRANSACTIONS – logger til transactions14/{fbKey}
+// ════════════════════════════════════════════════════════════
+async function logTx14(sk, type, icon, desc, amount) {
+  if (!window._push || !window._set) return;
+  await window._set(window._push(fbRef('transactions14/' + sk)), { type, icon, desc, amount, ts: Date.now() });
+}
+
+// ════════════════════════════════════════════════════════════
+// SPAREMÅL – classGoals14
+// ════════════════════════════════════════════════════════════
+window._classGoals = window._classGoals || [];
+
+async function distributeToGoals14(amount) {
+  if (!amount || !window._classGoals?.length) return;
+  const active = window._classGoals.filter(g => !g.completed);
+  if (!active.length) return;
+  const perGoal = Math.floor(amount / active.length);
+  if (perGoal <= 0) return;
+  const upd = {};
+  active.forEach(g => {
+    const ns = (g.saved || 0) + perGoal;
+    upd['classGoals14/' + g.fbKey + '/saved'] = ns;
+    if (ns >= g.target) upd['classGoals14/' + g.fbKey + '/completed'] = true;
+  });
+  await window._update(fbRef('/'), upd);
+}
+
+async function createClassGoal() {
+  if (!ready()) return;
+  const active = (window._classGoals || []).filter(g => !g.completed);
+  if (active.length >= 3) {
+    document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Maks 3 aktive sparemål samtidig.</div>';
+    return;
+  }
+  const emoji  = document.getElementById('goal-emoji').value.trim() || '🏦';
+  const name   = document.getElementById('goal-name').value.trim();
+  const target = parseInt(document.getElementById('goal-target').value) || 1000;
+  const desc   = document.getElementById('goal-desc').value.trim();
+  if (!name) {
+    document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et navn på sparemålet.</div>';
+    return;
+  }
+  await window._set(window._push(fbRef('classGoals14')), {
+    emoji, name, target, desc, saved: 0, completed: false, created: Date.now()
+  });
+  ['goal-emoji','goal-name','goal-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('goal-target').value = '1000';
+  document.getElementById('goal-alert').innerHTML = '<div class="alert alert-success">✅ «' + name + '» opprettet!</div>';
+  setTimeout(() => document.getElementById('goal-alert').innerHTML = '', 3000);
+}
+
+async function deleteClassGoal(fbKey) {
+  if (!confirm('Slett sparemål? Sparte mynter forsvinner.')) return;
+  await window._remove(fbRef('classGoals14/' + fbKey));
+}
+
+function renderClassGoalsPage() {
+  const el = document.getElementById('class-goals-container');
+  if (!el) return;
+  const goals = window._classGoals || [];
+  const active = goals.filter(g => !g.completed);
+  const done   = goals.filter(g =>  g.completed);
+  const newCard = document.getElementById('new-goal-card');
+  if (newCard) newCard.style.display = active.length >= 3 ? 'none' : 'block';
+  if (!goals.length) { el.innerHTML = ''; return; }
+  el.innerHTML = [...active, ...done].map(g => {
+    const pct = Math.min(100, Math.round((g.saved||0) / g.target * 100));
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:.75rem;">
+        <div style="font-size:1.8rem;">${g.emoji||'🏦'}</div>
+        <div style="flex:1;"><div style="font-weight:800;font-size:1.05rem;">${g.name}${g.completed?' ✅':''}</div><div style="font-size:.8rem;color:var(--muted);">Mål: 🪙 ${g.target}${g.desc?' · '+g.desc:''}</div></div>
+        <button onclick="deleteClassGoal('${g.fbKey}')" style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:1.1rem;">🗑️</button>
+      </div>
+      <div style="height:12px;background:var(--bg);border-radius:20px;overflow:hidden;margin-bottom:.5rem;border:1px solid var(--border);">
+        <div style="height:100%;background:${g.completed?'#16a34a':'var(--teal)'};border-radius:20px;width:${pct}%;transition:width .4s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:700;color:var(--muted);">
+        <span>🪙 ${g.saved||0} spart</span><span>${pct}%</span><span>🪙 ${Math.max(0,g.target-(g.saved||0))} igjen</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// HENDELSER – hendelser14
+// ════════════════════════════════════════════════════════════
+window._hendelser = window._hendelser || [];
+
+const DEFAULT_HENDELSER_14 = [
+  // 10 inntekter
+  { emoji:'🎂', type:'income',  amount:30,  desc:'Du fikk bursdagspenger' },
+  { emoji:'🏆', type:'income',  amount:50,  desc:'Du vant en konkurranse' },
+  { emoji:'🛍️', type:'income',  amount:25,  desc:'Du solgte gamle leker' },
+  { emoji:'🌱', type:'income',  amount:20,  desc:'Du hjalp i hagen til naboen' },
+  { emoji:'📦', type:'income',  amount:30,  desc:'Du hjalp til med å rydde' },
+  { emoji:'🎁', type:'income',  amount:60,  desc:'Du fikk en gave fra familien' },
+  { emoji:'🐕', type:'income',  amount:40,  desc:'Du passet hunden til naboen' },
+  { emoji:'♻️', type:'income',  amount:15,  desc:'Du pante tomflasker' },
+  { emoji:'📚', type:'income',  amount:30,  desc:'Du leste 3 bøker – fikk leselønn' },
+  { emoji:'🍪', type:'income',  amount:20,  desc:'Du bakte og solgte kaker' },
+  // 20 utgifter
+  { emoji:'🍕', type:'expense', amount:30,  desc:'Du kjøpte pizza til vennene' },
+  { emoji:'🎮', type:'expense', amount:60,  desc:'Du kjøpte et nytt spill' },
+  { emoji:'👟', type:'expense', amount:50,  desc:'Du måtte kjøpe nye joggesko' },
+  { emoji:'🚌', type:'expense', amount:15,  desc:'Du tok bussen hjem' },
+  { emoji:'🦷', type:'expense', amount:40,  desc:'Tannlegen – egenandel' },
+  { emoji:'🧸', type:'expense', amount:35,  desc:'Du kjøpte en ny bamse' },
+  { emoji:'🎬', type:'expense', amount:25,  desc:'Du var på kino med popcorn' },
+  { emoji:'☂️', type:'expense', amount:20,  desc:'Du glemte paraplyen og kjøpte ny' },
+  { emoji:'🍦', type:'expense', amount:15,  desc:'Du kjøpte iskrem' },
+  { emoji:'🐾', type:'expense', amount:35,  desc:'Du måtte til veterinæren' },
+  { emoji:'🔑', type:'expense', amount:30,  desc:'Du mistet en nøkkel' },
+  { emoji:'💻', type:'expense', amount:55,  desc:'PC-en din måtte repareres' },
+  { emoji:'🏊', type:'expense', amount:25,  desc:'Du kjøpte badebillett' },
+  { emoji:'🎪', type:'expense', amount:20,  desc:'Du var i tivoli' },
+  { emoji:'🍱', type:'expense', amount:25,  desc:'Du kjøpte lunsj på skolen' },
+  { emoji:'⚡', type:'expense', amount:30,  desc:'Strømregningen – stor måned' },
+  { emoji:'🎿', type:'expense', amount:60,  desc:'Du leide ski en hel dag' },
+  { emoji:'🎨', type:'expense', amount:25,  desc:'Du kjøpte tegnesaker' },
+  { emoji:'🚲', type:'expense', amount:40,  desc:'Sykkelen din punkterte – nytt dekk' },
+  { emoji:'🌧️', type:'expense', amount:35,  desc:'Du måtte kjøpe regnjakke' },
+];
+
+async function addHendelse() {
+  if (!ready()) return;
+  const emoji  = document.getElementById('hend-emoji').value.trim() || '🎲';
+  const desc   = document.getElementById('hend-desc').value.trim();
+  const type   = document.getElementById('hend-type').value;
+  const amount = parseInt(document.getElementById('hend-amount').value) || 0;
+  const alertEl = document.getElementById('hend-alert');
+  if (!desc) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn en beskrivelse.</div>'; return; }
+  if (amount < 1 || amount > 999) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Beløp må være mellom 1 og 999.</div>'; return; }
+  await window._set(window._push(fbRef('hendelser14')), { emoji, desc, type, amount, created: Date.now() });
+  document.getElementById('hend-emoji').value  = '';
+  document.getElementById('hend-desc').value   = '';
+  document.getElementById('hend-amount').value = '';
+  alertEl.innerHTML = '<div class="alert alert-success">✅ Hendelse lagt til!</div>';
+  setTimeout(() => alertEl.innerHTML = '', 2500);
+}
+
+async function deleteHendelse(fbKey) {
+  if (!confirm('Slett denne hendelsen?')) return;
+  await window._remove(fbRef('hendelser14/' + fbKey));
+}
+
+async function clearAllHendelser() {
+  if (!confirm('Slett ALLE hendelser? Dette kan ikke angres.')) return;
+  await window._remove(fbRef('hendelser14'));
+}
+
+async function seedDefaultHendelser() {
+  if (!ready()) return;
+  const hend = window._hendelser || [];
+  if (hend.length > 0) {
+    if (!confirm('Du har allerede ' + hend.length + ' hendelser. Legg til 30 standard i tillegg?')) return;
+  }
+  const alertEl = document.getElementById('hend-alert');
+  if (alertEl) alertEl.innerHTML = '<div class="alert alert-info">⏳ Laster inn 30 hendelser…</div>';
+  try {
+    await Promise.all(DEFAULT_HENDELSER_14.map(function(h) {
+      return window._set(window._push(fbRef('hendelser14')), Object.assign({}, h, { created: Date.now() }));
+    }));
+    if (alertEl) {
+      alertEl.innerHTML = '<div class="alert alert-success">✅ 30 standard hendelser lagt til!</div>';
+      setTimeout(function() { alertEl.innerHTML = ''; }, 3000);
+    }
+  } catch(err) {
+    console.error('seedDefaultHendelser feilet:', err);
+    if (alertEl) alertEl.innerHTML = '<div class="alert alert-error">❌ Feil: ' + err.message + '</div>';
+  }
+}
+
+function renderHendelser() {
+  const list = document.getElementById('hendelser-list');
+  if (!list) return;
+  const filter = document.getElementById('hend-filter')?.value || 'all';
+  const all = window._hendelser || [];
+  const income  = all.filter(h => h.type === 'income');
+  const expense = all.filter(h => h.type === 'expense');
+  const ct = document.getElementById('hend-count-total');
+  const ci = document.getElementById('hend-count-income');
+  const ce = document.getElementById('hend-count-expense');
+  if (ct) ct.textContent = all.length;
+  if (ci) ci.textContent = income.length;
+  if (ce) ce.textContent = expense.length;
+  const filtered = filter === 'all' ? all : all.filter(h => h.type === filter);
+  if (!filtered.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen hendelser å vise. Trykk «Last inn 30 standard» for å komme i gang.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(h => {
+    const isIncome = h.type === 'income';
+    const bg     = isIncome ? '#dcfce7' : '#fee2e2';
+    const color  = isIncome ? '#15803d' : '#dc2626';
+    const border = isIncome ? '#86efac' : '#fca5a5';
+    const sign   = isIncome ? '+' : '-';
+    return `<div style="background:${bg};border:1.5px solid ${border};border-radius:12px;padding:.85rem 1rem;display:flex;flex-direction:column;gap:.4rem;position:relative;">
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <span style="font-size:1.6rem;">${h.emoji||'🎲'}</span>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);line-height:1.2;">${h.desc}</div>
+          <div style="font-size:.82rem;font-weight:900;color:${color};margin-top:2px;">${sign}🪙${h.amount}</div>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" onclick="showHendelseQR14('${h.fbKey}')" title="Vis QR">⬛</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteHendelse('${h.fbKey}')" title="Slett" style="color:var(--coral);">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showHendelseQR14(fbKey) {
+  const h = (window._hendelser || []).find(x => x.fbKey === fbKey);
+  if (!h) return;
+  const payload = JSON.stringify({ type: 'event', subtype: h.type, amount: h.amount, desc: h.desc });
+  const modal = document.getElementById('modal-hend-qr');
+  const box   = document.getElementById('modal-hend-qr-box');
+  const title = document.getElementById('modal-hend-qr-title');
+  const desc  = document.getElementById('modal-hend-qr-desc');
+  const isIncome = h.type === 'income';
+  const sign = isIncome ? '+' : '-';
+  title.textContent = (h.emoji||'🎲') + ' ' + h.desc;
+  desc.textContent  = (isIncome ? '💰 Inntekt' : '💸 Utgift') + ': ' + sign + '🪙' + h.amount;
+  box.innerHTML     = '<div style="width:250px;height:250px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem;">Genererer QR…</div>';
+  modal.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    box.innerHTML = '';
+    try {
+      new QRCode(box, { text: payload, width: 250, height: 250, correctLevel: QRCode.CorrectLevel.M });
+    } catch(e) {
+      box.innerHTML = '<p style="color:var(--coral);font-size:.82rem;">Kunne ikke generere QR</p>';
+    }
+    setTimeout(() => {
+      const canvas = box.querySelector('canvas');
+      if (canvas) document.getElementById('hend-qr-print-btn')._qrDataUrl = canvas.toDataURL('image/png');
+    }, 200);
+    document.getElementById('hend-qr-print-btn')._hendelse = h;
+  }));
+}
+
+function printHendelseQRCard() {
+  const btn = document.getElementById('hend-qr-print-btn');
+  const h   = btn._hendelse;
+  const dataUrl = btn._qrDataUrl || '';
+  if (!dataUrl || !h) { alert('QR ikke klar ennå – vent et sekund.'); return; }
+  printHendelserCards14([{ ...h, _dataUrl: dataUrl }]);
+}
+
+function printHendelser() {
+  const all = window._hendelser || [];
+  if (!all.length) { alert('Ingen hendelser å skrive ut.'); return; }
+  const cards = all.map(h => ({
+    ...h,
+    qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=4&data=' +
+           encodeURIComponent(JSON.stringify({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }))
+  }));
+  printHendelserCards14(cards);
+}
+
+function printHendelserCards14(cards) {
+  const win = window.open('', '_blank', 'width=900,height=700');
+  const cardHTML = (c) => {
+    const isIncome = c.type === 'income';
+    const color    = isIncome ? '#15803d' : '#dc2626';
+    const bg       = isIncome ? '#f0fdf4' : '#fff1f2';
+    const border   = isIncome ? '#86efac' : '#fca5a5';
+    const sign     = isIncome ? '+' : '−';
+    const label    = isIncome ? 'INNTEKT' : 'UTGIFT';
+    const qrSrc    = c.qrUrl || (c._dataUrl || '');
+    return `<div class="card-print" style="background:${bg};border:2.5px solid ${border};">
+      <div class="type-label" style="background:${border};color:${color};">${label}</div>
+      <div class="emoji">${c.emoji||'🎲'}</div>
+      <div class="desc">${c.desc}</div>
+      <div class="amount" style="color:${color};">${sign} 🪙 ${c.amount}</div>
+      <div class="qr-wrap"><img src="${qrSrc}" width="130" height="130" alt="QR"></div>
+      <div class="scan-hint">Scan for å registrere</div>
+    </div>`;
+  };
+  let pagesHTML = '';
+  for (let i = 0; i < cards.length; i += 4) {
+    const group = cards.slice(i, i+4);
+    while (group.length < 4) group.push(null);
+    pagesHTML += `<div class="page-print">
+      ${group.map(c => c ? cardHTML(c) : '<div class="card-print empty"></div>').join('')}
+    </div>`;
+  }
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:white;}
+    @media print{@page{size:A4 portrait;margin:0;}}
+    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative;}
+    .page-print::before{content:'';position:absolute;left:50%;top:8mm;bottom:8mm;width:0;border-left:1.5px dashed #1D9E75;z-index:10;pointer-events:none;}
+    .page-print::after{content:'';position:absolute;top:50%;left:8mm;right:8mm;height:0;border-top:1.5px dashed #1D9E75;z-index:10;pointer-events:none;}
+    .card-print{padding:7mm 8mm;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3.5mm;text-align:center;border:none;outline:0.5px solid #d1d5db;outline-offset:-1px;}
+    .card-print.empty{background:white;}
+    .type-label{font-size:3.5mm;font-weight:900;letter-spacing:0.5mm;padding:1.5mm 5mm;border-radius:3mm;text-transform:uppercase;}
+    .emoji{font-size:22mm;line-height:1.05;}
+    .desc{font-size:5mm;font-weight:800;color:#1a1040;line-height:1.3;max-width:80mm;}
+    .amount{font-family:'Fredoka One',cursive;font-size:11mm;line-height:1;}
+    .qr-wrap{display:flex;justify-content:center;}
+    .scan-hint{font-size:3mm;color:#6b7280;font-weight:700;}
+  </style>
+</head><body>
+  ${pagesHTML}
+  <script>setTimeout(function(){window.focus();window.print();},800);<\/script>
+</body></html>`);
+  win.document.close();
+}
 </script>
 </body>
 </html>

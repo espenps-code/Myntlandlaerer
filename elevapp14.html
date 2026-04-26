@@ -122,6 +122,17 @@
   .nav-item.active{color:var(--teal);}.nav-item:not(.active){color:var(--muted);}
   .nav-icon{font-size:1.4rem;}.nav-label{font-size:.68rem;font-weight:800;}
 
+  /* SAVINGS */
+  .savings-card{background:linear-gradient(135deg,#0f5132 0%,#198754 50%,#20c997 100%);border-radius:24px;padding:1.75rem;color:white;position:relative;overflow:hidden;margin-bottom:1.25rem;}
+  .savings-card::before{content:'';position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08);}
+  .savings-card::after{content:'';position:absolute;bottom:-50px;left:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);}
+  .savings-label{font-size:.9rem;opacity:.9;font-weight:700;margin-bottom:6px;position:relative;z-index:1;}
+  .savings-amount{font-family:'Fredoka One',cursive;font-size:3.4rem;color:var(--amber);line-height:1;position:relative;z-index:1;}
+  .savings-currency{font-size:.95rem;opacity:.85;font-weight:700;position:relative;z-index:1;}
+  .savings-rate{display:inline-flex;align-items:center;font-size:.78rem;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;margin-top:12px;font-weight:700;position:relative;z-index:1;}
+  .savings-chart-card{background:white;border-radius:16px;padding:1.25rem;border:1.5px solid var(--border);}
+  .savings-chart-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);margin-bottom:.75rem;}
+
   /* CONTENT */
   .content{flex:1;overflow-y:auto;padding:1.5rem;}
   .customer-tab-content{display:none;}.customer-tab-content.active{display:block;}
@@ -284,8 +295,8 @@
     <img class="splash-monster" src="data:image/webp;base64,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" alt="Myntland-monster">
   </div>
   <div class="splash-logo">Myntland</div>
-  <div class="splash-tagline">Din digitale butikk 🛒</div>
-  <button class="role-btn role-btn-customer" onclick="selectRole('customer')">👛 Jeg er kunde</button>
+  <div class="splash-tagline">Min intro til økonomi 💰</div>
+  <button class="role-btn role-btn-customer" onclick="selectRole('customer')">👛 Min nettbank</button>
   <button class="role-btn role-btn-cashier" onclick="selectRole('cashier')">🏪 Jeg er kasse</button>
 </div>
 
@@ -390,12 +401,41 @@
       </div>
     </div>
     <button class="action-btn action-btn-amber" onclick="startScan('payment')">📷 Scan & betal</button>
-    <button class="action-btn action-btn-ghost" style="margin-top:.5rem;" onclick="startScan('reward')">⭐ Scan belønnings-QR</button>
+    <button class="action-btn action-btn-ghost" style="margin-top:.5rem;" onclick="startScan('reward')">⭐ Scan belønning eller hendelse</button>
+  </div>
+
+  <!-- SPAREKONTO TAB -->
+  <div class="customer-tab-content content" id="tab-savings">
+    <div class="savings-card">
+      <div class="savings-label">🏦 Sparekonto</div>
+      <div class="savings-amount" id="savings-balance">0</div>
+      <div class="savings-currency">Mynter 🪙</div>
+      <div class="savings-rate">📈 5 % rente hver uke (utbetales mandag)</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+      <button class="action-btn action-btn-amber" style="margin-bottom:0;font-size:1rem;padding:14px;" onclick="openDepositModal()">💰 Sett inn</button>
+      <button class="action-btn action-btn-ghost" style="margin-bottom:0;font-size:1rem;padding:14px;" onclick="openWithdrawModal()">↩️ Ta ut</button>
+    </div>
+
+    <div class="savings-chart-card">
+      <div class="savings-chart-title">📊 Utvikling</div>
+      <canvas id="savings-chart" width="600" height="220" style="width:100%;height:220px;display:block;"></canvas>
+      <div id="savings-chart-empty" style="text-align:center;color:var(--muted);font-size:.85rem;padding:1.5rem 0;display:none;">Sett inn dine første mynter for å se kurven vokse!</div>
+    </div>
+
+    <div class="section-title" style="margin-top:1.5rem;">📜 Sparehistorikk</div>
+    <div id="savings-history">
+      <div class="empty-state"><div class="empty-icon">🏦</div><div style="font-weight:700;">Ingen innskudd ennå</div></div>
+    </div>
   </div>
 
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchCustomerTab('bank',this)">
       <div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div>
+    </button>
+    <button class="nav-item" onclick="switchCustomerTab('savings',this)">
+      <div class="nav-icon">💰</div><div class="nav-label">Sparekonto</div>
     </button>
     <button class="nav-item" onclick="switchCustomerTab('card',this)">
       <div class="nav-icon">💳</div><div class="nav-label">Bankkort</div>
@@ -518,6 +558,37 @@
   <div class="success-amount" id="success-amount"></div>
   <div class="success-text" id="success-text"></div>
   <button class="success-close" onclick="document.getElementById('success-overlay').classList.remove('open');">Fortsett</button>
+</div>
+
+<!-- INNSKUDD/UTTAK MODAL -->
+<div class="pin-overlay" id="savings-modal">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:340px;">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);text-align:center;margin-bottom:.25rem;" id="savings-modal-title">💰 Sett inn på sparekonto</div>
+    <div style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1rem;font-weight:700;" id="savings-modal-info">Hovedkonto: 0 🪙</div>
+    <div style="margin-bottom:1rem;">
+      <label style="display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Beløp (mynter)</label>
+      <input type="number" id="savings-modal-amount" min="1" placeholder="50"
+        style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);text-align:center;">
+    </div>
+    <div id="savings-modal-error" style="color:var(--coral);font-size:.85rem;font-weight:700;margin-bottom:.5rem;text-align:center;min-height:1.2rem;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeSavingsModal()" style="flex:1;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Avbryt</button>
+      <button id="savings-modal-confirm" onclick="confirmSavingsAction()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--teal);color:white;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Bekreft</button>
+    </div>
+  </div>
+</div>
+
+<!-- HENDELSE-BEKREFTELSE MODAL -->
+<div class="pin-overlay" id="event-modal">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:340px;text-align:center;">
+    <div style="font-size:3.5rem;margin-bottom:.25rem;" id="event-modal-emoji">🎲</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:.5rem;" id="event-modal-desc">Hendelse</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:2.2rem;line-height:1;margin-bottom:1rem;" id="event-modal-amount">+0 🪙</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="cancelEvent()" style="flex:1;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Avbryt</button>
+      <button onclick="acceptEvent()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--amber);color:var(--teal-dark);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">OK</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -661,6 +732,7 @@ function showScreen(id) {
 function goToSplash() {
   stopScan();
   window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0; transactions = []; _pinVisible14 = false;
+  savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
   clearCart();
   showScreen('screen-splash');
 }
@@ -704,6 +776,12 @@ function tryLogin() {
       topAv.appendChild(window.makeAnimalSVG(avatarSeed, 32));
     }
     loadTransactions(s.fbKey);
+    // Last sparekonto, kjør evt. mandags-renteutbetaling, og rendre
+    (async () => {
+      await loadSavings(s.fbKey);
+      await checkAndPayInterest(s.fbKey);
+      renderSavings();
+    })();
     checkQuizStatus();
     switchCustomerTab('bank', document.querySelector('.nav-item'));
     showScreen('screen-customer');
@@ -746,6 +824,10 @@ function switchCustomerTab(tab, btn) {
     if (d) { d.textContent = '••••'; d.style.letterSpacing = '.4rem'; }
     if (b) b.textContent = '👁 Vis PIN';
   }
+  // Tegn graf når sparekonto blir synlig (canvas må ha synlig størrelse)
+  if (tab === 'savings') {
+    requestAnimationFrame(() => requestAnimationFrame(drawSavingsChart));
+  }
 }
 
 // ── Transactions (persistent in Firebase) ─────────────────────────────────
@@ -781,6 +863,323 @@ async function loadTransactions(studentFbKey) {
   } catch(e) {}
 }
 
+// ════════════════════════════════════════════════════════════
+// SPAREKONTO – 5 % ukentlig rente, utbetales mandag
+// ════════════════════════════════════════════════════════════
+let savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+let savingsAction = 'deposit'; // 'deposit' eller 'withdraw'
+
+// Hjelpefunksjon: returnerer ms-tidspunktet for siste mandag kl 00:00 (lokal tid)
+function lastMondayTs(now) {
+  const d = new Date(now);
+  d.setHours(0,0,0,0);
+  const day = d.getDay(); // 0=søn, 1=man, ..., 6=lør
+  const daysSinceMonday = (day === 0) ? 6 : (day - 1);
+  d.setDate(d.getDate() - daysSinceMonday);
+  return d.getTime();
+}
+
+async function loadSavings(studentFbKey) {
+  if (!window._get || !window._ref || !window._db) {
+    savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+    return;
+  }
+  try {
+    const snap = await window._get(window._ref(window._db, 'savings14/' + studentFbKey));
+    const v = snap.val();
+    if (v) {
+      savingsState = {
+        balance: v.balance || 0,
+        history: v.history ? Object.values(v.history).sort((a,b) => (a.ts||0) - (b.ts||0)) : [],
+        lastInterestPaid: v.lastInterestPaid || 0
+      };
+    } else {
+      savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+    }
+  } catch(e) {
+    savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+  }
+}
+
+async function saveSavingsRecord(studentFbKey, entry) {
+  // entry = { type:'deposit'|'withdraw'|'interest', amount, ts, balanceAfter }
+  if (!window._push || !window._set || !window._ref || !window._db) return;
+  const r = window._push(window._ref(window._db, 'savings14/' + studentFbKey + '/history'));
+  await window._set(r, entry);
+  savingsState.history.push(entry);
+}
+
+async function setSavingsBalance(studentFbKey, newBalance) {
+  if (!window._update || !window._ref || !window._db) return;
+  await window._update(window._ref(window._db, 'savings14/' + studentFbKey), { balance: newBalance });
+  savingsState.balance = newBalance;
+}
+
+async function setLastInterestPaid(studentFbKey, ts) {
+  if (!window._update || !window._ref || !window._db) return;
+  await window._update(window._ref(window._db, 'savings14/' + studentFbKey), { lastInterestPaid: ts });
+  savingsState.lastInterestPaid = ts;
+}
+
+// Sjekker om det skal utbetales rente: 5 % per uke, telles per mandag som har passert siden lastInterestPaid
+async function checkAndPayInterest(studentFbKey) {
+  if (savingsState.balance <= 0) return;
+  const now = Date.now();
+  const lastMon = lastMondayTs(now);
+  const lastPaid = savingsState.lastInterestPaid || 0;
+
+  if (lastPaid >= lastMon) return; // allerede utbetalt for denne mandagen
+
+  // Hvor mange mandager har passert? (vanligvis 1, men kan være flere ved langvarig fravær)
+  let weeksToPay = 0;
+  if (lastPaid === 0) {
+    weeksToPay = 1; // første gang: kun én utbetaling for forrige mandag
+  } else {
+    const lastPaidMon = lastMondayTs(lastPaid);
+    weeksToPay = Math.round((lastMon - lastPaidMon) / (7 * 24 * 3600 * 1000));
+    if (weeksToPay < 1) weeksToPay = 1;
+    if (weeksToPay > 8) weeksToPay = 8; // sikkerhetsgrense
+  }
+
+  // Utbetal rentene én etter én – så grafen viser hver mandag
+  let bal = savingsState.balance;
+  for (let i = 0; i < weeksToPay; i++) {
+    const interest = Math.floor(bal * 0.05);
+    if (interest <= 0) break;
+    bal += interest;
+    // Tidsstempel for den aktuelle mandagen
+    const mondayTs = lastMon - (weeksToPay - 1 - i) * 7 * 24 * 3600 * 1000;
+    await saveSavingsRecord(studentFbKey, {
+      type: 'interest', amount: interest, ts: mondayTs, balanceAfter: bal
+    });
+    // Logg også i hovedtransaksjonene så det vises på Nettbank
+    await saveTransaction(studentFbKey, {
+      type: 'income', icon: '📈', desc: 'Renter på sparekonto (5 %)', amount: interest, ts: mondayTs
+    });
+    transactions.unshift({ type:'income', icon:'📈', desc:'Renter på sparekonto (5 %)', amount: interest, ts: mondayTs });
+  }
+  await setSavingsBalance(studentFbKey, bal);
+  await setLastInterestPaid(studentFbKey, lastMon);
+  renderTransactions();
+}
+
+function renderSavings() {
+  const balEl = document.getElementById('savings-balance');
+  if (balEl) balEl.textContent = savingsState.balance;
+  renderSavingsHistory();
+  drawSavingsChart();
+}
+
+function renderSavingsHistory() {
+  const el = document.getElementById('savings-history');
+  if (!el) return;
+  if (!savingsState.history.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏦</div><div style="font-weight:700;">Ingen innskudd ennå</div></div>';
+    return;
+  }
+  const sorted = [...savingsState.history].sort((a,b) => (b.ts||0) - (a.ts||0)).slice(0, 15);
+  const meta = {
+    deposit:  { icon:'💰', name:'Innskudd',          cls:'income',  sign:'+' },
+    withdraw: { icon:'↩️', name:'Uttak',              cls:'expense', sign:'-' },
+    interest: { icon:'📈', name:'Renter (5 % ukentlig)', cls:'income', sign:'+' }
+  };
+  el.innerHTML = sorted.map(t => {
+    const m = meta[t.type] || { icon:'•', name:t.type, cls:'income', sign:'+' };
+    return `<div class="transaction-item">
+      <div class="tx-icon ${m.cls}">${m.icon}</div>
+      <div class="tx-desc">
+        <div class="tx-name">${m.name}</div>
+        <div class="tx-date">${fmtDate(t.ts||0)}</div>
+      </div>
+      <div class="tx-amount ${m.cls}">${m.sign}${t.amount} 🪙</div>
+    </div>`;
+  }).join('');
+}
+
+function drawSavingsChart() {
+  const canvas = document.getElementById('savings-chart');
+  const empty  = document.getElementById('savings-chart-empty');
+  if (!canvas) return;
+  const hist = [...savingsState.history].sort((a,b) => (a.ts||0) - (b.ts||0));
+  if (!hist.length) {
+    canvas.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  if (empty) empty.style.display = 'none';
+
+  // Bruk faktisk pikselstørrelse for skarp tegning
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 600;
+  const cssH = 220;
+  canvas.width  = Math.floor(cssW * dpr);
+  canvas.height = Math.floor(cssH * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const padL = 36, padR = 14, padT = 14, padB = 28;
+  const w = cssW - padL - padR;
+  const h = cssH - padT - padB;
+
+  // Dataserie: (ts, balanceAfter). Inkluder også "0" som startpunkt før første hendelse.
+  const points = hist.map(p => ({ ts: p.ts || 0, val: p.balanceAfter || 0 }));
+  if (points.length < 2) {
+    // Legg til et startpunkt 1 uke før første hendelse, med saldo 0
+    points.unshift({ ts: points[0].ts - 7*24*3600*1000, val: 0 });
+  }
+
+  const minTs = points[0].ts;
+  const maxTs = points[points.length - 1].ts;
+  const tsRange = Math.max(1, maxTs - minTs);
+  const maxVal = Math.max(...points.map(p => p.val), 10);
+  const minVal = 0;
+
+  // Bakgrunnsgrid
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (h * i / 4);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + w, y); ctx.stroke();
+  }
+  // Y-aksetekster
+  ctx.fillStyle = '#5a7a5a';
+  ctx.font = '10px Nunito, sans-serif';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const v = Math.round(maxVal - (maxVal - minVal) * i / 4);
+    const y = padT + (h * i / 4);
+    ctx.fillText(v, padL - 4, y + 3);
+  }
+
+  // Areal-fyll
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const x = padL + ((p.ts - minTs) / tsRange) * w;
+    const y = padT + h - ((p.val - minVal) / (maxVal - minVal || 1)) * h;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  const lastX = padL + w;
+  ctx.lineTo(lastX, padT + h);
+  ctx.lineTo(padL, padT + h);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, padT, 0, padT + h);
+  grad.addColorStop(0, 'rgba(29,158,117,.35)');
+  grad.addColorStop(1, 'rgba(29,158,117,.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Linje
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const x = padL + ((p.ts - minTs) / tsRange) * w;
+    const y = padT + h - ((p.val - minVal) / (maxVal - minVal || 1)) * h;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#1D9E75';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Punkter (uthev rente i amber)
+  hist.forEach(p => {
+    const x = padL + ((p.ts - minTs) / tsRange) * w;
+    const y = padT + h - (((p.balanceAfter||0) - minVal) / (maxVal - minVal || 1)) * h;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = (p.type === 'interest') ? '#EF9F27' : '#1D9E75';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // X-akse: dato på første og siste punkt
+  ctx.fillStyle = '#5a7a5a';
+  ctx.textAlign = 'left';
+  ctx.fillText(shortDate(minTs), padL, padT + h + 14);
+  ctx.textAlign = 'right';
+  ctx.fillText(shortDate(maxTs), padL + w, padT + h + 14);
+}
+
+function shortDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+// ── Modal-styring ─────────────────────────────────────────────────────────
+function openDepositModal() {
+  savingsAction = 'deposit';
+  const s = window._currentStudent; if (!s) return;
+  document.getElementById('savings-modal-title').textContent = '💰 Sett inn på sparekonto';
+  document.getElementById('savings-modal-info').textContent  = 'Hovedkonto: ' + s.balance + ' 🪙';
+  document.getElementById('savings-modal-amount').value = '';
+  document.getElementById('savings-modal-error').textContent = '';
+  document.getElementById('savings-modal-confirm').style.background = '#1D9E75';
+  document.getElementById('savings-modal').classList.add('open');
+  setTimeout(() => document.getElementById('savings-modal-amount').focus(), 50);
+}
+
+function openWithdrawModal() {
+  savingsAction = 'withdraw';
+  document.getElementById('savings-modal-title').textContent = '↩️ Ta ut fra sparekonto';
+  document.getElementById('savings-modal-info').textContent  = 'Sparekonto: ' + savingsState.balance + ' 🪙';
+  document.getElementById('savings-modal-amount').value = '';
+  document.getElementById('savings-modal-error').textContent = '';
+  document.getElementById('savings-modal-confirm').style.background = '#EF9F27';
+  document.getElementById('savings-modal').classList.add('open');
+  setTimeout(() => document.getElementById('savings-modal-amount').focus(), 50);
+}
+
+function closeSavingsModal() {
+  document.getElementById('savings-modal').classList.remove('open');
+}
+
+async function confirmSavingsAction() {
+  const s = window._currentStudent; if (!s) return;
+  const amount = parseInt(document.getElementById('savings-modal-amount').value) || 0;
+  const errEl  = document.getElementById('savings-modal-error');
+  if (amount < 1) { errEl.textContent = 'Beløpet må være minst 1 mynt.'; return; }
+
+  if (savingsAction === 'deposit') {
+    if (s.balance < amount) { errEl.textContent = 'Du har ikke nok på hovedkontoen.'; return; }
+    const newMain    = s.balance - amount;
+    const newSavings = savingsState.balance + amount;
+    await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
+    window._currentStudent.balance = newMain;
+    await setSavingsBalance(s.fbKey, newSavings);
+    await saveSavingsRecord(s.fbKey, { type:'deposit', amount, ts: Date.now(), balanceAfter: newSavings });
+    const tx = { type:'expense', icon:'🏦', desc:'Innskudd til sparekonto', amount: -amount, ts: Date.now() };
+    await saveTransaction(s.fbKey, tx);
+    transactions.unshift(tx);
+    document.getElementById('customer-balance').textContent = newMain;
+    renderTransactions();
+    renderSavings();
+    closeSavingsModal();
+    playSuccessChime();
+    showSuccess('🏦','Satt inn!','+' + amount + ' 🪙', 'På sparekonto: ' + newSavings + ' mynter');
+  } else {
+    if (savingsState.balance < amount) { errEl.textContent = 'Ikke nok på sparekontoen.'; return; }
+    const newMain    = s.balance + amount;
+    const newSavings = savingsState.balance - amount;
+    await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
+    window._currentStudent.balance = newMain;
+    await setSavingsBalance(s.fbKey, newSavings);
+    await saveSavingsRecord(s.fbKey, { type:'withdraw', amount, ts: Date.now(), balanceAfter: newSavings });
+    const tx = { type:'income', icon:'🏦', desc:'Uttak fra sparekonto', amount: +amount, ts: Date.now() };
+    await saveTransaction(s.fbKey, tx);
+    transactions.unshift(tx);
+    document.getElementById('customer-balance').textContent = newMain;
+    renderTransactions();
+    renderSavings();
+    closeSavingsModal();
+    playSuccessChime();
+    showSuccess('💸','Tatt ut!','+' + amount + ' 🪙', 'På hovedkonto: ' + newMain + ' mynter');
+  }
+}
+
 function renderTransactions() {
   const el = document.getElementById('transaction-list');
   if (!el) return;
@@ -802,8 +1201,8 @@ function renderTransactions() {
 // ── Camera QR scanner ──────────────────────────────────────────────────────
 function startScan(mode) {
   scanMode = mode;
-  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønnings-QR', cashier:'🛒 Scan varekode' };
-  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Hold belønnings-QR innenfor rammen', cashier:'Hold varekortet innenfor rammen' };
+  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønning / hendelse', cashier:'🛒 Scan varekode' };
+  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Belønning eller hendelse fra læreren', cashier:'Hold varekortet innenfor rammen' };
   document.getElementById('scanner-title').textContent = titles[mode] || 'Scan QR-kode';
   document.getElementById('scanner-hint').textContent  = hints[mode] || 'Hold QR-koden innenfor rammen';
   document.getElementById('scanner-overlay').classList.add('open');
@@ -919,6 +1318,7 @@ function handleScanResult(text) {
       }
     } else if (scanMode === 'reward') {
       if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
+      else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
     }
     stopScan();
   } catch(e) {
@@ -999,8 +1399,15 @@ async function doPayment(amount) {
 async function doReward(amount) {
   const s = window._currentStudent;
   if (!s) return;
-  const newBal = s.balance + amount;
-  const tx = { type:'income', icon:'⭐', desc:'Belønning skannet', amount:+amount, ts:Date.now() };
+  // 20 % skatt trekkes fra brutto, går til klassens sparemål
+  const taxAmt = Math.floor(amount * 0.20);
+  const net    = amount - taxAmt;
+  const newBal = s.balance + net;
+  const tx = {
+    type: 'income', icon: '⭐',
+    desc: 'Belønning (netto etter 20 % skatt)',
+    amount: +net, ts: Date.now()
+  };
   await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newBal });
   window._currentStudent.balance = newBal;
   const idxR = window._allStudents.findIndex(x=>x.fbKey===s.fbKey); if(idxR!==-1) window._allStudents[idxR].balance=newBal;
@@ -1008,8 +1415,86 @@ async function doReward(amount) {
   document.getElementById('customer-balance').textContent = newBal;
   transactions.unshift(tx);
   renderTransactions();
+  // Distribuer skatten til aktive klassesparemål
+  if (taxAmt > 0) {
+    try { await distributeTaxToGoals14(taxAmt); } catch(e) { console.warn('Kunne ikke fordele skatt:', e); }
+  }
   playSuccessChime();
-  showSuccess('🎉','Belønning!',`+${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
+  showSuccess('🎉','Belønning!','+' + net + ' 🪙','Ny saldo: ' + newBal + ' mynter (20 % skatt: ' + taxAmt + ')');
+}
+
+// Henter aktive sparemål, fordeler skatt likt, oppdaterer dem
+async function distributeTaxToGoals14(amount) {
+  if (!window._get || !window._update || !window._ref || !window._db) return;
+  if (!amount) return;
+  const snap = await window._get(window._ref(window._db, 'classGoals14'));
+  const all  = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+  const active = all.filter(g => !g.completed);
+  if (!active.length) return;
+  const perGoal = Math.floor(amount / active.length);
+  if (perGoal <= 0) return;
+  const upd = {};
+  active.forEach(g => {
+    const ns = (g.saved || 0) + perGoal;
+    upd['classGoals14/' + g.fbKey + '/saved'] = ns;
+    if (ns >= g.target) upd['classGoals14/' + g.fbKey + '/completed'] = true;
+  });
+  await window._update(window._ref(window._db, '/'), upd);
+}
+
+// ── Hendelser fra lærer (QR-kort) ─────────────────────────────────────────
+let _pendingEvent = null;
+function showEventConfirm(data) {
+  // data = { type:'event', subtype:'income'|'expense', amount, desc }
+  _pendingEvent = data;
+  const isIncome = data.subtype === 'income';
+  // Velg en passende emoji ut fra beskrivelsen (de fleste har emoji i selve teksten ikke, så vi velger en standard)
+  const emoji = isIncome ? '🎉' : '💸';
+  document.getElementById('event-modal-emoji').textContent = emoji;
+  document.getElementById('event-modal-desc').textContent  = data.desc || 'Hendelse';
+  const sign = isIncome ? '+' : '-';
+  const color = isIncome ? '#1D9E75' : '#D85A30';
+  const amtEl = document.getElementById('event-modal-amount');
+  amtEl.textContent = sign + data.amount + ' 🪙';
+  amtEl.style.color = color;
+  document.getElementById('event-modal').classList.add('open');
+}
+
+function cancelEvent() {
+  _pendingEvent = null;
+  document.getElementById('event-modal').classList.remove('open');
+}
+
+async function acceptEvent() {
+  const data = _pendingEvent;
+  if (!data) { cancelEvent(); return; }
+  const s = window._currentStudent;
+  if (!s) { cancelEvent(); return; }
+  const isIncome = data.subtype === 'income';
+  const delta = isIncome ? data.amount : -data.amount;
+  const newBal = Math.max(0, s.balance + delta);
+  const tx = {
+    type: isIncome ? 'income' : 'expense',
+    icon: isIncome ? '🎉' : '💸',
+    desc: 'Hendelse: ' + (data.desc || ''),
+    amount: delta,
+    ts: Date.now()
+  };
+  await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newBal });
+  window._currentStudent.balance = newBal;
+  const idx = window._allStudents.findIndex(x=>x.fbKey===s.fbKey); if(idx!==-1) window._allStudents[idx].balance=newBal;
+  await saveTransaction(s.fbKey, tx);
+  document.getElementById('customer-balance').textContent = newBal;
+  transactions.unshift(tx);
+  renderTransactions();
+  document.getElementById('event-modal').classList.remove('open');
+  _pendingEvent = null;
+  playSuccessChime();
+  if (isIncome) {
+    showSuccess('🎉', 'Inntekt!', '+' + data.amount + ' 🪙', 'Ny saldo: ' + newBal + ' mynter');
+  } else {
+    showSuccess('💸', 'Utgift', '-' + data.amount + ' 🪙', 'Ny saldo: ' + newBal + ' mynter');
+  }
 }
 
 // ── QUIZ ───────────────────────────────────────────────────────────────────
