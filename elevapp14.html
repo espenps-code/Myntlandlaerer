@@ -150,6 +150,29 @@
   .class-goal-meta{display:flex;justify-content:space-between;font-size:.74rem;font-weight:700;color:var(--muted);margin-top:5px;}
   .class-goal-meta .pct{color:var(--teal-dark);}
 
+  .class-goal-row.mine{background:linear-gradient(90deg,#fff7ed 0%,white 100%);border-left:4px solid var(--amber);padding-left:10px;border-radius:8px;margin:6px -4px;}
+  .mine-badge{display:inline-block;background:var(--amber);color:var(--teal-dark);font-size:.62rem;padding:2px 7px;border-radius:10px;font-weight:900;margin-left:4px;vertical-align:middle;}
+
+  .chosen-goal-banner{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 100%);border:1.5px solid var(--amber);border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
+  .chosen-goal-banner:active{transform:scale(.98);}
+  .chosen-goal-banner.empty{background:#fef2f2;border-color:#fca5a5;}
+  .chosen-goal-left{flex:1;min-width:0;}
+  .chosen-goal-label{font-size:.7rem;font-weight:900;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.5px;}
+  .chosen-goal-name{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);line-height:1.1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chosen-goal-edit{background:white;color:var(--teal-dark);font-weight:900;font-size:.78rem;padding:5px 12px;border-radius:8px;border:1.5px solid var(--amber);}
+
+  .choose-goal-row{width:100%;display:flex;align-items:center;gap:12px;background:white;border:2px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer;text-align:left;transition:all .12s;font-family:inherit;}
+  .choose-goal-row:active{transform:scale(.98);}
+  .choose-goal-row.selected{border-color:var(--amber);background:#fff7ed;}
+  .choose-goal-emoji{font-size:1.8rem;flex-shrink:0;}
+  .choose-goal-info{flex:1;min-width:0;}
+  .choose-goal-name{font-weight:900;color:var(--teal-dark);font-size:.92rem;line-height:1.2;margin-bottom:5px;}
+  .choose-goal-bar{height:6px;background:var(--bg);border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+  .choose-goal-fill{height:100%;background:var(--teal);border-radius:10px;}
+  .choose-goal-meta{font-size:.74rem;color:var(--muted);font-weight:700;margin-top:3px;}
+  .choose-goal-check{font-size:1.4rem;color:var(--amber);flex-shrink:0;}
+  .choose-goal-check.empty{color:var(--border);font-size:1.6rem;}
+
   .savings-card{background:linear-gradient(135deg,#0f5132 0%,#198754 50%,#20c997 100%);border-radius:24px;padding:1.75rem;color:white;position:relative;overflow:hidden;margin-bottom:1.25rem;}
   .savings-card::before{content:'';position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08);}
   .savings-card::after{content:'';position:absolute;bottom:-50px;left:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);}
@@ -647,6 +670,16 @@
   </div>
 </div>
 
+<!-- VELG SPAREMÅL MODAL -->
+<div class="pin-overlay" id="choose-goal-modal">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:400px;">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);text-align:center;margin-bottom:.5rem;">⭐ Velg sparemål</div>
+    <div style="text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:1rem;font-weight:700;">Skatten din går til dette målet</div>
+    <div id="choose-goal-list" style="max-height:60vh;overflow-y:auto;margin-bottom:1rem;"></div>
+    <button onclick="closeChooseGoalModal()" style="width:100%;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Lukk</button>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════════════════
 // MONSTERAVATAR ENGINE – bruker monster-bilder (ingen ekstern API)
@@ -1054,20 +1087,48 @@ function renderClassGoals(goals) {
   const body = document.getElementById('class-goals-body');
   if (!card || !body) return;
   if (!goals || !goals.length) { card.style.display = 'none'; return; }
+  // Lagre globalt for valg-modal
+  window._allClassGoals = goals;
   // Sorter: aktive først, så fullførte
   const active = goals.filter(g => !g.completed);
   const done   = goals.filter(g =>  g.completed);
   const ordered = [...active, ...done];
   card.style.display = 'block';
-  body.innerHTML = ordered.map(g => {
+
+  const s = window._currentStudent;
+  const chosenKey = s?.chosenGoalKey || '';
+  const chosen = chosenKey ? goals.find(g => g.fbKey === chosenKey && !g.completed) : null;
+
+  // Header med valgt mål-info
+  let headerHTML = '';
+  if (chosen) {
+    headerHTML = `<div class="chosen-goal-banner" onclick="openChooseGoalModal()">
+      <div class="chosen-goal-left">
+        <div class="chosen-goal-label">⭐ Du støtter</div>
+        <div class="chosen-goal-name">${chosen.emoji||'🏦'} ${chosen.name}</div>
+      </div>
+      <div class="chosen-goal-edit">Bytt</div>
+    </div>`;
+  } else if (active.length) {
+    headerHTML = `<div class="chosen-goal-banner empty" onclick="openChooseGoalModal()">
+      <div class="chosen-goal-left">
+        <div class="chosen-goal-label" style="color:var(--coral);">⚠️ Du har ikke valgt et sparemål ennå</div>
+        <div class="chosen-goal-name" style="font-size:.85rem;color:var(--muted);">Skatten din venter på å bli plassert</div>
+      </div>
+      <div class="chosen-goal-edit" style="background:var(--amber);color:var(--teal-dark);">Velg</div>
+    </div>`;
+  }
+
+  body.innerHTML = headerHTML + ordered.map(g => {
     const saved = g.saved || 0;
     const target = g.target || 1;
     const pct = Math.min(100, Math.round(saved / target * 100));
     const isDone = !!g.completed;
-    return `<div class="class-goal-row">
+    const isMine = g.fbKey === chosenKey && !isDone;
+    return `<div class="class-goal-row${isMine ? ' mine' : ''}">
       <div class="class-goal-top">
         <div class="class-goal-emoji">${g.emoji || '🏦'}</div>
-        <div class="class-goal-name${isDone ? ' done' : ''}">${g.name || 'Sparemål'}${isDone ? ' ✅' : ''}</div>
+        <div class="class-goal-name${isDone ? ' done' : ''}">${g.name || 'Sparemål'}${isDone ? ' ✅' : ''}${isMine ? ' <span class="mine-badge">⭐ Mitt valg</span>' : ''}</div>
       </div>
       <div class="class-goal-bar"><div class="class-goal-fill${isDone ? ' done' : ''}" style="width:${pct}%;"></div></div>
       <div class="class-goal-meta">
@@ -1077,6 +1138,54 @@ function renderClassGoals(goals) {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── Velg sparemål-modal ──────────────────────────────────────────────────
+function openChooseGoalModal() {
+  const goals = (window._allClassGoals || []).filter(g => !g.completed);
+  const list = document.getElementById('choose-goal-list');
+  if (!goals.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;">Ingen aktive sparemål akkurat nå.</div>';
+  } else {
+    const s = window._currentStudent;
+    const chosenKey = s?.chosenGoalKey || '';
+    list.innerHTML = goals.map(g => {
+      const saved = g.saved || 0;
+      const pct = Math.min(100, Math.round(saved / (g.target||1) * 100));
+      const isMine = g.fbKey === chosenKey;
+      return `<button class="choose-goal-row${isMine ? ' selected' : ''}" onclick="selectGoal('${g.fbKey}')">
+        <div class="choose-goal-emoji">${g.emoji||'🏦'}</div>
+        <div class="choose-goal-info">
+          <div class="choose-goal-name">${g.name}</div>
+          <div class="choose-goal-bar"><div class="choose-goal-fill" style="width:${pct}%;"></div></div>
+          <div class="choose-goal-meta">🪙 ${saved} / ${g.target} · ${pct}%</div>
+        </div>
+        ${isMine ? '<div class="choose-goal-check">⭐</div>' : '<div class="choose-goal-check empty">○</div>'}
+      </button>`;
+    }).join('');
+  }
+  document.getElementById('choose-goal-modal').classList.add('open');
+}
+
+function closeChooseGoalModal() {
+  document.getElementById('choose-goal-modal').classList.remove('open');
+}
+
+async function selectGoal(fbKey) {
+  const s = window._currentStudent;
+  if (!s) return;
+  try {
+    await window._update(window._ref(window._db, 'students14/' + s.fbKey), { chosenGoalKey: fbKey });
+    window._currentStudent.chosenGoalKey = fbKey;
+    const idx = window._allStudents.findIndex(x => x.fbKey === s.fbKey);
+    if (idx !== -1) window._allStudents[idx].chosenGoalKey = fbKey;
+    // Re-render med nytt valg
+    renderClassGoals(window._allClassGoals || []);
+    closeChooseGoalModal();
+    playSuccessChime();
+  } catch (err) {
+    alert('Kunne ikke lagre valget: ' + (err.message || ''));
+  }
 }
 
 function renderSavingsHistory() {
@@ -1576,7 +1685,24 @@ async function doPayment(amount) {
 async function doReward(amount) {
   const s = window._currentStudent;
   if (!s) return;
-  // 20 % skatt trekkes fra brutto, går til klassens sparemål
+
+  // Sjekk at eleven har valgt et gyldig (aktivt) sparemål — ellers be dem velge først
+  const goals = window._allClassGoals || [];
+  const active = goals.filter(g => !g.completed);
+  if (active.length > 0) {
+    const chosen = s.chosenGoalKey ? active.find(g => g.fbKey === s.chosenGoalKey) : null;
+    if (!chosen) {
+      // Be eleven velge før belønning kan tas imot
+      showSuccess('⚠️','Velg sparemål først!','','Du må velge hvilket sparemål skatten din skal støtte.');
+      setTimeout(() => {
+        document.getElementById('success-overlay').classList.remove('open');
+        openChooseGoalModal();
+      }, 1500);
+      return;
+    }
+  }
+
+  // 20 % skatt trekkes fra brutto, går til elevens valgte sparemål
   const taxAmt = Math.floor(amount * 0.20);
   const net    = amount - taxAmt;
   const newBal = s.balance + net;
@@ -1592,31 +1718,24 @@ async function doReward(amount) {
   document.getElementById('customer-balance').textContent = newBal;
   transactions.unshift(tx);
   renderTransactions();
-  // Distribuer skatten til aktive klassesparemål
-  if (taxAmt > 0) {
-    try { await distributeTaxToGoals14(taxAmt); } catch(e) { console.warn('Kunne ikke fordele skatt:', e); }
+  // Gi skatten til elevens valgte mål
+  if (taxAmt > 0 && s.chosenGoalKey) {
+    try { await addTaxToChosenGoal(s.chosenGoalKey, taxAmt); } catch(e) { console.warn('Skatt-feil:', e); }
   }
   playSuccessChime();
   showSuccess('🎉','Belønning!','+' + net + ' 🪙','Ny saldo: ' + newBal + ' mynter (20 % skatt: ' + taxAmt + ')');
 }
 
-// Henter aktive sparemål, fordeler skatt likt, oppdaterer dem
-async function distributeTaxToGoals14(amount) {
+// Legger skatten til ett bestemt mål, men kun hvis det fortsatt er aktivt
+async function addTaxToChosenGoal(fbKey, amount) {
   if (!window._get || !window._update || !window._ref || !window._db) return;
-  if (!amount) return;
-  const snap = await window._get(window._ref(window._db, 'classGoals14'));
-  const all  = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-  const active = all.filter(g => !g.completed);
-  if (!active.length) return;
-  const perGoal = Math.floor(amount / active.length);
-  if (perGoal <= 0) return;
-  const upd = {};
-  active.forEach(g => {
-    const ns = (g.saved || 0) + perGoal;
-    upd['classGoals14/' + g.fbKey + '/saved'] = ns;
-    if (ns >= g.target) upd['classGoals14/' + g.fbKey + '/completed'] = true;
-  });
-  await window._update(window._ref(window._db, '/'), upd);
+  const snap = await window._get(window._ref(window._db, 'classGoals14/' + fbKey));
+  const g = snap.val();
+  if (!g || g.completed) return; // hopp over hvis fjernet eller fullført
+  const ns = (g.saved || 0) + amount;
+  const upd = { saved: ns };
+  if (ns >= g.target) upd.completed = true;
+  await window._update(window._ref(window._db, 'classGoals14/' + fbKey), upd);
 }
 
 // ── Hendelser fra lærer (QR-kort) ─────────────────────────────────────────
