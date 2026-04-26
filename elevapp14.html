@@ -123,6 +123,16 @@
   .nav-icon{font-size:1.4rem;}.nav-label{font-size:.68rem;font-weight:800;}
 
   /* SAVINGS */
+  .home-savings-card{display:flex;align-items:center;justify-content:space-between;background:white;border:2px solid #86efac;border-radius:18px;padding:14px 18px;margin-bottom:1.25rem;cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(15,81,50,.08);}
+  .home-savings-card:active{transform:scale(.98);background:#f0fdf4;}
+  .home-savings-left{display:flex;align-items:center;gap:14px;}
+  .home-savings-icon{font-size:2rem;}
+  .home-savings-label{font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.1rem;line-height:1;}
+  .home-savings-sub{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:3px;}
+  .home-savings-right{display:flex;align-items:center;gap:8px;}
+  .home-savings-amount{font-family:'Fredoka One',cursive;color:#15803d;font-size:1.3rem;}
+  .home-savings-arrow{font-size:1.4rem;color:#86efac;font-weight:700;}
+
   .savings-card{background:linear-gradient(135deg,#0f5132 0%,#198754 50%,#20c997 100%);border-radius:24px;padding:1.75rem;color:white;position:relative;overflow:hidden;margin-bottom:1.25rem;}
   .savings-card::before{content:'';position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08);}
   .savings-card::after{content:'';position:absolute;bottom:-50px;left:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);}
@@ -350,6 +360,22 @@
       <div class="balance-currency">Mynter 🪙</div>
       <div class="live-indicator"><div class="live-dot"></div> Oppdateres i sanntid</div>
     </div>
+
+    <!-- SPAREKONTO SNARVEI -->
+    <div class="home-savings-card" onclick="goToSavingsTab()">
+      <div class="home-savings-left">
+        <div class="home-savings-icon">🏦</div>
+        <div>
+          <div class="home-savings-label">Sparekonto</div>
+          <div class="home-savings-sub">5 % rente hver mandag</div>
+        </div>
+      </div>
+      <div class="home-savings-right">
+        <div class="home-savings-amount"><span id="home-savings-balance">0</span> 🪙</div>
+        <div class="home-savings-arrow">›</div>
+      </div>
+    </div>
+
     <!-- QUIZ CARD -->
     <div class="quiz-card" id="quiz-card">
       <div class="quiz-header">
@@ -966,8 +992,15 @@ async function checkAndPayInterest(studentFbKey) {
 function renderSavings() {
   const balEl = document.getElementById('savings-balance');
   if (balEl) balEl.textContent = savingsState.balance;
+  const homeEl = document.getElementById('home-savings-balance');
+  if (homeEl) homeEl.textContent = savingsState.balance;
   renderSavingsHistory();
   drawSavingsChart();
+}
+
+function goToSavingsTab() {
+  const btn = document.querySelector('.bottom-nav .nav-item:nth-child(2)');
+  switchCustomerTab('savings', btn);
 }
 
 function renderSavingsHistory() {
@@ -1141,42 +1174,52 @@ async function confirmSavingsAction() {
   const s = window._currentStudent; if (!s) return;
   const amount = parseInt(document.getElementById('savings-modal-amount').value) || 0;
   const errEl  = document.getElementById('savings-modal-error');
+  errEl.textContent = '';
   if (amount < 1) { errEl.textContent = 'Beløpet må være minst 1 mynt.'; return; }
 
-  if (savingsAction === 'deposit') {
-    if (s.balance < amount) { errEl.textContent = 'Du har ikke nok på hovedkontoen.'; return; }
-    const newMain    = s.balance - amount;
-    const newSavings = savingsState.balance + amount;
-    await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
-    window._currentStudent.balance = newMain;
-    await setSavingsBalance(s.fbKey, newSavings);
-    await saveSavingsRecord(s.fbKey, { type:'deposit', amount, ts: Date.now(), balanceAfter: newSavings });
-    const tx = { type:'expense', icon:'🏦', desc:'Innskudd til sparekonto', amount: -amount, ts: Date.now() };
-    await saveTransaction(s.fbKey, tx);
-    transactions.unshift(tx);
-    document.getElementById('customer-balance').textContent = newMain;
-    renderTransactions();
-    renderSavings();
-    closeSavingsModal();
-    playSuccessChime();
-    showSuccess('🏦','Satt inn!','+' + amount + ' 🪙', 'På sparekonto: ' + newSavings + ' mynter');
-  } else {
-    if (savingsState.balance < amount) { errEl.textContent = 'Ikke nok på sparekontoen.'; return; }
-    const newMain    = s.balance + amount;
-    const newSavings = savingsState.balance - amount;
-    await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
-    window._currentStudent.balance = newMain;
-    await setSavingsBalance(s.fbKey, newSavings);
-    await saveSavingsRecord(s.fbKey, { type:'withdraw', amount, ts: Date.now(), balanceAfter: newSavings });
-    const tx = { type:'income', icon:'🏦', desc:'Uttak fra sparekonto', amount: +amount, ts: Date.now() };
-    await saveTransaction(s.fbKey, tx);
-    transactions.unshift(tx);
-    document.getElementById('customer-balance').textContent = newMain;
-    renderTransactions();
-    renderSavings();
-    closeSavingsModal();
-    playSuccessChime();
-    showSuccess('💸','Tatt ut!','+' + amount + ' 🪙', 'På hovedkonto: ' + newMain + ' mynter');
+  try {
+    if (savingsAction === 'deposit') {
+      if (s.balance < amount) { errEl.textContent = 'Du har ikke nok på hovedkontoen.'; return; }
+      const newMain    = s.balance - amount;
+      const newSavings = savingsState.balance + amount;
+      await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
+      window._currentStudent.balance = newMain;
+      await setSavingsBalance(s.fbKey, newSavings);
+      await saveSavingsRecord(s.fbKey, { type:'deposit', amount, ts: Date.now(), balanceAfter: newSavings });
+      const tx = { type:'expense', icon:'🏦', desc:'Innskudd til sparekonto', amount: -amount, ts: Date.now() };
+      await saveTransaction(s.fbKey, tx);
+      transactions.unshift(tx);
+      document.getElementById('customer-balance').textContent = newMain;
+      const homeEl = document.getElementById('home-savings-balance');
+      if (homeEl) homeEl.textContent = newSavings;
+      renderTransactions();
+      renderSavings();
+      closeSavingsModal();
+      playSuccessChime();
+      showSuccess('🏦','Satt inn!','+' + amount + ' 🪙', 'På sparekonto: ' + newSavings + ' mynter');
+    } else {
+      if (savingsState.balance < amount) { errEl.textContent = 'Ikke nok på sparekontoen.'; return; }
+      const newMain    = s.balance + amount;
+      const newSavings = savingsState.balance - amount;
+      await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
+      window._currentStudent.balance = newMain;
+      await setSavingsBalance(s.fbKey, newSavings);
+      await saveSavingsRecord(s.fbKey, { type:'withdraw', amount, ts: Date.now(), balanceAfter: newSavings });
+      const tx = { type:'income', icon:'🏦', desc:'Uttak fra sparekonto', amount: +amount, ts: Date.now() };
+      await saveTransaction(s.fbKey, tx);
+      transactions.unshift(tx);
+      document.getElementById('customer-balance').textContent = newMain;
+      const homeEl = document.getElementById('home-savings-balance');
+      if (homeEl) homeEl.textContent = newSavings;
+      renderTransactions();
+      renderSavings();
+      closeSavingsModal();
+      playSuccessChime();
+      showSuccess('💸','Tatt ut!','+' + amount + ' 🪙', 'På hovedkonto: ' + newMain + ' mynter');
+    }
+  } catch (err) {
+    console.error('Sparekonto-feil:', err);
+    errEl.textContent = '❌ ' + (err.message || 'Ukjent feil. Sjekk Firebase-regler.');
   }
 }
 
