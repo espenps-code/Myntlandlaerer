@@ -133,6 +133,23 @@
   .home-savings-amount{font-family:'Fredoka One',cursive;color:#15803d;font-size:1.3rem;}
   .home-savings-arrow{font-size:1.4rem;color:#86efac;font-weight:700;}
 
+  /* CLASS GOALS */
+  .class-goals-card{background:white;border:2px solid var(--border);border-radius:18px;padding:14px 18px;margin-bottom:1.25rem;box-shadow:0 1px 3px rgba(15,81,50,.08);}
+  .class-goals-header{margin-bottom:12px;}
+  .class-goals-title{font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.1rem;line-height:1;}
+  .class-goals-sub{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:3px;}
+  .class-goal-row{padding:10px 0;border-top:1px solid var(--border);}
+  .class-goal-row:first-child{border-top:none;padding-top:4px;}
+  .class-goal-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .class-goal-emoji{font-size:1.5rem;}
+  .class-goal-name{flex:1;font-weight:800;font-size:.92rem;color:var(--teal-dark);line-height:1.2;}
+  .class-goal-name.done{color:#15803d;}
+  .class-goal-bar{height:10px;background:var(--bg);border-radius:20px;overflow:hidden;border:1px solid var(--border);}
+  .class-goal-fill{height:100%;background:var(--teal);border-radius:20px;transition:width .4s;}
+  .class-goal-fill.done{background:#16a34a;}
+  .class-goal-meta{display:flex;justify-content:space-between;font-size:.74rem;font-weight:700;color:var(--muted);margin-top:5px;}
+  .class-goal-meta .pct{color:var(--teal-dark);}
+
   .savings-card{background:linear-gradient(135deg,#0f5132 0%,#198754 50%,#20c997 100%);border-radius:24px;padding:1.75rem;color:white;position:relative;overflow:hidden;margin-bottom:1.25rem;}
   .savings-card::before{content:'';position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08);}
   .savings-card::after{content:'';position:absolute;bottom:-50px;left:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);}
@@ -376,6 +393,15 @@
       </div>
     </div>
 
+    <!-- KLASSENS SPAREMÅL -->
+    <div class="class-goals-card" id="class-goals-card" style="display:none;">
+      <div class="class-goals-header">
+        <div class="class-goals-title">🎯 Klassens sparemål</div>
+        <div class="class-goals-sub">Skatt fra hele klassen går hit</div>
+      </div>
+      <div id="class-goals-body"></div>
+    </div>
+
     <!-- QUIZ CARD -->
     <div class="quiz-card" id="quiz-card">
       <div class="quiz-header">
@@ -445,9 +471,13 @@
     </div>
 
     <div class="savings-chart-card">
-      <div class="savings-chart-title">📊 Utvikling</div>
+      <div class="savings-chart-title">📊 Utvikling siste 2 uker</div>
       <canvas id="savings-chart" width="600" height="220" style="width:100%;height:220px;display:block;"></canvas>
       <div id="savings-chart-empty" style="text-align:center;color:var(--muted);font-size:.85rem;padding:1.5rem 0;display:none;">Sett inn dine første mynter for å se kurven vokse!</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:.5rem;font-size:.74rem;color:var(--muted);font-weight:700;flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#1D9E75;display:inline-block;"></span>Innskudd / uttak</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#EF9F27;display:inline-block;"></span>Renter (mandag)</span>
+      </div>
     </div>
 
     <div class="section-title" style="margin-top:1.5rem;">📜 Sparehistorikk</div>
@@ -759,6 +789,8 @@ function goToSplash() {
   stopScan();
   window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0; transactions = []; _pinVisible14 = false;
   savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+  const card = document.getElementById('class-goals-card');
+  if (card) card.style.display = 'none';
   clearCart();
   showScreen('screen-splash');
 }
@@ -808,6 +840,7 @@ function tryLogin() {
       await checkAndPayInterest(s.fbKey);
       renderSavings();
     })();
+    startClassGoalsListener();
     checkQuizStatus();
     switchCustomerTab('bank', document.querySelector('.nav-item'));
     showScreen('screen-customer');
@@ -1003,6 +1036,49 @@ function goToSavingsTab() {
   switchCustomerTab('savings', btn);
 }
 
+// ── Klassens sparemål (live) ─────────────────────────────────────────────
+let _classGoalsUnsub = null;
+function startClassGoalsListener() {
+  if (_classGoalsUnsub || !window._onValue || !window._ref || !window._db) return;
+  try {
+    _classGoalsUnsub = window._onValue(window._ref(window._db, 'classGoals14'), snap => {
+      const v = snap.val() || {};
+      const goals = Object.entries(v).map(([k, g]) => ({ ...g, fbKey: k }));
+      renderClassGoals(goals);
+    });
+  } catch(e) { console.warn('classGoals14 listener feilet:', e); }
+}
+
+function renderClassGoals(goals) {
+  const card = document.getElementById('class-goals-card');
+  const body = document.getElementById('class-goals-body');
+  if (!card || !body) return;
+  if (!goals || !goals.length) { card.style.display = 'none'; return; }
+  // Sorter: aktive først, så fullførte
+  const active = goals.filter(g => !g.completed);
+  const done   = goals.filter(g =>  g.completed);
+  const ordered = [...active, ...done];
+  card.style.display = 'block';
+  body.innerHTML = ordered.map(g => {
+    const saved = g.saved || 0;
+    const target = g.target || 1;
+    const pct = Math.min(100, Math.round(saved / target * 100));
+    const isDone = !!g.completed;
+    return `<div class="class-goal-row">
+      <div class="class-goal-top">
+        <div class="class-goal-emoji">${g.emoji || '🏦'}</div>
+        <div class="class-goal-name${isDone ? ' done' : ''}">${g.name || 'Sparemål'}${isDone ? ' ✅' : ''}</div>
+      </div>
+      <div class="class-goal-bar"><div class="class-goal-fill${isDone ? ' done' : ''}" style="width:${pct}%;"></div></div>
+      <div class="class-goal-meta">
+        <span>🪙 ${saved} / ${target}</span>
+        <span class="pct">${pct}%</span>
+        <span>${isDone ? 'Fullført!' : '🪙 ' + Math.max(0, target - saved) + ' igjen'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderSavingsHistory() {
   const el = document.getElementById('savings-history');
   if (!el) return;
@@ -1033,14 +1109,6 @@ function drawSavingsChart() {
   const canvas = document.getElementById('savings-chart');
   const empty  = document.getElementById('savings-chart-empty');
   if (!canvas) return;
-  const hist = [...savingsState.history].sort((a,b) => (a.ts||0) - (b.ts||0));
-  if (!hist.length) {
-    canvas.style.display = 'none';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
-  canvas.style.display = 'block';
-  if (empty) empty.style.display = 'none';
 
   // Bruk faktisk pikselstørrelse for skarp tegning
   const dpr = window.devicePixelRatio || 1;
@@ -1052,22 +1120,58 @@ function drawSavingsChart() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
 
-  const padL = 36, padR = 14, padT = 14, padB = 28;
+  // Hvis det ikke er noen historikk i det hele tatt – vis tom-melding
+  if (!savingsState.history.length) {
+    canvas.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  if (empty) empty.style.display = 'none';
+
+  // ── 2-ukers vindu (i dag og 13 dager bakover) ─────────────────────────
+  const DAY = 24 * 3600 * 1000;
+  const DAYS = 14;
+  const today = new Date(); today.setHours(23,59,59,999);
+  const endTs = today.getTime();
+  const start = new Date(today); start.setDate(today.getDate() - (DAYS - 1)); start.setHours(0,0,0,0);
+  const startTs = start.getTime();
+
+  // Rekonstruer daglig sluttsaldo: ta saldo ved siste hendelse hver dag, ellers før-dagens saldo
+  const sortedAll = [...savingsState.history].sort((a,b) => (a.ts||0) - (b.ts||0));
+  // Saldo ved starten av vinduet = balanceAfter på siste hendelse FØR vinduet, ellers 0
+  let runningBal = 0;
+  for (const h of sortedAll) {
+    if ((h.ts||0) < startTs) runningBal = h.balanceAfter || 0;
+    else break;
+  }
+  // For hver av de 14 dagene: finn siste hendelse på den dagen, ellers behold forrige saldo
+  const dayPoints = [];
+  for (let i = 0; i < DAYS; i++) {
+    const dayStart = startTs + i * DAY;
+    const dayEnd   = dayStart + DAY;
+    let dayBal = runningBal;
+    let hadEvent = false;
+    let lastEventType = null;
+    for (const h of sortedAll) {
+      const t = h.ts || 0;
+      if (t >= dayStart && t < dayEnd) {
+        dayBal = h.balanceAfter || 0;
+        hadEvent = true;
+        lastEventType = h.type;
+      }
+    }
+    runningBal = dayBal;
+    dayPoints.push({ ts: dayStart, val: dayBal, hadEvent, type: lastEventType });
+  }
+
+  const padL = 36, padR = 14, padT = 14, padB = 36;
   const w = cssW - padL - padR;
   const h = cssH - padT - padB;
 
-  // Dataserie: (ts, balanceAfter). Inkluder også "0" som startpunkt før første hendelse.
-  const points = hist.map(p => ({ ts: p.ts || 0, val: p.balanceAfter || 0 }));
-  if (points.length < 2) {
-    // Legg til et startpunkt 1 uke før første hendelse, med saldo 0
-    points.unshift({ ts: points[0].ts - 7*24*3600*1000, val: 0 });
-  }
-
-  const minTs = points[0].ts;
-  const maxTs = points[points.length - 1].ts;
-  const tsRange = Math.max(1, maxTs - minTs);
-  const maxVal = Math.max(...points.map(p => p.val), 10);
+  const maxVal = Math.max(...dayPoints.map(p => p.val), 10);
   const minVal = 0;
+  const tsRange = (DAYS - 1) * DAY;
 
   // Bakgrunnsgrid
   ctx.strokeStyle = '#e5e7eb';
@@ -1086,15 +1190,14 @@ function drawSavingsChart() {
     ctx.fillText(v, padL - 4, y + 3);
   }
 
-  // Areal-fyll
+  // Areal-fyll under linjen
   ctx.beginPath();
-  points.forEach((p, i) => {
-    const x = padL + ((p.ts - minTs) / tsRange) * w;
+  dayPoints.forEach((p, i) => {
+    const x = padL + (i / (DAYS - 1)) * w;
     const y = padT + h - ((p.val - minVal) / (maxVal - minVal || 1)) * h;
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   });
-  const lastX = padL + w;
-  ctx.lineTo(lastX, padT + h);
+  ctx.lineTo(padL + w, padT + h);
   ctx.lineTo(padL, padT + h);
   ctx.closePath();
   const grad = ctx.createLinearGradient(0, padT, 0, padT + h);
@@ -1103,10 +1206,10 @@ function drawSavingsChart() {
   ctx.fillStyle = grad;
   ctx.fill();
 
-  // Linje
+  // Selve linjen
   ctx.beginPath();
-  points.forEach((p, i) => {
-    const x = padL + ((p.ts - minTs) / tsRange) * w;
+  dayPoints.forEach((p, i) => {
+    const x = padL + (i / (DAYS - 1)) * w;
     const y = padT + h - ((p.val - minVal) / (maxVal - minVal || 1)) * h;
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   });
@@ -1115,25 +1218,56 @@ function drawSavingsChart() {
   ctx.lineJoin = 'round';
   ctx.stroke();
 
-  // Punkter (uthev rente i amber)
-  hist.forEach(p => {
-    const x = padL + ((p.ts - minTs) / tsRange) * w;
-    const y = padT + h - (((p.balanceAfter||0) - minVal) / (maxVal - minVal || 1)) * h;
+  // Punkter: små grå prikker for dager uten hendelser, større farget for dager med
+  dayPoints.forEach((p, i) => {
+    const x = padL + (i / (DAYS - 1)) * w;
+    const y = padT + h - ((p.val - minVal) / (maxVal - minVal || 1)) * h;
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = (p.type === 'interest') ? '#EF9F27' : '#1D9E75';
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    if (p.hadEvent) {
+      ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = (p.type === 'interest') ? '#EF9F27' : '#1D9E75';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else {
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#1D9E75';
+      ctx.globalAlpha = 0.45;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
   });
 
-  // X-akse: dato på første og siste punkt
+  // X-akse: vis hver mandag i vinduet (eller dag 1, dag 8) + dagens dato
   ctx.fillStyle = '#5a7a5a';
-  ctx.textAlign = 'left';
-  ctx.fillText(shortDate(minTs), padL, padT + h + 14);
-  ctx.textAlign = 'right';
-  ctx.fillText(shortDate(maxTs), padL + w, padT + h + 14);
+  ctx.font = '10px Nunito, sans-serif';
+  dayPoints.forEach((p, i) => {
+    const d = new Date(p.ts);
+    const isMonday = d.getDay() === 1;
+    const isLast   = (i === DAYS - 1);
+    if (isMonday || isLast) {
+      const x = padL + (i / (DAYS - 1)) * w;
+      // Liten vertikal markør
+      ctx.strokeStyle = isMonday ? '#EF9F27' : '#5a7a5a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, padT + h);
+      ctx.lineTo(x, padT + h + 4);
+      ctx.stroke();
+      // Tekst
+      ctx.textAlign = 'center';
+      ctx.fillStyle = isMonday ? '#EF9F27' : '#5a7a5a';
+      const lbl = isLast && !isMonday ? 'I dag' : shortDate(p.ts);
+      ctx.fillText(lbl, x, padT + h + 16);
+      if (isMonday) {
+        ctx.fillStyle = '#EF9F27';
+        ctx.font = 'bold 9px Nunito, sans-serif';
+        ctx.fillText('man', x, padT + h + 28);
+        ctx.font = '10px Nunito, sans-serif';
+      }
+    }
+  });
 }
 
 function shortDate(ts) {
