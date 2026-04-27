@@ -363,8 +363,11 @@ body {
 /* Header */
 .ws-header {
   display: flex; align-items: center; justify-content: space-between;
-  background: var(--ink); border-radius: 8px;
+  background: linear-gradient(135deg, var(--green-dark), var(--green));
+  border-radius: 8px;
   padding: 3mm 5mm; margin-bottom: 4mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 .ws-header-left { display: flex; align-items: center; gap: 3mm; }
 .ws-header-monster {
@@ -375,11 +378,13 @@ body {
   font-family: 'Fredoka One', cursive;
   font-size: 7mm; color: var(--yellow);
 }
-.ws-subtitle { font-size: 2.8mm; color: #999; font-weight: 700; letter-spacing: 0.5mm; text-transform: uppercase; }
+.ws-subtitle { font-size: 2.8mm; color: rgba(255,255,255,0.85); font-weight: 700; letter-spacing: 0.5mm; text-transform: uppercase; }
 .ws-week-pill {
-  background: var(--yellow); color: var(--ink);
+  background: var(--yellow); color: var(--green-dark);
   font-family: 'Fredoka One', cursive; font-size: 4.5mm;
   padding: 1.5mm 5mm; border-radius: 10mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 /* Info row */
