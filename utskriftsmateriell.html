@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Utskriftsmateriell – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Myntland – Utskriftsmateriell" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  a { color: var(--green-dark); }
+
+  /* Topp-nav */
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    color: white;
+    padding: 3rem 1.5rem 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(216, 90, 48, 0.18) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  h1 .accent { color: var(--amber); }
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.1rem);
+    color: rgba(255,255,255,0.9);
+    max-width: 640px;
+    margin: 0 auto;
+    font-weight: 600;
+  }
+
+  /* Layout */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* Kategori-faner */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .tab {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 0.6rem 1.1rem;
+    border-radius: 24px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: inherit;
+  }
+  .tab:hover {
+    border-color: var(--green);
+    color: var(--green-dark);
+  }
+  .tab.active {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: white;
+  }
+  .tab-count {
+    background: rgba(255,255,255,0.2);
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+  }
+  .tab:not(.active) .tab-count {
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+
+  /* Galleri */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .resource-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+  }
+  .resource-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(30, 15, 82, 0.1);
+    border-color: var(--green);
+  }
+
+  .resource-preview {
+    aspect-ratio: 210 / 297; /* A4 ratio */
+    background: linear-gradient(135deg, #f0f4f0, #e1f5ee);
+    position: relative;
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+  .resource-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .resource-preview::after {
+    content: '🔍 Klikk for forhåndsvisning';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(30, 15, 82, 0.85), transparent);
+    color: white;
+    padding: 2.5rem 1rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .resource-preview:hover::after {
+    opacity: 1;
+  }
+
+  /* Placeholder for missing thumbs */
+  .preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--green-light), #f0f4f0);
+  }
+  .preview-placeholder svg {
+    color: var(--green);
+    opacity: 0.5;
+  }
+  .preview-placeholder span {
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 0 1rem;
+  }
+
+  .resource-body {
+    padding: 1.1rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .resource-tag {
+    align-self: flex-start;
+    background: var(--amber-light, #FAEEDA);
+    color: var(--amber-dark);
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .resource-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--teal-dark);
+    margin-bottom: 0.4rem;
+    line-height: 1.2;
+  }
+
+  .resource-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    flex: 1;
+  }
+
+  .download-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .dl-btn {
+    flex: 1;
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 0.6rem 0.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 800;
+    font-size: 0.82rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .dl-btn:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .dl-btn-format {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .dl-btn-size {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .dl-btn:hover .dl-btn-size {
+    color: var(--green-dark);
+  }
+
+  .dl-btn.primary {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: white;
+  }
+  .dl-btn.primary:hover {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: white;
+  }
+  .dl-btn.primary .dl-btn-size {
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* Tom kategori */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--muted);
+  }
+  .empty-state-emoji {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+  .empty-state h3 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    margin-bottom: 0.4rem;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 8, 35, 0.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    z-index: 1000;
+    cursor: zoom-out;
+  }
+  .lightbox.open {
+    display: flex;
+  }
+  .lightbox-img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .lightbox-close:hover {
+    background: rgba(255,255,255,0.25);
+  }
+
+  /* Hjelp-blokk */
+  .help-box {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  .help-item {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+  }
+  .help-icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .help-icon.pdf {
+    background: var(--coral-light);
+    color: var(--coral);
+  }
+  .help-icon.png {
+    background: var(--purple-light);
+    color: var(--purple);
+  }
+  .help-text strong {
+    display: block;
+    color: var(--teal-dark);
+    margin-bottom: 2px;
+    font-size: 0.95rem;
+  }
+  .help-text span {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 600px) {
+    .help-box { grid-template-columns: 1fr; padding: 1.25rem; }
+    .gallery { grid-template-columns: 1fr; gap: 1.25rem; }
+  }
+
+  /* Footer */
+  footer {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  footer a { color: var(--muted); margin: 0 0.5rem; }
+  footer a:hover { color: var(--green-dark); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">For lærere</div>
+    <h1>Utskrifts<span class="accent">materiell</span></h1>
+    <p class="hero-sub">Plakater, monsterkort, diplomer og spillkort – ferdig til print. Gjør klasserommet til et levende Myntland.</p>
+  </div>
+</section>
+
+<main>
+
+  <!-- Hjelp-blokk: forklarer PDF vs PNG -->
+  <div class="help-box">
+    <div class="help-item">
+      <div class="help-icon pdf">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="help-text">
+        <strong>PDF – for utskrift</strong>
+        <span>Høy oppløsning, klar for A4-printer. Skarp tekst og farger på papir.</span>
+      </div>
+    </div>
+    <div class="help-item">
+      <div class="help-icon png">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </div>
+      <div class="help-text">
+        <strong>PNG – for SmartBoard og projektor</strong>
+        <span>Lett å vise i klasserommet, sette inn i PowerPoint eller bruke digitalt.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kategori-faner -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-category="alle" role="tab">
+      Alle <span class="tab-count" data-count="alle">2</span>
+    </button>
+    <button class="tab" data-category="plakater" role="tab">
+      🖼️ Plakater <span class="tab-count" data-count="plakater">2</span>
+    </button>
+    <button class="tab" data-category="monsterkort" role="tab">
+      👾 Monsterkort <span class="tab-count" data-count="monsterkort">0</span>
+    </button>
+    <button class="tab" data-category="diplomer" role="tab">
+      🏆 Diplomer <span class="tab-count" data-count="diplomer">0</span>
+    </button>
+    <button class="tab" data-category="spillkort" role="tab">
+      🎴 Spillkort <span class="tab-count" data-count="spillkort">0</span>
+    </button>
+  </div>
+
+  <!-- Galleri -->
+  <div class="gallery" id="gallery">
+    <!-- Innhold genereres av JS basert på RESOURCES under -->
+  </div>
+
+</main>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" aria-label="Lukk forhåndsvisning">×</button>
+  <img class="lightbox-img" id="lightbox-img" alt="Forhåndsvisning">
+</div>
+
+<footer>
+  <span>🪙 Myntland © 2026</span><br>
+  <a href="index.html">Forsiden</a> ·
+  <a href="for-skoler.html">For skoler</a> ·
+  <a href="mailto:kontakt@myntland.no">Kontakt</a>
+</footer>
+
+<script>
+/* ===== Ressursregister =====
+   Legg til nye plakater/kort/diplomer her. Gallery oppdateres automatisk.
+
+   Felter:
+     id          – kort identifikator
+     category    – 'plakater' | 'monsterkort' | 'diplomer' | 'spillkort'
+     title       – navn som vises på kortet
+     description – kort tekst (1–2 setninger)
+     trinn       – f.eks. '1.–4. trinn' eller '5.–7. trinn'
+     thumb       – sti til thumbnail (~800px bred JPG, ca 80–150 KB)
+     pdf         – sti til print-PDF (A4, 300 DPI)
+     pdfSize     – filstørrelse som tekst, f.eks. '8.2 MB'
+     png         – sti til skjerm-PNG
+     pngSize     – filstørrelse som tekst, f.eks. '1.4 MB'
+*/
+const RESOURCES = [
+  {
+    id: 'personlig-okonomi-57',
+    category: 'plakater',
+    title: 'Personlig økonomi',
+    description: '9 viktige begreper – fra inntekt og budsjett til renter og smartforbruk. Perfekt for klasseromsveggen.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/personlig-okonomi-57.jpg',
+    pdf: 'materiell/pdf/personlig-okonomi-57.pdf',
+    pdfSize: '774 KB',
+    png: 'materiell/png/personlig-okonomi-57.png',
+    pngSize: '1.0 MB'
+  },
+  {
+    id: 'sparing-10-aar',
+    category: 'plakater',
+    title: 'Se hva sparingen blir til!',
+    description: 'Bobo sparer 50 kr i uka i ti år – og pengene vokser. Visualiserer renters rente på en lekende måte.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/sparing-10-aar.jpg',
+    pdf: 'materiell/pdf/sparing-10-aar.pdf',
+    pdfSize: '670 KB',
+    png: 'materiell/png/sparing-10-aar.png',
+    pngSize: '706 KB'
+  }
+  // Legg til flere ressurser her etterhvert som de blir klare
+];
+
+const CATEGORY_LABELS = {
+  plakater: { emoji: '🖼️', singular: 'plakat' },
+  monsterkort: { emoji: '👾', singular: 'monsterkort' },
+  diplomer: { emoji: '🏆', singular: 'diplom' },
+  spillkort: { emoji: '🎴', singular: 'spillkort' }
+};
+
+// Oppdater fane-tellere
+function updateCounts() {
+  const counts = { alle: RESOURCES.length, plakater: 0, monsterkort: 0, diplomer: 0, spillkort: 0 };
+  RESOURCES.forEach(r => { counts[r.category] = (counts[r.category] || 0) + 1; });
+  document.querySelectorAll('[data-count]').forEach(el => {
+    el.textContent = counts[el.dataset.count] ?? 0;
+  });
+}
+
+// Render et kort
+function renderCard(r) {
+  const card = document.createElement('article');
+  card.className = 'resource-card';
+  card.dataset.category = r.category;
+  card.innerHTML = `
+    <div class="resource-preview" data-fullimg="${r.png || r.thumb}">
+      <img src="${r.thumb}" alt="${r.title}" loading="lazy"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'preview-placeholder',innerHTML:'<svg width=\\'48\\' height=\\'48\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><polyline points=\\'21 15 16 10 5 21\\'/></svg><span>Forhåndsvisning kommer</span>'}))">
+    </div>
+    <div class="resource-body">
+      <span class="resource-tag">${r.trinn}</span>
+      <h3 class="resource-title">${r.title}</h3>
+      <p class="resource-desc">${r.description}</p>
+      <div class="download-row">
+        <a href="${r.pdf}" class="dl-btn primary" download>
+          <span class="dl-btn-format">📥 PDF</span>
+          <span class="dl-btn-size">${r.pdfSize}</span>
+        </a>
+        <a href="${r.png}" class="dl-btn" download>
+          <span class="dl-btn-format">🖼️ PNG</span>
+          <span class="dl-btn-size">${r.pngSize}</span>
+        </a>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+// Render galleriet for en kategori
+function renderGallery(category) {
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = '';
+  const filtered = category === 'alle' ? RESOURCES : RESOURCES.filter(r => r.category === category);
+
+  if (filtered.length === 0) {
+    const cat = CATEGORY_LABELS[category] || { emoji: '📋', singular: 'ressurs' };
+    gallery.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-emoji">${cat.emoji}</div>
+        <h3>Kommer snart!</h3>
+        <p>Vi jobber med flere ressurser i denne kategorien. Sjekk tilbake snart.</p>
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(r => gallery.appendChild(renderCard(r)));
+}
+
+// Lightbox-funksjonalitet
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const closeBtn = document.querySelector('.lightbox-close');
+
+function openLightbox(src, alt) {
+  lightboxImg.src = src;
+  lightboxImg.alt = alt || '';
+  lightbox.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  lightbox.classList.remove('open');
+  document.body.style.overflow = '';
+}
+lightbox.addEventListener('click', (e) => {
+  if (e.target === lightbox || e.target === closeBtn || e.target.closest('.lightbox-close')) {
+    closeLightbox();
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// Event delegation for forhåndsvisning
+document.getElementById('gallery').addEventListener('click', (e) => {
+  const preview = e.target.closest('.resource-preview');
+  if (preview && preview.dataset.fullimg) {
+    openLightbox(preview.dataset.fullimg, preview.querySelector('img')?.alt);
+  }
+});
+
+// Fane-bytting
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderGallery(tab.dataset.category);
+  });
+});
+
+// Init
+updateCounts();
+renderGallery('alle');
+</script>
+
+</body>
+</html>
