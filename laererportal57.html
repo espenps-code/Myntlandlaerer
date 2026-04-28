@@ -1429,7 +1429,16 @@ function openSaldoModal(fbKey, action) {
   const s = window._students.find(x => x.fbKey === fbKey);
   const labels = { add:'➕ Legg til', subtract:'➖ Trekk fra', set:'✏️ Sett saldo', reset:'🔄 Nullstill' };
   document.getElementById('modal-saldo-title').textContent = labels[action] + ` – ${s.firstname}`;
-  document.getElementById('modal-saldo-info').textContent  = `Nåværende saldo: 🪙 ${s.balance||0}`;
+  if (action === 'reset') {
+    const sav = s.savings || 0;
+    const ln  = s.loan || 0;
+    const fl  = (s.fund_low_units || 0) > 0 ? ' · fond lav' : '';
+    const fh  = (s.fund_high_units || 0) > 0 ? ' · fond høy' : '';
+    document.getElementById('modal-saldo-info').textContent =
+      `⚠️ Nullstiller ALT: brukskonto (🪙${s.balance||0}), sparekonto (🪙${sav}), lån (🪙${ln})${fl}${fh}`;
+  } else {
+    document.getElementById('modal-saldo-info').textContent  = `Nåværende saldo: 🪙 ${s.balance||0}`;
+  }
   document.getElementById('modal-saldo-amount').style.display = action === 'reset' ? 'none' : 'block';
   document.getElementById('modal-saldo').classList.add('open');
 }
@@ -1442,9 +1451,27 @@ async function confirmSaldoAction() {
   else if (currentAction === 'subtract') newBal = Math.max(0, newBal - amount);
   else if (currentAction === 'set') newBal = Math.max(0, amount);
   else if (currentAction === 'reset') newBal = 0;
-  await window._update(fbRef('students57/' + currentStudentId), { balance: newBal });
-  await logTx(currentStudentId, newBal > (s.balance||0) ? 'income' : 'expense', '💰',
-    'Saldo justert av lærer', newBal - (s.balance||0));
+
+  if (currentAction === 'reset') {
+    // Full nullstilling: brukskonto, sparekonto, fond og lån
+    const fullReset = {
+      balance: 0,
+      savings: 0,
+      loan: 0,
+      loanDate: null,
+      fund_low_units: 0,
+      fund_low_invested: 0,
+      fund_high_units: 0,
+      fund_high_invested: 0,
+      withdrawalsThisWeek: 0
+    };
+    await window._update(fbRef('students57/' + currentStudentId), fullReset);
+    await logTx(currentStudentId, 'expense', '🔄', 'Alle kontoer nullstilt av lærer', -(s.balance||0));
+  } else {
+    await window._update(fbRef('students57/' + currentStudentId), { balance: newBal });
+    await logTx(currentStudentId, newBal > (s.balance||0) ? 'income' : 'expense', '💰',
+      'Saldo justert av lærer', newBal - (s.balance||0));
+  }
   closeModal('modal-saldo');
 }
 
@@ -1478,7 +1505,21 @@ async function confirmBulkAction() {
       await distributeToGoalsPortal(taxAmt);
     }
     if (bulkAction === 'tax')    { const t = Math.floor(cur * TAX_RATE); newBal = cur - t; txDesc = 'Skattetrekk 20%'; txAmt = -t; await distributeToGoalsPortal(t); }
-    if (bulkAction === 'reset')  { newBal = 0;                                  txDesc = 'Saldo nullstilt';        txAmt = -cur; }
+    if (bulkAction === 'reset')  {
+      // Full nullstilling: brukskonto, sparekonto, fond og lån
+      newBal = 0;
+      txDesc = 'Alle kontoer nullstilt';
+      txAmt = -cur;
+      const base = 'students57/' + s.fbKey + '/';
+      updates[base + 'savings']            = 0;
+      updates[base + 'loan']               = 0;
+      updates[base + 'loanDate']           = null;
+      updates[base + 'fund_low_units']     = 0;
+      updates[base + 'fund_low_invested']  = 0;
+      updates[base + 'fund_high_units']    = 0;
+      updates[base + 'fund_high_invested'] = 0;
+      updates[base + 'withdrawalsThisWeek']= 0;
+    }
     updates['students57/' + s.fbKey + '/balance'] = Math.max(0, newBal);
     if (txAmt !== 0) await logTx(s.fbKey, txAmt > 0 ? 'income' : 'expense', '💰', txDesc, txAmt);
   }
