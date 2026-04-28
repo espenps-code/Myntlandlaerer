@@ -851,6 +851,13 @@ async function doTransfer(type, amt) {
   if (!s) return;
   const fbKey = s.fbKey;
 
+  // Sperre: flytting AV brukskonto når brukskonto er negativ (gjeld må gjøres opp først)
+  const movingOutOfBalance = (type === 'bruk-til-spare' || type === 'bruk-til-fond-low' || type === 'bruk-til-fond-high');
+  if (movingOutOfBalance && (s.balance||0) < 0) {
+    alert('🚫 Brukskontoen din er negativ (du har gjeld). Du kan ikke flytte penger ut før gjelden er gjort opp.');
+    return;
+  }
+
   if (type === 'bruk-til-spare') {
     if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
     const upd = { balance: (s.balance||0)-amt, savings: (s.savings||0)+amt };
@@ -1082,18 +1089,149 @@ function renderFondChart(hist,days){
 async function checkLoanExpiry() {
   const s = window._currentStudent; if (!s || !s.loan || !s.loanDate) return;
   const daysSince = (Date.now() - s.loanDate) / 86400000;
-  if (daysSince >= 14) {
-    // Auto-inndra: trekk lånet fra brukskonto
-    const newBal = Math.max(0, (s.balance||0) - s.loan);
-    await window._update(fbRef('students57/'+s.fbKey), { loan: 0, loanDate: null, balance: newBal });
-    patchStudent(s.fbKey, { loan: 0, loanDate: null, balance: newBal });
-    await saveTx(s.fbKey, 'expense', '🚫',
-      `Lån automatisk inndratt etter 14 dager (🪙 ${s.loan} trukket fra brukskonto)`, -s.loan);
-    transactions.unshift({type:'expense',icon:'🚫',desc:'Lån automatisk inndratt etter 14 dager',amount:-s.loan,ts:Date.now()});
-    refreshAllDisplays(); renderTransactions();
-    showSuccess('⚠️', 'Lån inndratt!', `-${s.loan} 🪙`,
-      'Lånet ble automatisk inndratt etter 14 dager.');
+  if (daysSince < 14) return;
+
+  // Misligholdsgebyr: 25% straff på toppen av lånebeløpet
+  const penaltyRate = 0.25;
+  const penalty = Math.ceil(s.loan * penaltyRate);
+  const totalDue = s.loan + penalty;
+  let owed = totalDue;
+
+  // Hent gjeldende fondskurser
+  const days_le = Object.keys(window._fundHistory||{}).sort();
+  const lastDay_le = days_le.length ? window._fundHistory[days_le[days_le.length-1]] : null;
+  const rateLow_le  = lastDay_le?.low  || 100;
+  const rateHigh_le = lastDay_le?.high || 100;
+
+  // Start-tilstand
+  let bal       = s.balance || 0;
+  let savings   = s.savings || 0;
+  let unitsLow  = s.fund_low_units  || 0;
+  let invLow    = s.fund_low_invested  || 0;
+  let unitsHigh = s.fund_high_units || 0;
+  let invHigh   = s.fund_high_invested || 0;
+
+  // 1) Brukskonto
+  if (owed > 0 && bal > 0) {
+    const take = Math.min(bal, owed);
+    bal  -= take;
+    owed -= take;
   }
+
+  // 2) Sparekonto
+  if (owed > 0 && savings > 0) {
+    const take = Math.min(savings, owed);
+    savings -= take;
+    owed    -= take;
+  }
+
+  // 3) Fond lavrisiko – selg proporsjonalt med fondskatt på gevinst
+  if (owed > 0 && unitsLow > 0) {
+    const totalValue = getFondValue(unitsLow, rateLow_le);
+    if (totalValue > 0) {
+      // Hvor mye markedsverdi må selges for å dekke "owed" netto etter skatt?
+      // Forenkling: selg så mye at netto >= owed (eller alt). Gjør binærsøk-light:
+      // Beregn først hva alt selges for netto.
+      const allGain = Math.max(0, totalValue - invLow);
+      const allTax  = Math.round(allGain * getFundTax());
+      const allNet  = totalValue - allTax;
+      if (allNet <= owed) {
+        // Selg alt
+        bal       += 0; // går rett mot owed
+        owed      -= allNet;
+        unitsLow   = 0;
+        invLow     = 0;
+      } else {
+        // Selg en andel slik at netto ≈ owed
+        // ratio er andelen av markedsverdi vi selger
+        // Vi løser tilnærmet: sellGross - tax(sellGross - costBasis*ratio) = owed
+        // For enkelhet: ratio ≈ owed / allNet (litt unøyaktig, men trygt avrundet opp)
+        let ratio = Math.min(1, (owed / allNet) * 1.02); // litt buffer pga skatt
+        if (ratio > 1) ratio = 1;
+        const sellGross = Math.round(totalValue * ratio);
+        const unitsSold = Math.round(unitsLow * ratio * 100) / 100;
+        const costBasis = Math.round(invLow * ratio);
+        const gain      = Math.max(0, sellGross - costBasis);
+        const taxAmt    = Math.round(gain * getFundTax());
+        const net       = sellGross - taxAmt;
+        unitsLow = Math.max(0, Math.round((unitsLow - unitsSold) * 100) / 100);
+        invLow   = Math.max(0, invLow - costBasis);
+        if (net >= owed) {
+          // overskudd legges på brukskonto
+          bal += (net - owed);
+          owed = 0;
+        } else {
+          owed -= net;
+        }
+      }
+    }
+  }
+
+  // 4) Fond høyrisiko – samme logikk
+  if (owed > 0 && unitsHigh > 0) {
+    const totalValue = getFondValue(unitsHigh, rateHigh_le);
+    if (totalValue > 0) {
+      const allGain = Math.max(0, totalValue - invHigh);
+      const allTax  = Math.round(allGain * getFundTax());
+      const allNet  = totalValue - allTax;
+      if (allNet <= owed) {
+        owed     -= allNet;
+        unitsHigh = 0;
+        invHigh   = 0;
+      } else {
+        let ratio = Math.min(1, (owed / allNet) * 1.02);
+        if (ratio > 1) ratio = 1;
+        const sellGross = Math.round(totalValue * ratio);
+        const unitsSold = Math.round(unitsHigh * ratio * 100) / 100;
+        const costBasis = Math.round(invHigh * ratio);
+        const gain      = Math.max(0, sellGross - costBasis);
+        const taxAmt    = Math.round(gain * getFundTax());
+        const net       = sellGross - taxAmt;
+        unitsHigh = Math.max(0, Math.round((unitsHigh - unitsSold) * 100) / 100);
+        invHigh   = Math.max(0, invHigh - costBasis);
+        if (net >= owed) {
+          bal += (net - owed);
+          owed = 0;
+        } else {
+          owed -= net;
+        }
+      }
+    }
+  }
+
+  // 5) Resten = negativ brukskonto (gjeld som må gjøres opp)
+  if (owed > 0) {
+    bal -= owed;  // bal blir negativ
+    owed = 0;
+  }
+
+  const updates = {
+    loan: 0,
+    loanDate: null,
+    balance: bal,
+    savings: savings,
+    fund_low_units:     unitsLow,
+    fund_low_invested:  invLow,
+    fund_high_units:    unitsHigh,
+    fund_high_invested: invHigh
+  };
+
+  await window._update(fbRef('students57/'+s.fbKey), updates);
+  patchStudent(s.fbKey, updates);
+
+  await saveTx(s.fbKey, 'expense', '🚫',
+    `Lån tvangsinndratt etter 14 dager (lån ${s.loan}🪙 + 25% gebyr ${penalty}🪙 = ${totalDue}🪙)`, -totalDue);
+  transactions.unshift({
+    type:'expense', icon:'🚫',
+    desc:`Lån tvangsinndratt + 25% gebyr (${totalDue}🪙)`,
+    amount:-totalDue, ts:Date.now()
+  });
+  refreshAllDisplays(); renderTransactions();
+
+  const debtMsg = bal < 0
+    ? `Brukskonto er nå ${bal}🪙 (gjeld). Du må gjøre opp før du kan ta opp nytt lån eller spare/investere.`
+    : `Trukket fra alle kontoer. 25% gebyr ekstra: ${penalty}🪙.`;
+  showSuccess('⚠️', 'Lån tvangsinndratt!', `-${totalDue} 🪙`, debtMsg);
 }
 
 function renderLoan(){
@@ -1122,15 +1260,34 @@ function renderLoan(){
     ${urgent ? `<div class="warn-box">🔴 Mindre enn 3 dager igjen! Betal tilbake nå for å unngå automatisk inndragelse.</div>` : `<div class="info-box">⏳ Du har ${daysLeft} dager på å betale tilbake. Etter 14 dager inndras lånet automatisk.</div>`}
     <button class="big-btn bb-coral" onclick="repayLoan()">💳 Betal tilbake 🪙 ${total}</button>`;
   } else {
-    const maxLoan=Math.max(50,Math.floor((s.balance||0)*factor));
+    // Beregn totale aktiva (brukskonto + sparekonto + markedsverdi av fond)
+    const days_ml = Object.keys(window._fundHistory||{}).sort();
+    const lastDay_ml = days_ml.length ? window._fundHistory[days_ml[days_ml.length-1]] : null;
+    const rLow_ml  = lastDay_ml?.low  || 100;
+    const rHigh_ml = lastDay_ml?.high || 100;
+    const fondLowVal  = getFondValue(s.fund_low_units  || 0, rLow_ml);
+    const fondHighVal = getFondValue(s.fund_high_units || 0, rHigh_ml);
+    const totalAssets = (s.balance||0) + (s.savings||0) + fondLowVal + fondHighVal;
+    const maxLoan = (s.balance||0) < 0 ? 0 : Math.max(50, Math.floor(totalAssets * factor));
+    const debtBlock = (s.balance||0) < 0
+      ? `<div class="warn-box">🔴 Du har gjeld på brukskontoen (${s.balance}🪙). Du kan ikke ta opp nytt lån før gjelden er gjort opp.</div>`
+      : '';
     el.innerHTML=`<div class="loan-card loan-none"><div style="font-weight:800;margin-bottom:.3rem">✅ Ingen aktive lån</div><div style="font-size:.85rem;color:var(--teal-dark);font-weight:700">Brukskonto: 🪙 ${s.balance||0}</div></div>
-    <div class="info-box">⚠️ Lån koster penger! ${Math.round(rate*100)}% rente betales ved tilbakebetaling. Maks lån: 🪙 ${maxLoan} (${factor}× brukskonto).</div>
+    ${debtBlock}
+    <div class="info-box">⚠️ Lån koster penger! ${Math.round(rate*100)}% rente betales ved tilbakebetaling. Maks lån: 🪙 ${maxLoan} (${factor}× totale verdier).</div>
+    <div class="warn-box">🚨 Hvis du ikke betaler tilbake innen 14 dager, blir lånet tvangsinndratt med 25% gebyr. Banken trekker da fra brukskonto, sparekonto og fond i den rekkefølgen – også fond du har kjøpt for lånte penger.</div>
     <div class="card-block"><div style="font-weight:800;margin-bottom:.6rem">Lånevilkår</div>
-    <div style="font-size:.85rem;color:var(--muted);line-height:1.8">• Maks: 🪙 ${maxLoan}<br>• Rente: ${Math.round(rate*100)}%<br>• Betales i ett beløp<br>• Bare ett lån av gangen<br>• ⏳ Tilbakebetaling innen 14 dager</div></div>
-    <button class="big-btn bb-blue" onclick="takeLoan(${maxLoan})">📋 Ta opp lån</button>`;
+    <div style="font-size:.85rem;color:var(--muted);line-height:1.8">• Maks: 🪙 ${maxLoan} (basert på alt du eier)<br>• Rente: ${Math.round(rate*100)}%<br>• Betales i ett beløp<br>• Bare ett lån av gangen<br>• ⏳ Tilbakebetaling innen 14 dager<br>• ⚠️ Mislighold: 25% gebyr + trekk fra alle kontoer</div></div>
+    <button class="big-btn bb-blue" onclick="takeLoan(${maxLoan})" ${maxLoan<=0?'disabled style="opacity:.4"':''}>📋 Ta opp lån</button>`;
   }
 }
 function takeLoan(max){
+  const sChk = window._currentStudent;
+  if (sChk && (sChk.balance||0) < 0) {
+    alert(`Du har gjeld på brukskontoen (${sChk.balance}🪙). Gjør opp gjelden før du kan ta opp nytt lån.`);
+    return;
+  }
+  if (max <= 0) { alert('Du kan ikke ta opp lån akkurat nå.'); return; }
   showInputSheet('Ta opp lån',`Maks 🪙 ${max} · Rente: ${Math.round(getLoanRate()*100)}%`,async(amt)=>{
     if(amt>max){alert(`Maks lån er 🪙 ${max}.`);return;}
     const s=window._currentStudent;const newBal=(s.balance||0)+amt;
