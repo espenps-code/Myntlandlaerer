@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lærerveiledning – Myntland</title>
+<meta name="description" content="Hvordan komme i gang med Myntland i klasserommet — fra registrering til daglig bruk." />
+<meta name="theme-color" content="#1e0f52" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-light: #dbeafe;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  a { color: var(--green-dark); }
+
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    color: white;
+    padding: 4rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(29, 158, 117, 0.18) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  h1 .accent { color: var(--amber); }
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    color: rgba(255,255,255,0.9);
+    max-width: 640px;
+    margin: 0 auto;
+    font-weight: 600;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 2rem;
+  }
+  section { margin-bottom: 3rem; }
+
+  h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.7rem;
+    color: var(--teal-dark);
+    margin-bottom: 1rem;
+  }
+  h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--teal-dark);
+    margin: 1.5rem 0 0.5rem;
+  }
+  p { margin-bottom: 0.85rem; }
+  ul { margin: 0.5rem 0 1rem 1.5rem; }
+  ul li { margin-bottom: 0.4rem; }
+
+  /* Steps */
+  .step {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.25rem;
+    position: relative;
+    padding-left: 5rem;
+  }
+  .step-num {
+    position: absolute;
+    left: 1.25rem;
+    top: 1.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--amber);
+    color: var(--teal-dark);
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step h3 {
+    margin: 0 0 0.5rem;
+  }
+  .step p {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Tip box */
+  .tip {
+    background: var(--green-light);
+    border-left: 5px solid var(--green);
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin: 1rem 0;
+  }
+  .tip-title {
+    font-weight: 800;
+    color: var(--green-dark);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* Variant cards */
+  .variants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 600px) {
+    .variants { grid-template-columns: 1fr; }
+  }
+  .variant-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+  .variant-card h3 {
+    margin-top: 0;
+    color: var(--purple);
+  }
+
+  .pdf-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--teal-dark);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 800;
+    margin-top: 1rem;
+    transition: all 0.2s ease;
+  }
+  .pdf-link:hover {
+    background: var(--teal);
+    transform: translateY(-2px);
+  }
+
+  footer.site-footer {
+    background: var(--teal-dark);
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+    padding: 2rem 1.5rem;
+    font-size: 0.9rem;
+    margin-top: 3rem;
+  }
+  footer.site-footer a {
+    color: var(--amber);
+    text-decoration: none;
+    margin: 0 0.5rem;
+  }
+  footer.site-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">← Tilbake til forsiden</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <span class="hero-tag">For lærere</span>
+    <h1>Lærer­veiledning for <span class="accent">Myntland</span></h1>
+    <p class="hero-sub">Hvordan komme i gang, og hvordan bruke Myntland i en travel klasseromshverdag.</p>
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <h2>Komme i gang i fem steg</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Sjekk at skolen har avtale</h3>
+      <p>Myntland brukes innenfor en avtale skolen din har med oss. Spør IKT-ansvarlig eller rektor om Myntland er klargjort for skolen.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Logg inn i lærerportalen</h3>
+      <p>Gå til lærerportalen for ditt trinn (1.–4. eller 5.–7.) og logg inn med e-postadressen din. Første gang oppretter du et passord.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Opprett klassen og legg til elever</h3>
+      <p>Du legger til elever ved å skrive inn et <strong>kallenavn</strong> for hver elev. Dette skal ikke være elevens fulle navn — bruk gjerne fornavn, kallenavn eller fantasinavn.</p>
+      <div class="tip">
+        <div class="tip-title">💡 Tips</div>
+        <p>La elevene selv velge kallenavn første time. «MyntKongen», «Stjerneskudd» eller «Kaptein Saldo» fungerer like godt som fornavn — og er bedre for personvernet.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Skriv ut PIN-kortene</h3>
+      <p>Hver elev får en firesifret PIN-kode. Skriv ut PIN-kortene fra portalen og del ut til elevene. PIN-en er det de bruker for å logge inn på elevappen.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <h3>Sett i gang spillet!</h3>
+      <p>Gi elevene en startkapital (f.eks. 500 mynter), og kjør i gang første hendelse. Mange lærere starter med en enkel utbetaling: «Alle får 100 mynter for å være tilstede i dag.»</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Slik kan du bruke Myntland i undervisningen</h2>
+    <p>Det finnes ingen «riktig» måte å bruke Myntland på. Her er noen forslag fra lærere som har prøvd:</p>
+
+    <div class="variants">
+      <div class="variant-card">
+        <h3>📅 Fast ukerytme</h3>
+        <p>15 minutter hver fredag. Lønn utbetales, ukens hendelse kjøres, klassen diskuterer hva som har skjedd.</p>
+      </div>
+      <div class="variant-card">
+        <h3>🎯 Prosjektperiode</h3>
+        <p>Bruk Myntland i en intensiv 2-ukers periode i matematikk eller samfunnsfag, med daglige hendelser.</p>
+      </div>
+      <div class="variant-card">
+        <h3>🏆 Skoleåret-spillet</h3>
+        <p>Myntland går gjennom hele skoleåret. Saldoen følger eleven, og store hendelser skjer ved jul, påske og sommer.</p>
+      </div>
+      <div class="variant-card">
+        <h3>🎲 Tema-uker</h3>
+        <p>Aktiver Myntland kun i temauker — for eksempel «Klimauke» med klimarelaterte økonomiske hendelser.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Diskusjonsspørsmål til klassen</h2>
+    <p>Mye av læringen skjer i samtalen rundt spillet. Her er noen spørsmål som ofte fungerer godt:</p>
+    <ul>
+      <li>Hva er forskjellen på å trenge noe og å ha lyst på noe?</li>
+      <li>Hvorfor sparer folk penger? Hva sparer dere til selv?</li>
+      <li>Hva ville dere gjort hvis dere fikk 1 000 mynter ekstra denne uken?</li>
+      <li>Er det noen ganger riktig å bruke alt man har, og andre ganger riktig å spare?</li>
+      <li>Hva betyr det at noe er «risikabelt»? Kan dere gi eksempler?</li>
+      <li>Hvis en venn alltid spør om å låne mynter, hva sier dere?</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Tips for å unngå konflikter</h2>
+    <div class="tip">
+      <div class="tip-title">🎯 Sett tydelige rammer fra dag én</div>
+      <p>Snakk med klassen om at Myntland er et spill, og at det er greit at noen får mer eller mindre enn andre noen ganger — akkurat som i et brettspill.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-title">⚖️ Vær åpen om hvordan «lønn» bestemmes</div>
+      <p>Hvis du gir mynter for «innsats» eller «atferd», kan det føles urettferdig. Mange lærere foretrekker å gi alle samme grunnlønn, og heller la hendelser eller frivillige oppgaver skape forskjellene.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-title">🤝 Bruk konflikter som læringsstoff</div>
+      <p>Hvis to elever krangler om en transaksjon, er det en gylden mulighet til å diskutere avtaler, tillit og forhandling.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Trenger du hjelp?</h2>
+    <p>Vi svarer gjerne på spørsmål om hvordan Myntland kan brukes i klasserommet ditt.</p>
+    <p>
+      📧 <a href="mailto:kontakt@myntland.no">kontakt@myntland.no</a>
+    </p>
+    <a href="docs/Laererveiledning_Myntland.pdf" class="pdf-link" download>
+      📄 Last ned veiledning som PDF
+    </a>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <a href="index.html">Forsiden</a> ·
+  <a href="for-skoler.html">For skoler</a> ·
+  <a href="personvern.html">Personvern</a> ·
+  <a href="vilkar.html">Vilkår</a> ·
+  <a href="mailto:kontakt@myntland.no">Kontakt</a>
+  <p style="margin-top: 1rem; opacity: 0.6;">© Myntland</p>
+</footer>
+
+</body>
+</html>

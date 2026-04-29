@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vilkår for bruk – Myntland</title>
+<meta name="description" content="Vilkår for bruk av Myntland — pedagogisk plattform for økonomiundervisning i barneskolen." />
+<meta name="theme-color" content="#1e0f52" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-light: #dbeafe;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  a { color: var(--green-dark); }
+
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    color: white;
+    padding: 4rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(29, 158, 117, 0.18) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  h1 .accent { color: var(--amber); }
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    color: rgba(255,255,255,0.9);
+    max-width: 640px;
+    margin: 0 auto;
+    font-weight: 600;
+  }
+  .hero-meta {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.7);
+  }
+
+  main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 2rem;
+  }
+  section { margin-bottom: 2.5rem; }
+  h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--teal-dark);
+    margin-bottom: 1rem;
+    margin-top: 2rem;
+  }
+  p { margin-bottom: 0.85rem; }
+  ul { margin: 0.5rem 0 1rem 1.5rem; }
+  ul li { margin-bottom: 0.4rem; }
+
+  footer.site-footer {
+    background: var(--teal-dark);
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+    padding: 2rem 1.5rem;
+    font-size: 0.9rem;
+    margin-top: 3rem;
+  }
+  footer.site-footer a {
+    color: var(--amber);
+    text-decoration: none;
+    margin: 0 0.5rem;
+  }
+  footer.site-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">← Tilbake til forsiden</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <span class="hero-tag">Vilkår</span>
+    <h1>Vilkår for bruk av <span class="accent">Myntland</span></h1>
+    <p class="hero-sub">Disse vilkårene regulerer bruken av Myntland som pedagogisk plattform for skoler og deres elever.</p>
+    <p class="hero-meta">Sist oppdatert: [DATO] · Versjon 1.0</p>
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <h2>1. Om tjenesten</h2>
+    <p>Myntland er en nettbasert pedagogisk plattform for økonomiundervisning rettet mot grunnskolen (1.–7. trinn). Tjenesten leveres av <strong>[SELSKAPSNAVN]</strong> («Leverandøren»).</p>
+    <p>Disse vilkårene gjelder for alle som bruker Myntland, herunder skoleeiere, lærere og elever.</p>
+  </section>
+
+  <section>
+    <h2>2. Hvem kan bruke Myntland?</h2>
+    <p>Myntland er først og fremst utformet for bruk i klasseromssituasjoner under en lærers tilsyn. Tjenesten brukes på følgende måte:</p>
+    <ul>
+      <li><strong>Skoleeier</strong> (kommune eller privat skole) inngår avtale med Leverandøren om bruk av Tjenesten.</li>
+      <li><strong>Lærere</strong> oppretter klasser, administrerer elever og styrer klassens spill.</li>
+      <li><strong>Elever</strong> får tilgang gjennom kallenavn og PIN-kode tildelt av læreren.</li>
+    </ul>
+    <p>Privatpersoner kan ikke registrere seg uten tilknytning til en skole.</p>
+  </section>
+
+  <section>
+    <h2>3. Riktig bruk</h2>
+    <p>Du forplikter deg til å bruke Myntland i tråd med formålet, som er undervisning og læring. Det er ikke tillatt å:</p>
+    <ul>
+      <li>Forsøke å få tilgang til andre brukeres data eller kontoer</li>
+      <li>Forsøke å omgå sikkerhetstiltak eller misbruke tjenesten</li>
+      <li>Bruke tjenesten til å trakassere, mobbe eller på annen måte skade andre</li>
+      <li>Lage kallenavn som er støtende, identifiserende på uønskede måter, eller bryter med skolens regler</li>
+      <li>Bruke automatiserte verktøy (bots, skraping) mot tjenesten uten skriftlig tillatelse</li>
+    </ul>
+    <p>Brudd på disse reglene kan føre til at tilgang stenges.</p>
+  </section>
+
+  <section>
+    <h2>4. Eierskap til innhold</h2>
+    <p>Myntlands plattform, design, kode og pedagogiske materiale tilhører Leverandøren og er beskyttet av åndsverkloven.</p>
+    <p>Data som skolen registrerer i tjenesten (klasselister, hendelser, oppgaver) tilhører skoleeier. Leverandøren benytter ikke disse dataene til andre formål enn å levere tjenesten.</p>
+  </section>
+
+  <section>
+    <h2>5. Personvern</h2>
+    <p>Behandling av personopplysninger er regulert i en egen <a href="personvern.html">personvernerklæring</a> og databehandleravtale mellom skoleeier og Leverandøren. Vi anbefaler at både skoler og foresatte gjør seg kjent med personvernerklæringen.</p>
+  </section>
+
+  <section>
+    <h2>6. Tilgjengelighet og driftsforstyrrelser</h2>
+    <p>Myntland tilstreber høy oppetid, men kan ikke garantere uavbrutt drift. Planlagte vedlikeholdsvinduer og uventede feil kan forekomme. Leverandøren er ikke ansvarlig for tap som måtte oppstå som følge av at tjenesten ikke er tilgjengelig.</p>
+  </section>
+
+  <section>
+    <h2>7. Endringer i tjenesten</h2>
+    <p>Leverandøren kan oppdatere og forbedre Myntland løpende. Vesentlige endringer som påvirker brukeropplevelsen eller funksjonaliteten varsles på forhånd.</p>
+  </section>
+
+  <section>
+    <h2>8. Endringer i vilkårene</h2>
+    <p>Disse vilkårene kan oppdateres. Den til enhver tid gjeldende versjonen er publisert på myntland.no/vilkar. Vesentlige endringer varsles til skoleeiere i god tid.</p>
+  </section>
+
+  <section>
+    <h2>9. Ansvarsfraskrivelse</h2>
+    <p>Myntland leveres «som den er». Leverandøren fraskriver seg, så langt loven tillater, ansvar for indirekte tap, herunder tap av data, tapt fortjeneste eller andre følgekostnader.</p>
+    <p>Leverandørens samlede ansvar er begrenset i samsvar med det som er avtalt med skoleeier i den enkelte avtalen.</p>
+  </section>
+
+  <section>
+    <h2>10. Lovvalg og verneting</h2>
+    <p>Disse vilkårene er underlagt norsk rett. Tvister søkes løst i minnelighet. Dersom enighet ikke oppnås, er verneting Haugaland tingrett.</p>
+  </section>
+
+  <section>
+    <h2>11. Kontakt</h2>
+    <p>Spørsmål om vilkårene kan rettes til:</p>
+    <p>
+      <strong>[SELSKAPSNAVN]</strong><br>
+      E-post: <a href="mailto:kontakt@myntland.no">kontakt@myntland.no</a>
+    </p>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <a href="index.html">Forsiden</a> ·
+  <a href="for-skoler.html">For skoler</a> ·
+  <a href="personvern.html">Personvern</a> ·
+  <a href="mailto:kontakt@myntland.no">Kontakt</a>
+  <p style="margin-top: 1rem; opacity: 0.6;">© Myntland</p>
+</footer>
+
+</body>
+</html>
