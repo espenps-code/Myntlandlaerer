@@ -1813,7 +1813,10 @@ async function confirmBulkAction() {
   const updates = {};
   const targets = window._students.filter(s => !cls || s.class === cls);
 
-  let totalTaxCollected = 0;
+  // Per-mål skatt-akkumulering for lønn (skatt sendes til elevens valgte sparemål)
+  const goalsByKey = Object.fromEntries((window._classGoals || []).map(g => [g.fbKey, g]));
+  const taxPerGoal = {};
+  const studentsWithoutGoal = [];
 
   for (const s of targets) {
     const cur = s.balance || 0;
@@ -1830,7 +1833,13 @@ async function confirmBulkAction() {
       txDesc = 'Ukentlig lønn (netto etter 20 % skatt)';
       txAmt  = net;
       txIcon = '💼';
-      totalTaxCollected += taxAmt;
+      // Send skatten til elevens valgte sparemål (hvis det er aktivt)
+      const chosen = s.chosenGoalKey ? goalsByKey[s.chosenGoalKey] : null;
+      if (chosen && !chosen.completed && taxAmt > 0) {
+        taxPerGoal[chosen.fbKey] = (taxPerGoal[chosen.fbKey] || 0) + taxAmt;
+      } else if (taxAmt > 0) {
+        studentsWithoutGoal.push(s.firstname + ' ' + s.lastname);
+      }
     } else if (bulkAction === 'reset') {
       newBal = 0;
       txDesc = 'Saldo nullstilt';
@@ -1844,11 +1853,24 @@ async function confirmBulkAction() {
       await logTx14(s.fbKey, txAmt > 0 ? 'income' : 'expense', txIcon, txDesc, txAmt);
     }
   }
+
+  // Skriv per-mål skattetillegg inn i samme batch
+  for (const [fbKey, addAmt] of Object.entries(taxPerGoal)) {
+    const g = goalsByKey[fbKey];
+    if (!g) continue;
+    const ns = (g.saved || 0) + addAmt;
+    updates['classGoals14/' + fbKey + '/saved'] = ns;
+    if (ns >= g.target) updates['classGoals14/' + fbKey + '/completed'] = true;
+  }
+
   await window._update(fbRef('/'), updates);
 
-  // Distribuer total skatt til aktive sparemål
-  if (totalTaxCollected > 0) {
-    await distributeToGoals14(totalTaxCollected);
+  // Gi læreren beskjed hvis noen elever ikke hadde valgt sparemål
+  if (bulkAction === 'salary' && studentsWithoutGoal.length > 0) {
+    const navn = studentsWithoutGoal.slice(0, 5).join(', ') + (studentsWithoutGoal.length > 5 ? ' …' : '');
+    setTimeout(() => {
+      alert('💡 ' + studentsWithoutGoal.length + ' elev(er) hadde ikke valgt sparemål – skatten deres ble holdt tilbake.\n\nElever: ' + navn + '\n\nBe dem velge sparemål i elevappen.');
+    }, 100);
   }
 
   closeModal('modal-bulk');
