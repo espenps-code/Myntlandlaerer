@@ -348,10 +348,9 @@
         </div>
         <div class="form-row">
           <label>Fiktivt navn</label>
-          <div style="display:flex;gap:8px;">
-            <input type="text" id="new-firstname" placeholder="Fornavn" style="flex:1;">
-            <input type="text" id="new-lastname" placeholder="Etternavn" style="flex:1;">
-          </div>
+          <div id="new-fictive-name-display" style="background:var(--bg);border:2px dashed var(--border);border-radius:10px;padding:.75rem;font-weight:700;color:var(--muted);text-align:center;">Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn</div>
+          <input type="hidden" id="new-firstname" value="">
+          <input type="hidden" id="new-lastname" value="">
         </div>
         <div class="form-row"><label>Klasse</label>
           <select id="new-class">
@@ -367,7 +366,7 @@
       </div>
       <div class="card">
         <div class="card-title">💳 Skriv ut bankkort</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort (8 per A4) med avatar, navn, klasse og PIN.</p>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer bankkort-formede kort (8 per A4) med avatar, navn, klasse og PIN.</p>
         <div class="form-row">
           <label>Velg klasse</label>
           <select id="card-class-filter">
@@ -568,10 +567,10 @@
 <!-- ===== DAGLIGVARER ===== -->
 <div class="page" id="page-dagligvarer">
   <div class="page-title">🛒 Dagligvarer & butikk</div>
-  <div class="page-subtitle">Administrer butikkens varer og skriv ut handlelapper med QR-koder</div>
+  <div class="page-subtitle">Administrer butikkens varer og skriv ut varelapper med QR-koder</div>
   <div class="tabs">
     <button class="tab active" onclick="showTab('butikk-rediger',this)">✏️ Rediger varer</button>
-    <button class="tab" onclick="showTab('butikk-skriv',this)">🖨️ Skriv ut handlelapper</button>
+    <button class="tab" onclick="showTab('butikk-skriv',this)">🖨️ Skriv ut varelapper</button>
   </div>
   <div id="butikk-rediger">
     <div class="card">
@@ -590,7 +589,7 @@
   </div>
   <div id="butikk-skriv" style="display:none;">
     <div class="card">
-      <div class="card-title">🖨️ Skriv ut handlelapper</div>
+      <div class="card-title">🖨️ Skriv ut varelapper</div>
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;">Velg varer å skrive ut (¼ A4 per vare med QR-kode).</p>
       <div class="grocery-grid" id="grocery-print-select"></div>
       <div style="margin-top:1.5rem;display:flex;gap:10px;">
@@ -1206,6 +1205,13 @@ function randomFictiveName() {
   const n = generateFictiveName(s);
   document.getElementById('new-firstname').value = n.firstname;
   document.getElementById('new-lastname').value  = n.lastname;
+  const display = document.getElementById('new-fictive-name-display');
+  if (display) {
+    display.textContent = n.firstname + ' ' + n.lastname;
+    display.style.color = 'var(--teal-dark)';
+    display.style.borderStyle = 'solid';
+    display.style.background = 'var(--teal-light)';
+  }
   window._pendingAvatarSeed = s;
   renderPortalAvatarPreview(s);
 }
@@ -1236,7 +1242,7 @@ async function createStudent() {
   const cls = document.getElementById('new-class').value || (window._currentTeacher?.class || '1. klasse');
   const bal = parseInt(document.getElementById('new-balance').value) || 0;
   const alertEl = document.getElementById('create-alert');
-  if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
+  if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn først.</div>'; return; }
   const pin = generatePIN();
   const avatarSeed = window._pendingAvatarSeed || Math.floor(Math.random()*99999);
   await window._set(window._push(fbRef('students14')), {
@@ -1249,6 +1255,15 @@ async function createStudent() {
   window._pendingAvatarSeed = null;
   const wrap = document.getElementById('avatar-preview-wrap');
   if (wrap) wrap.innerHTML = '';
+  const display = document.getElementById('new-fictive-name-display');
+  if (display) {
+    display.textContent = 'Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn';
+    display.style.color = 'var(--muted)';
+    display.style.borderStyle = 'dashed';
+    display.style.background = 'var(--bg)';
+  }
+  const label = document.getElementById('avatar-preview-label');
+  if (label) label.textContent = 'Ingen avatar ennå';
   alertEl.innerHTML = `<div class="alert alert-success">✅ ${fn} ${ln} (${window.getAnimalName(avatarSeed)}) opprettet! PIN: <strong>${pin}</strong></div>`;
 }
 
@@ -1765,6 +1780,10 @@ async function confirmSaldoAction() {
   else if (currentAction === 'set')      newBal = Math.max(0, amount);
   else if (currentAction === 'reset')    newBal = 0;
   await window._update(fbRef('students14/' + currentStudentId), { balance: newBal });
+  // Nullstill også sparekonto når hovedkonto nullstilles
+  if (currentAction === 'reset') {
+    await window._update(fbRef('savings14/' + currentStudentId), { balance: 0 });
+  }
   closeModal('modal-saldo');
 }
 function openBulkModal(action) {
@@ -1780,7 +1799,7 @@ function openBulkModal(action) {
   if (action === 'salary') {
     const active = (window._classGoals || []).filter(g => !g.completed);
     ti.innerHTML = active.length
-      ? '🏛️ <strong>20 % skatt</strong> trekkes fra brutto og fordeles likt på <strong>' + active.length + '</strong> aktive sparemål. Eksempel: 100 mynter brutto → 80 til eleven, 20 til klassens sparemål.'
+      ? '🏛️ <strong>20 % skatt</strong> trekkes fra brutto og sendes til sparemålet eleven har valgt. Eksempel: 100 mynter brutto → 80 til eleven, 20 til klassens sparemål.'
       : '⚠️ Ingen aktive sparemål – skatten <strong>holdes tilbake</strong>, men ingenting fordeles. Opprett et sparemål først for å bruke skattepengene.';
     ti.style.display = 'block';
   } else {
@@ -1817,6 +1836,8 @@ async function confirmBulkAction() {
       txDesc = 'Saldo nullstilt';
       txAmt  = -cur;
       txIcon = '🔄';
+      // Nullstill også sparekonto
+      updates['savings14/'+s.fbKey+'/balance'] = 0;
     }
     updates['students14/'+s.fbKey+'/balance'] = Math.max(0, newBal);
     if (txAmt !== 0) {
