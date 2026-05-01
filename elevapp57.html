@@ -56,9 +56,9 @@
     }
   });
   onValue(ref(db,'classGoals'),snap=>{
-    window._classGoals=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(g=>!g.completed):[];
-    if(document.getElementById('tab-sparemaal')?.classList.contains('active')) renderClassGoalsTab();
-    refreshGoalSelect();
+    // Behold også fullførte mål her, slik at sparemål-velgeren på forsiden kan vise dem som "Fullført!"
+    window._classGoals=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];
+    renderClassGoalsHome();
   });
   onValue(ref(db,'jobs'),snap=>{
     window._jobs=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(j=>j.active):[];
@@ -74,7 +74,10 @@
   });
   onValue(ref(db,'fundHistory'),snap=>{
     window._fundHistory=snap.val()||{};
-    if(document.getElementById('tab-fond')?.classList.contains('active')) renderFond();
+    // Re-rendre fond hvis spare-fanen er åpen og fond-segmentet er aktivt
+    if(document.getElementById('tab-spare')?.classList.contains('active')
+       && document.getElementById('spare-seg-fond')?.classList.contains('active'))
+      renderFond();
   });
 </script>
 <style>
@@ -143,10 +146,51 @@
   .tx-amount{font-family:'Fredoka One',cursive;font-size:.95rem;}
   .tx-amount.income{color:var(--teal);} .tx-amount.expense{color:var(--coral);}
 
-  /* GOAL SELECTOR */
-  .goal-select-wrap{background:var(--purple-light);border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem;border:1.5px solid #c4b5fd;}
-  .goal-select-label{font-size:.78rem;font-weight:800;color:var(--purple);margin-bottom:.4rem;}
-  .goal-select-inner select{border-color:#c4b5fd;font-size:.88rem;}
+  /* CLASS GOALS CARD (forsiden) */
+  .class-goals-card{background:white;border:2px solid var(--border);border-radius:18px;padding:14px 18px;margin-bottom:1.25rem;box-shadow:0 1px 3px rgba(15,81,50,.08);}
+  .class-goals-header{margin-bottom:12px;}
+  .class-goals-title{font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.1rem;line-height:1;}
+  .class-goals-sub{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:3px;}
+  .class-goal-row{padding:10px 0;border-top:1px solid var(--border);}
+  .class-goal-row:first-child{border-top:none;padding-top:4px;}
+  .class-goal-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .class-goal-emoji{font-size:1.5rem;}
+  .class-goal-name{flex:1;font-weight:800;font-size:.92rem;color:var(--teal-dark);line-height:1.2;}
+  .class-goal-name.done{color:#15803d;}
+  .class-goal-bar{height:10px;background:var(--bg);border-radius:20px;overflow:hidden;border:1px solid var(--border);}
+  .class-goal-fill{height:100%;background:var(--teal);border-radius:20px;transition:width .4s;}
+  .class-goal-fill.done{background:#16a34a;}
+  .class-goal-meta{display:flex;justify-content:space-between;font-size:.74rem;font-weight:700;color:var(--muted);margin-top:5px;}
+  .class-goal-meta .pct{color:var(--teal-dark);}
+  .class-goal-row.mine{background:linear-gradient(90deg,#fff7ed 0%,white 100%);border-left:4px solid var(--amber);padding-left:10px;border-radius:8px;margin:6px -4px;}
+  .mine-badge{display:inline-block;background:var(--amber);color:var(--teal-dark);font-size:.62rem;padding:2px 7px;border-radius:10px;font-weight:900;margin-left:4px;vertical-align:middle;}
+
+  .chosen-goal-banner{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 100%);border:1.5px solid var(--amber);border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
+  .chosen-goal-banner:active{transform:scale(.98);}
+  .chosen-goal-banner.empty{background:#fef2f2;border-color:#fca5a5;}
+  .chosen-goal-left{flex:1;min-width:0;}
+  .chosen-goal-label{font-size:.7rem;font-weight:900;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.5px;}
+  .chosen-goal-name{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);line-height:1.1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chosen-goal-edit{background:white;color:var(--teal-dark);font-weight:900;font-size:.78rem;padding:5px 12px;border-radius:8px;border:1.5px solid var(--amber);}
+
+  .choose-goal-row{width:100%;display:flex;align-items:center;gap:12px;background:white;border:2px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer;text-align:left;transition:all .12s;font-family:inherit;}
+  .choose-goal-row:active{transform:scale(.98);}
+  .choose-goal-row.selected{border-color:var(--amber);background:#fff7ed;}
+  .choose-goal-emoji{font-size:1.8rem;flex-shrink:0;}
+  .choose-goal-info{flex:1;min-width:0;}
+  .choose-goal-name{font-weight:900;color:var(--teal-dark);font-size:.92rem;line-height:1.2;margin-bottom:5px;}
+  .choose-goal-bar{height:6px;background:var(--bg);border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+  .choose-goal-fill{height:100%;background:var(--teal);border-radius:10px;}
+  .choose-goal-meta{font-size:.74rem;color:var(--muted);font-weight:700;margin-top:3px;}
+  .choose-goal-check{font-size:1.4rem;color:var(--amber);flex-shrink:0;}
+  .choose-goal-check.empty{color:var(--border);font-size:1.6rem;}
+
+  /* SPARE SEGMENTED CONTROL */
+  .spare-segmented{display:flex;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:4px;margin-bottom:1rem;gap:4px;}
+  .ss-pill{flex:1;border:none;background:transparent;padding:10px;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;color:var(--muted);cursor:pointer;transition:all .15s;}
+  .ss-pill.active{background:white;color:var(--teal-dark);box-shadow:0 1px 3px rgba(15,81,50,.12);}
+  .spare-seg-content{display:none;}
+  .spare-seg-content.active{display:block;}
 
   /* QUIZ */
   .quiz-banner{background:linear-gradient(135deg,var(--purple),#3d3490);border-radius:14px;padding:1.1rem 1.25rem;margin-bottom:1rem;color:white;position:relative;overflow:hidden;}
@@ -427,14 +471,13 @@
       </div>
     </div>
 
-    <!-- Sparemål-velger -->
-    <div class="goal-select-wrap" id="goal-select-wrap">
-      <div class="goal-select-label">🏦 Skatt fra belønninger går til:</div>
-      <div class="goal-select-inner">
-        <select id="goal-selector" onchange="saveGoalChoice()" style="width:100%">
-          <option value="">Ingen valgt (fordeles likt)</option>
-        </select>
+    <!-- KLASSENS SPAREMÅL (visuell velger) -->
+    <div class="class-goals-card" id="class-goals-card" style="display:none;">
+      <div class="class-goals-header">
+        <div class="class-goals-title">🎯 Klassens sparemål</div>
+        <div class="class-goals-sub">Skatt fra belønninger går til ditt valgte mål</div>
       </div>
+      <div id="class-goals-body"></div>
     </div>
 
 
@@ -454,48 +497,51 @@
     <div id="transaction-list"><div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700">Ingen transaksjoner ennå</div></div></div>
   </div>
 
-  <!-- SPARE TAB -->
+  <!-- SPARE TAB (sparekonto + fond samlet) -->
   <div class="tab-content content" id="tab-spare">
-    <div class="account-card spare" style="border-radius:14px;padding:1.1rem;margin-bottom:.85rem;color:white">
-      <div class="acc-label">💰 Sparekonto</div>
-      <div class="acc-val" id="spare-main-val">0</div>
-      <div class="acc-sub" id="spare-rate-sub">2% ukentlig rente · maks 2 uttak/uke</div>
+    <!-- Pill-bryter: Sparekonto / Fond -->
+    <div class="spare-segmented">
+      <button class="ss-pill active" id="ss-pill-konto" onclick="switchSpareSeg('konto',this)">💰 Sparekonto</button>
+      <button class="ss-pill" id="ss-pill-fond" onclick="switchSpareSeg('fond',this);renderFond()">📊 Fond</button>
     </div>
-    <div class="info-box" id="spare-info-box">💡 Penger på sparekonto vokser med 2% hver uke (betales ut mandag). Maks 2 uttak per uke.</div>
-    <div id="spare-withdrawal-warn" style="display:none" class="warn-box">⚠️ Du har brukt alle uttakene dine denne uken!</div>
-    <div class="acc-action-grid">
-      <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">➕ Sett inn fra brukskonto</button>
-      <button class="acc-action-btn aab-ghost" id="spare-withdraw-btn" onclick="openTransfer('spare-til-bruk')">➖ Ta ut til brukskonto</button>
-    </div>
-    <div class="section-title" style="margin-top:.5rem">📜 Sparehistorikk</div>
-    <div id="spare-tx-list"><div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen sparehistorikk</div></div></div>
-  </div>
 
-  <!-- FOND TAB -->
-  <div class="tab-content content" id="tab-fond">
-    <div id="fond-cards"></div>
-    <div class="chart-wrap">
-      <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);margin-bottom:.5rem">📈 Kursutvikling (siste 14 dager)</div>
-      <canvas id="fond-chart" height="140"></canvas>
+    <!-- Sparekonto-seksjon -->
+    <div id="spare-seg-konto" class="spare-seg-content active">
+      <div class="account-card spare" style="border-radius:14px;padding:1.1rem;margin-bottom:.85rem;color:white">
+        <div class="acc-label">💰 Sparekonto</div>
+        <div class="acc-val" id="spare-main-val">0</div>
+        <div class="acc-sub" id="spare-rate-sub">2% ukentlig rente · maks 2 uttak/uke</div>
+      </div>
+      <div class="info-box" id="spare-info-box">💡 Penger på sparekonto vokser med 2% hver uke (betales ut mandag). Maks 2 uttak per uke.</div>
+      <div id="spare-withdrawal-warn" style="display:none" class="warn-box">⚠️ Du har brukt alle uttakene dine denne uken!</div>
+      <div class="acc-action-grid">
+        <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">➕ Sett inn fra brukskonto</button>
+        <button class="acc-action-btn aab-ghost" id="spare-withdraw-btn" onclick="openTransfer('spare-til-bruk')">➖ Ta ut til brukskonto</button>
+      </div>
+      <div class="section-title" style="margin-top:.5rem">📜 Sparehistorikk</div>
+      <div id="spare-tx-list"><div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen sparehistorikk</div></div></div>
     </div>
-    <div class="info-box">💡 Fondet oppdateres daglig av læreren. Gevinst beskattes med <span id="fond-tax-pct">10</span>% ved uttak. Kan sette inn når som helst.</div>
-    <div class="acc-action-grid">
-      <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-low')">📈 Sett inn lav risiko</button>
-      <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-low-til-bruk')">📉 Ta ut lav risiko</button>
-      <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-high')">📈 Sett inn høy risiko</button>
-      <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-high-til-bruk')">📉 Ta ut høy risiko</button>
+
+    <!-- Fond-seksjon -->
+    <div id="spare-seg-fond" class="spare-seg-content">
+      <div id="fond-cards"></div>
+      <div class="chart-wrap">
+        <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);margin-bottom:.5rem">📈 Kursutvikling (siste 14 dager)</div>
+        <canvas id="fond-chart" height="140"></canvas>
+      </div>
+      <div class="info-box">💡 Fondet oppdateres daglig av læreren. Gevinst beskattes med <span id="fond-tax-pct">10</span>% ved uttak. Kan sette inn når som helst.</div>
+      <div class="acc-action-grid">
+        <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-low')">📈 Sett inn lav risiko</button>
+        <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-low-til-bruk')">📉 Ta ut lav risiko</button>
+        <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-high')">📈 Sett inn høy risiko</button>
+        <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-high-til-bruk')">📉 Ta ut høy risiko</button>
+      </div>
     </div>
   </div>
 
   <!-- LÅN TAB -->
   <div class="tab-content content" id="tab-laan">
     <div id="loan-section"></div>
-  </div>
-
-  <!-- SPAREMÅL TAB -->
-  <div class="tab-content content" id="tab-sparemaal">
-    <div class="section-title">🏦 Klassens sparemål</div>
-    <div id="class-goals-list"><div class="empty-state"><div class="empty-icon">🏦</div><div style="font-weight:700">Ingen sparemål opprettet ennå</div></div></div>
   </div>
 
   <!-- OPPDRAG TAB -->
@@ -538,10 +584,8 @@
 
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
-    <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab()"><div class="nav-icon">💰</div><div class="nav-label">Spare</div></button>
-    <button class="nav-item"        onclick="switchTab('fond',this);renderFond()"><div class="nav-icon">📊</div><div class="nav-label">Fond</div></button>
+    <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
     <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
-    <button class="nav-item"        onclick="switchTab('sparemaal',this);renderClassGoalsTab()"><div class="nav-icon">🏦</div><div class="nav-label">Sparemål</div></button>
     <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Oppdrag</div></button>
     <button class="nav-item"        onclick="switchTab('kort',this)"><div class="nav-icon">💳</div><div class="nav-label">Kort</div></button>
   </div>
@@ -607,6 +651,16 @@
   <div class="success-amount" id="suc-amount"></div>
   <div class="success-text"   id="suc-text"></div>
   <button class="success-close" onclick="document.getElementById('success-overlay').classList.remove('open')">Fortsett</button>
+</div>
+
+<!-- VELG SPAREMÅL MODAL -->
+<div class="pin-overlay" id="choose-goal-modal">
+  <div style="background:rgba(255,255,255,.97);max-width:400px;width:100%;border-radius:16px;padding:1.25rem;">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);text-align:center;margin-bottom:.5rem;">⭐ Velg sparemål</div>
+    <div style="text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:1rem;font-weight:700;">Skatten din går til dette målet</div>
+    <div id="choose-goal-list" style="max-height:60vh;overflow-y:auto;margin-bottom:1rem;"></div>
+    <button onclick="closeChooseGoalModal()" style="width:100%;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Lukk</button>
+  </div>
 </div>
 
 <div class="quiz-overlay" id="quiz-overlay">
@@ -711,7 +765,7 @@ function tryLogin(){
     document.getElementById('card-holder').textContent=(s.firstname+' '+s.lastname).toUpperCase();
     document.getElementById('card-number').textContent='•••• ••••';
     refreshAllDisplays();
-    refreshGoalSelect();
+    renderClassGoalsHome();
     loadTransactions(s.fbKey);
     checkAndResetQuiz(s);
     checkQuizStatus();
@@ -764,20 +818,115 @@ function refreshAllDisplays(){
   if(mini)mini.textContent=(s.loan||0)+' 🪙';
 }
 
-// ── GOAL SELECT ────────────────────────────────────────────────────────────
-function refreshGoalSelect(){
-  const sel=document.getElementById('goal-selector');if(!sel)return;
+// ── KLASSENS SPAREMÅL (forsiden) ───────────────────────────────────────────
+function renderClassGoalsHome(){
+  const card=document.getElementById('class-goals-card');
+  const body=document.getElementById('class-goals-body');
+  if(!card||!body)return;
+  const goals=window._classGoals||[];
+  if(!goals.length){card.style.display='none';return;}
+  card.style.display='block';
+
+  // Sortér: aktive først, så fullførte
+  const active=goals.filter(g=>!g.completed);
+  const done=goals.filter(g=>g.completed);
+  const ordered=[...active,...done];
+
   const s=window._currentStudent;
-  sel.innerHTML='<option value="">Fordeles likt mellom aktive mål</option>'+(window._classGoals||[]).map(g=>`<option value="${g.fbKey}">${g.emoji||'🏦'} ${g.name}</option>`).join('');
-  if(s?.preferredGoal) sel.value=s.preferredGoal;
-  const wrap=document.getElementById('goal-select-wrap');
-  if(wrap)wrap.style.display=(window._classGoals?.length)?'block':'none';
+  const chosenKey=s?.preferredGoal||'';
+  const chosen=chosenKey?active.find(g=>g.fbKey===chosenKey):null;
+
+  let headerHTML='';
+  if(chosen){
+    headerHTML=`<div class="chosen-goal-banner" onclick="openChooseGoalModal()">
+      <div class="chosen-goal-left">
+        <div class="chosen-goal-label">⭐ Du støtter</div>
+        <div class="chosen-goal-name">${chosen.emoji||'🏦'} ${chosen.name}</div>
+      </div>
+      <div class="chosen-goal-edit">Bytt</div>
+    </div>`;
+  } else if(active.length){
+    headerHTML=`<div class="chosen-goal-banner empty" onclick="openChooseGoalModal()">
+      <div class="chosen-goal-left">
+        <div class="chosen-goal-label" style="color:var(--coral);">⚠️ Du har ikke valgt et sparemål ennå</div>
+        <div class="chosen-goal-name" style="font-size:.85rem;color:var(--muted);">Skatten din venter på å bli plassert</div>
+      </div>
+      <div class="chosen-goal-edit" style="background:var(--amber);color:var(--teal-dark);">Velg</div>
+    </div>`;
+  }
+
+  body.innerHTML=headerHTML+ordered.map(g=>{
+    const saved=g.saved||0;
+    const target=g.target||1;
+    const pct=Math.min(100,Math.round(saved/target*100));
+    const isDone=!!g.completed;
+    const isMine=g.fbKey===chosenKey&&!isDone;
+    return `<div class="class-goal-row${isMine?' mine':''}">
+      <div class="class-goal-top">
+        <div class="class-goal-emoji">${g.emoji||'🏦'}</div>
+        <div class="class-goal-name${isDone?' done':''}">${g.name||'Sparemål'}${isDone?' ✅':''}${isMine?' <span class="mine-badge">⭐ Mitt valg</span>':''}</div>
+      </div>
+      <div class="class-goal-bar"><div class="class-goal-fill${isDone?' done':''}" style="width:${pct}%;"></div></div>
+      <div class="class-goal-meta">
+        <span>🪙 ${saved} / ${target}</span>
+        <span class="pct">${pct}%</span>
+        <span>${isDone?'Fullført!':'🪙 '+Math.max(0,target-saved)+' igjen'}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
-async function saveGoalChoice(){
-  const s=window._currentStudent;if(!s)return;
-  const v=document.getElementById('goal-selector').value;
-  await window._update(fbRef('students57/'+s.fbKey),{preferredGoal:v||null});
-  patchStudent(s.fbKey,{preferredGoal:v||null});
+
+function openChooseGoalModal(){
+  const goals=(window._classGoals||[]).filter(g=>!g.completed);
+  const list=document.getElementById('choose-goal-list');
+  if(!goals.length){
+    list.innerHTML='<div style="text-align:center;color:var(--muted);padding:1rem;">Ingen aktive sparemål akkurat nå.</div>';
+  } else {
+    const s=window._currentStudent;
+    const chosenKey=s?.preferredGoal||'';
+    list.innerHTML=goals.map(g=>{
+      const saved=g.saved||0;
+      const pct=Math.min(100,Math.round(saved/(g.target||1)*100));
+      const isMine=g.fbKey===chosenKey;
+      return `<button class="choose-goal-row${isMine?' selected':''}" onclick="selectGoal('${g.fbKey}')">
+        <div class="choose-goal-emoji">${g.emoji||'🏦'}</div>
+        <div class="choose-goal-info">
+          <div class="choose-goal-name">${g.name}</div>
+          <div class="choose-goal-bar"><div class="choose-goal-fill" style="width:${pct}%;"></div></div>
+          <div class="choose-goal-meta">🪙 ${saved} / ${g.target} · ${pct}%</div>
+        </div>
+        ${isMine?'<div class="choose-goal-check">⭐</div>':'<div class="choose-goal-check empty">○</div>'}
+      </button>`;
+    }).join('');
+  }
+  document.getElementById('choose-goal-modal').classList.add('open');
+}
+
+function closeChooseGoalModal(){
+  document.getElementById('choose-goal-modal').classList.remove('open');
+}
+
+async function selectGoal(fbKey){
+  const s=window._currentStudent;
+  if(!s)return;
+  try {
+    await window._update(fbRef('students57/'+s.fbKey),{preferredGoal:fbKey});
+    window._currentStudent.preferredGoal=fbKey;
+    patchStudent(s.fbKey,{preferredGoal:fbKey});
+    renderClassGoalsHome();
+    closeChooseGoalModal();
+  } catch(err) {
+    alert('Kunne ikke lagre valget: '+(err.message||''));
+  }
+}
+
+// ── PILL-BRYTER: Sparekonto / Fond ─────────────────────────────────────────
+function switchSpareSeg(seg,btn){
+  document.querySelectorAll('.spare-seg-content').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.ss-pill').forEach(b=>b.classList.remove('active'));
+  const target=document.getElementById('spare-seg-'+seg);
+  if(target)target.classList.add('active');
+  if(btn)btn.classList.add('active');
 }
 async function distributeToGoals(amount){
   if(!amount||!window._classGoals?.length)return;
@@ -1310,13 +1459,6 @@ async function repayLoan(){
   await saveTx(s.fbKey,'expense','📋',`Lån nedbetalt (rente: ${interest}🪙)`,-total);
   transactions.unshift({type:'expense',icon:'📋',desc:`Lån nedbetalt (rente: ${interest}🪙)`,amount:-total,ts:Date.now()});
   refreshAllDisplays();renderTransactions();renderLoan();showSuccess('✅','Nedbetalt!',`-${total} 🪙`,`Rente betalt: ${interest}🪙`);
-}
-
-// ── CLASS GOALS ────────────────────────────────────────────────────────────
-function renderClassGoalsTab(){
-  const el=document.getElementById('class-goals-list');if(!el)return;
-  if(!window._classGoals?.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🏦</div><div style="font-weight:700">Ingen aktive sparemål</div><div style="font-size:.85rem">Læreren oppretter klassens sparemål</div></div>';return;}
-  el.innerHTML=window._classGoals.map(g=>{const pct=Math.min(100,Math.round((g.saved||0)/g.target*100));return`<div class="class-goal-card"><div class="cg-header"><div class="cg-emoji">${g.emoji||'🏦'}</div><div><div class="cg-name">${g.name}</div><div class="cg-target">Mål: 🪙 ${g.target}${g.desc?` · ${g.desc}`:''}</div></div></div><div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div><div class="prog-meta"><span>🪙 ${g.saved||0} spart</span><span>${pct}%</span><span>🪙 ${Math.max(0,g.target-(g.saved||0))} igjen</span></div></div>`;}).join('');
 }
 
 // ── JOBS ───────────────────────────────────────────────────────────────────
