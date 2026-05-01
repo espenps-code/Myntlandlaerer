@@ -100,6 +100,8 @@
     checkAndUpdateFund();
     // ── Automatisk ukentlig lønn (mandag) ──────────────────────────────
     checkAndPayWeeklySalary();
+    // ── Automatisk fredagslønn for faste jobber ────────────────────────
+    checkAndPayFridayJobSalaries();
     checkDailySavingsInterest();
   }
 
@@ -199,7 +201,91 @@
     } catch(e) { console.log('⚠️ Lønn feilet:', e.message); }
   }
 
-  
+  // ── Automatisk fredagslønn for faste jobber ────────────────────────────────
+  async function checkAndPayFridayJobSalaries() {
+    try {
+      const now = new Date();
+      if (now.getDay() !== 5) return; // kun fredag
+      if (now.getHours() < 8) return;
+
+      const yr  = now.getFullYear();
+      const mo  = String(now.getMonth() + 1).padStart(2, '0');
+      const dy  = String(now.getDate()).padStart(2, '0');
+      const today = `${yr}-${mo}-${dy}`;
+
+      const lastSnap = await get(ref(db, 'fridaySalaryLastPaid'));
+      if (lastSnap.val() === today) return;
+
+      const jobsSnap = await get(ref(db, 'jobs'));
+      if (!jobsSnap.val()) return;
+      const allJobs = Object.entries(jobsSnap.val()).map(([k,v])=>({...v,fbKey:k}));
+      const salaryJobs = allJobs.filter(j => j.type === 'salary' && j.active !== false);
+      if (!salaryJobs.length) { await set(ref(db, 'fridaySalaryLastPaid'), today); return; }
+
+      const studSnap = await get(ref(db, 'students57'));
+      if (!studSnap.val()) return;
+      const allStudents = Object.entries(studSnap.val()).map(([k,v])=>({...v,fbKey:k}));
+
+      const settSnap = await get(ref(db, 'settings'));
+      const sett = settSnap.val() || {};
+      const tax = (sett.taxRate || 20) / 100;
+
+      // Bygg studentKey -> [jobs] map for å oppdatere balanse én gang per elev
+      const balanceUpdates = {};
+      let totalTax = 0;
+      let payoutCount = 0;
+
+      for (const job of salaryJobs) {
+        const assigned = job.assigned ? Object.keys(job.assigned) : [];
+        if (!assigned.length) continue;
+        for (const sk of assigned) {
+          const s = allStudents.find(x => x.fbKey === sk);
+          if (!s) continue;
+          const gross = job.pay || 0;
+          if (!gross) continue;
+          const net = Math.floor(gross * (1 - tax));
+          const taxAmt = gross - net;
+          balanceUpdates[sk] = (balanceUpdates[sk] || (s.balance || 0)) + net;
+          await set(ref(db, 'transactions57/' + sk + '/' + Date.now() + '_' + job.fbKey), {
+            type:'income', icon: job.emoji || '💼',
+            desc:`Ukelønn: ${job.title} (netto etter ${Math.round(tax*100)}% skatt)`,
+            amount: net, ts: Date.now()
+          });
+          totalTax += taxAmt;
+          payoutCount++;
+        }
+      }
+
+      const updates = {};
+      Object.entries(balanceUpdates).forEach(([sk, newBal]) => {
+        updates['students57/' + sk + '/balance'] = newBal;
+      });
+      if (Object.keys(updates).length) await update(ref(db, '/'), updates);
+
+      // Skatt til klassens sparemål
+      if (totalTax > 0) {
+        const goalsSnap = await get(ref(db, 'classGoals'));
+        if (goalsSnap.val()) {
+          const goals = Object.entries(goalsSnap.val()).map(([k,v])=>({...v,fbKey:k})).filter(g=>!g.completed);
+          if (goals.length) {
+            const perGoal = Math.floor(totalTax / goals.length);
+            const gUpd = {};
+            goals.forEach(g => {
+              const ns = (g.saved||0) + perGoal;
+              gUpd['classGoals/' + g.fbKey + '/saved'] = ns;
+              if (ns >= g.target) gUpd['classGoals/' + g.fbKey + '/completed'] = true;
+            });
+            await update(ref(db, '/'), gUpd);
+          }
+        }
+      }
+
+      await set(ref(db, 'fridaySalaryLastPaid'), today);
+      console.log(`✅ Fredagslønn utbetalt: ${payoutCount} utbetalinger på tvers av ${salaryJobs.length} faste jobber`);
+    } catch(e) { console.log('⚠️ Fredagslønn feilet:', e.message); }
+  }
+
+
   // ── Daglig sparerente-sjekk (ikke bare mandager) ────────────────────────
   async function checkDailySavingsInterest() {
     try {
@@ -444,7 +530,7 @@
     <button class="active" onclick="showPage('elever')" id="nav-elever"><span class="nav-icon">👩‍🎓</span> Elever</button>
     <button onclick="showPage('grupper')" id="nav-grupper"><span class="nav-icon">👥</span> Grupper</button>
     <button onclick="showPage('saldo')" id="nav-saldo"><span class="nav-icon">💰</span> Saldo</button>
-    <button onclick="showPage('oppdrag')" id="nav-oppdrag"><span class="nav-icon">💼</span> Oppdrag</button>
+    <button onclick="showPage('oppdrag')" id="nav-oppdrag"><span class="nav-icon">💼</span> Jobber</button>
     <button onclick="showPage('butikk57')" id="nav-butikk57"><span class="nav-icon">🛒</span> Butikk</button>
     <button onclick="showPage('sparemaal')" id="nav-sparemaal"><span class="nav-icon">🏦</span> Sparemål</button>
     <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
@@ -653,29 +739,51 @@
   </div>
 </div>
 
-<!-- ═══════ OPPDRAG ═══════ -->
+<!-- ═══════ JOBBER ═══════ -->
 <div class="page" id="page-oppdrag">
-  <div class="page-title">💼 Oppdrag & jobber</div>
-  <div class="page-subtitle">Opprett oppdrag elevene kan ta og tjene mynter på</div>
+  <div class="page-title">💼 Jobber & oppdrag</div>
+  <div class="page-subtitle">Engangsoppdrag eller faste jobber med ukelønn (utbetales fredag)</div>
   <div class="grid-2">
     <div class="card">
-      <div class="card-title" id="job-form-title">➕ Nytt oppdrag</div>
+      <div class="card-title" id="job-form-title">➕ Ny jobb</div>
+
+      <!-- Type-velger -->
+      <div class="form-row">
+        <label>Type</label>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn btn-primary" id="job-type-task-btn" onclick="setJobType('task')" style="flex:1;">📌 Engangsoppdrag</button>
+          <button type="button" class="btn btn-ghost" id="job-type-salary-btn" onclick="setJobType('salary')" style="flex:1;">💰 Fast jobb (ukelønn)</button>
+        </div>
+      </div>
+
       <div class="form-row"><label>Emoji</label><input type="text" id="job-emoji" placeholder="🧹" maxlength="2"></div>
       <div class="form-row"><label>Tittel</label><input type="text" id="job-title" placeholder="f.eks. Rydde klasserommet"></div>
       <div class="form-row"><label>Beskrivelse</label><textarea id="job-desc" placeholder="Hva skal gjøres?"></textarea></div>
+
       <div class="form-grid">
-        <div class="form-row"><label>Betaling (mynter)</label><input type="number" id="job-pay" value="50" min="1"></div>
-        <div class="form-row"><label>Frist (valgfritt)</label><input type="text" id="job-deadline" placeholder="f.eks. Fredag"></div>
+        <div class="form-row">
+          <label id="job-pay-label">Betaling (mynter)</label>
+          <input type="number" id="job-pay" value="50" min="1">
+        </div>
+        <div class="form-row" id="job-deadline-row"><label>Frist (valgfritt)</label><input type="text" id="job-deadline" placeholder="f.eks. Fredag"></div>
       </div>
-      <div class="form-row"><label>Maks antall ganger</label><input type="number" id="job-max-uses" value="" min="1" placeholder="Ubegrenset"></div>
+
+      <div class="form-row" id="job-max-uses-row"><label>Maks antall ganger</label><input type="number" id="job-max-uses" value="" min="1" placeholder="Ubegrenset"></div>
+
+      <div class="form-row" id="job-salary-info-row" style="display:none;">
+        <div style="background:var(--teal-light);border-radius:10px;padding:.85rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;line-height:1.5;">
+          💡 Faste jobber utbetales hver fredag. Eleven kan søke i appen, eller du kan tildele direkte fra lista nedenfor. 20% skatt går til klassens sparemål.
+        </div>
+      </div>
+
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary" id="job-submit-btn" onclick="submitJob()">Opprett oppdrag</button>
+        <button class="btn btn-primary" id="job-submit-btn" onclick="submitJob()">Opprett jobb</button>
         <button class="btn btn-ghost" id="job-cancel-btn" onclick="cancelJobEdit()" style="display:none;">Avbryt</button>
       </div>
       <div id="job-alert" style="margin-top:1rem;"></div>
     </div>
     <div class="card">
-      <div class="card-title">✅ Godkjenn utførelse</div>
+      <div class="card-title">✅ Godkjenn engangsoppdrag</div>
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Alternativ til QR: godkjenn manuelt og betal ut.</p>
       <div class="form-row"><label>Velg elev</label><select id="job-approve-student"><option value="">– Velg elev –</option></select></div>
       <div class="form-row"><label>Velg oppdrag</label><select id="job-approve-job"><option value="">– Velg oppdrag –</option></select></div>
@@ -683,8 +791,16 @@
       <div id="job-approve-alert" style="margin-top:1rem;"></div>
     </div>
   </div>
+
+  <!-- Faste jobber -->
   <div class="card">
-    <div class="card-title">📋 Aktive oppdrag (med QR)</div>
+    <div class="card-title">💰 Faste jobber (ukelønn fredag)</div>
+    <div id="salary-jobs-list"><p style="color:var(--muted);font-size:.9rem;">Ingen faste jobber ennå.</p></div>
+  </div>
+
+  <!-- Engangsoppdrag -->
+  <div class="card">
+    <div class="card-title">📋 Engangsoppdrag (med QR)</div>
     <div id="jobs-list"><p style="color:var(--muted);font-size:.9rem;">Ingen oppdrag ennå.</p></div>
   </div>
 </div>
@@ -1175,7 +1291,7 @@ function showPage(page) {
   document.getElementById('nav-'  + page).classList.add('active');
   if (page === 'qrkoder')  { generateRewardQRCodes(); renderCustomRewards57(); }
   if (page === 'grupper')  renderGroupsPage();
-  if (page === 'oppdrag')  refreshJobSelects();
+  if (page === 'oppdrag')  { refreshJobSelects(); if (typeof setJobType === 'function') setJobType(window._currentJobType || 'task'); }
   if (page === 'butikk57') renderShop57List();
   if (page === 'laerere')  renderTeacherList();
   if (page === 'hendelser') renderHendelser();
@@ -1693,12 +1809,72 @@ function cancelJobEdit() {
   currentEditJobKey = null;
   ['job-title','job-emoji','job-desc','job-deadline'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('job-pay').value = '50';
-  document.getElementById('job-form-title').textContent  = '➕ Nytt oppdrag';
-  document.getElementById('job-submit-btn').textContent  = 'Opprett oppdrag';
+  const mu = document.getElementById('job-max-uses'); if (mu) mu.value = '';
+  document.getElementById('job-form-title').textContent  = '➕ Ny jobb';
+  document.getElementById('job-submit-btn').textContent  = 'Opprett jobb';
   document.getElementById('job-cancel-btn').style.display = 'none';
+  setJobType('task');
 }
 
-async function deleteJob(fbKey) { if (!confirm('Slett oppdrag?')) return; await window._remove(fbRef('jobs/' + fbKey)); }
+// Velger mellom engangsoppdrag og fast jobb i skjemaet
+window._currentJobType = 'task';
+function setJobType(type) {
+  window._currentJobType = type;
+  const taskBtn = document.getElementById('job-type-task-btn');
+  const salaryBtn = document.getElementById('job-type-salary-btn');
+  const maxRow = document.getElementById('job-max-uses-row');
+  const deadlineRow = document.getElementById('job-deadline-row');
+  const salaryInfo = document.getElementById('job-salary-info-row');
+  const payLabel = document.getElementById('job-pay-label');
+  const submitBtn = document.getElementById('job-submit-btn');
+  const formTitle = document.getElementById('job-form-title');
+  if (type === 'salary') {
+    taskBtn.className = 'btn btn-ghost'; salaryBtn.className = 'btn btn-primary';
+    if (maxRow) maxRow.style.display = 'none';
+    if (deadlineRow) deadlineRow.style.display = 'none';
+    if (salaryInfo) salaryInfo.style.display = 'block';
+    if (payLabel) payLabel.textContent = 'Ukelønn (mynter, brutto)';
+    if (!currentEditJobKey) {
+      if (submitBtn) submitBtn.textContent = 'Opprett fast jobb';
+      if (formTitle) formTitle.textContent = '➕ Ny fast jobb';
+    }
+  } else {
+    taskBtn.className = 'btn btn-primary'; salaryBtn.className = 'btn btn-ghost';
+    if (maxRow) maxRow.style.display = '';
+    if (deadlineRow) deadlineRow.style.display = '';
+    if (salaryInfo) salaryInfo.style.display = 'none';
+    if (payLabel) payLabel.textContent = 'Betaling (mynter)';
+    if (!currentEditJobKey) {
+      if (submitBtn) submitBtn.textContent = 'Opprett oppdrag';
+      if (formTitle) formTitle.textContent = '➕ Nytt engangsoppdrag';
+    }
+  }
+}
+
+async function deleteJob(fbKey) {
+  const j = (window._jobs||[]).find(x => x.fbKey === fbKey);
+  const label = j?.type === 'salary' ? 'fast jobb' : 'oppdrag';
+  if (!confirm('Slett ' + label + '?')) return;
+  await window._remove(fbRef('jobs/' + fbKey));
+}
+
+// Tildel/fjern elev til/fra fast jobb
+async function assignStudentToJob(jobKey, studentKey) {
+  if (!jobKey || !studentKey) return;
+  await window._update(fbRef('jobs/' + jobKey + '/assigned'), { [studentKey]: true });
+  // Fjern eventuell søknad
+  await window._remove(fbRef('jobs/' + jobKey + '/applicants/' + studentKey));
+}
+async function unassignStudentFromJob(jobKey, studentKey) {
+  if (!jobKey || !studentKey) return;
+  await window._remove(fbRef('jobs/' + jobKey + '/assigned/' + studentKey));
+}
+async function approveApplicant(jobKey, studentKey) {
+  await assignStudentToJob(jobKey, studentKey);
+}
+async function rejectApplicant(jobKey, studentKey) {
+  await window._remove(fbRef('jobs/' + jobKey + '/applicants/' + studentKey));
+}
 
 function showJobQR(fbKey) {
   const j = window._jobs.find(x => x.fbKey === fbKey); if (!j) return;
@@ -1771,21 +1947,102 @@ async function approveJob() {
 }
 
 function renderJobsList() {
-  const el = document.getElementById('jobs-list'); if (!el) return;
-  if (!window._jobs.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Ingen oppdrag.</p>'; refreshJobSelects(); return; }
-  el.innerHTML = window._jobs.map(j => `
-    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;">
-      <div style="width:48px;height:48px;border-radius:12px;background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">${j.emoji||'💼'}</div>
-      <div style="flex:1;">
-        <div style="font-weight:800;font-size:.95rem;">${j.title}</div>
-        <div style="font-size:.82rem;color:var(--muted);margin-top:2px;">${j.desc||''}${j.deadline?' · Frist: '+j.deadline:''}</div>
-        <div style="margin-top:4px;"><span class="badge badge-amber">Brutto 🪙 ${j.pay}</span> <span class="badge" style="background:var(--teal-light);color:var(--teal-dark);">Netto 🪙 ${Math.floor(j.pay*.8)}</span></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="showJobQR('${j.fbKey}')">⬛ QR</button>
-        <button class="btn btn-coral btn-sm"   onclick="deleteJob('${j.fbKey}')">🗑️</button>
-      </div>
-    </div>`).join('');
+  const taskEl = document.getElementById('jobs-list');
+  const salaryEl = document.getElementById('salary-jobs-list');
+  const allJobs = window._jobs || [];
+  const taskJobs = allJobs.filter(j => (j.type || 'task') !== 'salary');
+  const salaryJobs = allJobs.filter(j => j.type === 'salary');
+
+  // Engangsoppdrag (med QR)
+  if (taskEl) {
+    if (!taskJobs.length) {
+      taskEl.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Ingen engangsoppdrag.</p>';
+    } else {
+      taskEl.innerHTML = taskJobs.map(j => `
+        <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;">
+          <div style="width:48px;height:48px;border-radius:12px;background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">${j.emoji||'💼'}</div>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:.95rem;">${j.title}</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:2px;">${j.desc||''}${j.deadline?' · Frist: '+j.deadline:''}</div>
+            <div style="margin-top:4px;"><span class="badge badge-amber">Brutto 🪙 ${j.pay}</span> <span class="badge" style="background:var(--teal-light);color:var(--teal-dark);">Netto 🪙 ${Math.floor(j.pay*.8)}</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="showJobQR('${j.fbKey}')">⬛ QR</button>
+            <button class="btn btn-coral btn-sm"   onclick="deleteJob('${j.fbKey}')">🗑️</button>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  // Faste jobber (ukelønn fredag)
+  if (salaryEl) {
+    if (!salaryJobs.length) {
+      salaryEl.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Ingen faste jobber ennå.</p>';
+    } else {
+      salaryEl.innerHTML = salaryJobs.map(j => {
+        const assigned = j.assigned ? Object.keys(j.assigned) : [];
+        const applicants = j.applicants ? Object.keys(j.applicants) : [];
+        const tax = (window._settings?.taxRate || 20) / 100;
+        const net = Math.floor((j.pay||0) * (1 - tax));
+
+        const assignedHTML = assigned.length
+          ? assigned.map(sk => {
+              const s = window._students.find(x => x.fbKey === sk);
+              const name = s ? `${s.firstname} ${s.lastname.charAt(0)}.` : '(ukjent elev)';
+              return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--teal-light);padding:6px 10px;border-radius:8px;margin-bottom:4px;font-size:.85rem;">
+                <span style="font-weight:700;color:var(--teal-dark);">👤 ${name}</span>
+                <button class="btn btn-coral btn-sm" onclick="unassignStudentFromJob('${j.fbKey}','${sk}')" style="padding:3px 9px;font-size:.75rem;">Fjern</button>
+              </div>`;
+            }).join('')
+          : '<p style="font-size:.8rem;color:var(--muted);font-style:italic;margin:4px 0;">Ingen ansatte enn\u00e5</p>';
+
+        const applicantsHTML = applicants.length
+          ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+              <div style="font-size:.8rem;font-weight:800;color:var(--coral);margin-bottom:4px;">📨 Søknader (${applicants.length})</div>
+              ${applicants.map(sk => {
+                const s = window._students.find(x => x.fbKey === sk);
+                const name = s ? `${s.firstname} ${s.lastname.charAt(0)}.` : '(ukjent)';
+                return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--amber-light);padding:6px 10px;border-radius:8px;margin-bottom:4px;font-size:.85rem;">
+                  <span style="font-weight:700;">${name}</span>
+                  <div style="display:flex;gap:4px;">
+                    <button class="btn btn-primary btn-sm" onclick="approveApplicant('${j.fbKey}','${sk}')" style="padding:3px 9px;font-size:.75rem;">✅ Ansett</button>
+                    <button class="btn btn-ghost btn-sm" onclick="rejectApplicant('${j.fbKey}','${sk}')" style="padding:3px 9px;font-size:.75rem;">Avslå</button>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>`
+          : '';
+
+        return `
+        <div style="background:var(--white);border:1.5px solid var(--teal);border-radius:14px;padding:1.1rem;margin-bottom:10px;">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="width:48px;height:48px;border-radius:12px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">${j.emoji||'💼'}</div>
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:.95rem;">${j.title} <span class="badge" style="background:var(--teal);color:white;font-size:.65rem;">FAST · FREDAG</span></div>
+              <div style="font-size:.82rem;color:var(--muted);margin-top:2px;">${j.desc||''}</div>
+              <div style="margin-top:4px;"><span class="badge badge-amber">Ukelønn brutto 🪙 ${j.pay}</span> <span class="badge" style="background:var(--teal-light);color:var(--teal-dark);">Netto 🪙 ${net}</span></div>
+            </div>
+            <button class="btn btn-coral btn-sm" onclick="deleteJob('${j.fbKey}')">🗑️</button>
+          </div>
+          <div style="margin-top:10px;">
+            <div style="font-size:.8rem;font-weight:800;color:var(--teal-dark);margin-bottom:4px;">👥 Ansatte (${assigned.length})</div>
+            ${assignedHTML}
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <select id="assign-sel-${j.fbKey}" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--border);font-size:.85rem;">
+                <option value="">– Velg elev å ansette –</option>
+                ${window._students
+                  .filter(s => !assigned.includes(s.fbKey))
+                  .map(s => `<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('')}
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="assignStudentToJob('${j.fbKey}', document.getElementById('assign-sel-${j.fbKey}').value)">Ansett</button>
+            </div>
+            ${applicantsHTML}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
   refreshJobSelects();
 }
 
@@ -1794,7 +2051,8 @@ function refreshJobSelects() {
   const js = document.getElementById('job-approve-job');
   if (!ss || !js) return;
   ss.innerHTML = '<option value="">– Velg elev –</option>' + window._students.map(s => `<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('');
-  js.innerHTML = '<option value="">– Velg oppdrag –</option>' + window._jobs.map(j => `<option value="${j.fbKey}">${j.emoji||'💼'} ${j.title} (${j.pay}🪙)</option>`).join('');
+  const taskJobs = (window._jobs||[]).filter(j => (j.type || 'task') !== 'salary');
+  js.innerHTML = '<option value="">– Velg oppdrag –</option>' + taskJobs.map(j => `<option value="${j.fbKey}">${j.emoji||'💼'} ${j.title} (${j.pay}🪙)</option>`).join('');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -2165,9 +2423,8 @@ function renderClassGoalsPage() {
 }
 
 // ════════════════════════════════════════════════════════════
-// OPPDRAG – MAX USES
+// JOBBER – opprett/oppdater (engangsoppdrag + faste jobber)
 // ════════════════════════════════════════════════════════════
-// Override submitJob to include maxUses
 async function submitJob() {
   if (!ready()) return;
   const title    = document.getElementById('job-title').value.trim();
@@ -2176,19 +2433,35 @@ async function submitJob() {
   const pay      = parseInt(document.getElementById('job-pay').value) || 50;
   const deadline = document.getElementById('job-deadline').value.trim();
   const maxUses  = parseInt(document.getElementById('job-max-uses')?.value) || 0;
+  const type     = window._currentJobType || 'task';
   const alertEl  = document.getElementById('job-alert');
   if (!title) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn tittel.</div>'; return; }
-  const data = { title, emoji, desc, pay, deadline, active: true, created: Date.now(), usesLeft: maxUses || null, maxUses: maxUses || null };
-  if (currentEditJobKey) {
-    await window._update(fbRef('jobs/' + currentEditJobKey), { title, emoji, desc, pay, deadline, maxUses: maxUses||null });
-    alertEl.innerHTML = '<div class="alert alert-success">✅ Oppdatert!</div>';
-    cancelJobEdit();
+
+  if (type === 'salary') {
+    const data = { title, emoji, desc, pay, type: 'salary', active: true, created: Date.now() };
+    if (currentEditJobKey) {
+      await window._update(fbRef('jobs/' + currentEditJobKey), { title, emoji, desc, pay, type: 'salary' });
+      alertEl.innerHTML = '<div class="alert alert-success">✅ Fast jobb oppdatert!</div>';
+      cancelJobEdit();
+    } else {
+      await window._set(window._push(fbRef('jobs')), data);
+      alertEl.innerHTML = `<div class="alert alert-success">✅ Fast jobb «${title}» opprettet!</div>`;
+      ['job-title','job-emoji','job-desc'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('job-pay').value = '50';
+    }
   } else {
-    await window._set(window._push(fbRef('jobs')), data);
-    alertEl.innerHTML = `<div class="alert alert-success">✅ «${title}» opprettet!</div>`;
-    ['job-title','job-emoji','job-desc','job-deadline'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('job-pay').value = '50';
-    const mu = document.getElementById('job-max-uses'); if(mu) mu.value='';
+    const data = { title, emoji, desc, pay, deadline, type: 'task', active: true, created: Date.now(), usesLeft: maxUses || null, maxUses: maxUses || null };
+    if (currentEditJobKey) {
+      await window._update(fbRef('jobs/' + currentEditJobKey), { title, emoji, desc, pay, deadline, maxUses: maxUses||null });
+      alertEl.innerHTML = '<div class="alert alert-success">✅ Oppdatert!</div>';
+      cancelJobEdit();
+    } else {
+      await window._set(window._push(fbRef('jobs')), data);
+      alertEl.innerHTML = `<div class="alert alert-success">✅ «${title}» opprettet!</div>`;
+      ['job-title','job-emoji','job-desc','job-deadline'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('job-pay').value = '50';
+      const mu = document.getElementById('job-max-uses'); if(mu) mu.value='';
+    }
   }
   setTimeout(() => alertEl.innerHTML = '', 3000);
 }

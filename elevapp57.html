@@ -552,11 +552,24 @@
     <div id="loan-section"></div>
   </div>
 
-  <!-- OPPDRAG TAB -->
+  <!-- JOBBER TAB -->
   <div class="tab-content content" id="tab-oppdrag">
-    <div class="section-title">💼 Tilgjengelige oppdrag</div>
-    <div class="info-box">💡 Gjør oppdraget og be læreren godkjenne – eller scan QR-koden du får!</div>
-    <div id="jobs-list-el"><div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag nå</div></div></div>
+    <div class="section-title">💼 Jobber</div>
+    <input type="text" id="jobs-search-input" placeholder="🔍 Søk i jobber…" oninput="filterJobs(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:.85rem;">
+
+    <!-- Faste jobber -->
+    <div id="salary-jobs-section">
+      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">💰 Faste jobber (ukelønn fredag)</div>
+      <div class="info-box">💡 Søk på en jobb du vil ha. Læreren godkjenner. Du får ukelønn hver fredag (med skatt).</div>
+      <div id="salary-jobs-list-el"></div>
+    </div>
+
+    <!-- Engangsoppdrag -->
+    <div id="task-jobs-section" style="margin-top:1.25rem;">
+      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">📌 Engangsoppdrag</div>
+      <div class="info-box">💡 Gjør oppdraget og be læreren godkjenne – eller scan QR-koden du får!</div>
+      <div id="jobs-list-el"><div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag nå</div></div></div>
+    </div>
   </div>
 
 
@@ -595,7 +608,7 @@
     <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
     <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
     <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
-    <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Oppdrag</div></button>
+    <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Jobber</div></button>
   </div>
 </div>
 
@@ -1470,11 +1483,116 @@ async function repayLoan(){
 }
 
 // ── JOBS ───────────────────────────────────────────────────────────────────
-function renderJobs(){
-  const el=document.getElementById('jobs-list-el');if(!el)return;
-  if(!window._jobs?.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag tilgjengelig</div></div>';return;}
-  const tax=getTax();
-  el.innerHTML=window._jobs.map(j=>{const net=Math.floor(j.pay*(1-tax));return`<div class="job-card-el"><div class="job-emoji-el">${j.emoji||'💼'}</div><div><div class="job-title-el">${j.title}</div><div class="job-desc-el">${j.desc||''}${j.deadline?` · Frist: ${j.deadline}`:''}</div><div class="job-pay-el">Brutto 🪙 ${j.pay} · netto 🪙 ${net}</div></div></div>`;}).join('');
+window._jobsSearchQuery = '';
+
+function filterJobs(q) {
+  window._jobsSearchQuery = (q || '').toLowerCase().trim();
+  renderJobs();
+}
+
+function jobMatchesSearch(j) {
+  const q = window._jobsSearchQuery || '';
+  if (!q) return true;
+  const hay = ((j.title || '') + ' ' + (j.desc || '') + ' ' + (j.emoji || '')).toLowerCase();
+  return hay.includes(q);
+}
+
+async function applyForJob(jobKey) {
+  const s = window._currentStudent;
+  if (!s || !jobKey) return;
+  try {
+    await window._update(window._ref(window._db, 'jobs/' + jobKey + '/applicants'), { [s.fbKey]: true });
+    showSuccess('📨','Søknad sendt!','','Læreren må godkjenne søknaden din.');
+  } catch(e) {
+    showSuccess('⚠️','Noe gikk galt','','Prøv igjen senere.');
+  }
+}
+
+async function withdrawApplication(jobKey) {
+  const s = window._currentStudent;
+  if (!s || !jobKey) return;
+  if (!confirm('Trekke tilbake søknaden?')) return;
+  try {
+    await window._set(window._ref(window._db, 'jobs/' + jobKey + '/applicants/' + s.fbKey), null);
+  } catch(e) {}
+}
+
+function renderJobs() {
+  const taskEl = document.getElementById('jobs-list-el');
+  const salaryEl = document.getElementById('salary-jobs-list-el');
+  const all = window._jobs || [];
+  const tax = getTax();
+  const me = window._currentStudent;
+
+  const taskJobs = all.filter(j => (j.type || 'task') !== 'salary' && jobMatchesSearch(j));
+  const salaryJobs = all.filter(j => j.type === 'salary' && jobMatchesSearch(j));
+
+  // Engangsoppdrag
+  if (taskEl) {
+    if (!taskJobs.length) {
+      const noResults = window._jobsSearchQuery && all.some(j => (j.type||'task') !== 'salary');
+      taskEl.innerHTML = noResults
+        ? '<div class="empty-state"><div class="empty-icon">🔍</div><div style="font-weight:700">Ingen treff</div></div>'
+        : '<div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag nå</div></div>';
+    } else {
+      taskEl.innerHTML = taskJobs.map(j => {
+        const net = Math.floor((j.pay||0) * (1 - tax));
+        return `<div class="job-card-el">
+          <div class="job-emoji-el">${j.emoji||'💼'}</div>
+          <div style="flex:1;">
+            <div class="job-title-el">${j.title}</div>
+            <div class="job-desc-el">${j.desc||''}${j.deadline?` · Frist: ${j.deadline}`:''}</div>
+            <div class="job-pay-el">Brutto 🪙 ${j.pay} · netto 🪙 ${net}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Faste jobber
+  if (salaryEl) {
+    if (!salaryJobs.length) {
+      const hasAny = all.some(j => j.type === 'salary');
+      const noResults = window._jobsSearchQuery && hasAny;
+      salaryEl.innerHTML = noResults
+        ? '<div class="empty-state"><div class="empty-icon">🔍</div><div style="font-weight:700">Ingen treff</div></div>'
+        : (hasAny ? '' : '<div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen faste jobber ennå</div></div>');
+    } else {
+      salaryEl.innerHTML = salaryJobs.map(j => {
+        const net = Math.floor((j.pay||0) * (1 - tax));
+        const assigned = j.assigned || {};
+        const applicants = j.applicants || {};
+        const isAssigned = me && !!assigned[me.fbKey];
+        const hasApplied = me && !!applicants[me.fbKey];
+        const numEmployed = Object.keys(assigned).length;
+
+        let actionHTML = '';
+        if (isAssigned) {
+          actionHTML = `<div style="background:var(--green-light);border:1.5px solid var(--green);color:#14532d;padding:8px 12px;border-radius:10px;font-weight:800;font-size:.85rem;text-align:center;margin-top:8px;">✅ Du er ansatt – lønn hver fredag</div>`;
+        } else if (hasApplied) {
+          actionHTML = `<div style="display:flex;gap:6px;margin-top:8px;">
+            <div style="flex:1;background:var(--amber-light);border:1.5px solid #f0c060;color:#854F0B;padding:8px 12px;border-radius:10px;font-weight:800;font-size:.82rem;text-align:center;">⏳ Søknad sendt</div>
+            <button onclick="withdrawApplication('${j.fbKey}')" style="background:white;border:1.5px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;">Trekk</button>
+          </div>`;
+        } else {
+          actionHTML = `<button onclick="applyForJob('${j.fbKey}')" style="width:100%;background:var(--teal);border:none;color:white;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;margin-top:8px;">📨 Søk på jobben</button>`;
+        }
+
+        return `<div class="job-card-el" style="display:block;border-color:var(--teal);">
+          <div style="display:flex;gap:10px;">
+            <div class="job-emoji-el">${j.emoji||'💼'}</div>
+            <div style="flex:1;">
+              <div class="job-title-el">${j.title} <span style="background:var(--teal);color:white;font-size:.6rem;padding:2px 6px;border-radius:8px;font-weight:800;vertical-align:middle;">FAST</span></div>
+              <div class="job-desc-el">${j.desc||''}</div>
+              <div class="job-pay-el">Ukelønn 🪙 ${j.pay} · netto 🪙 ${net}</div>
+              <div style="font-size:.7rem;color:var(--muted);font-weight:700;margin-top:2px;">👥 ${numEmployed} ansatt${numEmployed===1?'':'e'}</div>
+            </div>
+          </div>
+          ${actionHTML}
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 // ── CAMERA / QR ────────────────────────────────────────────────────────────
