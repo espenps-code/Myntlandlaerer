@@ -52,6 +52,7 @@
         Object.assign(window._currentStudent, up);
         refreshAllDisplays();
         checkQuizStatus();
+        if(document.getElementById('tab-budsjett')?.classList.contains('active')) renderBudgetTab();
       }
     }
   });
@@ -660,9 +661,10 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="number" id="bud-est-input" min="0" max="9999" placeholder="0" style="flex:1;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);outline:none;">
           <span style="font-weight:800;color:var(--teal-dark);">🪙</span>
-          <button onclick="saveEstimatedIncome()" style="background:var(--teal);border:none;color:white;border-radius:10px;padding:10px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;">Lagre</button>
+          <button id="bud-est-save-btn" onclick="saveEstimatedIncome()" style="background:var(--teal);border:none;color:white;border-radius:10px;padding:10px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;">Lagre</button>
         </div>
-        <div style="font-size:.72rem;color:var(--muted);font-weight:700;margin-top:6px;">F.eks. forventet lommepenger, ekstra-oppdrag eller belønninger.</div>
+        <div id="bud-est-feedback" style="font-size:.75rem;font-weight:800;margin-top:6px;min-height:1em;"></div>
+        <div style="font-size:.72rem;color:var(--muted);font-weight:700;margin-top:2px;">Fra ekstra oppdrag, belønninger eller hendelser.</div>
       </div>
     </div>
 
@@ -1162,7 +1164,9 @@ async function renderBudgetTab() {
   // Estimert ekstra inntekt (lagret pr. elev)
   const estIn = +(me.estimatedIncome || 0);
   const estInputEl = document.getElementById('bud-est-input');
-  if (estInputEl && document.activeElement !== estInputEl) estInputEl.value = estIn || '';
+  if (estInputEl && document.activeElement !== estInputEl) {
+    estInputEl.value = estIn > 0 ? estIn : '';
+  }
 
   // ── Estimat for uka ────────────────────────────────────────────────
   const totalIn = totalSalaryNet + estIn;
@@ -1230,18 +1234,36 @@ function renderBudgetPeriod() {
 
 async function saveEstimatedIncome() {
   const s = window._currentStudent;
-  if (!s) return;
-  const v = parseInt(document.getElementById('bud-est-input').value) || 0;
-  if (v < 0 || v > 9999) {
-    alert('Beløp må være mellom 0 og 9999.');
+  const fbEl = document.getElementById('bud-est-feedback');
+  const btn  = document.getElementById('bud-est-save-btn');
+  const inp  = document.getElementById('bud-est-input');
+  const showMsg = (txt, color) => { if (fbEl) { fbEl.textContent = txt; fbEl.style.color = color; } };
+
+  if (!s) { showMsg('⚠️ Ikke innlogget', '#dc2626'); return; }
+  if (!window._update) { showMsg('⚠️ Forbindelse ikke klar – prøv igjen', '#dc2626'); return; }
+
+  const raw = inp?.value;
+  // Tom = 0 (lov å nullstille)
+  const v = raw === '' || raw == null ? 0 : parseInt(raw);
+  if (isNaN(v) || v < 0 || v > 9999) {
+    showMsg('⚠️ Beløp må være mellom 0 og 9999', '#dc2626');
     return;
   }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Lagrer…'; }
+  showMsg('⏳ Lagrer…', 'var(--muted)');
+
   try {
-    await window._update(fbRef('students57/'+s.fbKey), {estimatedIncome: v});
-    patchStudent(s.fbKey, {estimatedIncome: v});
+    await window._update(fbRef('students57/' + s.fbKey), { estimatedIncome: v });
+    patchStudent(s.fbKey, { estimatedIncome: v });
+    showMsg('✅ Lagret!', '#15803d');
+    // Oppdater estimat-tallene umiddelbart
     renderBudgetTab();
+    setTimeout(() => { if (fbEl) fbEl.textContent = ''; }, 2200);
   } catch(e) {
-    alert('Kunne ikke lagre: ' + e.message);
+    showMsg('⚠️ Kunne ikke lagre: ' + (e.message || e), '#dc2626');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Lagre'; }
   }
 }
 
