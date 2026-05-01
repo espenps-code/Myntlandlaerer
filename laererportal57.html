@@ -55,6 +55,7 @@
         window._students = all.filter(s => s.class === window._currentTeacher?.class);
       }
       renderStudentTable(); renderSaldoTable(); updateStats();
+      if (document.getElementById('page-merker')?.classList.contains('active')) renderMerkerPage();
     });
 
     onValue(ref(db, 'groups'), snap => {
@@ -101,6 +102,14 @@
       window._budgetSettings = snap.val() || { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50, wedEventsEnabled:true };
       if (document.getElementById('page-budsjett')?.classList.contains('active')) {
         renderBudgetPage();
+      }
+    });
+
+    // ── Innstillinger (inkl. merkeparametere) ───────────────────────────
+    onValue(ref(db, 'settings'), snap => {
+      window._settings = snap.val() || {};
+      if (document.getElementById('page-merker')?.classList.contains('active')) {
+        loadBadgeParamsToForm();
       }
     });
 
@@ -693,6 +702,7 @@
     <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
     <button onclick="showPage('hendelser')" id="nav-hendelser"><span class="nav-icon">🎲</span> Hendelser</button>
     <button onclick="showPage('budsjett')" id="nav-budsjett"><span class="nav-icon">📊</span> Budsjett</button>
+    <button onclick="showPage('merker');renderMerkerPage()" id="nav-merker"><span class="nav-icon">🏅</span> Merker</button>
     <button onclick="showPage('laerere')" id="nav-laerere" style="display:none"><span class="nav-icon">⚙️</span> Lærere</button>
   </nav>
   <div class="header-right">
@@ -1202,6 +1212,98 @@
     <div id="bud-salary-jobs-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;">
       <div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen faste jobber.</div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════ MERKER ═══════ -->
+<div class="page" id="page-merker">
+  <div class="page-title">🏅 Merker</div>
+  <div class="page-subtitle">Oversikt over elevenes merker – rediger krav og reset ved skolestart</div>
+
+  <!-- Merkeparametere -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">⚙️ Merkekrav og bonuser</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Endre krav for hvert merke og bonusbeløp. Klikk «Lagre» for å oppdatere.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1rem;">
+      <!-- Quizmester -->
+      <div style="background:var(--purple-light);border-radius:12px;padding:1rem;border:1.5px solid #c4b5fd;">
+        <div style="font-weight:800;color:#4c1d95;margin-bottom:.75rem;">🧠 Quizmester – riktige svar totalt</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥉 Bronse</label><input type="number" id="bp-quizBronse" min="1" style="width:100px;"> svar</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥈 Sølv</label><input type="number" id="bp-quizSolv" min="1" style="width:100px;"> svar</div>
+        <div class="form-row"><label style="width:70px;">🥇 Gull</label><input type="number" id="bp-quizGull" min="1" style="width:100px;"> svar</div>
+      </div>
+      <!-- Sparemester -->
+      <div style="background:#f0fdf4;border-radius:12px;padding:1rem;border:1.5px solid #86efac;">
+        <div style="font-weight:800;color:#14532d;margin-bottom:.75rem;">💰 Sparemester – renter + fondsgevinst 🪙</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥉 Bronse</label><input type="number" id="bp-spareBronse" min="1" style="width:100px;"> 🪙</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥈 Sølv</label><input type="number" id="bp-spareSolv" min="1" style="width:100px;"> 🪙</div>
+        <div class="form-row"><label style="width:70px;">🥇 Gull</label><input type="number" id="bp-spareGull" min="1" style="width:100px;"> 🪙</div>
+      </div>
+      <!-- Skattemester -->
+      <div style="background:var(--amber-light);border-radius:12px;padding:1rem;border:1.5px solid #fcd34d;">
+        <div style="font-weight:800;color:#854F0B;margin-bottom:.75rem;">🏛️ Skattemester – bidratt i skatt 🪙</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥉 Bronse</label><input type="number" id="bp-skattBronse" min="1" style="width:100px;"> 🪙</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥈 Sølv</label><input type="number" id="bp-skattSolv" min="1" style="width:100px;"> 🪙</div>
+        <div class="form-row"><label style="width:70px;">🥇 Gull</label><input type="number" id="bp-skattGull" min="1" style="width:100px;"> 🪙</div>
+      </div>
+    </div>
+    <!-- Bonuser -->
+    <div style="background:var(--bg);border-radius:12px;padding:1rem;border:1.5px solid var(--border);margin-bottom:1rem;">
+      <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.75rem;">🎁 Bonusmynter per merketype</div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <div class="form-row"><label>🥉 Bronse-bonus</label><input type="number" id="bp-bonusBronse" min="0" style="width:100px;"> 🪙</div>
+        <div class="form-row"><label>🥈 Sølv-bonus</label><input type="number" id="bp-bonusSolv" min="0" style="width:100px;"> 🪙</div>
+        <div class="form-row"><label>🥇 Gull-bonus</label><input type="number" id="bp-bonusGull" min="0" style="width:100px;"> 🪙</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="saveBadgeParams()">💾 Lagre merkeparametere</button>
+      <div id="bp-save-alert" style="font-size:.85rem;font-weight:800;color:var(--teal-dark);"></div>
+    </div>
+  </div>
+
+  <!-- Reset ved skolestart -->
+  <div class="card" style="margin-bottom:1.5rem;border:2px solid var(--coral);background:var(--coral-light);">
+    <div class="card-title" style="color:var(--coral);">🔄 Reset merker ved skolestart</div>
+    <p style="font-size:.85rem;color:#7f1d1d;margin-bottom:1rem;">Sletter alle oppnådde merker og nullstiller fremgangstellere (quizriktige, spareinntekter, skattebidraget) for alle elever. Utfør kun ved nytt skoleår!</p>
+    <div class="form-row" style="margin-bottom:.75rem;">
+      <label>Velg klasse (tomt = alle)</label>
+      <select id="badge-reset-class">
+        <option value="">Alle klasser</option>
+        <option value="5. klasse">5. klasse</option>
+        <option value="6. klasse">6. klasse</option>
+        <option value="7. klasse">7. klasse</option>
+      </select>
+    </div>
+    <button class="btn btn-coral" onclick="confirmBadgeReset()">🔄 Reset alle merker</button>
+    <div id="badge-reset-alert" style="margin-top:.75rem;"></div>
+  </div>
+
+  <!-- Elevtabell -->
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>📋 Elevenes merkestatus</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select onchange="renderMerkerPage()" id="merker-class-filter">
+          <option value="">Alle klasser</option>
+          <option value="5. klasse">5. klasse</option>
+          <option value="6. klasse">6. klasse</option>
+          <option value="7. klasse">7. klasse</option>
+        </select>
+      </div>
+    </div>
+    <table id="merker-table">
+      <thead><tr>
+        <th>Elev</th><th>Klasse</th>
+        <th>🧠 Quiz totalt</th>
+        <th>🧠 Quizmester</th>
+        <th>💰 Spareinntekt</th>
+        <th>💰 Sparemester</th>
+        <th>🏛️ Skatt bidratt</th>
+        <th>🏛️ Skattemester</th>
+      </tr></thead>
+      <tbody id="merker-table-body"></tbody>
+    </table>
   </div>
 </div>
 
@@ -3273,6 +3375,132 @@ async function runWednesdayEventsNow() {
   } catch(e) {
     alert('⚠️ Feilet: ' + e.message);
   }
+}
+
+// ════════════════════════════════════════════════════════════
+// MERKER
+// ════════════════════════════════════════════════════════════
+
+const DEFAULT_BADGE_PARAMS = {
+  quizBronse: 25, quizSolv: 50, quizGull: 75,
+  spareBronse: 100, spareSolv: 1000, spareGull: 10000,
+  skattBronse: 1000, skattSolv: 5000, skattGull: 10000,
+  bonusBronse: 500, bonusSolv: 2500, bonusGull: 5000
+};
+
+function loadBadgeParamsToForm() {
+  const bp = window._settings?.badgeParams || DEFAULT_BADGE_PARAMS;
+  const fields = ['quizBronse','quizSolv','quizGull','spareBronse','spareSolv','spareGull','skattBronse','skattSolv','skattGull','bonusBronse','bonusSolv','bonusGull'];
+  fields.forEach(f => {
+    const el = document.getElementById('bp-' + f);
+    if (el) el.value = bp[f] !== undefined ? bp[f] : DEFAULT_BADGE_PARAMS[f];
+  });
+}
+
+async function saveBadgeParams() {
+  const alertEl = document.getElementById('bp-save-alert');
+  const fields = ['quizBronse','quizSolv','quizGull','spareBronse','spareSolv','spareGull','skattBronse','skattSolv','skattGull','bonusBronse','bonusSolv','bonusGull'];
+  const bp = {};
+  for (const f of fields) {
+    const v = parseInt(document.getElementById('bp-' + f)?.value);
+    if (isNaN(v) || v < 0) { alertEl.textContent = '⚠️ Alle felter må være positive tall'; alertEl.style.color='var(--coral)'; return; }
+    bp[f] = v;
+  }
+  try {
+    await window._update(fbRef('settings'), { badgeParams: bp });
+    if (!window._settings) window._settings = {};
+    window._settings.badgeParams = bp;
+    alertEl.textContent = '✅ Lagret!';
+    alertEl.style.color = 'var(--teal-dark)';
+    setTimeout(() => alertEl.textContent = '', 2500);
+    renderMerkerPage();
+  } catch(e) {
+    alertEl.textContent = '⚠️ Feilet: ' + e.message;
+    alertEl.style.color = 'var(--coral)';
+  }
+}
+
+async function confirmBadgeReset() {
+  const cls = document.getElementById('badge-reset-class').value;
+  const alertEl = document.getElementById('badge-reset-alert');
+  const target = cls ? `klasse ${cls}` : 'alle elever';
+  if (!confirm(`⚠️ Vil du virkelig slette ALLE merker og nullstille fremgang for ${target}? Dette kan ikke angres!`)) return;
+
+  try {
+    const students = window._students.filter(s => !cls || s.class === cls);
+    const updates = {};
+    for (const s of students) {
+      updates['students57/' + s.fbKey + '/badges'] = null;
+      updates['students57/' + s.fbKey + '/quizCorrectTotal'] = 0;
+      updates['students57/' + s.fbKey + '/badgeSavingsEarned'] = 0;
+      updates['students57/' + s.fbKey + '/badgeTaxContributed'] = 0;
+    }
+    await window._update(fbRef('/'), updates);
+    alertEl.innerHTML = `<div class="alert alert-success">✅ Merker nullstilt for ${students.length} elever!</div>`;
+    setTimeout(() => alertEl.innerHTML = '', 3500);
+    renderMerkerPage();
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠️ Feilet: ${e.message}</div>`;
+  }
+}
+
+function badgeLevelBadge(earned, level) {
+  const colors = { bronse: '#cd7f32', sølv: '#9ea7aa', gull: '#EF9F27' };
+  const labels = { bronse: '🥉', sølv: '🥈', gull: '🥇' };
+  if (earned) return `<span title="Oppnådd ${level}" style="font-size:1.1rem;">${labels[level]}</span>`;
+  return `<span title="Ikke oppnådd ${level}" style="opacity:.25;font-size:1.1rem;">${labels[level]}</span>`;
+}
+
+function renderMerkerPage() {
+  loadBadgeParamsToForm();
+  const tbody = document.getElementById('merker-table-body'); if (!tbody) return;
+  const cls = document.getElementById('merker-class-filter')?.value || '';
+  const bp = window._settings?.badgeParams || DEFAULT_BADGE_PARAMS;
+  const students = window._students.filter(s => !cls || s.class === cls);
+
+  if (!students.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = students.map(s => {
+    const badges = s.badges || {};
+    const quiz = s.quizCorrectTotal || 0;
+    const spare = s.badgeSavingsEarned || 0;
+    const skatt = s.badgeTaxContributed || 0;
+
+    const quizLevels = badgeLevelBadge(!!badges.quiz_bronse,'bronse') + badgeLevelBadge(!!badges.quiz_sølv,'sølv') + badgeLevelBadge(!!badges.quiz_gull,'gull');
+    const spareLevels = badgeLevelBadge(!!badges.spare_bronse,'bronse') + badgeLevelBadge(!!badges.spare_sølv,'sølv') + badgeLevelBadge(!!badges.spare_gull,'gull');
+    const skattLevels = badgeLevelBadge(!!badges.skatt_bronse,'bronse') + badgeLevelBadge(!!badges.skatt_sølv,'sølv') + badgeLevelBadge(!!badges.skatt_gull,'gull');
+
+    const quizPct = Math.min(100,Math.round(quiz/bp.quizGull*100));
+    const sparePct = Math.min(100,Math.round(spare/bp.spareGull*100));
+    const skattPct = Math.min(100,Math.round(skatt/bp.skattGull*100));
+
+    const miniBar = (pct, color) => `<div style="height:4px;background:#e5e7eb;border-radius:4px;margin-top:3px;overflow:hidden;width:80px;display:inline-block;"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px;"></div></div>`;
+
+    return `<tr>
+      <td>
+        <div style="font-weight:800;font-size:.88rem;">${s.firstname} ${s.lastname}</div>
+      </td>
+      <td><span class="class-badge">${s.class}</span></td>
+      <td>
+        <div style="font-weight:800;">${quiz}</div>
+        ${miniBar(quizPct, '#7c3aed')}
+      </td>
+      <td>${quizLevels}</td>
+      <td>
+        <div style="font-weight:800;">🪙 ${spare}</div>
+        ${miniBar(sparePct, '#16a34a')}
+      </td>
+      <td>${spareLevels}</td>
+      <td>
+        <div style="font-weight:800;">🪙 ${skatt}</div>
+        ${miniBar(skattPct, '#EF9F27')}
+      </td>
+      <td>${skattLevels}</td>
+    </tr>`;
+  }).join('');
 }
 
 </script>

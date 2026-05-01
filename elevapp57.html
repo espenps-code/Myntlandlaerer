@@ -250,8 +250,31 @@
   .bud-row-amt.income{color:#15803d;}
   .bud-row-amt.expense{color:#dc2626;}
 
-  /* FOND */
-  .fond-card{border-radius:14px;padding:1rem;margin-bottom:.85rem;position:relative;overflow:hidden;}
+  /* MERKER */
+  .merke-card{background:white;border-radius:16px;border:1.5px solid var(--border);padding:1rem 1.1rem;margin-bottom:.85rem;overflow:hidden;position:relative;}
+  .merke-card-header{display:flex;align-items:center;gap:12px;margin-bottom:.75rem;}
+  .merke-icon{font-size:2rem;flex-shrink:0;}
+  .merke-name{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal-dark);}
+  .merke-desc{font-size:.75rem;color:var(--muted);font-weight:700;margin-top:1px;}
+  .merke-levels{display:flex;flex-direction:column;gap:.5rem;}
+  .merke-level-row{display:flex;align-items:center;gap:10px;padding:.6rem .8rem;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);}
+  .merke-level-row.earned{border-color:var(--amber);background:linear-gradient(135deg,#fffbea,#fff8e0);}
+  .merke-medal{font-size:1.4rem;flex-shrink:0;}
+  .merke-level-info{flex:1;}
+  .merke-level-name{font-weight:800;font-size:.85rem;color:var(--teal-dark);}
+  .merke-level-req{font-size:.73rem;color:var(--muted);font-weight:700;margin-top:1px;}
+  .merke-prog-wrap{height:6px;background:var(--border);border-radius:20px;margin-top:4px;overflow:hidden;}
+  .merke-prog-fill{height:100%;border-radius:20px;transition:width .6s;}
+  .merke-prog-fill.bronse{background:linear-gradient(90deg,#cd7f32,#e8a054);}
+  .merke-prog-fill.sølv{background:linear-gradient(90deg,#9ea7aa,#c8d0d4);}
+  .merke-prog-fill.gull{background:linear-gradient(90deg,#EF9F27,#FFD700);}
+  .merke-bonus{font-family:'Fredoka One',cursive;font-size:.85rem;color:var(--amber);flex-shrink:0;}
+  .merke-earned-badge{background:linear-gradient(135deg,var(--amber),#FFD700);color:var(--teal-dark);font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:10px;flex-shrink:0;letter-spacing:.3px;}
+  .merke-score-bar{display:flex;align-items:center;gap:8px;margin-bottom:.4rem;}
+  .merke-score-label{font-size:.72rem;font-weight:800;color:var(--muted);}
+  .merke-score-val{font-family:'Fredoka One',cursive;font-size:.95rem;color:var(--teal-dark);}
+
+  /* MERKER END */
   .fond-card.low{background:linear-gradient(135deg,#1e3a5f,#2563eb);}
   .fond-card.high{background:linear-gradient(135deg,#4c1d95,#7c3aed);}
   .fond-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);}
@@ -695,12 +718,19 @@
     </div>
   </div>
 
+  <!-- MERKER TAB -->
+  <div class="tab-content content" id="tab-merker">
+    <div class="section-title">🏅 Mine merker</div>
+    <div class="info-box" id="merker-info-box">🎯 Samle merker ved å fullføre mål i Myntland! Hvert merke gir mynter som bonus.</div>
+    <div id="merker-list"></div>
+  </div>
+
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
     <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
     <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
     <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Jobber</div></button>
-    <button class="nav-item"        onclick="switchTab('budsjett',this);renderBudgetTab()"><div class="nav-icon">📊</div><div class="nav-label">Budsjett</div></button>
+    <button class="nav-item"        onclick="switchTab('merker',this);renderMerker()"><div class="nav-icon">🏅</div><div class="nav-label">Merker</div></button>
   </div>
 </div>
 
@@ -1377,8 +1407,15 @@ async function doTransfer(type, amt) {
     patchStudent(fbKey, upd);
     await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_lw.toFixed(2)} andeler lav fond (${taxAmt_lw}🪙 skatt)`,net_lw);
     transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_lw.toFixed(2)} andeler lav fond`,amount:net_lw,ts:Date.now()});
+    // Track realized gain for Sparemester badge
+    if (gain_lw > 0) {
+      const newSpare = (window._currentStudent?.badgeSavingsEarned||0) + gain_lw;
+      await window._update(fbRef('students57/'+fbKey), {badgeSavingsEarned: newSpare});
+      patchStudent(fbKey, {badgeSavingsEarned: newSpare});
+    }
     refreshAllDisplays(); renderTransactions(); renderFond();
     showSuccess('📊','Solgt!',`+${net_lw} 🪙`,`Solgte ${unitsSold_lw.toFixed(2)} andeler · Fondskatt: ${taxAmt_lw}🪙`);
+    await checkAndAwardBadges(window._currentStudent);
 
   } else if (type === 'bruk-til-fond-high') {
     if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
@@ -1420,8 +1457,15 @@ async function doTransfer(type, amt) {
     patchStudent(fbKey, upd);
     await saveTx(fbKey,'income','📊',`Solgte ${unitsSold_hw.toFixed(2)} andeler høy fond (${taxAmt_hw}🪙 skatt)`,net_hw);
     transactions.unshift({type:'income',icon:'📊',desc:`Solgte ${unitsSold_hw.toFixed(2)} andeler høy fond`,amount:net_hw,ts:Date.now()});
+    // Track realized gain for Sparemester badge
+    if (gain_hw > 0) {
+      const newSpare = (window._currentStudent?.badgeSavingsEarned||0) + gain_hw;
+      await window._update(fbRef('students57/'+fbKey), {badgeSavingsEarned: newSpare});
+      patchStudent(fbKey, {badgeSavingsEarned: newSpare});
+    }
     refreshAllDisplays(); renderTransactions(); renderFond();
     showSuccess('📊','Solgt!',`+${net_hw} 🪙`,`Solgte ${unitsSold_hw.toFixed(2)} andeler · Fondskatt: ${taxAmt_hw}🪙`);
+    await checkAndAwardBadges(window._currentStudent);
   }
 }
 
@@ -1998,25 +2042,29 @@ async function doReward(amount,desc){
   const s=window._currentStudent;if(!s)return;
   const tax=getTax();const taxAmt=Math.floor(amount*tax);const net=amount-taxAmt;
   const newBal=(s.balance||0)+net;
-  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
-  patchStudent(s.fbKey,{balance:newBal});
+  const newTaxTotal=(s.badgeTaxContributed||0)+taxAmt;
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,badgeTaxContributed:newTaxTotal});
+  patchStudent(s.fbKey,{balance:newBal,badgeTaxContributed:newTaxTotal});
   await distributeToGoals(taxAmt);
   const tx={type:'income',icon:'⭐',desc:desc||`Belønning skannet (${taxAmt}🪙 til sparemål)`,amount:net,ts:Date.now()};
   await saveTx(s.fbKey,'income','⭐',tx.desc,net);
   transactions.unshift(tx);refreshAllDisplays();renderTransactions();
   showSuccess('🎉','Belønning!',`+${net} 🪙`,`${taxAmt}🪙 til klassens sparemål`);
+  await checkAndAwardBadges(window._currentStudent);
 }
 async function doJobReward(grossPay,title){
   const s=window._currentStudent;if(!s)return;
   const tax=getTax();const taxAmt=Math.floor(grossPay*tax);const net=grossPay-taxAmt;
   const newBal=(s.balance||0)+net;
-  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal});
-  patchStudent(s.fbKey,{balance:newBal});
+  const newTaxTotal=(s.badgeTaxContributed||0)+taxAmt;
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,badgeTaxContributed:newTaxTotal});
+  patchStudent(s.fbKey,{balance:newBal,badgeTaxContributed:newTaxTotal});
   await distributeToGoals(taxAmt);
   const tx={type:'income',icon:'💼',desc:`Oppdrag: ${title||'Fullført'} (netto etter skatt)`,amount:net,ts:Date.now()};
   await saveTx(s.fbKey,'income','💼',tx.desc,net);
   transactions.unshift(tx);refreshAllDisplays();renderTransactions();
   showSuccess('💼','Oppdrag fullført!',`+${net} 🪙`,`${taxAmt}🪙 til klassens sparemål`);
+  await checkAndAwardBadges(window._currentStudent);
 }
 
 
@@ -2275,7 +2323,8 @@ function checkAndResetQuiz(s) {
       var interest = Math.floor(savings * interestRate);
       if (interest > 0) {
         upd['students57/' + s.fbKey + '/savings'] = savings + interest;
-        patchStudent(s.fbKey, { savings: savings + interest, withdrawalsThisWeek: 0 });
+        upd['students57/' + s.fbKey + '/badgeSavingsEarned'] = (s.badgeSavingsEarned || 0) + interest;
+        patchStudent(s.fbKey, { savings: savings + interest, withdrawalsThisWeek: 0, badgeSavingsEarned: (s.badgeSavingsEarned || 0) + interest });
         // Logg utbetalt rente som egen transaksjon (vises i sparehistorikken)
         var rentePct = Math.round(interestRate * 100);
         var renteDesc = 'Sparerente (' + rentePct + '%)';
@@ -2439,6 +2488,153 @@ async function confirmPurchase() {
   _pendingPurchase = null; _buyPin = '';
 }
 
+// ── MERKER (BADGES) ────────────────────────────────────────────────────────
+// Badge parameters loaded from settings/badgeParams (teacher-editable)
+function getBadgeParams() {
+  return window._settings?.badgeParams || {
+    quizBronse: 25, quizSolv: 50, quizGull: 75,
+    spareBronse: 100, spareSolv: 1000, spareGull: 10000,
+    skattBronse: 1000, skattSolv: 5000, skattGull: 10000,
+    bonusBronse: 500, bonusSolv: 2500, bonusGull: 5000
+  };
+}
+
+function getMedalLabel(type) {
+  if (type === 'bronse') return {emoji: '🥉', name: 'Bronse', cls: 'bronse'};
+  if (type === 'sølv')   return {emoji: '🥈', name: 'Sølv',   cls: 'sølv'};
+  if (type === 'gull')   return {emoji: '🥇', name: 'Gull',   cls: 'gull'};
+}
+
+function getBadgeStatus(s) {
+  const bp = getBadgeParams();
+  const badges = s?.badges || {};
+  // Current progress values
+  const quizTotal = s?.quizCorrectTotal || 0;
+  const spareTotal = s?.badgeSavingsEarned || 0;
+  const skattTotal = s?.badgeTaxContributed || 0;
+
+  return {
+    quizTotal, spareTotal, skattTotal,
+    quiz: {
+      bronse: { earned: !!badges.quiz_bronse, req: bp.quizBronse, progress: quizTotal },
+      sølv:   { earned: !!badges.quiz_sølv,   req: bp.quizSolv,   progress: quizTotal },
+      gull:   { earned: !!badges.quiz_gull,   req: bp.quizGull,   progress: quizTotal },
+    },
+    spare: {
+      bronse: { earned: !!badges.spare_bronse, req: bp.spareBronse, progress: spareTotal },
+      sølv:   { earned: !!badges.spare_sølv,   req: bp.spareSolv,   progress: spareTotal },
+      gull:   { earned: !!badges.spare_gull,   req: bp.spareGull,   progress: spareTotal },
+    },
+    skatt: {
+      bronse: { earned: !!badges.skatt_bronse, req: bp.skattBronse, progress: skattTotal },
+      sølv:   { earned: !!badges.skatt_sølv,   req: bp.skattSolv,   progress: skattTotal },
+      gull:   { earned: !!badges.skatt_gull,   req: bp.skattGull,   progress: skattTotal },
+    }
+  };
+}
+
+function renderMerker() {
+  const s = window._currentStudent; if (!s) return;
+  const el = document.getElementById('merker-list'); if (!el) return;
+  const bs = getBadgeStatus(s);
+  const bp = getBadgeParams();
+
+  const makeLevelRow = (level, data, category) => {
+    const m = getMedalLabel(level);
+    const pct = Math.min(100, Math.round(data.progress / data.req * 100));
+    const earned = data.earned;
+    const bonusKey = `bonus${level.charAt(0).toUpperCase()+level.slice(1)}`;
+    const bonus = bp[bonusKey] || 0;
+    return `<div class="merke-level-row${earned?' earned':''}">
+      <div class="merke-medal">${m.emoji}</div>
+      <div class="merke-level-info">
+        <div class="merke-level-name">${m.name}</div>
+        <div class="merke-level-req">${data.progress} / ${data.req}</div>
+        ${!earned ? `<div class="merke-prog-wrap"><div class="merke-prog-fill ${m.cls}" style="width:${pct}%"></div></div>` : ''}
+      </div>
+      ${earned
+        ? `<div class="merke-earned-badge">✅ Oppnådd</div>`
+        : `<div class="merke-bonus">+${bonus}🪙</div>`}
+    </div>`;
+  };
+
+  const cards = [
+    {
+      icon: '🧠', name: 'Quizmester',
+      desc: `Totalt riktige svar i økonomiquizen: ${bs.quizTotal}`,
+      levels: ['bronse','sølv','gull'].map(l => makeLevelRow(l, bs.quiz[l], 'quiz'))
+    },
+    {
+      icon: '💰', name: 'Sparemester',
+      desc: `Totalt opptjent fra renter og fondsgevinst: ${bs.spareTotal} 🪙`,
+      levels: ['bronse','sølv','gull'].map(l => makeLevelRow(l, bs.spare[l], 'spare'))
+    },
+    {
+      icon: '🏛️', name: 'Skattemester',
+      desc: `Totalt bidratt i skatt: ${bs.skattTotal} 🪙`,
+      levels: ['bronse','sølv','gull'].map(l => makeLevelRow(l, bs.skatt[l], 'skatt'))
+    }
+  ];
+
+  el.innerHTML = cards.map(c => `
+    <div class="merke-card">
+      <div class="merke-card-header">
+        <div class="merke-icon">${c.icon}</div>
+        <div>
+          <div class="merke-name">${c.name}</div>
+          <div class="merke-desc">${c.desc}</div>
+        </div>
+      </div>
+      <div class="merke-levels">${c.levels.join('')}</div>
+    </div>`).join('');
+}
+
+async function checkAndAwardBadges(s) {
+  if (!s) return;
+  const bp = getBadgeParams();
+  const bs = getBadgeStatus(s);
+  const updates = {};
+  const newBadges = [];
+
+  const check = (category, level, data, bonusKey) => {
+    const key = `${category}_${level}`;
+    if (!data.earned && data.progress >= data.req) {
+      updates[`students57/${s.fbKey}/badges/${key}`] = true;
+      const bonus = bp[bonusKey] || 0;
+      newBadges.push({ key, bonus, label: getMedalLabel(level).name + ' ' + ({quiz:'Quizmester',spare:'Sparemester',skatt:'Skattemester'}[category]) });
+    }
+  };
+
+  check('quiz',  'bronse', bs.quiz.bronse,  'bonusBronse');
+  check('quiz',  'sølv',   bs.quiz.sølv,    'bonusSolv');
+  check('quiz',  'gull',   bs.quiz.gull,    'bonusGull');
+  check('spare', 'bronse', bs.spare.bronse, 'bonusBronse');
+  check('spare', 'sølv',   bs.spare.sølv,   'bonusSolv');
+  check('spare', 'gull',   bs.spare.gull,   'bonusGull');
+  check('skatt', 'bronse', bs.skatt.bronse, 'bonusBronse');
+  check('skatt', 'sølv',   bs.skatt.sølv,   'bonusSolv');
+  check('skatt', 'gull',   bs.skatt.gull,   'bonusGull');
+
+  if (newBadges.length > 0) {
+    let totalBonus = newBadges.reduce((a, b) => a + b.bonus, 0);
+    if (totalBonus > 0) {
+      updates[`students57/${s.fbKey}/balance`] = (s.balance || 0) + totalBonus;
+      patchStudent(s.fbKey, { balance: (s.balance || 0) + totalBonus });
+    }
+    for (const [k, v] of Object.entries(updates)) {
+      patchStudent(s.fbKey, { badges: { ...(s.badges||{}), [k.split('/').pop()]: v } });
+    }
+    await window._update(window._ref(window._db, '/'), updates);
+    if (totalBonus > 0) {
+      await saveTx(s.fbKey, 'income', '🏅', `Merke-bonus: ${newBadges.map(b=>b.label).join(', ')}`, totalBonus);
+      transactions.unshift({type:'income',icon:'🏅',desc:`Merke-bonus opptjent!`,amount:totalBonus,ts:Date.now()});
+      renderTransactions();
+      refreshAllDisplays();
+      showSuccess('🏅','Nytt merke!',`+${totalBonus} 🪙`,newBadges.map(b=>b.label).join(' · '));
+    }
+  }
+}
+
 // ── QUIZ ───────────────────────────────────────────────────────────────────
 const QUIZ_POOL=[
   {q:'Hva er rente?',opts:['Penger du får gratis','En kostnad for å låne penger','Et annet ord for lønn','En type skatt'],a:1},
@@ -2519,9 +2715,11 @@ async function nextQ(){quizIdx++;if(quizIdx<quizQs.length)showQuizQ();else await
 async function finishQuiz(){
   document.getElementById('quiz-overlay').classList.remove('open');
   const earned=quizOk*20;const s=window._currentStudent;
+  const prevTotal = s.quizCorrectTotal || 0;
+  const newTotal = prevTotal + quizOk;
   const newBal=(s.balance||0)+earned;
-  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,quizWeek:getWeekKey()});
-  patchStudent(s.fbKey,{balance:newBal,quizWeek:getWeekKey()});
+  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,quizWeek:getWeekKey(),quizCorrectTotal:newTotal});
+  patchStudent(s.fbKey,{balance:newBal,quizWeek:getWeekKey(),quizCorrectTotal:newTotal});
   refreshAllDisplays();
   if(earned>0){const tx={type:'income',icon:'🧠',desc:`Quiz – ${quizOk}/5 riktige`,amount:earned,ts:Date.now()};await saveTx(s.fbKey,'income','🧠',tx.desc,earned);transactions.unshift(tx);renderTransactions();}
   const pct=quizOk/quizQs.length;
@@ -2530,6 +2728,8 @@ async function finishQuiz(){
   document.getElementById('qr-score').textContent=`${quizOk} av ${quizQs.length} riktige`;
   document.getElementById('qr-earned').textContent=earned>0?`+${earned} 🪙`:'0 🪙';
   document.getElementById('quiz-result').classList.add('open');checkQuizStatus();
+  // Check badges after updating student
+  await checkAndAwardBadges(window._currentStudent);
 }
 function closeQuiz(){document.getElementById('quiz-overlay').classList.remove('open');}
 function closeQuizResult(){document.getElementById('quiz-result').classList.remove('open');}
