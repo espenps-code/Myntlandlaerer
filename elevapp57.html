@@ -1120,7 +1120,7 @@ async function renderBudgetTab() {
   const expensesEl = document.getElementById('bud-expenses-list');
   const expRows = [];
   if (rentDesk > 0) expRows.push({icon:'🪑', label:'Leie av pult', sub:'Trekkes hver fredag', amt:rentDesk});
-  if (pMax > 0)    expRows.push({icon:'⚡', label:'Strøm',        sub:`Tilfeldig mellom ${pMin}–${pMax} 🪙`, amt:powerAvg, isAvg:true});
+  if (pMax > 0)    expRows.push({icon:'⚡', label:'Strøm',        sub:`Trekkes hver fredag`, amt:powerAvg, isAvg:false});
   if (rentIpad > 0) expRows.push({icon:'📱', label:'Leie av iPad', sub:'Trekkes hver fredag', amt:rentIpad});
 
   if (expensesEl) {
