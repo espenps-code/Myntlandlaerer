@@ -3065,8 +3065,9 @@ function showHendelseQR(fbKey) {
   const h = window._hendelser.find(x => x.fbKey === fbKey);
   if (!h) return;
 
-  // Payload: type=event, subtype=income/expense, amount, desc
-  const payload = JSON.stringify({ type: 'event', subtype: h.type, amount: h.amount, desc: h.desc });
+  // Kompakt payload (kortere felt = får plass i QR selv med lange beskrivelser/æøå)
+  // t=type, s=subtype, a=amount, d=desc. Elev-appen leser begge varianter.
+  const payload = JSON.stringify({ t: 'event', s: h.type, a: h.amount, d: h.desc });
 
   // Åpne modal FØRST, generer QR etterpå (dobbel rAF for synlighet)
   const modal = document.getElementById('modal-hend-qr');
@@ -3083,12 +3084,35 @@ function showHendelseQR(fbKey) {
 
   requestAnimationFrame(() => requestAnimationFrame(() => {
     box.innerHTML = '';
+    // correctLevel L gir plass til ~50 % flere tegn enn M → trygt for lange norske tekster
+    let ok = false;
     try {
-      new QRCode(box, { text: payload, width: 250, height: 250, correctLevel: QRCode.CorrectLevel.M });
-    } catch(e) {
-      box.innerHTML = '<p style="color:var(--coral);font-size:.82rem;">Kunne ikke generere QR</p>';
+      new QRCode(box, { text: payload, width: 250, height: 250, correctLevel: QRCode.CorrectLevel.L });
+      ok = !!box.querySelector('canvas, img');
+    } catch(e) { ok = false; }
+    // Fallback: hvis qrcodejs likevel feilet (tekst for lang), bruk online QR-tjeneste
+    if (!ok) {
+      box.innerHTML = '';
+      const img = new Image();
+      img.width = 250; img.height = 250;
+      img.crossOrigin = 'anonymous';
+      img.onerror = () => {
+        box.innerHTML = '<p style="color:var(--coral);font-size:.82rem;">Kunne ikke generere QR – beskrivelsen er for lang. Forkort den og prøv igjen.</p>';
+      };
+      img.onload = () => {
+        // Lagre dataUrl for utskrift
+        try {
+          const c = document.createElement('canvas');
+          c.width = 250; c.height = 250;
+          c.getContext('2d').drawImage(img, 0, 0, 250, 250);
+          const btn = document.getElementById('hend-qr-print-btn');
+          if (btn) btn._qrDataUrl = c.toDataURL('image/png');
+        } catch(_) {}
+      };
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&ecc=L&data=' + encodeURIComponent(payload);
+      box.appendChild(img);
     }
-    // Lagre dataUrl for utskrift
+    // Lagre dataUrl for utskrift (canvas-variant)
     setTimeout(() => {
       const canvas = box.querySelector('canvas');
       if (canvas) document.getElementById('hend-qr-print-btn')._qrDataUrl = canvas.toDataURL('image/png');
@@ -3112,11 +3136,11 @@ function printHendelser() {
   const all = window._hendelser;
   if (!all.length) { alert('Ingen hendelser å skrive ut.'); return; }
   // Generate QR data URLs via api.qrserver.com (no canvas issues in print)
-  // Build cards with img from qrserver
+  // Bruk kompakt payload (kortere felt) + ecc=L så lange tekster med æøå får plass.
   const cards = all.map(h => ({
     ...h,
-    qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=4&data=' +
-           encodeURIComponent(JSON.stringify({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }))
+    qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=4&ecc=L&data=' +
+           encodeURIComponent(JSON.stringify({ t:'event', s:h.type, a:h.amount, d:h.desc }))
   }));
   openHendelserPrintWindow(cards);
 }
