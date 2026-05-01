@@ -96,12 +96,24 @@
 
     onValue(ref(db, 'hendelser'), onHendelserSnap);
 
+    // ── Budsjett-innstillinger (faste utgifter, onsdagshendelser) ─────────
+    onValue(ref(db, 'budgetSettings'), snap => {
+      window._budgetSettings = snap.val() || { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50, wedEventsEnabled:true };
+      if (document.getElementById('page-budsjett')?.classList.contains('active')) {
+        renderBudgetPage();
+      }
+    });
+
     // ── Automatisk fond-oppdatering ──────────────────────────────────────
     checkAndUpdateFund();
     // ── Automatisk ukentlig lønn (mandag) ──────────────────────────────
     checkAndPayWeeklySalary();
     // ── Automatisk fredagslønn for faste jobber ────────────────────────
     checkAndPayFridayJobSalaries();
+    // ── Automatisk fredags-utgifter (pult, strøm, ipad) ────────────────
+    checkAndDeductFridayBudgetExpenses();
+    // ── Automatisk onsdags-hendelser ───────────────────────────────────
+    checkAndApplyWednesdayEvents();
     checkDailySavingsInterest();
   }
 
@@ -284,6 +296,151 @@
       console.log(`✅ Fredagslønn utbetalt: ${payoutCount} utbetalinger på tvers av ${salaryJobs.length} faste jobber`);
     } catch(e) { console.log('⚠️ Fredagslønn feilet:', e.message); }
   }
+
+
+  // ── Automatisk fredags-utgifter (pult, strøm, iPad) ─────────────────────
+  async function checkAndDeductFridayBudgetExpenses(force) {
+    try {
+      const now = new Date();
+      if (!force) {
+        if (now.getDay() !== 5) return;       // kun fredag
+        if (now.getHours() < 8) return;
+      }
+
+      const yr = now.getFullYear();
+      const mo = String(now.getMonth() + 1).padStart(2, '0');
+      const dy = String(now.getDate()).padStart(2, '0');
+      const today = `${yr}-${mo}-${dy}`;
+
+      if (!force) {
+        const lastSnap = await get(ref(db, 'fridayBudgetLastPaid'));
+        if (lastSnap.val() === today) return;
+      }
+
+      const settSnap = await get(ref(db, 'budgetSettings'));
+      const bs = settSnap.val() || { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50 };
+      const rentDesk = +bs.rentDesk || 0;
+      const rentIpad = +bs.rentIpad || 0;
+      const pMin     = +bs.powerMin || 0;
+      const pMax     = Math.max(pMin, +bs.powerMax || 0);
+
+      if (rentDesk <= 0 && rentIpad <= 0 && pMax <= 0) {
+        if (!force) await set(ref(db, 'fridayBudgetLastPaid'), today);
+        return;
+      }
+
+      const studSnap = await get(ref(db, 'students57'));
+      if (!studSnap.val()) return;
+      const VALID57 = ['5. klasse','6. klasse','7. klasse'];
+      const allStudents = Object.entries(studSnap.val())
+        .map(([k,v]) => ({...v, fbKey:k}))
+        .filter(s => VALID57.includes(s.class));
+
+      const balUpdates = {};
+      let totalCount = 0;
+
+      for (const s of allStudents) {
+        let bal = s.balance || 0;
+        // Strøm: tilfeldig mellom min og max for hver elev
+        const power = (pMax > 0)
+          ? Math.floor(pMin + Math.random() * (pMax - pMin + 1))
+          : 0;
+
+        const items = [
+          { amount: rentDesk, icon: '🪑', desc: 'Leie av pult'  },
+          { amount: power,    icon: '⚡', desc: 'Strøm'         },
+          { amount: rentIpad, icon: '📱', desc: 'Leie av iPad'  }
+        ];
+
+        for (const it of items) {
+          if (it.amount <= 0) continue;
+          bal -= it.amount;
+          await set(ref(db, 'transactions57/' + s.fbKey + '/' + Date.now() + '_bud_' + it.desc.replace(/\s/g,'')), {
+            type: 'expense',
+            icon: it.icon,
+            desc: it.desc,
+            amount: -it.amount,
+            ts: Date.now(),
+            category: 'fixedExpense'
+          });
+          totalCount++;
+        }
+        balUpdates['students57/' + s.fbKey + '/balance'] = bal;
+      }
+
+      if (Object.keys(balUpdates).length) await update(ref(db, '/'), balUpdates);
+      if (!force) await set(ref(db, 'fridayBudgetLastPaid'), today);
+      console.log(`✅ Fredags-utgifter: ${totalCount} trekk på ${allStudents.length} elever`);
+    } catch(e) { console.log('⚠️ Fredags-utgifter feilet:', e.message); }
+  }
+
+
+  // ── Automatisk onsdags-hendelser ────────────────────────────────────────
+  async function checkAndApplyWednesdayEvents(force) {
+    try {
+      const now = new Date();
+      if (!force) {
+        if (now.getDay() !== 3) return;       // kun onsdag
+        if (now.getHours() < 8) return;
+      }
+
+      const yr = now.getFullYear();
+      const mo = String(now.getMonth() + 1).padStart(2, '0');
+      const dy = String(now.getDate()).padStart(2, '0');
+      const today = `${yr}-${mo}-${dy}`;
+
+      if (!force) {
+        const lastSnap = await get(ref(db, 'wedEventsLastApplied'));
+        if (lastSnap.val() === today) return;
+
+        const settSnap = await get(ref(db, 'budgetSettings'));
+        const bs = settSnap.val() || {};
+        if (bs.wedEventsEnabled === false) return;
+      }
+
+      const hSnap = await get(ref(db, 'hendelser'));
+      if (!hSnap.val()) {
+        if (!force) await set(ref(db, 'wedEventsLastApplied'), today);
+        return;
+      }
+      const allH = Object.entries(hSnap.val()).map(([k,v]) => ({...v, fbKey:k}));
+      if (!allH.length) {
+        if (!force) await set(ref(db, 'wedEventsLastApplied'), today);
+        return;
+      }
+
+      const studSnap = await get(ref(db, 'students57'));
+      if (!studSnap.val()) return;
+      const VALID57 = ['5. klasse','6. klasse','7. klasse'];
+      const allStudents = Object.entries(studSnap.val())
+        .map(([k,v]) => ({...v, fbKey:k}))
+        .filter(s => VALID57.includes(s.class));
+
+      const balUpdates = {};
+      for (const s of allStudents) {
+        const h = allH[Math.floor(Math.random() * allH.length)];
+        const sign = h.type === 'income' ? 1 : -1;
+        const delta = sign * (h.amount || 0);
+        const newBal = (s.balance || 0) + delta;
+        balUpdates['students57/' + s.fbKey + '/balance'] = newBal;
+        await set(ref(db, 'transactions57/' + s.fbKey + '/' + Date.now() + '_wed_' + s.fbKey), {
+          type: h.type,
+          icon: h.emoji || '🎲',
+          desc: 'Onsdagshendelse: ' + (h.desc || ''),
+          amount: delta,
+          ts: Date.now(),
+          category: 'event'
+        });
+      }
+      if (Object.keys(balUpdates).length) await update(ref(db, '/'), balUpdates);
+      if (!force) await set(ref(db, 'wedEventsLastApplied'), today);
+      console.log(`✅ Onsdagshendelser: ${allStudents.length} elever fikk én tilfeldig hendelse`);
+    } catch(e) { console.log('⚠️ Onsdagshendelser feilet:', e.message); }
+  }
+
+  // Eksponér slik at lærer kan kjøre fra UI
+  window._runFridayBudgetNow = () => checkAndDeductFridayBudgetExpenses(true);
+  window._runWednesdayEventsNow = () => checkAndApplyWednesdayEvents(true);
 
 
   // ── Daglig sparerente-sjekk (ikke bare mandager) ────────────────────────
@@ -535,6 +692,7 @@
     <button onclick="showPage('sparemaal')" id="nav-sparemaal"><span class="nav-icon">🏦</span> Sparemål</button>
     <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
     <button onclick="showPage('hendelser')" id="nav-hendelser"><span class="nav-icon">🎲</span> Hendelser</button>
+    <button onclick="showPage('budsjett')" id="nav-budsjett"><span class="nav-icon">📊</span> Budsjett</button>
     <button onclick="showPage('laerere')" id="nav-laerere" style="display:none"><span class="nav-icon">⚙️</span> Lærere</button>
   </nav>
   <div class="header-right">
@@ -973,6 +1131,80 @@
   </div>
 </div>
 
+<!-- ═══════ BUDSJETT ═══════ -->
+<div class="page" id="page-budsjett">
+  <div class="page-title">📊 Budsjett</div>
+  <div class="page-subtitle">Faste utgifter (trekkes hver fredag) og automatiske onsdagshendelser</div>
+
+  <div class="grid-2" style="margin-bottom:1.5rem;">
+    <!-- Faste utgifter -->
+    <div class="card">
+      <div class="card-title">💸 Faste ukentlige utgifter</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Disse trekkes automatisk fra elevenes brukskonto hver fredag (kl. 08:00 eller senere).</p>
+
+      <div class="form-row">
+        <label>🪑 Leie av pult (🪙 per uke)</label>
+        <input type="number" id="bud-rent-desk" min="0" max="9999" placeholder="300">
+      </div>
+
+      <div class="form-row" style="display:flex;gap:.75rem;align-items:flex-end;">
+        <div style="flex:1">
+          <label>⚡ Strøm – minimum (🪙)</label>
+          <input type="number" id="bud-power-min" min="0" max="9999" placeholder="50">
+        </div>
+        <div style="flex:1">
+          <label>⚡ Strøm – maksimum (🪙)</label>
+          <input type="number" id="bud-power-max" min="0" max="9999" placeholder="150">
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:-.4rem;margin-bottom:.85rem;">Strøm trekkes med et tilfeldig beløp innenfor dette intervallet for hver elev.</p>
+
+      <div class="form-row">
+        <label>📱 Leie av iPad (🪙 per uke)</label>
+        <input type="number" id="bud-rent-ipad" min="0" max="9999" placeholder="50">
+      </div>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+        <button class="btn btn-primary" onclick="saveBudgetSettings()">💾 Lagre innstillinger</button>
+        <button class="btn btn-ghost" onclick="runBudgetExpensesNow()" title="Kjør trekk for alle elever nå – som om det var fredag">⚡ Kjør trekk nå</button>
+      </div>
+      <div id="bud-alert" style="margin-top:.75rem;"></div>
+    </div>
+
+    <!-- Onsdagshendelser + status -->
+    <div class="card">
+      <div class="card-title">🎲 Onsdagshendelser</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Hver onsdag (kl. 08:00 eller senere) får hver elev én tilfeldig hendelse fra hendelseslisten – akkurat som om de hadde scannet QR-koden.</p>
+
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
+        <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--teal-dark);cursor:pointer;">
+          <input type="checkbox" id="bud-wed-events-toggle" style="width:18px;height:18px;cursor:pointer;">
+          <span>Aktiver onsdagshendelser</span>
+        </label>
+      </div>
+
+      <div id="bud-status" style="background:var(--teal-light);border-radius:10px;padding:.7rem .9rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">
+        <div>Antall hendelser i biblioteket: <span id="bud-status-hend-count">0</span></div>
+        <div>Sist trukket fredag: <span id="bud-status-last-friday">aldri</span></div>
+        <div>Sist trukket onsdag: <span id="bud-status-last-wed">aldri</span></div>
+      </div>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.85rem;">
+        <button class="btn btn-amber" onclick="runWednesdayEventsNow()" title="Kjør én tilfeldig hendelse for alle elever nå">🎲 Kjør hendelser nå</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Oversikt: faste jobber & lønn -->
+  <div class="card">
+    <div class="card-title">💼 Faste jobber (lønn fredag)</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Faste jobber utbetales også hver fredag. Du kan administrere dem på <a href="#" onclick="showPage('oppdrag');return false;" style="color:var(--teal);font-weight:800;">Jobber-siden</a>.</p>
+    <div id="bud-salary-jobs-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;">
+      <div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen faste jobber.</div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════ LÆRERE (admin) ═══════ -->
 <div class="page" id="page-laerere">
   <div class="page-title">⚙️ Lærerprofilene</div>
@@ -1296,6 +1528,7 @@ function showPage(page) {
   if (page === 'laerere')  renderTeacherList();
   if (page === 'hendelser') renderHendelser();
   if (page === 'sparemaal') renderClassGoalsPage();
+  if (page === 'budsjett') renderBudgetPage();
 }
 
 function showElevTab(tab, btn) {
@@ -2920,6 +3153,128 @@ document.addEventListener('keydown', function(e) {
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+// ════════════════════════════════════════════════════════════
+// BUDSJETT
+// ════════════════════════════════════════════════════════════
+window._budgetSettings = window._budgetSettings || { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50, wedEventsEnabled:true };
+
+function renderBudgetPage() {
+  const bs = window._budgetSettings || {};
+  const elDesk = document.getElementById('bud-rent-desk');
+  const elPMin = document.getElementById('bud-power-min');
+  const elPMax = document.getElementById('bud-power-max');
+  const elIpad = document.getElementById('bud-rent-ipad');
+  const elWed  = document.getElementById('bud-wed-events-toggle');
+  if (elDesk) elDesk.value = bs.rentDesk ?? 300;
+  if (elPMin) elPMin.value = bs.powerMin ?? 50;
+  if (elPMax) elPMax.value = bs.powerMax ?? 150;
+  if (elIpad) elIpad.value = bs.rentIpad ?? 50;
+  if (elWed)  elWed.checked = bs.wedEventsEnabled !== false;
+
+  // Status
+  const cnt = document.getElementById('bud-status-hend-count');
+  if (cnt) cnt.textContent = (window._hendelser || []).length;
+
+  // Last paid – les fra Firebase
+  if (window._get && window._db) {
+    window._get(window._ref(window._db, 'fridayBudgetLastPaid')).then(snap => {
+      const el = document.getElementById('bud-status-last-friday');
+      if (el) el.textContent = snap.val() || 'aldri';
+    }).catch(()=>{});
+    window._get(window._ref(window._db, 'wedEventsLastApplied')).then(snap => {
+      const el = document.getElementById('bud-status-last-wed');
+      if (el) el.textContent = snap.val() || 'aldri';
+    }).catch(()=>{});
+  }
+
+  // Faste jobber-liste
+  const list = document.getElementById('bud-salary-jobs-list');
+  if (list) {
+    const salaryJobs = (window._jobs || []).filter(j => j.type === 'salary' && j.active !== false);
+    if (!salaryJobs.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen faste jobber. Opprett dem på Jobber-siden.</div>';
+    } else {
+      list.innerHTML = salaryJobs.map(j => {
+        const numEmp = j.assigned ? Object.keys(j.assigned).length : 0;
+        return `<div style="background:var(--teal-light);border:1.5px solid var(--border);border-radius:12px;padding:.75rem .9rem;display:flex;align-items:center;gap:.6rem;">
+          <span style="font-size:1.6rem;">${j.emoji || '💼'}</span>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:.92rem;color:var(--teal-dark);">${j.title}</div>
+            <div style="font-size:.78rem;color:var(--muted);font-weight:700;">🪙 ${j.pay} per uke · 👥 ${numEmp} ansatt${numEmp===1?'':'e'}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+async function saveBudgetSettings() {
+  const alertEl = document.getElementById('bud-alert');
+  const rentDesk = parseInt(document.getElementById('bud-rent-desk').value);
+  const powerMin = parseInt(document.getElementById('bud-power-min').value);
+  const powerMax = parseInt(document.getElementById('bud-power-max').value);
+  const rentIpad = parseInt(document.getElementById('bud-rent-ipad').value);
+  const wedOn    = !!document.getElementById('bud-wed-events-toggle').checked;
+
+  if ([rentDesk, powerMin, powerMax, rentIpad].some(v => isNaN(v) || v < 0 || v > 9999)) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Alle beløp må være tall mellom 0 og 9999.</div>';
+    return;
+  }
+  if (powerMin > powerMax) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Strøm-min kan ikke være større enn strøm-maks.</div>';
+    return;
+  }
+
+  try {
+    await window._set(fbRef('budgetSettings'), {
+      rentDesk, powerMin, powerMax, rentIpad, wedEventsEnabled: wedOn,
+      updated: Date.now()
+    });
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Innstillinger lagret!</div>';
+    setTimeout(() => alertEl.innerHTML = '', 2500);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Lagring feilet: ' + e.message + '</div>';
+  }
+}
+
+async function runBudgetExpensesNow() {
+  if (!confirm('Trekke faste utgifter (pult, strøm, iPad) fra ALLE elever nå? Dette kan ikke angres.')) return;
+  const alertEl = document.getElementById('bud-alert');
+  alertEl.innerHTML = '<div class="alert alert-info">⏳ Kjører trekk for alle elever…</div>';
+  try {
+    if (typeof window._runFridayBudgetNow === 'function') {
+      await window._runFridayBudgetNow();
+      alertEl.innerHTML = '<div class="alert alert-success">✅ Trekk gjennomført!</div>';
+      renderBudgetPage();
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-error">⚠️ Funksjonen er ikke klar – prøv igjen om et øyeblikk.</div>';
+    }
+    setTimeout(() => alertEl.innerHTML = '', 3000);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Feilet: ' + e.message + '</div>';
+  }
+}
+
+async function runWednesdayEventsNow() {
+  if (!(window._hendelser || []).length) {
+    alert('Ingen hendelser i biblioteket. Legg til hendelser først (Hendelser-siden).');
+    return;
+  }
+  if (!confirm('Tildele én tilfeldig hendelse til ALLE elever nå? Dette kan ikke angres.')) return;
+  try {
+    if (typeof window._runWednesdayEventsNow === 'function') {
+      await window._runWednesdayEventsNow();
+      alert('✅ Hendelser tildelt!');
+      renderBudgetPage();
+    } else {
+      alert('⚠️ Funksjonen er ikke klar – prøv igjen om et øyeblikk.');
+    }
+  } catch(e) {
+    alert('⚠️ Feilet: ' + e.message);
+  }
+}
+
 </script>
 </body>
 </html>

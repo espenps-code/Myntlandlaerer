@@ -79,6 +79,10 @@
        && document.getElementById('spare-seg-fond')?.classList.contains('active'))
       renderFond();
   });
+  onValue(ref(db,'budgetSettings'),snap=>{
+    window._budgetSettings=snap.val()||{rentDesk:300,powerMin:50,powerMax:150,rentIpad:50,wedEventsEnabled:true};
+    if(document.getElementById('tab-budsjett')?.classList.contains('active')) renderBudgetTab();
+  });
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
@@ -233,6 +237,17 @@
   .aab-ghost{background:white;color:var(--text);border:1.5px solid var(--border);}
   .info-box{background:var(--amber-light);border-radius:11px;padding:.8rem .95rem;margin-bottom:.85rem;font-size:.82rem;color:#854F0B;font-weight:700;border:1px solid #f0c060;}
   .warn-box{background:var(--coral-light);border-radius:11px;padding:.8rem .95rem;margin-bottom:.85rem;font-size:.82rem;color:#7f1d1d;font-weight:700;}
+
+  /* BUDGET */
+  .bud-period-btn{flex:1;background:white;border:1.5px solid var(--border);color:var(--muted);border-radius:10px;padding:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;}
+  .bud-period-btn.bud-period-active{background:var(--teal);border-color:var(--teal);color:white;}
+  .bud-row{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--bg);border-radius:10px;margin-bottom:6px;}
+  .bud-row-icon{font-size:1.3rem;width:32px;text-align:center;}
+  .bud-row-label{flex:1;font-weight:700;font-size:.86rem;color:var(--text);line-height:1.2;}
+  .bud-row-sub{font-size:.7rem;color:var(--muted);font-weight:700;margin-top:1px;}
+  .bud-row-amt{font-family:'Fredoka One',cursive;font-size:.95rem;}
+  .bud-row-amt.income{color:#15803d;}
+  .bud-row-amt.expense{color:#dc2626;}
 
   /* FOND */
   .fond-card{border-radius:14px;padding:1rem;margin-bottom:.85rem;position:relative;overflow:hidden;}
@@ -604,11 +619,86 @@
     <button class="big-btn bb-ghost" onclick="startScan('reward')">⭐ Scan belønnings-QR</button>
   </div>
 
+  <!-- BUDSJETT TAB -->
+  <div class="tab-content content" id="tab-budsjett">
+    <div class="section-title">📊 Budsjett</div>
+    <div class="info-box">💡 Her ser du de faste utgiftene som trekkes hver fredag, og inntektene dine. Planlegg uka di!</div>
+
+    <!-- Sammendrag -->
+    <div id="bud-summary" class="card-block" style="background:linear-gradient(135deg,var(--teal-light),#fff);">
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.65rem;">📈 Estimat for uka</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+        <div>
+          <div style="font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Inn</div>
+          <div id="bud-est-in" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:#15803d;">0 🪙</div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Ut</div>
+          <div id="bud-est-out" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:#dc2626;">0 🪙</div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Netto</div>
+          <div id="bud-est-net" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal-dark);">0 🪙</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Faste utgifter -->
+    <div class="card-block">
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">💸 Faste utgifter (fredag)</div>
+      <div id="bud-expenses-list"></div>
+      <div id="bud-next-friday" style="font-size:.74rem;color:var(--muted);font-weight:700;margin-top:.5rem;text-align:right;"></div>
+    </div>
+
+    <!-- Inntekter -->
+    <div class="card-block">
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">💰 Inntekter</div>
+      <div id="bud-salary-list"></div>
+
+      <div style="margin-top:.85rem;padding-top:.85rem;border-top:1.5px dashed var(--border);">
+        <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.4rem;">✏️ Estimert ekstra inntekt per uke</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" id="bud-est-input" min="0" max="9999" placeholder="0" style="flex:1;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);outline:none;">
+          <span style="font-weight:800;color:var(--teal-dark);">🪙</span>
+          <button onclick="saveEstimatedIncome()" style="background:var(--teal);border:none;color:white;border-radius:10px;padding:10px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;">Lagre</button>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);font-weight:700;margin-top:6px;">F.eks. forventet lommepenger, ekstra-oppdrag eller belønninger.</div>
+      </div>
+    </div>
+
+    <!-- Periode-velger -->
+    <div class="card-block">
+      <div style="display:flex;gap:6px;margin-bottom:.75rem;">
+        <button id="bud-period-1" class="bud-period-btn bud-period-active" onclick="switchBudgetPeriod(1)">📅 Siste uke</button>
+        <button id="bud-period-4" class="bud-period-btn" onclick="switchBudgetPeriod(4)">🗓️ Siste 4 uker</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-bottom:.85rem;">
+        <div style="background:var(--green-light);border-radius:10px;padding:.55rem;">
+          <div style="font-size:.65rem;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.5px;">Inntekter</div>
+          <div id="bud-period-in" style="font-family:'Fredoka One',cursive;font-size:1.15rem;color:#15803d;">0 🪙</div>
+        </div>
+        <div style="background:var(--coral-light);border-radius:10px;padding:.55rem;">
+          <div style="font-size:.65rem;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.5px;">Utgifter</div>
+          <div id="bud-period-out" style="font-family:'Fredoka One',cursive;font-size:1.15rem;color:#dc2626;">0 🪙</div>
+        </div>
+      </div>
+      <div style="background:var(--teal-light);border-radius:10px;padding:.55rem;text-align:center;margin-bottom:.85rem;">
+        <div style="font-size:.65rem;font-weight:800;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.5px;">Netto</div>
+        <div id="bud-period-net" style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);">0 🪙</div>
+      </div>
+
+      <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.5rem;">📜 Bevegelser</div>
+      <div id="bud-period-list"></div>
+    </div>
+  </div>
+
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
     <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
     <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
     <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Jobber</div></button>
+    <button class="nav-item"        onclick="switchTab('budsjett',this);renderBudgetTab()"><div class="nav-icon">📊</div><div class="nav-label">Budsjett</div></button>
   </div>
 </div>
 
@@ -980,6 +1070,179 @@ function renderTransactions(){
   const spEl=document.getElementById('spare-tx-list');if(!spEl)return;
   const spareTx=transactions.filter(t=>t.desc?.toLowerCase().includes('spare'));
   spEl.innerHTML=spareTx.length?spareTx.slice(0,8).map(t=>`<div class="tx-item"><div class="tx-icon ${t.type}">${t.icon}</div><div class="tx-desc"><div class="tx-name">${t.desc}</div><div class="tx-date">${fmtDate(t.ts||0)}</div></div><div class="tx-amount ${t.type}">${t.amount>0?'+':''}${t.amount} 🪙</div></div>`).join(''):'<div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen sparehistorikk</div></div>';
+}
+
+// ── BUDSJETT ───────────────────────────────────────────────────────────────
+window._budgetSettings = window._budgetSettings || {rentDesk:300,powerMin:50,powerMax:150,rentIpad:50,wedEventsEnabled:true};
+window._budgetTxCache = [];
+window._budgetPeriod = 1; // uker
+
+async function loadBudgetTx() {
+  const s = window._currentStudent;
+  if (!s || !window._get) return;
+  try {
+    const snap = await window._get(fbRef('transactions57/' + s.fbKey));
+    const all = snap.val() ? Object.values(snap.val()) : [];
+    // 4 uker = 28 dager
+    const cutoff = Date.now() - 28*24*60*60*1000;
+    window._budgetTxCache = all.filter(t => (t.ts||0) >= cutoff).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  } catch(e) { window._budgetTxCache = []; }
+}
+
+function nextFridayLabel() {
+  const now = new Date();
+  const day = now.getDay(); // 0=søn, 5=fre
+  let daysUntil = (5 - day + 7) % 7;
+  // Hvis det er fredag og før kl. 08, så er "neste" i dag
+  if (day === 5 && now.getHours() < 8) daysUntil = 0;
+  // Hvis det er fredag og etter kl. 08, så er "neste" om en uke
+  if (day === 5 && now.getHours() >= 8) daysUntil = 7;
+  if (daysUntil === 0) return 'i dag';
+  if (daysUntil === 1) return 'i morgen';
+  return `om ${daysUntil} dager`;
+}
+
+async function renderBudgetTab() {
+  const s = window._currentStudent;
+  if (!s) return;
+  const bs = window._budgetSettings || {};
+  const tax = (window._settings?.taxRate || 20) / 100;
+
+  // ── Faste utgifter ──────────────────────────────────────────────────
+  const rentDesk = +bs.rentDesk || 0;
+  const rentIpad = +bs.rentIpad || 0;
+  const pMin     = +bs.powerMin || 0;
+  const pMax     = Math.max(pMin, +bs.powerMax || 0);
+  const powerAvg = Math.round((pMin + pMax) / 2);
+
+  const expensesEl = document.getElementById('bud-expenses-list');
+  const expRows = [];
+  if (rentDesk > 0) expRows.push({icon:'🪑', label:'Leie av pult', sub:'Trekkes hver fredag', amt:rentDesk});
+  if (pMax > 0)    expRows.push({icon:'⚡', label:'Strøm',        sub:`Tilfeldig mellom ${pMin}–${pMax} 🪙`, amt:powerAvg, isAvg:true});
+  if (rentIpad > 0) expRows.push({icon:'📱', label:'Leie av iPad', sub:'Trekkes hver fredag', amt:rentIpad});
+
+  if (expensesEl) {
+    if (!expRows.length) {
+      expensesEl.innerHTML = '<div style="color:var(--muted);font-size:.85rem;font-weight:700;padding:.5rem;">Ingen faste utgifter akkurat nå.</div>';
+    } else {
+      expensesEl.innerHTML = expRows.map(r => `
+        <div class="bud-row">
+          <div class="bud-row-icon">${r.icon}</div>
+          <div class="bud-row-label">${r.label}<div class="bud-row-sub">${r.sub}</div></div>
+          <div class="bud-row-amt expense">${r.isAvg?'~':'-'}${r.amt} 🪙</div>
+        </div>`).join('');
+    }
+  }
+  const totalExpense = rentDesk + rentIpad + powerAvg;
+
+  const nfEl = document.getElementById('bud-next-friday');
+  if (nfEl) nfEl.textContent = `Neste trekk: ${nextFridayLabel()}`;
+
+  // ── Inntekter (faste jobber + estimat) ──────────────────────────────
+  const me = window._currentStudent;
+  const myJobs = (window._jobs || []).filter(j => j.type === 'salary' && j.assigned && j.assigned[me.fbKey]);
+  const salaryEl = document.getElementById('bud-salary-list');
+  let totalSalaryNet = 0;
+  if (salaryEl) {
+    if (!myJobs.length) {
+      salaryEl.innerHTML = '<div style="color:var(--muted);font-size:.85rem;font-weight:700;padding:.5rem;">Du har ingen faste jobber ennå. Søk på en jobb i Jobber-fanen!</div>';
+    } else {
+      salaryEl.innerHTML = myJobs.map(j => {
+        const net = Math.floor((j.pay||0) * (1 - tax));
+        totalSalaryNet += net;
+        return `<div class="bud-row">
+          <div class="bud-row-icon">${j.emoji||'💼'}</div>
+          <div class="bud-row-label">${j.title}<div class="bud-row-sub">Ukelønn 🪙 ${j.pay} · netto etter skatt</div></div>
+          <div class="bud-row-amt income">+${net} 🪙</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Estimert ekstra inntekt (lagret pr. elev)
+  const estIn = +(me.estimatedIncome || 0);
+  const estInputEl = document.getElementById('bud-est-input');
+  if (estInputEl && document.activeElement !== estInputEl) estInputEl.value = estIn || '';
+
+  // ── Estimat for uka ────────────────────────────────────────────────
+  const totalIn = totalSalaryNet + estIn;
+  const totalOut = totalExpense;
+  const net = totalIn - totalOut;
+  const setT = (id,t,c)=>{const el=document.getElementById(id);if(el){el.textContent=t;if(c)el.style.color=c;}};
+  setT('bud-est-in',  '+'+totalIn+' 🪙', '#15803d');
+  setT('bud-est-out', '-'+totalOut+' 🪙', '#dc2626');
+  setT('bud-est-net', (net>=0?'+':'')+net+' 🪙', net>=0?'#15803d':'#dc2626');
+
+  // ── Periode-oversikt fra historikk ─────────────────────────────────
+  await loadBudgetTx();
+  renderBudgetPeriod();
+}
+
+function switchBudgetPeriod(weeks) {
+  window._budgetPeriod = weeks;
+  document.getElementById('bud-period-1').classList.toggle('bud-period-active', weeks===1);
+  document.getElementById('bud-period-4').classList.toggle('bud-period-active', weeks===4);
+  renderBudgetPeriod();
+}
+
+function renderBudgetPeriod() {
+  const weeks = window._budgetPeriod || 1;
+  const cutoff = Date.now() - weeks * 7 * 24 * 60 * 60 * 1000;
+  const tx = (window._budgetTxCache || []).filter(t => (t.ts||0) >= cutoff);
+
+  let totalIn = 0, totalOut = 0;
+  tx.forEach(t => {
+    const amt = +t.amount || 0;
+    if (amt > 0) totalIn += amt;
+    else totalOut += -amt;
+  });
+
+  const setT = (id, val, color) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val;
+    if (color) el.style.color = color;
+  };
+  setT('bud-period-in',  '+'+totalIn+' 🪙', '#15803d');
+  setT('bud-period-out', '-'+totalOut+' 🪙', '#dc2626');
+  const netP = totalIn - totalOut;
+  setT('bud-period-net', (netP>=0?'+':'')+netP+' 🪙', netP>=0?'#15803d':'#dc2626');
+
+  const listEl = document.getElementById('bud-period-list');
+  if (!listEl) return;
+  if (!tx.length) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700">Ingen bevegelser i denne perioden</div></div>';
+    return;
+  }
+  // Vis maks 30
+  listEl.innerHTML = tx.slice(0, 30).map(t => {
+    const isInc = (+t.amount||0) > 0;
+    return `<div class="tx-item">
+      <div class="tx-icon ${isInc?'income':'expense'}">${t.icon||'•'}</div>
+      <div class="tx-desc">
+        <div class="tx-name">${t.desc||''}</div>
+        <div class="tx-date">${fmtDate(t.ts||0)}</div>
+      </div>
+      <div class="tx-amount ${isInc?'income':'expense'}">${isInc?'+':''}${t.amount} 🪙</div>
+    </div>`;
+  }).join('');
+}
+
+async function saveEstimatedIncome() {
+  const s = window._currentStudent;
+  if (!s) return;
+  const v = parseInt(document.getElementById('bud-est-input').value) || 0;
+  if (v < 0 || v > 9999) {
+    alert('Beløp må være mellom 0 og 9999.');
+    return;
+  }
+  try {
+    await window._update(fbRef('students57/'+s.fbKey), {estimatedIncome: v});
+    patchStudent(s.fbKey, {estimatedIncome: v});
+    renderBudgetTab();
+  } catch(e) {
+    alert('Kunne ikke lagre: ' + e.message);
+  }
 }
 
 // ── TRANSFERS ──────────────────────────────────────────────────────────────
