@@ -1828,6 +1828,7 @@ function setJobType(type) {
   const payLabel = document.getElementById('job-pay-label');
   const submitBtn = document.getElementById('job-submit-btn');
   const formTitle = document.getElementById('job-form-title');
+  if (!taskBtn || !salaryBtn) return;
   if (type === 'salary') {
     taskBtn.className = 'btn btn-ghost'; salaryBtn.className = 'btn btn-primary';
     if (maxRow) maxRow.style.display = 'none';
@@ -1862,8 +1863,9 @@ async function deleteJob(fbKey) {
 async function assignStudentToJob(jobKey, studentKey) {
   if (!jobKey || !studentKey) return;
   await window._update(fbRef('jobs/' + jobKey + '/assigned'), { [studentKey]: true });
-  // Fjern eventuell søknad
+  // Fjern eventuell søknad og tidligere avslag når eleven faktisk ansettes
   await window._remove(fbRef('jobs/' + jobKey + '/applicants/' + studentKey));
+  await window._remove(fbRef('jobs/' + jobKey + '/rejected/' + studentKey));
 }
 async function unassignStudentFromJob(jobKey, studentKey) {
   if (!jobKey || !studentKey) return;
@@ -1872,8 +1874,17 @@ async function unassignStudentFromJob(jobKey, studentKey) {
 async function approveApplicant(jobKey, studentKey) {
   await assignStudentToJob(jobKey, studentKey);
 }
+// Avslå søknad: lagre tidsstempel slik at eleven har 7 dagers karantene
 async function rejectApplicant(jobKey, studentKey) {
+  await window._update(fbRef('jobs/' + jobKey + '/rejected'), { [studentKey]: Date.now() });
   await window._remove(fbRef('jobs/' + jobKey + '/applicants/' + studentKey));
+}
+// Lærer kan åpne/stenge søknader på en fast jobb
+async function toggleApplicationsOpen(jobKey) {
+  const j = (window._jobs||[]).find(x => x.fbKey === jobKey);
+  if (!j) return;
+  const cur = (j.applicationsOpen !== false); // default åpen
+  await window._update(fbRef('jobs/' + jobKey), { applicationsOpen: !cur });
 }
 
 function showJobQR(fbKey) {
@@ -1982,8 +1993,10 @@ function renderJobsList() {
       salaryEl.innerHTML = salaryJobs.map(j => {
         const assigned = j.assigned ? Object.keys(j.assigned) : [];
         const applicants = j.applicants ? Object.keys(j.applicants) : [];
+        const rejected = j.rejected || {};
         const tax = (window._settings?.taxRate || 20) / 100;
         const net = Math.floor((j.pay||0) * (1 - tax));
+        const appsOpen = (j.applicationsOpen !== false); // default åpne
 
         const assignedHTML = assigned.length
           ? assigned.map(sk => {
@@ -2013,6 +2026,29 @@ function renderJobsList() {
             </div>`
           : '';
 
+        // Vis avslåtte søkere som har aktiv karantene (innen 7 dager)
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+        const rejectedActive = Object.entries(rejected)
+          .filter(([sk, ts]) => (now - (ts||0)) < SEVEN_DAYS && !assigned.includes(sk));
+        const rejectedHTML = rejectedActive.length
+          ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+              <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin-bottom:4px;">⏳ Avslåtte (kan søke igjen senere)</div>
+              ${rejectedActive.map(([sk, ts]) => {
+                const s = window._students.find(x => x.fbKey === sk);
+                const name = s ? `${s.firstname} ${s.lastname.charAt(0)}.` : '(ukjent)';
+                const daysLeft = Math.max(1, Math.ceil((SEVEN_DAYS - (now - ts)) / (24*60*60*1000)));
+                return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:6px 10px;border-radius:8px;margin-bottom:4px;font-size:.82rem;">
+                  <span style="color:var(--muted);font-weight:700;">${name}</span>
+                  <span style="font-size:.75rem;color:var(--muted);font-weight:700;">${daysLeft} dag${daysLeft===1?'':'er'} igjen</span>
+                </div>`;
+              }).join('')}
+            </div>`
+          : '';
+
+        const toggleBtnLabel = appsOpen ? '🟢 Søknader åpne' : '🔴 Søknader stengt';
+        const toggleBtnClass = appsOpen ? 'btn btn-primary btn-sm' : 'btn btn-coral btn-sm';
+
         return `
         <div style="background:var(--white);border:1.5px solid var(--teal);border-radius:14px;padding:1.1rem;margin-bottom:10px;">
           <div style="display:flex;align-items:flex-start;gap:12px;">
@@ -2022,7 +2058,10 @@ function renderJobsList() {
               <div style="font-size:.82rem;color:var(--muted);margin-top:2px;">${j.desc||''}</div>
               <div style="margin-top:4px;"><span class="badge badge-amber">Ukelønn brutto 🪙 ${j.pay}</span> <span class="badge" style="background:var(--teal-light);color:var(--teal-dark);">Netto 🪙 ${net}</span></div>
             </div>
-            <button class="btn btn-coral btn-sm" onclick="deleteJob('${j.fbKey}')">🗑️</button>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="${toggleBtnClass}" onclick="toggleApplicationsOpen('${j.fbKey}')" style="white-space:nowrap;">${toggleBtnLabel}</button>
+              <button class="btn btn-coral btn-sm" onclick="deleteJob('${j.fbKey}')">🗑️ Slett</button>
+            </div>
           </div>
           <div style="margin-top:10px;">
             <div style="font-size:.8rem;font-weight:800;color:var(--teal-dark);margin-bottom:4px;">👥 Ansatte (${assigned.length})</div>
@@ -2037,6 +2076,7 @@ function renderJobsList() {
               <button class="btn btn-primary btn-sm" onclick="assignStudentToJob('${j.fbKey}', document.getElementById('assign-sel-${j.fbKey}').value)">Ansett</button>
             </div>
             ${applicantsHTML}
+            ${rejectedHTML}
           </div>
         </div>`;
       }).join('');
@@ -2438,7 +2478,7 @@ async function submitJob() {
   if (!title) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn tittel.</div>'; return; }
 
   if (type === 'salary') {
-    const data = { title, emoji, desc, pay, type: 'salary', active: true, created: Date.now() };
+    const data = { title, emoji, desc, pay, type: 'salary', active: true, applicationsOpen: true, created: Date.now() };
     if (currentEditJobKey) {
       await window._update(fbRef('jobs/' + currentEditJobKey), { title, emoji, desc, pay, type: 'salary' });
       alertEl.innerHTML = '<div class="alert alert-success">✅ Fast jobb oppdatert!</div>';

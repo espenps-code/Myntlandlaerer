@@ -1484,6 +1484,7 @@ async function repayLoan(){
 
 // ── JOBS ───────────────────────────────────────────────────────────────────
 window._jobsSearchQuery = '';
+const REJECTION_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 function filterJobs(q) {
   window._jobsSearchQuery = (q || '').toLowerCase().trim();
@@ -1500,6 +1501,19 @@ function jobMatchesSearch(j) {
 async function applyForJob(jobKey) {
   const s = window._currentStudent;
   if (!s || !jobKey) return;
+  const j = (window._jobs||[]).find(x => x.fbKey === jobKey);
+  if (!j) return;
+  // Sikkerhetssjekker (UI burde allerede ha hindret dette, men dobbeltsjekk)
+  if (j.applicationsOpen === false) {
+    showSuccess('🔒','Søknader stengt','','Læreren har stengt søknader på denne jobben.');
+    return;
+  }
+  const rejTs = j.rejected?.[s.fbKey];
+  if (rejTs && (Date.now() - rejTs) < REJECTION_COOLDOWN_MS) {
+    const daysLeft = Math.max(1, Math.ceil((REJECTION_COOLDOWN_MS - (Date.now() - rejTs)) / (24*60*60*1000)));
+    showSuccess('⏳','Karantene aktiv','',`Du kan søke igjen om ${daysLeft} dag${daysLeft===1?'':'er'}.`);
+    return;
+  }
   try {
     await window._update(window._ref(window._db, 'jobs/' + jobKey + '/applicants'), { [s.fbKey]: true });
     showSuccess('📨','Søknad sendt!','','Læreren må godkjenne søknaden din.');
@@ -1523,6 +1537,7 @@ function renderJobs() {
   const all = window._jobs || [];
   const tax = getTax();
   const me = window._currentStudent;
+  const now = Date.now();
 
   const taskJobs = all.filter(j => (j.type || 'task') !== 'salary' && jobMatchesSearch(j));
   const salaryJobs = all.filter(j => j.type === 'salary' && jobMatchesSearch(j));
@@ -1562,9 +1577,18 @@ function renderJobs() {
         const net = Math.floor((j.pay||0) * (1 - tax));
         const assigned = j.assigned || {};
         const applicants = j.applicants || {};
+        const rejected = j.rejected || {};
         const isAssigned = me && !!assigned[me.fbKey];
         const hasApplied = me && !!applicants[me.fbKey];
         const numEmployed = Object.keys(assigned).length;
+        const appsOpen = (j.applicationsOpen !== false); // default åpne
+
+        // Karantene-sjekk for denne eleven
+        let cooldownDaysLeft = 0;
+        const myRejTs = me ? rejected[me.fbKey] : null;
+        if (myRejTs && (now - myRejTs) < REJECTION_COOLDOWN_MS) {
+          cooldownDaysLeft = Math.max(1, Math.ceil((REJECTION_COOLDOWN_MS - (now - myRejTs)) / (24*60*60*1000)));
+        }
 
         let actionHTML = '';
         if (isAssigned) {
@@ -1574,15 +1598,23 @@ function renderJobs() {
             <div style="flex:1;background:var(--amber-light);border:1.5px solid #f0c060;color:#854F0B;padding:8px 12px;border-radius:10px;font-weight:800;font-size:.82rem;text-align:center;">⏳ Søknad sendt</div>
             <button onclick="withdrawApplication('${j.fbKey}')" style="background:white;border:1.5px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer;">Trekk</button>
           </div>`;
+        } else if (cooldownDaysLeft > 0) {
+          actionHTML = `<div style="background:var(--coral-light);border:1.5px solid var(--coral);color:#7f1d1d;padding:8px 12px;border-radius:10px;font-weight:800;font-size:.82rem;text-align:center;margin-top:8px;">⏳ Avslått – kan søke igjen om ${cooldownDaysLeft} dag${cooldownDaysLeft===1?'':'er'}</div>`;
+        } else if (!appsOpen) {
+          actionHTML = `<button disabled style="width:100%;background:#cbd5cb;border:none;color:#6b7280;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:not-allowed;margin-top:8px;">🔒 Søknader stengt</button>`;
         } else {
           actionHTML = `<button onclick="applyForJob('${j.fbKey}')" style="width:100%;background:var(--teal);border:none;color:white;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;margin-top:8px;">📨 Søk på jobben</button>`;
         }
+
+        const statusBadge = appsOpen
+          ? '<span style="background:var(--green-light);color:#14532d;font-size:.6rem;padding:2px 6px;border-radius:8px;font-weight:800;vertical-align:middle;margin-left:4px;">SØKER VELKOMMEN</span>'
+          : '<span style="background:var(--coral-light);color:#7f1d1d;font-size:.6rem;padding:2px 6px;border-radius:8px;font-weight:800;vertical-align:middle;margin-left:4px;">STENGT</span>';
 
         return `<div class="job-card-el" style="display:block;border-color:var(--teal);">
           <div style="display:flex;gap:10px;">
             <div class="job-emoji-el">${j.emoji||'💼'}</div>
             <div style="flex:1;">
-              <div class="job-title-el">${j.title} <span style="background:var(--teal);color:white;font-size:.6rem;padding:2px 6px;border-radius:8px;font-weight:800;vertical-align:middle;">FAST</span></div>
+              <div class="job-title-el">${j.title} <span style="background:var(--teal);color:white;font-size:.6rem;padding:2px 6px;border-radius:8px;font-weight:800;vertical-align:middle;">FAST</span>${isAssigned ? '' : statusBadge}</div>
               <div class="job-desc-el">${j.desc||''}</div>
               <div class="job-pay-el">Ukelønn 🪙 ${j.pay} · netto 🪙 ${net}</div>
               <div style="font-size:.7rem;color:var(--muted);font-weight:700;margin-top:2px;">👥 ${numEmployed} ansatt${numEmployed===1?'':'e'}</div>
