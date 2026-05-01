@@ -2543,7 +2543,8 @@ function renderMerker() {
     const m = getMedalLabel(level);
     const pct = Math.min(100, Math.round(data.progress / data.req * 100));
     const earned = data.earned;
-    const bonusKey = `bonus${level.charAt(0).toUpperCase()+level.slice(1)}`;
+    const bonusKeyMap = { bronse: 'bonusBronse', sølv: 'bonusSolv', gull: 'bonusGull' };
+    const bonusKey = bonusKeyMap[level] || `bonus${level.charAt(0).toUpperCase()+level.slice(1)}`;
     const bonus = bp[bonusKey] || 0;
     return `<div class="merke-level-row${earned?' earned':''}">
       <div class="merke-medal">${m.emoji}</div>
