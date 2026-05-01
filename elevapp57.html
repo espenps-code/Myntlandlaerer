@@ -469,17 +469,16 @@
         <div class="acc-val" id="bal-fond">0</div>
         <div class="acc-sub" id="fond-sub">Lav + Høy risiko</div>
       </div>
-    </div>
-
-    <!-- KLASSENS SPAREMÅL (visuell velger) -->
-    <div class="class-goals-card" id="class-goals-card" style="display:none;">
-      <div class="class-goals-header">
-        <div class="class-goals-title">🎯 Klassens sparemål</div>
-        <div class="class-goals-sub">Skatt fra belønninger går til ditt valgte mål</div>
+      <div class="account-card bruk" style="grid-column:1/-1;cursor:pointer" onclick="switchTab('kort',null);document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'))">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="acc-label">💳 Bankkort</div>
+            <div style="font-size:.72rem;opacity:.8;font-weight:700">Se kort, PIN & scan</div>
+          </div>
+          <div style="font-size:1.3rem;opacity:.7">→</div>
+        </div>
       </div>
-      <div id="class-goals-body"></div>
     </div>
-
 
     <!-- Quiz -->
     <div class="quiz-banner" id="quiz-banner">
@@ -491,6 +490,15 @@
         <div style="font-size:.8rem;opacity:.85;margin-bottom:.5rem">Test dine kunnskaper om økonomi!</div>
         <button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>
       </div>
+    </div>
+
+    <!-- KLASSENS SPAREMÅL (visuell velger) -->
+    <div class="class-goals-card" id="class-goals-card" style="display:none;">
+      <div class="class-goals-header">
+        <div class="class-goals-title">🎯 Klassens sparemål</div>
+        <div class="class-goals-sub">Skatt fra belønninger går til ditt valgte mål</div>
+      </div>
+      <div id="class-goals-body"></div>
     </div>
 
     <div class="section-title">📜 Siste transaksjoner</div>
@@ -555,6 +563,7 @@
 
   <!-- KORT TAB -->
   <div class="tab-content content" id="tab-kort">
+    <button onclick="switchTab('bank',document.querySelector('.nav-item'));document.querySelector('.nav-item').classList.add('active')" style="background:transparent;border:none;color:var(--teal);font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;cursor:pointer;margin-bottom:.75rem;padding:0">← Tilbake til nettbank</button>
     <div style="background:linear-gradient(135deg,#1a1a18,#3a3a36);border-radius:20px;padding:1.4rem;color:white;position:relative;overflow:hidden;margin-bottom:1rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between">
       <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;border-radius:50%;background:rgba(239,159,39,.12)"></div>
       <div><div style="width:32px;height:24px;background:var(--amber);border-radius:5px;position:relative;z-index:1"></div><div style="font-family:'Fredoka One',cursive;font-size:1.2rem;letter-spacing:4px;opacity:.9;z-index:1;position:relative;margin-top:.5rem" id="card-number">•••• ••••</div></div>
@@ -587,7 +596,6 @@
     <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
     <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
     <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Oppdrag</div></button>
-    <button class="nav-item"        onclick="switchTab('kort',this)"><div class="nav-icon">💳</div><div class="nav-label">Kort</div></button>
   </div>
 </div>
 
