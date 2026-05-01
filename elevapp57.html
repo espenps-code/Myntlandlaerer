@@ -275,9 +275,11 @@
   .merke-score-val{font-family:'Fredoka One',cursive;font-size:.95rem;color:var(--teal-dark);}
 
   /* MERKER END */
+  .fond-card{border-radius:18px;padding:1.15rem 1.2rem;margin-bottom:.85rem;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.18);}
   .fond-card.low{background:linear-gradient(135deg,#1e3a5f,#2563eb);}
   .fond-card.high{background:linear-gradient(135deg,#4c1d95,#7c3aed);}
   .fond-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);}
+  .fond-card::after{content:'';position:absolute;bottom:-30px;left:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.05);}
   .fond-title{font-family:'Fredoka One',cursive;font-size:1rem;color:rgba(255,255,255,.9);position:relative;z-index:1;}
   .fond-risk{font-size:.7rem;color:rgba(255,255,255,.65);font-weight:700;position:relative;z-index:1;}
   .fond-value{font-family:'Fredoka One',cursive;font-size:2rem;color:#FAC775;position:relative;z-index:1;margin:.4rem 0;}
@@ -626,12 +628,7 @@
         👁 Vis PIN
       </button>
     </div>
-    <div style="background:var(--teal-light);border-radius:13px;padding:.9rem;text-align:center;margin-bottom:1rem;border:2px solid #5DCAA5">
-      <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);margin-bottom:3px">💳 Slik betaler du</div>
-      <div style="font-size:.82rem;color:var(--teal-dark);font-weight:700">Scan belønnings-QR for å motta mynter<br>eller scan betaling fra kassen 📷</div>
-    </div>
-    <button class="big-btn bb-teal" onclick="startScan('payment')">📷 Scan & betal</button>
-    <button class="big-btn bb-ghost" onclick="startScan('reward')">⭐ Scan belønnings-QR</button>
+    <button class="big-btn bb-teal" onclick="startScan('any')" style="margin-top:.25rem">📷 Scan betaling og belønning</button>
   </div>
 
   <!-- BUDSJETT TAB -->
@@ -1956,6 +1953,7 @@ function startScan(mode){
   const hintEl=document.getElementById('scanner-hint');
   if(mode==='payment'){titleEl.textContent='💳 Scan betalings-QR';hintEl.textContent='Hold kassens QR innenfor rammen';}
   else if(mode==='reward'){titleEl.textContent='⭐ Scan belønnings-QR';hintEl.textContent='Hold belønnings-QR innenfor rammen';}
+  else if(mode==='any'){titleEl.textContent='📷 Scan QR';hintEl.textContent='Hold QR-koden innenfor rammen';}
   else if(mode==='loginCard'){titleEl.textContent='💳 Scan bankkortet ditt';hintEl.textContent='Hold QR-koden på kortet innenfor rammen';}
   else if(mode==='loginShop'){titleEl.textContent='🛒 Scan bankkortet ditt';hintEl.textContent='Hold QR-koden på kortet innenfor rammen';}
   document.getElementById('scanner-overlay').classList.add('open');
@@ -1990,6 +1988,11 @@ function handleScan(text){
     else if(scanMode==='reward'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
     else if((scanMode==='payment'||scanMode==='reward')&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
     else if(scanMode==='reward'&&d.type==='event')doEventHendelse(d.subtype,d.amount,d.desc);
+    else if(scanMode==='any'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
+    else if(scanMode==='any'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc);
+    else if(scanMode==='any'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
+    else if(scanMode==='any'&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
+    else if(scanMode==='any'&&d.type==='event')doEventHendelse(d.subtype,d.amount,d.desc);
     else showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');
   }catch(e){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');}
 }
