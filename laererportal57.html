@@ -658,7 +658,76 @@
   .qr-wrap{background:white;padding:12px;border-radius:12px;border:2px solid var(--border);}
   .class-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;}
 
-  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}main{padding:1rem;}header{padding:.4rem .75rem .3rem;}header nav button{font-size:.82rem;padding:.42rem .7rem;}}
+  /* ── HAMBURGER MENU ───────────────────────── */
+  .hamburger-btn{display:none;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);color:#fff;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;transition:background .15s;}
+  .hamburger-btn:hover{background:rgba(255,255,255,.22);}
+  .hamburger-btn span{display:block;width:20px;height:2px;background:#fff;border-radius:2px;transition:all .25s;}
+  .hamburger-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger-btn.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+  .hamburger-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  /* ── MOBILE TABLE → CARDS ─────────────────── */
+  @media(max-width:700px){
+    .grid-2,.grid-3{grid-template-columns:1fr;}
+    main{padding:.75rem;}
+    header{padding:.4rem .75rem .3rem;}
+
+    .hamburger-btn{display:flex;}
+
+    header nav{
+      display:none;
+      flex-direction:column;
+      align-items:stretch;
+      gap:4px;
+      padding:.5rem 0 .4rem;
+      border-top:1px solid rgba(255,255,255,.1);
+      margin-top:.25rem;
+    }
+    header nav.open{display:flex;}
+    header nav button{font-size:.95rem;padding:.65rem 1rem;border-radius:10px;width:100%;justify-content:flex-start;}
+
+    table thead{display:none;}
+    table,table tbody,table tr,table td{display:block;width:100%;}
+    table tr{
+      background:var(--white);
+      border:1.5px solid var(--border);
+      border-radius:14px;
+      padding:.6rem .75rem;
+      margin-bottom:.6rem;
+      position:relative;
+    }
+    table tr:hover td{background:transparent;}
+    table tr:hover{background:var(--teal-light);border-color:var(--teal);}
+    table td{
+      padding:3px 0;
+      border:none;
+      font-size:.9rem;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    table td::before{
+      content:attr(data-label);
+      font-size:.72rem;
+      font-weight:800;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.4px;
+      min-width:72px;
+      flex-shrink:0;
+    }
+    table td:empty{display:none;}
+    .balance-actions{flex-wrap:wrap;}
+    .stat-row{flex-wrap:wrap;}
+    .stat-box{min-width:120px;}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;gap:3px;}
+    .tab{flex-shrink:0;font-size:.82rem;padding:8px 10px;}
+    .grocery-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem;}
+    .form-grid{grid-template-columns:1fr;}
+    .page-title{font-size:1.5rem;}
+    .logout-btn{font-size:.8rem;padding:6px 10px;}
+    .teacher-badge-name{display:none;}
+  }
   @media(min-width:900px){header nav button{font-size:1.05rem;padding:.6rem 1.25rem;}.nav-icon{font-size:1.3rem;}}
 </style>
 </head>
@@ -697,6 +766,9 @@
 <!-- ═══════ APP ═══════ -->
 <div id="app">
 <header>
+  <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileNav()" aria-label="Meny">
+    <span></span><span></span><span></span>
+  </button>
   <div class="logo">🪙 Myntland <span class="logo-badge">5–7. trinn</span></div>
   <nav>
     <button class="active" onclick="showPage('elever')" id="nav-elever"><span class="nav-icon">👩‍🎓</span> Elever</button>
@@ -1637,6 +1709,17 @@ function showPage(page) {
   if (page === 'hendelser') renderHendelser();
   if (page === 'sparemaal') renderClassGoalsPage();
   if (page === 'budsjett') renderBudgetPage();
+  // Close mobile nav after selection
+  const nav = document.querySelector('header nav');
+  const btn = document.getElementById('hamburger-btn');
+  if (nav && btn) { nav.classList.remove('open'); btn.classList.remove('open'); }
+}
+
+function toggleMobileNav() {
+  const nav = document.querySelector('header nav');
+  const btn = document.getElementById('hamburger-btn');
+  nav.classList.toggle('open');
+  btn.classList.toggle('open');
 }
 
 function showElevTab(tab, btn) {
@@ -1704,14 +1787,14 @@ function renderStudentTable() {
       ? `<span class="group-badge" style="color:${grp.color};border-color:${grp.color};background:${grp.color}18;">${grp.emoji||'👥'} ${grp.name}</span>`
       : `<span style="color:var(--muted);font-size:.8rem;">–</span>`;
     return `<tr>
-      <td><div style="display:flex;align-items:center;gap:8px;">
+      <td data-label="Elev"><div style="display:flex;align-items:center;gap:8px;">
         <div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark);">${s.firstname[0]}${s.lastname[0]}</div>
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
-      <td><span class="class-badge">${s.class}</span></td>
-      <td>${grpBadge}</td>
-      <td><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
-      <td><span class="balance-badge">🪙 ${s.balance||0}</span></td>
-      <td><div class="balance-actions">
+      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
+      <td data-label="Gruppe">${grpBadge}</td>
+      <td data-label="PIN"><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
+      <td data-label="Saldo"><span class="balance-badge">🪙 ${s.balance||0}</span></td>
+      <td data-label=""><div class="balance-actions">
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
@@ -1856,7 +1939,7 @@ function renderSaldoTable() {
     const loan  = s.loan      || 0;
     const total = bruk + spare + fl + fh;
     return `<tr>
-      <td>
+      <td data-label="Elev">
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="width:30px;height:30px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;color:var(--teal-dark);flex-shrink:0;">${s.firstname[0]}${s.lastname[0]}</div>
           <div>
@@ -1865,13 +1948,13 @@ function renderSaldoTable() {
           </div>
         </div>
       </td>
-      <td><span class="class-badge">${s.class}</span></td>
-      <td><span class="balance-badge">🪙 ${bruk}</span></td>
-      <td><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
-      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_low_units||0).toFixed(2)} andeler × 🪙${rateLow}">🪙 ${fl}</span></td>
-      <td><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_high_units||0).toFixed(2)} andeler × 🪙${rateHigh}">🪙 ${fh}</span></td>
-      <td>${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
-      <td><div class="balance-actions">
+      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
+      <td data-label="Brukskonto"><span class="balance-badge">🪙 ${bruk}</span></td>
+      <td data-label="Sparekonto"><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
+      <td data-label="Fond lav"><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_low_units||0).toFixed(2)} andeler × 🪙${rateLow}">🪙 ${fl}</span></td>
+      <td data-label="Fond høy"><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_high_units||0).toFixed(2)} andeler × 🪙${rateHigh}">🪙 ${fh}</span></td>
+      <td data-label="Lån">${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
+      <td data-label=""><div class="balance-actions">
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')" title="Legg til">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')" title="Trekk fra">➖</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')" title="Sett saldo">✏️</button>
@@ -3521,25 +3604,25 @@ function renderMerkerPage() {
     const miniBar = (pct, color) => `<div style="height:4px;background:#e5e7eb;border-radius:4px;margin-top:3px;overflow:hidden;width:80px;display:inline-block;"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px;"></div></div>`;
 
     return `<tr>
-      <td>
+      <td data-label="Elev">
         <div style="font-weight:800;font-size:.88rem;">${s.firstname} ${s.lastname}</div>
       </td>
-      <td><span class="class-badge">${s.class}</span></td>
-      <td>
+      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
+      <td data-label="Quiz">
         <div style="font-weight:800;">${quiz}</div>
         ${miniBar(quizPct, '#7c3aed')}
       </td>
-      <td>${quizLevels}</td>
-      <td>
+      <td data-label="Nivå">${quizLevels}</td>
+      <td data-label="Spare">
         <div style="font-weight:800;">🪙 ${spare}</div>
         ${miniBar(sparePct, '#16a34a')}
       </td>
-      <td>${spareLevels}</td>
-      <td>
+      <td data-label="Nivå">${spareLevels}</td>
+      <td data-label="Skatt">
         <div style="font-weight:800;">🪙 ${skatt}</div>
         ${miniBar(skattPct, '#EF9F27')}
       </td>
-      <td>${skattLevels}</td>
+      <td data-label="Nivå">${skattLevels}</td>
     </tr>`;
   }).join('');
 }
