@@ -380,6 +380,150 @@
     background: rgba(255, 255, 255, 0.18);
   }
 
+  /* Live preview phones for elevapps */
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 720px) {
+    .preview-grid { grid-template-columns: 1fr; }
+  }
+
+  .preview-card {
+    background: var(--white);
+    border-radius: 24px;
+    border: 2px solid var(--border);
+    padding: 1.25rem 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .preview-card.purple { border-color: #d8d5fb; }
+  .preview-card.amber  { border-color: #f4dfb5; }
+
+  .preview-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(30, 15, 82, 0.10);
+  }
+
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .preview-title-block { display: flex; flex-direction: column; gap: 4px; }
+
+  .preview-tag {
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 12px;
+    width: fit-content;
+  }
+  .preview-card.amber  .preview-tag { background: var(--amber-light); color: #854F0B; }
+  .preview-card.purple .preview-tag { background: var(--purple-light); color: var(--purple); }
+
+  .preview-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.15rem;
+    color: var(--teal-dark);
+    line-height: 1.1;
+  }
+
+  .preview-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: transform 0.2s ease;
+  }
+  .preview-card.amber  .preview-open { background: var(--amber); color: var(--teal-dark); }
+  .preview-card.purple .preview-open { background: var(--purple); color: white; }
+  .preview-open:hover { transform: translateX(2px); }
+  .preview-open svg { transition: transform 0.2s ease; }
+  .preview-open:hover svg { transform: translateX(3px); }
+
+  /* Phone frame holding the iframe */
+  .preview-phone {
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 26px;
+    padding: 10px 8px;
+    box-shadow:
+      0 12px 30px rgba(30, 15, 82, 0.18),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+  }
+
+  .preview-phone::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 5px;
+    background: #333;
+    border-radius: 999px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .preview-screen {
+    position: relative;
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    aspect-ratio: 9 / 16;
+    width: 100%;
+  }
+
+  .preview-screen iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #fff;
+  }
+
+  .preview-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    align-self: center;
+  }
+
+  .preview-hint .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 0 rgba(29, 158, 117, 0.55);
+    animation: livePulse 2s infinite;
+  }
+
+  @keyframes livePulse {
+    0%   { box-shadow: 0 0 0 0 rgba(29, 158, 117, 0.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(29, 158, 117, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(29, 158, 117, 0); }
+  }
+
   /* Trust-bar for skoleledere */
   .trust-bar {
     background: var(--white);
@@ -651,6 +795,62 @@
         </span>
       </div>
     </a>
+
+  </div>
+
+  <h2 class="section-heading">
+    👀 Forhåndsvisning
+    <span class="pill">Live</span>
+    <span class="preview-hint" style="margin-left:auto"><span class="dot"></span> Trykk og scroll i appene</span>
+  </h2>
+
+  <div class="preview-grid">
+
+    <div class="preview-card amber">
+      <div class="preview-header">
+        <div class="preview-title-block">
+          <span class="preview-tag">Trinn 1–4</span>
+          <span class="preview-title">Småtrinnet</span>
+        </div>
+        <a href="elevapp14.html" class="preview-open" aria-label="Åpne Elevapp småtrinnet i full skjerm">
+          Åpne
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+        </a>
+      </div>
+      <div class="preview-phone">
+        <div class="preview-screen">
+          <iframe
+            src="elevapp14.html"
+            title="Elevapp småtrinnet (1–4) – live forhåndsvisning"
+            loading="lazy"
+            allow="camera; microphone"
+            referrerpolicy="no-referrer"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-card purple">
+      <div class="preview-header">
+        <div class="preview-title-block">
+          <span class="preview-tag">Trinn 5–7</span>
+          <span class="preview-title">Mellomtrinnet</span>
+        </div>
+        <a href="elevapp57.html" class="preview-open" aria-label="Åpne Elevapp mellomtrinnet i full skjerm">
+          Åpne
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+        </a>
+      </div>
+      <div class="preview-phone">
+        <div class="preview-screen">
+          <iframe
+            src="elevapp57.html"
+            title="Elevapp mellomtrinnet (5–7) – live forhåndsvisning"
+            loading="lazy"
+            allow="camera; microphone"
+            referrerpolicy="no-referrer"></iframe>
+        </div>
+      </div>
+    </div>
 
   </div>
 
