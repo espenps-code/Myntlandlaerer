@@ -1958,10 +1958,17 @@ async function confirmBulkAction() {
       newBal = cur + net;
       txDesc = `Ukentlig lønn (netto etter ${Math.round(TAX_RATE*100)}% skatt)`;
       txAmt = net;
-      // Distribute tax to classGoals
+      updates['students57/' + s.fbKey + '/badgeTaxContributed'] = (s.badgeTaxContributed||0) + taxAmt;
       await distributeToGoalsPortal(taxAmt);
     }
-    if (bulkAction === 'tax')    { const t = Math.floor(cur * TAX_RATE); newBal = cur - t; txDesc = 'Skattetrekk 20%'; txAmt = -t; await distributeToGoalsPortal(t); }
+    if (bulkAction === 'tax') {
+      const t = Math.floor(cur * TAX_RATE);
+      newBal = cur - t;
+      txDesc = 'Skattetrekk 20%';
+      txAmt = -t;
+      updates['students57/' + s.fbKey + '/badgeTaxContributed'] = (s.badgeTaxContributed||0) + t;
+      await distributeToGoalsPortal(t);
+    }
     if (bulkAction === 'reset')  {
       // Full nullstilling: brukskonto, sparekonto, fond og lån
       newBal = 0;
@@ -2292,7 +2299,11 @@ async function approveJob() {
   const s = window._students.find(x => x.fbKey === sk);
   if (!j || !s) return;
   const net = Math.floor(j.pay * 0.8);
-  await window._update(fbRef('students57/' + sk), { balance: (s.balance||0) + net });
+  const taxAmt = j.pay - net;
+  await window._update(fbRef('students57/' + sk), {
+    balance: (s.balance||0) + net,
+    badgeTaxContributed: (s.badgeTaxContributed||0) + taxAmt
+  });
   await logTx(sk, 'income', '💼', `Oppdrag: ${j.title} (netto etter 20% skatt)`, net);
   alertEl.innerHTML = `<div class="alert alert-success">✅ 🪙 ${net} utbetalt til ${s.firstname}!</div>`;
   setTimeout(() => alertEl.innerHTML = '', 3000);

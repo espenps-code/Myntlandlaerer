@@ -1389,9 +1389,10 @@ async function doTransfer(type, amt) {
     const taxAmt_lw    = Math.round(gain_lw * getFundTax());
     const net_lw       = amt - taxAmt_lw;
     const upd = {
-      balance:            (s.balance||0) + net_lw,
-      fund_low_units:     Math.max(0, Math.round((totalUnits_lw - unitsSold_lw) * 100) / 100),
-      fund_low_invested:  Math.max(0, invested_lw - costBasis_lw)
+      balance:                (s.balance||0) + net_lw,
+      fund_low_units:         Math.max(0, Math.round((totalUnits_lw - unitsSold_lw) * 100) / 100),
+      fund_low_invested:      Math.max(0, invested_lw - costBasis_lw),
+      badgeTaxContributed:    (s.badgeTaxContributed||0) + taxAmt_lw
     };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
@@ -1439,9 +1440,10 @@ async function doTransfer(type, amt) {
     const taxAmt_hw     = Math.round(gain_hw * getFundTax());
     const net_hw        = amt - taxAmt_hw;
     const upd = {
-      balance:             (s.balance||0) + net_hw,
-      fund_high_units:     Math.max(0, Math.round((totalUnits_hw - unitsSold_hw) * 100) / 100),
-      fund_high_invested:  Math.max(0, invested_hw - costBasis_hw)
+      balance:                (s.balance||0) + net_hw,
+      fund_high_units:        Math.max(0, Math.round((totalUnits_hw - unitsSold_hw) * 100) / 100),
+      fund_high_invested:     Math.max(0, invested_hw - costBasis_hw),
+      badgeTaxContributed:    (s.badgeTaxContributed||0) + taxAmt_hw
     };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
