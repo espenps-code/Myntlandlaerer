@@ -666,10 +666,21 @@
 <!-- ===== SPAREMÅL ===== -->
 <div class="page" id="page-sparemaal">
   <div class="page-title">🏦 Klassens sparemål</div>
-  <div class="page-subtitle">Maks 3 aktive sparemål. Skatt fra elevene fordeles automatisk på tvers av aktive sparemål.</div>
+  <div class="page-subtitle" id="sparemaal-subtitle">Maks 3 aktive sparemål per klasse. Skatt fra elevene går til sparemålene i deres egen klasse.</div>
+  <div class="card" id="goal-class-filter-card" style="display:none;margin-bottom:1rem;">
+    <div class="form-row" style="margin-bottom:0;">
+      <label>Vis sparemål for</label>
+      <select id="goal-class-filter" onchange="renderClassGoalsPage()">
+        <option value="1. klasse">1. klasse</option>
+        <option value="2. klasse">2. klasse</option>
+        <option value="3. klasse">3. klasse</option>
+        <option value="4. klasse">4. klasse</option>
+      </select>
+    </div>
+  </div>
   <div id="class-goals-container"></div>
   <div class="card" id="new-goal-card">
-    <div class="card-title">➕ Nytt sparemål</div>
+    <div class="card-title">➕ Nytt sparemål <span id="new-goal-class-label" style="font-size:.85rem;color:var(--muted);font-weight:600;"></span></div>
     <div class="form-grid">
       <div class="form-row"><label>Emoji</label><input type="text" id="goal-emoji" placeholder="🚀" maxlength="2"></div>
       <div class="form-row"><label>Navn</label><input type="text" id="goal-name" placeholder="f.eks. Klassetur til dyrehagen"></div>
@@ -1797,10 +1808,19 @@ function openBulkModal(action) {
   document.getElementById('bulk-amount-row').style.display = action === 'reset' ? 'none' : 'block';
   const ti = document.getElementById('bulk-tax-info');
   if (action === 'salary') {
-    const active = (window._classGoals || []).filter(g => !g.completed);
-    ti.innerHTML = active.length
-      ? '🏛️ <strong>20 % skatt</strong> trekkes fra brutto og sendes til sparemålet eleven har valgt. Eksempel: 100 mynter brutto → 80 til eleven, 20 til klassens sparemål.'
-      : '⚠️ Ingen aktive sparemål – skatten <strong>holdes tilbake</strong>, men ingenting fordeles. Opprett et sparemål først for å bruke skattepengene.';
+    // Sjekk om det finnes aktive sparemål for noen av de berørte klassene
+    const cls = document.getElementById('bulk-class').value;
+    const targetClasses = cls
+      ? [cls]
+      : (window._currentTeacher?.role === 'admin'
+          ? ['1. klasse','2. klasse','3. klasse','4. klasse']
+          : [window._currentTeacher?.class].filter(Boolean));
+    const hasActive = targetClasses.some(c =>
+      (window._classGoals || []).some(g => !g.completed && g.class === c)
+    );
+    ti.innerHTML = hasActive
+      ? '🏛️ <strong>20 % skatt</strong> trekkes fra brutto. Hvis eleven har valgt et sparemål, går skatten dit. Ellers fordeles den jevnt på alle aktive sparemål i elevens klasse.'
+      : '⚠️ Ingen aktive sparemål for de valgte klassene – skatten <strong>holdes tilbake</strong>. Opprett et sparemål per klasse for at skatten skal komme til nytte.';
     ti.style.display = 'block';
   } else {
     ti.style.display = 'none';
@@ -1813,10 +1833,17 @@ async function confirmBulkAction() {
   const updates = {};
   const targets = window._students.filter(s => !cls || s.class === cls);
 
-  // Per-mål skatt-akkumulering for lønn (skatt sendes til elevens valgte sparemål)
+  // Per-mål skatt-akkumulering for lønn
   const goalsByKey = Object.fromEntries((window._classGoals || []).map(g => [g.fbKey, g]));
+  // Aktive sparemål gruppert per klasse – brukt til jevn fordeling når
+  // eleven ikke har valgt et sparemål selv.
+  const activeGoalsByClass = {};
+  (window._classGoals || []).forEach(g => {
+    if (g.completed || !g.class) return;
+    if (!activeGoalsByClass[g.class]) activeGoalsByClass[g.class] = [];
+    activeGoalsByClass[g.class].push(g);
+  });
   const taxPerGoal = {};
-  const studentsWithoutGoal = [];
 
   for (const s of targets) {
     const cur = s.balance || 0;
@@ -1833,12 +1860,27 @@ async function confirmBulkAction() {
       txDesc = 'Ukentlig lønn (netto etter 20 % skatt)';
       txAmt  = net;
       txIcon = '💼';
-      // Send skatten til elevens valgte sparemål (hvis det er aktivt)
-      const chosen = s.chosenGoalKey ? goalsByKey[s.chosenGoalKey] : null;
-      if (chosen && !chosen.completed && taxAmt > 0) {
-        taxPerGoal[chosen.fbKey] = (taxPerGoal[chosen.fbKey] || 0) + taxAmt;
-      } else if (taxAmt > 0) {
-        studentsWithoutGoal.push(s.firstname + ' ' + s.lastname);
+      // Send skatten – først prøv elevens valgte sparemål (hvis det
+      // tilhører klassen og er aktivt). Hvis ikke, fordel jevnt på alle
+      // aktive sparemål i elevens klasse.
+      if (taxAmt > 0) {
+        const chosen = s.chosenGoalKey ? goalsByKey[s.chosenGoalKey] : null;
+        const goalMatchesClass = chosen && (!chosen.class || chosen.class === s.class);
+        if (chosen && !chosen.completed && goalMatchesClass) {
+          taxPerGoal[chosen.fbKey] = (taxPerGoal[chosen.fbKey] || 0) + taxAmt;
+        } else {
+          // Jevn fordeling på elevens klasse-sparemål
+          const classGoals = activeGoalsByClass[s.class] || [];
+          if (classGoals.length > 0) {
+            const perGoal = Math.floor(taxAmt / classGoals.length);
+            const remainder = taxAmt - (perGoal * classGoals.length);
+            classGoals.forEach((g, i) => {
+              const share = perGoal + (i < remainder ? 1 : 0);
+              if (share > 0) taxPerGoal[g.fbKey] = (taxPerGoal[g.fbKey] || 0) + share;
+            });
+          }
+          // Hvis ingen aktive mål i klassen, holdes skatten tilbake (stille).
+        }
       }
     } else if (bulkAction === 'reset') {
       newBal = 0;
@@ -1864,14 +1906,6 @@ async function confirmBulkAction() {
   }
 
   await window._update(fbRef('/'), updates);
-
-  // Gi læreren beskjed hvis noen elever ikke hadde valgt sparemål
-  if (bulkAction === 'salary' && studentsWithoutGoal.length > 0) {
-    const navn = studentsWithoutGoal.slice(0, 5).join(', ') + (studentsWithoutGoal.length > 5 ? ' …' : '');
-    setTimeout(() => {
-      alert('💡 ' + studentsWithoutGoal.length + ' elev(er) hadde ikke valgt sparemål – skatten deres ble holdt tilbake.\n\nElever: ' + navn + '\n\nBe dem velge sparemål i elevappen.');
-    }, 100);
-  }
 
   closeModal('modal-bulk');
 }
@@ -2674,11 +2708,22 @@ async function logTx14(sk, type, icon, desc, amount) {
 }
 
 // ════════════════════════════════════════════════════════════
-// SPAREMÅL – classGoals14
+// SPAREMÅL – classGoals14 (per klasse)
 // ════════════════════════════════════════════════════════════
 window._classGoals = window._classGoals || [];
 
+// Hjelper: hvilken klasse jobber læreren med på sparemål-siden?
+function getActiveGoalClass() {
+  const t = window._currentTeacher;
+  if (t?.role === 'admin') {
+    return document.getElementById('goal-class-filter')?.value || '1. klasse';
+  }
+  return t?.class || '';
+}
+
 async function distributeToGoals14(amount) {
+  // Beholdt for bakoverkompatibilitet, men ikke lenger i bruk – skatt går nå
+  // direkte til elevens valgte sparemål i elevens egen klasse.
   if (!amount || !window._classGoals?.length) return;
   const active = window._classGoals.filter(g => !g.completed);
   if (!active.length) return;
@@ -2695,9 +2740,14 @@ async function distributeToGoals14(amount) {
 
 async function createClassGoal() {
   if (!ready()) return;
-  const active = (window._classGoals || []).filter(g => !g.completed);
+  const cls = getActiveGoalClass();
+  if (!cls) {
+    document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Velg en klasse først.</div>';
+    return;
+  }
+  const active = (window._classGoals || []).filter(g => !g.completed && g.class === cls);
   if (active.length >= 3) {
-    document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Maks 3 aktive sparemål samtidig.</div>';
+    document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Maks 3 aktive sparemål samtidig i ' + cls + '.</div>';
     return;
   }
   const emoji  = document.getElementById('goal-emoji').value.trim() || '🏦';
@@ -2709,11 +2759,11 @@ async function createClassGoal() {
     return;
   }
   await window._set(window._push(fbRef('classGoals14')), {
-    emoji, name, target, desc, saved: 0, completed: false, created: Date.now()
+    emoji, name, target, desc, saved: 0, completed: false, created: Date.now(), class: cls
   });
   ['goal-emoji','goal-name','goal-desc'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('goal-target').value = '1000';
-  document.getElementById('goal-alert').innerHTML = '<div class="alert alert-success">✅ «' + name + '» opprettet!</div>';
+  document.getElementById('goal-alert').innerHTML = '<div class="alert alert-success">✅ «' + name + '» opprettet for ' + cls + '!</div>';
   setTimeout(() => document.getElementById('goal-alert').innerHTML = '', 3000);
 }
 
@@ -2725,18 +2775,60 @@ async function deleteClassGoal(fbKey) {
 function renderClassGoalsPage() {
   const el = document.getElementById('class-goals-container');
   if (!el) return;
-  const goals = window._classGoals || [];
+  const t = window._currentTeacher;
+  const isAdmin = t?.role === 'admin';
+  const cls = getActiveGoalClass();
+
+  // Vis klasse-velger kun for admin
+  const filterCard = document.getElementById('goal-class-filter-card');
+  if (filterCard) filterCard.style.display = isAdmin ? 'block' : 'none';
+
+  // Oppdater "Nytt sparemål"-kortet med klassenavn
+  const newCardLabel = document.getElementById('new-goal-class-label');
+  if (newCardLabel) newCardLabel.textContent = cls ? '· ' + cls : '';
+
+  // Subtitle
+  const sub = document.getElementById('sparemaal-subtitle');
+  if (sub) {
+    sub.textContent = isAdmin
+      ? 'Maks 3 aktive sparemål per klasse. Velg klasse over for å se og redigere sparemål.'
+      : 'Maks 3 aktive sparemål for ' + cls + '. Skatt fra elevene i ' + cls + ' går til disse sparemålene.';
+  }
+
+  // Filtrer sparemål etter aktiv klasse
+  const allGoals = window._classGoals || [];
+  const goals = allGoals.filter(g => g.class === cls);
+  const legacy = allGoals.filter(g => !g.class); // gamle sparemål uten klasse
   const active = goals.filter(g => !g.completed);
   const done   = goals.filter(g =>  g.completed);
   const newCard = document.getElementById('new-goal-card');
   if (newCard) newCard.style.display = active.length >= 3 ? 'none' : 'block';
-  if (!goals.length) { el.innerHTML = ''; return; }
-  el.innerHTML = [...active, ...done].map(g => {
+
+  // Legacy-varsel kun for admin
+  let legacyHTML = '';
+  if (isAdmin && legacy.length) {
+    legacyHTML = `<div class="card" style="background:#FEF3C7;border:2px solid var(--amber);">
+      <div style="font-weight:800;color:#854F0B;margin-bottom:.5rem;">⚠️ ${legacy.length} sparemål uten klasse</div>
+      <div style="font-size:.85rem;color:#92400E;margin-bottom:.75rem;">Disse ble opprettet før klasse-funksjonen og vises ikke til elevene. Slett dem og opprett nye for hver klasse:</div>
+      ${legacy.map(g => `<div style="display:flex;align-items:center;gap:8px;padding:.5rem;background:white;border-radius:8px;margin-bottom:.4rem;">
+        <span style="font-size:1.2rem;">${g.emoji||'🏦'}</span>
+        <span style="flex:1;font-weight:700;">${g.name}</span>
+        <span style="font-size:.8rem;color:var(--muted);">🪙 ${g.saved||0}/${g.target}</span>
+        <button onclick="deleteClassGoal('${g.fbKey}')" style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:1.1rem;">🗑️</button>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  if (!goals.length) {
+    el.innerHTML = legacyHTML + '<div class="card" style="text-align:center;color:var(--muted);padding:1.5rem;">Ingen sparemål for ' + (cls || 'denne klassen') + ' ennå. Opprett ett under!</div>';
+    return;
+  }
+  el.innerHTML = legacyHTML + [...active, ...done].map(g => {
     const pct = Math.min(100, Math.round((g.saved||0) / g.target * 100));
     return `<div class="card">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:.75rem;">
         <div style="font-size:1.8rem;">${g.emoji||'🏦'}</div>
-        <div style="flex:1;"><div style="font-weight:800;font-size:1.05rem;">${g.name}${g.completed?' ✅':''}</div><div style="font-size:.8rem;color:var(--muted);">Mål: 🪙 ${g.target}${g.desc?' · '+g.desc:''}</div></div>
+        <div style="flex:1;"><div style="font-weight:800;font-size:1.05rem;">${g.name}${g.completed?' ✅':''}</div><div style="font-size:.8rem;color:var(--muted);">Mål: 🪙 ${g.target}${g.desc?' · '+g.desc:''}${g.class?' · '+g.class:''}</div></div>
         <button onclick="deleteClassGoal('${g.fbKey}')" style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:1.1rem;">🗑️</button>
       </div>
       <div style="height:12px;background:var(--bg);border-radius:20px;overflow:hidden;margin-bottom:.5rem;border:1px solid var(--border);">

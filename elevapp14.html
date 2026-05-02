@@ -874,6 +874,8 @@ function tryLogin() {
       renderSavings();
     })();
     startClassGoalsListener();
+    // Re-rendre umiddelbart for ny innlogget elev (i tilfelle samme nettleser-økt)
+    renderMyClassGoals();
     checkQuizStatus();
     switchCustomerTab('bank', document.querySelector('.nav-item'));
     showScreen('screen-customer');
@@ -1071,15 +1073,24 @@ function goToSavingsTab() {
 
 // ── Klassens sparemål (live) ─────────────────────────────────────────────
 let _classGoalsUnsub = null;
+window._allGoalsRaw = []; // alle sparemål fra Firebase, ufiltrert
+
 function startClassGoalsListener() {
   if (_classGoalsUnsub || !window._onValue || !window._ref || !window._db) return;
   try {
     _classGoalsUnsub = window._onValue(window._ref(window._db, 'classGoals14'), snap => {
       const v = snap.val() || {};
-      const goals = Object.entries(v).map(([k, g]) => ({ ...g, fbKey: k }));
-      renderClassGoals(goals);
+      window._allGoalsRaw = Object.entries(v).map(([k, g]) => ({ ...g, fbKey: k }));
+      renderMyClassGoals();
     });
   } catch(e) { console.warn('classGoals14 listener feilet:', e); }
+}
+
+// Filtrer til kun denne elevens egen klasse, og rendre
+function renderMyClassGoals() {
+  const myClass = window._currentStudent?.class || '';
+  const goals = (window._allGoalsRaw || []).filter(g => g.class === myClass);
+  renderClassGoals(goals);
 }
 
 function renderClassGoals(goals) {
@@ -1112,8 +1123,8 @@ function renderClassGoals(goals) {
   } else if (active.length) {
     headerHTML = `<div class="chosen-goal-banner empty" onclick="openChooseGoalModal()">
       <div class="chosen-goal-left">
-        <div class="chosen-goal-label" style="color:var(--coral);">⚠️ Du har ikke valgt et sparemål ennå</div>
-        <div class="chosen-goal-name" style="font-size:.85rem;color:var(--muted);">Skatten din venter på å bli plassert</div>
+        <div class="chosen-goal-label" style="color:var(--teal-dark);">⭐ Velg et sparemål å støtte</div>
+        <div class="chosen-goal-name" style="font-size:.85rem;color:var(--muted);">Skatten din fordeles jevnt til du velger</div>
       </div>
       <div class="chosen-goal-edit" style="background:var(--amber);color:var(--teal-dark);">Velg</div>
     </div>`;
@@ -1686,23 +1697,9 @@ async function doReward(amount) {
   const s = window._currentStudent;
   if (!s) return;
 
-  // Sjekk at eleven har valgt et gyldig (aktivt) sparemål — ellers be dem velge først
-  const goals = window._allClassGoals || [];
-  const active = goals.filter(g => !g.completed);
-  if (active.length > 0) {
-    const chosen = s.chosenGoalKey ? active.find(g => g.fbKey === s.chosenGoalKey) : null;
-    if (!chosen) {
-      // Be eleven velge før belønning kan tas imot
-      showSuccess('⚠️','Velg sparemål først!','','Du må velge hvilket sparemål skatten din skal støtte.');
-      setTimeout(() => {
-        document.getElementById('success-overlay').classList.remove('open');
-        openChooseGoalModal();
-      }, 1500);
-      return;
-    }
-  }
-
-  // 20 % skatt trekkes fra brutto, går til elevens valgte sparemål
+  // 20 % skatt trekkes fra brutto. Hvis eleven har valgt et aktivt sparemål
+  // (i sin egen klasse), går skatten dit. Ellers fordeles den jevnt på alle
+  // aktive sparemål i klassen – ingen blokkering, ingen popup.
   const taxAmt = Math.floor(amount * 0.20);
   const net    = amount - taxAmt;
   const newBal = s.balance + net;
@@ -1718,12 +1715,38 @@ async function doReward(amount) {
   document.getElementById('customer-balance').textContent = newBal;
   transactions.unshift(tx);
   renderTransactions();
-  // Gi skatten til elevens valgte mål
-  if (taxAmt > 0 && s.chosenGoalKey) {
-    try { await addTaxToChosenGoal(s.chosenGoalKey, taxAmt); } catch(e) { console.warn('Skatt-feil:', e); }
+  // Gi skatten til riktig(e) mål
+  if (taxAmt > 0) {
+    try { await routeTaxToClassGoals(s, taxAmt); } catch(e) { console.warn('Skatt-feil:', e); }
   }
   playSuccessChime();
   showSuccess('🎉','Belønning!','+' + net + ' 🪙','Ny saldo: ' + newBal + ' mynter (20 % skatt: ' + taxAmt + ')');
+}
+
+// Sender skatt til elevens valgte sparemål hvis det er gyldig, ellers
+// fordeler jevnt på alle aktive sparemål i elevens klasse.
+async function routeTaxToClassGoals(s, taxAmt) {
+  if (!taxAmt || !s) return;
+  const all = window._allGoalsRaw || [];
+  const myClassActive = all.filter(g => !g.completed && g.class === s.class);
+  if (!myClassActive.length) return; // ingen mål i klassen – skatt holdes tilbake stille
+
+  // Foretrukket: elevens valgte mål, hvis det er aktivt og i klassen
+  const chosen = s.chosenGoalKey ? myClassActive.find(g => g.fbKey === s.chosenGoalKey) : null;
+  if (chosen) {
+    await addTaxToChosenGoal(chosen.fbKey, taxAmt);
+    return;
+  }
+
+  // Fallback: jevn fordeling med rest til de første målene
+  const perGoal = Math.floor(taxAmt / myClassActive.length);
+  const remainder = taxAmt - (perGoal * myClassActive.length);
+  for (let i = 0; i < myClassActive.length; i++) {
+    const share = perGoal + (i < remainder ? 1 : 0);
+    if (share > 0) {
+      await addTaxToChosenGoal(myClassActive[i].fbKey, share);
+    }
+  }
 }
 
 // Legger skatten til ett bestemt mål, men kun hvis det fortsatt er aktivt
