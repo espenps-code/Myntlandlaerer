@@ -55,6 +55,9 @@
         ? all.filter(s => VALID14.includes(s.class))
         : all.filter(s => s.class === window._currentTeacher?.class);
       renderStudentTable(); renderSaldoTable(); updateStats(); renderTableAvatars();
+      if (document.getElementById('page-merker')?.classList.contains('active')) {
+        if (typeof renderMerkerPage === 'function') renderMerkerPage();
+      }
     });
 
     onValue(ref(db, 'groceries'), snap => {
@@ -91,6 +94,14 @@
         window._savings[k] = { balance: v?.balance || 0 };
       });
       if (document.getElementById('page-saldo').classList.contains('active')) renderSaldoTable();
+    });
+
+    // ── Innstillinger (inkl. merkeparametere) ───────────────────────────
+    onValue(ref(db, 'settings'), snap => {
+      window._settings = snap.val() || {};
+      if (document.getElementById('page-merker')?.classList.contains('active')) {
+        loadBadgeParamsToForm();
+      }
     });
   }
 
@@ -398,6 +409,7 @@
     <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
     <button onclick="showPage('sparemaal')" id="nav-sparemaal"><span class="nav-icon">🏦</span> Sparemål</button>
     <button onclick="showPage('hendelser')" id="nav-hendelser"><span class="nav-icon">🎲</span> Hendelser</button>
+    <button onclick="showPage('merker');renderMerkerPage()" id="nav-merker"><span class="nav-icon">🏅</span> Merker</button>
     <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;"><span class="nav-icon">⚙️</span> Lærere</button>
   </nav>
   <div class="header-right">
@@ -877,6 +889,91 @@
   </div>
 </div>
 
+<!-- ===== MERKER ===== -->
+<div class="page" id="page-merker">
+  <div class="page-title">🏅 Merker</div>
+  <div class="page-subtitle">Oversikt over elevenes merker – rediger krav og reset ved skolestart</div>
+
+  <!-- Merkeparametere -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">⚙️ Merkekrav og bonuser</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Endre krav for hvert merke og bonusbeløp. Klikk «Lagre» for å oppdatere.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1rem;">
+      <!-- Rentemester -->
+      <div style="background:#f0fdf4;border-radius:12px;padding:1rem;border:1.5px solid #86efac;">
+        <div style="font-weight:800;color:#14532d;margin-bottom:.75rem;">📈 Rentemester – renter til sparekonto 🪙</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥉 Bronse</label><input type="number" id="bp14-renterBronse" min="1" style="width:100px;"> 🪙</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥈 Sølv</label><input type="number" id="bp14-renterSolv" min="1" style="width:100px;"> 🪙</div>
+        <div class="form-row"><label style="width:70px;">🥇 Gull</label><input type="number" id="bp14-renterGull" min="1" style="width:100px;"> 🪙</div>
+      </div>
+      <!-- Quizmester -->
+      <div style="background:var(--purple-light);border-radius:12px;padding:1rem;border:1.5px solid #c4b5fd;">
+        <div style="font-weight:800;color:#4c1d95;margin-bottom:.75rem;">🧠 Quizmester – riktige svar totalt</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥉 Bronse</label><input type="number" id="bp14-quizBronse" min="1" style="width:100px;"> svar</div>
+        <div class="form-row" style="margin-bottom:.5rem;"><label style="width:70px;">🥈 Sølv</label><input type="number" id="bp14-quizSolv" min="1" style="width:100px;"> svar</div>
+        <div class="form-row"><label style="width:70px;">🥇 Gull</label><input type="number" id="bp14-quizGull" min="1" style="width:100px;"> svar</div>
+      </div>
+    </div>
+    <!-- Bonuser -->
+    <div style="background:var(--bg);border-radius:12px;padding:1rem;border:1.5px solid var(--border);margin-bottom:1rem;">
+      <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.75rem;">🎁 Bonusmynter per merketype</div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <div class="form-row"><label>🥉 Bronse-bonus</label><input type="number" id="bp14-bonusBronse" min="0" style="width:100px;"> 🪙</div>
+        <div class="form-row"><label>🥈 Sølv-bonus</label><input type="number" id="bp14-bonusSolv" min="0" style="width:100px;"> 🪙</div>
+        <div class="form-row"><label>🥇 Gull-bonus</label><input type="number" id="bp14-bonusGull" min="0" style="width:100px;"> 🪙</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="saveBadgeParams14()">💾 Lagre merkeparametere</button>
+      <div id="bp14-save-alert" style="font-size:.85rem;font-weight:800;color:var(--teal-dark);"></div>
+    </div>
+  </div>
+
+  <!-- Reset ved skolestart -->
+  <div class="card" style="margin-bottom:1.5rem;border:2px solid var(--coral);background:var(--coral-light);">
+    <div class="card-title" style="color:var(--coral);">🔄 Reset merker ved skolestart</div>
+    <p style="font-size:.85rem;color:#7f1d1d;margin-bottom:1rem;">Sletter alle oppnådde merker og nullstiller fremgangstellere (renter opptjent, quizriktige) for valgte elever. Utfør kun ved nytt skoleår eller prosjektstart!</p>
+    <div class="form-row" style="margin-bottom:.75rem;">
+      <label>Velg klasse (tomt = alle)</label>
+      <select id="badge14-reset-class">
+        <option value="">Alle klasser</option>
+        <option value="1. klasse">1. klasse</option>
+        <option value="2. klasse">2. klasse</option>
+        <option value="3. klasse">3. klasse</option>
+        <option value="4. klasse">4. klasse</option>
+      </select>
+    </div>
+    <button class="btn btn-coral" onclick="confirmBadgeReset14()">🔄 Reset alle merker</button>
+    <div id="badge14-reset-alert" style="margin-top:.75rem;"></div>
+  </div>
+
+  <!-- Elevtabell -->
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>📋 Elevenes merkestatus</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select onchange="renderMerkerPage()" id="merker14-class-filter">
+          <option value="">Alle klasser</option>
+          <option value="1. klasse">1. klasse</option>
+          <option value="2. klasse">2. klasse</option>
+          <option value="3. klasse">3. klasse</option>
+          <option value="4. klasse">4. klasse</option>
+        </select>
+      </div>
+    </div>
+    <table id="merker14-table">
+      <thead><tr>
+        <th>Elev</th><th>Klasse</th>
+        <th>📈 Renter opptjent</th>
+        <th>📈 Rentemester</th>
+        <th>🧠 Quiz totalt</th>
+        <th>🧠 Quizmester</th>
+      </tr></thead>
+      <tbody id="merker14-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
 <!-- ===== LÆRERE (admin) ===== -->
 <div class="page" id="page-laerere">
   <div class="page-title">⚙️ Lærerprofilene</div>
@@ -1158,6 +1255,7 @@ function showPage(page) {
   if (page === 'sparemaal') renderClassGoalsPage();
   if (page === 'hendelser') renderHendelser();
   if (page === 'saldo') renderSaldoTable();
+  if (page === 'merker') renderMerkerPage();
   // Close mobile nav after selection
   const nav = document.querySelector('header nav');
   const btn = document.getElementById('hamburger-btn');
@@ -3176,6 +3274,126 @@ function printHendelserCards14(cards) {
 </body></html>`);
   win.document.close();
 }
+// ════════════════════════════════════════════════════════════
+// MERKER (1–4)
+// ════════════════════════════════════════════════════════════
+
+const DEFAULT_BADGE_PARAMS_14 = {
+  renterBronse: 50,  renterSolv: 150, renterGull: 300,
+  quizBronse:   25,  quizSolv:    50, quizGull:    75,
+  bonusBronse:  100, bonusSolv:   500, bonusGull:  1000
+};
+
+function loadBadgeParamsToForm() {
+  const bp = window._settings?.badgeParams14 || DEFAULT_BADGE_PARAMS_14;
+  const fields = ['renterBronse','renterSolv','renterGull','quizBronse','quizSolv','quizGull','bonusBronse','bonusSolv','bonusGull'];
+  fields.forEach(f => {
+    const el = document.getElementById('bp14-' + f);
+    if (el) el.value = bp[f] !== undefined ? bp[f] : DEFAULT_BADGE_PARAMS_14[f];
+  });
+}
+
+async function saveBadgeParams14() {
+  const alertEl = document.getElementById('bp14-save-alert');
+  const fields = ['renterBronse','renterSolv','renterGull','quizBronse','quizSolv','quizGull','bonusBronse','bonusSolv','bonusGull'];
+  const bp = {};
+  for (const f of fields) {
+    const v = parseInt(document.getElementById('bp14-' + f)?.value);
+    if (isNaN(v) || v < 0) {
+      alertEl.textContent = '⚠️ Alle felter må være positive tall';
+      alertEl.style.color = 'var(--coral)';
+      return;
+    }
+    bp[f] = v;
+  }
+  try {
+    await window._update(fbRef('settings'), { badgeParams14: bp });
+    if (!window._settings) window._settings = {};
+    window._settings.badgeParams14 = bp;
+    alertEl.textContent = '✅ Lagret!';
+    alertEl.style.color = 'var(--teal-dark)';
+    setTimeout(() => alertEl.textContent = '', 2500);
+    renderMerkerPage();
+  } catch(e) {
+    alertEl.textContent = '⚠️ Feilet: ' + e.message;
+    alertEl.style.color = 'var(--coral)';
+  }
+}
+
+async function confirmBadgeReset14() {
+  const cls = document.getElementById('badge14-reset-class').value;
+  const alertEl = document.getElementById('badge14-reset-alert');
+  const target = cls ? cls : 'alle elever';
+  if (!confirm(`⚠️ Vil du virkelig slette ALLE merker og nullstille fremgang for ${target}? Dette kan ikke angres!`)) return;
+
+  try {
+    const students = window._students.filter(s => !cls || s.class === cls);
+    const updates = {};
+    for (const s of students) {
+      updates['students14/' + s.fbKey + '/badges'] = null;
+      updates['students14/' + s.fbKey + '/badgeRenterEarned'] = 0;
+      updates['students14/' + s.fbKey + '/quizCorrectTotal'] = 0;
+    }
+    await window._update(fbRef('/'), updates);
+    alertEl.innerHTML = `<div class="alert alert-success">✅ Merker nullstilt for ${students.length} elever!</div>`;
+    setTimeout(() => alertEl.innerHTML = '', 3500);
+    renderMerkerPage();
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠️ Feilet: ${e.message}</div>`;
+  }
+}
+
+function badgeLevelBadge14(earned, level) {
+  const labels = { bronse: '🥉', sølv: '🥈', gull: '🥇' };
+  if (earned) return `<span title="Oppnådd ${level}" style="font-size:1.1rem;">${labels[level]}</span>`;
+  return `<span title="Ikke oppnådd ${level}" style="opacity:.25;font-size:1.1rem;">${labels[level]}</span>`;
+}
+
+function renderMerkerPage() {
+  loadBadgeParamsToForm();
+  const tbody = document.getElementById('merker14-table-body'); if (!tbody) return;
+  const cls = document.getElementById('merker14-class-filter')?.value || '';
+  const bp = window._settings?.badgeParams14 || DEFAULT_BADGE_PARAMS_14;
+  const students = (window._students || []).filter(s => !cls || s.class === cls);
+
+  if (!students.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever</td></tr>';
+    return;
+  }
+
+  // Sort by lastname, firstname
+  const sorted = [...students].sort((a,b) => {
+    return (a.lastname||'').localeCompare(b.lastname||'') || (a.firstname||'').localeCompare(b.firstname||'');
+  });
+
+  tbody.innerHTML = sorted.map(s => {
+    const badges = s.badges || {};
+    const renter = s.badgeRenterEarned || 0;
+    const quiz   = s.quizCorrectTotal  || 0;
+
+    const renterLevels = badgeLevelBadge14(!!badges.renter_bronse,'bronse')
+                       + badgeLevelBadge14(!!badges.renter_sølv,'sølv')
+                       + badgeLevelBadge14(!!badges.renter_gull,'gull');
+    const quizLevels   = badgeLevelBadge14(!!badges.quiz_bronse,'bronse')
+                       + badgeLevelBadge14(!!badges.quiz_sølv,'sølv')
+                       + badgeLevelBadge14(!!badges.quiz_gull,'gull');
+
+    const renterPct = Math.min(100, Math.round(renter / bp.renterGull * 100));
+    const quizPct   = Math.min(100, Math.round(quiz   / bp.quizGull   * 100));
+
+    const miniBar = (pct, color) => `<div style="height:4px;background:#e5e7eb;border-radius:4px;margin-top:3px;overflow:hidden;width:80px;display:inline-block;"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px;"></div></div>`;
+
+    return `<tr>
+      <td data-label="Elev"><div style="font-weight:800;font-size:.88rem;">${s.firstname||''} ${s.lastname||''}</div></td>
+      <td data-label="Klasse"><span class="class-badge">${s.class||''}</span></td>
+      <td data-label="Renter"><div style="font-weight:800;">🪙 ${renter}</div>${miniBar(renterPct, '#16a34a')}</td>
+      <td data-label="Nivå">${renterLevels}</td>
+      <td data-label="Quiz"><div style="font-weight:800;">${quiz}</div>${miniBar(quizPct, '#7c3aed')}</td>
+      <td data-label="Nivå">${quizLevels}</td>
+    </tr>`;
+  }).join('');
+}
+
 </script>
 </body>
 </html>
