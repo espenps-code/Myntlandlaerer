@@ -670,9 +670,22 @@
   @media(max-width:700px){
     .grid-2,.grid-3{grid-template-columns:1fr;}
     main{padding:.75rem;}
-    header{padding:.4rem .75rem .3rem;}
+    header{padding:.4rem .75rem .3rem;overflow:visible;}
 
     .hamburger-btn{display:flex;}
+
+    /* Logo shrinks */
+    .logo{font-size:1.1rem;gap:4px;}
+    .logo-monster{width:26px;height:26px;}
+    .logo-monster.right{display:none;}
+    .logo-badge{font-size:.65rem;padding:2px 6px;}
+
+    /* header-right: compact */
+    .header-right{gap:4px;flex-shrink:0;min-width:0;}
+    .teacher-badge{padding:4px 6px;gap:4px;}
+    .teacher-badge-name{display:none;}
+    .teacher-badge-avatar{width:28px;height:28px;font-size:.72rem;}
+    .logout-btn{font-size:.76rem;padding:5px 8px;}
 
     header nav{
       display:none;
@@ -682,40 +695,18 @@
       padding:.5rem 0 .4rem;
       border-top:1px solid rgba(255,255,255,.1);
       margin-top:.25rem;
+      grid-column:1/-1;
     }
     header nav.open{display:flex;}
     header nav button{font-size:.95rem;padding:.65rem 1rem;border-radius:10px;width:100%;justify-content:flex-start;}
 
     table thead{display:none;}
     table,table tbody,table tr,table td{display:block;width:100%;}
-    table tr{
-      background:var(--white);
-      border:1.5px solid var(--border);
-      border-radius:14px;
-      padding:.6rem .75rem;
-      margin-bottom:.6rem;
-      position:relative;
-    }
+    table tr{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:.6rem .75rem;margin-bottom:.6rem;position:relative;}
     table tr:hover td{background:transparent;}
     table tr:hover{background:var(--teal-light);border-color:var(--teal);}
-    table td{
-      padding:3px 0;
-      border:none;
-      font-size:.9rem;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    table td::before{
-      content:attr(data-label);
-      font-size:.72rem;
-      font-weight:800;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.4px;
-      min-width:72px;
-      flex-shrink:0;
-    }
+    table td{padding:3px 0;border:none;font-size:.9rem;display:flex;align-items:center;gap:8px;}
+    table td::before{content:attr(data-label);font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;min-width:72px;flex-shrink:0;}
     table td:empty{display:none;}
     .balance-actions{flex-wrap:wrap;}
     .stat-row{flex-wrap:wrap;}
@@ -725,8 +716,6 @@
     .grocery-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem;}
     .form-grid{grid-template-columns:1fr;}
     .page-title{font-size:1.5rem;}
-    .logout-btn{font-size:.8rem;padding:6px 10px;}
-    .teacher-badge-name{display:none;}
   }
   @media(min-width:900px){header nav button{font-size:1.05rem;padding:.6rem 1.25rem;}.nav-icon{font-size:1.3rem;}}
 </style>
@@ -900,11 +889,11 @@
 
   <!-- Elevliste -->
   <div class="card">
-    <div class="card-title" style="justify-content:space-between;">
+    <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span>📋 Elevliste</span>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="text" placeholder="Søk elev…" style="width:200px;" oninput="filterStudents(this.value)" id="search-input">
-        <select onchange="filterClass(this.value)" style="width:130px;" id="filter-class-select"><option value="">Alle klasser</option></select>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1;min-width:0;justify-content:flex-end;">
+        <input type="text" placeholder="Søk elev…" style="width:180px;min-width:120px;flex:1;" oninput="filterStudents(this.value)" id="search-input">
+        <select onchange="filterClass(this.value)" style="width:130px;min-width:100px;flex:1;" id="filter-class-select"><option value="">Alle klasser</option></select>
       </div>
     </div>
     <table><thead><tr><th>Elev</th><th>Klasse</th><th>Gruppe</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
