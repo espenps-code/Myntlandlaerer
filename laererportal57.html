@@ -190,6 +190,7 @@
         const net = Math.floor(salaryAmount * (1 - tax));
         const taxAmt = salaryAmount - net;
         updates['students57/' + s.fbKey + '/balance'] = (s.balance||0) + net;
+        updates['students57/' + s.fbKey + '/badgeTaxContributed'] = (s.badgeTaxContributed||0) + taxAmt;
         await set(ref(db, 'transactions57/' + s.fbKey + '/' + Date.now()), {
           type:'income', icon:'💼', desc:`Ukentlig lønn (netto etter ${Math.round(tax*100)}% skatt)`, amount:net, ts:Date.now()
         });
@@ -253,6 +254,7 @@
 
       // Bygg studentKey -> [jobs] map for å oppdatere balanse én gang per elev
       const balanceUpdates = {};
+      const taxContribUpdates = {};
       let totalTax = 0;
       let payoutCount = 0;
 
@@ -267,6 +269,7 @@
           const net = Math.floor(gross * (1 - tax));
           const taxAmt = gross - net;
           balanceUpdates[sk] = (balanceUpdates[sk] || (s.balance || 0)) + net;
+          taxContribUpdates[sk] = (taxContribUpdates[sk] || (s.badgeTaxContributed || 0)) + taxAmt;
           await set(ref(db, 'transactions57/' + sk + '/' + Date.now() + '_' + job.fbKey), {
             type:'income', icon: job.emoji || '💼',
             desc:`Ukelønn: ${job.title} (netto etter ${Math.round(tax*100)}% skatt)`,
@@ -280,6 +283,9 @@
       const updates = {};
       Object.entries(balanceUpdates).forEach(([sk, newBal]) => {
         updates['students57/' + sk + '/balance'] = newBal;
+      });
+      Object.entries(taxContribUpdates).forEach(([sk, newTax]) => {
+        updates['students57/' + sk + '/badgeTaxContributed'] = newTax;
       });
       if (Object.keys(updates).length) await update(ref(db, '/'), updates);
 
