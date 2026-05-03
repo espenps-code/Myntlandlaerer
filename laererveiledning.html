@@ -144,7 +144,8 @@
     font-family: 'Fredoka One', cursive;
     color: var(--teal-dark);
     font-size: 1rem;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
   }
   .quicknav ul {
     list-style: none;
@@ -152,6 +153,7 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.5rem;
   }
   .quicknav a {
@@ -393,6 +395,78 @@
     transform: translateY(-2px);
   }
 
+  /* Elev-aktiviteter */
+  .elev-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 720px) {
+    .elev-grid { grid-template-columns: 1fr; }
+  }
+  .elev-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem;
+  }
+  .elev-card.lower { border-color: var(--amber); }
+  .elev-card.upper { border-color: var(--purple); }
+  .elev-card .trinn-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+  }
+  .elev-card.lower .trinn-tag {
+    background: var(--amber);
+    color: var(--teal-dark);
+  }
+  .elev-card.upper .trinn-tag {
+    background: var(--purple);
+    color: white;
+  }
+  .elev-card h3 {
+    margin: 0.6rem 0 0.4rem;
+    font-size: 1.15rem;
+  }
+  .elev-card .activity-block {
+    margin-top: 1rem;
+  }
+  .elev-card .activity-block:first-of-type {
+    margin-top: 0.5rem;
+  }
+  .elev-card .activity-title {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .elev-card ul {
+    margin: 0.25rem 0 0 1.25rem;
+    padding: 0;
+  }
+  .elev-card ul li {
+    margin-bottom: 0.45rem;
+    font-size: 0.95rem;
+  }
+  .elev-card .highlight {
+    background: var(--amber-light);
+    border-left: 4px solid var(--amber);
+    padding: 0.6rem 0.85rem;
+    border-radius: 8px;
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+  }
+
   /* Læreplan section */
   .laereplan-intro {
     background: var(--teal-light);
@@ -535,6 +609,7 @@
     <ul>
       <li><a href="#kom-i-gang">Kom i gang</a></li>
       <li><a href="#trinn">Tilpasning til trinn</a></li>
+      <li><a href="#elever">Hva skal elevene gjøre?</a></li>
       <li><a href="#bruk">Slik kan du bruke Myntland</a></li>
       <li><a href="#sporsmal">Diskusjonsspørsmål</a></li>
       <li><a href="#konflikter">Unngå konflikter</a></li>
@@ -687,6 +762,75 @@
             <strong>Se gjennom budsjettet.</strong> Sjekk inntekter og utgifter, og tilpass prisene så økonomien i klasserommet holder seg balansert.
           </li>
         </ol>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HVA SKAL ELEVENE GJØRE? -->
+  <section id="elever">
+    <h2>Hva skal elevene gjøre?</h2>
+    <p class="section-lede">Her er en oversikt over hva elevene faktisk gjør i Myntland — del den gjerne med klassen som en introduksjon, eller bruk den som sjekkliste i de første øktene.</p>
+
+    <div class="elev-grid">
+
+      <!-- 1.-4. klasse -->
+      <div class="elev-card lower">
+        <span class="trinn-tag">1.–4. klasse</span>
+
+        <div class="activity-block">
+          <div class="activity-title">🛒 Leke butikk</div>
+          <ul>
+            <li>Finne varene på handlelisten i butikken.</li>
+            <li>Regne ut totalen for varene de har plukket.</li>
+            <li>Ta varene med til kassen, så den som jobber i kassen skanner dem og sjekker om totalen stemmer.</li>
+            <li>Betale ved å skanne QR-koden i kassen med bankkortet i elevappen, og bekrefte med PIN-koden.</li>
+          </ul>
+        </div>
+
+        <div class="activity-block">
+          <div class="activity-title">💰 Personlig økonomi</div>
+          <ul>
+            <li>Sette av penger på sparekontoen for å få renter.</li>
+            <li>Følge med på merkene — for eksempel <em>Rentemester</em> og <em>Quizmester</em>.</li>
+            <li>Bruke bankkortet i elevappen til å betale i butikken, og til å skanne belønninger og hendelser.</li>
+            <li>Ta økonomiquizen — det kommer en ny quiz hver mandag!</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5.-7. klasse -->
+      <div class="elev-card upper">
+        <span class="trinn-tag">5.–7. klasse</span>
+
+        <div class="activity-block">
+          <div class="activity-title">📊 Spare, låne og planlegge</div>
+          <ul>
+            <li>Velge en sparestrategi — sparekonto eller fond.</li>
+            <li>Vurdere om de trenger å ta opp lån på et tidspunkt, og hva det koster.</li>
+            <li>Sette opp et budsjett basert på faste utgifter, faste inntekter, og hvor mye de tror de kan tjene ekstra.</li>
+          </ul>
+          <div class="highlight">
+            <strong>⚡ Husk!</strong> Hver onsdag skjer det en uforutsett hendelse som enten kan gi mer mynter — eller bli en utgift.
+          </div>
+        </div>
+
+        <div class="activity-block">
+          <div class="activity-title">💼 Tjene mynter</div>
+          <ul>
+            <li>Søke på faste jobber, eller ta enkeltoppdrag.</li>
+            <li>Bruke bankkortet til å betale i butikken, og til å skanne belønninger og hendelser.</li>
+          </ul>
+        </div>
+
+        <div class="activity-block">
+          <div class="activity-title">🏆 Hente bonuser og bruke butikken</div>
+          <ul>
+            <li>Følg med på merkene <em>Quizmester</em>, <em>Sparemester</em> og <em>Skattemester</em> — her er det bonuser å hente.</li>
+            <li>Ta økonomiquizen — ny quiz hver mandag!</li>
+            <li>Sjekk butikken for ting de kan kjøpe — kanskje noe kjekt, eller bare en blyant de trenger å låne.</li>
+          </ul>
+        </div>
       </div>
 
     </div>
