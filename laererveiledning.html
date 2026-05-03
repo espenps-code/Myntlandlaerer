@@ -393,6 +393,108 @@
     transform: translateY(-2px);
   }
 
+  /* Læreplan section */
+  .laereplan-intro {
+    background: var(--teal-light);
+    border-left: 5px solid var(--teal);
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .laereplan-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  @media (max-width: 720px) {
+    .laereplan-grid { grid-template-columns: 1fr; }
+  }
+  .laereplan-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.4rem;
+  }
+  .laereplan-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+  }
+  .laereplan-card .trinn-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--amber-light);
+    color: var(--amber-dark);
+    margin-right: 0.4rem;
+  }
+  .laereplan-card .trinn-label.upper {
+    background: var(--purple-light);
+    color: var(--purple);
+  }
+  .laereplan-card ul {
+    margin: 0.5rem 0 0 1.1rem;
+  }
+  .laereplan-card ul li {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .laereplan-card .quote {
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0 0.25rem;
+  }
+  .pill {
+    display: inline-block;
+    background: var(--green-light);
+    color: var(--green-dark);
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 1px solid var(--border);
+  }
+  .pill.purple {
+    background: var(--purple-light);
+    color: var(--purple);
+  }
+  .pill.amber {
+    background: var(--amber-light);
+    color: var(--amber-dark);
+  }
+
+  .laereplan-block {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.4rem;
+    margin-bottom: 1rem;
+  }
+  .laereplan-block h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  .laereplan-disclaimer {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border);
+  }
+  .laereplan-disclaimer a { color: var(--green-dark); }
+
   footer.site-footer {
     background: var(--teal-dark);
     color: rgba(255,255,255,0.85);
@@ -436,6 +538,7 @@
       <li><a href="#bruk">Slik kan du bruke Myntland</a></li>
       <li><a href="#sporsmal">Diskusjonsspørsmål</a></li>
       <li><a href="#konflikter">Unngå konflikter</a></li>
+      <li><a href="#laereplan">Læreplan</a></li>
       <li><a href="#hjelp">Hjelp</a></li>
     </ul>
   </div>
@@ -575,7 +678,7 @@
         <h3>💼 Jobber, butikk og budsjett</h3>
         <ol>
           <li>
-            <strong>Sett opp jobber.</strong> Lag faste jobber eller engangsoppdrag med lønn. Du kan tildele dem direkte, eller la elevene søke. Steng for søknader når en stilling er besatt.
+            <strong>Sett opp jobber.</strong> Lag faste jobber eller engangsoppdrag med lønn. Du kan tildele dem direkte, eller la elevene søke. Steng for søknader når en stilling er besatt. Skriftlige søknader må leveres fysisk — se utskriftsmateriell for en søknadsmal.
           </li>
           <li>
             <strong>Sett opp butikken.</strong> Legg inn ting elevene kan kjøpe — for eksempel å låne en blyant, en lader, eller kjøpe en ny skrivebok.
@@ -641,6 +744,96 @@
       <div class="tip-title">🤝 Bruk konflikter som læringsstoff</div>
       <p>Hvis to elever krangler om en transaksjon, er det en gylden mulighet til å diskutere avtaler, tillit og forhandling.</p>
     </div>
+  </section>
+
+  <section id="laereplan">
+    <h2>Myntland og læreplanen (LK20)</h2>
+    <p class="section-lede">Myntland er ikke et fag i seg selv, men et praktisk verktøy som kan brukes for å jobbe med kompetansemål og verdier i flere fag. Her er en oversikt over hvordan Myntland kobles til Kunnskapsløftet 2020.</p>
+
+    <div class="laereplan-intro">
+      <strong>Kort sagt:</strong> Myntland gir elevene en konkret, opplevd kontekst der de bruker matematikk, samtaler om forbruk og samfunn, og øver på livsmestring — ferdigheter læreplanen ber om at vi jobber med på tvers av fag.
+    </div>
+
+    <h3>Fag som er involvert</h3>
+    <div class="pill-row">
+      <span class="pill">📐 Matematikk</span>
+      <span class="pill">🌍 Samfunnsfag</span>
+      <span class="pill">📚 Norsk</span>
+      <span class="pill purple">💡 KRLE</span>
+      <span class="pill amber">🌱 Tverrfaglig arbeid</span>
+    </div>
+    <p style="margin-top: 0.85rem;">Matematikk og samfunnsfag står sentralt. Norsk kobles inn gjennom muntlig argumentasjon og lesing av tekster knyttet til pengebruk. KRLE og klassens time er naturlige steder for samtalene om verdier, rettferdighet og forbruk.</p>
+
+    <h3>Kompetansemål Myntland kan støtte</h3>
+    <p>Dette er ikke en uttømmende liste, men eksempler på kompetansemål der Myntland kan være en relevant arbeidsmåte:</p>
+
+    <div class="laereplan-grid">
+
+      <!-- Matematikk -->
+      <div class="laereplan-card">
+        <h3>📐 Matematikk</h3>
+        <p><span class="trinn-label">Etter 4. trinn</span></p>
+        <ul>
+          <li><span class="quote">«modellere situasjoner fra sin egen hverdag og forklare tenkemåtene sine»</span></li>
+          <li><span class="quote">«lage regneuttrykk til praktiske situasjoner og finne praktiske situasjoner som passer til oppgitte regneuttrykk»</span></li>
+          <li><span class="quote">«utforske og forklare sammenhenger mellom de fire regneartene og bruke sammenhengene hensiktsmessig i utregninger»</span></li>
+        </ul>
+        <p><span class="trinn-label upper">Etter 7. trinn</span></p>
+        <ul>
+          <li><span class="quote">«lage og vurdere budsjett og regnskap ved å bruke regneark med cellereferanser og formler»</span></li>
+          <li><span class="quote">«utvikle og bruke hensiktsmessige strategier i regning med brøk, desimaltall og prosent og forklare tenkemåtene sine»</span></li>
+          <li><span class="quote">«logge, sortere, presentere og lese data i tabeller og diagrammer»</span></li>
+        </ul>
+        <p style="font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem;">Etter 5. trinn er det også et eget mål om å «lage og løse oppgaver i regneark som omhandler personlig økonomi» — som passer godt sammen med Myntland.</p>
+      </div>
+
+      <!-- Samfunnsfag -->
+      <div class="laereplan-card">
+        <h3>🌍 Samfunnsfag</h3>
+        <p><span class="trinn-label">Etter 4. trinn</span></p>
+        <ul>
+          <li>Samtale om hvordan vi bruker penger, og hva som påvirker valgene våre.</li>
+          <li>Forstå at samfunnet er bygd opp av regler og avtaler, og at samarbeid er nødvendig for fellesskapet.</li>
+        </ul>
+        <p><span class="trinn-label upper">Etter 7. trinn</span></p>
+        <ul>
+          <li><span class="quote">«reflektere over hvordan kommersiell påvirkning kan virke inn på forbruk, personlig økonomi og selvbilde»</span></li>
+          <li>Utforske hvordan goder og ressurser fordeles i samfunnet, og samtale om rettferdighet.</li>
+          <li>Drøfte hvordan egne valg kan påvirke fellesskapet — for eksempel gjennom skatten som går til klassens sparemål.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <h3>Tverrfaglige temaer</h3>
+    <div class="laereplan-block">
+      <p><strong>🌱 Folkehelse og livsmestring</strong> — Læreplanen sier at matematikk skal gi elevene «kompetanse i problemløsing, i statistikk og i personlig økonomi» som hjelper dem å gjøre ansvarlige livsvalg. I samfunnsfag handler temaet om å «håndtere utfordringer knyttet til … personlig økonomi» og å gjøre kloke livsvalg. Myntland gir elevene øvelse i nettopp dette i en trygg ramme.</p>
+      <p><strong>🗳️ Demokrati og medborgerskap</strong> — Klassens sparemål er en konkret demokratisk øvelse: elevene velger hva fellesskapets midler skal gå til, og opplever at egne valg har konsekvenser for andre. I matematikk handler dette temaet også om å analysere reelle datasett — som klassens egen økonomi.</p>
+      <p><strong>♻️ Bærekraftig utvikling</strong> — Myntland kan kobles til samtaler om forbruk, ressursbruk og hva «nok» betyr — særlig for de eldre elevene.</p>
+    </div>
+
+    <h3>Grunnleggende ferdigheter</h3>
+    <p>Myntland legger til rette for arbeid med alle fem grunnleggende ferdigheter slik de er beskrevet for matematikk i LK20:</p>
+    <div class="laereplan-block">
+      <p><strong>🗣️ Muntlige ferdigheter</strong> — Elevene diskuterer transaksjoner, forhandler, argumenterer for valg av sparemål og samtaler om rettferdighet.</p>
+      <p><strong>✍️ Å kunne skrive</strong> — Skrive handlelister, søknader på jobber, regnskap eller refleksjoner rundt egne valg.</p>
+      <p><strong>📖 Å kunne lese</strong> — Lese varekort, hendelseskort, prislister og handlelister, og hente ut informasjon som er relevant for valgene de tar.</p>
+      <p><strong>🧮 Å kunne regne</strong> — Hjertet av Myntland: legge sammen lønn, trekke fra utgifter, regne ut prosent (skatt), planlegge sparing — alt knyttet til en virkelig opplevd kontekst.</p>
+      <p><strong>💻 Digitale ferdigheter</strong> — Elevene bruker elevappen, skanner QR-koder og navigerer i et digitalt verktøy for personlig økonomi.</p>
+    </div>
+
+    <h3>Overordnet del — verdier og prinsipper</h3>
+    <p>Myntland støtter flere av verdiene som er beskrevet i overordnet del av læreplanverket:</p>
+    <div class="laereplan-block">
+      <p><strong>👥 Demokrati og medvirkning</strong> — Klassen tar reelle, felles avgjørelser om hva sparemålet skal være og hvordan klassens fellesgoder skal brukes.</p>
+      <p><strong>🤔 Kritisk tenkning og etisk bevissthet</strong> — Elevene øver på å vurdere valg: Trenger jeg dette, eller har jeg bare lyst på det? Er det rettferdig at lønna er sånn?</p>
+      <p><strong>💪 Skaperglede, engasjement og utforskertrang</strong> — Elevene tar initiativ, forhandler og finner løsninger i en trygg lekekontekst — uten reelle økonomiske konsekvenser.</p>
+      <p><strong>🌟 Utvikle livsmestring</strong> — Personlig økonomi er en av de helt konkrete ferdighetene overordnet del peker på som viktige for at elevene skal mestre eget liv.</p>
+    </div>
+
+    <p class="laereplan-disclaimer">
+      📌 Sitater er hentet fra <a href="https://www.udir.no/lk20/" target="_blank" rel="noopener">Utdanningsdirektoratets læreplaner (LK20)</a>. Vi gir eksempler på kobling til kompetansemål — det er du som lærer som vurderer hvilke mål Myntland faktisk dekker i din konkrete undervisning.
+    </p>
   </section>
 
   <section id="hjelp">
