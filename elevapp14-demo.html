@@ -291,6 +291,29 @@
   .quiz-result-score{font-family:'Fredoka One',cursive;font-size:1.4rem;color:white;margin-bottom:.5rem;}
   .quiz-result-earned{font-family:'Fredoka One',cursive;font-size:2.8rem;color:#FAC775;margin:1rem 0;}
   .quiz-result-close{background:#EF9F27;color:#085041;border:none;border-radius:16px;padding:16px 40px;font-family:'Fredoka One',cursive;font-size:1.3rem;cursor:pointer;margin-top:1rem;}
+
+  /* MERKER */
+  .merke-card{background:white;border-radius:16px;border:1.5px solid var(--border);padding:1rem 1.1rem;margin-bottom:.85rem;overflow:hidden;position:relative;}
+  .merke-card-header{display:flex;align-items:center;gap:12px;margin-bottom:.75rem;}
+  .merke-icon{font-size:2rem;flex-shrink:0;}
+  .merke-name{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal-dark);}
+  .merke-desc{font-size:.75rem;color:var(--muted);font-weight:700;margin-top:1px;}
+  .merke-levels{display:flex;flex-direction:column;gap:.5rem;}
+  .merke-level-row{display:flex;align-items:center;gap:10px;padding:.6rem .8rem;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);}
+  .merke-level-row.earned{border-color:var(--amber);background:linear-gradient(135deg,#fffbea,#fff8e0);}
+  .merke-medal{font-size:1.4rem;flex-shrink:0;}
+  .merke-level-info{flex:1;}
+  .merke-level-name{font-weight:800;font-size:.85rem;color:var(--teal-dark);}
+  .merke-level-req{font-size:.73rem;color:var(--muted);font-weight:700;margin-top:1px;}
+  .merke-prog-wrap{height:6px;background:var(--border);border-radius:20px;margin-top:4px;overflow:hidden;}
+  .merke-prog-fill{height:100%;border-radius:20px;transition:width .6s;}
+  .merke-prog-fill.bronse{background:linear-gradient(90deg,#cd7f32,#e8a054);}
+  .merke-prog-fill.sølv{background:linear-gradient(90deg,#9ea7aa,#c8d0d4);}
+  .merke-prog-fill.gull{background:linear-gradient(90deg,#EF9F27,#FFD700);}
+  .merke-bonus{font-family:'Fredoka One',cursive;font-size:.85rem;color:var(--amber);flex-shrink:0;}
+  .merke-earned-badge{background:linear-gradient(135deg,var(--amber),#FFD700);color:var(--teal-dark);font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:10px;flex-shrink:0;letter-spacing:.3px;}
+  .merke-info-box{background:var(--teal-light);border:1.5px solid var(--border);border-radius:12px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;}
+  /* MERKER END */
 </style>
 </head>
 <body>
@@ -466,15 +489,25 @@
     </div>
   </div>
 
+  <!-- MERKER TAB -->
+  <div class="customer-tab-content content" id="tab-merker">
+    <div class="section-title">🏅 Mine merker</div>
+    <div class="merke-info-box">🎯 Samle merker ved å spare og ta quiz! Hvert merke gir mynter som bonus. 💰</div>
+    <div id="merker-list"></div>
+  </div>
+
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchCustomerTab('bank',this)">
       <div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div>
     </button>
     <button class="nav-item" onclick="switchCustomerTab('savings',this)">
-      <div class="nav-icon">💰</div><div class="nav-label">Sparekonto</div>
+      <div class="nav-icon">💰</div><div class="nav-label">Sparing</div>
+    </button>
+    <button class="nav-item" onclick="switchCustomerTab('merker',this);renderMerker()">
+      <div class="nav-icon">🏅</div><div class="nav-label">Merker</div>
     </button>
     <button class="nav-item" onclick="switchCustomerTab('card',this)">
-      <div class="nav-icon">💳</div><div class="nav-label">Bankkort</div>
+      <div class="nav-icon">💳</div><div class="nav-label">Kort</div>
     </button>
   </div>
 </div>
@@ -1773,6 +1806,103 @@ async function acceptEvent() {
   }
 }
 
+// ── MERKER (BADGES) ────────────────────────────────────────────────────────
+// Standardparametere – kan overstyres av læreren via settings/badgeParams14
+function getBadgeParams() {
+  return window._settings?.badgeParams14 || {
+    renterBronse: 50,  renterSolv: 150, renterGull: 300,
+    quizBronse:   25,  quizSolv:    50, quizGull:    75,
+    bonusBronse:  100, bonusSolv:   500, bonusGull:  1000
+  };
+}
+
+function getMedalLabel(type) {
+  if (type === 'bronse') return {emoji: '🥉', name: 'Bronse', cls: 'bronse'};
+  if (type === 'sølv')   return {emoji: '🥈', name: 'Sølv',   cls: 'sølv'};
+  if (type === 'gull')   return {emoji: '🥇', name: 'Gull',   cls: 'gull'};
+}
+
+function getBadgeStatus(s) {
+  const bp = getBadgeParams();
+  const badges = s?.badges || {};
+  const renterTotal = s?.badgeRenterEarned || 0;
+  const quizTotal   = s?.quizCorrectTotal || 0;
+
+  return {
+    renterTotal, quizTotal,
+    renter: {
+      bronse: { earned: !!badges.renter_bronse, req: bp.renterBronse, progress: renterTotal },
+      sølv:   { earned: !!badges.renter_sølv,   req: bp.renterSolv,   progress: renterTotal },
+      gull:   { earned: !!badges.renter_gull,   req: bp.renterGull,   progress: renterTotal },
+    },
+    quiz: {
+      bronse: { earned: !!badges.quiz_bronse, req: bp.quizBronse, progress: quizTotal },
+      sølv:   { earned: !!badges.quiz_sølv,   req: bp.quizSolv,   progress: quizTotal },
+      gull:   { earned: !!badges.quiz_gull,   req: bp.quizGull,   progress: quizTotal },
+    }
+  };
+}
+
+function renderMerker() {
+  const s = window._currentStudent; if (!s) return;
+  const el = document.getElementById('merker-list'); if (!el) return;
+  const bs = getBadgeStatus(s);
+  const bp = getBadgeParams();
+
+  const makeLevelRow = (level, data) => {
+    const m = getMedalLabel(level);
+    const pct = Math.min(100, Math.round(data.progress / data.req * 100));
+    const earned = data.earned;
+    const bonusKey = level === 'bronse' ? 'bonusBronse' : level === 'sølv' ? 'bonusSolv' : 'bonusGull';
+    const bonus = bp[bonusKey] || 0;
+    return `<div class="merke-level-row${earned?' earned':''}">
+      <div class="merke-medal">${m.emoji}</div>
+      <div class="merke-level-info">
+        <div class="merke-level-name">${m.name}</div>
+        <div class="merke-level-req">${data.progress} / ${data.req}</div>
+        ${!earned ? `<div class="merke-prog-wrap"><div class="merke-prog-fill ${m.cls}" style="width:${pct}%"></div></div>` : ''}
+      </div>
+      ${earned
+        ? `<div class="merke-earned-badge">✅ Oppnådd</div>`
+        : `<div class="merke-bonus">+${bonus}🪙</div>`}
+    </div>`;
+  };
+
+  const cards = [
+    {
+      icon: '📈', name: 'Rentemester',
+      desc: `Totalt opptjent i renter på sparekontoen: ${bs.renterTotal} 🪙`,
+      levels: ['bronse','sølv','gull'].map(l => makeLevelRow(l, bs.renter[l]))
+    },
+    {
+      icon: '🧠', name: 'Quizmester',
+      desc: `Totalt riktige svar i økonomiquizen: ${bs.quizTotal}`,
+      levels: ['bronse','sølv','gull'].map(l => makeLevelRow(l, bs.quiz[l]))
+    }
+  ];
+
+  el.innerHTML = cards.map(c => `
+    <div class="merke-card">
+      <div class="merke-card-header">
+        <div class="merke-icon">${c.icon}</div>
+        <div>
+          <div class="merke-name">${c.name}</div>
+          <div class="merke-desc">${c.desc}</div>
+        </div>
+      </div>
+      <div class="merke-levels">${c.levels.join('')}</div>
+    </div>`).join('');
+}
+
+// In demo mode, badge awards are non-persistent. Firebase calls are no-ops,
+// so we skip the write/award flow entirely — visitors just see the static
+// progress and any pre-earned badges from the seeded demo student.
+async function checkAndAwardBadges(s) {
+  if (!s || !s.fbKey) return;
+  if (window._DEMO || !window._db) return; // demo: skip Firebase writes
+  // (Original award logic lives in elevapp14.html — not needed in the demo.)
+}
+
 // ── QUIZ ───────────────────────────────────────────────────────────────────
 
 // 10 question pools (5 drawn per week, seeded by week number)
@@ -2072,7 +2202,16 @@ renderCart();
     pin:       '4271',
     balance:   342,
     avatarSeed: 4271 * 137,
-    chosenGoalKey: 'demo-goal-1'
+    chosenGoalKey: 'demo-goal-1',
+    // ── Merker-data ──────────────────────────────────────────────
+    // Eleven har tjent 78 mynter i renter totalt og svart 32 quiz-spørsmål rett.
+    // Det gir Bronse i begge kategorier; Sølv og Gull er fortsatt på vei.
+    badgeRenterEarned: 78,
+    quizCorrectTotal:  32,
+    badges: {
+      renter_bronse: true,
+      quiz_bronse:   true
+    }
   };
 
   window._allStudents = [demoStudent];
