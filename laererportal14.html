@@ -718,23 +718,23 @@
           <div style="font-size:2rem;line-height:1;flex-shrink:0;">2️⃣</div>
           <div>
             <div style="font-family:'Fredoka One',cursive;color:#854F0B;font-size:1.05rem;margin-bottom:.25rem;">🏷️ Skriv ut varelapper</div>
-            <div style="font-size:.88rem;color:#854F0B;font-weight:600;line-height:1.5;">Under <strong>«Skriv ut varelapper»</strong> får hver vare en lapp med emoji, navn, pris og <strong>QR-kode</strong>. Heng dem opp på «hyllene» i klasserommet. Eleven som er kasse-betjent scanner QR-koden for å legge varen i kassen.</div>
+            <div style="font-size:.88rem;color:#854F0B;font-weight:600;line-height:1.5;">Under <strong>«Skriv ut varelapper»</strong> får hver vare en lapp med emoji, navn, pris og <strong>QR-kode</strong>. Skriv ut varelappene, gjerne flere av hver vare, og legg de ut i «butikken». Det kan også være lurt å laminere de så varer de lengre.</div>
           </div>
         </div>
 
         <div style="display:flex;gap:1rem;background:#FCE7E1;border-radius:14px;padding:1rem;align-items:flex-start;">
           <div style="font-size:2rem;line-height:1;flex-shrink:0;">3️⃣</div>
           <div>
-            <div style="font-family:'Fredoka One',cursive;color:#9C2B1B;font-size:1.05rem;margin-bottom:.25rem;">📋 Lag handlelister (valgfritt)</div>
-            <div style="font-size:.88rem;color:#9C2B1B;font-weight:600;line-height:1.5;">Under <strong>«Handlelister»</strong> kan du lage utskrifter med utvalgte varer der elevene fyller inn pris selv og regner ut totalsummen. Bra som regneoppgave på papir <em>før</em> de går til kassen.</div>
+            <div style="font-family:'Fredoka One',cursive;color:#9C2B1B;font-size:1.05rem;margin-bottom:.25rem;">📋 Lag handlelister</div>
+            <div style="font-size:.88rem;color:#9C2B1B;font-weight:600;line-height:1.5;">Under <strong>«Handlelister»</strong> kan du lage utskrifter med utvalgte varer der elevene finner varen i «butikken», tar med seg et varekort, skriver opp prisen i handlelisten sin og regner ut totalen før eleven går til kassen. Bra som regneoppgave på papir <em>før</em> de går til kassen.</div>
           </div>
         </div>
 
         <div style="display:flex;gap:1rem;background:#E8F2FF;border-radius:14px;padding:1rem;align-items:flex-start;">
           <div style="font-size:2rem;line-height:1;flex-shrink:0;">4️⃣</div>
           <div>
-            <div style="font-family:'Fredoka One',cursive;color:#1B4F8C;font-size:1.05rem;margin-bottom:.25rem;">💳 Sett opp kassen (én tablet)</div>
-            <div style="font-size:.88rem;color:#1B4F8C;font-weight:600;line-height:1.5;">Åpne elevappen på en ekstra tablet/PC og velg <strong>«Kasse»</strong> på startskjermen. Denne tableten brukes som butikkens kassa-apparat. (Elevene som er kunder bruker sine egne tablets – innlogget med PIN-kort som vanlig.)</div>
+            <div style="font-family:'Fredoka One',cursive;color:#1B4F8C;font-size:1.05rem;margin-bottom:.25rem;">💳 Sett opp kassen</div>
+            <div style="font-size:.88rem;color:#1B4F8C;font-weight:600;line-height:1.5;">En eller flere elever åpner elevappen sin og velger <strong>«Jeg er kasse»</strong>. Det åpner kassefunksjonen i elevappen. Elever som har regnet ut totalsummen på handlelisten sin kan komme til kassen.</div>
           </div>
         </div>
 
@@ -744,8 +744,8 @@
             <div style="font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.05rem;margin-bottom:.25rem;">🛒 Slik betaler eleven</div>
             <div style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.5;">
               <strong>a)</strong> Kasse-betjenten scanner varelappene → varene legges i kassen.<br>
-              <strong>b)</strong> Når kunden vil betale: kasse-betjenten trykker <strong>«📷 Scan elevens kort»</strong> og scanner kundens bankkort.<br>
-              <strong>c)</strong> Kvitteringen og PIN-tastaturet vises rett på <strong>kassens tablet</strong> – kunden taster sin egen <strong>PIN-kode</strong> der for å bekrefte. Kunden trenger ikke gjøre noe på sin egen tablet.<br>
+              <strong>b)</strong> Når kunden vil betale: kasse-betjenten trykker <strong>«📷 Scan elevens kort for betaling»</strong> og scanner kundens bankkort.<br>
+              <strong>c)</strong> Kunden må taste inn <strong>PIN-koden</strong> sin for å bekrefte.<br>
               <strong>d)</strong> Penger trekkes (eller ikke – se «Innstillinger»). Kassen viser «Betalt!» ✅
             </div>
           </div>
@@ -3040,11 +3040,12 @@ function printWindow(htmlContent, pageSize) {
 function showTab(tabId, btn) {
   btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  ['butikk-rediger','butikk-skriv'].forEach(id => {
+  ['butikk-guide','butikk-innstillinger','butikk-rediger','butikk-skriv','butikk-handleliste'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = id === tabId ? 'block' : 'none';
   });
   if (tabId === 'butikk-skriv') renderGroceryPrintSelect();
+  if (tabId === 'butikk-handleliste' && typeof renderHandlelisteSelect === 'function') renderHandlelisteSelect();
 }
 
 // ── Tastatur-PIN (for PC-nettleser) ───────────────────────────────────────
