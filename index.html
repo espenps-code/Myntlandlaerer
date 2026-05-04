@@ -725,7 +725,7 @@
     background: #fff;
     border-radius: 24px;
     overflow: hidden;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 16 / 13.5;
     width: 100%;
   }
 
@@ -768,30 +768,6 @@
     opacity: 0;
     pointer-events: none;
   }
-
-  .preview-open {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    font-weight: 800;
-    font-size: 0.85rem;
-    padding: 10px 18px;
-    border-radius: 999px;
-    white-space: nowrap;
-    transition: transform 0.2s ease, background 0.3s ease, color 0.3s ease;
-    background: var(--amber);
-    color: var(--teal-dark);
-  }
-
-  .preview-card.is-purple .preview-open {
-    background: var(--purple);
-    color: white;
-  }
-
-  .preview-open:hover { transform: translateX(2px); }
-  .preview-open svg { transition: transform 0.2s ease; }
-  .preview-open:hover svg { transform: translateX(3px); }
 
   .preview-hint {
     display: inline-flex;
@@ -1120,11 +1096,6 @@
         <img data-monster="purple" data-trinn="57" alt="" id="monster-right-57" style="display:none">
       </div>
     </div>
-
-    <a href="elevapp14.html" class="preview-open" id="preview-open" aria-label="Åpne valgt elevapp i full skjerm">
-      Åpne i full skjerm
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
-    </a>
   </div>
 
   <h2 class="section-heading">
@@ -1373,7 +1344,6 @@ const MONSTERS = {
     if (!card) return;
     const tabsWrap = card.querySelector('.preview-tabs');
     const tabs = card.querySelectorAll('.preview-tab');
-    const openLink = document.getElementById('preview-open');
     const iframe14 = document.getElementById('iframe-14');
     const iframe57 = document.getElementById('iframe-57');
 
@@ -1401,7 +1371,7 @@ const MONSTERS = {
         outgoing.classList.add('is-leaving');
 
         incoming.classList.add('is-entering');
-        void incoming.offsetWidth; // tving reflow
+        void incoming.offsetWidth;
 
         requestAnimationFrame(() => {
           incoming.classList.remove('is-entering');
@@ -1426,15 +1396,11 @@ const MONSTERS = {
       tabs.forEach(t => t.setAttribute('aria-selected', t.getAttribute('data-trinn') === trinn ? 'true' : 'false'));
       tabsWrap.setAttribute('data-active', trinn);
 
-      // Oppdater knapp + kort-farge
+      // Oppdater kort-farge
       if (trinn === '14') {
-        openLink.href = 'elevapp14.html';
-        openLink.setAttribute('aria-label', 'Åpne Elevapp småtrinnet i full skjerm');
         card.classList.remove('is-purple');
         card.classList.add('is-amber');
       } else {
-        openLink.href = 'elevapp57.html';
-        openLink.setAttribute('aria-label', 'Åpne Elevapp mellomtrinnet i full skjerm');
         card.classList.remove('is-amber');
         card.classList.add('is-purple');
       }
@@ -1449,7 +1415,7 @@ const MONSTERS = {
       // Monster-bytting
       switchMonsters(activeTrinn, trinn);
 
-      // La monstrene lene seg inn et øyeblikk – de "reagerer" på byttet
+      // La monstrene lene seg inn et øyeblikk
       card.classList.add('is-switching');
 
       void incoming.offsetWidth;
