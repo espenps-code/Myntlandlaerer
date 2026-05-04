@@ -82,6 +82,15 @@
     if (document.getElementById('tab-merker')?.classList.contains('active')) {
       if (typeof renderMerker === 'function') renderMerker();
     }
+    // Re-anvend innloggingsmodus dersom eleven står på login-skjermen
+    // (lærer kan ha byttet modus mens appen er åpen) – men ikke hvis eleven
+    // allerede har scannet/forhåndsvalgt et kort eller har begynt å taste PIN.
+    const loginScreen = document.getElementById('screen-login');
+    if (loginScreen && loginScreen.classList.contains('active')
+        && !window._preselectedStudent
+        && (typeof currentPin === 'undefined' || currentPin === '')) {
+      if (typeof applyLoginMode === 'function') applyLoginMode();
+    }
   });
 </script>
 <style>
@@ -386,9 +395,20 @@
 <div class="screen" id="screen-login">
   <div style="text-align:center;margin:3rem 0 1.5rem;font-size:3rem;">👛</div>
   <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);margin-bottom:4px;">Logg inn</div>
-  <div style="text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;font-weight:700;">Tast inn din 4-sifrede PIN-kode</div>
+  <div id="login-subtitle" style="text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;font-weight:700;">Tast inn din 4-sifrede PIN-kode</div>
   <div style="width:100%;padding:0 1.5rem;flex:1;">
-    <div class="login-card">
+
+    <!-- Forhåndsvalgt elev (vises etter at kortet er scannet) -->
+    <div id="login-preselect" style="display:none;background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:10px 14px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:.75rem;color:var(--teal-dark);font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px;">Logger inn som</div>
+      <div id="login-preselect-name" style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);line-height:1.1;"></div>
+      <button onclick="clearPreselected()" style="margin-top:4px;background:transparent;border:none;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;text-decoration:underline;">Ikke meg? Bytt kort</button>
+    </div>
+
+    <!-- Scan-knapp (vises bare i QR+PIN-modus) -->
+    <button onclick="startScan('loginCard')" id="login-scan-btn" style="display:none;width:100%;background:var(--amber);border:none;color:white;padding:14px;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 rgba(0,0,0,.08);">📷 Scan kortet mitt</button>
+
+    <div class="login-card" id="login-card">
       <div class="pin-dots" id="pin-dots">
         <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
         <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
@@ -861,17 +881,103 @@ function showScreen(id) {
 
 function goToSplash() {
   stopScan();
-  window._currentStudent = null; currentPin = ''; cart = []; cartTotal = 0; transactions = []; _pinVisible14 = false;
+  window._currentStudent = null;
+  window._preselectedStudent = null;
+  currentPin = ''; cart = []; cartTotal = 0; transactions = []; _pinVisible14 = false;
   savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
   const card = document.getElementById('class-goals-card');
   if (card) card.style.display = 'none';
   clearCart();
+  // Tilbakestill innloggingsskjermen
+  resetLoginScreen();
   showScreen('screen-splash');
 }
 
 function selectRole(role) {
-  if (role === 'customer') showScreen('screen-login');
-  else { renderGroceryButtons(); showScreen('screen-cashier'); }
+  if (role === 'customer') {
+    applyLoginMode();
+    showScreen('screen-login');
+  } else {
+    renderGroceryButtons();
+    showScreen('screen-cashier');
+  }
+}
+
+// ── Login mode (settings/loginMode14) ─────────────────────────────────────
+// 'pin'   = elev taster bare PIN-kode (PIN søkes opp blant alle elever).
+// 'qrpin' = elev scanner QR-kode på bankkortet → PIN bekrefter for nettopp
+//           den eleven (PIN må matche eksakt for det forhåndsvalgte kortet).
+function getLoginMode() {
+  return (window._settings?.loginMode14 === 'qrpin') ? 'qrpin' : 'pin';
+}
+
+window._preselectedStudent = null;
+
+function applyLoginMode() {
+  // Setter opp innloggingsskjermen i henhold til valgt modus
+  const mode = getLoginMode();
+  const subtitle = document.getElementById('login-subtitle');
+  const scanBtn  = document.getElementById('login-scan-btn');
+  const card     = document.getElementById('login-card');
+  const preEl    = document.getElementById('login-preselect');
+  currentPin = '';
+  updatePinDots();
+  document.getElementById('login-error').textContent = '';
+  if (preEl) preEl.style.display = 'none';
+  window._preselectedStudent = null;
+
+  if (mode === 'qrpin') {
+    if (subtitle) subtitle.textContent = 'Scan bankkortet ditt for å logge inn';
+    if (scanBtn)  scanBtn.style.display = 'block';
+    if (card)     card.style.display = 'none';
+  } else {
+    if (subtitle) subtitle.textContent = 'Tast inn din 4-sifrede PIN-kode';
+    if (scanBtn)  scanBtn.style.display = 'none';
+    if (card)     card.style.display = 'block';
+  }
+}
+
+function resetLoginScreen() {
+  // Brukes når vi forlater login-skjermen
+  window._preselectedStudent = null;
+  currentPin = '';
+  const preEl = document.getElementById('login-preselect');
+  if (preEl) preEl.style.display = 'none';
+  const err = document.getElementById('login-error');
+  if (err) err.textContent = '';
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('dot-' + i);
+    if (d) d.classList.remove('filled');
+  }
+}
+
+function handleLoginCardScan(fbKey) {
+  const s = (window._allStudents || []).find(x => x.fbKey === fbKey);
+  if (!s) {
+    showSuccess('❌','Ukjent kort','','Be læreren om et nytt kort');
+    return;
+  }
+  window._preselectedStudent = s;
+  document.getElementById('login-preselect-name').textContent =
+    s.firstname + ' ' + (s.lastname ? s.lastname.charAt(0) + '.' : '');
+  document.getElementById('login-preselect').style.display = 'block';
+  document.getElementById('login-scan-btn').style.display = 'none';
+  document.getElementById('login-card').style.display = 'block';
+  document.getElementById('login-subtitle').textContent = 'Bekreft med PIN-koden din';
+  document.getElementById('login-error').textContent = '';
+  currentPin = '';
+  updatePinDots();
+}
+
+function clearPreselected() {
+  window._preselectedStudent = null;
+  document.getElementById('login-preselect').style.display = 'none';
+  document.getElementById('login-scan-btn').style.display = 'block';
+  document.getElementById('login-card').style.display = 'none';
+  document.getElementById('login-subtitle').textContent = 'Scan bankkortet ditt for å logge inn';
+  document.getElementById('login-error').textContent = '';
+  currentPin = '';
+  updatePinDots();
 }
 
 // ── Login numpad ───────────────────────────────────────────────────────────
@@ -883,12 +989,34 @@ function numpadPress(val) {
   if (currentPin.length === 4) setTimeout(tryLogin, 200);
 }
 function updatePinDots() {
-  for (let i=0;i<4;i++) document.getElementById('dot-'+i).classList.toggle('filled', i < currentPin.length);
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('dot-'+i);
+    if (d) d.classList.toggle('filled', i < currentPin.length);
+  }
 }
 function tryLogin() {
-  const s = window._allStudents.find(s => String(s.pin) === String(currentPin));
+  const mode = getLoginMode();
+  let s = null;
+
+  if (mode === 'qrpin') {
+    // QR + PIN: elev må ha scannet kortet først, og PIN må matche akkurat dén eleven.
+    if (!window._preselectedStudent) {
+      document.getElementById('login-error').textContent = '❌ Scan kortet først';
+      currentPin = '';
+      updatePinDots();
+      return;
+    }
+    const pre = window._preselectedStudent;
+    const fresh = (window._allStudents || []).find(x => x.fbKey === pre.fbKey) || pre;
+    if (String(fresh.pin) === String(currentPin)) s = fresh;
+  } else {
+    // Bare PIN: finn elev med matchende PIN i hele klassen
+    s = window._allStudents.find(x => String(x.pin) === String(currentPin));
+  }
+
   if (s) {
     window._currentStudent = s;
+    window._preselectedStudent = null;
     transactions = [];
     document.getElementById('customer-greeting').textContent = s.firstname;
     document.getElementById('customer-balance').textContent  = s.balance;
@@ -918,6 +1046,9 @@ function tryLogin() {
     // Re-rendre umiddelbart for ny innlogget elev (i tilfelle samme nettleser-økt)
     renderMyClassGoals();
     checkQuizStatus();
+    // Tilbakestill innloggingsskjermen for neste gang
+    const preEl = document.getElementById('login-preselect');
+    if (preEl) preEl.style.display = 'none';
     switchCustomerTab('bank', document.querySelector('.nav-item'));
     showScreen('screen-customer');
   } else {
@@ -1570,8 +1701,8 @@ function renderTransactions() {
 // ── Camera QR scanner ──────────────────────────────────────────────────────
 function startScan(mode) {
   scanMode = mode;
-  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønning / hendelse', cashier:'🛒 Scan varekode', any:'📷 Skann QR-kode' };
-  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Belønning eller hendelse fra læreren', cashier:'Hold varekortet innenfor rammen', any:'Hold QR-koden innenfor rammen' };
+  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønning / hendelse', cashier:'🛒 Scan varekode', any:'📷 Skann QR-kode', loginCard:'💳 Scan bankkortet ditt' };
+  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Belønning eller hendelse fra læreren', cashier:'Hold varekortet innenfor rammen', any:'Hold QR-koden innenfor rammen', loginCard:'Hold QR-koden på kortet innenfor rammen' };
   document.getElementById('scanner-title').textContent = titles[mode] || 'Scan QR-kode';
   document.getElementById('scanner-hint').textContent  = hints[mode] || 'Hold QR-koden innenfor rammen';
   document.getElementById('scanner-overlay').classList.add('open');
@@ -1694,6 +1825,13 @@ function handleScanResult(text) {
       }
       else if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
       else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
+    } else if (scanMode === 'loginCard') {
+      if (data.type === 'login' && data.fbKey) {
+        playScanBeep();
+        stopScan();
+        handleLoginCardScan(data.fbKey);
+        return;
+      }
     }
     stopScan();
   } catch(e) {

@@ -102,6 +102,8 @@
       if (document.getElementById('page-merker')?.classList.contains('active')) {
         loadBadgeParamsToForm();
       }
+      // Oppdater toggleknappene for innloggingsmodus
+      if (typeof syncLoginModeToggle === 'function') syncLoginModeToggle();
     });
   }
 
@@ -474,7 +476,18 @@
       </div>
       <div class="card">
         <div class="card-title">💳 Skriv ut bankkort</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer bankkort-formede kort (8 per A4) med avatar, navn, klasse og PIN.</p>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Bankkortene har alltid QR-kode for innlogging. Velg om elevene skal bekrefte med PIN eller bare scanne kortet.</p>
+
+        <!-- Innloggingsmodus (lagres i settings/loginMode14) -->
+        <div class="form-row">
+          <label>Innloggingsmodus i elevappen</label>
+          <div id="login-mode-toggle" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost btn-sm" id="login-mode-pin" onclick="setLoginMode14('pin')" style="flex:1;min-width:140px;">🔢 Bare PIN</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="login-mode-qrpin" onclick="setLoginMode14('qrpin')" style="flex:1;min-width:140px;">📷 QR + PIN</button>
+          </div>
+          <div id="login-mode-hint" style="margin-top:.5rem;font-size:.78rem;color:var(--muted);font-weight:600;"></div>
+        </div>
+
         <div class="form-row">
           <label>Velg klasse</label>
           <select id="card-class-filter">
@@ -1256,6 +1269,7 @@ function showPage(page) {
   if (page === 'hendelser') renderHendelser();
   if (page === 'saldo') renderSaldoTable();
   if (page === 'merker') renderMerkerPage();
+  if (page === 'elever' && typeof syncLoginModeToggle === 'function') syncLoginModeToggle();
   // Close mobile nav after selection
   const nav = document.querySelector('header nav');
   const btn = document.getElementById('hamburger-btn');
@@ -2659,6 +2673,11 @@ function generateCardPDF() {
     return;
   }
 
+  // Innloggingsmodus: 'qrpin' = bare QR + PIN (eleven taster PIN selv, PIN ikke trykket på kortet)
+  // 'pin' (default) = bare PIN (PIN trykket på kortet, men kortet har QR for fremtidig bruk)
+  const loginMode = (window._settings?.loginMode14 === 'qrpin') ? 'qrpin' : 'pin';
+  const showPinOnCard = loginMode === 'pin';
+
   // A4 portrait = 210×297mm, 0 margin.
   // 2 cols × 4 rows = 8 cards per page. Each card: 105mm wide × 74mm tall.
   // Name displayed as: Firstname L. (first letter of lastname)
@@ -2675,7 +2694,7 @@ function generateCardPDF() {
       height: 74mm;
       background-color: #085041;
       border-radius: 0;
-      padding: 6mm 7mm;
+      padding: 5mm 6mm;
       color: white;
       display: flex;
       flex-direction: column;
@@ -2703,28 +2722,30 @@ function generateCardPDF() {
     .card-top { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; }
     .card-logo {
       font-family: 'Fredoka One', cursive;
-      font-size: 6.5mm;
+      font-size: 6mm;
       color: #EF9F27;
       letter-spacing: 0.3mm;
       line-height: 1;
     }
+    .card-top-right { display: flex; align-items: center; gap: 2mm; }
     .card-chip {
-      width: 10mm; height: 7.5mm;
+      width: 9mm; height: 7mm;
       background: #EF9F27;
       border-radius: 1.5mm;
       opacity: 0.9;
     }
-    .card-bottom { position: relative; z-index: 1; }
+    .card-avatar { line-height: 0; }
+    .card-middle { position: relative; z-index: 1; }
     .card-label {
-      font-size: 2.8mm;
+      font-size: 2.5mm;
       color: rgba(255,255,255,0.60);
       font-weight: 700;
       letter-spacing: 0.4mm;
       text-transform: uppercase;
-      margin-bottom: 1mm;
+      margin-bottom: 0.5mm;
     }
     .card-name {
-      font-size: 5.5mm;
+      font-size: 5mm;
       font-weight: 800;
       letter-spacing: 0.1mm;
       text-transform: uppercase;
@@ -2734,63 +2755,75 @@ function generateCardPDF() {
       text-overflow: ellipsis;
     }
     .card-footer {
+      position: relative;
+      z-index: 1;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-top: 3mm;
+      gap: 3mm;
     }
+    .card-qr-wrap { background: white; padding: 1mm; border-radius: 1.2mm; line-height: 0; flex-shrink: 0; }
+    .card-qr-wrap img { display: block; width: 16mm; height: 16mm; }
+    .card-right-col { display: flex; flex-direction: column; align-items: flex-end; gap: 1.5mm; flex: 1; min-width: 0; }
+    .card-pin-block { text-align: right; }
     .card-pin-label {
-      font-size: 2.8mm;
+      font-size: 2.5mm;
       color: rgba(255,255,255,0.60);
       font-weight: 700;
+      letter-spacing: 0.3mm;
       text-transform: uppercase;
-      margin-bottom: 1mm;
+      margin-bottom: 0.5mm;
     }
     .card-pin {
       font-family: 'Fredoka One', cursive;
-      font-size: 9mm;
+      font-size: 7.5mm;
       color: #EF9F27;
-      letter-spacing: 2mm;
+      letter-spacing: 1.6mm;
       line-height: 1;
     }
     .card-class {
       background: #EF9F27;
       color: #085041;
       border-radius: 1.5mm;
-      padding: 1.5mm 3mm;
-      font-size: 4mm;
+      padding: 1.2mm 2.5mm;
+      font-size: 3.6mm;
       font-weight: 800;
-      align-self: flex-end;
     }
   </style>
   <div class="card-grid">
     ${students.map(s => {
       const displayName = s.firstname + ' ' + s.lastname.charAt(0) + '.';
+      const seed = s.avatarSeed||0;
+      const svgEl = window.makeAnimalSVG(seed, 50);
+      const avatarSVG = svgEl ? svgEl.outerHTML : '';
+      // QR-payload identisk format som 5-7 → eleven scanner og blir forhåndsvalgt
+      const qrPayload = JSON.stringify({ type: 'login', fbKey: s.fbKey });
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' + encodeURIComponent(qrPayload);
+      const pinBlock = showPinOnCard
+        ? `<div class="card-pin-block">
+             <div class="card-pin-label">PIN-kode</div>
+             <div class="card-pin">${s.pin}</div>
+           </div>`
+        : '';
       return `
       <div class="card-item">
         <div class="card-accent"></div>
         <div class="card-accent2"></div>
         <div class="card-top">
           <div class="card-logo">🪙 Myntland</div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1mm;">
+          <div class="card-top-right">
             <div class="card-chip"></div>
-            ${(function(){
-              var seed = s.avatarSeed||0;
-              var svgEl = window.makeAnimalSVG(seed, 60);
-              return svgEl ? svgEl.outerHTML : '';
-            })()}
+            <div class="card-avatar">${avatarSVG}</div>
           </div>
         </div>
-        <div class="card-bottom">
-          <div>
-            <div class="card-label">Kortinnehaver</div>
-            <div class="card-name">${displayName}</div>
-          </div>
-          <div class="card-footer">
-            <div>
-              <div class="card-pin-label">PIN-kode</div>
-              <div class="card-pin">${s.pin}</div>
-            </div>
+        <div class="card-middle">
+          <div class="card-label">Kortinnehaver</div>
+          <div class="card-name">${displayName}</div>
+        </div>
+        <div class="card-footer">
+          <div class="card-qr-wrap"><img src="${qrUrl}" alt="Innloggings-QR"></div>
+          <div class="card-right-col">
+            ${pinBlock}
             <div class="card-class">${s.class}</div>
           </div>
         </div>
@@ -2804,7 +2837,49 @@ function generateCardPDF() {
     '<style>@media print{@page{size:A4 portrait;margin:0}}</style>' +
     '</head><body>' + cardsHTML + '</body></html>');
   win.document.close();
-  setTimeout(() => { win.focus(); win.print(); }, 800);
+  // Vent til alle QR-bildene har lastet før utskrift
+  const waitForImages = () => {
+    const imgs = Array.from(win.document.images);
+    if (!imgs.length) return Promise.resolve();
+    return Promise.all(imgs.map(img => img.complete
+      ? Promise.resolve()
+      : new Promise(res => { img.onload = img.onerror = res; })));
+  };
+  setTimeout(() => {
+    waitForImages().then(() => { win.focus(); win.print(); });
+  }, 400);
+}
+
+// ══════════════════════════════════════════════════════════
+// LOGIN MODE TOGGLE (settings/loginMode14)
+// ══════════════════════════════════════════════════════════
+// 'pin'   = elever logger inn ved å taste 4-sifret PIN (PIN trykkes på kortet)
+// 'qrpin' = elever scanner kortets QR-kode + bekrefter med PIN (PIN ikke på kortet)
+async function setLoginMode14(mode) {
+  if (mode !== 'pin' && mode !== 'qrpin') return;
+  if (!window._db || !window._update || !window._ref) return;
+  await window._update(window._ref(window._db, 'settings'), { loginMode14: mode });
+  if (!window._settings) window._settings = {};
+  window._settings.loginMode14 = mode;
+  syncLoginModeToggle();
+}
+
+function syncLoginModeToggle() {
+  const mode = (window._settings?.loginMode14 === 'qrpin') ? 'qrpin' : 'pin';
+  const btnPin = document.getElementById('login-mode-pin');
+  const btnQr  = document.getElementById('login-mode-qrpin');
+  const hint   = document.getElementById('login-mode-hint');
+  if (!btnPin || !btnQr) return;
+  // Aktiv knapp får primær-stil
+  btnPin.className = mode === 'pin'   ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+  btnQr.className  = mode === 'qrpin' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+  btnPin.style.flex = '1'; btnPin.style.minWidth = '140px';
+  btnQr.style.flex  = '1'; btnQr.style.minWidth  = '140px';
+  if (hint) {
+    hint.textContent = mode === 'qrpin'
+      ? '📷 Eleven scanner kortet sitt og bekrefter med PIN. PIN-koden vises ikke på kortet.'
+      : '🔢 Eleven taster bare PIN-koden for å logge inn. PIN-koden vises på kortet (kortene har likevel QR-kode for fleksibilitet).';
+  }
 }
 
 // ══════════════════════════════════════════════════════════
