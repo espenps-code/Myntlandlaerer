@@ -669,6 +669,43 @@
   <div id="payment-overlay-spinner" style="font-size:2.5rem;animation:spin 1.5s linear infinite;">⏳</div>
   <button class="close-payment-btn" id="payment-overlay-cancel" onclick="cancelCashierPayment()">Avbryt</button>
 </div>
+
+<!-- CASHIER PIN OVERLAY (NEW: student types PIN directly on the cashier iPad) -->
+<div class="pin-overlay" id="cashpay-overlay" style="z-index:500;">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:380px;width:100%;">
+    <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:.25rem;">🛒 Bekreft kjøp</div>
+    <div style="text-align:center;font-size:.85rem;color:var(--muted);margin-bottom:.5rem;font-weight:700;">Kunde: <span id="cashpay-student" style="color:var(--teal-dark);"></span></div>
+    <div id="cashpay-cart-list" style="background:var(--teal-light,#E0F4F1);border-radius:12px;padding:.75rem;margin-bottom:.75rem;max-height:200px;overflow-y:auto;font-family:'Nunito',sans-serif;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--amber,#F4A261);color:white;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;">
+      <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;">SUM</span>
+      <span id="cashpay-total" style="font-family:'Fredoka One',cursive;font-size:1.5rem;">0 🪙</span>
+    </div>
+    <div id="cashpay-mode-banner" style="display:none;background:#FFF6DD;border:2px dashed var(--amber,#F4A261);border-radius:10px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:#854F0B;font-weight:800;text-align:center;">🎮 Lekemodus – ingen mynter trekkes</div>
+    <div style="text-align:center;font-family:'Nunito',sans-serif;font-weight:800;color:var(--teal-dark);margin-bottom:.5rem;font-size:.95rem;">🔐 Eleven taster sin PIN</div>
+    <div class="pin-overlay-dots" id="cashpay-dots" style="margin:0 0 .5rem;">
+      <div class="pin-overlay-dot" id="cashpay-dot-0" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="cashpay-dot-1" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="cashpay-dot-2" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="cashpay-dot-3" style="border-color:rgba(0,0,0,.25);"></div>
+    </div>
+    <div id="cashpay-error" style="color:#C0392B;font-size:.85rem;font-weight:700;text-align:center;min-height:20px;margin-bottom:8px;"></div>
+    <div class="pin-overlay-numpad">
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('1')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">1</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('2')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">2</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('3')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">3</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('4')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">4</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('5')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">5</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('6')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">6</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('7')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">7</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('8')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">8</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('9')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">9</button>
+      <div class="pin-overlay-btn empty"></div>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('0')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">0</button>
+      <button class="pin-overlay-btn del" onclick="cashpayPinPress('DEL')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">⌫</button>
+    </div>
+    <button class="pin-overlay-cancel" onclick="cancelCashpayPin()" style="color:var(--muted);border-color:rgba(0,0,0,.15);margin-top:.75rem;width:100%;">Avbryt</button>
+  </div>
+</div>
 <style>
   @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
 </style>
@@ -2706,6 +2743,15 @@ function startCustomerCardScan() {
   startScan('cashierCustomerCard');
 }
 
+// NEW: When the cashier scans a student card, the PIN is entered RIGHT HERE
+// on the cashier iPad. The customer never needs to be logged in on their own
+// device. We show the cart, total and student name, and once the correct PIN
+// is typed we deduct directly from the student's balance.
+let _cashierPayStudent = null;   // student object whose card was just scanned
+let _cashierPayPin     = '';     // PIN typed on the cashier iPad
+let _cashierPayCart    = [];     // snapshot of cart at scan time
+let _cashierPayTotal   = 0;      // snapshot of total at scan time
+
 async function handleCashierCustomerCardScan(fbKey) {
   // Look up the student so we can show their name on the cashier screen
   const s = (window._allStudents || []).find(x => x.fbKey === fbKey);
@@ -2715,57 +2761,135 @@ async function handleCashierCustomerCardScan(fbKey) {
     return;
   }
 
-  // Build cart payload for the payment request (snapshot of current cart)
-  const cartPayload = cart.map(it => ({ name: it.name, emoji: it.emoji || '🛒', price: it.price }));
-  const total = cartTotal;
+  // Snapshot the cart so it doesn't change while the PIN is being typed
+  _cashierPayStudent = s;
+  _cashierPayCart    = cart.map(it => ({ name: it.name, emoji: it.emoji || '🛒', price: it.price }));
+  _cashierPayTotal   = cartTotal;
+  _cashierPayPin     = '';
 
-  // Show waiting overlay on cashier device
-  document.getElementById('payment-overlay-title').textContent  = '⏳ Venter på eleven…';
-  document.getElementById('payment-display-amount').textContent = total + ' 🪙';
-  document.getElementById('payment-overlay-student').textContent = (s.firstName || s.name || 'Elev');
-  document.getElementById('payment-overlay-status').innerHTML   = '📱 Eleven taster PIN-koden på sin egen tablet for å bekrefte.';
-  document.getElementById('payment-overlay-spinner').style.display = 'block';
-  document.getElementById('payment-overlay-cancel').style.display  = 'inline-block';
-  document.getElementById('payment-overlay-cancel').textContent    = 'Avbryt';
-  document.getElementById('payment-overlay').classList.add('open');
+  // Open the on-cashier PIN/receipt overlay
+  showCashierPayPin();
+}
 
-  if (!window._push || !window._set || !window._ref || !window._db || !window._onValue) {
-    showSuccess('❌','Ingen tilkobling','','Kunne ikke sende betalingsforespørselen');
-    document.getElementById('payment-overlay').classList.remove('open');
-    return;
-  }
+function showCashierPayPin() {
+  const s = _cashierPayStudent;
+  if (!s) return;
 
-  // Push payment request under the student's fbKey
-  const reqRef = window._push(window._ref(window._db, 'paymentRequests14/' + fbKey));
-  _cashierPendingReqKey = reqRef.key;
-  window._currentCashierFbKey = fbKey;
-  const reqData = {
-    fbKey,
-    studentName: s.firstName || s.name || 'Elev',
-    cart: cartPayload,
-    total,
-    status: 'pending',         // pending | approved | declined | cancelled
-    ts: Date.now()
-  };
-  try { await window._set(reqRef, reqData); } catch(e) {
-    showSuccess('❌','Klarte ikke sende','','Sjekk nettverk og prøv igjen');
-    document.getElementById('payment-overlay').classList.remove('open');
-    _cashierPendingReqKey = null;
-    return;
-  }
-
-  // Listen for status updates on this request
-  if (_cashierPendingUnsub) { try { _cashierPendingUnsub(); } catch(e){} _cashierPendingUnsub = null; }
-  const statusRef = window._ref(window._db, 'paymentRequests14/' + fbKey + '/' + reqRef.key);
-  _cashierPendingUnsub = window._onValue(statusRef, snap => {
-    const v = snap.val();
-    if (!v) return;
-    if (v.status === 'approved') {
-      onCashierPaymentApproved(v);
-    } else if (v.status === 'declined') {
-      onCashierPaymentDeclined(v);
+  // Render cart on the PIN screen
+  const list = document.getElementById('cashpay-cart-list');
+  if (list) {
+    if (_cashierPayCart.length) {
+      list.innerHTML = _cashierPayCart.map(it =>
+        `<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .25rem;border-bottom:1px solid rgba(0,0,0,.05);">
+          <span style="font-size:1.4rem;">${it.emoji||'🛒'}</span>
+          <span style="flex:1;font-weight:700;color:var(--teal-dark,#04342C);font-size:.9rem;">${it.name||'Vare'}</span>
+          <span style="font-weight:800;color:var(--teal-dark,#04342C);">🪙${it.price||0}</span>
+        </div>`
+      ).join('');
+    } else {
+      list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:.85rem;padding:.5rem;">Ingen varer i kvitteringen</div>';
     }
-  });
+  }
+  document.getElementById('cashpay-student').textContent = (s.firstName || s.name || 'Elev');
+  document.getElementById('cashpay-total').textContent   = _cashierPayTotal + ' 🪙';
+  document.getElementById('cashpay-error').textContent   = '';
+
+  // Play-only banner
+  const playOnly = (window._settings && window._settings.realPayments14 === false);
+  document.getElementById('cashpay-mode-banner').style.display = playOnly ? 'block' : 'none';
+
+  updateCashpayDots();
+  document.getElementById('cashpay-overlay').classList.add('open');
+  try { playScanBeep(); } catch(e){}
+}
+
+function hideCashierPayPin() {
+  document.getElementById('cashpay-overlay')?.classList.remove('open');
+  _cashierPayStudent = null;
+  _cashierPayCart    = [];
+  _cashierPayTotal   = 0;
+  _cashierPayPin     = '';
+}
+
+function updateCashpayDots() {
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('cashpay-dot-'+i);
+    if (!d) continue;
+    if (i < _cashierPayPin.length) {
+      d.classList.add('filled');
+      d.style.background = 'var(--amber,#F4A261)';
+      d.style.borderColor = 'var(--amber,#F4A261)';
+    } else {
+      d.classList.remove('filled');
+      d.style.background = '';
+      d.style.borderColor = 'rgba(0,0,0,.25)';
+    }
+  }
+}
+
+function cashpayPinPress(val) {
+  if (!_cashierPayStudent) return;
+  if (val === 'DEL') _cashierPayPin = _cashierPayPin.slice(0,-1);
+  else if (_cashierPayPin.length < 4) _cashierPayPin += val;
+  document.getElementById('cashpay-error').textContent = '';
+  updateCashpayDots();
+  if (_cashierPayPin.length === 4) setTimeout(checkCashpayPin, 150);
+}
+
+async function checkCashpayPin() {
+  const s = _cashierPayStudent;
+  if (!s) return;
+  if (String(_cashierPayPin) !== String(s.pin)) {
+    document.getElementById('cashpay-error').textContent = '❌ Feil PIN – prøv igjen';
+    _cashierPayPin = '';
+    updateCashpayDots();
+    playErrorBeep();
+    return;
+  }
+
+  const amount   = _cashierPayTotal || 0;
+  const playOnly = (window._settings && window._settings.realPayments14 === false);
+  const fbKey    = s.fbKey;
+
+  if (!playOnly) {
+    // REAL payment – check balance
+    if ((s.balance || 0) < amount) {
+      document.getElementById('cashpay-error').textContent = '😕 Eleven har ikke nok mynter på konto!';
+      _cashierPayPin = '';
+      updateCashpayDots();
+      playErrorBeep();
+      return;
+    }
+    // Deduct from student's balance
+    const newBal = (s.balance || 0) - amount;
+    try {
+      await window._update(window._ref(window._db,'students14/'+fbKey), { balance: newBal });
+    } catch(e){}
+    // Update local cache so the student sees the new balance next time they log in
+    const idxP = (window._allStudents || []).findIndex(x => x.fbKey === fbKey);
+    if (idxP !== -1) window._allStudents[idxP].balance = newBal;
+    const tx = { type:'expense', icon:'🛒', desc:'Betaling i kassen', amount:-amount, ts:Date.now() };
+    try { await saveTransaction(fbKey, tx); } catch(e){}
+  } else {
+    // Play-only: log a play transaction (does not affect balance)
+    const tx = { type:'play', icon:'🎮', desc:'Lekekjøp i kassen', amount:0, ts:Date.now(), playAmount:-amount };
+    try { await saveTransaction(fbKey, tx); } catch(e){}
+  }
+
+  // Success – close PIN overlay, clear cart, show confirmation
+  const studentName = s.firstName || s.name || 'Elev';
+  hideCashierPayPin();
+  clearCart();
+  playSuccessChime();
+  if (playOnly) {
+    showSuccess('🎮','Lekekjøp godkjent!',`${studentName} – ${amount} 🪙`,'Ingen mynter ble trukket fra konto');
+  } else {
+    showSuccess('✅','Betalt!',`${studentName} – ${amount} 🪙`,'Mynter er trukket fra elevens konto');
+  }
+}
+
+function cancelCashpayPin() {
+  hideCashierPayPin();
 }
 
 function onCashierPaymentApproved(req) {
