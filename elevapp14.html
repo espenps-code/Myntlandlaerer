@@ -220,9 +220,11 @@
   .transaction-item{display:flex;align-items:center;gap:12px;padding:14px;background:white;border-radius:14px;margin-bottom:8px;border:1px solid var(--border);}
   .tx-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
   .tx-icon.income{background:var(--teal-light);}.tx-icon.expense{background:var(--coral-light);}
+  .tx-icon.play{background:#FFF6DD;}
   .tx-desc{flex:1;}.tx-name{font-weight:700;font-size:.9rem;}.tx-date{font-size:.75rem;color:var(--muted);}
   .tx-amount{font-family:'Fredoka One',cursive;font-size:1.1rem;}
   .tx-amount.income{color:var(--teal);}.tx-amount.expense{color:var(--coral);}
+  .tx-amount.play{color:#854F0B;}
 
   /* BANK CARD */
   .bank-card{background:linear-gradient(135deg,#2C2C2A,#444441);border-radius:20px;padding:1.5rem;color:white;position:relative;overflow:hidden;margin-bottom:1.5rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between;}
@@ -610,7 +612,7 @@
       </div>
     </div>
 
-    <button class="action-btn action-btn-amber" onclick="generatePaymentQR()" id="pay-btn" disabled style="opacity:.4;">💳 Betal</button>
+    <button class="action-btn action-btn-amber" onclick="startCustomerCardScan()" id="pay-btn" disabled style="opacity:.4;">📷 Scan elevens kort for betaling</button>
     <button class="action-btn action-btn-ghost" onclick="clearCart()">🗑️ Tøm kassen</button>
   </div>
 </div>
@@ -656,13 +658,56 @@
   <button class="pin-overlay-cancel" onclick="cancelPinConfirm()">Avbryt</button>
 </div>
 
-<!-- PAYMENT QR OVERLAY (cashier) -->
+<!-- CASHIER WAITING OVERLAY (after scanning student card – waiting for PIN) -->
 <div class="payment-overlay" id="payment-overlay">
-  <div class="payment-qr-title">💳 Betalings-QR</div>
+  <div class="payment-qr-title" id="payment-overlay-title">⏳ Venter på eleven…</div>
   <div class="payment-amount-display" id="payment-display-amount">0 🪙</div>
-  <div class="payment-qr-wrap" id="payment-qr-wrap"></div>
-  <div class="payment-instruction">📱 Kunden scanner QR-koden med bankkortet sitt</div>
-  <button class="close-payment-btn" onclick="document.getElementById('payment-overlay').classList.remove('open');clearCart();">Lukk</button>
+  <div id="payment-overlay-student" style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:white;margin:.5rem 0 1rem;text-align:center;"></div>
+  <div id="payment-overlay-status" style="background:rgba(255,255,255,.1);border-radius:14px;padding:1.25rem 1.5rem;text-align:center;color:white;font-family:'Nunito',sans-serif;font-weight:700;font-size:.95rem;max-width:320px;margin-bottom:1rem;line-height:1.5;">
+    📱 Eleven taster PIN-koden på sin egen tablet for å bekrefte.
+  </div>
+  <div id="payment-overlay-spinner" style="font-size:2.5rem;animation:spin 1.5s linear infinite;">⏳</div>
+  <button class="close-payment-btn" id="payment-overlay-cancel" onclick="cancelCashierPayment()">Avbryt</button>
+</div>
+<style>
+  @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+</style>
+
+<!-- CUSTOMER PAYMENT REQUEST OVERLAY (incoming from cashier) -->
+<div class="pin-overlay" id="customer-payreq-overlay" style="z-index:500;">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:380px;width:100%;">
+    <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:.25rem;">🛒 Bekreft kjøp</div>
+    <div style="text-align:center;font-size:.85rem;color:var(--muted);margin-bottom:.75rem;font-weight:700;">Kassen sendte deg dette kjøpet</div>
+    <div id="payreq-cart-list" style="background:var(--teal-light,#E0F4F1);border-radius:12px;padding:.75rem;margin-bottom:.75rem;max-height:200px;overflow-y:auto;font-family:'Nunito',sans-serif;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--amber,#F4A261);color:white;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;">
+      <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;">SUM</span>
+      <span id="payreq-total" style="font-family:'Fredoka One',cursive;font-size:1.5rem;">0 🪙</span>
+    </div>
+    <div id="payreq-mode-banner" style="display:none;background:#FFF6DD;border:2px dashed var(--amber,#F4A261);border-radius:10px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:#854F0B;font-weight:800;text-align:center;">🎮 Lekemodus – ingen mynter trekkes</div>
+    <div style="text-align:center;font-family:'Nunito',sans-serif;font-weight:800;color:var(--teal-dark);margin-bottom:.5rem;font-size:.95rem;">🔐 Tast PIN for å bekrefte</div>
+    <div class="pin-overlay-dots" id="payreq-dots" style="margin:0 0 .5rem;">
+      <div class="pin-overlay-dot" id="payreq-dot-0" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="payreq-dot-1" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="payreq-dot-2" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="payreq-dot-3" style="border-color:rgba(0,0,0,.25);"></div>
+    </div>
+    <div id="payreq-error" style="color:#C0392B;font-size:.85rem;font-weight:700;text-align:center;min-height:20px;margin-bottom:8px;"></div>
+    <div class="pin-overlay-numpad">
+      <button class="pin-overlay-btn" onclick="payreqPinPress('1')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">1</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('2')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">2</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('3')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">3</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('4')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">4</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('5')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">5</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('6')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">6</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('7')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">7</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('8')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">8</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('9')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">9</button>
+      <div class="pin-overlay-btn empty"></div>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('0')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">0</button>
+      <button class="pin-overlay-btn del" onclick="payreqPinPress('DEL')" style="background:var(--bg,#F4F1EB);color:var(--teal-dark);border:2px solid rgba(0,0,0,.08);">⌫</button>
+    </div>
+    <button class="pin-overlay-cancel" onclick="declinePaymentRequest()" style="color:var(--muted);border-color:rgba(0,0,0,.15);margin-top:.75rem;width:100%;">Avbryt</button>
+  </div>
 </div>
 
 <!-- QUIZ QUESTION OVERLAY -->
@@ -807,7 +852,7 @@ window._groceriesReady = false;
 
 let currentPin = '', cart = [], cartTotal = 0;
 let transactions = [];
-let scanMode = null;       // 'payment' | 'reward' | 'cashier' | 'any'
+let scanMode = null;       // 'payment' | 'reward' | 'cashier' | 'any' | 'loginCard' | 'cashierCustomerCard'
 let pendingPayAmount = 0;
 let confirmPin = '';
 
@@ -881,6 +926,7 @@ function showScreen(id) {
 
 function goToSplash() {
   stopScan();
+  stopPaymentRequestListener();
   window._currentStudent = null;
   window._preselectedStudent = null;
   currentPin = ''; cart = []; cartTotal = 0; transactions = []; _pinVisible14 = false;
@@ -1043,6 +1089,7 @@ function tryLogin() {
       renderSavings();
     })();
     startClassGoalsListener();
+    startPaymentRequestListener(s.fbKey);
     // Re-rendre umiddelbart for ny innlogget elev (i tilfelle samme nettleser-økt)
     renderMyClassGoals();
     checkQuizStatus();
@@ -1687,22 +1734,28 @@ function renderTransactions() {
     el.innerHTML='<div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>';
     return;
   }
-  el.innerHTML = transactions.slice(0,15).map(t => `
+  el.innerHTML = transactions.slice(0,15).map(t => {
+    const isPlay = (t.type === 'play');
+    const displayAmt = isPlay && typeof t.playAmount === 'number' ? t.playAmount : t.amount;
+    const sign = displayAmt > 0 ? '+' : '';
+    const suffix = isPlay ? ' (lek)' : '';
+    return `
     <div class="transaction-item">
       <div class="tx-icon ${t.type}">${t.icon}</div>
       <div class="tx-desc">
         <div class="tx-name">${t.desc}</div>
         <div class="tx-date">${fmtDate(t.ts||0)}</div>
       </div>
-      <div class="tx-amount ${t.type}">${t.amount>0?'+':''}${t.amount} 🪙</div>
-    </div>`).join('');
+      <div class="tx-amount ${t.type}">${sign}${displayAmt} 🪙${suffix}</div>
+    </div>`;
+  }).join('');
 }
 
 // ── Camera QR scanner ──────────────────────────────────────────────────────
 function startScan(mode) {
   scanMode = mode;
-  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønning / hendelse', cashier:'🛒 Scan varekode', any:'📷 Skann QR-kode', loginCard:'💳 Scan bankkortet ditt' };
-  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Belønning eller hendelse fra læreren', cashier:'Hold varekortet innenfor rammen', any:'Hold QR-koden innenfor rammen', loginCard:'Hold QR-koden på kortet innenfor rammen' };
+  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønning / hendelse', cashier:'🛒 Scan varekode', any:'📷 Skann QR-kode', loginCard:'💳 Scan bankkortet ditt', cashierCustomerCard:'💳 Scan elevens bankkort' };
+  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Belønning eller hendelse fra læreren', cashier:'Hold varekortet innenfor rammen', any:'Hold QR-koden innenfor rammen', loginCard:'Hold QR-koden på kortet innenfor rammen', cashierCustomerCard:'Be eleven holde sitt bankkort fram – hold QR-koden i rammen' };
   document.getElementById('scanner-title').textContent = titles[mode] || 'Scan QR-kode';
   document.getElementById('scanner-hint').textContent  = hints[mode] || 'Hold QR-koden innenfor rammen';
   document.getElementById('scanner-overlay').classList.add('open');
@@ -1832,6 +1885,13 @@ function handleScanResult(text) {
         handleLoginCardScan(data.fbKey);
         return;
       }
+    } else if (scanMode === 'cashierCustomerCard') {
+      if (data.type === 'login' && data.fbKey) {
+        playScanBeep();
+        stopScan();
+        handleCashierCustomerCardScan(data.fbKey);
+        return;
+      }
     }
     stopScan();
   } catch(e) {
@@ -1907,6 +1967,185 @@ async function doPayment(amount) {
   renderTransactions();
   playSuccessChime();
   showSuccess('✅','Betalt!',`-${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
+}
+
+// ── CUSTOMER-SIDE: incoming payment requests from cashier ─────────────────
+let _payreqUnsub      = null;   // listener cleanup
+let _payreqActiveKey  = null;   // currently shown request key
+let _payreqActiveData = null;   // data for active request
+let _payreqPin        = '';     // typed PIN
+
+function startPaymentRequestListener(fbKey) {
+  stopPaymentRequestListener();
+  if (!window._onValue || !window._ref || !window._db) return;
+  const reqRef = window._ref(window._db, 'paymentRequests14/' + fbKey);
+  _payreqUnsub = window._onValue(reqRef, snap => {
+    const all = snap.val() || {};
+    // Find the most recent pending request
+    const entries = Object.entries(all)
+      .map(([k,v]) => ({...v, _key:k}))
+      .filter(r => r && r.status === 'pending')
+      .sort((a,b) => (b.ts||0) - (a.ts||0));
+    const next = entries[0];
+    // If we already showed a different request and it's no longer pending, hide
+    if (_payreqActiveKey) {
+      const stillPending = next && next._key === _payreqActiveKey;
+      if (!stillPending) {
+        // The active one was cancelled / changed status elsewhere
+        const cur = all[_payreqActiveKey];
+        if (!cur || cur.status !== 'pending') hidePaymentRequest();
+      }
+    }
+    if (next && next._key !== _payreqActiveKey) {
+      showPaymentRequest(next);
+    }
+  });
+}
+
+function stopPaymentRequestListener() {
+  if (_payreqUnsub) { try { _payreqUnsub(); } catch(e){} _payreqUnsub = null; }
+  hidePaymentRequest();
+}
+
+function showPaymentRequest(req) {
+  _payreqActiveKey  = req._key;
+  _payreqActiveData = req;
+  _payreqPin        = '';
+  // Render cart
+  const list = document.getElementById('payreq-cart-list');
+  if (list) {
+    if (Array.isArray(req.cart) && req.cart.length) {
+      list.innerHTML = req.cart.map(it =>
+        `<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .25rem;border-bottom:1px solid rgba(0,0,0,.05);">
+          <span style="font-size:1.4rem;">${it.emoji||'🛒'}</span>
+          <span style="flex:1;font-weight:700;color:var(--teal-dark,#04342C);font-size:.9rem;">${it.name||'Vare'}</span>
+          <span style="font-weight:800;color:var(--teal-dark,#04342C);">🪙${it.price||0}</span>
+        </div>`
+      ).join('');
+    } else {
+      list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:.85rem;padding:.5rem;">Ingen varer i kvitteringen</div>';
+    }
+  }
+  document.getElementById('payreq-total').textContent = (req.total||0) + ' 🪙';
+  document.getElementById('payreq-error').textContent = '';
+  // Play-only banner
+  const playOnly = (window._settings && window._settings.realPayments14 === false);
+  document.getElementById('payreq-mode-banner').style.display = playOnly ? 'block' : 'none';
+  updatePayreqDots();
+  document.getElementById('customer-payreq-overlay').classList.add('open');
+  try { playScanBeep(); } catch(e){}
+}
+
+function hidePaymentRequest() {
+  document.getElementById('customer-payreq-overlay')?.classList.remove('open');
+  _payreqActiveKey  = null;
+  _payreqActiveData = null;
+  _payreqPin        = '';
+}
+
+function updatePayreqDots() {
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('payreq-dot-'+i);
+    if (!d) continue;
+    if (i < _payreqPin.length) { d.classList.add('filled'); d.style.background='var(--amber,#F4A261)'; d.style.borderColor='var(--amber,#F4A261)'; }
+    else { d.classList.remove('filled'); d.style.background=''; d.style.borderColor='rgba(0,0,0,.25)'; }
+  }
+}
+
+function payreqPinPress(val) {
+  if (!_payreqActiveKey) return;
+  if (val === 'DEL') _payreqPin = _payreqPin.slice(0,-1);
+  else if (_payreqPin.length < 4) _payreqPin += val;
+  document.getElementById('payreq-error').textContent = '';
+  updatePayreqDots();
+  if (_payreqPin.length === 4) setTimeout(checkPayreqPin, 150);
+}
+
+async function checkPayreqPin() {
+  const s = window._currentStudent;
+  if (!s || !_payreqActiveKey || !_payreqActiveData) return;
+  if (String(_payreqPin) !== String(s.pin)) {
+    document.getElementById('payreq-error').textContent = '❌ Feil PIN – prøv igjen';
+    _payreqPin = '';
+    updatePayreqDots();
+    return;
+  }
+  // Correct PIN: approve the payment
+  const amount   = _payreqActiveData.total || 0;
+  const playOnly = (window._settings && window._settings.realPayments14 === false);
+  const reqKey   = _payreqActiveKey;
+  const fbKey    = s.fbKey;
+
+  if (!playOnly) {
+    // REAL payment – check balance
+    if ((s.balance || 0) < amount) {
+      document.getElementById('payreq-error').textContent = '😕 Ikke nok mynter på konto!';
+      _payreqPin = '';
+      updatePayreqDots();
+      // Mark request declined with reason
+      try {
+        await window._update(window._ref(window._db, 'paymentRequests14/'+fbKey+'/'+reqKey), {
+          status: 'declined',
+          declineReason: 'Eleven har ikke nok mynter på konto.'
+        });
+      } catch(e){}
+      hidePaymentRequest();
+      return;
+    }
+    // Deduct
+    const newBal = (s.balance || 0) - amount;
+    try {
+      await window._update(window._ref(window._db,'students14/'+fbKey), { balance: newBal });
+    } catch(e){}
+    window._currentStudent.balance = newBal;
+    const idxP = window._allStudents.findIndex(x=>x.fbKey===fbKey);
+    if (idxP !== -1) window._allStudents[idxP].balance = newBal;
+    const tx = { type:'expense', icon:'🛒', desc:'Betaling i kassen', amount:-amount, ts:Date.now() };
+    try { await saveTransaction(fbKey, tx); } catch(e){}
+    document.getElementById('customer-balance').textContent = newBal;
+    transactions.unshift(tx);
+    renderTransactions();
+  } else {
+    // Play-only: log a play transaction (does not affect balance)
+    const tx = { type:'play', icon:'🎮', desc:'Lekekjøp i kassen', amount:0, ts:Date.now(), playAmount:-amount };
+    try { await saveTransaction(fbKey, tx); } catch(e){}
+    transactions.unshift(tx);
+    renderTransactions();
+  }
+
+  // Mark request approved
+  try {
+    await window._update(window._ref(window._db, 'paymentRequests14/'+fbKey+'/'+reqKey), {
+      status: 'approved',
+      playOnly: !!playOnly,
+      approvedTs: Date.now()
+    });
+  } catch(e){}
+
+  hidePaymentRequest();
+  playSuccessChime();
+  if (playOnly) {
+    showSuccess('🎮','Lekekjøp godkjent!',`-${amount} 🪙 (på liksom)`,'Ingen mynter trukket fra konto');
+  } else {
+    const newBal = (window._currentStudent.balance || 0);
+    showSuccess('✅','Betalt!',`-${amount} 🪙`,`Ny saldo: ${newBal} mynter`);
+  }
+}
+
+async function declinePaymentRequest() {
+  if (!_payreqActiveKey || !_payreqActiveData) { hidePaymentRequest(); return; }
+  const s = window._currentStudent;
+  const reqKey = _payreqActiveKey;
+  const fbKey  = s ? s.fbKey : (_payreqActiveData.fbKey || null);
+  if (fbKey && window._update && window._ref && window._db) {
+    try {
+      await window._update(window._ref(window._db, 'paymentRequests14/'+fbKey+'/'+reqKey), {
+        status: 'declined',
+        declineReason: 'Eleven avbrøt kjøpet på sin tablet.'
+      });
+    } catch(e){}
+  }
+  hidePaymentRequest();
 }
 
 async function doReward(amount) {
@@ -2457,13 +2696,129 @@ function renderCart() {
     </div>`).join('');
 }
 
-function generatePaymentQR() {
+// ── NEW PAYMENT FLOW: cashier scans student card, student confirms with PIN ──
+// Cashier-side state
+let _cashierPendingReqKey = null;  // Firebase key for the active payment request
+let _cashierPendingUnsub  = null;  // listener cleanup
+
+function startCustomerCardScan() {
   if (!cart.length) return;
-  const wrap = document.getElementById('payment-qr-wrap');
-  wrap.innerHTML = '';
-  try { new QRCode(wrap, { text: JSON.stringify({ type:'payment', amount:cartTotal, ts:Date.now() }), width:200, height:200, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
-  document.getElementById('payment-display-amount').textContent = cartTotal + ' 🪙';
+  startScan('cashierCustomerCard');
+}
+
+async function handleCashierCustomerCardScan(fbKey) {
+  // Look up the student so we can show their name on the cashier screen
+  const s = (window._allStudents || []).find(x => x.fbKey === fbKey);
+  if (!s) {
+    playErrorBeep();
+    showSuccess('❌','Fant ikke elev','','Sjekk at kortet er registrert i lærerportalen');
+    return;
+  }
+
+  // Build cart payload for the payment request (snapshot of current cart)
+  const cartPayload = cart.map(it => ({ name: it.name, emoji: it.emoji || '🛒', price: it.price }));
+  const total = cartTotal;
+
+  // Show waiting overlay on cashier device
+  document.getElementById('payment-overlay-title').textContent  = '⏳ Venter på eleven…';
+  document.getElementById('payment-display-amount').textContent = total + ' 🪙';
+  document.getElementById('payment-overlay-student').textContent = (s.firstName || s.name || 'Elev');
+  document.getElementById('payment-overlay-status').innerHTML   = '📱 Eleven taster PIN-koden på sin egen tablet for å bekrefte.';
+  document.getElementById('payment-overlay-spinner').style.display = 'block';
+  document.getElementById('payment-overlay-cancel').style.display  = 'inline-block';
+  document.getElementById('payment-overlay-cancel').textContent    = 'Avbryt';
   document.getElementById('payment-overlay').classList.add('open');
+
+  if (!window._push || !window._set || !window._ref || !window._db || !window._onValue) {
+    showSuccess('❌','Ingen tilkobling','','Kunne ikke sende betalingsforespørselen');
+    document.getElementById('payment-overlay').classList.remove('open');
+    return;
+  }
+
+  // Push payment request under the student's fbKey
+  const reqRef = window._push(window._ref(window._db, 'paymentRequests14/' + fbKey));
+  _cashierPendingReqKey = reqRef.key;
+  window._currentCashierFbKey = fbKey;
+  const reqData = {
+    fbKey,
+    studentName: s.firstName || s.name || 'Elev',
+    cart: cartPayload,
+    total,
+    status: 'pending',         // pending | approved | declined | cancelled
+    ts: Date.now()
+  };
+  try { await window._set(reqRef, reqData); } catch(e) {
+    showSuccess('❌','Klarte ikke sende','','Sjekk nettverk og prøv igjen');
+    document.getElementById('payment-overlay').classList.remove('open');
+    _cashierPendingReqKey = null;
+    return;
+  }
+
+  // Listen for status updates on this request
+  if (_cashierPendingUnsub) { try { _cashierPendingUnsub(); } catch(e){} _cashierPendingUnsub = null; }
+  const statusRef = window._ref(window._db, 'paymentRequests14/' + fbKey + '/' + reqRef.key);
+  _cashierPendingUnsub = window._onValue(statusRef, snap => {
+    const v = snap.val();
+    if (!v) return;
+    if (v.status === 'approved') {
+      onCashierPaymentApproved(v);
+    } else if (v.status === 'declined') {
+      onCashierPaymentDeclined(v);
+    }
+  });
+}
+
+function onCashierPaymentApproved(req) {
+  const isPlay = (req && req.playOnly) ? true : false;
+  document.getElementById('payment-overlay-title').textContent  = isPlay ? '✅ Lekebetaling godkjent!' : '✅ Betalt!';
+  document.getElementById('payment-overlay-status').innerHTML   = isPlay
+    ? '🎮 Dette var en lekebetaling – ingen mynter ble trukket fra konto.'
+    : '🪙 Mynter er trukket fra elevens konto.';
+  document.getElementById('payment-overlay-spinner').style.display = 'none';
+  document.getElementById('payment-overlay-cancel').textContent    = 'Lukk';
+  document.getElementById('payment-overlay-cancel').onclick        = function() {
+    document.getElementById('payment-overlay').classList.remove('open');
+    document.getElementById('payment-overlay-cancel').onclick = cancelCashierPayment;
+    clearCart();
+    cleanupCashierPayment(false);
+  };
+  playSuccessChime();
+}
+
+function onCashierPaymentDeclined(req) {
+  const reason = (req && req.declineReason) ? req.declineReason : 'Eleven avbrøt betalingen.';
+  document.getElementById('payment-overlay-title').textContent  = '❌ Avvist';
+  document.getElementById('payment-overlay-status').innerHTML   = reason;
+  document.getElementById('payment-overlay-spinner').style.display = 'none';
+  document.getElementById('payment-overlay-cancel').textContent    = 'Lukk';
+  document.getElementById('payment-overlay-cancel').onclick        = function() {
+    document.getElementById('payment-overlay').classList.remove('open');
+    document.getElementById('payment-overlay-cancel').onclick = cancelCashierPayment;
+    cleanupCashierPayment(false);
+  };
+  playErrorBeep();
+}
+
+function cancelCashierPayment() {
+  cleanupCashierPayment(true);
+  document.getElementById('payment-overlay').classList.remove('open');
+}
+
+function cleanupCashierPayment(markCancelled) {
+  if (_cashierPendingUnsub) { try { _cashierPendingUnsub(); } catch(e){} _cashierPendingUnsub = null; }
+  // Best-effort: mark the active request cancelled so the student side clears
+  if (markCancelled && _cashierPendingReqKey && window._currentCashierFbKey && window._update && window._ref && window._db) {
+    try {
+      window._update(window._ref(window._db, 'paymentRequests14/' + window._currentCashierFbKey + '/' + _cashierPendingReqKey), { status:'cancelled' });
+    } catch(e) {}
+  }
+  _cashierPendingReqKey = null;
+  window._currentCashierFbKey = null;
+}
+
+function generatePaymentQR() {
+  // Backwards-compat shim: legacy callers route into new flow
+  startCustomerCardScan();
 }
 
 // ── Success ────────────────────────────────────────────────────────────────
@@ -2472,9 +2827,15 @@ function generatePaymentQR() {
 document.addEventListener('keydown', function(e) {
   const loginScreen = document.getElementById('screen-login');
   const pinOverlay  = document.getElementById('pin-overlay');
+  const payreqOverlay = document.getElementById('customer-payreq-overlay');
   if (loginScreen?.classList.contains('active')) {
     if (e.key >= '0' && e.key <= '9') { numpadPress(e.key); e.preventDefault(); }
     if (e.key === 'Backspace') { numpadPress('DEL'); e.preventDefault(); }
+    return;
+  }
+  if (payreqOverlay?.classList.contains('open')) {
+    if (e.key >= '0' && e.key <= '9') { payreqPinPress(e.key); e.preventDefault(); }
+    if (e.key === 'Backspace') { payreqPinPress('DEL'); e.preventDefault(); }
     return;
   }
   if (pinOverlay?.classList.contains('open')) {

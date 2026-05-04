@@ -104,6 +104,8 @@
       }
       // Oppdater toggleknappene for innloggingsmodus
       if (typeof syncLoginModeToggle === 'function') syncLoginModeToggle();
+      // Oppdater toggleknappene for ekte/leke-betaling
+      if (typeof syncRealPaymentsToggle === 'function') syncRealPaymentsToggle();
     });
   }
 
@@ -406,8 +408,7 @@
     <button class="active" onclick="showPage('elever')" id="nav-elever"><span class="nav-icon">👩‍🎓</span> Elever</button>
     <button onclick="showPage('grupper')" id="nav-grupper"><span class="nav-icon">👥</span> Grupper</button>
     <button onclick="showPage('saldo')" id="nav-saldo"><span class="nav-icon">💰</span> Saldo</button>
-    <button onclick="showPage('dagligvarer')" id="nav-dagligvarer"><span class="nav-icon">🛒</span> Dagligvarer</button>
-    <button onclick="showPage('handleliste')" id="nav-handleliste"><span class="nav-icon">📋</span> Handleliste</button>
+    <button onclick="showPage('butikk')" id="nav-butikk"><span class="nav-icon">🛒</span> Butikk</button>
     <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
     <button onclick="showPage('sparemaal')" id="nav-sparemaal"><span class="nav-icon">🏦</span> Sparemål</button>
     <button onclick="showPage('hendelser')" id="nav-hendelser"><span class="nav-icon">🎲</span> Hendelser</button>
@@ -686,14 +687,103 @@
 </div>
 
 <!-- ===== DAGLIGVARER ===== -->
-<div class="page" id="page-dagligvarer">
-  <div class="page-title">🛒 Dagligvarer & butikk</div>
-  <div class="page-subtitle">Administrer butikkens varer og skriv ut varelapper med QR-koder</div>
+<!-- ===== BUTIKK (Dagligvarer + Handleliste + Innstillinger samlet) ===== -->
+<div class="page" id="page-butikk">
+  <div class="page-title">🛒 Butikk</div>
+  <div class="page-subtitle">Varer, handlelister og kasseinnstillinger for klassens butikk</div>
   <div class="tabs">
-    <button class="tab active" onclick="showTab('butikk-rediger',this)">✏️ Rediger varer</button>
-    <button class="tab" onclick="showTab('butikk-skriv',this)">🖨️ Skriv ut varelapper</button>
+    <button class="tab active" onclick="showTab('butikk-guide',this)">📖 Slik fungerer det</button>
+    <button class="tab" onclick="showTab('butikk-innstillinger',this)">⚙️ Innstillinger</button>
+    <button class="tab" onclick="showTab('butikk-rediger',this)">🛍️ Varer</button>
+    <button class="tab" onclick="showTab('butikk-skriv',this)">🏷️ Skriv ut varelapper</button>
+    <button class="tab" onclick="showTab('butikk-handleliste',this)">📋 Handlelister</button>
   </div>
-  <div id="butikk-rediger">
+
+  <!-- ── 1) STEP-BY-STEP GUIDE ── -->
+  <div id="butikk-guide">
+    <div class="card">
+      <div class="card-title">📖 Slik fungerer butikken</div>
+      <p style="font-size:.9rem;color:var(--muted);margin-bottom:1.25rem;font-weight:600;">Butikken har tre deler – varer, handlelister og kassen. Slik henger de sammen:</p>
+
+      <div style="display:grid;gap:1rem;">
+        <div style="display:flex;gap:1rem;background:var(--teal-light);border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">1️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.05rem;margin-bottom:.25rem;">🛍️ Legg inn varer</div>
+            <div style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.5;">Gå til <strong>«Varer»</strong>-fanen og legg til ting elevene kan kjøpe (melk, brød, eple, blyant osv.) med emoji og pris i mynter. Disse varene vises i kassen og dukker opp på handlelister.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;background:#FFF6DD;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">2️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#854F0B;font-size:1.05rem;margin-bottom:.25rem;">🏷️ Skriv ut varelapper</div>
+            <div style="font-size:.88rem;color:#854F0B;font-weight:600;line-height:1.5;">Under <strong>«Skriv ut varelapper»</strong> får hver vare en lapp med emoji, navn, pris og <strong>QR-kode</strong>. Heng dem opp på «hyllene» i klasserommet. Eleven som er kasse-betjent scanner QR-koden for å legge varen i kassen.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;background:#FCE7E1;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">3️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#9C2B1B;font-size:1.05rem;margin-bottom:.25rem;">📋 Lag handlelister (valgfritt)</div>
+            <div style="font-size:.88rem;color:#9C2B1B;font-weight:600;line-height:1.5;">Under <strong>«Handlelister»</strong> kan du lage utskrifter med utvalgte varer der elevene fyller inn pris selv og regner ut totalsummen. Bra som regneoppgave på papir <em>før</em> de går til kassen.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;background:#E8F2FF;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">4️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#1B4F8C;font-size:1.05rem;margin-bottom:.25rem;">💳 Sett opp kassen (én tablet)</div>
+            <div style="font-size:.88rem;color:#1B4F8C;font-weight:600;line-height:1.5;">Åpne elevappen på en ekstra tablet/PC og velg <strong>«Kasse»</strong> på startskjermen. Denne tableten brukes som butikkens kassa-apparat. (Elevene som er kunder bruker sine egne tablets – innlogget med PIN-kort som vanlig.)</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;background:#E8F8F2;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">5️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.05rem;margin-bottom:.25rem;">🛒 Slik betaler eleven</div>
+            <div style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.5;">
+              <strong>a)</strong> Kasse-betjenten scanner varelappene → varene legges i kassen.<br>
+              <strong>b)</strong> Når kunden vil betale: kasse-betjenten trykker <strong>«📷 Scan elevens kort»</strong> og scanner kundens bankkort.<br>
+              <strong>c)</strong> Kunden får en betalingsforespørsel på sin egen tablet og taster <strong>PIN-koden</strong> for å bekrefte.<br>
+              <strong>d)</strong> Penger trekkes (eller ikke – se «Innstillinger»). Kassen viser «Betalt!» ✅
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;background:#F4ECFF;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">6️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#5B2A91;font-size:1.05rem;margin-bottom:.25rem;">🎮 Lek eller på ekte?</div>
+            <div style="font-size:.88rem;color:#5B2A91;font-weight:600;line-height:1.5;">I <strong>«Innstillinger»</strong> velger du om mynter faktisk skal trekkes fra elevens konto, eller om alle kjøp bare er på liksom (lekemodus). Kjekt når dere bare øver på flyten uten å bruke opp elevenes saldo.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.25rem;background:var(--bg);border-radius:12px;padding:.9rem 1.1rem;border-left:4px solid var(--amber);font-size:.85rem;color:var(--muted);font-weight:600;line-height:1.55;">
+        💡 <strong>Tips:</strong> La elevene bytte på å være kasse-betjent! Det gir god trening på både hoderegning, sosial kompetanse og digital betaling.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2) INNSTILLINGER (real vs. play money) ── -->
+  <div id="butikk-innstillinger" style="display:none;">
+    <div class="card">
+      <div class="card-title">⚙️ Betalingsmodus</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Velg om kjøpene skal trekke ekte mynter fra elevens konto, eller om alle kjøp bare er på liksom.</p>
+      <div class="form-row">
+        <label>Når elev bekrefter et kjøp i kassen:</label>
+        <div id="real-payments-toggle" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost btn-sm" id="real-payments-on" onclick="setRealPayments14(true)" style="flex:1;min-width:160px;">💰 Trekk mynter på ekte</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="real-payments-off" onclick="setRealPayments14(false)" style="flex:1;min-width:160px;">🎮 Lekemodus (ingen trekk)</button>
+        </div>
+        <div id="real-payments-hint" style="margin-top:.5rem;font-size:.78rem;color:var(--muted);font-weight:600;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3) VARER (var: dagligvarer/butikk-rediger) ── -->
+  <div id="butikk-rediger" style="display:none;">
     <div class="card">
       <div class="card-title">➕ Legg til vare</div>
       <div class="form-grid">
@@ -708,6 +798,8 @@
     </div>
     <div class="card"><div class="card-title">🏪 Butikkens varer</div><div class="grocery-grid" id="grocery-list"><p style="color:var(--muted);font-size:.9rem;">Laster varer…</p></div></div>
   </div>
+
+  <!-- ── 4) SKRIV UT VARELAPPER ── -->
   <div id="butikk-skriv" style="display:none;">
     <div class="card">
       <div class="card-title">🖨️ Skriv ut varelapper</div>
@@ -724,30 +816,29 @@
       <button class="btn btn-amber" onclick="generateGroceryPDF()" style="margin-top:1rem;">🖨️ Åpne utskrift</button>
     </div>
   </div>
-</div>
 
-<!-- ===== HANDLELISTE ===== -->
-<div class="page" id="page-handleliste">
-  <div class="page-title">📋 Handlelister</div>
-  <div class="page-subtitle">Generer handlelister der elevene skriver inn pris og regner ut total</div>
-  <div class="card">
-    <div class="card-title">🛍️ Lag handleliste</div>
-    <div class="form-grid">
-      <div class="form-row"><label>Elevens navn (valgfritt)</label><input type="text" id="list-student" placeholder="La stå tomt for blank liste"></div>
-      <div class="form-row"><label>Antall varer per liste</label><input type="number" id="list-count" value="5" min="2" max="15"></div>
+  <!-- ── 5) HANDLELISTER (var: handleliste page) ── -->
+  <div id="butikk-handleliste" style="display:none;">
+    <div class="card">
+      <div class="card-title">📋 Lag handleliste</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Generer handlelister på papir der elevene skriver inn pris og regner ut totalsummen.</p>
+      <div class="form-grid">
+        <div class="form-row"><label>Elevens navn (valgfritt)</label><input type="text" id="list-student" placeholder="La stå tomt for blank liste"></div>
+        <div class="form-row"><label>Antall varer per liste</label><input type="number" id="list-count" value="5" min="2" max="15"></div>
+      </div>
+      <div class="form-row" style="max-width:280px;"><label>Antall sider (handlelistesider)</label><input type="number" id="list-pages" value="1" min="1" max="20"></div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig per side):</p>
+      <div class="grocery-grid" id="handleliste-select"></div>
+      <div style="margin-top:1.5rem;display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="generateShoppingList()">📋 Generer handlelister</button>
+        <button class="btn btn-ghost" onclick="generateRandomList()">🎲 Tilfeldig</button>
+      </div>
     </div>
-    <div class="form-row" style="max-width:280px;"><label>Antall sider (handlelistesider)</label><input type="number" id="list-pages" value="1" min="1" max="20"></div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig per side):</p>
-    <div class="grocery-grid" id="handleliste-select"></div>
-    <div style="margin-top:1.5rem;display:flex;gap:10px;">
-      <button class="btn btn-primary" onclick="generateShoppingList()">📋 Generer handlelister</button>
-      <button class="btn btn-ghost" onclick="generateRandomList()">🎲 Tilfeldig</button>
+    <div id="handleliste-preview" style="display:none;" class="card">
+      <div class="card-title">👁️ Forhåndsvisning <span style="font-size:.75rem;color:var(--muted);font-weight:400;">(liggende A4 – 2 lister per side)</span></div>
+      <div id="handleliste-content"></div>
+      <button class="btn btn-amber" onclick="printShoppingList()" style="margin-top:1rem;">🖨️ Åpne utskrift</button>
     </div>
-  </div>
-  <div id="handleliste-preview" style="display:none;" class="card">
-    <div class="card-title">👁️ Forhåndsvisning <span style="font-size:.75rem;color:var(--muted);font-weight:400;">(liggende A4 – 2 lister per side)</span></div>
-    <div id="handleliste-content"></div>
-    <button class="btn btn-amber" onclick="printShoppingList()" style="margin-top:1rem;">🖨️ Åpne utskrift</button>
   </div>
 </div>
 
@@ -1269,6 +1360,11 @@ function showPage(page) {
   if (page === 'hendelser') renderHendelser();
   if (page === 'saldo') renderSaldoTable();
   if (page === 'merker') renderMerkerPage();
+  if (page === 'butikk') {
+    if (typeof renderGroceryList === 'function') renderGroceryList();
+    if (typeof renderHandlelisteSelect === 'function') renderHandlelisteSelect();
+    if (typeof syncRealPaymentsToggle === 'function') syncRealPaymentsToggle();
+  }
   if (page === 'elever' && typeof syncLoginModeToggle === 'function') syncLoginModeToggle();
   // Close mobile nav after selection
   const nav = document.querySelector('header nav');
@@ -2879,6 +2975,38 @@ function syncLoginModeToggle() {
     hint.textContent = mode === 'qrpin'
       ? '📷 Eleven scanner kortet sitt og bekrefter med PIN. PIN-koden vises ikke på kortet.'
       : '🔢 Eleven taster bare PIN-koden for å logge inn. PIN-koden vises på kortet (kortene har likevel QR-kode for fleksibilitet).';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// REAL VS PRETEND PAYMENTS TOGGLE (settings/realPayments14)
+// ══════════════════════════════════════════════════════════
+// true (default)  = elevens mynter trekkes fra konto ved kjøp i kassen
+// false           = lekemodus: ingen mynter trekkes, kjøpet logges som "Lekekjøp"
+async function setRealPayments14(real) {
+  const val = !!real;
+  if (!window._db || !window._update || !window._ref) return;
+  await window._update(window._ref(window._db, 'settings'), { realPayments14: val });
+  if (!window._settings) window._settings = {};
+  window._settings.realPayments14 = val;
+  syncRealPaymentsToggle();
+}
+
+function syncRealPaymentsToggle() {
+  // Default = true (real)
+  const real = (window._settings?.realPayments14 !== false);
+  const btnOn  = document.getElementById('real-payments-on');
+  const btnOff = document.getElementById('real-payments-off');
+  const hint   = document.getElementById('real-payments-hint');
+  if (!btnOn || !btnOff) return;
+  btnOn.className  = real  ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+  btnOff.className = !real ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+  btnOn.style.flex  = '1'; btnOn.style.minWidth  = '160px';
+  btnOff.style.flex = '1'; btnOff.style.minWidth = '160px';
+  if (hint) {
+    hint.textContent = real
+      ? '💰 Mynter trekkes fra elevens konto når kjøp bekreftes. Transaksjonen vises i historikken.'
+      : '🎮 Lekemodus: kassen viser «Betalt!» og kjøpet logges som lekekjøp – elevens saldo endres ikke.';
   }
 }
 
