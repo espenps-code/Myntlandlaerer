@@ -502,13 +502,12 @@
       </button>
     </div>
     <div class="pay-instruction">
-      <div class="pay-instruction-title">💳 Slik betaler du</div>
+      <div class="pay-instruction-title">💳 Slik bruker du kortet</div>
       <div style="font-size:.88rem;color:var(--teal-dark);font-weight:700;">
-        Kassen viser en QR-kode.<br>Scan den her for å betale! 📷
+        Skann QR-koder for å betale eller motta belønninger 📷
       </div>
     </div>
-    <button class="action-btn action-btn-amber" onclick="startScan('payment')">📷 Scan & betal</button>
-    <button class="action-btn action-btn-ghost" style="margin-top:.5rem;" onclick="startScan('reward')">⭐ Scan belønning eller hendelse</button>
+    <button class="action-btn action-btn-amber" onclick="startScan('any')">📷 Skann betaling eller belønning</button>
   </div>
 
   <!-- SPAREKONTO TAB -->
@@ -788,7 +787,7 @@ window._groceriesReady = false;
 
 let currentPin = '', cart = [], cartTotal = 0;
 let transactions = [];
-let scanMode = null;       // 'payment' | 'reward' | 'cashier'
+let scanMode = null;       // 'payment' | 'reward' | 'cashier' | 'any'
 let pendingPayAmount = 0;
 let confirmPin = '';
 
@@ -1557,8 +1556,8 @@ function renderTransactions() {
 // ── Camera QR scanner ──────────────────────────────────────────────────────
 function startScan(mode) {
   scanMode = mode;
-  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønning / hendelse', cashier:'🛒 Scan varekode' };
-  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Belønning eller hendelse fra læreren', cashier:'Hold varekortet innenfor rammen' };
+  const titles = { payment:'💳 Scan betalings-QR', reward:'⭐ Scan belønning / hendelse', cashier:'🛒 Scan varekode', any:'📷 Skann QR-kode' };
+  const hints  = { payment:'Hold kassens QR-kode innenfor rammen', reward:'Belønning eller hendelse fra læreren', cashier:'Hold varekortet innenfor rammen', any:'Hold QR-koden innenfor rammen' };
   document.getElementById('scanner-title').textContent = titles[mode] || 'Scan QR-kode';
   document.getElementById('scanner-hint').textContent  = hints[mode] || 'Hold QR-koden innenfor rammen';
   document.getElementById('scanner-overlay').classList.add('open');
@@ -1662,9 +1661,8 @@ function handleScanResult(text) {
       if (data.type === 'grocery') {
         playScanBeep();
         addToCart(data.name || '?', data.name || '?', data.price || 0, data.emoji || '🛒');
-        // In cashier mode: keep scanner open for next item, just pause briefly
+        // Lukk scanneren – eleven må trykke "Scan vare" igjen for neste vare
         stopScan();
-        setTimeout(() => startScan('cashier'), 800);
         return;
       }
     } else if (scanMode === 'payment') {
@@ -1674,6 +1672,13 @@ function handleScanResult(text) {
       }
     } else if (scanMode === 'reward') {
       if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
+      else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
+    } else if (scanMode === 'any') {
+      if (data.type === 'payment' && data.amount > 0) {
+        pendingPayAmount = data.amount;
+        openPinConfirm(data.amount);
+      }
+      else if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
       else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
     }
     stopScan();
