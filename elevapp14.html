@@ -1099,16 +1099,30 @@ async function checkAndPayInterest(studentFbKey) {
   await setLastInterestPaid(studentFbKey, lastMon);
 
   // Spor rentebidraget for Rentemester-merket
+  // Fikset: leser nåværende verdi fra Firebase i stedet for å stole på _currentStudent,
+  // som ikke alltid er satt ved første innlogging.
   if (totalInterestPaid > 0) {
-    const s = window._currentStudent;
-    if (s) {
-      const newRenter = (s.badgeRenterEarned || 0) + totalInterestPaid;
+    try {
+      const renterSnap = await window._get(window._ref(window._db, 'students14/' + studentFbKey + '/badgeRenterEarned'));
+      const currentRenter = renterSnap.val() || 0;
+      const newRenter = currentRenter + totalInterestPaid;
       await window._update(window._ref(window._db, 'students14/' + studentFbKey), { badgeRenterEarned: newRenter });
-      window._currentStudent.badgeRenterEarned = newRenter;
-      const idxR = window._allStudents.findIndex(x => x.fbKey === studentFbKey);
-      if (idxR !== -1) window._allStudents[idxR].badgeRenterEarned = newRenter;
+
+      // Oppdater også lokal state hvis den finnes
+      if (window._currentStudent && window._currentStudent.fbKey === studentFbKey) {
+        window._currentStudent.badgeRenterEarned = newRenter;
+      }
+      if (window._allStudents) {
+        const idxR = window._allStudents.findIndex(x => x.fbKey === studentFbKey);
+        if (idxR !== -1) window._allStudents[idxR].badgeRenterEarned = newRenter;
+      }
+
       // Sjekk om elev har oppnådd nye merker etter renteutbetalingen
-      await checkAndAwardBadges(window._currentStudent);
+      if (window._currentStudent && window._currentStudent.fbKey === studentFbKey) {
+        await checkAndAwardBadges(window._currentStudent);
+      }
+    } catch (err) {
+      console.error('Kunne ikke oppdatere badgeRenterEarned:', err);
     }
   }
 
