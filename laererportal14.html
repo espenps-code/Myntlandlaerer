@@ -771,13 +771,26 @@
     <div class="card">
       <div class="card-title">⚙️ Betalingsmodus</div>
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Velg om kjøpene skal trekke ekte mynter fra elevens konto, eller om alle kjøp bare er på liksom.</p>
-      <div class="form-row">
-        <label>Når elev bekrefter et kjøp i kassen:</label>
-        <div id="real-payments-toggle" style="display:flex;gap:.5rem;flex-wrap:wrap;">
-          <button type="button" class="btn btn-ghost btn-sm" id="real-payments-on" onclick="setRealPayments14(true)" style="flex:1;min-width:160px;">💰 Trekk mynter på ekte</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="real-payments-off" onclick="setRealPayments14(false)" style="flex:1;min-width:160px;">🎮 Lekemodus (ingen trekk)</button>
+
+      <!-- Stor statusboks som endrer farge/tekst etter modus -->
+      <div id="payment-mode-status" style="border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;border:2px solid transparent;transition:all .2s;">
+        <div id="payment-mode-icon" style="font-size:2.6rem;line-height:1;flex-shrink:0;">💰</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.7;margin-bottom:.15rem;" id="payment-mode-label">Aktiv modus</div>
+          <div id="payment-mode-title" style="font-family:'Fredoka One',cursive;font-size:1.5rem;line-height:1.1;margin-bottom:.25rem;">Ekte mynter</div>
+          <div id="payment-mode-desc" style="font-size:.85rem;font-weight:600;line-height:1.4;">Mynter trekkes fra elevens konto når kjøp bekreftes. Transaksjonen vises i historikken.</div>
         </div>
-        <div id="real-payments-hint" style="margin-top:.5rem;font-size:.78rem;color:var(--muted);font-weight:600;"></div>
+      </div>
+
+      <button type="button" class="btn btn-ghost" id="payment-mode-switch" onclick="togglePaymentMode14()" style="width:100%;">
+        <span id="payment-mode-switch-text">🎮 Bytt til lekemodus</span>
+      </button>
+
+      <!-- Skjulte knapper som setRealPayments14 fortsatt kaller fra eldre kode (kompatibilitet) -->
+      <div id="real-payments-toggle" style="display:none;">
+        <button type="button" id="real-payments-on" onclick="setRealPayments14(true)"></button>
+        <button type="button" id="real-payments-off" onclick="setRealPayments14(false)"></button>
+        <div id="real-payments-hint"></div>
       </div>
     </div>
   </div>
@@ -826,7 +839,7 @@
         <div class="form-row"><label>Elevens navn (valgfritt)</label><input type="text" id="list-student" placeholder="La stå tomt for blank liste"></div>
         <div class="form-row"><label>Antall varer per liste</label><input type="number" id="list-count" value="5" min="2" max="15"></div>
       </div>
-      <div class="form-row" style="max-width:280px;"><label>Antall sider (handlelistesider)</label><input type="number" id="list-pages" value="1" min="1" max="20"></div>
+      <div class="form-row" style="max-width:280px;"><label>Antall sider (Det er 2 lister per side)</label><input type="number" id="list-pages" value="1" min="1" max="20"></div>
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig per side):</p>
       <div class="grocery-grid" id="handleliste-select"></div>
       <div style="margin-top:1.5rem;display:flex;gap:10px;">
@@ -2992,21 +3005,45 @@ async function setRealPayments14(real) {
   syncRealPaymentsToggle();
 }
 
+function togglePaymentMode14() {
+  const real = (window._settings?.realPayments14 !== false);
+  setRealPayments14(!real);
+}
+
 function syncRealPaymentsToggle() {
   // Default = true (real)
   const real = (window._settings?.realPayments14 !== false);
-  const btnOn  = document.getElementById('real-payments-on');
-  const btnOff = document.getElementById('real-payments-off');
-  const hint   = document.getElementById('real-payments-hint');
-  if (!btnOn || !btnOff) return;
-  btnOn.className  = real  ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  btnOff.className = !real ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  btnOn.style.flex  = '1'; btnOn.style.minWidth  = '160px';
-  btnOff.style.flex = '1'; btnOff.style.minWidth = '160px';
-  if (hint) {
-    hint.textContent = real
-      ? '💰 Mynter trekkes fra elevens konto når kjøp bekreftes. Transaksjonen vises i historikken.'
-      : '🎮 Lekemodus: kassen viser «Betalt!» og kjøpet logges som lekekjøp – elevens saldo endres ikke.';
+
+  const box       = document.getElementById('payment-mode-status');
+  const iconEl    = document.getElementById('payment-mode-icon');
+  const labelEl   = document.getElementById('payment-mode-label');
+  const titleEl   = document.getElementById('payment-mode-title');
+  const descEl    = document.getElementById('payment-mode-desc');
+  const switchBtn = document.getElementById('payment-mode-switch');
+  const switchTxt = document.getElementById('payment-mode-switch-text');
+
+  if (!box || !switchBtn) return;
+
+  if (real) {
+    // Ekte penger – grønn (teal)
+    box.style.background    = 'var(--teal-light)';
+    box.style.borderColor   = 'var(--teal)';
+    box.style.color         = 'var(--teal-dark)';
+    iconEl.textContent      = '💰';
+    labelEl.textContent     = 'Aktiv modus';
+    titleEl.textContent     = 'Ekte mynter';
+    descEl.textContent      = 'Mynter trekkes fra elevens konto når kjøp bekreftes. Transaksjonen vises i historikken.';
+    switchTxt.textContent   = '🎮 Bytt til lekemodus';
+  } else {
+    // Lekemodus – lilla
+    box.style.background    = 'var(--purple-light)';
+    box.style.borderColor   = 'var(--purple)';
+    box.style.color         = 'var(--purple)';
+    iconEl.textContent      = '🎮';
+    labelEl.textContent     = 'Aktiv modus';
+    titleEl.textContent     = 'Lekemodus';
+    descEl.textContent      = 'Kassen viser «Betalt!», men ingen mynter trekkes fra elevens konto. Kjøpet logges som lekekjøp.';
+    switchTxt.textContent   = '💰 Bytt til ekte mynter';
   }
 }
 
