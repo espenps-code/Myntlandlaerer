@@ -1077,7 +1077,24 @@ async function distributeToGoals(amount){
 }
 
 // ── TRANSACTIONS ───────────────────────────────────────────────────────────
-function fmtDate(ts){const d=new Date(ts),now=new Date(),diff=now-d;if(diff<60000)return 'Nå nettopp';if(diff<3600000)return Math.floor(diff/60000)+' min siden';if(diff<86400000)return 'I dag '+d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});if(diff<172800000)return 'I går '+d.toLocaleTimeString('no',{hour:'2-digit',minute:'2-digit'});return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0');}
+function fmtDate(ts){
+  const d = new Date(ts), now = new Date(), diff = now - d;
+  if (diff < 60000)   return 'Nå nettopp';
+  if (diff < 3600000) return Math.floor(diff/60000) + ' min siden';
+  // Sammenlign faktiske kalenderdager (lokal/norsk tid), ikke antall timer.
+  // Dette unngår at en transaksjon fra i går kveld vises som "I dag" bare
+  // fordi det er mindre enn 24 timer siden.
+  const sameDay = d.getFullYear() === now.getFullYear()
+               && d.getMonth()    === now.getMonth()
+               && d.getDate()     === now.getDate();
+  if (sameDay) return 'I dag ' + d.toLocaleTimeString('no', {hour:'2-digit', minute:'2-digit'});
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  const wasYesterday = d.getFullYear() === y.getFullYear()
+                    && d.getMonth()    === y.getMonth()
+                    && d.getDate()     === y.getDate();
+  if (wasYesterday) return 'I går ' + d.toLocaleTimeString('no', {hour:'2-digit', minute:'2-digit'});
+  return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0');
+}
 async function saveTx(sk,type,icon,desc,amount){if(!window._push||!window._set)return;await window._set(window._push(fbRef('transactions57/'+sk)),{type,icon,desc,amount,ts:Date.now()});}
 async function loadTransactions(sk){
   if(!window._get)return;
