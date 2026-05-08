@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myntjakten – Hoderegning</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="worksheet/favicon.png">
+
+<!-- Hjemskjerm-ikon -->
+<link rel="apple-touch-icon" sizes="180x180" href="worksheet/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Myntjakten">
+<meta name="theme-color" content="#1e0f52">
+
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  /* Myntland-farger */
+  --teal: #1a5fa5;
+  --teal-light: #dbeafe;
+  --teal-dark: #1e0f52;
+  --green: #1D9E75;
+  --green-light: #E1F5EE;
+  --green-dark: #085041;
+  --amber: #EF9F27;
+  --amber-dark: #d4890f;
+  --amber-light: #FAEEDA;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --yellow: #FFD93D;
+  --bg: #F7F9F7;
+  --white: #fff;
+  --text: #1a2e1a;
+  --muted: #5a7a5a;
+  --border: #c8dfc8;
+  --red: #D63031;
+  --red-light: #FFE5E5;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body {
+  padding: 0 0 40px;
+}
+
+/* ── TOPP-NAV ── */
+.topnav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topnav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topnav-logo {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  color: var(--teal-dark);
+  text-decoration: none;
+}
+.topnav-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.topnav-back:hover { color: var(--teal-dark); }
+
+/* ── HERO ── */
+.hero {
+  background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+  color: white;
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(29, 158, 117, 0.20) 0%, transparent 45%);
+  pointer-events: none;
+}
+.hero > * { position: relative; z-index: 2; }
+
+.hero-brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.12);
+  padding: 6px 16px; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.hero-brand-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 12px var(--amber);
+}
+.hero h1 {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  line-height: 1;
+  color: white;
+  letter-spacing: -0.01em;
+}
+.hero h1 .accent { color: var(--amber); }
+.hero p {
+  color: rgba(255,255,255,0.85);
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  margin-top: 8px; font-weight: 600;
+  max-width: 520px; margin-left: auto; margin-right: auto;
+}
+
+/* ── HOVEDOMRÅDE ── */
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ── START-SKJERM ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+.start-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  padding: 28px 24px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.04);
+}
+
+.start-mascot {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.start-mascot img {
+  width: 110px; height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.18));
+  animation: bounce 2.4s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+.start-title {
+  font-family: 'Fredoka One', cursive;
+  text-align: center;
+  font-size: 1.7rem;
+  color: var(--teal-dark);
+  margin-bottom: 4px;
+}
+.start-sub {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 22px;
+}
+
+/* Innstillinger */
+.setting-block {
+  margin-bottom: 18px;
+}
+.setting-label {
+  display: block;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+/* Pill-grupper for valg */
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pill-btn {
+  flex: 1 1 auto;
+  min-width: 90px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.pill-btn:hover {
+  border-color: var(--teal);
+  background: var(--teal-light);
+}
+.pill-btn.active {
+  background: var(--teal);
+  border-color: var(--teal-dark);
+  color: white;
+  box-shadow: 0 3px 0 var(--teal-dark);
+}
+
+/* Trinn-pillar er smalere så alle 6 får plass på en rad */
+.pill-group-grade .pill-btn {
+  min-width: 0;
+  flex: 1 1 0;
+  padding: 12px 4px;
+}
+
+/* Regnearter med farger */
+.op-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.op-btn {
+  padding: 14px 6px;
+  border-radius: 14px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  border: 2.5px solid;
+  background: var(--white);
+}
+.op-add { color: #1a5c1a; border-color: #1a5c1a; background: #e7f7e7; }
+.op-sub { color: #8b0000; border-color: #8b0000; background: #ffe8e8; }
+.op-mul { color: #7a5500; border-color: #7a5500; background: #fff5cc; }
+.op-div { color: #003e7a; border-color: #003e7a; background: #d8eeff; }
+.op-btn:hover { transform: translateY(-2px); }
+.op-btn.active {
+  box-shadow: 0 4px 0 currentColor;
+  transform: translateY(-2px);
+}
+.op-btn:not(.active) {
+  opacity: 0.45;
+}
+.op-btn small {
+  display: block;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+
+/* Knapper */
+.btn-primary {
+  display: block; width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--amber), #f8b347);
+  border: none; border-radius: 14px;
+  font-family: 'Fredoka One', cursive; font-size: 1.4rem;
+  color: var(--teal-dark); cursor: pointer;
+  box-shadow: 0 4px 0 var(--amber-dark), 0 8px 20px rgba(239,159,39,0.3);
+  transition: transform 0.1s, box-shadow 0.1s;
+  margin-top: 10px;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--amber-dark), 0 10px 24px rgba(239,159,39,0.4); }
+.btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--amber-dark); }
+.btn-primary:disabled {
+  background: #ccc; box-shadow: 0 4px 0 #999; cursor: not-allowed;
+  color: #666;
+}
+
+.btn-secondary {
+  display: block; width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  border: none; border-radius: 14px;
+  font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+  color: white; cursor: pointer;
+  box-shadow: 0 4px 0 var(--teal-dark);
+  transition: transform 0.1s;
+  margin-top: 10px;
+}
+.btn-secondary:hover { transform: translateY(-2px); }
+.btn-secondary:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--teal-dark); }
+
+.btn-ghost {
+  display: block; width: 100%; padding: 12px;
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem;
+  color: var(--muted); cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+.btn-ghost:hover { border-color: var(--teal); color: var(--teal-dark); }
+
+/* ── SPILL-SKJERM ── */
+
+/* ── MONSTER-AVSLØRING ── */
+.reveal-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.reveal-stage {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--teal-dark), var(--green));
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+}
+.reveal-stage::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 30% 20%, rgba(239, 159, 39, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+.reveal-img {
+  position: absolute;
+  inset: 8px;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+  z-index: 2;
+}
+.reveal-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  z-index: 3;
+  pointer-events: none;
+}
+.reveal-tile {
+  background: linear-gradient(135deg, var(--amber), #f8b347);
+  border: 1px solid rgba(0,0,0,0.15);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.reveal-tile.hidden {
+  opacity: 0;
+  transform: scale(0) rotate(180deg);
+}
+.reveal-info {
+  flex: 1;
+  min-width: 0;
+}
+.reveal-title {
+  font-family: 'Fredoka One', cursive;
+  color: var(--teal-dark);
+  font-size: 1.1rem;
+  margin-bottom: 2px;
+  line-height: 1.1;
+}
+.reveal-sub {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.reveal-progress-bar {
+  background: var(--bg);
+  border-radius: 10px;
+  height: 10px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+.reveal-progress-fill {
+  background: linear-gradient(90deg, var(--amber), #f8b347);
+  height: 100%;
+  width: 0%;
+  border-radius: 8px;
+  transition: width 0.4s ease-out;
+}
+.reveal-stage.complete {
+  animation: reveal-celebrate 0.8s ease-out;
+}
+@keyframes reveal-celebrate {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.12) rotate(-4deg); }
+  60% { transform: scale(1.05) rotate(4deg); }
+  100% { transform: scale(1); }
+}
+
+/* Mobil */
+@media (max-width: 520px) {
+  .reveal-stage {
+    width: 90px;
+    height: 90px;
+  }
+  .reveal-title { font-size: 1rem; }
+  .reveal-sub { font-size: 0.78rem; }
+}
+
+.game-hud {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.hud-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.hud-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.hud-value {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  color: var(--teal-dark);
+  line-height: 1;
+}
+.hud-coins .hud-value { color: var(--amber-dark); }
+.hud-streak .hud-value { color: var(--coral); }
+
+/* Tidsbar */
+.time-bar-wrap {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 8px;
+  margin-bottom: 16px;
+  height: 22px;
+  position: relative;
+  overflow: hidden;
+}
+.time-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #5cd6a3);
+  border-radius: 10px;
+  transition: width 0.1s linear, background 0.3s;
+  width: 100%;
+}
+.time-bar.warn { background: linear-gradient(90deg, var(--amber), #f8b347); }
+.time-bar.danger { background: linear-gradient(90deg, var(--red), #ff6b6b); }
+
+/* Oppgavekort */
+.problem-card {
+  background: var(--white);
+  border: 3px solid var(--border);
+  border-radius: 24px;
+  padding: 28px 20px 20px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.05);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.problem-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 80% 20%, rgba(239,159,39,0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+.problem-monster {
+  position: absolute;
+  top: 8px; right: 12px;
+  width: 56px; height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  z-index: 1;
+}
+
+.problem-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  color: var(--teal-dark);
+  text-align: center;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 8px;
+  line-height: 1.1;
+}
+.problem-text .equals { color: var(--amber); }
+.problem-text .qmark { color: var(--coral); }
+
+.answer-input {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  text-align: center;
+  border: 3px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--teal-dark);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  -moz-appearance: textfield;
+}
+.answer-input::-webkit-outer-spin-button,
+.answer-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.answer-input:focus {
+  border-color: var(--amber);
+  background: var(--white);
+}
+.answer-input.correct {
+  border-color: var(--green);
+  background: var(--green-light);
+  color: var(--green-dark);
+}
+.answer-input.wrong {
+  border-color: var(--red);
+  background: var(--red-light);
+  color: var(--red);
+  animation: shake 0.4s;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+/* Numpad for mobil */
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+.numpad-btn {
+  padding: 16px 0;
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  color: var(--teal-dark);
+  cursor: pointer;
+  transition: all 0.1s;
+  user-select: none;
+}
+.numpad-btn:active {
+  transform: translateY(2px);
+  background: var(--teal-light);
+}
+.numpad-btn.numpad-clear {
+  background: var(--coral-light);
+  color: var(--coral);
+  border-color: var(--coral);
+}
+.numpad-btn.numpad-submit {
+  background: linear-gradient(135deg, var(--amber), #f8b347);
+  color: var(--teal-dark);
+  border-color: var(--amber-dark);
+  box-shadow: 0 3px 0 var(--amber-dark);
+}
+.numpad-btn.numpad-submit:active {
+  box-shadow: 0 1px 0 var(--amber-dark);
+}
+
+/* Feedback flash */
+.feedback {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: var(--white);
+  border: 4px solid var(--green);
+  border-radius: 24px;
+  padding: 24px 36px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--green-dark);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+}
+.feedback.show {
+  animation: feedbackPop 0.8s ease-out forwards;
+}
+.feedback.wrong {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes feedbackPop {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1); }
+  80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* Mynt-animasjon */
+.coin-burst {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  font-size: 2rem;
+  animation: coinFly 1s ease-out forwards;
+}
+@keyframes coinFly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.4); opacity: 0; }
+}
+
+/* ── RESULTAT-SKJERM ── */
+.result-card {
+  background: var(--white);
+  border: 3px solid var(--border);
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.05);
+}
+.result-mascot {
+  width: 120px; height: 120px;
+  margin: 0 auto 12px;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.18));
+}
+.result-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--teal-dark);
+  margin-bottom: 4px;
+}
+.result-sub {
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.stat-box {
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 10px;
+}
+.stat-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.8rem;
+  color: var(--teal-dark);
+  line-height: 1;
+}
+.stat-coins .stat-value { color: var(--amber-dark); }
+.stat-streak .stat-value { color: var(--coral); }
+.stat-correct .stat-value { color: var(--green-dark); }
+
+.high-score-banner {
+  background: linear-gradient(135deg, var(--amber-light), #fff3cc);
+  border: 2px solid var(--amber);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-family: 'Fredoka One', cursive;
+  color: var(--amber-dark);
+  font-size: 1.1rem;
+}
+
+/* Mobil-tilpasninger */
+@media (max-width: 520px) {
+  .op-grid { grid-template-columns: repeat(4, 1fr); }
+  .op-btn { font-size: 1.3rem; padding: 12px 4px; }
+  .op-btn small { font-size: 0.6rem; }
+  .pill-btn { min-width: 70px; padding: 10px 8px; font-size: 0.9rem; }
+  .start-card { padding: 22px 18px; }
+  .start-title { font-size: 1.4rem; }
+  .problem-text { font-size: clamp(2.2rem, 11vw, 3.2rem); }
+  .problem-monster { width: 48px; height: 48px; }
+}
+
+/* Skjul numpad på desktop hvis ønskelig */
+.numpad-toggle-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.numpad-toggle-row .toggle {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.numpad-toggle-row .toggle:hover { color: var(--teal-dark); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-brand">
+    <span class="hero-brand-dot"></span>
+    Myntland · Hoderegning
+  </div>
+  <h1>🪙 <span class="accent">Myntjakten</span></h1>
+  <p>Regn fort i hodet og samle mest mulig mynter!</p>
+</div>
+
+<div class="container">
+
+  <!-- ════════ START-SKJERM ════════ -->
+  <div id="screen-start" class="screen active">
+    <div class="start-card">
+      <div class="start-mascot">
+        <img id="start-mascot-img" src="worksheet/monsters/03.webp" alt="Bobo">
+      </div>
+      <div class="start-title">Klar for myntjakt?</div>
+      <div class="start-sub">Velg innstillinger og kjør i gang!</div>
+
+      <div class="setting-block">
+        <span class="setting-label">🎯 Regnearter</span>
+        <div class="op-grid">
+          <button class="op-btn op-add active" data-op="add">+ <small>Pluss</small></button>
+          <button class="op-btn op-sub active" data-op="sub">− <small>Minus</small></button>
+          <button class="op-btn op-mul" data-op="mul">· <small>Gange</small></button>
+          <button class="op-btn op-div" data-op="div">: <small>Dele</small></button>
+        </div>
+      </div>
+
+      <div class="setting-block">
+        <span class="setting-label">🏫 Trinn</span>
+        <div class="pill-group pill-group-grade">
+          <button class="pill-btn" data-grade="2">2.</button>
+          <button class="pill-btn" data-grade="3">3.</button>
+          <button class="pill-btn active" data-grade="4">4.</button>
+          <button class="pill-btn" data-grade="5">5.</button>
+          <button class="pill-btn" data-grade="6">6.</button>
+          <button class="pill-btn" data-grade="7">7.</button>
+        </div>
+      </div>
+
+      <div class="setting-block">
+        <span class="setting-label">📊 Vanskelighetsgrad</span>
+        <div class="pill-group">
+          <button class="pill-btn" data-level="easy">😊 Lett</button>
+          <button class="pill-btn active" data-level="medium">😎 Middels</button>
+          <button class="pill-btn" data-level="hard">🔥 Hard</button>
+        </div>
+      </div>
+
+      <div class="setting-block">
+        <span class="setting-label">⏱ Tid per oppgave</span>
+        <div class="pill-group">
+          <button class="pill-btn" data-time="0">∞ Ingen</button>
+          <button class="pill-btn" data-time="5">5 sek</button>
+          <button class="pill-btn active" data-time="10">10 sek</button>
+          <button class="pill-btn" data-time="20">20 sek</button>
+        </div>
+      </div>
+
+      <div class="setting-block">
+        <span class="setting-label">🎮 Antall oppgaver</span>
+        <div class="pill-group">
+          <button class="pill-btn" data-count="10">10</button>
+          <button class="pill-btn active" data-count="20">20</button>
+          <button class="pill-btn" data-count="30">30</button>
+          <button class="pill-btn" data-count="50">50</button>
+        </div>
+      </div>
+
+      <button id="btn-start" class="btn-primary">✨ Start spillet!</button>
+    </div>
+  </div>
+
+  <!-- ════════ SPILL-SKJERM ════════ -->
+  <div id="screen-game" class="screen">
+    <div class="reveal-card">
+      <div class="reveal-stage" id="reveal-stage">
+        <img class="reveal-img" id="reveal-img" src="worksheet/monsters/01.webp" alt="">
+        <div class="reveal-grid" id="reveal-grid"></div>
+      </div>
+      <div class="reveal-info">
+        <div class="reveal-title" id="reveal-title">Hvem gjemmer seg?</div>
+        <div class="reveal-sub" id="reveal-sub">Få riktig svar for å avdekke monsteret!</div>
+        <div class="reveal-progress-bar">
+          <div class="reveal-progress-fill" id="reveal-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-hud">
+      <div class="hud-card">
+        <span class="hud-label">Oppgave</span>
+        <span class="hud-value" id="hud-progress">1/20</span>
+      </div>
+      <div class="hud-card hud-coins">
+        <span class="hud-label">🪙 Mynter</span>
+        <span class="hud-value" id="hud-coins">0</span>
+      </div>
+      <div class="hud-card hud-streak">
+        <span class="hud-label">🔥 På rad</span>
+        <span class="hud-value" id="hud-streak">0</span>
+      </div>
+    </div>
+
+    <div id="time-bar-wrap" class="time-bar-wrap">
+      <div id="time-bar" class="time-bar"></div>
+    </div>
+
+    <div class="problem-card">
+      <div class="problem-text" id="problem-text">12 + 7 = <span class="qmark">?</span></div>
+      <input
+        type="number"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        class="answer-input"
+        id="answer-input"
+        placeholder="?"
+        autocomplete="off"
+      >
+
+      <div class="numpad" id="numpad">
+        <button class="numpad-btn" data-key="1">1</button>
+        <button class="numpad-btn" data-key="2">2</button>
+        <button class="numpad-btn" data-key="3">3</button>
+        <button class="numpad-btn" data-key="4">4</button>
+        <button class="numpad-btn" data-key="5">5</button>
+        <button class="numpad-btn" data-key="6">6</button>
+        <button class="numpad-btn" data-key="7">7</button>
+        <button class="numpad-btn" data-key="8">8</button>
+        <button class="numpad-btn" data-key="9">9</button>
+        <button class="numpad-btn numpad-clear" data-key="clear">⌫</button>
+        <button class="numpad-btn" data-key="0">0</button>
+        <button class="numpad-btn numpad-submit" data-key="submit">✓</button>
+      </div>
+
+      <div class="numpad-toggle-row">
+        <button class="toggle" id="toggle-numpad">Skjul tastatur</button>
+      </div>
+    </div>
+
+    <button class="btn-ghost" id="btn-quit">Avslutt spillet</button>
+  </div>
+
+  <!-- ════════ RESULTAT-SKJERM ════════ -->
+  <div id="screen-result" class="screen">
+    <div class="result-card">
+      <img id="result-mascot" class="result-mascot" src="worksheet/monsters/02.webp" alt="">
+      <div class="result-title" id="result-title">Bra jobba!</div>
+      <div class="result-sub" id="result-sub">Du klarte 18 av 20 riktig.</div>
+
+      <div id="high-score-banner" class="high-score-banner" style="display:none;">
+        🏆 Ny rekord! 🏆
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box stat-correct">
+          <div class="stat-label">✅ Riktige</div>
+          <div class="stat-value" id="stat-correct">0</div>
+        </div>
+        <div class="stat-box stat-coins">
+          <div class="stat-label">🪙 Mynter</div>
+          <div class="stat-value" id="stat-coins">0</div>
+        </div>
+        <div class="stat-box stat-streak">
+          <div class="stat-label">🔥 Beste streak</div>
+          <div class="stat-value" id="stat-streak">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">⏱ Snittid</div>
+          <div class="stat-value" id="stat-time">0s</div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg); border:2px solid var(--border); border-radius:14px; padding:12px; margin-bottom:16px;">
+        <div style="font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:6px;">🏆 Personlig rekord</div>
+        <div style="font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--amber-dark);" id="best-score">0 mynter</div>
+      </div>
+
+      <button class="btn-primary" id="btn-play-again">🔄 Spill igjen</button>
+      <button class="btn-secondary" id="btn-change-settings">⚙️ Endre innstillinger</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Feedback flash -->
+<div id="feedback" class="feedback"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// MONSTER-BILDER (fra worksheet-mappa)
+// ═══════════════════════════════════════════════════════
+const MONSTER_IMGS = [
+  "worksheet/monsters/01.webp", "worksheet/monsters/02.webp",
+  "worksheet/monsters/03.webp", "worksheet/monsters/04.webp",
+  "worksheet/monsters/05.webp", "worksheet/monsters/06.webp",
+  "worksheet/monsters/07.webp", "worksheet/monsters/08.webp",
+  "worksheet/monsters/09.webp", "worksheet/monsters/10.webp",
+  "worksheet/monsters/11.webp", "worksheet/monsters/12.webp",
+  "worksheet/monsters/13.webp", "worksheet/monsters/14.webp",
+  "worksheet/monsters/15.webp", "worksheet/monsters/16.webp",
+  "worksheet/monsters/17.webp", "worksheet/monsters/18.webp",
+  "worksheet/monsters/19.webp", "worksheet/monsters/20.webp",
+  "worksheet/monsters/21.webp"
+];
+
+function randomMonster() {
+  return MONSTER_IMGS[Math.floor(Math.random() * MONSTER_IMGS.length)];
+}
+
+// ═══════════════════════════════════════════════════════
+// SPILL-INNSTILLINGER
+// ═══════════════════════════════════════════════════════
+const settings = {
+  ops: ['add', 'sub'],   // valgte regnearter
+  grade: 4,              // 2.-7. trinn
+  level: 'medium',       // lett / middels / hard (justerer innenfor trinnet)
+  timePerQuestion: 10,   // sekunder, 0 = ingen tid
+  totalQuestions: 20
+};
+
+// Tallområder per trinn — basert på vanlige læreplanmål.
+// "level" (lett/middels/hard) skifter mellom enklere/midt/vanskeligere
+// oppgaver innenfor det som passer trinnet.
+//
+// Struktur: GRADES[trinn][regneart][nivå] = { aMin, aMax, bMin, bMax }
+// For divisjon brukes tallene som svar*divisor for å unngå rester.
+const GRADES = {
+  // 2. trinn — addisjon/subtraksjon innenfor 20–50, gangetabell starter litt
+  2: {
+    add: {
+      easy:   { aMin: 1,  aMax: 10, bMin: 1,  bMax: 10 },
+      medium: { aMin: 1,  aMax: 20, bMin: 1,  bMax: 20 },
+      hard:   { aMin: 5,  aMax: 50, bMin: 5,  bMax: 50 }
+    },
+    sub: {
+      easy:   { aMin: 2,  aMax: 10, bMin: 1,  bMax: 9  },
+      medium: { aMin: 5,  aMax: 20, bMin: 1,  bMax: 15 },
+      hard:   { aMin: 10, aMax: 50, bMin: 1,  bMax: 30 }
+    },
+    mul: {
+      easy:   { aMin: 1, aMax: 2,  bMin: 1, bMax: 5  }, // 2-gangen
+      medium: { aMin: 1, aMax: 5,  bMin: 1, bMax: 5  }, // 1-5
+      hard:   { aMin: 2, aMax: 5,  bMin: 2, bMax: 10 }
+    },
+    div: {
+      easy:   { aMin: 1, aMax: 5,  bMin: 2, bMax: 2  }, // dele med 2
+      medium: { aMin: 1, aMax: 5,  bMin: 2, bMax: 5  },
+      hard:   { aMin: 2, aMax: 5,  bMin: 2, bMax: 5  }
+    }
+  },
+  // 3. trinn — utvider gangetabellen, addisjon/subtraksjon opp til 100
+  3: {
+    add: {
+      easy:   { aMin: 1,  aMax: 20, bMin: 1,  bMax: 20 },
+      medium: { aMin: 5,  aMax: 50, bMin: 5,  bMax: 50 },
+      hard:   { aMin: 10, aMax: 100, bMin: 10, bMax: 100 }
+    },
+    sub: {
+      easy:   { aMin: 5,  aMax: 25, bMin: 1,  bMax: 20 },
+      medium: { aMin: 10, aMax: 50, bMin: 1,  bMax: 40 },
+      hard:   { aMin: 20, aMax: 100, bMin: 1, bMax: 80 }
+    },
+    mul: {
+      easy:   { aMin: 1, aMax: 5,  bMin: 1, bMax: 5  },
+      medium: { aMin: 2, aMax: 5,  bMin: 2, bMax: 10 },
+      hard:   { aMin: 2, aMax: 10, bMin: 2, bMax: 10 }
+    },
+    div: {
+      easy:   { aMin: 1, aMax: 5,  bMin: 2, bMax: 5  },
+      medium: { aMin: 2, aMax: 10, bMin: 2, bMax: 5  },
+      hard:   { aMin: 2, aMax: 10, bMin: 2, bMax: 10 }
+    }
+  },
+  // 4. trinn — gangetabellen 1-10 sitter, addisjon/subtraksjon med 3-sifrede tall
+  4: {
+    add: {
+      easy:   { aMin: 5,  aMax: 50, bMin: 5,  bMax: 50 },
+      medium: { aMin: 10, aMax: 100, bMin: 10, bMax: 100 },
+      hard:   { aMin: 20, aMax: 200, bMin: 20, bMax: 200 }
+    },
+    sub: {
+      easy:   { aMin: 10, aMax: 50, bMin: 1,  bMax: 40 },
+      medium: { aMin: 20, aMax: 100, bMin: 5, bMax: 80 },
+      hard:   { aMin: 50, aMax: 200, bMin: 10, bMax: 150 }
+    },
+    mul: {
+      easy:   { aMin: 2, aMax: 5,  bMin: 2, bMax: 10 },
+      medium: { aMin: 2, aMax: 10, bMin: 2, bMax: 10 },
+      hard:   { aMin: 3, aMax: 12, bMin: 3, bMax: 12 }
+    },
+    div: {
+      easy:   { aMin: 2, aMax: 5,  bMin: 2, bMax: 5  },
+      medium: { aMin: 2, aMax: 10, bMin: 2, bMax: 10 },
+      hard:   { aMin: 3, aMax: 12, bMin: 3, bMax: 12 }
+    }
+  },
+  // 5. trinn — større tall, gangetabell utvides til 12, divisjon med flere sifre
+  5: {
+    add: {
+      easy:   { aMin: 10, aMax: 100, bMin: 10, bMax: 100 },
+      medium: { aMin: 20, aMax: 200, bMin: 20, bMax: 200 },
+      hard:   { aMin: 50, aMax: 500, bMin: 50, bMax: 500 }
+    },
+    sub: {
+      easy:   { aMin: 20, aMax: 100, bMin: 5,  bMax: 80 },
+      medium: { aMin: 50, aMax: 200, bMin: 10, bMax: 150 },
+      hard:   { aMin: 100, aMax: 500, bMin: 20, bMax: 400 }
+    },
+    mul: {
+      easy:   { aMin: 2, aMax: 10, bMin: 2, bMax: 10 },
+      medium: { aMin: 3, aMax: 12, bMin: 3, bMax: 12 },
+      hard:   { aMin: 5, aMax: 15, bMin: 5, bMax: 15 }
+    },
+    div: {
+      easy:   { aMin: 2, aMax: 10, bMin: 2, bMax: 10 },
+      medium: { aMin: 3, aMax: 12, bMin: 3, bMax: 10 },
+      hard:   { aMin: 5, aMax: 15, bMin: 4, bMax: 12 }
+    }
+  },
+  // 6. trinn — tresifrede tall, divisjon og gange med større tall
+  6: {
+    add: {
+      easy:   { aMin: 20, aMax: 200, bMin: 20, bMax: 200 },
+      medium: { aMin: 50, aMax: 500, bMin: 50, bMax: 500 },
+      hard:   { aMin: 100, aMax: 999, bMin: 100, bMax: 999 }
+    },
+    sub: {
+      easy:   { aMin: 50, aMax: 200, bMin: 10, bMax: 150 },
+      medium: { aMin: 100, aMax: 500, bMin: 20, bMax: 400 },
+      hard:   { aMin: 200, aMax: 999, bMin: 50, bMax: 800 }
+    },
+    mul: {
+      easy:   { aMin: 3, aMax: 12, bMin: 3, bMax: 12 },
+      medium: { aMin: 5, aMax: 15, bMin: 5, bMax: 15 },
+      hard:   { aMin: 10, aMax: 25, bMin: 5, bMax: 15 }
+    },
+    div: {
+      easy:   { aMin: 3, aMax: 12, bMin: 3, bMax: 10 },
+      medium: { aMin: 5, aMax: 15, bMin: 4, bMax: 12 },
+      hard:   { aMin: 5, aMax: 20, bMin: 5, bMax: 15 }
+    }
+  },
+  // 7. trinn — store tall, mer komplekse hoderegningstrekk
+  7: {
+    add: {
+      easy:   { aMin: 50, aMax: 500, bMin: 50, bMax: 500 },
+      medium: { aMin: 100, aMax: 999, bMin: 100, bMax: 999 },
+      hard:   { aMin: 200, aMax: 1500, bMin: 200, bMax: 1500 }
+    },
+    sub: {
+      easy:   { aMin: 100, aMax: 500, bMin: 20, bMax: 400 },
+      medium: { aMin: 200, aMax: 999, bMin: 50, bMax: 800 },
+      hard:   { aMin: 500, aMax: 1500, bMin: 100, bMax: 1200 }
+    },
+    mul: {
+      easy:   { aMin: 5, aMax: 15, bMin: 5, bMax: 15 },
+      medium: { aMin: 10, aMax: 25, bMin: 5, bMax: 15 },
+      hard:   { aMin: 12, aMax: 30, bMin: 8, bMax: 20 }
+    },
+    div: {
+      easy:   { aMin: 5, aMax: 15, bMin: 4, bMax: 12 },
+      medium: { aMin: 5, aMax: 20, bMin: 5, bMax: 15 },
+      hard:   { aMin: 8, aMax: 25, bMin: 6, bMax: 18 }
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+// SPILLTILSTAND
+// ═══════════════════════════════════════════════════════
+let state = null;
+
+function newGameState() {
+  return {
+    questions: [],
+    currentIdx: 0,
+    correctCount: 0,
+    coins: 0,
+    streak: 0,
+    bestStreak: 0,
+    answers: [],          // for snitt-tid o.l.
+    timer: null,
+    timeLeft: 0,
+    timeStart: 0,
+    locked: false,        // når true: feedback vises, ikke ta input
+    revealMonster: null,  // hvilket monster skal avdekkes
+    revealOrder: [],      // rekkefølge for å fjerne ruter
+    revealedCount: 0      // antall ruter fjernet
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// OPPGAVEGENERATOR
+// ═══════════════════════════════════════════════════════
+function rint(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function makeProblem(op, grade, level) {
+  const r = GRADES[grade][op][level];
+  let a, b, ans, text;
+
+  if (op === 'add') {
+    a = rint(r.aMin, r.aMax);
+    b = rint(r.bMin, r.bMax);
+    ans = a + b;
+    text = `${a} + ${b}`;
+  } else if (op === 'sub') {
+    a = rint(r.aMin, r.aMax);
+    b = rint(r.bMin, Math.min(r.bMax, a));  // sikre at svaret ikke blir negativt
+    ans = a - b;
+    text = `${a} − ${b}`;
+  } else if (op === 'mul') {
+    a = rint(r.aMin, r.aMax);
+    b = rint(r.bMin, r.bMax);
+    ans = a * b;
+    text = `${a} · ${b}`;
+  } else if (op === 'div') {
+    // Lag fra svar og divisor for å unngå rester
+    const divisor = rint(r.bMin, r.bMax);
+    ans = rint(r.aMin, r.aMax);
+    a = divisor * ans;
+    b = divisor;
+    text = `${a} : ${b}`;
+  }
+
+  return { op, text, answer: ans };
+}
+
+function buildQuestionList() {
+  const list = [];
+  for (let i = 0; i < settings.totalQuestions; i++) {
+    const op = settings.ops[Math.floor(Math.random() * settings.ops.length)];
+    list.push(makeProblem(op, settings.grade, settings.level));
+  }
+  return list;
+}
+
+// ═══════════════════════════════════════════════════════
+// SKJERMER
+// ═══════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  // Scroll til topp
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════
+// INNSTILLINGS-UI (start-skjerm)
+// ═══════════════════════════════════════════════════════
+function bindStartScreen() {
+  // Regnearter (toggle, minst én må være aktiv)
+  document.querySelectorAll('.op-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const op = btn.dataset.op;
+      const isActive = btn.classList.contains('active');
+      // Forhindre å fjerne siste aktive
+      const activeCount = document.querySelectorAll('.op-btn.active').length;
+      if (isActive && activeCount === 1) return;
+      btn.classList.toggle('active');
+      updateOpsFromUI();
+    });
+  });
+
+  // Vanskelighetsgrad (single)
+  document.querySelectorAll('.pill-btn[data-level]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pill-btn[data-level]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      settings.level = btn.dataset.level;
+    });
+  });
+
+  // Trinn (single)
+  document.querySelectorAll('.pill-btn[data-grade]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pill-btn[data-grade]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      settings.grade = parseInt(btn.dataset.grade);
+    });
+  });
+
+  // Tid (single)
+  document.querySelectorAll('.pill-btn[data-time]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pill-btn[data-time]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      settings.timePerQuestion = parseInt(btn.dataset.time);
+    });
+  });
+
+  // Antall (single)
+  document.querySelectorAll('.pill-btn[data-count]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pill-btn[data-count]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      settings.totalQuestions = parseInt(btn.dataset.count);
+    });
+  });
+
+  // Start-knapp
+  document.getElementById('btn-start').addEventListener('click', startGame);
+
+  // Sett tilfeldig start-maskot
+  document.getElementById('start-mascot-img').src = randomMonster();
+}
+
+function updateOpsFromUI() {
+  const active = Array.from(document.querySelectorAll('.op-btn.active'));
+  settings.ops = active.map(b => b.dataset.op);
+}
+
+// ═══════════════════════════════════════════════════════
+// SPILL-LØKKE
+// ═══════════════════════════════════════════════════════
+function startGame() {
+  state = newGameState();
+  state.questions = buildQuestionList();
+  setupReveal();
+  showScreen('game');
+  showQuestion();
+}
+
+// ═══════════════════════════════════════════════════════
+// MONSTER-AVSLØRING
+// ═══════════════════════════════════════════════════════
+// Bestem rute-grid basert på antall oppgaver: prøv å treffe et grid
+// der antall ruter er omtrent lik antall oppgaver, men ikke for tett.
+function pickGridSize(totalQuestions) {
+  // For færre enn ~12 oppgaver: 3×4. Ellers 4×5 = 20 ruter (passer 10/20 fint).
+  // For 30+: bruk 5×6 = 30. For 50: 6×7 = 42.
+  if (totalQuestions <= 12) return { cols: 3, rows: 4 };  // 12 ruter
+  if (totalQuestions <= 20) return { cols: 4, rows: 5 };  // 20 ruter
+  if (totalQuestions <= 30) return { cols: 5, rows: 6 };  // 30 ruter
+  return { cols: 6, rows: 7 };                             // 42 ruter
+}
+
+function setupReveal() {
+  // Velg et tilfeldig monster
+  state.revealMonster = randomMonster();
+  document.getElementById('reveal-img').src = state.revealMonster;
+
+  // Velg grid-størrelse
+  const { cols, rows } = pickGridSize(state.questions.length);
+  const totalTiles = cols * rows;
+
+  // Bygg ruter
+  const grid = document.getElementById('reveal-grid');
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+  for (let i = 0; i < totalTiles; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'reveal-tile';
+    tile.dataset.idx = i;
+    grid.appendChild(tile);
+  }
+
+  // Lag tilfeldig rekkefølge for hvilke ruter som forsvinner
+  const order = [];
+  for (let i = 0; i < totalTiles; i++) order.push(i);
+  // Shuffle (Fisher-Yates)
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  state.revealOrder = order;
+  state.revealedCount = 0;
+
+  updateRevealProgress();
+  document.getElementById('reveal-title').textContent = 'Hvem gjemmer seg?';
+  document.getElementById('reveal-sub').textContent = 'Få riktig svar for å avdekke monsteret!';
+  document.getElementById('reveal-stage').classList.remove('complete');
+}
+
+function revealOneTile() {
+  // Hvor mange ruter skal være avdekket etter dette riktige svaret?
+  // Vi mapper riktige svar (correctCount) til ruter.
+  // Hvis det er flere riktige svar enn ruter, fjernes flere på en gang.
+  const totalTiles = state.revealOrder.length;
+  const totalQuestions = state.questions.length;
+  // Andel riktige av totalt mulige skal mappe til andel avdekkede ruter
+  const targetRevealed = Math.min(
+    totalTiles,
+    Math.ceil((state.correctCount / totalQuestions) * totalTiles)
+  );
+
+  while (state.revealedCount < targetRevealed) {
+    const tileIdx = state.revealOrder[state.revealedCount];
+    const tile = document.querySelector(`.reveal-tile[data-idx="${tileIdx}"]`);
+    if (tile) tile.classList.add('hidden');
+    state.revealedCount++;
+  }
+
+  updateRevealProgress();
+
+  // Hvis alle ruter er fjernet — feir!
+  if (state.revealedCount >= totalTiles) {
+    document.getElementById('reveal-stage').classList.add('complete');
+    document.getElementById('reveal-title').textContent = '🎉 Avdekket!';
+    document.getElementById('reveal-sub').textContent = 'Du fant monsteret!';
+  }
+}
+
+function updateRevealProgress() {
+  const totalTiles = state.revealOrder.length;
+  const pct = totalTiles > 0 ? (state.revealedCount / totalTiles) * 100 : 0;
+  document.getElementById('reveal-progress-fill').style.width = pct + '%';
+}
+
+function showQuestion() {
+  if (state.currentIdx >= state.questions.length) {
+    endGame();
+    return;
+  }
+
+  state.locked = false;
+  const q = state.questions[state.currentIdx];
+
+  // HUD
+  document.getElementById('hud-progress').textContent =
+    `${state.currentIdx + 1}/${state.questions.length}`;
+  document.getElementById('hud-coins').textContent = state.coins;
+  document.getElementById('hud-streak').textContent = state.streak;
+
+  // Oppgavetekst
+  document.getElementById('problem-text').innerHTML =
+    `${q.text} <span class="equals">=</span> <span class="qmark">?</span>`;
+
+  // Reset input
+  const input = document.getElementById('answer-input');
+  input.value = '';
+  input.classList.remove('correct', 'wrong');
+  input.disabled = false;
+  // Forsøk å fokusere — fungerer på desktop
+  setTimeout(() => input.focus(), 50);
+
+  // Start tidsbar
+  startTimer();
+
+  state.timeStart = performance.now();
+}
+
+function startTimer() {
+  stopTimer();
+  const bar = document.getElementById('time-bar');
+  const wrap = document.getElementById('time-bar-wrap');
+
+  if (settings.timePerQuestion === 0) {
+    // Ingen tid – skjul baren
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = '';
+
+  state.timeLeft = settings.timePerQuestion;
+  bar.style.width = '100%';
+  bar.classList.remove('warn', 'danger');
+
+  const startTime = performance.now();
+  const total = settings.timePerQuestion * 1000;
+
+  state.timer = setInterval(() => {
+    const elapsed = performance.now() - startTime;
+    const pct = Math.max(0, 1 - elapsed / total);
+    bar.style.width = (pct * 100) + '%';
+
+    if (pct < 0.3) bar.classList.add('danger');
+    else if (pct < 0.6) bar.classList.add('warn');
+
+    if (elapsed >= total) {
+      stopTimer();
+      timeOut();
+    }
+  }, 50);
+}
+
+function stopTimer() {
+  if (state && state.timer) {
+    clearInterval(state.timer);
+    state.timer = null;
+  }
+}
+
+function timeOut() {
+  if (state.locked) return;
+  state.locked = true;
+  const input = document.getElementById('answer-input');
+  input.disabled = true;
+  const q = state.questions[state.currentIdx];
+
+  // Streak nullstilles
+  state.streak = 0;
+  state.answers.push({ correct: false, timeMs: settings.timePerQuestion * 1000 });
+
+  showFeedback(`⏰ Tiden ute! Riktig svar var ${q.answer}`, 'wrong');
+  setTimeout(nextQuestion, 1300);
+}
+
+function submitAnswer() {
+  if (state.locked) return;
+  const input = document.getElementById('answer-input');
+  const raw = input.value.trim();
+  if (raw === '') return;
+  const userAns = parseInt(raw);
+  if (isNaN(userAns)) return;
+
+  const q = state.questions[state.currentIdx];
+  const elapsed = performance.now() - state.timeStart;
+
+  state.locked = true;
+  stopTimer();
+
+  if (userAns === q.answer) {
+    // RIKTIG
+    state.correctCount++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
+    // Mynter: 1 grunn + bonus for streak + bonus for fart
+    let coinsEarned = 1;
+    if (state.streak >= 3) coinsEarned += 1;          // streak-bonus
+    if (state.streak >= 5) coinsEarned += 1;          // høyere streak
+    if (state.streak >= 10) coinsEarned += 2;         // stor streak
+    // Tidsbonus: hvis tid er på, og man var raskt under halvtid
+    if (settings.timePerQuestion > 0 && elapsed < settings.timePerQuestion * 500) {
+      coinsEarned += 1;
+    }
+    state.coins += coinsEarned;
+
+    state.answers.push({ correct: true, timeMs: elapsed });
+
+    input.classList.add('correct');
+    showFeedback(`✨ Riktig! +${coinsEarned} 🪙`, 'correct');
+    spawnCoinBurst(coinsEarned);
+    revealOneTile();
+  } else {
+    // FEIL
+    state.streak = 0;
+    state.answers.push({ correct: false, timeMs: elapsed });
+    input.classList.add('wrong');
+    showFeedback(`Riktig svar var ${q.answer}`, 'wrong');
+  }
+
+  input.disabled = true;
+
+  // Oppdater HUD
+  document.getElementById('hud-coins').textContent = state.coins;
+  document.getElementById('hud-streak').textContent = state.streak;
+
+  setTimeout(nextQuestion, 1100);
+}
+
+function nextQuestion() {
+  state.currentIdx++;
+  showQuestion();
+}
+
+// ═══════════════════════════════════════════════════════
+// FEEDBACK / EFFEKTER
+// ═══════════════════════════════════════════════════════
+function showFeedback(text, type) {
+  const fb = document.getElementById('feedback');
+  fb.textContent = text;
+  fb.classList.remove('show', 'wrong');
+  if (type === 'wrong') fb.classList.add('wrong');
+  // Tving reflow så animasjonen restartes
+  void fb.offsetWidth;
+  fb.classList.add('show');
+}
+
+function spawnCoinBurst(count) {
+  const card = document.querySelector('.problem-card');
+  if (!card) return;
+  const rect = card.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + 30;
+
+  for (let i = 0; i < Math.min(count, 6); i++) {
+    const coin = document.createElement('div');
+    coin.className = 'coin-burst';
+    coin.textContent = '🪙';
+    coin.style.left = cx + 'px';
+    coin.style.top = cy + 'px';
+    const angle = (Math.PI * 2 * i) / Math.min(count, 6) + Math.random() * 0.5;
+    const dist = 80 + Math.random() * 50;
+    coin.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    coin.style.setProperty('--dy', (Math.sin(angle) * dist - 60) + 'px');
+    document.body.appendChild(coin);
+    setTimeout(() => coin.remove(), 1100);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SLUTT-SKJERM
+// ═══════════════════════════════════════════════════════
+function endGame() {
+  stopTimer();
+
+  // Statistikk
+  const total = state.questions.length;
+  const correct = state.correctCount;
+  const avgTime = state.answers.length
+    ? state.answers.reduce((s, a) => s + a.timeMs, 0) / state.answers.length / 1000
+    : 0;
+
+  document.getElementById('stat-correct').textContent = `${correct}/${total}`;
+  document.getElementById('stat-coins').textContent = state.coins;
+  document.getElementById('stat-streak').textContent = state.bestStreak;
+  document.getElementById('stat-time').textContent = avgTime.toFixed(1) + 's';
+
+  // Tittel og maskot tilpasses prestasjon. Maskoten er det monsteret
+  // som har vært skjult bak rutene gjennom hele spillet.
+  const pct = correct / total;
+  const fullyRevealed = state.revealedCount >= state.revealOrder.length;
+  let title, sub;
+  if (pct >= 0.9) {
+    title = fullyRevealed ? '🏆 Mesterregner!' : '🏆 Helt på topp!';
+    sub = 'Helt utrolig — du er en liten regnemaskin!';
+  } else if (pct >= 0.7) {
+    title = '🌟 Bra jobba!';
+    sub = `Du klarte ${correct} av ${total} riktig.`;
+  } else if (pct >= 0.5) {
+    title = '👍 Godt forsøk!';
+    sub = `Du fikk ${correct} av ${total}. Prøv igjen og slå rekorden!`;
+  } else {
+    title = '💪 Bare prøv igjen!';
+    sub = `Du fikk ${correct} av ${total}. Øvelse gjør mester.`;
+  }
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-sub').textContent = sub;
+  document.getElementById('result-mascot').src = state.revealMonster || MONSTER_IMGS[0];
+
+  // Highscore (per innstillingskombinasjon)
+  const hsKey = makeHighscoreKey();
+  const prev = parseInt(localStorage.getItem(hsKey) || '0');
+  const isNewRecord = state.coins > prev;
+  if (isNewRecord) {
+    localStorage.setItem(hsKey, state.coins);
+    document.getElementById('high-score-banner').style.display = '';
+  } else {
+    document.getElementById('high-score-banner').style.display = 'none';
+  }
+  const best = Math.max(prev, state.coins);
+  document.getElementById('best-score').textContent = best + ' mynter';
+
+  showScreen('result');
+}
+
+function makeHighscoreKey() {
+  // Lag en nøkkel basert på alle innstillinger så hver kombinasjon har egen rekord
+  const opsSorted = [...settings.ops].sort().join(',');
+  return `myntjakten:g${settings.grade}:${opsSorted}:${settings.level}:${settings.timePerQuestion}:${settings.totalQuestions}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// INPUT-HÅNDTERING
+// ═══════════════════════════════════════════════════════
+function bindGameScreen() {
+  const input = document.getElementById('answer-input');
+
+  // Enter på vanlig tastatur
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitAnswer();
+    }
+  });
+
+  // Numpad-knapper
+  document.getElementById('numpad').addEventListener('click', (e) => {
+    const btn = e.target.closest('.numpad-btn');
+    if (!btn) return;
+    if (state && state.locked) return;
+    const key = btn.dataset.key;
+    if (key === 'clear') {
+      input.value = input.value.slice(0, -1);
+    } else if (key === 'submit') {
+      submitAnswer();
+    } else {
+      // Maks 6 sifre
+      if (input.value.length < 6) {
+        input.value += key;
+      }
+    }
+    input.focus();
+  });
+
+  // Toggle numpad
+  const numpad = document.getElementById('numpad');
+  document.getElementById('toggle-numpad').addEventListener('click', () => {
+    const isHidden = numpad.style.display === 'none';
+    numpad.style.display = isHidden ? '' : 'none';
+    document.getElementById('toggle-numpad').textContent =
+      isHidden ? 'Skjul tastatur' : 'Vis tastatur';
+  });
+
+  // Avslutt-knapp
+  document.getElementById('btn-quit').addEventListener('click', () => {
+    if (confirm('Er du sikker på at du vil avslutte spillet?')) {
+      stopTimer();
+      showScreen('start');
+    }
+  });
+}
+
+function bindResultScreen() {
+  document.getElementById('btn-play-again').addEventListener('click', startGame);
+  document.getElementById('btn-change-settings').addEventListener('click', () => {
+    showScreen('start');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+(function init() {
+  bindStartScreen();
+  bindGameScreen();
+  bindResultScreen();
+  updateOpsFromUI();
+})();
+</script>
+
+</body>
+</html>
