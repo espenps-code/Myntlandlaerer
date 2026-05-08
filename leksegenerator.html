@@ -465,6 +465,43 @@ body {
 /* Separator between pages on screen */
 .worksheet + .worksheet { margin-top: 24px; }
 
+/* ── TOPP-NAV (matcher utskriftsmateriell.html) ── */
+.topnav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topnav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topnav-logo {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.3rem;
+  color: var(--teal-dark);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+.topnav-back {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--green-dark);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.topnav-back:hover { color: var(--teal-dark); }
+
 /* ── PRINT ── */
 @media print {
   /* Gi skriveren en liten sikkerhetssone (6mm) langs kantene så
@@ -498,9 +535,15 @@ body {
 </head>
 <body>
 
-<div class="screen-only" style="max-width:860px;margin:16px auto 0;padding:0 16px;">
-  <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;color:#FF8C42;text-decoration:none;border:2px solid #FF8C42;border-radius:10px;font-weight:600;font-size:14px;transition:all .15s ease;box-shadow:0 2px 6px rgba(0,0,0,.06);" onmouseover="this.style.background='#FF8C42';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#FF8C42'">← Tilbake til forsiden</a>
-</div>
+<nav class="topnav screen-only">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
 
 <div class="hero">
   <div class="hero-brand">
