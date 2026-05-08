@@ -36,9 +36,15 @@
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
   :root{--teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;--amber:#EF9F27;--amber-light:#FAEEDA;--coral:#D85A30;--coral-light:#FAECE7;--purple:#534AB7;--purple-light:#EEEDFE;--bg:#F0FAF5;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#b8dfc8;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{-webkit-overflow-scrolling:touch;}
   body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;}
   .screen{display:none;min-height:100vh;flex-direction:column;}
   .screen.active{display:flex;}
+  /* iOS Safari iframe-fiks: la body scrolle naturlig i stedet for indre .content */
+  @supports (-webkit-touch-callout: none) {
+    .screen{min-height:0;}
+    .content,.cashier-content{overflow:visible !important;flex:0 0 auto !important;}
+  }
 
   /* SPLASH */
   #screen-splash{background:linear-gradient(160deg,var(--teal-dark) 0%,#1a6648 50%,var(--teal) 100%);align-items:center;justify-content:center;text-align:center;padding:2rem;}
