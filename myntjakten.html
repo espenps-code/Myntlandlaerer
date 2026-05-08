@@ -17,6 +17,41 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
+<!-- jsQR for QR-koder. Lokal kopi anbefales senere; CDN funker for testing -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+<!-- Firebase: samme konfig som lærerportalene. Eksponerer window._db osv. -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, get, update, push, runTransaction }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain: "myntland.firebaseapp.com",
+    databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "myntland",
+    storageBucket: "myntland.firebasestorage.app",
+    messagingSenderId: "711264415533",
+    appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+    measurementId: "G-95QZNLQ6V9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  window._db = db;
+  window._ref = ref;
+  window._get = get;
+  window._update = update;
+  window._push = push;
+  window._runTransaction = runTransaction;
+  window._fbReady = true;
+
+  // Signaler til resten av appen at Firebase er klar
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
 <style>
 :root {
   /* Myntland-farger */
@@ -740,6 +775,316 @@ body {
   text-decoration: underline;
 }
 .numpad-toggle-row .toggle:hover { color: var(--teal-dark); }
+
+/* ═══════════════════════════════════════════════ */
+/* BANK-SEKSJON (på resultat-skjermen)            */
+/* ═══════════════════════════════════════════════ */
+.bank-card {
+  background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+  color: white;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.bank-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 80% 20%, rgba(239,159,39,0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+.bank-card > * { position: relative; z-index: 2; }
+.bank-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+}
+.bank-sub {
+  font-size: 0.9rem;
+  font-weight: 700;
+  opacity: 0.9;
+  margin-bottom: 14px;
+}
+.bank-coins-display {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.4rem;
+  color: var(--amber);
+  margin-bottom: 14px;
+  text-align: center;
+}
+.btn-deposit {
+  display: block; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--amber), #f8b347);
+  border: none; border-radius: 14px;
+  font-family: 'Fredoka One', cursive; font-size: 1.2rem;
+  color: var(--teal-dark); cursor: pointer;
+  box-shadow: 0 4px 0 var(--amber-dark);
+  transition: transform 0.1s;
+}
+.btn-deposit:hover { transform: translateY(-2px); }
+.btn-deposit:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--amber-dark); }
+.btn-deposit:disabled {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.6);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.bank-status {
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+.bank-status.success {
+  background: rgba(29, 158, 117, 0.3);
+  border: 1px solid rgba(29, 158, 117, 0.6);
+}
+
+/* ═══════════════════════════════════════════════ */
+/* QR-OVERLAY                                      */
+/* ═══════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 15, 82, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 36px; height: 36px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover { color: var(--coral); border-color: var(--coral); }
+
+.modal-step {
+  display: none;
+}
+.modal-step.active {
+  display: block;
+}
+
+.modal-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  color: var(--teal-dark);
+  margin-bottom: 4px;
+  text-align: center;
+}
+.modal-sub {
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+/* QR-skanner */
+.scanner-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+#scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.scanner-frame {
+  position: absolute;
+  inset: 12%;
+  border: 3px solid var(--amber);
+  border-radius: 16px;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+}
+.scanner-frame::before, .scanner-frame::after,
+.scanner-frame > span::before, .scanner-frame > span::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 4px solid var(--white);
+}
+.scanner-frame::before { top: -4px; left: -4px; border-right: none; border-bottom: none; border-radius: 8px 0 0 0; }
+.scanner-frame::after  { top: -4px; right: -4px; border-left: none; border-bottom: none; border-radius: 0 8px 0 0; }
+.scanner-frame > span::before { content: ''; position: absolute; bottom: -4px; left: -4px; width: 24px; height: 24px; border: 4px solid var(--white); border-right: none; border-top: none; border-radius: 0 0 0 8px; }
+.scanner-frame > span::after  { content: ''; position: absolute; bottom: -4px; right: -4px; width: 24px; height: 24px; border: 4px solid var(--white); border-left: none; border-top: none; border-radius: 0 0 8px 0; }
+
+.scanner-status {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 8px 0;
+}
+.scanner-error {
+  background: var(--red-light);
+  border: 2px solid var(--red);
+  color: var(--red);
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* PIN-skjerm */
+.pin-display {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.pin-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border);
+  background: var(--bg);
+  transition: all 0.15s;
+}
+.pin-dot.filled {
+  background: var(--teal);
+  border-color: var(--teal-dark);
+  transform: scale(1.1);
+}
+.pin-dot.error {
+  border-color: var(--red);
+  background: var(--red-light);
+  animation: shake 0.4s;
+}
+
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.pin-pad-btn {
+  padding: 18px 0;
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  color: var(--teal-dark);
+  cursor: pointer;
+  transition: all 0.1s;
+  user-select: none;
+}
+.pin-pad-btn:active {
+  transform: translateY(2px);
+  background: var(--teal-light);
+}
+.pin-pad-btn.pin-clear {
+  background: var(--coral-light);
+  color: var(--coral);
+  border-color: var(--coral);
+}
+.pin-pad-btn.pin-empty {
+  visibility: hidden;
+}
+
+.pin-student-name {
+  text-align: center;
+  font-family: 'Fredoka One', cursive;
+  color: var(--teal-dark);
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+/* Suksess-skjerm */
+.deposit-success {
+  text-align: center;
+  padding: 12px 0;
+}
+.deposit-success-icon {
+  font-size: 4rem;
+  margin-bottom: 8px;
+  animation: success-pop 0.6s ease-out;
+}
+@keyframes success-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.deposit-success-amount {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--amber-dark);
+  margin: 8px 0;
+}
+.deposit-success-balance {
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 16px;
+}
+.deposit-success-balance-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.deposit-success-balance-value {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.6rem;
+  color: var(--teal-dark);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 16px auto;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 </style>
 </head>
 <body>
@@ -934,11 +1279,116 @@ body {
         <div style="font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--amber-dark);" id="best-score">0 mynter</div>
       </div>
 
+      <!-- Bank-kort: sett myntene på Myntland-kontoen -->
+      <div class="bank-card" id="bank-card">
+        <div class="bank-title">🏦 Sett inn på Myntland-konto</div>
+        <div class="bank-sub">Skann ditt Myntland-kort og bekreft med PIN.</div>
+        <div class="bank-coins-display">+<span id="bank-coins-amount">0</span> 🪙</div>
+        <button class="btn-deposit" id="btn-deposit">📷 Skann kortet ditt</button>
+        <div class="bank-status" id="bank-status" style="display:none;"></div>
+      </div>
+
       <button class="btn-primary" id="btn-play-again">🔄 Spill igjen</button>
       <button class="btn-secondary" id="btn-change-settings">⚙️ Endre innstillinger</button>
     </div>
   </div>
 
+</div>
+
+<!-- ════════ BETALINGS-MODAL (skann + PIN + bekreft) ════════ -->
+<div class="modal-overlay" id="deposit-modal">
+  <div class="modal-card">
+    <button class="modal-close" id="deposit-modal-close" aria-label="Lukk">✕</button>
+
+    <!-- STEG 1: SKANN -->
+    <div class="modal-step active" id="step-scan">
+      <div class="modal-title">📷 Skann kortet ditt</div>
+      <div class="modal-sub">Hold Myntland-kortet foran kameraet</div>
+
+      <div id="scanner-error" class="scanner-error" style="display:none;"></div>
+
+      <div class="scanner-wrap" id="scanner-wrap">
+        <video id="scanner-video" autoplay playsinline muted></video>
+        <div class="scanner-frame"><span></span></div>
+      </div>
+
+      <div class="scanner-status" id="scanner-status">Leter etter QR-kode…</div>
+
+      <button class="btn-ghost" id="btn-manual-id" style="margin-top:6px;">Skriv inn ID i stedet</button>
+    </div>
+
+    <!-- STEG 1B: MANUELL ID -->
+    <div class="modal-step" id="step-manual">
+      <div class="modal-title">⌨️ Skriv inn elev-ID</div>
+      <div class="modal-sub">Hvis kameraet ikke vil samarbeide</div>
+      <input type="text" id="manual-id-input" class="answer-input" placeholder="elev-id" autocomplete="off" style="font-size:1.3rem; max-width:none;">
+      <button class="btn-primary" id="btn-manual-confirm" style="margin-top:12px;">Bekreft</button>
+      <button class="btn-ghost" id="btn-back-to-scan" style="margin-top:6px;">Tilbake til skann</button>
+    </div>
+
+    <!-- STEG 2: PIN -->
+    <div class="modal-step" id="step-pin">
+      <div class="modal-title">🔒 Skriv PIN-koden din</div>
+      <div class="pin-student-name" id="pin-student-name">Elev</div>
+      <div class="modal-sub">4 sifre</div>
+
+      <div class="pin-display" id="pin-display">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <div id="pin-error" style="text-align:center; color:var(--red); font-weight:700; min-height:1.2em; margin-bottom:8px;"></div>
+
+      <div class="pin-pad" id="pin-pad">
+        <button class="pin-pad-btn" data-pin="1">1</button>
+        <button class="pin-pad-btn" data-pin="2">2</button>
+        <button class="pin-pad-btn" data-pin="3">3</button>
+        <button class="pin-pad-btn" data-pin="4">4</button>
+        <button class="pin-pad-btn" data-pin="5">5</button>
+        <button class="pin-pad-btn" data-pin="6">6</button>
+        <button class="pin-pad-btn" data-pin="7">7</button>
+        <button class="pin-pad-btn" data-pin="8">8</button>
+        <button class="pin-pad-btn" data-pin="9">9</button>
+        <button class="pin-pad-btn pin-empty"></button>
+        <button class="pin-pad-btn" data-pin="0">0</button>
+        <button class="pin-pad-btn pin-clear" data-pin="clear">⌫</button>
+      </div>
+    </div>
+
+    <!-- STEG 3: VENTER -->
+    <div class="modal-step" id="step-loading">
+      <div class="modal-title">⏳ Setter inn mynter…</div>
+      <div class="spinner"></div>
+      <div class="modal-sub" id="loading-text">Oppdaterer kontoen din</div>
+    </div>
+
+    <!-- STEG 4: SUKSESS -->
+    <div class="modal-step" id="step-success">
+      <div class="deposit-success">
+        <div class="deposit-success-icon">🎉</div>
+        <div class="modal-title" id="success-title">Pengene er på konto!</div>
+        <div class="deposit-success-amount">+<span id="success-amount">0</span> 🪙</div>
+        <div class="deposit-success-balance">
+          <div class="deposit-success-balance-label">Ny saldo</div>
+          <div class="deposit-success-balance-value"><span id="success-balance">0</span> 🪙</div>
+        </div>
+        <button class="btn-primary" id="btn-success-close" style="margin-top:16px;">Ferdig</button>
+      </div>
+    </div>
+
+    <!-- STEG 5: FEIL -->
+    <div class="modal-step" id="step-error">
+      <div style="text-align:center; padding:12px 0;">
+        <div style="font-size:3.5rem; margin-bottom:8px;">😟</div>
+        <div class="modal-title" id="error-title">Noe gikk galt</div>
+        <div class="modal-sub" id="error-text">Prøv igjen</div>
+        <button class="btn-primary" id="btn-error-retry" style="margin-top:16px;">Prøv igjen</button>
+        <button class="btn-ghost" id="btn-error-cancel" style="margin-top:6px;">Avbryt</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Feedback flash -->
@@ -1277,6 +1727,7 @@ function startGame() {
   state = newGameState();
   state.questions = buildQuestionList();
   setupReveal();
+  if (typeof onGameStartedHook === 'function') onGameStartedHook();
   showScreen('game');
   showQuestion();
 }
@@ -1605,6 +2056,7 @@ function endGame() {
   const best = Math.max(prev, state.coins);
   document.getElementById('best-score').textContent = best + ' mynter';
 
+  if (typeof onGameEndedHook === 'function') onGameEndedHook();
   showScreen('result');
 }
 
@@ -1670,6 +2122,461 @@ function bindResultScreen() {
   document.getElementById('btn-change-settings').addEventListener('click', () => {
     showScreen('start');
   });
+  document.getElementById('btn-deposit').addEventListener('click', openDepositFlow);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ▼▼▼ MYNTLAND-KONTO INTEGRASJON ▼▼▼
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Koblet mot ekte Firebase-database (samme prosjekt som lærerportalen).
+// Bruker students14/ og students57/ — søker i begge så elever fra alle
+// trinn kan bruke samme spill.
+//
+// Hvis du vil teste opplevelsen uten å berøre databasen, sett DEMO_MODE = true.
+//
+// ═══════════════════════════════════════════════════════════════════════
+
+const DEMO_MODE = false;
+
+// Demo-data til testing (kun når DEMO_MODE = true)
+const DEMO_STUDENTS = {
+  'demo-elev-1': { name: 'Lulu',  pin: '1234', coins: 142, node: 'students14' },
+  'demo-elev-2': { name: 'Bobo',  pin: '4321', coins: 87,  node: 'students14' },
+  'demo-elev-3': { name: 'Pip',   pin: '0000', coins: 305, node: 'students14' }
+};
+
+// Hvilke noder vi støtter — begge trinn-grupper
+const STUDENT_NODES = ['students14', 'students57'];
+
+// Hjelper: vent på at Firebase er klar
+function waitForFirebase(timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    if (window._fbReady) return resolve();
+    const t = setTimeout(() => reject(new Error('Firebase ble ikke klar i tide')), timeoutMs);
+    window.addEventListener('firebase-ready', () => {
+      clearTimeout(t);
+      resolve();
+    }, { once: true });
+  });
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// FUNKSJON 1 — HENT ELEV FRA QR-INNHOLD
+// ───────────────────────────────────────────────────────────────────────
+// QR-en fra lærerportalen er JSON: { type: 'login', fbKey: '...' }
+// Vi støtter også at QR-en bare inneholder en fbKey-streng (fallback for
+// manuell innskriving) — da søker vi i begge noder.
+async function lookupStudentFromQR(qrText) {
+  if (DEMO_MODE) {
+    const s = DEMO_STUDENTS[qrText.trim()];
+    if (!s) return null;
+    return { id: qrText.trim(), name: s.name, node: s.node };
+  }
+
+  await waitForFirebase();
+
+  // Forsøk å parse som JSON først (formatet fra lærerportalen)
+  let fbKey = null;
+  try {
+    const parsed = JSON.parse(qrText);
+    if (parsed && parsed.type === 'login' && parsed.fbKey) {
+      fbKey = parsed.fbKey;
+    }
+  } catch (e) {
+    // Ikke JSON — sannsynligvis manuell innskrivning av fbKey
+  }
+  if (!fbKey) {
+    // Behandle hele teksten som potensiell fbKey
+    fbKey = qrText.trim();
+  }
+  if (!fbKey) return null;
+
+  // Let i begge noder (1-4 og 5-7)
+  for (const node of STUDENT_NODES) {
+    try {
+      const snap = await window._get(window._ref(window._db, node + '/' + fbKey));
+      const data = snap.val();
+      if (data) {
+        const name = data.firstname || data.name || 'Elev';
+        return { id: fbKey, name, node };
+      }
+    } catch (e) {
+      console.error('Feil ved oppslag i ' + node, e);
+    }
+  }
+  return null;
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// FUNKSJON 2 — VERIFISER PIN
+// ───────────────────────────────────────────────────────────────────────
+// Henter PIN fra elevens record og sammenligner med det eleven tastet.
+// Lærerportalen lagrer PIN i klartekst som 4-sifret streng.
+async function verifyPin(student, pin) {
+  if (DEMO_MODE) {
+    const s = DEMO_STUDENTS[student.id];
+    return !!s && s.pin === pin;
+  }
+
+  await waitForFirebase();
+
+  try {
+    const snap = await window._get(
+      window._ref(window._db, student.node + '/' + student.id + '/pin')
+    );
+    const stored = snap.val();
+    if (stored === null || stored === undefined) return false;
+    return String(stored) === String(pin);
+  } catch (e) {
+    console.error('Feil ved PIN-sjekk:', e);
+    throw e;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// FUNKSJON 3 — SETT INN MYNTER
+// ───────────────────────────────────────────────────────────────────────
+// Legger `amount` mynter til elevens balance. Bruker en transaksjon for
+// å unngå race conditions hvis flere oppdateringer skjer samtidig.
+// Returnerer den nye saldoen.
+async function depositCoins(student, amount) {
+  if (DEMO_MODE) {
+    const key = 'myntjakten-demo-' + student.id;
+    const existing = parseInt(localStorage.getItem(key) || DEMO_STUDENTS[student.id].coins);
+    const newBalance = existing + amount;
+    localStorage.setItem(key, newBalance);
+    await new Promise(r => setTimeout(r, 600));
+    return newBalance;
+  }
+
+  await waitForFirebase();
+
+  // Transaksjon på balance-feltet — sikker mot race conditions
+  const balanceRef = window._ref(window._db, student.node + '/' + student.id + '/balance');
+  const result = await window._runTransaction(balanceRef, (current) => {
+    return (current || 0) + amount;
+  });
+
+  if (!result.committed) {
+    throw new Error('Transaksjonen ble avbrutt');
+  }
+
+  // Logg innskuddet til en egen "earnings"-node så læreren kan se det.
+  // Ikke kritisk — fortsett selv om dette feiler.
+  try {
+    await window._push(
+      window._ref(window._db, 'earnings/' + student.id),
+      {
+        amount,
+        source: 'myntjakten',
+        ts: Date.now()
+      }
+    );
+  } catch (e) {
+    console.warn('Kunne ikke logge innskudd:', e);
+  }
+
+  return result.snapshot.val();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ▲▲▲ SLUTT MYNTLAND-INTEGRASJON ▲▲▲
+// ═══════════════════════════════════════════════════════════════════════
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// QR-SKANNER + PIN-FLYT (intern logikk — du trenger ikke endre dette)
+// ═══════════════════════════════════════════════════════════════════════
+
+const depositState = {
+  step: null,
+  videoStream: null,
+  scanLoopHandle: null,
+  student: null,
+  pinBuffer: '',
+  pendingAmount: 0,
+  alreadyDeposited: false   // hindre dobbelt-innskudd
+};
+
+function openDepositFlow() {
+  if (depositState.alreadyDeposited) return;
+  depositState.pendingAmount = state ? state.coins : 0;
+  if (depositState.pendingAmount <= 0) return;
+  depositState.student = null;
+  depositState.pinBuffer = '';
+  document.getElementById('deposit-modal').classList.add('open');
+  goToStep('scan');
+  startScanner();
+}
+
+function closeDepositFlow() {
+  stopScanner();
+  document.getElementById('deposit-modal').classList.remove('open');
+  // Reset alle steg
+  depositState.pinBuffer = '';
+  depositState.student = null;
+  updatePinDisplay();
+}
+
+function goToStep(stepName) {
+  document.querySelectorAll('.modal-step').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('step-' + stepName);
+  if (target) target.classList.add('active');
+  depositState.step = stepName;
+}
+
+// ── SCANNER ──────────────────────────────────────────────────────────
+async function startScanner() {
+  const video = document.getElementById('scanner-video');
+  const errEl = document.getElementById('scanner-error');
+  const statusEl = document.getElementById('scanner-status');
+  errEl.style.display = 'none';
+  statusEl.textContent = 'Starter kamera…';
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    errEl.textContent = 'Nettleseren støtter ikke kamera-tilgang.';
+    errEl.style.display = 'block';
+    statusEl.textContent = '';
+    return;
+  }
+  if (typeof jsQR === 'undefined') {
+    errEl.textContent = 'QR-leseren er ikke lastet. Sjekk internett.';
+    errEl.style.display = 'block';
+    statusEl.textContent = '';
+    return;
+  }
+
+  try {
+    depositState.videoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    video.srcObject = depositState.videoStream;
+    statusEl.textContent = 'Leter etter QR-kode…';
+    // Start skanneløkke når video har data
+    video.addEventListener('loadedmetadata', () => {
+      scanLoop();
+    }, { once: true });
+  } catch (err) {
+    let msg = 'Kunne ikke starte kameraet.';
+    if (err.name === 'NotAllowedError') msg = 'Du må gi tilgang til kameraet.';
+    else if (err.name === 'NotFoundError') msg = 'Fant ingen kamera på enheten.';
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    statusEl.textContent = '';
+  }
+}
+
+function stopScanner() {
+  if (depositState.scanLoopHandle) {
+    cancelAnimationFrame(depositState.scanLoopHandle);
+    depositState.scanLoopHandle = null;
+  }
+  if (depositState.videoStream) {
+    depositState.videoStream.getTracks().forEach(t => t.stop());
+    depositState.videoStream = null;
+  }
+}
+
+function scanLoop() {
+  const video = document.getElementById('scanner-video');
+  if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+    depositState.scanLoopHandle = requestAnimationFrame(scanLoop);
+    return;
+  }
+
+  // Tegn videoframe til canvas for å få pikseldata
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  const code = jsQR(imgData.data, imgData.width, imgData.height, {
+    inversionAttempts: 'dontInvert'
+  });
+
+  if (code && code.data) {
+    onQrDetected(code.data);
+    return; // stopp løkken
+  }
+  depositState.scanLoopHandle = requestAnimationFrame(scanLoop);
+}
+
+async function onQrDetected(qrText) {
+  stopScanner();
+  document.getElementById('scanner-status').textContent = 'QR funnet! Sjekker…';
+  await handleStudentLookup(qrText);
+}
+
+async function handleStudentLookup(idText) {
+  try {
+    const student = await lookupStudentFromQR(idText);
+    if (!student) {
+      showDepositError('Fant ikke eleven', 'QR-koden eller ID-en stemmer ikke. Prøv igjen.');
+      return;
+    }
+    depositState.student = student;
+    depositState.pinBuffer = '';
+    updatePinDisplay();
+    document.getElementById('pin-student-name').textContent =
+      'Hei, ' + (student.name || 'elev') + '!';
+    document.getElementById('pin-error').textContent = '';
+    goToStep('pin');
+  } catch (e) {
+    console.error(e);
+    showDepositError('Tilkoblingsfeil', 'Sjekk internett og prøv igjen.');
+  }
+}
+
+// ── MANUELL ID ──────────────────────────────────────────────────────
+function bindManualId() {
+  document.getElementById('btn-manual-id').addEventListener('click', () => {
+    stopScanner();
+    document.getElementById('manual-id-input').value = '';
+    goToStep('manual');
+    setTimeout(() => document.getElementById('manual-id-input').focus(), 80);
+  });
+  document.getElementById('btn-back-to-scan').addEventListener('click', () => {
+    goToStep('scan');
+    startScanner();
+  });
+  document.getElementById('btn-manual-confirm').addEventListener('click', async () => {
+    const v = document.getElementById('manual-id-input').value.trim();
+    if (!v) return;
+    document.getElementById('scanner-status').textContent = 'Sjekker…';
+    await handleStudentLookup(v);
+  });
+  document.getElementById('manual-id-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('btn-manual-confirm').click();
+  });
+}
+
+// ── PIN ─────────────────────────────────────────────────────────────
+function bindPinPad() {
+  document.getElementById('pin-pad').addEventListener('click', (e) => {
+    const btn = e.target.closest('.pin-pad-btn');
+    if (!btn) return;
+    const key = btn.dataset.pin;
+    if (!key) return;
+    if (key === 'clear') {
+      depositState.pinBuffer = depositState.pinBuffer.slice(0, -1);
+    } else if (depositState.pinBuffer.length < 4) {
+      depositState.pinBuffer += key;
+    }
+    document.getElementById('pin-error').textContent = '';
+    updatePinDisplay();
+    if (depositState.pinBuffer.length === 4) {
+      // Liten forsinkelse så eleven ser at siste prikk fyltes ut
+      setTimeout(submitPin, 200);
+    }
+  });
+}
+
+function updatePinDisplay() {
+  const dots = document.querySelectorAll('#pin-display .pin-dot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('filled', i < depositState.pinBuffer.length);
+    d.classList.remove('error');
+  });
+}
+
+async function submitPin() {
+  const pin = depositState.pinBuffer;
+  const student = depositState.student;
+  if (!student || !student.id) return;
+
+  goToStep('loading');
+  document.getElementById('loading-text').textContent = 'Sjekker PIN…';
+
+  try {
+    const ok = await verifyPin(student, pin);
+    if (!ok) {
+      // Tilbake til PIN-skjermen og vis feil
+      goToStep('pin');
+      depositState.pinBuffer = '';
+      updatePinDisplay();
+      document.querySelectorAll('#pin-display .pin-dot').forEach(d => d.classList.add('error'));
+      document.getElementById('pin-error').textContent = 'Feil PIN. Prøv igjen.';
+      return;
+    }
+  } catch (e) {
+    console.error(e);
+    showDepositError('Tilkoblingsfeil', 'Sjekk internett og prøv igjen.');
+    return;
+  }
+
+  // PIN ok → sett inn mynter
+  document.getElementById('loading-text').textContent = 'Setter inn mynter…';
+  try {
+    const newBalance = await depositCoins(student, depositState.pendingAmount);
+    showDepositSuccess(newBalance);
+  } catch (e) {
+    console.error(e);
+    showDepositError('Innskudd feilet', 'Mynter er ikke satt inn. Prøv igjen.');
+  }
+}
+
+function showDepositSuccess(newBalance) {
+  depositState.alreadyDeposited = true;
+  document.getElementById('success-amount').textContent = depositState.pendingAmount;
+  document.getElementById('success-balance').textContent = newBalance;
+  goToStep('success');
+
+  // Oppdater bank-kortet på resultat-skjermen
+  const status = document.getElementById('bank-status');
+  status.textContent = `✅ ${depositState.pendingAmount} 🪙 satt inn på kontoen din!`;
+  status.classList.add('success');
+  status.style.display = '';
+  document.getElementById('btn-deposit').disabled = true;
+  document.getElementById('btn-deposit').textContent = '✅ Satt inn';
+}
+
+function showDepositError(title, text) {
+  document.getElementById('error-title').textContent = title;
+  document.getElementById('error-text').textContent = text;
+  goToStep('error');
+}
+
+function bindDepositModal() {
+  document.getElementById('deposit-modal-close').addEventListener('click', closeDepositFlow);
+  document.getElementById('btn-success-close').addEventListener('click', closeDepositFlow);
+  document.getElementById('btn-error-cancel').addEventListener('click', closeDepositFlow);
+  document.getElementById('btn-error-retry').addEventListener('click', () => {
+    // Start på nytt
+    depositState.student = null;
+    depositState.pinBuffer = '';
+    goToStep('scan');
+    startScanner();
+  });
+  bindManualId();
+  bindPinPad();
+}
+
+// Hooks som kalles fra startGame og endGame i hovedkoden
+function onGameStartedHook() {
+  depositState.alreadyDeposited = false;
+  const banner = document.getElementById('bank-status');
+  if (banner) {
+    banner.style.display = 'none';
+    banner.classList.remove('success');
+  }
+  const btn = document.getElementById('btn-deposit');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '📷 Skann kortet ditt';
+  }
+}
+
+function onGameEndedHook() {
+  document.getElementById('bank-coins-amount').textContent = state.coins;
+  const card = document.getElementById('bank-card');
+  if (state.coins === 0) {
+    card.style.display = 'none';
+  } else {
+    card.style.display = '';
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1679,6 +2586,7 @@ function bindResultScreen() {
   bindStartScreen();
   bindGameScreen();
   bindResultScreen();
+  bindDepositModal();
   updateOpsFromUI();
 })();
 </script>
