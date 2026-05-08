@@ -522,16 +522,19 @@
   <!-- Kategori-faner -->
   <div class="tabs" role="tablist">
     <button class="tab active" data-category="alle" role="tab">
-      Alle <span class="tab-count" data-count="alle">2</span>
+      Alle <span class="tab-count" data-count="alle">7</span>
     </button>
     <button class="tab" data-category="plakater" role="tab">
-      🖼️ Plakater <span class="tab-count" data-count="plakater">2</span>
+      🖼️ Plakater <span class="tab-count" data-count="plakater">5</span>
     </button>
     <button class="tab" data-category="monsterkort" role="tab">
       👾 Monsterkort <span class="tab-count" data-count="monsterkort">0</span>
     </button>
     <button class="tab" data-category="diplomer" role="tab">
-      🏆 Diplomer <span class="tab-count" data-count="diplomer">0</span>
+      🏆 Diplomer <span class="tab-count" data-count="diplomer">1</span>
+    </button>
+    <button class="tab" data-category="skjemaer" role="tab">
+      📝 Skjemaer <span class="tab-count" data-count="skjemaer">1</span>
     </button>
     <button class="tab" data-category="spillkort" role="tab">
       🎴 Spillkort <span class="tab-count" data-count="spillkort">0</span>
@@ -583,9 +586,9 @@ const RESOURCES = [
     trinn: '5.–7. trinn',
     thumb: 'materiell/thumbs/personlig-okonomi-57.jpg',
     pdf: 'materiell/pdf/personlig-okonomi-57.pdf',
-    pdfSize: '774 KB',
+    pdfSize: '492 KB',
     png: 'materiell/png/personlig-okonomi-57.png',
-    pngSize: '1.0 MB'
+    pngSize: '416 KB'
   },
   {
     id: 'sparing-10-aar',
@@ -595,9 +598,69 @@ const RESOURCES = [
     trinn: '5.–7. trinn',
     thumb: 'materiell/thumbs/sparing-10-aar.jpg',
     pdf: 'materiell/pdf/sparing-10-aar.pdf',
-    pdfSize: '670 KB',
+    pdfSize: '360 KB',
     png: 'materiell/png/sparing-10-aar.png',
-    pngSize: '706 KB'
+    pngSize: '300 KB'
+  },
+  {
+    id: 'behov-onsker',
+    category: 'plakater',
+    title: 'Behov vs. ønsker',
+    description: 'Hva trenger jeg, og hva har jeg bare lyst på? Lær Bobos huskeregel: Stopp og tenk først!',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/behov-onsker.jpg',
+    pdf: 'materiell/pdf/behov-onsker.pdf',
+    pdfSize: '528 KB',
+    png: 'materiell/png/behov-onsker.png',
+    pngSize: '364 KB'
+  },
+  {
+    id: 'renter',
+    category: 'plakater',
+    title: 'Renter – pengene som vokser (eller koster)',
+    description: 'Når er renter din venn, og når er de en kostnad? Sammenligner sparing og lån side om side.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/renter.jpg',
+    pdf: 'materiell/pdf/renter.pdf',
+    pdfSize: '516 KB',
+    png: 'materiell/png/renter.png',
+    pngSize: '388 KB'
+  },
+  {
+    id: 'personlig-okonomi-9-infografikker',
+    category: 'plakater',
+    title: 'Personlig økonomi – 9 infografikker',
+    description: 'Hefte med én plakat per begrep – inntekt, utgifter, budsjett, sparing, renter, lån, gjeld, behov vs. ønsker og smart forbruk. 9 sider.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/personlig-okonomi-9-infografikker.jpg',
+    pdf: 'materiell/pdf/personlig-okonomi-9-infografikker.pdf',
+    pdfSize: '1.7 MB',
+    png: 'materiell/png/personlig-okonomi-9-infografikker.png',
+    pngSize: '292 KB'
+  },
+  {
+    id: 'diplom-myntmester',
+    category: 'diplomer',
+    title: 'Diplom – Myntmester',
+    description: 'Tildeles ekte myntlandshelter for god forståelse av personlig økonomi. Felter for navn, lærer og dato.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/diplom-myntmester.jpg',
+    pdf: 'materiell/pdf/diplom-myntmester.pdf',
+    pdfSize: '164 KB',
+    png: 'materiell/png/diplom-myntmester.png',
+    pngSize: '132 KB'
+  },
+  {
+    id: 'jobbsoknad',
+    category: 'skjemaer',
+    title: 'Jobbsøknad',
+    description: 'Et brev fra en fremtidig myntmester. Utfyllingsskjema med navn, klasse, jobb det søkes på, og hvorfor man passer til jobben.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/jobbsoknad.jpg',
+    pdf: 'materiell/pdf/jobbsoknad.pdf',
+    pdfSize: '176 KB',
+    png: 'materiell/png/jobbsoknad.png',
+    pngSize: '136 KB'
   }
   // Legg til flere ressurser her etterhvert som de blir klare
 ];
@@ -606,12 +669,13 @@ const CATEGORY_LABELS = {
   plakater: { emoji: '🖼️', singular: 'plakat' },
   monsterkort: { emoji: '👾', singular: 'monsterkort' },
   diplomer: { emoji: '🏆', singular: 'diplom' },
+  skjemaer: { emoji: '📝', singular: 'skjema' },
   spillkort: { emoji: '🎴', singular: 'spillkort' }
 };
 
 // Oppdater fane-tellere
 function updateCounts() {
-  const counts = { alle: RESOURCES.length, plakater: 0, monsterkort: 0, diplomer: 0, spillkort: 0 };
+  const counts = { alle: RESOURCES.length, plakater: 0, monsterkort: 0, diplomer: 0, skjemaer: 0, spillkort: 0 };
   RESOURCES.forEach(r => { counts[r.category] = (counts[r.category] || 0) + 1; });
   document.querySelectorAll('[data-count]').forEach(el => {
     el.textContent = counts[el.dataset.count] ?? 0;
