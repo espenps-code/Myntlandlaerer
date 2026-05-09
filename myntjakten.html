@@ -2152,13 +2152,26 @@ const STUDENT_NODES = ['students14', 'students57'];
 // Hjelper: vent på at Firebase er klar
 function waitForFirebase(timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
-    if (window._fbReady) return resolve();
-    const t = setTimeout(() => reject(new Error('Firebase ble ikke klar i tide')), timeoutMs);
+    if (window._fbReady && window._db && window._get) return resolve();
+    const t = setTimeout(() => {
+      reject(new Error('Firebase ble ikke klar i tide. Sjekk at filen kjøres fra en webserver (ikke file://) og at det er internett-tilgang.'));
+    }, timeoutMs);
     window.addEventListener('firebase-ready', () => {
       clearTimeout(t);
       resolve();
     }, { once: true });
   });
+}
+
+// Hjelper: legg en tidsfrist på en async-operasjon
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error('Timeout: ' + label + ' tok mer enn ' + ms + 'ms')),
+      ms
+    ))
+  ]);
 }
 
 // ───────────────────────────────────────────────────────────────────────
@@ -2168,43 +2181,63 @@ function waitForFirebase(timeoutMs = 5000) {
 // Vi støtter også at QR-en bare inneholder en fbKey-streng (fallback for
 // manuell innskriving) — da søker vi i begge noder.
 async function lookupStudentFromQR(qrText) {
+  console.log('[Myntjakten] Mottok QR-tekst:', qrText);
+
   if (DEMO_MODE) {
     const s = DEMO_STUDENTS[qrText.trim()];
     if (!s) return null;
     return { id: qrText.trim(), name: s.name, node: s.node };
   }
 
+  console.log('[Myntjakten] Venter på Firebase…');
   await waitForFirebase();
+  console.log('[Myntjakten] Firebase klar. _db:', !!window._db, '_get:', !!window._get);
 
   // Forsøk å parse som JSON først (formatet fra lærerportalen)
   let fbKey = null;
   try {
     const parsed = JSON.parse(qrText);
+    console.log('[Myntjakten] Parset JSON:', parsed);
     if (parsed && parsed.type === 'login' && parsed.fbKey) {
+      fbKey = parsed.fbKey;
+    } else if (parsed && parsed.fbKey) {
+      // Andre QR-formater som inkluderer fbKey
       fbKey = parsed.fbKey;
     }
   } catch (e) {
-    // Ikke JSON — sannsynligvis manuell innskrivning av fbKey
+    console.log('[Myntjakten] Ikke JSON, behandler som ren fbKey');
   }
   if (!fbKey) {
-    // Behandle hele teksten som potensiell fbKey
     fbKey = qrText.trim();
   }
-  if (!fbKey) return null;
+  if (!fbKey) {
+    console.log('[Myntjakten] Ingen fbKey funnet');
+    return null;
+  }
+  console.log('[Myntjakten] Søker etter fbKey:', fbKey);
 
-  // Let i begge noder (1-4 og 5-7)
+  // Let i begge noder (1-4 og 5-7), med timeout per oppslag
   for (const node of STUDENT_NODES) {
     try {
-      const snap = await window._get(window._ref(window._db, node + '/' + fbKey));
+      console.log('[Myntjakten] Sjekker ' + node + '/' + fbKey + '…');
+      const snap = await withTimeout(
+        window._get(window._ref(window._db, node + '/' + fbKey)),
+        4000,
+        'oppslag i ' + node
+      );
       const data = snap.val();
+      console.log('[Myntjakten]   resultat:', data ? 'FUNNET' : 'ikke funnet');
       if (data) {
         const name = data.firstname || data.name || 'Elev';
         return { id: fbKey, name, node };
       }
     } catch (e) {
-      console.error('Feil ved oppslag i ' + node, e);
+      console.error('[Myntjakten] Feil ved oppslag i ' + node + ':', e);
+      // Kast videre slik at brukeren får se "tilkoblingsfeil"
+      throw e;
     }
   }
+  console.log('[Myntjakten] Eleven finnes ikke i noen av nodene');
   return null;
 }
 
@@ -2425,8 +2458,9 @@ async function handleStudentLookup(idText) {
     document.getElementById('pin-error').textContent = '';
     goToStep('pin');
   } catch (e) {
-    console.error(e);
-    showDepositError('Tilkoblingsfeil', 'Sjekk internett og prøv igjen.');
+    console.error('[Myntjakten] handleStudentLookup feilet:', e);
+    const msg = e && e.message ? e.message : 'Ukjent feil';
+    showDepositError('Tilkoblingsfeil', msg);
   }
 }
 
