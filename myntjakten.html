@@ -23,7 +23,7 @@
 <!-- Firebase: samme konfig som lærerportalene. Eksponerer window._db osv. -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, get, update, push, runTransaction }
+  import { getDatabase, ref, get, set, update, push, runTransaction }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
@@ -43,6 +43,7 @@
   window._db = db;
   window._ref = ref;
   window._get = get;
+  window._set = set;
   window._update = update;
   window._push = push;
   window._runTransaction = runTransaction;
@@ -2203,7 +2204,7 @@ const STUDENT_NODES = ['students14', 'students57'];
 // Hjelper: vent på at Firebase er klar
 function waitForFirebase(timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
-    if (window._fbReady && window._db && window._get) return resolve();
+    if (window._fbReady && window._db && window._get && window._set && window._push) return resolve();
     const t = setTimeout(() => {
       reject(new Error('Firebase ble ikke klar i tide. Sjekk at filen kjøres fra en webserver (ikke file://) og at det er internett-tilgang.'));
     }, timeoutMs);
@@ -2321,8 +2322,10 @@ async function verifyPin(student, pin) {
 // ───────────────────────────────────────────────────────────────────────
 // FUNKSJON 3 — SETT INN MYNTER
 // ───────────────────────────────────────────────────────────────────────
-// Legger `amount` mynter til elevens balance. Bruker en transaksjon for
-// å unngå race conditions hvis flere oppdateringer skjer samtidig.
+// Legger `amount` mynter til elevens balance via en transaksjon for å
+// unngå race conditions. Logger også transaksjonen til transactions14/57
+// så den dukker opp i elevens transaksjonsoversikt — samme format som
+// lærerportalen bruker (type='income', amount>0, ts).
 // Returnerer den nye saldoen.
 async function depositCoins(student, amount) {
   if (DEMO_MODE) {
@@ -2336,32 +2339,37 @@ async function depositCoins(student, amount) {
 
   await waitForFirebase();
 
-  // Transaksjon på balance-feltet — sikker mot race conditions
+  // 1) Oppdater saldo med transaksjon (sikker mot samtidige endringer)
   const balanceRef = window._ref(window._db, student.node + '/' + student.id + '/balance');
   const result = await window._runTransaction(balanceRef, (current) => {
     return (current || 0) + amount;
   });
-
   if (!result.committed) {
     throw new Error('Transaksjonen ble avbrutt');
   }
+  const newBalance = result.snapshot.val();
 
-  // Logg innskuddet til en egen "earnings"-node så læreren kan se det.
-  // Ikke kritisk — fortsett selv om dette feiler.
+  // 2) Logg transaksjonen til transactions{14|57}/{fbKey} så det vises
+  //    i elevens transaksjonsoversikt. Ikke kritisk hvis det feiler —
+  //    saldoen er uansett oppdatert.
+  // Mappe students14 → transactions14, students57 → transactions57
+  const txNode = student.node.replace('students', 'transactions');
   try {
-    await window._push(
-      window._ref(window._db, 'earnings/' + student.id),
+    await window._set(
+      window._push(window._ref(window._db, txNode + '/' + student.id)),
       {
-        amount,
-        source: 'myntjakten',
+        type: 'income',
+        icon: '🧮',
+        desc: 'Myntjakten – hoderegning',
+        amount: amount,
         ts: Date.now()
       }
     );
   } catch (e) {
-    console.warn('Kunne ikke logge innskudd:', e);
+    console.warn('[Myntjakten] Kunne ikke logge transaksjonen:', e);
   }
 
-  return result.snapshot.val();
+  return newBalance;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
