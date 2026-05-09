@@ -2305,9 +2305,9 @@ renderCart();
 })();
 
 // iOS Safari iframe scroll-fiks
-// Når demoen vises i en iframe på iPad/iPhone, fungerer ikke intern flex-scroll på .content.
-// Vi bytter til naturlig body-scroll: body får all høyden, .content slipper flex,
-// og iframens forelder utvider iframen og scroller den selv.
+// På iPad/iPhone er intern iframe-scroll begrenset. Vi bruker -webkit-overflow-scrolling
+// på .content + touch-action for å aktivere native momentum-scroll i iframen,
+// uten å endre layouten – så bunnmenyen forblir sticky.
 (function iosIframeScrollFix() {
   const inIframe = window.self !== window.top;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -2316,42 +2316,15 @@ renderCart();
 
   const style = document.createElement('style');
   style.textContent = `
-    html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; }
-    .screen, .screen.active { min-height: 0 !important; height: auto !important; }
+    html, body { height: 100%; overflow: hidden; -webkit-overflow-scrolling: touch; }
+    .screen, .screen.active { height: 100vh; min-height: 0; }
     .content, .cashier-content, .quiz-body {
-      flex: 0 0 auto !important;
-      overflow: visible !important;
-      height: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      overflow-y: scroll !important;
+      touch-action: pan-y !important;
     }
-    .bottom-nav { position: sticky; bottom: 0; }
   `;
   document.head.appendChild(style);
-
-  // Rapporter høyden til foreldre-siden så iframen kan utvides
-  function reportHeight() {
-    const h = Math.max(
-      document.body.scrollHeight,
-      document.documentElement.scrollHeight,
-      document.body.offsetHeight,
-      document.documentElement.offsetHeight
-    );
-    window.parent.postMessage({ type: 'myntland-iframe-height', height: h }, '*');
-  }
-
-  window.addEventListener('load', () => {
-    reportHeight();
-    setTimeout(reportHeight, 200);
-    setTimeout(reportHeight, 800);
-  });
-
-  // Følg med på dynamiske endringer (tab-bytte, modaler osv.)
-  if (window.ResizeObserver) {
-    const ro = new ResizeObserver(reportHeight);
-    ro.observe(document.body);
-  }
-
-  // Rapporter når noen klikker (bytte av tab kan endre høyden)
-  document.addEventListener('click', () => setTimeout(reportHeight, 100));
 })();
 </script>
 </body>
