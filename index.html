@@ -788,7 +788,7 @@
   }
   .ios-floating-nav .nav-item {
     flex: 1;
-    padding: 9px 2px;
+    padding: 9px 1px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -802,12 +802,15 @@
     font-family: 'Nunito', sans-serif;
   }
   .ios-floating-nav .nav-item.active { opacity: 1; }
-  .ios-floating-nav .nav-icon { font-size: 1.3rem; }
+  .ios-floating-nav .nav-icon { font-size: 1.15rem; }
   .ios-floating-nav .nav-label {
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     font-weight: 800;
     color: var(--teal-dark);
+    white-space: nowrap;
   }
+  /* 5-7 har 7 knapper, ekstra kompakt */
+  #ios-nav-57 .nav-label { font-size: 0.55rem; }
 
   /* Animert iframe-bytting: usynlig iframe glir litt og fader ut */
   .preview-screen iframe.is-leaving-left {
@@ -1147,13 +1150,13 @@
           <iframe
             id="iframe-14"
             class="is-active"
-            src="elevapp14-demo.html?v=11"
+            src="elevapp14-demo.html?v=12"
             title="Elevapp småtrinnet (1–4) – live forhåndsvisning"
             loading="lazy"
             referrerpolicy="no-referrer"></iframe>
           <iframe
             id="iframe-57"
-            src="elevapp57-demo.html?v=11"
+            src="elevapp57-demo.html?v=12"
             title="Elevapp mellomtrinnet (5–7) – live forhåndsvisning"
             loading="lazy"
             referrerpolicy="no-referrer"></iframe>
@@ -1161,29 +1164,29 @@
           <div class="ios-floating-nav" id="ios-nav-14" data-trinn="14">
             <button class="nav-item active" data-tab="bank" type="button">
               <span class="nav-icon">🏦</span>
-              <span class="nav-label">Bank</span>
+              <span class="nav-label">Nettbank</span>
+            </button>
+            <button class="nav-item" data-tab="savings" type="button">
+              <span class="nav-icon">💰</span>
+              <span class="nav-label">Sparing</span>
+            </button>
+            <button class="nav-item" data-tab="merker" type="button">
+              <span class="nav-icon">🏅</span>
+              <span class="nav-label">Merker</span>
             </button>
             <button class="nav-item" data-tab="card" type="button">
               <span class="nav-icon">💳</span>
               <span class="nav-label">Kort</span>
             </button>
-            <button class="nav-item" data-tab="savings" type="button">
-              <span class="nav-icon">🏛️</span>
-              <span class="nav-label">Sparing</span>
-            </button>
-            <button class="nav-item" data-tab="merker" type="button">
-              <span class="nav-icon">🏆</span>
-              <span class="nav-label">Merker</span>
-            </button>
           </div>
           <div class="ios-floating-nav" id="ios-nav-57" data-trinn="57" style="display:none;">
             <button class="nav-item active" data-tab="bank" type="button">
               <span class="nav-icon">🏦</span>
-              <span class="nav-label">Bank</span>
+              <span class="nav-label">Nettbank</span>
             </button>
             <button class="nav-item" data-tab="spare" type="button">
               <span class="nav-icon">💰</span>
-              <span class="nav-label">Spare</span>
+              <span class="nav-label">Sparing</span>
             </button>
             <button class="nav-item" data-tab="laan" type="button">
               <span class="nav-icon">📋</span>
@@ -1191,11 +1194,19 @@
             </button>
             <button class="nav-item" data-tab="oppdrag" type="button">
               <span class="nav-icon">💼</span>
-              <span class="nav-label">Jobb</span>
+              <span class="nav-label">Jobber</span>
+            </button>
+            <button class="nav-item" data-tab="budsjett" type="button">
+              <span class="nav-icon">📊</span>
+              <span class="nav-label">Budsjett</span>
             </button>
             <button class="nav-item" data-tab="merker" type="button">
-              <span class="nav-icon">🏆</span>
+              <span class="nav-icon">🏅</span>
               <span class="nav-label">Merker</span>
+            </button>
+            <button class="nav-item" data-tab="kort" type="button">
+              <span class="nav-icon">💳</span>
+              <span class="nav-label">Kort</span>
             </button>
           </div>
         </div>
