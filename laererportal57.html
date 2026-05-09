@@ -982,8 +982,7 @@
       <span>Alle elevers saldo</span>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('add')">➕ Legg til alle</button>
-        <button class="btn btn-ghost btn-sm" onclick="openBulkModal('salary')">💼 Utbetal lønn nå</button>
-        <button class="btn btn-ghost btn-sm" onclick="openBulkModal('tax')">🏛️ Trekk skatt</button>
+        <button class="btn btn-ghost btn-sm" onclick="openBulkModal('salary')">💼 Utbetal lønn nå (20 % skatt)</button>
         <button class="btn btn-ghost btn-sm" onclick="openBulkModal('reset')">🔄 Nullstill</button>
       </div>
     </div>
@@ -1608,7 +1607,7 @@ let searchFilter = '', classFilter = '';
 let csvParsed = [];
 let selectedGroupColor = '#1D9E75';
 let selectedTeacherColor = '#1D9E75';
-const TAX_RATE = 0.22;
+const TAX_RATE = 0.20;
 
 function fbRef(p) { return window._ref(window._db, p); }
 function ready()  { return !!(window._fbReady && window._db && window._ref); }
@@ -2134,61 +2133,96 @@ async function confirmSaldoAction() {
 
 function openBulkModal(action) {
   bulkAction = action;
-  const labels = { add:'➕ Legg til – alle', salary:'💼 Utbetal ukentlig lønn', tax:'🏛️ Trekk skatt (22%)', reset:'🔄 Nullstill – alle' };
+  const labels = {
+    add:    '➕ Legg til – alle',
+    salary: '💼 Utbetal ukentlig lønn (20 % skatt trekkes automatisk)',
+    reset:  '🔄 Nullstill – alle'
+  };
   document.getElementById('modal-bulk-title').textContent = labels[action];
-  document.getElementById('bulk-amount-row').style.display = (action === 'reset' || action === 'tax') ? 'none' : 'block';
+  document.getElementById('bulk-amount-row').style.display = action === 'reset' ? 'none' : 'block';
+  // Bulk-info-felt (vises ikke lenger — beholdes for bakoverkompatibilitet)
   const ti = document.getElementById('bulk-tax-info');
-  ti.style.display = action === 'tax' ? 'block' : 'none';
-  if (action === 'tax') ti.textContent = '22% trekkes fra saldo for valgt klasse.';
+  if (ti) ti.style.display = 'none';
   document.getElementById('modal-bulk').classList.add('open');
 }
 
 async function confirmBulkAction() {
-  const cls    = document.getElementById('bulk-class').value;
-  const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
-  const updates = {};
-  const targets = window._students.filter(s => !cls || s.class === cls);
-  for (const s of targets) {
-    const cur = s.balance || 0;
-    let newBal = cur, txDesc = '', txAmt = 0;
-    if (bulkAction === 'add')    { newBal = cur + amount; txDesc = 'Ekstra fra lærer'; txAmt = amount; }
-    if (bulkAction === 'salary') {
-      const taxAmt = Math.floor(amount * TAX_RATE);
-      const net = amount - taxAmt;
-      newBal = cur + net;
-      txDesc = `Ukentlig lønn (netto etter ${Math.round(TAX_RATE*100)}% skatt)`;
-      txAmt = net;
-      updates['students57/' + s.fbKey + '/badgeTaxContributed'] = (s.badgeTaxContributed||0) + taxAmt;
-      await distributeToGoalsPortal(taxAmt);
-    }
-    if (bulkAction === 'tax') {
-      const t = Math.floor(cur * TAX_RATE);
-      newBal = cur - t;
-      txDesc = 'Skattetrekk 20%';
-      txAmt = -t;
-      updates['students57/' + s.fbKey + '/badgeTaxContributed'] = (s.badgeTaxContributed||0) + t;
-      await distributeToGoalsPortal(t);
-    }
-    if (bulkAction === 'reset')  {
-      // Full nullstilling: brukskonto, sparekonto, fond og lån
-      newBal = 0;
-      txDesc = 'Alle kontoer nullstilt';
-      txAmt = -cur;
-      const base = 'students57/' + s.fbKey + '/';
-      updates[base + 'savings']            = 0;
-      updates[base + 'loan']               = 0;
-      updates[base + 'loanDate']           = null;
-      updates[base + 'fund_low_units']     = 0;
-      updates[base + 'fund_low_invested']  = 0;
-      updates[base + 'fund_high_units']    = 0;
-      updates[base + 'fund_high_invested'] = 0;
-      updates[base + 'withdrawalsThisWeek']= 0;
-    }
-    updates['students57/' + s.fbKey + '/balance'] = Math.max(0, newBal);
-    if (txAmt !== 0) await logTx(s.fbKey, txAmt > 0 ? 'income' : 'expense', '💰', txDesc, txAmt);
+  // Anti-dobbeltklikk-vakt: hvis denne fortsatt kjører fra forrige klikk,
+  // ignorer nye trykk. Tidligere bug: en utbetaling som tar 1-3 sekunder
+  // (mange Firebase-kall i loop) lot læreren klikke "Bekreft" flere
+  // ganger og dermed utbetale lønn dobbelt eller trippelt.
+  if (window._bulkActionRunning) return;
+  window._bulkActionRunning = true;
+
+  // Lås knappen visuelt slik at læreren skjønner at noe skjer
+  const confirmBtn = document.querySelector('#modal-bulk .btn-primary');
+  const cancelBtn  = document.querySelector('#modal-bulk .btn-ghost');
+  const origConfirmText = confirmBtn ? confirmBtn.textContent : '';
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '⏳ Behandler…';
+    confirmBtn.style.opacity = '0.6';
+    confirmBtn.style.cursor = 'wait';
   }
-  await window._update(fbRef('/'), updates);
-  closeModal('modal-bulk');
+  if (cancelBtn) cancelBtn.disabled = true;
+
+  try {
+    const cls    = document.getElementById('bulk-class').value;
+    const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
+    const updates = {};
+    const targets = window._students.filter(s => !cls || s.class === cls);
+    for (const s of targets) {
+      const cur = s.balance || 0;
+      let newBal = cur, txDesc = '', txAmt = 0;
+      if (bulkAction === 'add') {
+        newBal = cur + amount;
+        txDesc = 'Ekstra fra lærer';
+        txAmt = amount;
+      }
+      if (bulkAction === 'salary') {
+        const taxAmt = Math.floor(amount * TAX_RATE);
+        const net = amount - taxAmt;
+        newBal = cur + net;
+        txDesc = `Ukentlig lønn (netto etter ${Math.round(TAX_RATE*100)}% skatt)`;
+        txAmt = net;
+        updates['students57/' + s.fbKey + '/badgeTaxContributed'] = (s.badgeTaxContributed||0) + taxAmt;
+        await distributeToGoalsPortal(taxAmt);
+      }
+      if (bulkAction === 'reset') {
+        // Full nullstilling: brukskonto, sparekonto, fond og lån
+        newBal = 0;
+        txDesc = 'Alle kontoer nullstilt';
+        txAmt = -cur;
+        const base = 'students57/' + s.fbKey + '/';
+        updates[base + 'savings']            = 0;
+        updates[base + 'loan']               = 0;
+        updates[base + 'loanDate']           = null;
+        updates[base + 'fund_low_units']     = 0;
+        updates[base + 'fund_low_invested']  = 0;
+        updates[base + 'fund_high_units']    = 0;
+        updates[base + 'fund_high_invested'] = 0;
+        updates[base + 'withdrawalsThisWeek']= 0;
+      }
+      updates['students57/' + s.fbKey + '/balance'] = Math.max(0, newBal);
+      if (txAmt !== 0) await logTx(s.fbKey, txAmt > 0 ? 'income' : 'expense', '💰', txDesc, txAmt);
+    }
+    await window._update(fbRef('/'), updates);
+  } catch (e) {
+    console.error('[Bulk-action feilet]', e);
+    alert('Noe gikk galt: ' + (e.message || e) + '\n\nPrøv igjen, eller sjekk transaksjonsloggen for å se hva som rakk å skje.');
+  } finally {
+    // Sikrer at modalen alltid lukkes og knappen tilbakestilles,
+    // også hvis det oppstod en feil underveis.
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = origConfirmText || 'Bekreft';
+      confirmBtn.style.opacity = '';
+      confirmBtn.style.cursor = '';
+    }
+    if (cancelBtn) cancelBtn.disabled = false;
+    window._bulkActionRunning = false;
+    closeModal('modal-bulk');
+  }
 }
 
 function openDeleteModal(fbKey, name) {

@@ -2255,86 +2255,110 @@ function openBulkModal(action) {
   document.getElementById('modal-bulk').classList.add('open');
 }
 async function confirmBulkAction() {
-  const cls    = document.getElementById('bulk-class').value;
-  const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
-  const updates = {};
-  const targets = window._students.filter(s => !cls || s.class === cls);
+  // Anti-dobbeltklikk-vakt: hvis denne fortsatt kjører fra forrige klikk,
+  // ignorer nye trykk. Tidligere bug: en utbetaling som tar 1-3 sekunder
+  // (mange Firebase-kall i loop) lot læreren klikke "Bekreft" flere
+  // ganger og dermed utbetale lønn dobbelt eller trippelt.
+  if (window._bulkActionRunning) return;
+  window._bulkActionRunning = true;
 
-  // Per-mål skatt-akkumulering for lønn
-  const goalsByKey = Object.fromEntries((window._classGoals || []).map(g => [g.fbKey, g]));
-  // Aktive sparemål gruppert per klasse – brukt til jevn fordeling når
-  // eleven ikke har valgt et sparemål selv.
-  const activeGoalsByClass = {};
-  (window._classGoals || []).forEach(g => {
-    if (g.completed || !g.class) return;
-    if (!activeGoalsByClass[g.class]) activeGoalsByClass[g.class] = [];
-    activeGoalsByClass[g.class].push(g);
-  });
-  const taxPerGoal = {};
+  // Lås knappen visuelt slik at læreren skjønner at noe skjer
+  const confirmBtn = document.querySelector('#modal-bulk .btn-primary');
+  const cancelBtn  = document.querySelector('#modal-bulk .btn-ghost');
+  const origConfirmText = confirmBtn ? confirmBtn.textContent : '';
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '⏳ Behandler…';
+    confirmBtn.style.opacity = '0.6';
+    confirmBtn.style.cursor = 'wait';
+  }
+  if (cancelBtn) cancelBtn.disabled = true;
 
-  for (const s of targets) {
-    const cur = s.balance || 0;
-    let newBal = cur, txDesc = '', txAmt = 0, txIcon = '💰';
-    if (bulkAction === 'add') {
-      newBal = cur + amount;
-      txDesc = 'Ekstra fra lærer';
-      txAmt  = amount;
-      txIcon = '🎁';
-    } else if (bulkAction === 'salary') {
-      const taxAmt = Math.floor(amount * 0.20);
-      const net    = amount - taxAmt;
-      newBal = cur + net;
-      txDesc = 'Ukentlig lønn (netto etter 20 % skatt)';
-      txAmt  = net;
-      txIcon = '💼';
-      // Send skatten – først prøv elevens valgte sparemål (hvis det
-      // tilhører klassen og er aktivt). Hvis ikke, fordel jevnt på alle
-      // aktive sparemål i elevens klasse.
-      if (taxAmt > 0) {
-        const chosen = s.chosenGoalKey ? goalsByKey[s.chosenGoalKey] : null;
-        const goalMatchesClass = chosen && (!chosen.class || chosen.class === s.class);
-        if (chosen && !chosen.completed && goalMatchesClass) {
-          taxPerGoal[chosen.fbKey] = (taxPerGoal[chosen.fbKey] || 0) + taxAmt;
-        } else {
-          // Jevn fordeling på elevens klasse-sparemål
-          const classGoals = activeGoalsByClass[s.class] || [];
-          if (classGoals.length > 0) {
-            const perGoal = Math.floor(taxAmt / classGoals.length);
-            const remainder = taxAmt - (perGoal * classGoals.length);
-            classGoals.forEach((g, i) => {
-              const share = perGoal + (i < remainder ? 1 : 0);
-              if (share > 0) taxPerGoal[g.fbKey] = (taxPerGoal[g.fbKey] || 0) + share;
-            });
+  try {
+    const cls    = document.getElementById('bulk-class').value;
+    const amount = parseInt(document.getElementById('bulk-amount').value) || 0;
+    const updates = {};
+    const targets = window._students.filter(s => !cls || s.class === cls);
+
+    // Per-mål skatt-akkumulering for lønn
+    const goalsByKey = Object.fromEntries((window._classGoals || []).map(g => [g.fbKey, g]));
+    const activeGoalsByClass = {};
+    (window._classGoals || []).forEach(g => {
+      if (g.completed || !g.class) return;
+      if (!activeGoalsByClass[g.class]) activeGoalsByClass[g.class] = [];
+      activeGoalsByClass[g.class].push(g);
+    });
+    const taxPerGoal = {};
+
+    for (const s of targets) {
+      const cur = s.balance || 0;
+      let newBal = cur, txDesc = '', txAmt = 0, txIcon = '💰';
+      if (bulkAction === 'add') {
+        newBal = cur + amount;
+        txDesc = 'Ekstra fra lærer';
+        txAmt  = amount;
+        txIcon = '🎁';
+      } else if (bulkAction === 'salary') {
+        const taxAmt = Math.floor(amount * 0.20);
+        const net    = amount - taxAmt;
+        newBal = cur + net;
+        txDesc = 'Ukentlig lønn (netto etter 20 % skatt)';
+        txAmt  = net;
+        txIcon = '💼';
+        if (taxAmt > 0) {
+          const chosen = s.chosenGoalKey ? goalsByKey[s.chosenGoalKey] : null;
+          const goalMatchesClass = chosen && (!chosen.class || chosen.class === s.class);
+          if (chosen && !chosen.completed && goalMatchesClass) {
+            taxPerGoal[chosen.fbKey] = (taxPerGoal[chosen.fbKey] || 0) + taxAmt;
+          } else {
+            const classGoals = activeGoalsByClass[s.class] || [];
+            if (classGoals.length > 0) {
+              const perGoal = Math.floor(taxAmt / classGoals.length);
+              const remainder = taxAmt - (perGoal * classGoals.length);
+              classGoals.forEach((g, i) => {
+                const share = perGoal + (i < remainder ? 1 : 0);
+                if (share > 0) taxPerGoal[g.fbKey] = (taxPerGoal[g.fbKey] || 0) + share;
+              });
+            }
           }
-          // Hvis ingen aktive mål i klassen, holdes skatten tilbake (stille).
         }
+      } else if (bulkAction === 'reset') {
+        newBal = 0;
+        txDesc = 'Saldo nullstilt';
+        txAmt  = -cur;
+        txIcon = '🔄';
+        updates['savings14/'+s.fbKey+'/balance'] = 0;
       }
-    } else if (bulkAction === 'reset') {
-      newBal = 0;
-      txDesc = 'Saldo nullstilt';
-      txAmt  = -cur;
-      txIcon = '🔄';
-      // Nullstill også sparekonto
-      updates['savings14/'+s.fbKey+'/balance'] = 0;
+      updates['students14/'+s.fbKey+'/balance'] = Math.max(0, newBal);
+      if (txAmt !== 0) {
+        await logTx14(s.fbKey, txAmt > 0 ? 'income' : 'expense', txIcon, txDesc, txAmt);
+      }
     }
-    updates['students14/'+s.fbKey+'/balance'] = Math.max(0, newBal);
-    if (txAmt !== 0) {
-      await logTx14(s.fbKey, txAmt > 0 ? 'income' : 'expense', txIcon, txDesc, txAmt);
+
+    // Skriv per-mål skattetillegg inn i samme batch
+    for (const [fbKey, addAmt] of Object.entries(taxPerGoal)) {
+      const g = goalsByKey[fbKey];
+      if (!g) continue;
+      const ns = (g.saved || 0) + addAmt;
+      updates['classGoals14/' + fbKey + '/saved'] = ns;
+      if (ns >= g.target) updates['classGoals14/' + fbKey + '/completed'] = true;
     }
+
+    await window._update(fbRef('/'), updates);
+  } catch (e) {
+    console.error('[Bulk-action feilet]', e);
+    alert('Noe gikk galt: ' + (e.message || e) + '\n\nPrøv igjen, eller sjekk transaksjonsloggen for å se hva som rakk å skje.');
+  } finally {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = origConfirmText || 'Bekreft';
+      confirmBtn.style.opacity = '';
+      confirmBtn.style.cursor = '';
+    }
+    if (cancelBtn) cancelBtn.disabled = false;
+    window._bulkActionRunning = false;
+    closeModal('modal-bulk');
   }
-
-  // Skriv per-mål skattetillegg inn i samme batch
-  for (const [fbKey, addAmt] of Object.entries(taxPerGoal)) {
-    const g = goalsByKey[fbKey];
-    if (!g) continue;
-    const ns = (g.saved || 0) + addAmt;
-    updates['classGoals14/' + fbKey + '/saved'] = ns;
-    if (ns >= g.target) updates['classGoals14/' + fbKey + '/completed'] = true;
-  }
-
-  await window._update(fbRef('/'), updates);
-
-  closeModal('modal-bulk');
 }
 function openDeleteModal(fbKey, name) {
   currentStudentId = fbKey;
