@@ -377,6 +377,7 @@
   <div class="splash-logo">Myntland</div>
   <button class="big-splash-btn" onclick="selectRole()">🏦 Min nettbank</button>
   <button class="big-splash-btn" onclick="showShopScreen()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🛒 Butikken</button>
+  <button class="big-splash-btn" onclick="goToMyntjakten()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🪙 Myntjakten</button>
 </div>
 
 <!-- BUTIKK – PIN LOGIN -->
@@ -838,6 +839,10 @@ function getMaxW(){return window._settings?.maxWithdrawals||2;}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function goToSplash(){stopScan();window._currentStudent=null;window._preselectedStudent=null;currentPin='';transactions=[];const pre=document.getElementById('login-preselect');if(pre)pre.style.display='none';const btn=document.getElementById('login-scan-btn');if(btn)btn.style.display='block';const card=document.getElementById('login-card');if(card)card.style.display='none';const sub=document.getElementById('login-subtitle');if(sub)sub.textContent='Scan bankkortet ditt for å logge inn';showScreen('screen-splash');}
 function selectRole(){showScreen('screen-login');}
+
+// Naviger til Myntjakten med kontekst-flagg så tilbakeknappen
+// der peker hit i stedet for til markedsføringssiden.
+function goToMyntjakten(){window.location.href='myntjakten.html?from=elevapp57';}
 
 // ── LOGIN ──────────────────────────────────────────────────────────────────
 // Kort-scan er påkrevd. PIN-en må matche nøyaktig den eleven kortet tilhører.

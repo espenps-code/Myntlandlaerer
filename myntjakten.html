@@ -1116,10 +1116,10 @@ body {
 
 <nav class="topnav">
   <div class="topnav-inner">
-    <a href="index.html" class="topnav-logo">Myntland</a>
-    <a href="index.html" class="topnav-back">
+    <a id="topnav-logo-link" href="index.html" class="topnav-logo">Myntland</a>
+    <a id="topnav-back-link" href="index.html" class="topnav-back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Tilbake til forsiden
+      <span id="topnav-back-text">Tilbake til forsiden</span>
     </a>
   </div>
 </nav>
@@ -1310,6 +1310,11 @@ body {
         <div class="bank-status" id="bank-status" style="display:none;"></div>
       </div>
 
+      <!-- Vises kun for spillere som ikke kommer fra elevappen -->
+      <div id="no-card-hint" style="display:none; text-align:center; margin: -8px 0 14px; padding: 10px 14px; background: var(--teal-light); border-radius: 12px; font-size: 0.85rem; color: var(--teal-dark); font-weight: 700;">
+        Har du ikke kort? <span style="font-weight:800;">Snakk med læreren din om Myntland!</span>
+      </div>
+
       <button class="btn-primary" id="btn-play-again">🔄 Spill igjen</button>
       <button class="btn-secondary" id="btn-change-settings">⚙️ Endre innstillinger</button>
     </div>
@@ -1417,6 +1422,101 @@ body {
 <div id="feedback" class="feedback"></div>
 
 <script>
+// ═══════════════════════════════════════════════════════
+// NAVIGASJONS-KONTEKST
+// ═══════════════════════════════════════════════════════
+// Myntjakten kan åpnes fra tre steder:
+//   - elevapp14.html (kall: myntjakten.html?from=elevapp14)
+//   - elevapp57.html (kall: myntjakten.html?from=elevapp57)
+//   - direkte fra index.html (uten parameter)
+// Tilbakeknappen og "ingen kort"-meldingen tilpasses deretter.
+// ═══════════════════════════════════════════════════════
+const NAV_CONTEXT = (() => {
+  const params = new URLSearchParams(window.location.search);
+  const from = params.get('from');
+  if (from === 'elevapp14') {
+    return { backUrl: 'elevapp14.html', backText: '← Tilbake til appen min', isInApp: true };
+  }
+  if (from === 'elevapp57') {
+    return { backUrl: 'elevapp57.html', backText: '← Tilbake til appen min', isInApp: true };
+  }
+  return { backUrl: 'index.html', backText: 'Tilbake til forsiden', isInApp: false };
+})();
+
+(function applyNavContext() {
+  const backLink = document.getElementById('topnav-back-link');
+  const backText = document.getElementById('topnav-back-text');
+  const logoLink = document.getElementById('topnav-logo-link');
+  if (backLink) backLink.href = NAV_CONTEXT.backUrl;
+  if (backText) backText.textContent = NAV_CONTEXT.backText;
+  // Logo-klikk skal også gå tilbake til appen hvis vi kom derfra,
+  // ikke til markedsføringssiden.
+  if (logoLink) logoLink.href = NAV_CONTEXT.backUrl;
+
+  // "Har du ikke kort?"-hint vises bare når spilleren IKKE er i elevappen
+  // (i appen har de jo allerede kort — meldingen ville vært meningsløs).
+  if (!NAV_CONTEXT.isInApp) {
+    const hint = document.getElementById('no-card-hint');
+    if (hint) hint.style.display = 'block';
+  }
+})();
+
+// ═══════════════════════════════════════════════════════
+// FERSK-AUTH-VINDU (5 minutter)
+// ═══════════════════════════════════════════════════════
+// Etter en vellykket PIN-bekreftelse i nettleseren, lagrer vi et lite
+// token i sessionStorage. Hvis samme elev skanner kortet sitt på nytt
+// innen 5 minutter (typisk "spill flere runder etter hverandre"), hopper
+// vi rett over PIN-steget. Det er fiktive mynter — bekvemmelighet vinner.
+//
+// sessionStorage er bevisst valgt over localStorage: tokenet skal forsvinne
+// når fanen lukkes, så neste bruker av samme enhet aldri arver det.
+// ═══════════════════════════════════════════════════════
+const FRESH_AUTH_WINDOW_MS = 5 * 60 * 1000; // 5 minutter
+const FRESH_AUTH_KEY = 'myntjakten-fresh-auth';
+
+function rememberFreshAuth(student) {
+  try {
+    const token = {
+      // Bruk fbKey hvis tilgjengelig (unik på tvers av students14/57),
+      // ellers id+node som sammensatt nøkkel.
+      fbKey: student.fbKey || null,
+      id: student.id,
+      node: student.node,
+      ts: Date.now()
+    };
+    sessionStorage.setItem(FRESH_AUTH_KEY, JSON.stringify(token));
+  } catch (e) {
+    // sessionStorage kan være blokkert (privat modus i noen nettlesere) —
+    // ikke kritisk, eleven taster bare PIN som vanlig.
+    console.warn('[Myntjakten] Kunne ikke lagre auth-token:', e);
+  }
+}
+
+function hasFreshAuthFor(student) {
+  try {
+    const raw = sessionStorage.getItem(FRESH_AUTH_KEY);
+    if (!raw) return false;
+    const token = JSON.parse(raw);
+    if (!token || !token.ts) return false;
+
+    // Utløpt?
+    if (Date.now() - token.ts > FRESH_AUTH_WINDOW_MS) {
+      sessionStorage.removeItem(FRESH_AUTH_KEY);
+      return false;
+    }
+
+    // Match på fbKey er strengeste — bruk den hvis begge har det.
+    if (token.fbKey && student.fbKey) {
+      return token.fbKey === student.fbKey;
+    }
+    // Fallback: samme id i samme node (students14/students57).
+    return token.id === student.id && token.node === student.node;
+  } catch (e) {
+    return false;
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 // MONSTER-BILDER (fra worksheet-mappa)
 // ═══════════════════════════════════════════════════════
@@ -2515,6 +2615,21 @@ async function handleStudentLookup(idText) {
     document.getElementById('pin-student-name').textContent =
       'Hei, ' + (student.name || 'elev') + '!';
     document.getElementById('pin-error').textContent = '';
+
+    // Fersk auth innen 5 min? Hopp rett til innskudd uten PIN.
+    if (hasFreshAuthFor(student)) {
+      goToStep('loading');
+      document.getElementById('loading-text').textContent = 'Setter inn mynter…';
+      try {
+        const newBalance = await depositCoins(student, depositState.pendingAmount);
+        showDepositSuccess(newBalance);
+      } catch (e) {
+        console.error(e);
+        showDepositError('Innskudd feilet', 'Mynter er ikke satt inn. Prøv igjen.');
+      }
+      return;
+    }
+
     goToStep('pin');
   } catch (e) {
     console.error('[Myntjakten] handleStudentLookup feilet:', e);
@@ -2594,6 +2709,9 @@ async function submitPin() {
       document.getElementById('pin-error').textContent = 'Feil PIN. Prøv igjen.';
       return;
     }
+    // PIN ok — husk det i 5 min så eleven slipper å taste igjen
+    // ved gjentatte runder.
+    rememberFreshAuth(student);
   } catch (e) {
     console.error(e);
     showDepositError('Tilkoblingsfeil', 'Sjekk internett og prøv igjen.');
