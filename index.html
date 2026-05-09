@@ -743,6 +743,13 @@
     width: 100%;
   }
 
+  /* iOS-fiks: når iframen utvides utover skjermen via postMessage,
+     lar vi preview-screen scrolle internt med native touch-scroll. */
+  .preview-screen.is-ios {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .preview-screen iframe {
     position: absolute;
     inset: 0;
@@ -752,6 +759,18 @@
     display: block;
     background: #fff;
     transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  /* På iOS blir iframene ikke-absolutte og får dynamisk høyde fra postMessage */
+  .preview-screen.is-ios iframe {
+    position: relative;
+    inset: auto;
+    height: auto;
+    min-height: 100%;
+  }
+  /* Skjul ikke-aktiv iframe på iOS */
+  .preview-screen.is-ios iframe:not(.is-active) {
+    display: none;
   }
 
   /* Animert iframe-bytting: usynlig iframe glir litt og fader ut */
@@ -1092,13 +1111,13 @@
           <iframe
             id="iframe-14"
             class="is-active"
-            src="elevapp14-demo.html?v=4"
+            src="elevapp14-demo.html?v=5"
             title="Elevapp småtrinnet (1–4) – live forhåndsvisning"
             loading="lazy"
             referrerpolicy="no-referrer"></iframe>
           <iframe
             id="iframe-57"
-            src="elevapp57-demo.html?v=4"
+            src="elevapp57-demo.html?v=5"
             title="Elevapp mellomtrinnet (5–7) – live forhåndsvisning"
             loading="lazy"
             referrerpolicy="no-referrer"></iframe>
@@ -1467,6 +1486,31 @@ const MONSTERS = {
 
     tabs.forEach(tab => {
       tab.addEventListener('click', () => switchTo(tab.getAttribute('data-trinn')));
+    });
+  })();
+
+  // iOS Safari iframe scroll-fiks (foreldre-side)
+  // På iPad/iPhone fungerer ikke intern scroll i iframer pålitelig.
+  // Vi bytter til en modus der iframen utvides til content-høyde og preview-screen scroller.
+  (function iosIframeHostFix() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!isIOS) return;
+
+    const screen = document.querySelector('.preview-screen');
+    if (!screen) return;
+    screen.classList.add('is-ios');
+
+    const iframe14 = document.getElementById('iframe-14');
+    const iframe57 = document.getElementById('iframe-57');
+
+    window.addEventListener('message', (e) => {
+      if (!e.data || e.data.type !== 'myntland-iframe-height') return;
+      const h = e.data.height;
+      if (typeof h !== 'number' || h < 100) return;
+      // Sett begge iframes høyde – kun den aktive er synlig, men bredden må regnes for hver
+      if (e.source === iframe14.contentWindow) iframe14.style.height = h + 'px';
+      if (e.source === iframe57.contentWindow) iframe57.style.height = h + 'px';
     });
   })();
 </script>
