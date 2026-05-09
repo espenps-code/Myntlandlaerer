@@ -2953,29 +2953,6 @@ function showSuccess(emoji,title,amount,text){
   }
   showScreen('screen-app');
 })();
-
-// iOS Safari iframe scroll-fiks
-// På iPad/iPhone er intern iframe-scroll begrenset. Vi bruker -webkit-overflow-scrolling
-// på .content + touch-action for å aktivere native momentum-scroll i iframen,
-// uten å endre layouten – så bunnmenyen forblir sticky.
-(function iosIframeScrollFix() {
-  const inIframe = window.self !== window.top;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!inIframe || !isIOS) return;
-
-  const style = document.createElement('style');
-  style.textContent = `
-    html, body { height: 100%; overflow: hidden; -webkit-overflow-scrolling: touch; }
-    .screen, .screen.active { height: 100vh; min-height: 0; }
-    .content, .quiz-body {
-      -webkit-overflow-scrolling: touch !important;
-      overflow-y: scroll !important;
-      touch-action: pan-y !important;
-    }
-  `;
-  document.head.appendChild(style);
-})();
 </script>
 </body>
 </html>
