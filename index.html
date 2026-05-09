@@ -738,11 +738,15 @@
     position: relative;
     background: #fff;
     border-radius: 24px;
-    overflow: visible;
+    overflow: hidden;
     aspect-ratio: 16 / 16.875;
     width: 100%;
+  }
+
+  /* iOS-modus: preview-screen scroller selv, iframen utvides til content-høyde */
+  .preview-screen.is-ios {
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
   }
 
   .preview-screen iframe {
@@ -753,9 +757,56 @@
     border: 0;
     display: block;
     background: #fff;
-    border-radius: 24px;
-    touch-action: pan-y;
     transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  /* På iOS: iframen tar full høyde og er ikke absolutt-posisjonert */
+  .preview-screen.is-ios iframe {
+    position: relative;
+    inset: auto;
+    height: auto;
+    min-height: 100%;
+  }
+  .preview-screen.is-ios iframe:not(.is-active) {
+    display: none;
+  }
+
+  /* Floating bottom-nav som overlayes over iframen på iOS */
+  .ios-floating-nav {
+    display: none;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 2px solid #b8dfc8;
+    z-index: 20;
+    padding: 0;
+  }
+  .preview-screen.is-ios .ios-floating-nav {
+    display: flex;
+  }
+  .ios-floating-nav .nav-item {
+    flex: 1;
+    padding: 9px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    min-width: 0;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .ios-floating-nav .nav-item.active { opacity: 1; }
+  .ios-floating-nav .nav-icon { font-size: 1.3rem; }
+  .ios-floating-nav .nav-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--teal-dark);
   }
 
   /* Animert iframe-bytting: usynlig iframe glir litt og fader ut */
@@ -1096,16 +1147,57 @@
           <iframe
             id="iframe-14"
             class="is-active"
-            src="elevapp14-demo.html?v=10"
+            src="elevapp14-demo.html?v=11"
             title="Elevapp småtrinnet (1–4) – live forhåndsvisning"
             loading="lazy"
             referrerpolicy="no-referrer"></iframe>
           <iframe
             id="iframe-57"
-            src="elevapp57-demo.html?v=10"
+            src="elevapp57-demo.html?v=11"
             title="Elevapp mellomtrinnet (5–7) – live forhåndsvisning"
             loading="lazy"
             referrerpolicy="no-referrer"></iframe>
+          <!-- Floating bottom-nav som vises kun på iOS, sticky til preview-screen -->
+          <div class="ios-floating-nav" id="ios-nav-14" data-trinn="14">
+            <button class="nav-item active" data-tab="bank" type="button">
+              <span class="nav-icon">🏦</span>
+              <span class="nav-label">Bank</span>
+            </button>
+            <button class="nav-item" data-tab="card" type="button">
+              <span class="nav-icon">💳</span>
+              <span class="nav-label">Kort</span>
+            </button>
+            <button class="nav-item" data-tab="savings" type="button">
+              <span class="nav-icon">🏛️</span>
+              <span class="nav-label">Sparing</span>
+            </button>
+            <button class="nav-item" data-tab="merker" type="button">
+              <span class="nav-icon">🏆</span>
+              <span class="nav-label">Merker</span>
+            </button>
+          </div>
+          <div class="ios-floating-nav" id="ios-nav-57" data-trinn="57" style="display:none;">
+            <button class="nav-item active" data-tab="bank" type="button">
+              <span class="nav-icon">🏦</span>
+              <span class="nav-label">Bank</span>
+            </button>
+            <button class="nav-item" data-tab="spare" type="button">
+              <span class="nav-icon">💰</span>
+              <span class="nav-label">Spare</span>
+            </button>
+            <button class="nav-item" data-tab="laan" type="button">
+              <span class="nav-icon">📋</span>
+              <span class="nav-label">Lån</span>
+            </button>
+            <button class="nav-item" data-tab="oppdrag" type="button">
+              <span class="nav-icon">💼</span>
+              <span class="nav-label">Jobb</span>
+            </button>
+            <button class="nav-item" data-tab="merker" type="button">
+              <span class="nav-icon">🏆</span>
+              <span class="nav-label">Merker</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1472,6 +1564,71 @@ const MONSTERS = {
     tabs.forEach(tab => {
       tab.addEventListener('click', () => switchTo(tab.getAttribute('data-trinn')));
     });
+  })();
+
+  // iOS Safari iframe-modus
+  // På iPad/iPhone fungerer ikke intern scroll i iframer pålitelig.
+  // Vi bytter til en modus der iframen utvides til content-høyde og preview-screen scroller,
+  // mens en floating bottom-nav i index.html overlayes for å bytte tab.
+  (function iosIframeMode() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!isIOS) return;
+
+    const screen = document.querySelector('.preview-screen');
+    if (!screen) return;
+    screen.classList.add('is-ios');
+
+    const iframe14 = document.getElementById('iframe-14');
+    const iframe57 = document.getElementById('iframe-57');
+    const nav14 = document.getElementById('ios-nav-14');
+    const nav57 = document.getElementById('ios-nav-57');
+    const previewCard = document.getElementById('preview-card');
+
+    // Vis riktig nav basert på aktiv trinn
+    function syncFloatingNav() {
+      const activeTrinn = previewCard.querySelector('.preview-tabs').getAttribute('data-active');
+      if (activeTrinn === '57') {
+        nav14.style.display = 'none';
+        nav57.style.display = 'flex';
+      } else {
+        nav14.style.display = 'flex';
+        nav57.style.display = 'none';
+      }
+    }
+    syncFloatingNav();
+    // Observer trinn-bytte
+    new MutationObserver(syncFloatingNav).observe(
+      previewCard.querySelector('.preview-tabs'),
+      { attributes: true, attributeFilter: ['data-active'] }
+    );
+
+    // Lytt etter iframe-høyde via postMessage og oppdater iframe-størrelse
+    window.addEventListener('message', (e) => {
+      if (!e.data || e.data.type !== 'myntland-iframe-height') return;
+      const h = e.data.height;
+      if (typeof h !== 'number' || h < 100) return;
+      if (e.source === iframe14.contentWindow) iframe14.style.height = h + 'px';
+      if (e.source === iframe57.contentWindow) iframe57.style.height = h + 'px';
+    });
+
+    // Klikk på floating-nav → send beskjed til iframe om å bytte tab
+    function setupNavClicks(navEl, iframe) {
+      navEl.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Oppdater visuell aktiv-tilstand
+          navEl.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          // Send til iframe
+          const tab = btn.getAttribute('data-tab');
+          iframe.contentWindow?.postMessage({ type: 'myntland-switch-tab', tab }, '*');
+          // Scroll preview-screen tilbake til topp etter tab-bytte
+          setTimeout(() => screen.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+        });
+      });
+    }
+    setupNavClicks(nav14, iframe14);
+    setupNavClicks(nav57, iframe57);
   })();
 </script>
 

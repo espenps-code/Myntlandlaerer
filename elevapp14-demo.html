@@ -2302,6 +2302,67 @@ renderCart();
   // Skip splash + login, jump straight to customer screen
   showScreen('screen-customer');
 })();
+
+// iOS iframe-modus: la innholdet flyte naturlig, rapporter høyde til parent,
+// skjul intern bottom-nav (parent viser sin egen floating-nav), og lytt til tab-bytte.
+(function iosIframeMode() {
+  const inIframe = window.self !== window.top;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!inIframe || !isIOS) return;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; }
+    .screen, .screen.active { min-height: 0 !important; height: auto !important; }
+    .content, .cashier-content, .quiz-body {
+      flex: 0 0 auto !important;
+      overflow: visible !important;
+      height: auto !important;
+      padding-bottom: 1rem !important;
+    }
+    /* Skjul intern bottom-nav siden parent viser en egen */
+    .bottom-nav { display: none !important; }
+  `;
+  document.head.appendChild(style);
+
+  function reportHeight() {
+    const h = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight
+    );
+    window.parent.postMessage({ type: 'myntland-iframe-height', height: h }, '*');
+  }
+
+  window.addEventListener('load', () => {
+    reportHeight();
+    setTimeout(reportHeight, 200);
+    setTimeout(reportHeight, 800);
+    setTimeout(reportHeight, 2000);
+  });
+
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(reportHeight);
+    ro.observe(document.body);
+  }
+
+  // Lytt etter tab-bytte fra parent
+  window.addEventListener('message', (e) => {
+    if (!e.data || e.data.type !== 'myntland-switch-tab') return;
+    const tab = e.data.tab;
+    // Finn riktig nav-item basert på onclick-attributtet
+    const navItems = document.querySelectorAll('#screen-customer .bottom-nav .nav-item');
+    navItems.forEach(item => {
+      const onclick = item.getAttribute('onclick') || '';
+      if (onclick.includes(`'${tab}'`)) {
+        item.click();
+        setTimeout(reportHeight, 100);
+      }
+    });
+  });
+})();
 </script>
 </body>
 </html>
