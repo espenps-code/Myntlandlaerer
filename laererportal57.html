@@ -2879,8 +2879,231 @@ function _printRewardCards57(rewards) {
   win.document.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+// MYNTLAND BANKKORT — shared helper
+// Bygger en komplett HTML-side med 8 forsider + 8 baksider per A4-side.
+// Brukes av begge lærerportaler (1–4 og 5–7) til utskrift av bankkort.
+// ════════════════════════════════════════════════════════════════════
+window.buildMyntlandBankCardsHTML = function(students, opts) {
+  opts = opts || {};
+  var showPin    = !!opts.showPin;
+  var getAvatar  = opts.getAvatarSVG;            // function(student) -> svg/html string, or null
+  var title      = opts.title || 'Myntland · Bankkort';
+  var THEMES = ['theme-gull','theme-turkis','theme-korall','theme-lilla','theme-lime','theme-skog'];
+
+  function qrUrl(payload) {
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data='
+      + encodeURIComponent(JSON.stringify(payload));
+  }
+  function hashStr(str) {
+    var h = 0, i; str = String(str||'');
+    for (i = 0; i < str.length; i++) h = ((h<<5) - h) + str.charCodeAt(i);
+    return Math.abs(h);
+  }
+  function fakePAN(s) {
+    var h = hashStr((s.fbKey||'') + (s.firstname||'') + (s.lastname||''));
+    var last4 = String(h % 10000).padStart(4, '0');
+    return '4900 41•• •••• ' + last4;
+  }
+  function coinPortraitSVG() {
+    return '<svg viewBox="0 0 60 60" preserveAspectRatio="xMidYMid meet">'
+      + '<circle cx="30" cy="30" r="22" fill="#F5C849" stroke="#2A1F3D" stroke-width="2.5"/>'
+      + '<circle cx="30" cy="30" r="17" fill="none" stroke="#C99517" stroke-width="1" stroke-dasharray="2,1.5"/>'
+      + '<text x="30" y="38" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="22" font-weight="900" font-style="italic" fill="#2A1F3D">M</text>'
+      + '</svg>';
+  }
+  function escapeHTML(s) {
+    return String(s||'').replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function frontHTML(s, idx) {
+    var theme   = THEMES[idx % THEMES.length];
+    var display = escapeHTML((s.firstname||'') + ' ' + (s.lastname||'').charAt(0) + '.');
+    var portrait = (typeof getAvatar === 'function' && getAvatar(s)) || coinPortraitSVG();
+    var qr = qrUrl({ type:'login', fbKey:s.fbKey });
+    var pan = fakePAN(s);
+    var pinHTML = showPin && s.pin
+      ? '<div class="pin-box"><div class="label">PIN-kode</div><div class="pin">' + escapeHTML(s.pin) + '</div></div>'
+      : '<div class="pin-box"><div class="label">PIN-kode</div><div class="pin pin-blank">– – – –</div></div>';
+    return ''
+      + '<div class="card-slot">'
+      +   '<span class="crop tl"></span><span class="crop tr"></span>'
+      +   '<span class="crop bl"></span><span class="crop br"></span>'
+      +   '<div class="bank ' + theme + '">'
+      +     '<div class="band">'
+      +       '<div class="mark"><span class="coin">M</span> MYNTLAND · BANK</div>'
+      +       '<div class="klasse">' + escapeHTML(s.class||'') + '</div>'
+      +     '</div>'
+      +     '<div class="body">'
+      +       '<div class="portrait">' + portrait + '</div>'
+      +       '<div class="ident">'
+      +         '<div class="label">Kortinnehaver</div>'
+      +         '<div class="navn">' + display + '</div>'
+      +         '<div class="pan-row"><div class="chip"></div><div class="pan">' + pan + '</div></div>'
+      +       '</div>'
+      +     '</div>'
+      +     '<div class="foot">'
+      +       '<div class="qr"><img src="' + qr + '" alt="QR" crossorigin="anonymous"></div>'
+      +       pinHTML
+      +       '<div class="valid"><div class="label">Gyldig t.o.m.</div><div class="val">06/30</div></div>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>';
+  }
+  function backHTML() {
+    return ''
+      + '<div class="card-slot">'
+      +   '<span class="crop tl"></span><span class="crop tr"></span>'
+      +   '<span class="crop bl"></span><span class="crop br"></span>'
+      +   '<div class="back">'
+      +     '<svg class="bstar" style="top:5mm;left:6mm;width:14px;height:14px;" viewBox="0 0 20 20"><path d="M10 1 L12 7 L18 7.5 L13.5 11.5 L15 18 L10 14.5 L5 18 L6.5 11.5 L2 7.5 L8 7 Z" fill="currentColor"/></svg>'
+      +     '<svg class="bstar" style="bottom:6mm;right:7mm;width:14px;height:14px;" viewBox="0 0 20 20"><path d="M10 1 L12 7 L18 7.5 L13.5 11.5 L15 18 L10 14.5 L5 18 L6.5 11.5 L2 7.5 L8 7 Z" fill="currentColor"/></svg>'
+      +     '<svg class="bstar" style="top:14mm;right:8mm;width:8px;height:8px;" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3" fill="currentColor"/></svg>'
+      +     '<svg class="bstar" style="bottom:14mm;left:8mm;width:8px;height:8px;" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3" fill="currentColor"/></svg>'
+      +     '<div class="stamp"><div class="logo">MYNTLAND<small>~ KLASSENS SPAREBANK ~</small></div></div>'
+      +     '<div class="sig"></div>'
+      +     '<div class="footnote"><span>Mistet kortet? Si fra til læreren.</span><span class="bank-mark">M · BANK</span></div>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  // Bygg sider — 8 kort/side, forside + bakside annenhver side.
+  //
+  // Tosidig utskrift: forside-siden og bakside-siden veksler. Læreren må
+  // velge "tosidig utskrift, vend langs lang kant" i printerdialogen for
+  // at fysiske kort skal ende opp riktig (forside og bakside på samme ark).
+  //
+  // Ettersom baksiden er identisk for alle kort (samme Myntland-stempel),
+  // spiller eksakt fysisk posisjon ingen rolle — bakside #5 ser lik ut
+  // som bakside #1. Vi fyller likevel alltid 8 bakside-slots så
+  // grid-layouten ikke kollapser visuelt.
+  var pagesHTML = '';
+  var emptySlot = '<div class="card-slot card-slot-empty"></div>';
+  for (var i = 0; i < students.length; i += 8) {
+    var chunk = students.slice(i, i + 8);
+    var fronts = chunk.map(function(s, j){ return frontHTML(s, i + j); }).join('');
+    // Fyll opp til 8 forside-slots med tomme slots, så grid forblir 2x4
+    for (var fp = chunk.length; fp < 8; fp++) fronts += emptySlot;
+    // 8 baksider alltid — én per fysisk kort-posisjon
+    var backs = '';
+    for (var k = 0; k < 8; k++) backs += backHTML();
+    pagesHTML += '<div class="page"><div class="card-grid">' + fronts + '</div></div>';
+    pagesHTML += '<div class="page back-page"><div class="card-grid">' + backs + '</div></div>';
+  }
+
+  var css = ''
+    + '@page{size:A4 portrait;margin:0}'
+    + '*{box-sizing:border-box}'
+    + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,255,255,0.4),transparent 75%),#FBF2D6}'
+    + '.page:last-of-type{page-break-after:auto}'
+    + '.page::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.04) 1px,transparent 1.5px);background-size:6px 6px;pointer-events:none}'
+    + '.page.back-page{background:radial-gradient(ellipse 70% 80% at 50% 50%,#6B5BA8 0%,#2A1F3D 80%)}'
+    + '.page.back-page::before{background-image:radial-gradient(circle,rgba(245,200,73,0.05) 1px,transparent 1.5px);background-size:8px 8px}'
+    + '.card-grid{position:absolute;inset:7mm 0 7mm 0;display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,70mm);gap:0;justify-content:center}'
+    + '.card-slot{position:relative;padding:1.5mm}'
+    + '.card-slot-empty{visibility:hidden}'  /* skjul tomme slots på siste forside-side */
+    + '.crop{position:absolute;width:4mm;height:4mm;z-index:10;pointer-events:none}'
+    + '.crop::before,.crop::after{content:"";position:absolute;background:#4A3D5C;opacity:.45}'
+    + '.crop::before{width:4mm;height:.4px;top:50%}.crop::after{width:.4px;height:4mm;left:50%}'
+    + '.crop.tl{top:-2mm;left:-2mm}.crop.tr{top:-2mm;right:-2mm}.crop.bl{bottom:-2mm;left:-2mm}.crop.br{bottom:-2mm;right:-2mm}'
+    + '.back-page .crop::before,.back-page .crop::after{background:#F5C849;opacity:.45}'
+    /* FRONT CARD */
+    + '.bank{width:100%;height:100%;background:#FBF2D6;border:2px solid #2A1F3D;border-radius:7px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 4px #FBF2D6,inset 0 0 0 5px var(--ca,#F5C849);display:grid;grid-template-rows:8mm 1fr auto}'
+    + '.bank .band{height:8mm;background:var(--ca,#F5C849);border-bottom:2px solid #2A1F3D;display:flex;align-items:center;justify-content:space-between;padding:0 3.5mm;color:#2A1F3D;position:relative;z-index:2}'
+    + '.bank .band .mark{font-family:"Bowlby One",sans-serif;font-size:8.5pt;letter-spacing:.04em;display:flex;align-items:center;gap:4px}'
+    + '.bank .band .mark .coin{width:4mm;height:4mm;border-radius:50%;background:#2A1F3D;color:var(--ca,#F5C849);display:inline-flex;align-items:center;justify-content:center;font-family:"Fraunces",serif;font-size:6.5pt;font-weight:900;font-style:italic;border:1px solid #2A1F3D}'
+    + '.bank .band .klasse{font-family:"Fraunces",serif;font-style:italic;font-weight:900;font-size:8.5pt;letter-spacing:.04em;text-transform:uppercase;background:#2A1F3D;color:var(--cl,#FFE89A);padding:.8mm 3mm;border-radius:999px;border:1.2px solid var(--cl,#FFE89A)}'
+    + '.bank .body{position:relative;z-index:1;display:grid;grid-template-columns:32mm 1fr;gap:3mm;padding:3mm 4mm 0 4mm;align-items:start}'
+    + '.bank .portrait{width:32mm;height:32mm;border:1.5px solid #2A1F3D;border-radius:5px;background:radial-gradient(ellipse 70% 60% at 50% 60%,var(--cb,#BFEDF0) 0%,var(--cl,#FFE89A) 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:2mm}'
+    + '.bank .portrait::after{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.10) .8px,transparent 1.2px);background-size:5px 5px;pointer-events:none}'
+    + '.bank .portrait > svg,.bank .portrait > img{position:relative;z-index:1;max-width:100%;max-height:100%;display:block;filter:drop-shadow(0 2px 3px rgba(42,31,61,0.25))}'
+    + '.bank .portrait > svg{width:100%;height:100%}'
+    + '.bank .ident{display:flex;flex-direction:column;justify-content:flex-start;min-width:0;padding-top:.5mm}'
+    + '.bank .ident .label{font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.18em;text-transform:uppercase;color:#4A3D5C}'
+    + '.bank .ident .navn{font-family:"Fraunces",serif;font-weight:900;font-size:13pt;line-height:1;color:#2A1F3D;margin-top:.6mm;letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+    + '.bank .pan-row{margin-top:2.5mm;display:flex;align-items:center;gap:2mm}'
+    + '.bank .chip{width:7mm;height:5mm;background:linear-gradient(135deg,#FFE89A 0%,#F5C849 60%,#C99517 100%);border:1px solid #2A1F3D;border-radius:1.2mm;position:relative;flex-shrink:0}'
+    + '.bank .chip::before{content:"";position:absolute;inset:.6mm;background:linear-gradient(0deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%),linear-gradient(90deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%);border:.5px solid rgba(42,31,61,.55);border-radius:.5mm}'
+    + '.bank .pan{font-family:"JetBrains Mono",monospace;font-size:9pt;font-weight:700;letter-spacing:.05em;color:#2A1F3D}'
+    + '.bank .foot{padding:2mm 4mm 3mm 4mm;display:grid;grid-template-columns:18mm 1fr auto;gap:3mm;align-items:end;position:relative;z-index:1}'
+    + '.bank .qr{width:18mm;height:18mm;background:white;border:1.2px solid #2A1F3D;border-radius:2px;padding:1mm}'
+    + '.bank .qr img{display:block;width:100%;height:100%}'
+    + '.bank .pin-box{display:flex;flex-direction:column;align-items:flex-start;gap:.4mm}'
+    + '.bank .pin-box .label{font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.18em;text-transform:uppercase;color:#4A3D5C}'
+    + '.bank .pin-box .pin{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:14pt;letter-spacing:.18em;color:#2A1F3D;background:var(--cl,#FFE89A);border:1.2px solid #2A1F3D;padding:.4mm 2.4mm;border-radius:3px;line-height:1.05}'
+    + '.bank .pin-box .pin.pin-blank{color:#4A3D5C;opacity:.55;letter-spacing:.12em}'
+    + '.bank .valid{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:.4mm}'
+    + '.bank .valid .label{font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6pt;letter-spacing:.16em;text-transform:uppercase;color:#4A3D5C;line-height:1}'
+    + '.bank .valid .val{font-family:"Bowlby One",sans-serif;font-size:9.5pt;color:#2A1F3D;letter-spacing:.02em;line-height:1}'
+    /* THEMES */
+    + '.bank.theme-gull{--ca:#F5C849;--cd:#C99517;--cl:#FFE89A;--cb:#FFE89A}'
+    + '.bank.theme-turkis{--ca:#2DC4C4;--cd:#0C7A8A;--cl:#BFEDF0;--cb:#BFEDF0}'
+    + '.bank.theme-korall{--ca:#E64B3B;--cd:#A82218;--cl:#FFB8C7;--cb:#FFB8C7}'
+    + '.bank.theme-lilla{--ca:#6B5BA8;--cd:#3D2E70;--cl:#C8C0E5;--cb:#C8C0E5}'
+    + '.bank.theme-lime{--ca:#B8DA3B;--cd:#5A7A1F;--cl:#E8F2A8;--cb:#E8F2A8}'
+    + '.bank.theme-skog{--ca:#2F6B4A;--cd:#1A3F2A;--cl:#A8D5B8;--cb:#A8D5B8}'
+    + '.bank.theme-korall .band,.bank.theme-lilla .band,.bank.theme-skog .band{color:#FBF2D6}'
+    + '.bank.theme-korall .band .coin,.bank.theme-lilla .band .coin,.bank.theme-skog .band .coin{background:#FBF2D6;color:var(--cd)}'
+    /* BACK CARD */
+    + '.back{width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%,#6B5BA8 0%,#2A1F3D 80%);border:2px solid #2A1F3D;border-radius:7px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 4px #2A1F3D,inset 0 0 0 5px #F5C849;display:flex;flex-direction:column;color:#F5C849}'
+    + '.back::before{content:"";position:absolute;inset:5mm;border:1.2px dashed rgba(245,200,73,0.35);border-radius:4px;pointer-events:none}'
+    + '.back .bstar{position:absolute;color:#F5C849;opacity:.35}'
+    + '.back .stamp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:2;padding:2mm 6mm 4mm}'
+    + '.back .stamp .logo{font-family:"Bowlby One",sans-serif;font-size:18pt;line-height:.95;color:#F5C849;-webkit-text-stroke:1px #2A1F3D;text-shadow:2px 2px 0 #2A1F3D;letter-spacing:-.01em}'
+    + '.back .stamp .logo small{display:block;font-family:"Fraunces",serif;font-style:italic;font-weight:900;-webkit-text-stroke:0;text-shadow:none;font-size:9pt;color:#FBF2D6;letter-spacing:.06em;margin-top:1.5mm}'
+    + '.back .sig{margin:0 6mm 3mm;height:6mm;background:repeating-linear-gradient(45deg,#FBF2D6 0 3px,#F0E1B0 3px 6px);border:1px solid #2A1F3D;border-radius:1mm;position:relative}'
+    + '.back .sig::after{content:"Signatur";position:absolute;left:1.5mm;top:50%;transform:translateY(-50%);font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.14em;text-transform:uppercase;color:#4A3D5C}'
+    + '.back .footnote{padding:0 5mm 4mm;display:flex;justify-content:space-between;align-items:flex-end;color:rgba(255,232,154,0.78);font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.12em;z-index:2;position:relative}'
+    + '.back .footnote .bank-mark{font-family:"Bowlby One",sans-serif;font-style:normal;color:#F5C849;font-size:8pt;letter-spacing:.04em}';
+
+  // Info-banner som vises i forhåndsvisningen, men skjules ved utskrift
+  // (via @media print). Gir læreren sjansen til å lese instruksjonen og
+  // selv trykke skriv ut — i stedet for at vi auto-printer øyeblikkelig.
+  var infoBanner = ''
+    + '<div class="print-info-banner">'
+    +   '<div class="pib-inner">'
+    +     '<div class="pib-title">📋 Før du skriver ut</div>'
+    +     '<ol class="pib-list">'
+    +       '<li>Velg <strong>tosidig utskrift</strong> i printer-dialogen.</li>'
+    +       '<li>For vending: velg <strong>«vend langs lang kant»</strong> (boklign) — ikke «kort kant».</li>'
+    +       '<li>Sett <strong>skala til 100 %</strong> (ikke «tilpass til side»).</li>'
+    +       '<li>Bakgrunnsfarger: pass på at <strong>«skriv ut bakgrunnsgrafikk»</strong> er på.</li>'
+    +     '</ol>'
+    +     '<div class="pib-tip">💡 <em>Tips:</em> Skriv ut én testside først for å sjekke at fargene blir riktige før du tar hele klassen.</div>'
+    +     '<button class="pib-print-btn" onclick="window.print()">🖨️ Skriv ut nå</button>'
+    +   '</div>'
+    + '</div>';
+
+  // CSS for banneret — skjules helt ved utskrift via @media print
+  var bannerCSS = ''
+    + '@media screen{'
+    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
+    +   '.pib-inner{max-width:780px;margin:0 auto}'
+    +   '.pib-title{font-family:"Bowlby One",sans-serif;font-size:14pt;margin-bottom:8px;letter-spacing:.02em}'
+    +   '.pib-list{margin:0 0 10px 22px;padding:0;font-size:10.5pt;line-height:1.55}'
+    +   '.pib-list li{margin-bottom:3px}'
+    +   '.pib-list strong{color:#2A1F3D}'
+    +   '.pib-tip{font-size:10pt;color:#4A3D5C;margin-bottom:12px;padding:8px 12px;background:rgba(42,31,61,.06);border-radius:6px;border-left:3px solid #F5C849}'
+    +   '.pib-print-btn{display:inline-block;background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer;transition:all .15s}'
+    +   '.pib-print-btn:hover{background:#1A1228;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}'
+    +   'body{padding-top:240px}'  /* gi plass til banneret slik at første side ikke skjules */
+    + '}'
+    + '@media print{.print-info-banner{display:none !important}body{padding-top:0 !important}}';
+
+  return '<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>' + escapeHTML(title) + '</title>'
+    + '<link rel="preconnect" href="https://fonts.googleapis.com">'
+    + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+    + '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700;1,9..144,900&family=Nunito:wght@400;600;700;800;900&family=Bowlby+One&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">'
+    + '<style>' + css + bannerCSS + '</style>'
+    + '</head><body>' + infoBanner + pagesHTML + '</body></html>';
+};
+
+
 // ════════════════════════════════════════════════════════════
-// BANKKORT PDF
+// BANKKORT PDF — Myntland-design (forside + bakside annenhver side)
 // ════════════════════════════════════════════════════════════
 function generateCardPDF() {
   const cardClassFilter = document.getElementById('card-class-filter')?.value || '';
@@ -2891,59 +3114,14 @@ function generateCardPDF() {
     alert(cardClassFilter ? `Ingen elever i ${cardClassFilter}.` : 'Ingen elever å skrive ut.');
     return;
   }
-  const cardsHTML = `<style>
-    body { margin: 0; padding: 0; background: white; }
-    .card-grid { display: grid; grid-template-columns: repeat(2, 105mm); grid-template-rows: repeat(4, 74mm); gap: 0; }
-    .card-item { width: 105mm; height: 74mm; background-color: #085041; border-radius: 0; padding: 6mm 7mm; color: white; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; page-break-inside: avoid; box-sizing: border-box; border: 0.3mm solid #1D9E75; }
-    .card-accent { position: absolute; top: -14mm; right: -14mm; width: 46mm; height: 46mm; border-radius: 50%; background: rgba(255,255,255,0.07); }
-    .card-accent2 { position: absolute; bottom: -12mm; left: -10mm; width: 38mm; height: 38mm; border-radius: 50%; background: rgba(239,159,39,0.10); }
-    .card-top { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; }
-    .card-logo { font-family: 'Fredoka One', cursive; font-size: 6.5mm; color: #EF9F27; letter-spacing: 0.3mm; line-height: 1; }
-    .card-chip { width: 10mm; height: 7.5mm; background: #EF9F27; border-radius: 1.5mm; opacity: 0.9; }
-    .card-bottom { position: relative; z-index: 1; }
-    .card-label { font-size: 2.8mm; color: rgba(255,255,255,0.60); font-weight: 700; letter-spacing: 0.4mm; text-transform: uppercase; margin-bottom: 1mm; }
-    .card-name { font-size: 5.5mm; font-weight: 800; letter-spacing: 0.1mm; text-transform: uppercase; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 3mm; }
-    .card-qr-wrap { background: white; padding: 1.2mm; border-radius: 1.5mm; line-height: 0; }
-    .card-qr-wrap img { display: block; width: 17mm; height: 17mm; }
-    .card-class { background: #EF9F27; color: #085041; border-radius: 1.5mm; padding: 1.5mm 3mm; font-size: 4mm; font-weight: 800; align-self: flex-end; }
-  </style>
-  <div class="card-grid">
-    ${printStudents.map(s => {
-      const displayName = s.firstname + ' ' + s.lastname.charAt(0) + '.';
-      const qrPayload = JSON.stringify({ type: 'login', fbKey: s.fbKey });
-      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' + encodeURIComponent(qrPayload);
-      return `<div class="card-item">
-        <div class="card-accent"></div><div class="card-accent2"></div>
-        <div class="card-top"><div class="card-logo">🪙 Myntland</div><div class="card-chip"></div></div>
-        <div class="card-bottom">
-          <div class="card-label">Kortinnehaver</div>
-          <div class="card-name">${displayName}</div>
-          <div class="card-footer">
-            <div class="card-qr-wrap"><img src="${qrUrl}" alt="Innloggings-QR"></div>
-            <div class="card-class">${s.class}</div>
-          </div>
-        </div>
-      </div>`;
-    }).join('')}
-  </div>`;
-  const win = window.open('', '_blank', 'width=900,height=700');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
-    '<style>@media print{@page{size:A4 portrait;margin:0}}</style>' +
-    '</head><body>' + cardsHTML + '</body></html>');
+  // Skriv ut bankkort med samme design som "Bankkort - Myntland" — uten PIN på 5–7
+  const html = window.buildMyntlandBankCardsHTML(printStudents, { showPin: false, title: 'Myntland · Bankkort' });
+  const win = window.open('', '_blank', 'width=900,height=900');
+  win.document.write(html);
   win.document.close();
-  // Vent til alle QR-bildene har lastet før utskrift
-  const waitForImages = () => {
-    const imgs = Array.from(win.document.images);
-    if (!imgs.length) return Promise.resolve();
-    return Promise.all(imgs.map(img => img.complete
-      ? Promise.resolve()
-      : new Promise(res => { img.onload = img.onerror = res; })));
-  };
-  setTimeout(() => {
-    waitForImages().then(() => { win.focus(); win.print(); });
-  }, 400);
+  // Auto-print fjernet — læreren ser banneret med utskriftsinstruksjoner
+  // og trykker "Skriv ut nå"-knappen selv etter å ha lest dem og evt
+  // kontrollert printerinnstillingene.
 }
 
 
