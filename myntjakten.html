@@ -553,7 +553,9 @@ body {
 .problem-text .equals { color: var(--amber); }
 .problem-text .qmark { color: var(--coral); }
 
-.answer-input {
+/* Brukes både for div-versjonen i spillet og input i manuell-modus */
+.answer-input,
+.answer-display {
   display: block;
   width: 100%;
   max-width: 280px;
@@ -570,6 +572,26 @@ body {
   transition: border-color 0.15s, background 0.15s;
   -moz-appearance: textfield;
 }
+
+/* Display-versjonen (i spillet) — ingen tastatur popper opp */
+.answer-display {
+  min-height: 64px;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+  /* Klikk på den fokuserer ingenting — ingen tastatur */
+  -webkit-tap-highlight-color: transparent;
+  /* Subtil "puls" på borderen så det føles som det er der man taster */
+  border-color: var(--amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.answer-placeholder {
+  color: var(--coral);
+  opacity: 0.6;
+}
+
 .answer-input::-webkit-outer-spin-button,
 .answer-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -579,12 +601,14 @@ body {
   border-color: var(--amber);
   background: var(--white);
 }
-.answer-input.correct {
+.answer-input.correct,
+.answer-display.correct {
   border-color: var(--green);
   background: var(--green-light);
   color: var(--green-dark);
 }
-.answer-input.wrong {
+.answer-input.wrong,
+.answer-display.wrong {
   border-color: var(--red);
   background: var(--red-light);
   color: var(--red);
@@ -1211,15 +1235,12 @@ body {
 
     <div class="problem-card">
       <div class="problem-text" id="problem-text">12 + 7 = <span class="qmark">?</span></div>
-      <input
-        type="number"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        class="answer-input"
+      <div
+        class="answer-display"
         id="answer-input"
-        placeholder="?"
-        autocomplete="off"
-      >
+        role="textbox"
+        aria-label="Svaret ditt"
+      ><span class="answer-placeholder">?</span></div>
 
       <div class="numpad" id="numpad">
         <button class="numpad-btn" data-key="1">1</button>
@@ -1592,6 +1613,7 @@ function newGameState() {
     timeLeft: 0,
     timeStart: 0,
     locked: false,        // når true: feedback vises, ikke ta input
+    currentAnswer: '',    // det eleven har tastet inn så langt
     revealMonster: null,  // hvilket monster skal avdekkes
     revealOrder: [],      // rekkefølge for å fjerne ruter
     revealedCount: 0      // antall ruter fjernet
@@ -1839,18 +1861,27 @@ function showQuestion() {
   document.getElementById('problem-text').innerHTML =
     `${q.text} <span class="equals">=</span> <span class="qmark">?</span>`;
 
-  // Reset input
-  const input = document.getElementById('answer-input');
-  input.value = '';
-  input.classList.remove('correct', 'wrong');
-  input.disabled = false;
-  // Forsøk å fokusere — fungerer på desktop
-  setTimeout(() => input.focus(), 50);
+  // Reset svar-display
+  state.currentAnswer = '';
+  updateAnswerDisplay();
+  const display = document.getElementById('answer-input');
+  display.classList.remove('correct', 'wrong');
 
   // Start tidsbar
   startTimer();
 
   state.timeStart = performance.now();
+}
+
+// Oppdaterer visningen av det eleven har tastet (numpad eller fysisk tastatur)
+function updateAnswerDisplay() {
+  const display = document.getElementById('answer-input');
+  if (!display) return;
+  if (!state || !state.currentAnswer) {
+    display.innerHTML = '<span class="answer-placeholder">?</span>';
+  } else {
+    display.textContent = state.currentAnswer;
+  }
 }
 
 function startTimer() {
@@ -1897,8 +1928,6 @@ function stopTimer() {
 function timeOut() {
   if (state.locked) return;
   state.locked = true;
-  const input = document.getElementById('answer-input');
-  input.disabled = true;
   const q = state.questions[state.currentIdx];
 
   // Streak nullstilles
@@ -1911,14 +1940,14 @@ function timeOut() {
 
 function submitAnswer() {
   if (state.locked) return;
-  const input = document.getElementById('answer-input');
-  const raw = input.value.trim();
+  const raw = (state.currentAnswer || '').trim();
   if (raw === '') return;
   const userAns = parseInt(raw);
   if (isNaN(userAns)) return;
 
   const q = state.questions[state.currentIdx];
   const elapsed = performance.now() - state.timeStart;
+  const display = document.getElementById('answer-input');
 
   state.locked = true;
   stopTimer();
@@ -1942,7 +1971,7 @@ function submitAnswer() {
 
     state.answers.push({ correct: true, timeMs: elapsed });
 
-    input.classList.add('correct');
+    display.classList.add('correct');
     showFeedback(`✨ Riktig! +${coinsEarned} 🪙`, 'correct');
     spawnCoinBurst(coinsEarned);
     revealOneTile();
@@ -1950,11 +1979,9 @@ function submitAnswer() {
     // FEIL
     state.streak = 0;
     state.answers.push({ correct: false, timeMs: elapsed });
-    input.classList.add('wrong');
+    display.classList.add('wrong');
     showFeedback(`Riktig svar var ${q.answer}`, 'wrong');
   }
-
-  input.disabled = true;
 
   // Oppdater HUD
   document.getElementById('hud-coins').textContent = state.coins;
@@ -2069,37 +2096,61 @@ function makeHighscoreKey() {
 // ═══════════════════════════════════════════════════════
 // INPUT-HÅNDTERING
 // ═══════════════════════════════════════════════════════
+
+// Hjelpere for å manipulere svaret eleven taster
+function appendToAnswer(digit) {
+  if (!state || state.locked) return;
+  // Kun siffer (0-9), maks 6 tegn
+  if (!/^[0-9]$/.test(digit)) return;
+  if ((state.currentAnswer || '').length >= 6) return;
+  state.currentAnswer = (state.currentAnswer || '') + digit;
+  updateAnswerDisplay();
+}
+function backspaceAnswer() {
+  if (!state || state.locked) return;
+  state.currentAnswer = (state.currentAnswer || '').slice(0, -1);
+  updateAnswerDisplay();
+}
+
 function bindGameScreen() {
-  const input = document.getElementById('answer-input');
-
-  // Enter på vanlig tastatur
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      submitAnswer();
-    }
-  });
-
-  // Numpad-knapper
-  document.getElementById('numpad').addEventListener('click', (e) => {
+  // Numpad-knapper (touchstart for raskere respons på touch-enheter)
+  const numpadEl = document.getElementById('numpad');
+  const handleNumpadPress = (e) => {
     const btn = e.target.closest('.numpad-btn');
     if (!btn) return;
+    e.preventDefault();
     if (state && state.locked) return;
     const key = btn.dataset.key;
     if (key === 'clear') {
-      input.value = input.value.slice(0, -1);
+      backspaceAnswer();
     } else if (key === 'submit') {
       submitAnswer();
     } else {
-      // Maks 6 sifre
-      if (input.value.length < 6) {
-        input.value += key;
-      }
+      appendToAnswer(key);
     }
-    input.focus();
+  };
+  numpadEl.addEventListener('click', handleNumpadPress);
+
+  // Fysisk tastatur — fungerer på desktop, eksterne keyboards på iPad osv.
+  document.addEventListener('keydown', (e) => {
+    // Bare aktivt når spill-skjermen er synlig og ikke noe modal er åpen
+    const gameActive = document.getElementById('screen-game').classList.contains('active');
+    const modalOpen = document.getElementById('deposit-modal').classList.contains('open');
+    if (!gameActive || modalOpen) return;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitAnswer();
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      backspaceAnswer();
+    } else if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      appendToAnswer(e.key);
+    }
   });
 
-  // Toggle numpad
+  // Toggle numpad — fortsatt nyttig hvis noen vil ha mer plass på desktop
   const numpad = document.getElementById('numpad');
   document.getElementById('toggle-numpad').addEventListener('click', () => {
     const isHidden = numpad.style.display === 'none';
