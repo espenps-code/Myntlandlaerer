@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retteportal – Myntland</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #1d9e75;
+  --teal-dark: #0f6e58;
+  --amber: #ef9f27;
+  --amber-dark: #d4890f;
+  --amber-light: #FAEEDA;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --bg: #F7F9F7;
+  --white: #fff;
+  --text: #1a2e1a;
+  --muted: #5a7a5a;
+  --border: #c8dfc8;
+  --success: #2e8b57;
+  --success-light: #e8f5ed;
+  --warning: #d4890f;
+  --warning-light: #FAEEDA;
+  --error: #c0392b;
+  --error-light: #fde8e6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 40px;
+}
+
+.hero {
+  background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+  color: white;
+  padding: 2.5rem 1.5rem 1.75rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(29, 158, 117, 0.18) 0%, transparent 45%);
+  pointer-events: none;
+}
+.hero > * { position: relative; z-index: 2; }
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 50px;
+  padding: 8px 18px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+  margin-bottom: 16px;
+}
+.btn-back:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+
+.hero-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.hero h1 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.hero p {
+  font-size: 1rem;
+  opacity: 0.95;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.card h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.35rem;
+  margin-bottom: 4px;
+  color: var(--teal-dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--amber);
+  color: white;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 900;
+  font-family: 'Nunito', sans-serif;
+}
+
+.card-desc {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+textarea, input[type="password"], input[type="text"] {
+  width: 100%;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+textarea:focus, input:focus {
+  outline: none;
+  border-color: var(--green);
+  background: var(--white);
+}
+
+textarea {
+  min-height: 140px;
+  resize: vertical;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.helper {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.helper code {
+  background: var(--amber-light);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: var(--amber-dark);
+}
+
+.upload-area {
+  border: 2.5px dashed var(--border);
+  border-radius: 14px;
+  padding: 28px 16px;
+  text-align: center;
+  background: var(--bg);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.upload-area:hover, .upload-area.dragover {
+  border-color: var(--green);
+  background: var(--success-light);
+}
+
+.upload-area input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.upload-label {
+  font-weight: 700;
+  color: var(--teal-dark);
+  margin-bottom: 4px;
+}
+
+.upload-sublabel {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.preview-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.preview-grid.two-images {
+  grid-template-columns: 1fr 1fr;
+}
+
+.preview-item {
+  position: relative;
+  text-align: center;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 8px;
+  border: 1.5px solid var(--border);
+}
+
+.preview-item img {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 6px;
+  display: block;
+  margin: 0 auto;
+}
+
+.preview-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.preview-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.preview-remove:hover { background: var(--error); }
+
+@media (max-width: 540px) {
+  .preview-grid.two-images { grid-template-columns: 1fr; }
+}
+
+.options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.option {
+  flex: 1;
+  min-width: 180px;
+}
+
+select {
+  width: 100%;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.checkbox-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.checkbox-item:hover { border-color: var(--green); }
+.checkbox-item input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--green); }
+.checkbox-item span { font-weight: 600; font-size: 0.92rem; }
+
+.btn-primary {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, var(--amber), var(--coral));
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 14px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 12px rgba(216, 90, 48, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(216, 90, 48, 0.35);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.results {
+  margin-top: 24px;
+}
+
+.result-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  font-family: 'Fredoka', sans-serif;
+}
+
+.result-summary.all-correct {
+  background: var(--success-light);
+  border: 2px solid var(--success);
+  color: var(--success);
+}
+
+.result-summary.has-errors {
+  background: var(--warning-light);
+  border: 2px solid var(--warning);
+  color: var(--amber-dark);
+}
+
+.result-summary .big-emoji { font-size: 2.5rem; }
+.result-summary .summary-text strong { font-size: 1.3rem; display: block; }
+.result-summary .summary-text span { font-size: 0.95rem; opacity: 0.85; font-family: 'Nunito', sans-serif; font-weight: 600; }
+
+.task-result {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  background: var(--white);
+  border-left: 5px solid;
+}
+
+.task-result.correct { border-left-color: var(--success); background: var(--success-light); }
+.task-result.partial { border-left-color: var(--warning); background: var(--warning-light); }
+.task-result.wrong { border-left-color: var(--error); background: var(--error-light); }
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.task-status-icon { font-size: 1.3rem; }
+
+.task-question {
+  font-size: 0.92rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.task-feedback {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.task-feedback strong { color: var(--text); }
+
+.loading {
+  text-align: center;
+  padding: 30px;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.loading .spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 4px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-msg {
+  padding: 14px 18px;
+  background: var(--error-light);
+  border: 1.5px solid var(--error);
+  border-radius: 10px;
+  color: var(--error);
+  font-size: 0.92rem;
+  margin-top: 12px;
+}
+
+.demo-notice {
+  background: var(--purple-light);
+  border: 1.5px solid var(--purple);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  font-size: 0.88rem;
+  color: var(--purple);
+  line-height: 1.5;
+}
+
+.demo-notice strong { display: block; margin-bottom: 3px; }
+
+@media (max-width: 540px) {
+  .hero h1 { font-size: 1.75rem; }
+  .card { padding: 18px; }
+  .options-row { flex-direction: column; gap: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container">
+    <a href="#" class="btn-back" onclick="alert('I produksjon: tilbake til Myntland forsiden'); return false;">← Tilbake</a>
+    <div class="hero-eyebrow">Myntland · Lærerverktøy</div>
+    <h1>📸 Retteportal</h1>
+    <p>Last opp bildet av leksen, så får eleven tilbakemelding på hver oppgave</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="demo-notice">
+    <strong>🧪 Prototype</strong>
+    Dette er en testversjon. I den endelige versjonen leses fasit og krav automatisk fra QR-koden på leksearket — eleven trenger bare å laste opp bildet. For nå skriver vi inn fasiten manuelt.
+  </div>
+
+  <!-- API key -->
+  <div class="card">
+    <h2><span class="step-num">1</span> Claude API-nøkkel</h2>
+    <p class="card-desc">Trengs kun for testing. I produksjon ligger nøkkelen trygt på en server.</p>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+    <p class="helper">Lagres bare i nettleseren din (localStorage). Få nøkkel på <code>console.anthropic.com</code></p>
+  </div>
+
+  <!-- Trinn og krav -->
+  <div class="card">
+    <h2><span class="step-num">2</span> Trinn og krav</h2>
+    <p class="card-desc">Disse hentes automatisk fra QR-koden i den ferdige versjonen.</p>
+    <div class="options-row">
+      <div class="option">
+        <label>🏫 Trinn</label>
+        <select id="trinn">
+          <option value="2">2. trinn</option>
+          <option value="3">3. trinn</option>
+          <option value="4" selected>4. trinn</option>
+          <option value="5">5. trinn</option>
+          <option value="6">6. trinn</option>
+          <option value="7">7. trinn</option>
+        </select>
+      </div>
+    </div>
+    <div class="checkbox-row">
+      <label class="checkbox-item">
+        <input type="checkbox" id="kravOppstilling" checked>
+        <span>📐 Krev oppstilling (sifre under hverandre, mente synlig)</span>
+      </label>
+      <label class="checkbox-item">
+        <input type="checkbox" id="kravSvarsetning" checked>
+        <span>📝 Krev svarsetning på tekstoppgaver</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Fasit -->
+  <div class="card">
+    <h2><span class="step-num">3</span> Fasit</h2>
+    <p class="card-desc">Skriv hver oppgave på én linje: <code>nr. regnestykke = svar</code>. For tekstoppgaver, skriv også oppgaveteksten.</p>
+    <textarea id="fasit" placeholder="1. 247 + 158 = 405
+2. 632 - 178 = 454
+3. 24 · 7 = 168
+4. 144 : 6 = 24
+5. Tekstoppgave: Kari har 24 kr. Hun kjøper en is til 17 kr. Hvor mye har hun igjen? = 7 (Kari har 7 kr igjen)"></textarea>
+    <p class="helper">Eksempel-format vises som plassholder.</p>
+  </div>
+
+  <!-- Bilder -->
+  <div class="card">
+    <h2><span class="step-num">4</span> Bilde(r) av leksen</h2>
+    <p class="card-desc">Ta bilde rett ovenfra med god belysning. Tosidig lekse? Last opp begge sidene.</p>
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="bildeInput" accept="image/*" capture="environment" multiple>
+      <div class="upload-icon">📷</div>
+      <div class="upload-label">Trykk for å laste opp eller ta bilde</div>
+      <div class="upload-sublabel">Du kan legge til 1 eller 2 bilder · JPG, PNG eller HEIC · maks 20 MB per bilde</div>
+    </div>
+    <div class="preview-grid" id="preview"></div>
+  </div>
+
+  <button class="btn-primary" id="rettBtn" disabled>✨ Rett leksen</button>
+
+  <div id="errorBox"></div>
+  <div id="results" class="results"></div>
+
+</div>
+
+<script>
+// API key persistence
+const apiKeyInput = document.getElementById('apiKey');
+apiKeyInput.value = localStorage.getItem('claudeApiKey') || '';
+apiKeyInput.addEventListener('change', () => {
+  localStorage.setItem('claudeApiKey', apiKeyInput.value);
+  updateButton();
+});
+
+// File upload (støtter 1-2 bilder)
+const uploadArea = document.getElementById('uploadArea');
+const bildeInput = document.getElementById('bildeInput');
+const preview = document.getElementById('preview');
+let bilder = []; // {base64, mediaType, dataUrl}
+
+bildeInput.addEventListener('change', () => {
+  for (const file of bildeInput.files) {
+    if (bilder.length >= 2) break;
+    leggTilBilde(file);
+  }
+  bildeInput.value = ''; // reset så samme fil kan velges igjen
+});
+
+uploadArea.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  for (const file of e.dataTransfer.files) {
+    if (bilder.length >= 2) break;
+    leggTilBilde(file);
+  }
+});
+
+function leggTilBilde(file) {
+  if (!file.type.startsWith('image/')) return;
+  if (file.size > 20 * 1024 * 1024) {
+    alert('Bildet "' + file.name + '" er for stort. Maks 20 MB.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    bilder.push({
+      mediaType: dataUrl.split(';')[0].split(':')[1],
+      base64: dataUrl.split(',')[1],
+      dataUrl: dataUrl
+    });
+    renderPreviews();
+    updateButton();
+  };
+  reader.readAsDataURL(file);
+}
+
+function fjernBilde(indeks) {
+  bilder.splice(indeks, 1);
+  renderPreviews();
+  updateButton();
+}
+
+function renderPreviews() {
+  if (bilder.length === 0) {
+    preview.innerHTML = '';
+    preview.className = 'preview-grid';
+    uploadArea.style.display = 'block';
+    return;
+  }
+  preview.className = 'preview-grid' + (bilder.length === 2 ? ' two-images' : '');
+  preview.innerHTML = bilder.map((b, i) => `
+    <div class="preview-item">
+      <div class="preview-label">${bilder.length === 1 ? 'Bilde' : (i === 0 ? 'Side 1' : 'Side 2')}</div>
+      <img src="${b.dataUrl}" alt="Forhåndsvisning">
+      <button class="preview-remove" onclick="fjernBilde(${i})" title="Fjern">×</button>
+    </div>
+  `).join('');
+  // Skjul opplastingsfeltet når to bilder er lastet opp
+  uploadArea.style.display = bilder.length >= 2 ? 'none' : 'block';
+  if (bilder.length === 1) {
+    uploadArea.querySelector('.upload-label').textContent = 'Legg til side 2 (valgfritt)';
+    uploadArea.querySelector('.upload-sublabel').textContent = 'Eller trykk «Rett leksen» hvis det bare er én side';
+  } else {
+    uploadArea.querySelector('.upload-label').textContent = 'Trykk for å laste opp eller ta bilde';
+    uploadArea.querySelector('.upload-sublabel').textContent = 'Du kan legge til 1 eller 2 bilder · JPG, PNG eller HEIC · maks 20 MB per bilde';
+  }
+}
+
+// Fasit listener
+document.getElementById('fasit').addEventListener('input', updateButton);
+
+function updateButton() {
+  const btn = document.getElementById('rettBtn');
+  const apiKey = apiKeyInput.value.trim();
+  const fasit = document.getElementById('fasit').value.trim();
+  btn.disabled = !(apiKey && fasit && bilder.length > 0);
+}
+
+// Rett-knapp
+document.getElementById('rettBtn').addEventListener('click', rettLekse);
+
+async function rettLekse() {
+  const btn = document.getElementById('rettBtn');
+  const errorBox = document.getElementById('errorBox');
+  const results = document.getElementById('results');
+  errorBox.innerHTML = '';
+  results.innerHTML = `<div class="loading"><div class="spinner"></div><div>Claude leser leksen og sjekker hver oppgave...</div></div>`;
+  btn.disabled = true;
+
+  const apiKey = apiKeyInput.value.trim();
+  const trinn = document.getElementById('trinn').value;
+  const kravOppstilling = document.getElementById('kravOppstilling').checked;
+  const kravSvarsetning = document.getElementById('kravSvarsetning').checked;
+  const fasit = document.getElementById('fasit').value.trim();
+
+  // Bygg prompt
+  const trinnTekst = parseInt(trinn) <= 3 ? 'tidligtrinn (2-3)' : parseInt(trinn) <= 5 ? 'mellomtrinn (4-5)' : 'mellomtrinn-høyt (6-7)';
+  const tone = parseInt(trinn) <= 3
+    ? 'svært vennlig, oppmuntrende, mye ros. Bruk korte enkle setninger.'
+    : parseInt(trinn) <= 5
+    ? 'vennlig og oppmuntrende, men tydelig på hva som mangler.'
+    : 'tydelig og presis, men positiv. Forvent god kvalitet.';
+
+  const flerSidet = bilder.length > 1;
+  const prompt = `Du retter en mattelekse for en elev på ${trinn}. trinn (${trinnTekst}).
+
+${flerSidet ? `Leksen er på ${bilder.length} sider — ${bilder.map((_, i) => `side ${i + 1}`).join(' og ')} følger som separate bilder i samme rekkefølge.` : ''}
+
+FASIT:
+${fasit}
+
+KRAV TIL ELEVEN:
+- ${kravOppstilling ? 'JA — krev synlig oppstilling for pluss/minus/gange/dele (sifre under hverandre, mente/lån synlig der relevant). Hvis svaret er riktig men oppstilling mangler, gi delvis godkjenning.' : 'Ikke krev oppstilling.'}
+- ${kravSvarsetning ? 'JA — krev hel svarsetning på tekstoppgaver ("Kari har 7 kr igjen"), ikke bare et tall.' : 'Ikke krev svarsetning.'}
+
+TONE: ${tone} Skriv tilbakemelding direkte til eleven (du-form).
+
+VIKTIG når du leser bildet${flerSidet ? 'ene' : ''}:
+- Eleven skriver med blyant. Vær tolerant for utydelig skrift.
+- Hvis du er usikker på hva eleven skrev (f.eks. 1 vs 7, 0 vs 6), nevn det i tilbakemeldingen.
+- Hvis du ikke kan se en oppgave i bildet, si det.
+${flerSidet ? '- Oppgavenummer fortsetter på tvers av sidene (ikke begynn på 1 igjen på side 2).' : ''}
+
+Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rundt):
+{
+  "oppgaver": [
+    {
+      "nummer": 1,
+      "oppgave": "247 + 158",
+      "elev_svar": "405",
+      "elev_oppstilling": true,
+      "status": "correct",
+      "tilbakemelding": "Helt riktig! Fin oppstilling med menteret."
+    }
+  ],
+  "oppsummering": "Bra jobbet! Du fikk 4 av 5 riktig."
+}
+
+status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangler som oppstilling/svarsetning), eller "wrong" (feil svar).`;
+
+  // Bygg content-array: alle bilder først, så prompt-tekst
+  const contentBlocks = [];
+  bilder.forEach((b, i) => {
+    if (flerSidet) {
+      contentBlocks.push({ type: 'text', text: `[Side ${i + 1}]` });
+    }
+    contentBlocks.push({
+      type: 'image',
+      source: { type: 'base64', media_type: b.mediaType, data: b.base64 }
+    });
+  });
+  contentBlocks.push({ type: 'text', text: prompt });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-7',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: contentBlocks
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      let errMsg = `API-feil (${response.status})`;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson.error && errJson.error.message) errMsg += ': ' + errJson.error.message;
+      } catch {}
+      throw new Error(errMsg);
+    }
+
+    const data = await response.json();
+    const text = data.content.map(c => c.text || '').join('').trim();
+    
+    // Strip markdown fences hvis Claude legger dem på
+    const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      throw new Error('Klarte ikke å tolke svaret. Råsvar: ' + cleaned.slice(0, 200));
+    }
+
+    visResultater(parsed);
+
+  } catch (err) {
+    results.innerHTML = '';
+    errorBox.innerHTML = `<div class="error-msg"><strong>Noe gikk galt:</strong> ${err.message}</div>`;
+  } finally {
+    updateButton();
+  }
+}
+
+function visResultater(data) {
+  const results = document.getElementById('results');
+  const oppgaver = data.oppgaver || [];
+  const antallRiktig = oppgaver.filter(o => o.status === 'correct').length;
+  const antallTotalt = oppgaver.length;
+  const allCorrect = antallRiktig === antallTotalt && antallTotalt > 0;
+
+  let html = '';
+
+  // Oppsummering
+  html += `<div class="result-summary ${allCorrect ? 'all-correct' : 'has-errors'}">
+    <div class="big-emoji">${allCorrect ? '🎉' : '💪'}</div>
+    <div class="summary-text">
+      <strong>${antallRiktig} av ${antallTotalt} riktig</strong>
+      <span>${data.oppsummering || ''}</span>
+    </div>
+  </div>`;
+
+  // Hver oppgave
+  oppgaver.forEach(o => {
+    const icon = o.status === 'correct' ? '✅' : o.status === 'partial' ? '⚠️' : '❌';
+    const statusClass = o.status === 'correct' ? 'correct' : o.status === 'partial' ? 'partial' : 'wrong';
+    html += `<div class="task-result ${statusClass}">
+      <div class="task-header">
+        <span class="task-status-icon">${icon}</span>
+        <span>Oppgave ${o.nummer}: ${o.oppgave || ''}</span>
+      </div>
+      ${o.elev_svar ? `<div class="task-question">Du skrev: <strong>${o.elev_svar}</strong></div>` : ''}
+      <div class="task-feedback">${o.tilbakemelding}</div>
+    </div>`;
+  });
+
+  results.innerHTML = html;
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+
+</body>
+</html>
