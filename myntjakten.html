@@ -1405,6 +1405,30 @@ body {
       </div>
     </div>
 
+    <!-- STEG: POLICY BLOKKERT (læreren har slått av eller tak er nådd) -->
+    <div class="modal-step" id="step-policy-blocked">
+      <div style="text-align:center; padding:12px 0;">
+        <div style="font-size:3rem; margin-bottom:8px;">🪙</div>
+        <div class="modal-title" id="policy-blocked-title">Ingen mynter denne gangen</div>
+        <div class="modal-sub" id="policy-blocked-text" style="margin-top:8px; line-height:1.4;"></div>
+        <button class="btn-primary" id="btn-policy-blocked-close" style="margin-top:18px;">Greit, fortsett å spille</button>
+      </div>
+    </div>
+
+    <!-- STEG: POLICY DELVIS (tak nesten nådd, eleven får mindre enn opptjent) -->
+    <div class="modal-step" id="step-policy-partial">
+      <div style="text-align:center; padding:12px 0;">
+        <div style="font-size:3rem; margin-bottom:8px;">🎯</div>
+        <div class="modal-title">Nesten ved dagstaket</div>
+        <div class="modal-sub" id="policy-partial-text" style="margin-top:8px; line-height:1.4;"></div>
+        <div style="font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--amber-dark); margin: 14px 0 4px;">
+          Du får +<span id="policy-partial-amount">0</span> 🪙
+        </div>
+        <button class="btn-primary" id="btn-policy-partial-continue" style="margin-top:14px;">Fortsett til innlogging</button>
+        <button class="btn-ghost" id="btn-policy-partial-cancel" style="margin-top:6px;">Avbryt</button>
+      </div>
+    </div>
+
     <!-- STEG 5: FEIL -->
     <div class="modal-step" id="step-error">
       <div style="text-align:center; padding:12px 0;">
@@ -2469,12 +2493,176 @@ async function depositCoins(student, amount) {
     console.warn('[Myntjakten] Kunne ikke logge transaksjonen:', e);
   }
 
+  // 3) Oppdater dagens opptjening (for dagstak-håndhevelse). Vi leser
+  //    først for å unngå å overskrive et nyere tall hvis to runder
+  //    havner her samtidig — det er ikke perfekt mot race conditions,
+  //    men godt nok i et klasserom.
+  try {
+    const earnedSoFar = await loadEarnedToday(student);
+    await recordEarnedToday(student, earnedSoFar + amount);
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke oppdatere dagens opptjening:', e);
+  }
+
   return newBalance;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
 // ▲▲▲ SLUTT MYNTLAND-INTEGRASJON ▲▲▲
 // ═══════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════
+// MYNTJAKTEN-POLICY (settings/myntjakten14, settings/myntjakten57)
+// ═══════════════════════════════════════════════════════════════════════
+// Læreren styrer to ting fra lærerportalen:
+//   1) enabled  — om elevene i det hele tatt kan tjene mynter via spillet
+//   2) dailyMax — hvor mye en enkelt elev kan tjene per dag (0 = ingen grense)
+//
+// Vi sjekker reglene FØR PIN spørres om, så eleven slipper å taste PIN
+// for så å få nei. Hvis taket er delvis nådd (har tjent 25 av 50), settes
+// pendingAmount ned til det som er igjen før PIN-skjermen vises.
+// ═══════════════════════════════════════════════════════════════════════
+
+// Returner trinn-spesifikk settings-nøkkel basert på elevens node.
+// students14 → 'myntjakten14', students57 → 'myntjakten57'.
+function policyKeyForStudent(student) {
+  if (!student || !student.node) return null;
+  if (student.node.endsWith('14')) return 'myntjakten14';
+  if (student.node.endsWith('57')) return 'myntjakten57';
+  return null;
+}
+
+// Hent gjeldende policy for elevens trinn fra Firebase.
+// Default: { enabled: true, dailyMax: 0 } — bakoverkompatibelt med
+// tidligere datasett der innstillingen ikke fantes.
+async function loadMyntjaktenPolicy(student) {
+  const key = policyKeyForStudent(student);
+  if (!key) return { enabled: true, dailyMax: 0 };
+
+  if (DEMO_MODE) {
+    return { enabled: true, dailyMax: 0 };
+  }
+
+  try {
+    const snap = await window._get(window._ref(window._db, 'settings/' + key));
+    const val = snap.val();
+    if (!val) return { enabled: true, dailyMax: 0 };
+    return {
+      enabled: val.enabled !== false,
+      dailyMax: parseInt(val.dailyMax) || 0
+    };
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke laste policy:', e);
+    return { enabled: true, dailyMax: 0 }; // safe default
+  }
+}
+
+// Datostreng på formatet YYYY-MM-DD i lokal tidssone (ikke UTC) — slik at
+// "i dag" matcher det elev og lærer faktisk opplever som dagen.
+function todayKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+// Hent hvor mye eleven har tjent via Myntjakten i dag (0 hvis annen dag).
+async function loadEarnedToday(student) {
+  if (DEMO_MODE) {
+    const key = 'myntjakten-earned-' + student.id;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return 0;
+      const obj = JSON.parse(raw);
+      return obj.date === todayKey() ? (obj.earned || 0) : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  try {
+    const snap = await window._get(
+      window._ref(window._db, student.node + '/' + student.id + '/myntjaktenToday')
+    );
+    const val = snap.val();
+    if (!val || val.date !== todayKey()) return 0;
+    return parseInt(val.earned) || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+// Logg ny opptjening — settes alltid med dagens dato. Hvis lagret dato
+// ikke matcher i dag, overskrives feltet (det er ikke en logg, bare en
+// teller for inneværende dag).
+async function recordEarnedToday(student, totalEarnedToday) {
+  if (DEMO_MODE) {
+    const key = 'myntjakten-earned-' + student.id;
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        date: todayKey(),
+        earned: totalEarnedToday
+      }));
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+  try {
+    await window._update(
+      window._ref(window._db, student.node + '/' + student.id),
+      {
+        myntjaktenToday: {
+          date: todayKey(),
+          earned: totalEarnedToday
+        }
+      }
+    );
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke logge dagens opptjening:', e);
+  }
+}
+
+// Beregn hva eleven faktisk får etter policy. Returnerer:
+//   { allowed: true,  amount: <antall mynter>, reason: null }   — gå videre
+//   { allowed: false, amount: 0, reason: <tekst til eleven> }   — stopp
+async function applyPolicyToAmount(student, requestedAmount) {
+  const policy = await loadMyntjaktenPolicy(student);
+
+  if (!policy.enabled) {
+    return {
+      allowed: false,
+      amount: 0,
+      reason: 'Læreren har slått av opptjening i Myntjakten akkurat nå. Mynter går ikke inn på kontoen i dag — men du kan fortsatt spille!'
+    };
+  }
+
+  if (policy.dailyMax > 0) {
+    const earned = await loadEarnedToday(student);
+    const remaining = policy.dailyMax - earned;
+
+    if (remaining <= 0) {
+      return {
+        allowed: false,
+        amount: 0,
+        reason: 'Du har allerede tjent ' + earned + ' 🪙 i dag — det er dagstaket. Kom tilbake i morgen for flere mynter!'
+      };
+    }
+
+    if (requestedAmount > remaining) {
+      // Delvis tak: eleven får det som er igjen, men vi forklarer det.
+      return {
+        allowed: true,
+        amount: remaining,
+        reason: 'Du har bare ' + remaining + ' 🪙 igjen av dagstaket — så det er det du får i dag.',
+        partial: true,
+        originalAmount: requestedAmount
+      };
+    }
+  }
+
+  return { allowed: true, amount: requestedAmount, reason: null };
+}
 
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -2615,6 +2803,37 @@ async function handleStudentLookup(idText) {
     document.getElementById('pin-student-name').textContent =
       'Hei, ' + (student.name || 'elev') + '!';
     document.getElementById('pin-error').textContent = '';
+
+    // Policy-sjekk FØR vi spør om PIN. Læreren kan ha slått av opptjening,
+    // eller eleven kan ha nådd dagstaket. Da slipper vi å skuffe etterpå.
+    document.getElementById('scanner-status').textContent = 'Sjekker…';
+    let policy;
+    try {
+      policy = await applyPolicyToAmount(student, depositState.pendingAmount);
+    } catch (e) {
+      console.warn('[Myntjakten] Policy-sjekk feilet, lar gå igjennom:', e);
+      policy = { allowed: true, amount: depositState.pendingAmount, reason: null };
+    }
+
+    if (!policy.allowed) {
+      // Helt blokkert — vis melding og la eleven gå tilbake til spillet.
+      document.getElementById('policy-blocked-text').textContent = policy.reason;
+      goToStep('policy-blocked');
+      return;
+    }
+
+    if (policy.partial) {
+      // Tak nesten nådd — eleven får bare det som er igjen. Vis det
+      // ærlig før de taster PIN.
+      depositState.pendingAmount = policy.amount;
+      document.getElementById('policy-partial-text').textContent = policy.reason;
+      document.getElementById('policy-partial-amount').textContent = policy.amount;
+      goToStep('policy-partial');
+      return;
+    }
+
+    // (Normal flyt) — beløpet kan ha blitt justert ned, sett det.
+    depositState.pendingAmount = policy.amount;
 
     // Fersk auth innen 5 min? Hopp rett til innskudd uten PIN.
     if (hasFreshAuthFor(student)) {
@@ -2761,6 +2980,34 @@ function bindDepositModal() {
     goToStep('scan');
     startScanner();
   });
+
+  // Policy-blokkert: bare lukk og la eleven gå tilbake til spillet.
+  document.getElementById('btn-policy-blocked-close').addEventListener('click', closeDepositFlow);
+
+  // Policy-delvis: eleven godtar redusert beløp og går videre.
+  document.getElementById('btn-policy-partial-cancel').addEventListener('click', closeDepositFlow);
+  document.getElementById('btn-policy-partial-continue').addEventListener('click', async () => {
+    const student = depositState.student;
+    if (!student) return closeDepositFlow();
+
+    // Samme fersk-auth-snarvei som i normal flyt — ingen vits i å taste
+    // PIN på nytt hvis eleven nettopp gjorde det.
+    if (hasFreshAuthFor(student)) {
+      goToStep('loading');
+      document.getElementById('loading-text').textContent = 'Setter inn mynter…';
+      try {
+        const newBalance = await depositCoins(student, depositState.pendingAmount);
+        showDepositSuccess(newBalance);
+      } catch (e) {
+        console.error(e);
+        showDepositError('Innskudd feilet', 'Mynter er ikke satt inn. Prøv igjen.');
+      }
+      return;
+    }
+
+    goToStep('pin');
+  });
+
   bindManualId();
   bindPinPad();
 }

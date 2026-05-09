@@ -56,6 +56,9 @@
       }
       renderStudentTable(); renderSaldoTable(); updateStats();
       if (document.getElementById('page-merker')?.classList.contains('active')) renderMerkerPage();
+      // Myntjakten-statistikk er en lett aggregering over students-listen,
+      // så den kan oppdateres live ved hver endring.
+      if (typeof renderMyntjaktenStats57 === 'function') renderMyntjaktenStats57();
     });
 
     onValue(ref(db, 'groups'), snap => {
@@ -110,6 +113,10 @@
       window._settings = snap.val() || {};
       if (document.getElementById('page-merker')?.classList.contains('active')) {
         loadBadgeParamsToForm();
+      }
+      // Myntjakten-innstillinger ligger også her — re-render hvis budsjettsida er åpen
+      if (document.getElementById('page-budsjett')?.classList.contains('active')) {
+        renderBudgetPage();
       }
     });
 
@@ -1293,6 +1300,37 @@
         <button class="btn btn-amber" onclick="runWednesdayEventsNow()" title="Kjør én tilfeldig hendelse for alle elever nå">🎲 Kjør hendelser nå</button>
       </div>
     </div>
+  </div>
+
+  <!-- Myntjakten-innstillinger -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">🪙 Myntjakten</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Myntjakten er hoderegningsspillet på <code style="font-size:.8rem;background:var(--teal-light);padding:1px 6px;border-radius:4px;">myntland.no/myntjakten</code>. Elevene kan tjene mynter til kontoen sin ved å skanne kortet etter en runde. Slå av hvis du ikke ønsker at de skal opptjene mynter — eller sett et dagstak.</p>
+
+    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
+      <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--teal-dark);cursor:pointer;">
+        <input type="checkbox" id="myntjakten57-enabled" style="width:18px;height:18px;cursor:pointer;">
+        <span>Tillat opptjening av mynter via Myntjakten</span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label>🎯 Dagstak per elev (🪙 — sett 0 for ingen grense)</label>
+      <input type="number" id="myntjakten57-daily-max" min="0" max="9999" placeholder="0" style="max-width:200px;">
+      <p style="font-size:.78rem;color:var(--muted);margin-top:.4rem;">Når en elev har tjent dette antallet mynter via Myntjakten i dag, kan de fortsatt spille — men får ikke flere mynter på kontoen før i morgen.</p>
+    </div>
+
+    <!-- Dagens aktivitet -->
+    <div id="myntjakten57-stats" style="background:var(--teal-light);border-radius:10px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.4rem;">Myntjakten i dag</div>
+      <div id="myntjakten57-stats-summary" style="margin-bottom:.3rem;">Laster…</div>
+      <div id="myntjakten57-stats-top" style="font-size:.78rem;font-weight:600;color:var(--teal-dark);"></div>
+    </div>
+
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+      <button class="btn btn-primary" onclick="saveMyntjakten57Settings()">💾 Lagre Myntjakten-innstillinger</button>
+    </div>
+    <div id="myntjakten57-alert" style="margin-top:.75rem;"></div>
   </div>
 
   <!-- Oversikt: faste jobber & lønn -->
@@ -3444,6 +3482,87 @@ function renderBudgetPage() {
         </div>`;
       }).join('');
     }
+  }
+
+  // Myntjakten-innstillinger (lagres i settings/myntjakten57)
+  const mj = (window._settings && window._settings.myntjakten57) || {};
+  const mjEnabled = document.getElementById('myntjakten57-enabled');
+  const mjMax     = document.getElementById('myntjakten57-daily-max');
+  // Default: aktivert, ingen grense
+  if (mjEnabled) mjEnabled.checked = mj.enabled !== false;
+  if (mjMax)     mjMax.value       = (mj.dailyMax != null) ? mj.dailyMax : 0;
+
+  // Dagens aktivitet
+  renderMyntjaktenStats57();
+}
+
+// Lokal "i dag"-nøkkel — må matche logikken i myntjakten.html
+function _myntjaktenTodayKey57() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function renderMyntjaktenStats57() {
+  const summaryEl = document.getElementById('myntjakten57-stats-summary');
+  const topEl     = document.getElementById('myntjakten57-stats-top');
+  if (!summaryEl || !topEl) return;
+
+  const students = window._students || [];
+  const today = _myntjaktenTodayKey57();
+
+  // Filtrer ut elever som har tjent i dag
+  const active = students
+    .map(s => {
+      const t = s.myntjaktenToday;
+      if (!t || t.date !== today) return null;
+      const earned = parseInt(t.earned) || 0;
+      if (earned <= 0) return null;
+      return { name: s.name || s.id, earned };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.earned - a.earned);
+
+  if (active.length === 0) {
+    summaryEl.textContent = 'Ingen elever har tjent mynter via Myntjakten i dag ennå.';
+    topEl.textContent = '';
+    return;
+  }
+
+  const total = active.reduce((sum, a) => sum + a.earned, 0);
+  summaryEl.innerHTML = '👥 <strong>' + active.length + '</strong> elev' +
+    (active.length === 1 ? '' : 'er') + ' har tjent totalt <strong>🪙 ' + total + '</strong> i dag.';
+
+  // Topp 5 (eller færre hvis det er færre)
+  const top = active.slice(0, 5);
+  topEl.innerHTML = '🏆 ' + top.map(a => a.name + ' (🪙 ' + a.earned + ')').join(' · ');
+}
+
+async function saveMyntjakten57Settings() {
+  const alertEl = document.getElementById('myntjakten57-alert');
+  const enabled = !!document.getElementById('myntjakten57-enabled').checked;
+  const dailyMax = parseInt(document.getElementById('myntjakten57-daily-max').value);
+
+  if (isNaN(dailyMax) || dailyMax < 0 || dailyMax > 9999) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Dagstak må være et tall mellom 0 og 9999 (0 = ingen grense).</div>';
+    return;
+  }
+
+  try {
+    await window._update(window._ref(window._db, 'settings'), {
+      myntjakten57: { enabled, dailyMax, updated: Date.now() }
+    });
+    if (!window._settings) window._settings = {};
+    window._settings.myntjakten57 = { enabled, dailyMax };
+
+    const status = enabled
+      ? (dailyMax > 0
+          ? `✅ Lagret. Elevene kan tjene opp til 🪙 ${dailyMax} per dag via Myntjakten.`
+          : '✅ Lagret. Ingen dagstak — elevene kan tjene fritt.')
+      : '✅ Lagret. Opptjening via Myntjakten er slått av.';
+    alertEl.innerHTML = '<div class="alert alert-success">' + status + '</div>';
+    setTimeout(() => alertEl.innerHTML = '', 3500);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Lagring feilet: ' + e.message + '</div>';
   }
 }
 
