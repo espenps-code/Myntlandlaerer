@@ -743,58 +743,45 @@
     width: 100%;
   }
 
-  /* iOS-fiks: iframen kan ikke scrolles internt på iPad/iPhone.
-     Vi pakker hver iframe i en wrapper som tar over touch-scrollingen. */
-  .preview-iframe-wrap {
+  .preview-screen iframe {
     position: absolute;
     inset: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    border-radius: 24px;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #fff;
     transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.4, 0.0, 0.2, 1);
   }
 
-  /* Animert bytting flyttes til wrapperen i stedet for iframen */
-  .preview-iframe-wrap.is-leaving-left {
+  /* Animert iframe-bytting: usynlig iframe glir litt og fader ut */
+  .preview-screen iframe.is-leaving-left {
     opacity: 0;
     transform: translateX(-18px);
     pointer-events: none;
   }
-  .preview-iframe-wrap.is-leaving-right {
+  .preview-screen iframe.is-leaving-right {
     opacity: 0;
     transform: translateX(18px);
     pointer-events: none;
   }
-  .preview-iframe-wrap.is-entering-left {
+  .preview-screen iframe.is-entering-left {
     opacity: 0;
     transform: translateX(-18px);
   }
-  .preview-iframe-wrap.is-entering-right {
+  .preview-screen iframe.is-entering-right {
     opacity: 0;
     transform: translateX(18px);
   }
-  .preview-iframe-wrap.is-active {
+  .preview-screen iframe.is-active {
     opacity: 1;
     transform: translateX(0);
     pointer-events: auto;
   }
-  .preview-iframe-wrap:not(.is-active):not(.is-leaving-left):not(.is-leaving-right):not(.is-entering-left):not(.is-entering-right) {
+  .preview-screen iframe:not(.is-active):not(.is-leaving-left):not(.is-leaving-right):not(.is-entering-left):not(.is-entering-right) {
     opacity: 0;
     pointer-events: none;
   }
-
-  .preview-screen iframe {
-    width: 100%;
-    /* Settes dynamisk via JS basert på innholdets faktiske høyde.
-       Fallback-høyde sikrer scroll-mulighet før onload. */
-    height: 1400px;
-    border: 0;
-    display: block;
-    background: #fff;
-  }
-
-  /* (animasjons-states ligger nå på .preview-iframe-wrap, ikke iframen) */
 
   .preview-hint {
     display: inline-flex;
@@ -846,7 +833,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .preview-tabs::before,
-    .preview-iframe-wrap,
+    .preview-screen iframe,
     .preview-monster img { transition: none !important; animation: none !important; }
   }
 
@@ -1102,22 +1089,19 @@
 
       <div class="preview-phone">
         <div class="preview-screen">
-          <div class="preview-iframe-wrap is-active" id="wrap-14">
-            <iframe
-              id="iframe-14"
-              src="elevapp14-demo.html"
-              title="Elevapp småtrinnet (1–4) – live forhåndsvisning"
-              loading="lazy"
-              referrerpolicy="no-referrer"></iframe>
-          </div>
-          <div class="preview-iframe-wrap" id="wrap-57">
-            <iframe
-              id="iframe-57"
-              src="elevapp57-demo.html"
-              title="Elevapp mellomtrinnet (5–7) – live forhåndsvisning"
-              loading="lazy"
-              referrerpolicy="no-referrer"></iframe>
-          </div>
+          <iframe
+            id="iframe-14"
+            class="is-active"
+            src="elevapp14-demo.html"
+            title="Elevapp småtrinnet (1–4) – live forhåndsvisning"
+            loading="lazy"
+            referrerpolicy="no-referrer"></iframe>
+          <iframe
+            id="iframe-57"
+            src="elevapp57-demo.html"
+            title="Elevapp mellomtrinnet (5–7) – live forhåndsvisning"
+            loading="lazy"
+            referrerpolicy="no-referrer"></iframe>
         </div>
       </div>
 
@@ -1391,10 +1375,8 @@ const MONSTERS = {
     if (!card) return;
     const tabsWrap = card.querySelector('.preview-tabs');
     const tabs = card.querySelectorAll('.preview-tab');
-    // Vi animerer wrapperne i stedet for iframene selv,
-    // slik at iOS Safari kan håndtere intern scroll på touch.
-    const wrap14 = document.getElementById('wrap-14');
-    const wrap57 = document.getElementById('wrap-57');
+    const iframe14 = document.getElementById('iframe-14');
+    const iframe57 = document.getElementById('iframe-57');
 
     // Monster-par per side – hentes ved klikk
     const monsters = {
@@ -1438,8 +1420,8 @@ const MONSTERS = {
       isAnimating = true;
 
       const goingRight = trinn === '57';
-      const outgoing = goingRight ? wrap14 : wrap57;
-      const incoming = goingRight ? wrap57 : wrap14;
+      const outgoing = goingRight ? iframe14 : iframe57;
+      const incoming = goingRight ? iframe57 : iframe14;
 
       // Oppdater tab-tilstand og indikator
       tabs.forEach(t => t.setAttribute('aria-selected', t.getAttribute('data-trinn') === trinn ? 'true' : 'false'));
@@ -1454,7 +1436,7 @@ const MONSTERS = {
         card.classList.add('is-purple');
       }
 
-      // Wrapper-animasjon
+      // Iframe-animasjon
       outgoing.classList.remove('is-active');
       outgoing.classList.add(goingRight ? 'is-leaving-left' : 'is-leaving-right');
 
@@ -1485,49 +1467,6 @@ const MONSTERS = {
 
     tabs.forEach(tab => {
       tab.addEventListener('click', () => switchTo(tab.getAttribute('data-trinn')));
-    });
-  })();
-
-  // iOS-fiks: Juster iframe-høyde til innholdets faktiske høyde,
-  // slik at den ytre wrapperen tar over scrollingen (iframen scroller ikke selv på iOS).
-  (function setupIframeAutoHeight() {
-    const iframes = document.querySelectorAll('.preview-iframe-wrap iframe');
-    iframes.forEach(iframe => {
-      const adjustHeight = () => {
-        try {
-          const doc = iframe.contentDocument || iframe.contentWindow?.document;
-          if (!doc) return;
-          const body = doc.body;
-          const html = doc.documentElement;
-          if (!body || !html) return;
-          const h = Math.max(
-            body.scrollHeight, html.scrollHeight,
-            body.offsetHeight, html.offsetHeight
-          );
-          if (h > 0) {
-            iframe.style.height = h + 'px';
-          }
-        } catch (e) {
-          // Cross-origin – behold fallback-høyde fra CSS
-        }
-      };
-
-      iframe.addEventListener('load', () => {
-        adjustHeight();
-        // Justér flere ganger – noen apper laster innhold async
-        setTimeout(adjustHeight, 300);
-        setTimeout(adjustHeight, 1000);
-        setTimeout(adjustHeight, 2500);
-
-        // Følg med på dynamiske endringer (apper som åpner/lukker paneler)
-        try {
-          const doc = iframe.contentDocument;
-          if (doc && doc.body) {
-            const observer = new ResizeObserver(adjustHeight);
-            observer.observe(doc.body);
-          }
-        } catch (e) { /* same-origin only */ }
-      });
     });
   })();
 </script>
