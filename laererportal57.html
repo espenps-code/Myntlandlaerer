@@ -55,7 +55,7 @@
         window._students = all.filter(s => s.class === window._currentTeacher?.class);
       }
       renderStudentTable(); renderSaldoTable(); updateStats();
-      if (document.getElementById('page-merker')?.classList.contains('active')) renderMerkerPage();
+      if (document.getElementById('page-belonninger')?.classList.contains('active')) renderMerkerPage();
       // Myntjakten-statistikk er en lett aggregering over students-listen,
       // så den kan oppdateres live ved hver endring.
       if (typeof renderMyntjaktenStats57 === 'function') renderMyntjaktenStats57();
@@ -81,12 +81,12 @@
       window._customRewards57 = snap.val()
         ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
         : [];
-      if (document.getElementById('page-qrkoder')?.classList.contains('active')) renderCustomRewards57();
+      if (document.getElementById('page-belonninger')?.classList.contains('active')) renderCustomRewards57();
     });
 
     onValue(ref(db, 'classGoals'), snap => {
       window._classGoals = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-      if (document.getElementById('page-sparemaal')?.classList.contains('active')) renderClassGoalsPage();
+      if (document.getElementById('page-belonninger')?.classList.contains('active')) renderClassGoalsPage();
     });
 
     onValue(ref(db, 'fundHistory'), snap => {
@@ -111,12 +111,11 @@
     // ── Innstillinger (inkl. merkeparametere) ───────────────────────────
     onValue(ref(db, 'settings'), snap => {
       window._settings = snap.val() || {};
-      if (document.getElementById('page-merker')?.classList.contains('active')) {
-        loadBadgeParamsToForm();
-      }
-      // Myntjakten-innstillinger ligger også her — re-render hvis budsjettsida er åpen
-      if (document.getElementById('page-budsjett')?.classList.contains('active')) {
-        renderBudgetPage();
+      // Belønninger-siden viser merker, hendelser, sparemål og Myntjakten —
+      // alle kan ha innstillinger som nettopp ble endret.
+      if (document.getElementById('page-belonninger')?.classList.contains('active')) {
+        if (typeof loadBadgeParamsToForm === 'function') loadBadgeParamsToForm();
+        if (typeof renderMyntjaktenSettings57 === 'function') renderMyntjaktenSettings57();
       }
     });
 
@@ -795,11 +794,8 @@
     <button onclick="showPage('saldo')" id="nav-saldo"><span class="nav-icon">💰</span> Saldo</button>
     <button onclick="showPage('oppdrag')" id="nav-oppdrag"><span class="nav-icon">💼</span> Jobber</button>
     <button onclick="showPage('butikk57')" id="nav-butikk57"><span class="nav-icon">🛒</span> Butikk</button>
-    <button onclick="showPage('sparemaal')" id="nav-sparemaal"><span class="nav-icon">🏦</span> Sparemål</button>
-    <button onclick="showPage('qrkoder')" id="nav-qrkoder"><span class="nav-icon">⬛</span> QR</button>
-    <button onclick="showPage('hendelser')" id="nav-hendelser"><span class="nav-icon">🎲</span> Hendelser</button>
+    <button onclick="showPage('belonninger')" id="nav-belonninger"><span class="nav-icon">🎁</span> Belønninger</button>
     <button onclick="showPage('budsjett')" id="nav-budsjett"><span class="nav-icon">📊</span> Budsjett</button>
-    <button onclick="showPage('merker');renderMerkerPage()" id="nav-merker"><span class="nav-icon">🏅</span> Merker</button>
     <button onclick="showPage('laerere')" id="nav-laerere" style="display:none"><span class="nav-icon">⚙️</span> Lærere</button>
   </nav>
   <div class="header-right">
@@ -1112,8 +1108,22 @@
 
 
 <!-- ═══════ KLASSENS SPAREMÅL ═══════ -->
-<div class="page" id="page-sparemaal">
-  <div class="page-title">🏦 Klassens sparemål</div>
+<!-- ═══════ BELØNNINGER (samlet: sparemål, QR, hendelser, merker, Myntjakten) ═══════ -->
+<div class="page" id="page-belonninger">
+  <div class="page-title">🎁 Belønninger</div>
+  <div class="page-subtitle">Sparemål, QR-koder, hendelser, merker og Myntjakten på ett sted.</div>
+
+  <div class="tabs" style="margin-bottom:1rem;">
+    <button class="tab active" onclick="showBelonningTab('sparemaal', this)">🏦 Sparemål</button>
+    <button class="tab"        onclick="showBelonningTab('qrkoder',   this)">⬛ Belønnings-QR</button>
+    <button class="tab"        onclick="showBelonningTab('hendelser', this)">🎲 Hendelser</button>
+    <button class="tab"        onclick="showBelonningTab('merker',    this)">🏅 Merker</button>
+    <button class="tab"        onclick="showBelonningTab('myntjakten',this)">🪙 Myntjakten</button>
+  </div>
+
+  <!-- Tab: Sparemål -->
+  <div id="bel-tab-sparemaal">
+    <div class="page-title">🏦 Klassens sparemål</div>
   <div class="page-subtitle">Maks 3 aktive sparemål. Skatt fra elever fordeles automatisk.</div>
   <div id="class-goals-container"></div>
   <div class="card" id="new-goal-card">
@@ -1127,11 +1137,11 @@
     <button class="btn btn-primary" onclick="createClassGoal()">Opprett sparemål</button>
     <div id="goal-alert" style="margin-top:1rem;"></div>
   </div>
-</div>
+  </div>
 
-<!-- ═══════ QR KODER ═══════ -->
-<div class="page" id="page-qrkoder">
-  <div class="page-title">⬛ QR-belønningskoder</div>
+  <!-- Tab: Belønnings-QR -->
+  <div id="bel-tab-qrkoder" style="display:none;">
+    <div class="page-title">⬛ QR-belønningskoder</div>
   <div class="page-subtitle">Elevene scanner og får mynter (minus 20% skatt til klassens sparemål)</div>
   <div class="grid-3">
     <div class="qr-card"><div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><button class="btn btn-primary btn-sm" onclick="printSingleQR('qr-10','10 🪙')">🖨️ Skriv ut</button></div>
@@ -1158,12 +1168,11 @@
       <p style="color:var(--muted);font-size:.85rem;">Ingen egendefinerte belønninger ennå.</p>
     </div>
   </div>
-</div>
+  </div>
 
-
-<!-- ═══════ HENDELSER ═══════ -->
-<div class="page" id="page-hendelser">
-  <div class="page-title">🎲 Hendelser</div>
+  <!-- Tab: Hendelser -->
+  <div id="bel-tab-hendelser" style="display:none;">
+    <div class="page-title">🎲 Hendelser</div>
   <div class="page-subtitle">Tilfeldige livshendelser med økonomikonsekvenser – del ut QR-kort til elevene</div>
 
   <div class="grid-2" style="margin-bottom:1.5rem;">
@@ -1236,116 +1245,11 @@
       <div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen hendelser ennå. Trykk «Last inn 30 standard» for å komme i gang.</div>
     </div>
   </div>
-</div>
-
-<!-- ═══════ BUDSJETT ═══════ -->
-<div class="page" id="page-budsjett">
-  <div class="page-title">📊 Budsjett</div>
-  <div class="page-subtitle">Faste utgifter (trekkes hver fredag) og automatiske onsdagshendelser</div>
-
-  <div class="grid-2" style="margin-bottom:1.5rem;">
-    <!-- Faste utgifter -->
-    <div class="card">
-      <div class="card-title">💸 Faste ukentlige utgifter</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Disse trekkes automatisk fra elevenes brukskonto hver fredag (kl. 08:00 eller senere).</p>
-
-      <div class="form-row">
-        <label>🪑 Leie av pult (🪙 per uke)</label>
-        <input type="number" id="bud-rent-desk" min="0" max="9999" placeholder="300">
-      </div>
-
-      <div class="form-row" style="display:flex;gap:.75rem;align-items:flex-end;">
-        <div style="flex:1">
-          <label>⚡ Strøm – minimum (🪙)</label>
-          <input type="number" id="bud-power-min" min="0" max="9999" placeholder="50">
-        </div>
-        <div style="flex:1">
-          <label>⚡ Strøm – maksimum (🪙)</label>
-          <input type="number" id="bud-power-max" min="0" max="9999" placeholder="150">
-        </div>
-      </div>
-      <p style="font-size:.78rem;color:var(--muted);margin-top:-.4rem;margin-bottom:.85rem;">Strøm trekkes med et tilfeldig beløp innenfor dette intervallet for hver elev.</p>
-
-      <div class="form-row">
-        <label>📱 Leie av iPad (🪙 per uke)</label>
-        <input type="number" id="bud-rent-ipad" min="0" max="9999" placeholder="50">
-      </div>
-
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
-        <button class="btn btn-primary" onclick="saveBudgetSettings()">💾 Lagre innstillinger</button>
-        <button class="btn btn-ghost" onclick="runBudgetExpensesNow()" title="Kjør trekk for alle elever nå – som om det var fredag">⚡ Kjør trekk nå</button>
-      </div>
-      <div id="bud-alert" style="margin-top:.75rem;"></div>
-    </div>
-
-    <!-- Onsdagshendelser + status -->
-    <div class="card">
-      <div class="card-title">🎲 Onsdagshendelser</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Hver onsdag (kl. 08:00 eller senere) får hver elev én tilfeldig hendelse fra hendelseslisten – akkurat som om de hadde scannet QR-koden.</p>
-
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
-        <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--teal-dark);cursor:pointer;">
-          <input type="checkbox" id="bud-wed-events-toggle" style="width:18px;height:18px;cursor:pointer;">
-          <span>Aktiver onsdagshendelser</span>
-        </label>
-      </div>
-
-      <div id="bud-status" style="background:var(--teal-light);border-radius:10px;padding:.7rem .9rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">
-        <div>Antall hendelser i biblioteket: <span id="bud-status-hend-count">0</span></div>
-        <div>Sist trukket fredag: <span id="bud-status-last-friday">aldri</span></div>
-        <div>Sist trukket onsdag: <span id="bud-status-last-wed">aldri</span></div>
-      </div>
-
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.85rem;">
-        <button class="btn btn-amber" onclick="runWednesdayEventsNow()" title="Kjør én tilfeldig hendelse for alle elever nå">🎲 Kjør hendelser nå</button>
-      </div>
-    </div>
   </div>
 
-  <!-- Myntjakten-innstillinger -->
-  <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-title">🪙 Myntjakten</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Myntjakten er hoderegningsspillet på <code style="font-size:.8rem;background:var(--teal-light);padding:1px 6px;border-radius:4px;">myntland.no/myntjakten</code>. Elevene kan tjene mynter til kontoen sin ved å skanne kortet etter en runde. Slå av hvis du ikke ønsker at de skal opptjene mynter — eller sett et dagstak.</p>
-
-    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
-      <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--teal-dark);cursor:pointer;">
-        <input type="checkbox" id="myntjakten57-enabled" style="width:18px;height:18px;cursor:pointer;">
-        <span>Tillat opptjening av mynter via Myntjakten</span>
-      </label>
-    </div>
-
-    <div class="form-row">
-      <label>🎯 Dagstak per elev (🪙 — sett 0 for ingen grense)</label>
-      <input type="number" id="myntjakten57-daily-max" min="0" max="9999" placeholder="0" style="max-width:200px;">
-      <p style="font-size:.78rem;color:var(--muted);margin-top:.4rem;">Når en elev har tjent dette antallet mynter via Myntjakten i dag, kan de fortsatt spille — men får ikke flere mynter på kontoen før i morgen.</p>
-    </div>
-
-    <!-- Dagens aktivitet -->
-    <div id="myntjakten57-stats" style="background:var(--teal-light);border-radius:10px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;">
-      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.4rem;">Myntjakten i dag</div>
-      <div id="myntjakten57-stats-summary" style="margin-bottom:.3rem;">Laster…</div>
-      <div id="myntjakten57-stats-top" style="font-size:.78rem;font-weight:600;color:var(--teal-dark);"></div>
-    </div>
-
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
-      <button class="btn btn-primary" onclick="saveMyntjakten57Settings()">💾 Lagre Myntjakten-innstillinger</button>
-    </div>
-    <div id="myntjakten57-alert" style="margin-top:.75rem;"></div>
-  </div>
-
-  <!-- Oversikt: faste jobber & lønn -->
-  <div class="card">
-    <div class="card-title">💼 Faste jobber (lønn fredag)</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Faste jobber utbetales også hver fredag. Du kan administrere dem på <a href="#" onclick="showPage('oppdrag');return false;" style="color:var(--teal);font-weight:800;">Jobber-siden</a>.</p>
-    <div id="bud-salary-jobs-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;">
-      <div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen faste jobber.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════ MERKER ═══════ -->
-<div class="page" id="page-merker">
-  <div class="page-title">🏅 Merker</div>
+  <!-- Tab: Merker -->
+  <div id="bel-tab-merker" style="display:none;">
+    <div class="page-title">🏅 Merker</div>
   <div class="page-subtitle">Oversikt over elevenes merker – rediger krav og reset ved skolestart</div>
 
   <!-- Merkeparametere -->
@@ -1433,7 +1337,127 @@
       <tbody id="merker-table-body"></tbody>
     </table>
   </div>
+  </div>
+
+  <!-- Tab: Myntjakten -->
+  <div id="bel-tab-myntjakten" style="display:none;">
+    <!-- Myntjakten-innstillinger -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">🪙 Myntjakten</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Myntjakten er hoderegningsspillet på <code style="font-size:.8rem;background:var(--teal-light);padding:1px 6px;border-radius:4px;">myntland.no/myntjakten</code>. Elevene kan tjene mynter til kontoen sin ved å skanne kortet etter en runde. Slå av hvis du ikke ønsker at de skal opptjene mynter — eller sett et dagstak.</p>
+
+    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
+      <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--teal-dark);cursor:pointer;">
+        <input type="checkbox" id="myntjakten57-enabled" style="width:18px;height:18px;cursor:pointer;">
+        <span>Tillat opptjening av mynter via Myntjakten</span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label>🎯 Dagstak per elev (🪙 — sett 0 for ingen grense)</label>
+      <input type="number" id="myntjakten57-daily-max" min="0" max="9999" placeholder="0" style="max-width:200px;">
+      <p style="font-size:.78rem;color:var(--muted);margin-top:.4rem;">Når en elev har tjent dette antallet mynter via Myntjakten i dag, kan de fortsatt spille — men får ikke flere mynter på kontoen før i morgen.</p>
+    </div>
+
+    <!-- Dagens aktivitet -->
+    <div id="myntjakten57-stats" style="background:var(--teal-light);border-radius:10px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.4rem;">Myntjakten i dag</div>
+      <div id="myntjakten57-stats-summary" style="margin-bottom:.3rem;">Laster…</div>
+      <div id="myntjakten57-stats-top" style="font-size:.78rem;font-weight:600;color:var(--teal-dark);"></div>
+    </div>
+
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+      <button class="btn btn-primary" onclick="saveMyntjakten57Settings()">💾 Lagre Myntjakten-innstillinger</button>
+    </div>
+    <div id="myntjakten57-alert" style="margin-top:.75rem;"></div>
+  </div>
+  </div>
 </div>
+
+
+<!-- ═══════ QR KODER ═══════ -->
+
+
+
+<!-- ═══════ HENDELSER ═══════ -->
+
+
+<!-- ═══════ BUDSJETT ═══════ -->
+<div class="page" id="page-budsjett">
+  <div class="page-title">📊 Budsjett</div>
+  <div class="page-subtitle">Faste utgifter (trekkes hver fredag) og automatiske onsdagshendelser</div>
+
+  <div class="grid-2" style="margin-bottom:1.5rem;">
+    <!-- Faste utgifter -->
+    <div class="card">
+      <div class="card-title">💸 Faste ukentlige utgifter</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Disse trekkes automatisk fra elevenes brukskonto hver fredag (kl. 08:00 eller senere).</p>
+
+      <div class="form-row">
+        <label>🪑 Leie av pult (🪙 per uke)</label>
+        <input type="number" id="bud-rent-desk" min="0" max="9999" placeholder="300">
+      </div>
+
+      <div class="form-row" style="display:flex;gap:.75rem;align-items:flex-end;">
+        <div style="flex:1">
+          <label>⚡ Strøm – minimum (🪙)</label>
+          <input type="number" id="bud-power-min" min="0" max="9999" placeholder="50">
+        </div>
+        <div style="flex:1">
+          <label>⚡ Strøm – maksimum (🪙)</label>
+          <input type="number" id="bud-power-max" min="0" max="9999" placeholder="150">
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:-.4rem;margin-bottom:.85rem;">Strøm trekkes med et tilfeldig beløp innenfor dette intervallet for hver elev.</p>
+
+      <div class="form-row">
+        <label>📱 Leie av iPad (🪙 per uke)</label>
+        <input type="number" id="bud-rent-ipad" min="0" max="9999" placeholder="50">
+      </div>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+        <button class="btn btn-primary" onclick="saveBudgetSettings()">💾 Lagre innstillinger</button>
+        <button class="btn btn-ghost" onclick="runBudgetExpensesNow()" title="Kjør trekk for alle elever nå – som om det var fredag">⚡ Kjør trekk nå</button>
+      </div>
+      <div id="bud-alert" style="margin-top:.75rem;"></div>
+    </div>
+
+    <!-- Onsdagshendelser + status -->
+    <div class="card">
+      <div class="card-title">🎲 Onsdagshendelser</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Hver onsdag (kl. 08:00 eller senere) får hver elev én tilfeldig hendelse fra hendelseslisten – akkurat som om de hadde scannet QR-koden.</p>
+
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
+        <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--teal-dark);cursor:pointer;">
+          <input type="checkbox" id="bud-wed-events-toggle" style="width:18px;height:18px;cursor:pointer;">
+          <span>Aktiver onsdagshendelser</span>
+        </label>
+      </div>
+
+      <div id="bud-status" style="background:var(--teal-light);border-radius:10px;padding:.7rem .9rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">
+        <div>Antall hendelser i biblioteket: <span id="bud-status-hend-count">0</span></div>
+        <div>Sist trukket fredag: <span id="bud-status-last-friday">aldri</span></div>
+        <div>Sist trukket onsdag: <span id="bud-status-last-wed">aldri</span></div>
+      </div>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.85rem;">
+        <button class="btn btn-amber" onclick="runWednesdayEventsNow()" title="Kjør én tilfeldig hendelse for alle elever nå">🎲 Kjør hendelser nå</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Oversikt: faste jobber & lønn -->
+  <div class="card">
+    <div class="card-title">💼 Faste jobber (lønn fredag)</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Faste jobber utbetales også hver fredag. Du kan administrere dem på <a href="#" onclick="showPage('oppdrag');return false;" style="color:var(--teal);font-weight:800;">Jobber-siden</a>.</p>
+    <div id="bud-salary-jobs-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;">
+      <div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen faste jobber.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MERKER ═══════ -->
+
 
 <!-- ═══════ LÆRERE (admin) ═══════ -->
 <div class="page" id="page-laerere">
@@ -1747,22 +1771,65 @@ async function confirmDeleteTeacher() {
 // NAVIGASJON
 // ════════════════════════════════════════════════════════════
 function showPage(page) {
+  // Bakoverkompatibilitet: gamle sidenavn (sparemaal, qrkoder, hendelser, merker)
+  // er nå tabs på Belønninger-siden. Rut til riktig fane.
+  const tabMap = {
+    sparemaal: 'sparemaal',
+    qrkoder:   'qrkoder',
+    hendelser: 'hendelser',
+    merker:    'merker',
+    myntjakten:'myntjakten'
+  };
+  if (tabMap[page]) {
+    showPage('belonninger');
+    setTimeout(() => {
+      const btn = document.querySelector('#page-belonninger .tabs button[onclick*="' + tabMap[page] + '"]');
+      if (btn) showBelonningTab(tabMap[page], btn);
+    }, 0);
+    return;
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-'  + page).classList.add('active');
-  if (page === 'qrkoder')  { generateRewardQRCodes(); renderCustomRewards57(); }
   if (page === 'grupper')  renderGroupsPage();
   if (page === 'oppdrag')  { refreshJobSelects(); if (typeof setJobType === 'function') setJobType(window._currentJobType || 'task'); }
   if (page === 'butikk57') renderShop57List();
   if (page === 'laerere')  renderTeacherList();
-  if (page === 'hendelser') renderHendelser();
-  if (page === 'sparemaal') renderClassGoalsPage();
   if (page === 'budsjett') renderBudgetPage();
+  if (page === 'belonninger') {
+    // Render alle tabs som kan være synlig — billig og gjør at innholdet
+    // er klart uansett hvilken fane læreren bytter til.
+    if (typeof renderClassGoalsPage === 'function') renderClassGoalsPage();
+    if (typeof generateRewardQRCodes === 'function') generateRewardQRCodes();
+    if (typeof renderCustomRewards57 === 'function') renderCustomRewards57();
+    if (typeof renderHendelser === 'function') renderHendelser();
+    if (typeof renderMerkerPage === 'function') renderMerkerPage();
+    if (typeof renderMyntjaktenSettings57 === 'function') renderMyntjaktenSettings57();
+  }
   // Close mobile nav after selection
   const nav = document.querySelector('header nav');
   const btn = document.getElementById('hamburger-btn');
   if (nav && btn) { nav.classList.remove('open'); btn.classList.remove('open'); }
+}
+
+// Bytt fane på Belønninger-siden. Mønster identisk med showElevTab.
+function showBelonningTab(tab, btnEl) {
+  ['sparemaal','qrkoder','hendelser','merker','myntjakten'].forEach(t => {
+    const el = document.getElementById('bel-tab-' + t);
+    if (el) el.style.display = (t === tab) ? 'block' : 'none';
+  });
+  if (btnEl && btnEl.closest) {
+    btnEl.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  // Re-render aktiv fane (idempotent og billig)
+  if (tab === 'sparemaal'  && typeof renderClassGoalsPage   === 'function') renderClassGoalsPage();
+  if (tab === 'qrkoder'    && typeof generateRewardQRCodes  === 'function') { generateRewardQRCodes(); renderCustomRewards57(); }
+  if (tab === 'hendelser'  && typeof renderHendelser        === 'function') renderHendelser();
+  if (tab === 'merker'     && typeof renderMerkerPage       === 'function') renderMerkerPage();
+  if (tab === 'myntjakten' && typeof renderMyntjaktenSettings57 === 'function') renderMyntjaktenSettings57();
 }
 
 function toggleMobileNav() {
@@ -3099,7 +3166,7 @@ function onHendelserSnap(snap) {
   window._hendelser = snap.val()
     ? Object.entries(snap.val()).map(([k,v]) => ({ ...v, fbKey: k }))
     : [];
-  if (document.getElementById('page-hendelser')?.classList.contains('active')) {
+  if (document.getElementById('page-belonninger')?.classList.contains('active')) {
     renderHendelser();
   }
 }
@@ -3483,8 +3550,10 @@ function renderBudgetPage() {
       }).join('');
     }
   }
+}
 
-  // Myntjakten-innstillinger (lagres i settings/myntjakten57)
+// Myntjakten-innstillinger (egen funksjon — flyttet til Belønninger-siden)
+function renderMyntjaktenSettings57() {
   const mj = (window._settings && window._settings.myntjakten57) || {};
   const mjEnabled = document.getElementById('myntjakten57-enabled');
   const mjMax     = document.getElementById('myntjakten57-daily-max');
