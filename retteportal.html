@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Retteportal – Myntland</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+<!-- jsQR for å lese QR-koden direkte fra bildet -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
 <style>
 :root {
   --green: #1d9e75;
@@ -120,23 +124,6 @@ body {
   font-size: 1.35rem;
   margin-bottom: 4px;
   color: var(--teal-dark);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.card .step-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--amber);
-  color: white;
-  border-radius: 50%;
-  font-size: 1rem;
-  font-weight: 900;
-  font-family: 'Nunito', sans-serif;
 }
 
 .card-desc {
@@ -145,59 +132,10 @@ body {
   margin-bottom: 16px;
 }
 
-textarea, input[type="password"], input[type="text"] {
-  width: 100%;
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.95rem;
-  padding: 12px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-  color: var(--text);
-  transition: border-color 0.15s, background 0.15s;
-}
-
-textarea:focus, input:focus {
-  outline: none;
-  border-color: var(--green);
-  background: var(--white);
-}
-
-textarea {
-  min-height: 140px;
-  resize: vertical;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-label {
-  display: block;
-  font-weight: 700;
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-  color: var(--text);
-}
-
-.helper {
-  font-size: 0.82rem;
-  color: var(--muted);
-  margin-top: 6px;
-  line-height: 1.4;
-}
-
-.helper code {
-  background: var(--amber-light);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 0.85em;
-  color: var(--amber-dark);
-}
-
 .upload-area {
   border: 2.5px dashed var(--border);
   border-radius: 14px;
-  padding: 28px 16px;
+  padding: 40px 16px;
   text-align: center;
   background: var(--bg);
   cursor: pointer;
@@ -218,18 +156,19 @@ label {
 }
 
 .upload-icon {
-  font-size: 2.5rem;
-  margin-bottom: 8px;
+  font-size: 3.5rem;
+  margin-bottom: 12px;
 }
 
 .upload-label {
   font-weight: 700;
   color: var(--teal-dark);
   margin-bottom: 4px;
+  font-size: 1.05rem;
 }
 
 .upload-sublabel {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: var(--muted);
 }
 
@@ -270,6 +209,30 @@ label {
   margin-bottom: 6px;
 }
 
+.preview-qr-status {
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.preview-qr-status.found {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.preview-qr-status.notfound {
+  background: var(--warning-light);
+  color: var(--amber-dark);
+}
+
+.preview-qr-status.scanning {
+  background: var(--purple-light);
+  color: var(--purple);
+}
+
 .preview-remove {
   position: absolute;
   top: 6px;
@@ -292,66 +255,16 @@ label {
 
 .preview-remove:hover { background: var(--error); }
 
-@media (max-width: 540px) {
-  .preview-grid.two-images { grid-template-columns: 1fr; }
-}
-
-.options-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 8px;
-}
-
-.option {
-  flex: 1;
-  min-width: 180px;
-}
-
-select {
-  width: 100%;
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.95rem;
-  padding: 12px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-  cursor: pointer;
-}
-
-.checkbox-row {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.checkbox-item:hover { border-color: var(--green); }
-.checkbox-item input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--green); }
-.checkbox-item span { font-weight: 600; font-size: 0.92rem; }
-
 .btn-primary {
   display: block;
   width: 100%;
   background: linear-gradient(135deg, var(--amber), var(--coral));
   color: white;
   border: none;
-  padding: 16px 24px;
+  padding: 18px 24px;
   border-radius: 14px;
   font-family: 'Fredoka', sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
@@ -368,9 +281,7 @@ select {
   cursor: not-allowed;
 }
 
-.results {
-  margin-top: 24px;
-}
+.results { margin-top: 24px; }
 
 .result-summary {
   display: flex;
@@ -428,11 +339,7 @@ select {
   font-style: italic;
 }
 
-.task-feedback {
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
+.task-feedback { font-size: 0.95rem; line-height: 1.5; }
 .task-feedback strong { color: var(--text); }
 
 .loading {
@@ -461,27 +368,67 @@ select {
   border: 1.5px solid var(--error);
   border-radius: 10px;
   color: var(--error);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   margin-top: 12px;
-}
-
-.demo-notice {
-  background: var(--purple-light);
-  border: 1.5px solid var(--purple);
-  border-radius: 10px;
-  padding: 12px 16px;
-  margin-bottom: 18px;
-  font-size: 0.88rem;
-  color: var(--purple);
   line-height: 1.5;
 }
 
-.demo-notice strong { display: block; margin-bottom: 3px; }
+.error-msg strong { display: block; margin-bottom: 4px; font-size: 1rem; }
+
+/* Settings (skjult bak liten knapp) */
+.settings-toggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+  margin: 8px auto 0;
+  display: block;
+  font-family: inherit;
+}
+
+.settings-panel {
+  background: var(--purple-light);
+  border: 1.5px solid var(--purple);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: none;
+}
+
+.settings-panel.open { display: block; }
+
+.settings-panel label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+  color: var(--purple);
+}
+
+.settings-panel input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--white);
+}
+
+.settings-panel .helper-text {
+  font-size: 0.78rem;
+  color: var(--purple);
+  margin-top: 6px;
+  line-height: 1.4;
+  opacity: 0.8;
+}
 
 @media (max-width: 540px) {
   .hero h1 { font-size: 1.75rem; }
   .card { padding: 18px; }
-  .options-row { flex-direction: column; gap: 12px; }
+  .preview-grid.two-images { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -490,82 +437,38 @@ select {
 <div class="hero">
   <div class="container">
     <a href="#" class="btn-back" onclick="alert('I produksjon: tilbake til Myntland forsiden'); return false;">← Tilbake</a>
-    <div class="hero-eyebrow">Myntland · Lærerverktøy</div>
-    <h1>📸 Retteportal</h1>
-    <p>Last opp bildet av leksen, så får eleven tilbakemelding på hver oppgave</p>
+    <div class="hero-eyebrow">Myntland</div>
+    <h1>📸 Rett leksen din</h1>
+    <p>Ta bilde av leksen, så får du tilbakemelding på hver oppgave</p>
   </div>
 </div>
 
 <div class="container">
 
-  <div class="demo-notice">
-    <strong>🧪 Prototype</strong>
-    Dette er en testversjon. I den endelige versjonen leses fasit og krav automatisk fra QR-koden på leksearket — eleven trenger bare å laste opp bildet. For nå skriver vi inn fasiten manuelt.
-  </div>
-
-  <!-- API key -->
-  <div class="card">
-    <h2><span class="step-num">1</span> Claude API-nøkkel</h2>
-    <p class="card-desc">Trengs kun for testing. I produksjon ligger nøkkelen trygt på en server.</p>
+  <!-- Settings (skjult, åpnes med knapp) -->
+  <div class="settings-panel" id="settingsPanel">
+    <label>Claude API-nøkkel</label>
     <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
-    <p class="helper">Lagres bare i nettleseren din (localStorage). Få nøkkel på <code>console.anthropic.com</code></p>
-  </div>
-
-  <!-- Trinn og krav -->
-  <div class="card">
-    <h2><span class="step-num">2</span> Trinn og krav</h2>
-    <p class="card-desc">Disse hentes automatisk fra QR-koden i den ferdige versjonen.</p>
-    <div class="options-row">
-      <div class="option">
-        <label>🏫 Trinn</label>
-        <select id="trinn">
-          <option value="2">2. trinn</option>
-          <option value="3">3. trinn</option>
-          <option value="4" selected>4. trinn</option>
-          <option value="5">5. trinn</option>
-          <option value="6">6. trinn</option>
-          <option value="7">7. trinn</option>
-        </select>
-      </div>
-    </div>
-    <div class="checkbox-row">
-      <label class="checkbox-item">
-        <input type="checkbox" id="kravOppstilling" checked>
-        <span>📐 Krev oppstilling (sifre under hverandre, mente synlig)</span>
-      </label>
-      <label class="checkbox-item">
-        <input type="checkbox" id="kravSvarsetning" checked>
-        <span>📝 Krev svarsetning på tekstoppgaver</span>
-      </label>
+    <div class="helper-text">
+      Lagres bare i nettleseren din. I produksjon ligger nøkkelen trygt på Myntland-serveren — eleven trenger den ikke.
     </div>
   </div>
 
-  <!-- Fasit -->
+  <!-- Last opp -->
   <div class="card">
-    <h2><span class="step-num">3</span> Fasit</h2>
-    <p class="card-desc">Skriv hver oppgave på én linje: <code>nr. regnestykke = svar</code>. For tekstoppgaver, skriv også oppgaveteksten.</p>
-    <textarea id="fasit" placeholder="1. 247 + 158 = 405
-2. 632 - 178 = 454
-3. 24 · 7 = 168
-4. 144 : 6 = 24
-5. Tekstoppgave: Kari har 24 kr. Hun kjøper en is til 17 kr. Hvor mye har hun igjen? = 7 (Kari har 7 kr igjen)"></textarea>
-    <p class="helper">Eksempel-format vises som plassholder.</p>
-  </div>
-
-  <!-- Bilder -->
-  <div class="card">
-    <h2><span class="step-num">4</span> Bilde(r) av leksen</h2>
-    <p class="card-desc">Ta bilde rett ovenfra med god belysning. Tosidig lekse? Last opp begge sidene.</p>
+    <h2>📷 Last opp bilde av leksen</h2>
+    <p class="card-desc">Ta bilde rett ovenfra med god belysning. Hele arket må være med — særlig QR-koden nederst. Tosidig lekse? Last opp begge sidene.</p>
     <div class="upload-area" id="uploadArea">
       <input type="file" id="bildeInput" accept="image/*" capture="environment" multiple>
       <div class="upload-icon">📷</div>
-      <div class="upload-label">Trykk for å laste opp eller ta bilde</div>
-      <div class="upload-sublabel">Du kan legge til 1 eller 2 bilder · JPG, PNG eller HEIC · maks 20 MB per bilde</div>
+      <div class="upload-label">Trykk for å ta bilde eller velge fra galleriet</div>
+      <div class="upload-sublabel">JPG, PNG eller HEIC · 1 eller 2 bilder</div>
     </div>
     <div class="preview-grid" id="preview"></div>
+    <button class="settings-toggle" id="settingsToggle">⚙️ Innstillinger</button>
   </div>
 
-  <button class="btn-primary" id="rettBtn" disabled>✨ Rett leksen</button>
+  <button class="btn-primary" id="rettBtn" disabled>✨ Rett leksen min</button>
 
   <div id="errorBox"></div>
   <div id="results" class="results"></div>
@@ -573,7 +476,7 @@ select {
 </div>
 
 <script>
-// API key persistence
+// ─── Settings ───
 const apiKeyInput = document.getElementById('apiKey');
 apiKeyInput.value = localStorage.getItem('claudeApiKey') || '';
 apiKeyInput.addEventListener('change', () => {
@@ -581,18 +484,22 @@ apiKeyInput.addEventListener('change', () => {
   updateButton();
 });
 
-// File upload (støtter 1-2 bilder)
+document.getElementById('settingsToggle').addEventListener('click', () => {
+  document.getElementById('settingsPanel').classList.toggle('open');
+});
+
+// ─── Bilder + QR-skanning ───
 const uploadArea = document.getElementById('uploadArea');
 const bildeInput = document.getElementById('bildeInput');
 const preview = document.getElementById('preview');
-let bilder = []; // {base64, mediaType, dataUrl}
+let bilder = []; // {base64, mediaType, dataUrl, qrData, qrStatus}
 
 bildeInput.addEventListener('change', () => {
   for (const file of bildeInput.files) {
     if (bilder.length >= 2) break;
     leggTilBilde(file);
   }
-  bildeInput.value = ''; // reset så samme fil kan velges igjen
+  bildeInput.value = '';
 });
 
 uploadArea.addEventListener('dragover', e => {
@@ -618,13 +525,18 @@ function leggTilBilde(file) {
   const reader = new FileReader();
   reader.onload = e => {
     const dataUrl = e.target.result;
+    const indeks = bilder.length;
     bilder.push({
       mediaType: dataUrl.split(';')[0].split(':')[1],
       base64: dataUrl.split(',')[1],
-      dataUrl: dataUrl
+      dataUrl: dataUrl,
+      qrData: null,
+      qrStatus: 'scanning'
     });
     renderPreviews();
     updateButton();
+    // Skann QR-koden i bakgrunnen
+    scanQRFromImage(dataUrl, indeks);
   };
   reader.readAsDataURL(file);
 }
@@ -635,6 +547,57 @@ function fjernBilde(indeks) {
   updateButton();
 }
 
+// Bruk jsQR til å lese QR-kode fra bildet. Vi tegner bildet til canvas
+// og prøver å skanne. Hvis bildet er stort, prøver vi flere skala-nivåer
+// for å øke sjansen for å finne en lesbar QR.
+function scanQRFromImage(dataUrl, indeks) {
+  const img = new Image();
+  img.onload = () => {
+    if (typeof jsQR === 'undefined') {
+      console.warn('jsQR ikke lastet');
+      bilder[indeks].qrStatus = 'notfound';
+      renderPreviews();
+      return;
+    }
+
+    // Prøv først full størrelse, så halv, så kvart — i tilfelle bildet er
+    // veldig stort eller veldig lite. Stopp så snart QR finnes.
+    const skalaer = [1, 0.7, 1.4, 0.5];
+    let found = null;
+    for (const s of skalaer) {
+      const w = Math.round(img.width * s);
+      const h = Math.round(img.height * s);
+      // Begrens til rimelig størrelse for ytelse
+      if (w > 3000 || h > 3000) continue;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const code = jsQR(imageData.data, w, h, { inversionAttempts: 'attemptBoth' });
+      if (code && code.data && code.data.startsWith('M1|')) {
+        found = code.data;
+        break;
+      }
+    }
+
+    if (found) {
+      bilder[indeks].qrData = found;
+      bilder[indeks].qrStatus = 'found';
+    } else {
+      bilder[indeks].qrStatus = 'notfound';
+    }
+    renderPreviews();
+    updateButton();
+  };
+  img.onerror = () => {
+    bilder[indeks].qrStatus = 'notfound';
+    renderPreviews();
+  };
+  img.src = dataUrl;
+}
+
 function renderPreviews() {
   if (bilder.length === 0) {
     preview.innerHTML = '';
@@ -643,35 +606,86 @@ function renderPreviews() {
     return;
   }
   preview.className = 'preview-grid' + (bilder.length === 2 ? ' two-images' : '');
-  preview.innerHTML = bilder.map((b, i) => `
-    <div class="preview-item">
-      <div class="preview-label">${bilder.length === 1 ? 'Bilde' : (i === 0 ? 'Side 1' : 'Side 2')}</div>
-      <img src="${b.dataUrl}" alt="Forhåndsvisning">
-      <button class="preview-remove" onclick="fjernBilde(${i})" title="Fjern">×</button>
-    </div>
-  `).join('');
-  // Skjul opplastingsfeltet når to bilder er lastet opp
+  preview.innerHTML = bilder.map((b, i) => {
+    let statusHtml = '';
+    if (b.qrStatus === 'scanning') {
+      statusHtml = `<div class="preview-qr-status scanning">🔍 Leser QR-kode…</div>`;
+    } else if (b.qrStatus === 'found') {
+      statusHtml = `<div class="preview-qr-status found">✓ QR-kode funnet</div>`;
+    } else {
+      statusHtml = `<div class="preview-qr-status notfound">⚠ Fant ikke QR-kode</div>`;
+    }
+    return `
+      <div class="preview-item">
+        <div class="preview-label">${bilder.length === 1 ? 'Bilde' : (i === 0 ? 'Side 1' : 'Side 2')}</div>
+        <img src="${b.dataUrl}" alt="Forhåndsvisning">
+        ${statusHtml}
+        <button class="preview-remove" onclick="fjernBilde(${i})" title="Fjern">×</button>
+      </div>
+    `;
+  }).join('');
   uploadArea.style.display = bilder.length >= 2 ? 'none' : 'block';
   if (bilder.length === 1) {
     uploadArea.querySelector('.upload-label').textContent = 'Legg til side 2 (valgfritt)';
-    uploadArea.querySelector('.upload-sublabel').textContent = 'Eller trykk «Rett leksen» hvis det bare er én side';
+    uploadArea.querySelector('.upload-sublabel').textContent = 'Eller trykk «Rett leksen» hvis det er bare én side';
   } else {
-    uploadArea.querySelector('.upload-label').textContent = 'Trykk for å laste opp eller ta bilde';
-    uploadArea.querySelector('.upload-sublabel').textContent = 'Du kan legge til 1 eller 2 bilder · JPG, PNG eller HEIC · maks 20 MB per bilde';
+    uploadArea.querySelector('.upload-label').textContent = 'Trykk for å ta bilde eller velge fra galleriet';
+    uploadArea.querySelector('.upload-sublabel').textContent = 'JPG, PNG eller HEIC · 1 eller 2 bilder';
   }
 }
-
-// Fasit listener
-document.getElementById('fasit').addEventListener('input', updateButton);
 
 function updateButton() {
   const btn = document.getElementById('rettBtn');
   const apiKey = apiKeyInput.value.trim();
-  const fasit = document.getElementById('fasit').value.trim();
-  btn.disabled = !(apiKey && fasit && bilder.length > 0);
+  // Knappen er aktiv hvis: nøkkel finnes + minst ett bilde + minst én av bildene har QR
+  // (vi krever ikke QR i alle bildene, men minst ett må ha den så vi har fasit)
+  const noenHarQR = bilder.some(b => b.qrData);
+  const noenSkanner = bilder.some(b => b.qrStatus === 'scanning');
+  btn.disabled = !(apiKey && bilder.length > 0 && noenHarQR && !noenSkanner);
+
+  // Oppdater knappetekst
+  if (noenSkanner) {
+    btn.textContent = '🔍 Leser QR-kode…';
+  } else if (bilder.length > 0 && !noenHarQR) {
+    btn.textContent = '⚠ QR-kode mangler — ta nytt bilde';
+  } else {
+    btn.textContent = '✨ Rett leksen min';
+  }
 }
 
-// Rett-knapp
+// ─── Parsing av QR-data ───
+// Format: "M1|t=4|o=1|s=1|w=17|a=1:405:a,2:454:s,3:T:t,..."
+// hvor hver oppgave er "nr:svar:type" og type er a/s/m/d/t (add/sub/mul/div/txt)
+function parseFasit(qrData) {
+  if (!qrData || !qrData.startsWith('M1|')) return null;
+  const parts = qrData.split('|');
+  const result = { version: parts[0], svar: {}, opType: {} };
+  // Mappingen tilbake fra kompakt kode
+  const typeMap = { a: 'add', s: 'sub', m: 'mul', d: 'div', t: 'txt' };
+  for (const p of parts.slice(1)) {
+    const eq = p.indexOf('=');
+    if (eq < 0) continue;
+    const key = p.slice(0, eq);
+    const val = p.slice(eq + 1);
+    if (key === 'a') {
+      // Parse svar-listen: "nr:svar:type" eller (gammelt format) "nr:svar"
+      val.split(',').forEach(pair => {
+        const sub = pair.split(':');
+        const nr = sub[0];
+        result.svar[nr] = sub[1];
+        // Type kan mangle i gammelt format
+        if (sub.length >= 3) {
+          result.opType[nr] = typeMap[sub[2]] || 'add';
+        }
+      });
+    } else {
+      result[key] = val;
+    }
+  }
+  return result;
+}
+
+// ─── Rette-knapp ───
 document.getElementById('rettBtn').addEventListener('click', rettLekse);
 
 async function rettLekse() {
@@ -679,42 +693,83 @@ async function rettLekse() {
   const errorBox = document.getElementById('errorBox');
   const results = document.getElementById('results');
   errorBox.innerHTML = '';
-  results.innerHTML = `<div class="loading"><div class="spinner"></div><div>Claude leser leksen og sjekker hver oppgave...</div></div>`;
+  results.innerHTML = `<div class="loading"><div class="spinner"></div><div>Claude leser leksen og sjekker hver oppgave…</div></div>`;
   btn.disabled = true;
 
   const apiKey = apiKeyInput.value.trim();
-  const trinn = document.getElementById('trinn').value;
-  const kravOppstilling = document.getElementById('kravOppstilling').checked;
-  const kravSvarsetning = document.getElementById('kravSvarsetning').checked;
-  const fasit = document.getElementById('fasit').value.trim();
 
-  // Bygg prompt
-  const trinnTekst = parseInt(trinn) <= 3 ? 'tidligtrinn (2-3)' : parseInt(trinn) <= 5 ? 'mellomtrinn (4-5)' : 'mellomtrinn-høyt (6-7)';
-  const tone = parseInt(trinn) <= 3
+  // Finn fasit fra QR-kode (bruk første bilde med QR)
+  const bildeMedQR = bilder.find(b => b.qrData);
+  const fasit = parseFasit(bildeMedQR.qrData);
+
+  if (!fasit) {
+    errorBox.innerHTML = `<div class="error-msg"><strong>Klarte ikke å lese QR-koden</strong>QR-koden ser ikke ut til å være fra Myntland. Be læreren om et nytt ark.</div>`;
+    results.innerHTML = '';
+    updateButton();
+    return;
+  }
+
+  const trinn = parseInt(fasit.t) || 4;
+  const kravOppstilling = fasit.o === '1';
+  const kravSvarsetning = fasit.s === '1';
+
+  // Bygg fasit-tekst Claude kan forstå, med regneart per oppgave
+  const opLabel = {
+    add: 'pluss',
+    sub: 'minus',
+    mul: 'gange',
+    div: 'dele',
+    txt: 'tekstoppgave'
+  };
+  const fasitLinjer = Object.entries(fasit.svar).map(([nr, svar]) => {
+    const op = fasit.opType[nr] || 'add';
+    const label = opLabel[op];
+    if (svar === 'T') return `Oppgave ${nr} (${label}): les oppgaveteksten i bildet og regn ut riktig svar selv`;
+    if (svar === '?') return `Oppgave ${nr} (${label}): ukjent svar (regn ut selv)`;
+    return `Oppgave ${nr} (${label}): svar = ${svar}`;
+  }).join('\n');
+
+  const trinnTekst = trinn <= 3 ? 'tidligtrinn (2-3)' : trinn <= 5 ? 'mellomtrinn (4-5)' : 'mellomtrinn-høyt (6-7)';
+  const tone = trinn <= 3
     ? 'svært vennlig, oppmuntrende, mye ros. Bruk korte enkle setninger.'
-    : parseInt(trinn) <= 5
+    : trinn <= 5
     ? 'vennlig og oppmuntrende, men tydelig på hva som mangler.'
     : 'tydelig og presis, men positiv. Forvent god kvalitet.';
+
+  // Bygg presise krav per regneart. Oppstilling sjekkes KUN for pluss/minus.
+  // For gange/dele sjekker vi bare svaret — ikke hvordan eleven har stilt opp.
+  const kravTekst = [];
+  if (kravOppstilling) {
+    kravTekst.push('PLUSS/MINUS: Krev synlig oppstilling med sifrene under hverandre. Mente eller lån skal være synlig der det er nødvendig. Hvis svaret er riktig men oppstilling mangler eller er rotete, gi status "partial" med vennlig påminnelse om å sette opp neste gang.');
+  } else {
+    kravTekst.push('PLUSS/MINUS: Sjekk kun at svaret er riktig. Ikke kommenter oppstilling.');
+  }
+  kravTekst.push('GANGE og DELE: Krev at eleven har skrevet hele regnestykket (f.eks. "24 · 7 = 168" eller "144 : 6 = 24"), ikke bare svaret alene. Hvis bare svaret er skrevet uten regnestykket, gi status "partial" med vennlig påminnelse om å skrive hele regnestykket. Hvis regnestykket er skrevet og svaret er riktig, gi status "correct" — uansett hvordan eleven har stilt det opp.');
+  if (kravSvarsetning) {
+    kravTekst.push('TEKSTOPPGAVER: Krev hel svarsetning ("Kari har 7 kr igjen"), ikke bare et tall. Hvis svaret er riktig men svarsetning mangler, gi status "partial".');
+  } else {
+    kravTekst.push('TEKSTOPPGAVER: Sjekk kun at svaret er riktig.');
+  }
 
   const flerSidet = bilder.length > 1;
   const prompt = `Du retter en mattelekse for en elev på ${trinn}. trinn (${trinnTekst}).
 
 ${flerSidet ? `Leksen er på ${bilder.length} sider — ${bilder.map((_, i) => `side ${i + 1}`).join(' og ')} følger som separate bilder i samme rekkefølge.` : ''}
 
-FASIT:
-${fasit}
+FASIT (fra QR-koden på arket — regneart i parentes):
+${fasitLinjer}
 
-KRAV TIL ELEVEN:
-- ${kravOppstilling ? 'JA — krev synlig oppstilling for pluss/minus/gange/dele (sifre under hverandre, mente/lån synlig der relevant). Hvis svaret er riktig men oppstilling mangler, gi delvis godkjenning.' : 'Ikke krev oppstilling.'}
-- ${kravSvarsetning ? 'JA — krev hel svarsetning på tekstoppgaver ("Kari har 7 kr igjen"), ikke bare et tall.' : 'Ikke krev svarsetning.'}
+KRAV TIL ELEVEN PER REGNEART:
+${kravTekst.map(k => '- ' + k).join('\n')}
 
 TONE: ${tone} Skriv tilbakemelding direkte til eleven (du-form).
 
 VIKTIG når du leser bildet${flerSidet ? 'ene' : ''}:
 - Eleven skriver med blyant. Vær tolerant for utydelig skrift.
-- Hvis du er usikker på hva eleven skrev (f.eks. 1 vs 7, 0 vs 6), nevn det i tilbakemeldingen.
-- Hvis du ikke kan se en oppgave i bildet, si det.
+- Hvis du er usikker på hva eleven skrev (f.eks. 1 vs 7, 0 vs 6), nevn det vennlig i tilbakemeldingen.
+- Hvis du ikke kan se en oppgave i bildet, marker den som "wrong" og forklar at du ikke kunne se den.
 ${flerSidet ? '- Oppgavenummer fortsetter på tvers av sidene (ikke begynn på 1 igjen på side 2).' : ''}
+- For tekstoppgaver må du selv lese oppgaven fra bildet og regne ut riktig svar.
 
 Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rundt):
 {
@@ -723,7 +778,6 @@ Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rund
       "nummer": 1,
       "oppgave": "247 + 158",
       "elev_svar": "405",
-      "elev_oppstilling": true,
       "status": "correct",
       "tilbakemelding": "Helt riktig! Fin oppstilling med menteret."
     }
@@ -731,9 +785,8 @@ Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rund
   "oppsummering": "Bra jobbet! Du fikk 4 av 5 riktig."
 }
 
-status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangler som oppstilling/svarsetning), eller "wrong" (feil svar).`;
+status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangler som oppstilling/svarsetning der det er krav), eller "wrong" (feil svar).`;
 
-  // Bygg content-array: alle bilder først, så prompt-tekst
   const contentBlocks = [];
   bilder.forEach((b, i) => {
     if (flerSidet) {
@@ -758,10 +811,7 @@ status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangle
       body: JSON.stringify({
         model: 'claude-opus-4-7',
         max_tokens: 2000,
-        messages: [{
-          role: 'user',
-          content: contentBlocks
-        }]
+        messages: [{ role: 'user', content: contentBlocks }]
       })
     });
 
@@ -777,10 +827,8 @@ status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangle
 
     const data = await response.json();
     const text = data.content.map(c => c.text || '').join('').trim();
-    
-    // Strip markdown fences hvis Claude legger dem på
     const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-    
+
     let parsed;
     try {
       parsed = JSON.parse(cleaned);
@@ -792,7 +840,7 @@ status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangle
 
   } catch (err) {
     results.innerHTML = '';
-    errorBox.innerHTML = `<div class="error-msg"><strong>Noe gikk galt:</strong> ${err.message}</div>`;
+    errorBox.innerHTML = `<div class="error-msg"><strong>Noe gikk galt</strong>${err.message}</div>`;
   } finally {
     updateButton();
   }
@@ -806,8 +854,6 @@ function visResultater(data) {
   const allCorrect = antallRiktig === antallTotalt && antallTotalt > 0;
 
   let html = '';
-
-  // Oppsummering
   html += `<div class="result-summary ${allCorrect ? 'all-correct' : 'has-errors'}">
     <div class="big-emoji">${allCorrect ? '🎉' : '💪'}</div>
     <div class="summary-text">
@@ -816,7 +862,6 @@ function visResultater(data) {
     </div>
   </div>`;
 
-  // Hver oppgave
   oppgaver.forEach(o => {
     const icon = o.status === 'correct' ? '✅' : o.status === 'partial' ? '⚠️' : '❌';
     const statusClass = o.status === 'correct' ? 'correct' : o.status === 'partial' ? 'partial' : 'wrong';
