@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Økonomikalkulator – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Myntland – Økonomikalkulator" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  a { color: var(--green-dark); }
+
+  /* Topp-nav */
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    color: white;
+    padding: 3rem 1.5rem 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(216, 90, 48, 0.18) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  h1 .accent { color: var(--amber); }
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.1rem);
+    color: rgba(255,255,255,0.9);
+    max-width: 640px;
+    margin: 0 auto;
+    font-weight: 600;
+  }
+
+  /* Layout */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* Hjelp-blokk øverst */
+  .help-box {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  .help-item {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+  }
+  .help-icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+  .help-icon.amber {
+    background: var(--amber-light);
+    color: var(--amber-dark);
+  }
+  .help-icon.green {
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .help-text strong {
+    display: block;
+    color: var(--teal-dark);
+    margin-bottom: 2px;
+    font-size: 0.95rem;
+  }
+  .help-text span {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  /* Kalkulator-grid */
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.75rem 1.85rem;
+  }
+
+  .panel h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--teal-dark);
+    margin-bottom: 0.3rem;
+    line-height: 1.15;
+  }
+  .panel .panel-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+
+  .panel-section-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.05rem;
+    color: var(--teal-dark);
+    margin-top: 1.5rem;
+    margin-bottom: 0.3rem;
+    padding-top: 1.25rem;
+    border-top: 2px dashed var(--border);
+  }
+  .panel-section-sub {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  /* Felter */
+  .field {
+    margin-bottom: 1rem;
+  }
+  .field label {
+    display: block;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--teal-dark);
+    margin-bottom: 0.4rem;
+  }
+  .field .hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+
+  .input-group {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .input-group:focus-within {
+    border-color: var(--green);
+    background: var(--white);
+  }
+  .input-group input {
+    flex: 1;
+    padding: 0.65rem 0.85rem;
+    border: none;
+    background: transparent;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--teal-dark);
+    outline: none;
+    width: 100%;
+  }
+  .input-group .suffix {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--muted);
+    padding-right: 0.85rem;
+    white-space: nowrap;
+  }
+
+  /* Avansert */
+  details.advanced {
+    margin-top: 1rem;
+    padding: 1rem 1.1rem;
+    background: var(--green-light);
+    border-radius: 12px;
+    border: 1px dashed var(--green);
+  }
+  details.advanced summary {
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--green-dark);
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  details.advanced summary::before {
+    content: '▶';
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+  }
+  details.advanced[open] summary::before {
+    transform: rotate(90deg);
+  }
+  details.advanced summary::-webkit-details-marker {
+    display: none;
+  }
+  details.advanced .field {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* RESULTAT-panel */
+  .panel.resultat {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648 80%);
+    border-color: var(--teal-dark);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel.resultat::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 90% 10%, rgba(239, 159, 39, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 10% 90%, rgba(29, 158, 117, 0.15) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .panel.resultat > * { position: relative; z-index: 1; }
+  .panel.resultat h2 { color: white; }
+  .panel.resultat .panel-sub { color: rgba(255,255,255,0.7); }
+  .panel.resultat .panel-section-title {
+    color: white;
+    border-top-color: rgba(255,255,255,0.15);
+  }
+  .panel.resultat .panel-section-sub {
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* KPI-kort */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .kpi {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+  }
+  .kpi.featured {
+    background: rgba(239, 159, 39, 0.12);
+    border-color: rgba(239, 159, 39, 0.35);
+  }
+  .kpi-lab {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.65);
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .kpi-val {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--amber);
+    line-height: 1.1;
+  }
+  .kpi.featured .kpi-val { color: var(--amber); }
+  .kpi-sub {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.65);
+    margin-top: 3px;
+    font-weight: 600;
+  }
+
+  /* Sparemål */
+  .sparemaal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.6rem;
+  }
+  .niva {
+    background: white;
+    color: var(--teal-dark);
+    border-radius: 14px;
+    padding: 1rem 0.75rem;
+    text-align: center;
+    border: 3px solid white;
+  }
+  .niva.lett { border-top: 6px solid var(--green); }
+  .niva.middels { border-top: 6px solid var(--amber); }
+  .niva.hoyt { border-top: 6px solid var(--coral); }
+
+  .niva-lab {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 900;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .niva-mynter {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.55rem;
+    line-height: 1;
+    color: var(--teal-dark);
+  }
+  .niva-mynter::after {
+    content: ' 🪙';
+    font-size: 0.85rem;
+  }
+  .niva-uker {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 5px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Varsler */
+  .varsel {
+    margin-top: 1rem;
+    padding: 0.75rem 0.95rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    font-weight: 600;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .varsel .ikon {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+  .varsel.ok {
+    background: rgba(29, 158, 117, 0.18);
+    border: 1px solid rgba(29, 158, 117, 0.4);
+    color: white;
+  }
+  .varsel.advarsel {
+    background: rgba(239, 159, 39, 0.18);
+    border: 1px solid rgba(239, 159, 39, 0.45);
+    color: white;
+  }
+  .varsel.feil {
+    background: rgba(216, 90, 48, 0.2);
+    border: 1px solid rgba(216, 90, 48, 0.45);
+    color: white;
+  }
+  .varsel strong { font-weight: 900; }
+
+  .liten-note {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 1rem;
+    line-height: 1.4;
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  /* Butikk-tips */
+  .tips-section {
+    margin-top: 2rem;
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.75rem 1.85rem;
+  }
+  .tips-section h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    color: var(--teal-dark);
+    margin-bottom: 0.35rem;
+  }
+  .tips-section .tips-sub {
+    font-size: 0.88rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+  }
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.85rem;
+  }
+  .tips-item {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    border-left: 5px solid var(--amber);
+  }
+  .tips-item .kategori {
+    display: inline-block;
+    background: var(--amber-light);
+    color: var(--amber-dark);
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .tips-item .tips-navn {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1rem;
+    line-height: 1.2;
+    margin-bottom: 0.35rem;
+  }
+  .tips-item .tips-meta {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .tips-item .tips-pris {
+    font-family: 'Fredoka One', cursive;
+    color: var(--amber-dark);
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 820px) {
+    .calc-grid { grid-template-columns: 1fr; }
+    .help-box { grid-template-columns: 1fr; padding: 1.25rem; }
+  }
+
+  @media (max-width: 520px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .sparemaal-grid { grid-template-columns: 1fr; }
+    main { padding: 1.75rem 1rem 3rem; }
+  }
+
+  /* Footer */
+  footer {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  footer a { color: var(--muted); margin: 0 0.5rem; }
+  footer a:hover { color: var(--green-dark); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">For lærere · 5.–7. trinn</div>
+    <h1>Økonomi<span class="accent">kalkulator</span></h1>
+    <p class="hero-sub">Skriv inn klassens størrelse, ukelønn og faste utgifter – så foreslår kalkulatoren en balansert klasseøkonomi og passende sparemål-grenser.</p>
+  </div>
+</section>
+
+<main>
+
+  <!-- Hjelp-blokk -->
+  <div class="help-box">
+    <div class="help-item">
+      <div class="help-icon amber">💡</div>
+      <div class="help-text">
+        <strong>Slik bruker du kalkulatoren</strong>
+        <span>Endre tallene – alt regnes automatisk. Ingen data lagres; alt skjer lokalt i nettleseren din.</span>
+      </div>
+    </div>
+    <div class="help-item">
+      <div class="help-icon green">🪙</div>
+      <div class="help-text">
+        <strong>Hva regnes ut?</strong>
+        <span>Klassens uketjening, skatt til sparemålene, hva elevene har igjen – og forslag til lett, middels og høyt sparemål.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kalkulator -->
+  <div class="calc-grid">
+
+    <!-- INPUT -->
+    <section class="panel">
+      <h2>Klassen din</h2>
+      <p class="panel-sub">Tall som driver hele økonomien.</p>
+
+      <div class="field">
+        <label for="elever">Antall elever</label>
+        <div class="input-group">
+          <input type="number" id="elever" min="1" max="40" value="22" step="1">
+          <span class="suffix">elever</span>
+        </div>
+        <div class="hint">Brukes til å regne klassens samlede lønn og skatteinngang.</div>
+      </div>
+
+      <div class="field">
+        <label for="lonn">Estimert ukelønn/belønning per elev</label>
+        <div class="input-group">
+          <input type="number" id="lonn" min="0" max="2000" value="200" step="10">
+          <span class="suffix">🪙 / uke</span>
+        </div>
+        <div class="hint">Hva en elev typisk tjener i uka totalt – lønn, belønninger og engangsoppdrag.</div>
+      </div>
+
+      <div class="field">
+        <label for="totalLonn">Totalt utbetalt fast lønn fra jobber</label>
+        <div class="input-group">
+          <input type="number" id="totalLonn" min="0" max="20000" value="2000" step="50">
+          <span class="suffix">🪙 / uke</span>
+        </div>
+        <div class="hint">Sum av alle faste ukelønninger i klassen. Viser hvor stor andel av tjeningen som er garantert vs. variabel.</div>
+      </div>
+
+      <div class="panel-section-title">Faste fredagsutgifter</div>
+      <p class="panel-section-sub">Trekkes automatisk fra brukskontoen hver fredag.</p>
+
+      <div class="field">
+        <label for="pult">Leie av pult</label>
+        <div class="input-group">
+          <input type="number" id="pult" min="0" value="20" step="5">
+          <span class="suffix">🪙 / uke</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="strom">Strøm (gjennomsnitt)</label>
+        <div class="input-group">
+          <input type="number" id="strom" min="0" value="15" step="5">
+          <span class="suffix">🪙 / uke</span>
+        </div>
+        <div class="hint">Tilfeldig innenfor min/max – bruk gjennomsnittet her.</div>
+      </div>
+
+      <div class="field">
+        <label for="ipad">Leie av iPad / utstyr</label>
+        <div class="input-group">
+          <input type="number" id="ipad" min="0" value="25" step="5">
+          <span class="suffix">🪙 / uke</span>
+        </div>
+      </div>
+
+      <details class="advanced">
+        <summary>Avanserte parametre</summary>
+        <div class="field">
+          <label for="skatt">Skatteprosent</label>
+          <div class="input-group">
+            <input type="number" id="skatt" min="0" max="50" value="20" step="1">
+            <span class="suffix">%</span>
+          </div>
+          <div class="hint">Standard i Myntland er 20 %. Trekkes fra lønn, belønninger og engangsoppdrag (men ikke onsdagshendelser).</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- RESULTAT -->
+    <section class="panel resultat">
+      <h2>Forslag til balanse</h2>
+      <p class="panel-sub">Beregnet automatisk når du endrer tallene.</p>
+
+      <div class="kpi-grid">
+        <div class="kpi featured">
+          <div class="kpi-lab">Klassens uketjening</div>
+          <div class="kpi-val" id="kpi-totallonn">—</div>
+          <div class="kpi-sub" id="kpi-totallonn-sub">lønn + belønninger</div>
+        </div>
+        <div class="kpi featured">
+          <div class="kpi-lab">Klassens skatt / uke</div>
+          <div class="kpi-val" id="kpi-skatt">—</div>
+          <div class="kpi-sub">fordeles på sparemålene</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-lab">Netto per elev / uke</div>
+          <div class="kpi-val" id="kpi-netto">—</div>
+          <div class="kpi-sub" id="kpi-netto-sub">etter skatt og utgifter</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lab">Garantert fast lønn</div>
+          <div class="kpi-val" id="kpi-garantert">—</div>
+          <div class="kpi-sub" id="kpi-garantert-sub">av uketjeningen</div>
+        </div>
+      </div>
+
+      <div class="panel-section-title">Foreslåtte sparemål-grenser</div>
+      <p class="panel-section-sub">Elevene velger selv hvilket av inntil 3 sparemål skatten deres støtter. Beregningen antar at skatten fordeles jevnt mellom målene.</p>
+
+      <div class="sparemaal-grid">
+        <div class="niva lett">
+          <div class="niva-lab">Lett</div>
+          <div class="niva-mynter" id="lett-mynter">—</div>
+          <div class="niva-uker" id="lett-uker">—</div>
+        </div>
+        <div class="niva middels">
+          <div class="niva-lab">Middels</div>
+          <div class="niva-mynter" id="middels-mynter">—</div>
+          <div class="niva-uker" id="middels-uker">—</div>
+        </div>
+        <div class="niva hoyt">
+          <div class="niva-lab">Høyt</div>
+          <div class="niva-mynter" id="hoyt-mynter">—</div>
+          <div class="niva-uker" id="hoyt-uker">—</div>
+        </div>
+      </div>
+
+      <div id="varsler"></div>
+
+      <p class="liten-note">Tallene er rundet til klassevennlige beløp. Tilpass gjerne etter klassens egne ønsker.</p>
+    </section>
+
+  </div>
+
+  <!-- Butikk-tips -->
+  <section class="tips-section">
+    <h2>🛒 Forslag til butikkpriser for 5.–7. trinn</h2>
+    <p class="tips-sub">Dette er bare eksempler på ting du kan ha i butikken – tilpass gjerne til klassens egne ønsker og skolens regler. Myntland-prinsippet: privilegier bør koste 1–3 ukers sparing. Prisene tilpasses din ukelønn.</p>
+
+    <div class="tips-grid" id="butikk-tips">
+      <!-- fylles dynamisk -->
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>🪙 Myntland © 2026</span><br>
+  <a href="index.html">Forsiden</a> ·
+  <a href="for-skoler.html">For skoler</a> ·
+  <a href="laererveiledning.html">Lærerveiledning</a> ·
+  <a href="mailto:kontakt@myntland.no">Kontakt</a>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const inputs = ['elever', 'lonn', 'totalLonn', 'pult', 'strom', 'ipad', 'skatt']
+    .map(id => $(id));
+
+  const rundTil = (val, n) => Math.max(0, Math.round(val / n) * n);
+
+  const fmt = (n) => {
+    if (!isFinite(n)) return '—';
+    return Math.round(n).toLocaleString('nb-NO').replace(/,/g, ' ');
+  };
+
+  const hent = (id, fallback = 0) => {
+    const v = parseFloat($(id).value);
+    return isNaN(v) ? fallback : v;
+  };
+
+  function regnUt() {
+    const elever = Math.max(1, hent('elever', 22));
+    const lonn = hent('lonn', 200);                  // typisk uketjening per elev (lønn + belønning)
+    const totalLonn = hent('totalLonn', 2000);       // sum av faste jobblønninger i klassen
+    const pult = hent('pult', 0);
+    const strom = hent('strom', 0);
+    const ipad = hent('ipad', 0);
+    const skatt = Math.min(50, Math.max(0, hent('skatt', 20))) / 100;
+
+    // Klassens samlede uketjening = snitt-tjening × elever
+    const klassenUketjening = lonn * elever;
+
+    // Skatt regnes fra hele uketjeningen (lønn + belønninger + engangsoppdrag beskattes alle)
+    // Onsdagshendelser inngår ikke fordi de utbetales utenom og ikke er en fast inntekt
+    const skattKlasse = klassenUketjening * skatt;
+
+    // Faste utgifter per elev
+    const fasteUtgifter = pult + strom + ipad;
+
+    // Snitt-skatt per elev
+    const snittSkattPerElev = skattKlasse / elever;
+
+    // Netto per elev = typisk uketjening − skatt − faste utgifter
+    const nettoPerElev = lonn - snittSkattPerElev - fasteUtgifter;
+
+    // Garantert-andel: hvor stor del av uketjeningen som er fast jobblønn
+    const garantertAndel = klassenUketjening > 0
+      ? (totalLonn / klassenUketjening) * 100
+      : 0;
+
+    // KPI-er
+    $('kpi-totallonn').textContent = fmt(klassenUketjening) + ' 🪙';
+    $('kpi-skatt').textContent = fmt(skattKlasse) + ' 🪙';
+    $('kpi-netto').textContent = fmt(nettoPerElev) + ' 🪙';
+    $('kpi-garantert').textContent = fmt(totalLonn) + ' 🪙';
+
+    // Kommentar på uketjeningen
+    $('kpi-totallonn-sub').textContent = elever + ' elever × ' + fmt(lonn) + ' 🪙 i snitt';
+
+    // Subtekst netto
+    if (nettoPerElev < 0) {
+      $('kpi-netto-sub').textContent = 'underskudd hver uke!';
+    } else if (nettoPerElev < lonn * 0.2) {
+      $('kpi-netto-sub').textContent = 'lite til overs til sparing';
+    } else {
+      $('kpi-netto-sub').textContent = 'å disponere fritt';
+    }
+
+    // Subtekst garantert
+    if (totalLonn === 0) {
+      $('kpi-garantert-sub').textContent = 'ingen faste jobber';
+    } else if (garantertAndel > 100) {
+      $('kpi-garantert-sub').textContent = 'høyere enn uketjeningen – sjekk tallene';
+    } else {
+      $('kpi-garantert-sub').textContent = Math.round(garantertAndel) + ' % av uketjeningen';
+    }
+
+    // SPAREMÅL — skatten fordeles på inntil 3 aktive sparemål
+    // Antar jevn fordeling: hvert mål får ca. 1/3 av skatteinngangen
+    const skattPerMaal = skattKlasse / 3;
+    const ukerLett = 2, ukerMiddels = 4, ukerHoyt = 8;
+
+    const avrund = (raw) => {
+      if (raw < 500) return rundTil(raw, 50);
+      if (raw < 5000) return rundTil(raw, 100);
+      return rundTil(raw, 500);
+    };
+
+    const lett = avrund(skattPerMaal * ukerLett);
+    const middels = avrund(skattPerMaal * ukerMiddels);
+    const hoyt = avrund(skattPerMaal * ukerHoyt);
+
+    $('lett-mynter').textContent = fmt(lett);
+    $('middels-mynter').textContent = fmt(middels);
+    $('hoyt-mynter').textContent = fmt(hoyt);
+
+    $('lett-uker').textContent = '~' + ukerLett + ' uker';
+    $('middels-uker').textContent = '~' + ukerMiddels + ' uker';
+    $('hoyt-uker').textContent = '~' + ukerHoyt + ' uker';
+
+    // VARSLER
+    const varsler = $('varsler');
+    varsler.innerHTML = '';
+
+    function leggTilVarsel(type, ikon, tekst) {
+      const div = document.createElement('div');
+      div.className = 'varsel ' + type;
+      div.innerHTML = '<span class="ikon">' + ikon + '</span><span>' + tekst + '</span>';
+      varsler.appendChild(div);
+    }
+
+    if (nettoPerElev < 0) {
+      leggTilVarsel('feil', '⚠️',
+        '<strong>Elevene går i minus hver uke.</strong> Faste utgifter + skatt overgår uketjeningen. Senk utgiftene eller hev lønn/belønning.');
+    } else if (nettoPerElev < 30 && lonn > 0) {
+      leggTilVarsel('advarsel', '💡',
+        'Elevene har lite til overs etter utgifter. Det blir lite rom for sparing eller butikk-kjøp.');
+    } else if (nettoPerElev > lonn * 0.7) {
+      leggTilVarsel('advarsel', '🎈',
+        'Mye penger blir igjen – kan gi mindre øvelse i å prioritere. Vurder noe høyere faste utgifter.');
+    } else {
+      leggTilVarsel('ok', '✓',
+        '<strong>Sunn balanse.</strong> Elevene har nok til både sparing, hendelser og kjøp i butikken.');
+    }
+
+    if (fasteUtgifter > lonn * 0.5) {
+      leggTilVarsel('feil', '⚠️',
+        'Faste utgifter alene tar mer enn 50 % av uketjeningen – det føles fort urettferdig. Vurder å senke utgiftene.');
+    }
+
+    if (skattKlasse < 100) {
+      leggTilVarsel('advarsel', '🐢',
+        'Liten skatteinngang gjør sparemålene treige å nå. Vurder flere elever, høyere uketjening eller høyere skattesats.');
+    }
+
+    if (totalLonn > klassenUketjening) {
+      leggTilVarsel('advarsel', '🤔',
+        'Total fast jobblønn er høyere enn klassens uketjening. Sjekk at tallene henger sammen.');
+    }
+
+    // BUTIKK-TIPS
+    const tipsBox = $('butikk-tips');
+    tipsBox.innerHTML = '';
+
+    const butikkTips = [
+      { navn: 'Låne en blyant', uker: 0.2, kategori: 'Småting' },
+      { navn: 'Låne en lader', uker: 0.2, kategori: 'Småting' },
+      { navn: 'Ny skrivebok', uker: 0.4, kategori: 'Utstyr' },
+      { navn: 'Velge musikk i timen', uker: 0.6, kategori: 'Privilegium' },
+      { navn: 'Sitte ved siden av en venn', uker: 1.2, kategori: 'Privilegium' },
+      { navn: 'Leksefri uke', uker: 2.5, kategori: 'Stort privilegium' },
+    ];
+
+    butikkTips.forEach(t => {
+      const pris = avrund(lonn * t.uker);
+      const tidsTekst = t.uker < 1
+        ? '~' + Math.round(t.uker * 5) + ' dagers lønn'
+        : '~' + t.uker.toFixed(1).replace('.', ',') + ' ukers lønn';
+      const div = document.createElement('div');
+      div.className = 'tips-item';
+      div.innerHTML =
+        '<span class="kategori">' + t.kategori + '</span>' +
+        '<div class="tips-navn">' + t.navn + '</div>' +
+        '<div class="tips-meta">' + tidsTekst + '</div>' +
+        '<div class="tips-pris">' + fmt(pris) + ' 🪙</div>';
+      tipsBox.appendChild(div);
+    });
+  }
+
+  inputs.forEach(el => {
+    el.addEventListener('input', regnUt);
+    el.addEventListener('change', regnUt);
+  });
+
+  regnUt();
+})();
+</script>
+
+</body>
+</html>
