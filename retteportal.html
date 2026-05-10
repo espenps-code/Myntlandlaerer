@@ -255,6 +255,23 @@ body {
 
 .preview-remove:hover { background: var(--error); }
 
+.qr-tips {
+  grid-column: 1 / -1;
+  background: var(--warning-light);
+  border: 1.5px solid var(--warning);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-top: 4px;
+  color: var(--amber-dark);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.qr-tips strong { display: block; margin-bottom: 8px; font-size: 0.95rem; }
+.qr-tips ul { margin: 0; padding-left: 20px; }
+.qr-tips li { margin-bottom: 4px; }
+.qr-tips li:last-child { margin-bottom: 0; }
+.qr-tips strong:first-child { display: block; }
+
 .btn-primary {
   display: block;
   width: 100%;
@@ -547,9 +564,10 @@ function fjernBilde(indeks) {
   updateButton();
 }
 
-// Bruk jsQR til å lese QR-kode fra bildet. Vi tegner bildet til canvas
-// og prøver å skanne. Hvis bildet er stort, prøver vi flere skala-nivåer
-// for å øke sjansen for å finne en lesbar QR.
+// Bruk jsQR til å lese QR-kode fra bildet. Skanning gjøres i flere
+// runder med ulike strategier for å takle vanskelige forhold som
+// telefon-bilder av skjerm (moiré-mønster, lav kontrast, små QR-koder
+// midt i et stort bilde).
 function scanQRFromImage(dataUrl, indeks) {
   const img = new Image();
   img.onload = () => {
@@ -560,26 +578,82 @@ function scanQRFromImage(dataUrl, indeks) {
       return;
     }
 
-    // Prøv først full størrelse, så halv, så kvart — i tilfelle bildet er
-    // veldig stort eller veldig lite. Stopp så snart QR finnes.
-    const skalaer = [1, 0.7, 1.4, 0.5];
+    const tryScan = (canvas) => {
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: 'attemptBoth' });
+      if (code && code.data && code.data.startsWith('M1|')) return code.data;
+      return null;
+    };
+
+    const makeCanvas = (w, h) => {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      return c;
+    };
+
     let found = null;
+
+    // STRATEGI 1: Hele bildet i ulike skala. QR-skannere fungerer
+    // best når QR-koden tar opp en betydelig del av bildet.
+    // Telefonbilder er ofte 4000×3000 mens QR-koden bare er 200×200,
+    // så nedskalering hjelper jsQR å se mønsteret tydeligere.
+    const skalaer = [1, 0.75, 0.5, 1.5, 0.35, 2];
     for (const s of skalaer) {
       const w = Math.round(img.width * s);
       const h = Math.round(img.height * s);
-      // Begrens til rimelig størrelse for ytelse
-      if (w > 3000 || h > 3000) continue;
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
+      if (w > 3000 || h > 3000 || w < 200 || h < 200) continue;
+      const canvas = makeCanvas(w, h);
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      found = tryScan(canvas);
+      if (found) break;
+    }
+
+    // STRATEGI 2: Beskjær til nedre høyre kvadrant (der QR-koden
+    // er printet). Dette fjerner forstyrrende elementer fra resten
+    // av arket og gir QR-koden mer "plass" i skanne-bildet.
+    if (!found) {
+      const kvadranter = [
+        // [xStart%, yStart%, bredde%, høyde%]
+        [0.55, 0.55, 0.45, 0.45], // nedre høyre kvadrant
+        [0.45, 0.45, 0.55, 0.55], // litt større nedre høyre
+        [0.65, 0.65, 0.35, 0.35], // mindre, mer presist
+        [0,    0.55, 1,    0.45], // hele bunnen
+      ];
+      for (const [xs, ys, ws, hs] of kvadranter) {
+        const sx = Math.round(img.width * xs);
+        const sy = Math.round(img.height * ys);
+        const sw = Math.round(img.width * ws);
+        const sh = Math.round(img.height * hs);
+        // Tegn til en canvas på 600x600 for konsistent skannerstørrelse
+        const target = 600;
+        const canvas = makeCanvas(target, target);
+        canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, target, target);
+        found = tryScan(canvas);
+        if (found) break;
+      }
+    }
+
+    // STRATEGI 3: Kontrastforbedring — for skjermbilder med lav
+    // kontrast eller refleksjoner. Vi øker kontrasten kraftig og
+    // skanner igjen. Dette hjelper også mot moiré-mønstre.
+    if (!found) {
+      const w = Math.min(img.width, 1500);
+      const h = Math.round(img.height * (w / img.width));
+      const canvas = makeCanvas(w, h);
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
       const imageData = ctx.getImageData(0, 0, w, h);
-      const code = jsQR(imageData.data, w, h, { inversionAttempts: 'attemptBoth' });
-      if (code && code.data && code.data.startsWith('M1|')) {
-        found = code.data;
-        break;
+      const data = imageData.data;
+      // Konverter til ren svart-hvitt med terskel — hjelper på
+      // skjermbilder hvor "svart" er mer som mørkegrå
+      for (let i = 0; i < data.length; i += 4) {
+        const grayscale = (data[i] + data[i+1] + data[i+2]) / 3;
+        const bw = grayscale < 128 ? 0 : 255;
+        data[i] = data[i+1] = data[i+2] = bw;
       }
+      ctx.putImageData(imageData, 0, 0);
+      found = tryScan(canvas);
     }
 
     if (found) {
@@ -624,6 +698,24 @@ function renderPreviews() {
       </div>
     `;
   }).join('');
+
+  // Hvis QR mangler i ALLE bilder, vis hjelpetips
+  const allMissingQR = bilder.length > 0 && bilder.every(b => b.qrStatus === 'notfound');
+  if (allMissingQR) {
+    const tipsBox = document.createElement('div');
+    tipsBox.className = 'qr-tips';
+    tipsBox.innerHTML = `
+      <strong>💡 Tips for å få QR-koden lest:</strong>
+      <ul>
+        <li><strong>Print arket på papir</strong> hvis mulig — bilder av skjermer er vanskelige å lese fordi de gir uskarpe striper (moiré-mønster).</li>
+        <li>Hvis du må fotografere en skjerm: <strong>hold telefonen lenger unna</strong>, vinkle den litt skrått, og prøv flere bilder.</li>
+        <li>Sørg for at <strong>QR-koden nederst til høyre er tydelig synlig</strong> i bildet, ikke avkuttet.</li>
+        <li>Unngå skygger og refleksjoner over QR-koden.</li>
+      </ul>
+    `;
+    preview.appendChild(tipsBox);
+  }
+
   uploadArea.style.display = bilder.length >= 2 ? 'none' : 'block';
   if (bilder.length === 1) {
     uploadArea.querySelector('.upload-label').textContent = 'Legg til side 2 (valgfritt)';
@@ -693,7 +785,7 @@ async function rettLekse() {
   const errorBox = document.getElementById('errorBox');
   const results = document.getElementById('results');
   errorBox.innerHTML = '';
-  results.innerHTML = `<div class="loading"><div class="spinner"></div><div>Claude leser leksen og sjekker hver oppgave…</div></div>`;
+  results.innerHTML = `<div class="loading"><div class="spinner"></div><div>Leser leksen din og sjekker hver oppgave…</div></div>`;
   btn.disabled = true;
 
   const apiKey = apiKeyInput.value.trim();
@@ -809,7 +901,7 @@ status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangle
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-7',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2000,
         messages: [{ role: 'user', content: contentBlocks }]
       })
