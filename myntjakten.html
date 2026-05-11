@@ -1529,16 +1529,16 @@ body {
       <div class="myntdex-grid" id="myntdex-grid"></div>
       <div class="dex-legend">
         <span class="dex-legend-item rarity-normal">
-          <span class="dex-legend-dot rarity-normal"></span>Normal<span class="dex-legend-pct">60 %</span>
+          <span class="dex-legend-dot rarity-normal"></span>Normal<span class="dex-legend-pct">75 %</span>
         </span>
         <span class="dex-legend-item rarity-sjelden">
-          <span class="dex-legend-dot rarity-sjelden"></span>Sjelden<span class="dex-legend-pct">25 %</span>
+          <span class="dex-legend-dot rarity-sjelden"></span>Sjelden<span class="dex-legend-pct">20 %</span>
         </span>
         <span class="dex-legend-item rarity-episk">
-          <span class="dex-legend-dot rarity-episk"></span>Episk<span class="dex-legend-pct">10 %</span>
+          <span class="dex-legend-dot rarity-episk"></span>Episk<span class="dex-legend-pct">4 %</span>
         </span>
         <span class="dex-legend-item rarity-legendarisk">
-          <span class="dex-legend-dot rarity-legendarisk"></span>Legendarisk<span class="dex-legend-pct">5 %</span>
+          <span class="dex-legend-dot rarity-legendarisk"></span>Legendarisk<span class="dex-legend-pct">1 %</span>
         </span>
       </div>
     </div>
@@ -1919,10 +1919,10 @@ function hasFreshAuthFor(student) {
 // IDene er strenger ('01'…'20') så de mappes 1:1 til filnavn i worksheet/monsters/
 // og er trygge å bruke som Firebase-nøkler.
 const RARITY = {
-  normal:      { label: 'Normal',      weight: 60, color: '#7a8a9a', emoji: '⚪' },
-  sjelden:     { label: 'Sjelden',     weight: 25, color: '#2a8f4a', emoji: '🟢' },
-  episk:       { label: 'Episk',       weight: 10, color: '#7a3eb8', emoji: '🟣' },
-  legendarisk: { label: 'Legendarisk', weight:  5, color: '#d97706', emoji: '⭐' }
+  normal:      { label: 'Normal',      weight: 75, color: '#7a8a9a', emoji: '⚪' },
+  sjelden:     { label: 'Sjelden',     weight: 20, color: '#2a8f4a', emoji: '🟢' },
+  episk:       { label: 'Episk',       weight:  4, color: '#7a3eb8', emoji: '🟣' },
+  legendarisk: { label: 'Legendarisk', weight:  1, color: '#d97706', emoji: '⭐' }
 };
 
 const MONSTERS = [
@@ -1995,11 +1995,13 @@ function randomMonster() {
 let currentStudent = null;
 let caughtMonsters = new Set();   // IDer av monstre eleven allerede har fanget
 
-// Sti i Firebase: myntdex14/{fbKey}/{monsterId} eller myntdex57/...
-function myntdexNodeFor(student) {
-  if (!student || !student.node) return null;
-  // students14 → myntdex14, students57 → myntdex57
-  return student.node.replace('students', 'myntdex');
+// Myntdex lagres som et felt på selve student-objektet i Firebase, slik at
+// samme sikkerhetsregler som styrer students14/57 også gjelder her — ingen
+// behov for å oppdatere Firebase-regler for nye topp-nivå-noder.
+// Sti: students14/{fbKey}/myntdex/{monsterId} (eller students57/…).
+function myntdexPathFor(student) {
+  if (!student || !student.node || !student.id) return null;
+  return student.node + '/' + student.id + '/myntdex';
 }
 
 async function loadMyntdex(student) {
@@ -2009,9 +2011,9 @@ async function loadMyntdex(student) {
 
   try {
     await waitForFirebase();
-    const node = myntdexNodeFor(student);
-    if (!node) return;
-    const snap = await window._get(window._ref(window._db, node + '/' + student.id));
+    const path = myntdexPathFor(student);
+    if (!path) return;
+    const snap = await window._get(window._ref(window._db, path));
     const data = snap.val();
     if (data && typeof data === 'object') {
       Object.keys(data).forEach(id => caughtMonsters.add(id));
@@ -2031,10 +2033,12 @@ async function captureMonster(student, monster) {
 
   try {
     await waitForFirebase();
-    const node = myntdexNodeFor(student);
-    if (!node) return wasNew;
+    const path = myntdexPathFor(student);
+    if (!path) return wasNew;
+    // _update på myntdex-pathen, ikke på student-roten — slik at vi ikke
+    // ved et uhell overskriver andre felter på student-objektet.
     await window._update(
-      window._ref(window._db, node + '/' + student.id),
+      window._ref(window._db, path),
       { [monster.id]: { rarity: monster.rarity, ts: Date.now() } }
     );
   } catch (e) {
@@ -2043,15 +2047,21 @@ async function captureMonster(student, monster) {
   return wasNew;
 }
 
-// Bestetid per preset+tid+antall. Brukes som tillegg til localStorage-rekorden
-// for innloggede elever — slik at de ser samme rekord uavhengig av nettleser.
+// Bestetider lagres tilsvarende under student-objektet — samme regler som
+// resten av student-noden. Sti: students14/{fbKey}/myntjaktenScores/{key}
+function highscorePathFor(student) {
+  if (!student || !student.node || !student.id) return null;
+  return student.node + '/' + student.id + '/myntjaktenScores';
+}
+
 async function loadCloudHighscore(student, key) {
   if (!student || DEMO_MODE) return 0;
   try {
     await waitForFirebase();
-    const node = student.node.replace('students', 'myntjaktenScores');
+    const path = highscorePathFor(student);
+    if (!path) return 0;
     const snap = await window._get(
-      window._ref(window._db, node + '/' + student.id + '/' + key)
+      window._ref(window._db, path + '/' + key)
     );
     return parseInt(snap.val() || 0);
   } catch (e) {
@@ -2064,9 +2074,10 @@ async function saveCloudHighscore(student, key, score) {
   if (!student || DEMO_MODE) return;
   try {
     await waitForFirebase();
-    const node = student.node.replace('students', 'myntjaktenScores');
+    const path = highscorePathFor(student);
+    if (!path) return;
     await window._set(
-      window._ref(window._db, node + '/' + student.id + '/' + key),
+      window._ref(window._db, path + '/' + key),
       score
     );
   } catch (e) {
