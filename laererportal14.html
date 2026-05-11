@@ -2932,92 +2932,75 @@ function _printRewardCards(rewards) {
 
 // ════════════════════════════════════════════════════════════════════
 // QR-TIL-SVG — utskriftsvennlig, ingen ekstern PNG, ingen rasterisering
-// Bruker qrcodejs (allerede lastet) til å generere QR-mønsteret i en
-// midlertidig <canvas>, leser pikslene og emitterer en kompakt SVG der
-// alle mørke moduler tegnes som ett <path>. Resultatet er vektor, ren
-// svart-hvit, og typisk 1–3 KB per QR (vs. 5–30 KB for PNG fra
-// api.qrserver.com). Printeren elsker dette.
+//
+// Bruker qrcodejs (allerede lastet) til å beregne QR-modulmønsteret,
+// men i stedet for å lese ut pikslene fra dens canvas-output (sårbart
+// for antialiasing og varierende modulstørrelser), graver vi rett inn
+// i bibliotekets interne QRCodeModel-objekt som har eksakte
+// isDark(row,col) og getModuleCount(). Da blir resultatet alltid
+// piksel-perfekt, uavhengig av QR-versjon eller render-strategi.
+//
+// Resultatet er vektor (ren svart/hvit SVG), typisk 1–3 KB per QR
+// (vs. 5–30 KB for PNG fra api.qrserver.com som så blir rasterisert
+// til mye større bitmap når printeren tar over).
 // ════════════════════════════════════════════════════════════════════
 window.qrToSVG = function(payload, sizeMm) {
   sizeMm = sizeMm || 30;
+  var text = typeof payload === 'string' ? payload : JSON.stringify(payload);
+
+  // Fallback hvis qrcodejs ikke er lastet (skal ikke skje i lærerportalen)
   if (typeof QRCode === 'undefined') {
-    // Fallback til ekstern PNG hvis qrcodejs ikke er lastet (skal ikke skje)
     var url = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' +
-              encodeURIComponent(typeof payload === 'string' ? payload : JSON.stringify(payload));
+              encodeURIComponent(text);
     return '<img src="' + url + '" style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;display:block;" alt="QR">';
   }
-  var text = typeof payload === 'string' ? payload : JSON.stringify(payload);
-  // Lag QR i en off-screen container
+
+  // Lag en QRCode-instans i en off-screen container.
+  // Vi trenger ikke selve renderingen — bare det interne modellobjektet.
   var tmp = document.createElement('div');
   tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;visibility:hidden';
   document.body.appendChild(tmp);
+
+  var qr;
   try {
-    // correctLevel.M gir god balanse mellom feilkorreksjon og modulantall.
-    // 200×200 px gir oss god opløsning til å lese piksler nøyaktig.
-    new QRCode(tmp, { text: text, width: 200, height: 200,
-                      correctLevel: QRCode.CorrectLevel.M });
+    qr = new QRCode(tmp, {
+      text: text,
+      width: 200, height: 200,
+      correctLevel: QRCode.CorrectLevel.M
+    });
   } catch(e) {
     document.body.removeChild(tmp);
-    return '<div style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;border:1px dashed #999;"></div>';
+    return '<div style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:8pt;color:#999;">QR-feil</div>';
   }
-  var canvas = tmp.querySelector('canvas');
-  if (!canvas) {
+
+  // Hent modulmodellen direkte fra biblioteket — eksakt, ingen pikselgjetting.
+  var model = qr._oQRCode;
+  if (!model || typeof model.getModuleCount !== 'function') {
     document.body.removeChild(tmp);
     return '<div style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;border:1px dashed #999;"></div>';
   }
-  var ctx = canvas.getContext('2d');
-  var w = canvas.width, h = canvas.height;
-  var data = ctx.getImageData(0, 0, w, h).data;
-  // Finn modulstørrelse — qrcodejs lar oss ikke spørre direkte. Skann første
-  // rad nedover fra venstre kant for å finne første mørke pixel, deretter
-  // første lyse — det er én modul.
-  function isDark(x, y) {
-    var i = (y * w + x) * 4;
-    // Bruk luminans for å sjekke mørke moduler (255 = hvit, 0 = svart)
-    return (data[i] + data[i+1] + data[i+2]) < 384;
-  }
-  // Finn topp-venstre mørke modul
-  var startX = 0, startY = 0;
-  outer: for (var y = 0; y < h; y++) {
-    for (var x = 0; x < w; x++) {
-      if (isDark(x, y)) { startX = x; startY = y; break outer; }
-    }
-  }
-  // Mål modulstørrelse fra første mørke pixel
-  var moduleSize = 1;
-  for (var x2 = startX; x2 < w && isDark(x2, startY); x2++) moduleSize++;
-  moduleSize = moduleSize - 1;
-  if (moduleSize < 2) moduleSize = Math.round(w / 33); // sikkerhetsnett
-  // Bygg modulmatrisen
-  var modules = Math.round((w - 2 * startX) / moduleSize);
-  if (modules < 21 || modules > 177) modules = 25; // sikkerhetsnett (vanlig: 25-29)
-  var grid = [];
-  for (var my = 0; my < modules; my++) {
-    var row = [];
-    var py = startY + Math.floor(my * moduleSize + moduleSize / 2);
-    for (var mx = 0; mx < modules; mx++) {
-      var px = startX + Math.floor(mx * moduleSize + moduleSize / 2);
-      row.push(px < w && py < h && isDark(px, py) ? 1 : 0);
-    }
-    grid.push(row);
-  }
-  document.body.removeChild(tmp);
-  // Bygg én sammensatt path — én "M x y h 1 v 1 h -1 z" per mørk modul.
+  var modules = model.getModuleCount();
+
+  // Bygg én sammensatt path — én "M x y h1 v1 h-1 z" per mørk modul.
   // Dette er den mest kompakte SVG-representasjonen av en QR.
   var pathParts = [];
-  for (var ry = 0; ry < modules; ry++) {
-    for (var rx = 0; rx < modules; rx++) {
-      if (grid[ry][rx]) pathParts.push('M' + rx + ' ' + ry + 'h1v1h-1z');
+  for (var row = 0; row < modules; row++) {
+    for (var col = 0; col < modules; col++) {
+      if (model.isDark(row, col)) {
+        pathParts.push('M' + col + ' ' + row + 'h1v1h-1z');
+      }
     }
   }
-  var pathD = pathParts.join('');
-  // Marg på 2 moduler (quiet zone) inkluderes i viewBox
+  document.body.removeChild(tmp);
+
+  // Quiet zone på 2 moduler (standard er 4, men 2 holder for skanning og
+  // sparer plass på tett trykte kort).
   var quiet = 2;
   var vb = modules + quiet * 2;
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' +
          (-quiet) + ' ' + (-quiet) + ' ' + vb + ' ' + vb +
          '" style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;display:block;background:white;shape-rendering:crispEdges">' +
-         '<path d="' + pathD + '" fill="#000"/></svg>';
+         '<path d="' + pathParts.join('') + '" fill="#000"/></svg>';
 };
 
 // ════════════════════════════════════════════════════════════════════
