@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forslag – Myntjakten redesign</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --teal: #1a5fa5;
+    --teal-light: #dbeafe;
+    --teal-dark: #1e0f52;
+    --teal-deeper: #160a3d;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --yellow: #FFD93D;
+    --bg: #FBF6EC;
+    --bg-alt: #F2EADB;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #6b7a6b;
+    --border: #e8d9b8;
+    --red: #D63031;
+    --red-light: #FFE5E5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(239, 159, 39, 0.08) 0, transparent 22%),
+      radial-gradient(circle at 88% 62%, rgba(83, 74, 183, 0.06) 0, transparent 25%);
+  }
+
+  /* ──────── DESIGNERNOTAT ──────── */
+  .designer-note {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 28px;
+  }
+  .note-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--teal-dark);
+    color: var(--amber);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .note-tag .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--amber); box-shadow: 0 0 10px var(--amber);
+  }
+  .note-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--teal-dark);
+    line-height: 1;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .note-title .accent { color: var(--amber); }
+  .note-lede {
+    font-size: 1.05rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.55;
+    max-width: 640px;
+    margin-bottom: 24px;
+  }
+
+  .note-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 700px) {
+    .note-grid { grid-template-columns: 1fr; }
+  }
+  .note-box {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 3px 0 rgba(30,15,82,0.05);
+  }
+  .note-box h4 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    color: var(--teal-dark);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .note-box p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .note-chip {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--amber-light);
+    color: #854F0B;
+    margin-right: 4px;
+  }
+
+  /* ──────── CANVAS WRAP ──────── */
+  .canvas-wrap {
+    background: var(--bg-alt);
+    border-top: 2px dashed var(--border);
+    border-bottom: 2px dashed var(--border);
+    padding: 32px 0 48px;
+    margin-top: 24px;
+    position: relative;
+  }
+  .canvas-wrap::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(30,15,82,0.07) 1px, transparent 0);
+    background-size: 22px 22px;
+    pointer-events: none;
+  }
+  .canvas-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+  }
+  .canvas-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    color: var(--teal-dark);
+    margin-bottom: 4px;
+  }
+  .canvas-sub {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+  .phone-row {
+    display: flex;
+    gap: 28px;
+    overflow-x: auto;
+    padding: 12px 4px 24px;
+    scroll-snap-type: x mandatory;
+  }
+  .phone-slot {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .phone-slot .slot-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    color: var(--teal-dark);
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 999px;
+    box-shadow: 0 2px 0 rgba(30,15,82,0.06);
+  }
+
+  /* ──────── PHONE FRAME ──────── */
+  .phone {
+    width: 360px;
+    height: 740px;
+    background: #1a1a1a;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow:
+      0 0 0 2px #2a2a2a,
+      0 30px 60px rgba(30,15,82,0.25);
+    position: relative;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    border-radius: 36px;
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute;
+    top: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 100px; height: 28px;
+    background: #000;
+    border-radius: 16px;
+    z-index: 100;
+  }
+  .phone-status {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 26px 0;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.78rem;
+    color: var(--teal-dark);
+    z-index: 50;
+    pointer-events: none;
+  }
+  .phone-status.dark { color: white; }
+  .phone-status .signal {
+    display: flex; gap: 3px; align-items: flex-end;
+  }
+  .phone-status .signal i {
+    display: block; width: 3px; background: currentColor; border-radius: 1px;
+  }
+  .phone-status .signal i:nth-child(1) { height: 4px; }
+  .phone-status .signal i:nth-child(2) { height: 6px; }
+  .phone-status .signal i:nth-child(3) { height: 8px; }
+  .phone-status .signal i:nth-child(4) { height: 10px; }
+  .phone-status .battery {
+    width: 22px; height: 11px;
+    border: 1.4px solid currentColor;
+    border-radius: 3px;
+    position: relative;
+    padding: 1px;
+  }
+  .phone-status .battery::after {
+    content: '';
+    position: absolute;
+    right: -3px; top: 3px;
+    width: 2px; height: 5px;
+    background: currentColor;
+    border-radius: 0 1px 1px 0;
+  }
+  .phone-status .battery i {
+    display: block; height: 100%; width: 80%;
+    background: currentColor; border-radius: 1px;
+  }
+
+  /* ──────── SCREEN CONTENT shared ──────── */
+  .screen-body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-top: 50px;
+  }
+
+  /* TOP NAV */
+  .scr-nav {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 18px 10px;
+  }
+  .scr-back {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--teal-dark);
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+  .scr-back.on-dark {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+    color: white;
+  }
+  .scr-brand {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    color: var(--teal-dark);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .scr-brand.on-dark { color: white; }
+  .scr-brand .bd { width:7px; height:7px; border-radius:50%; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .scr-iconbtn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--teal-dark);
+    font-size: 0.95rem;
+  }
+  .scr-iconbtn.on-dark {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+    color: white;
+  }
+
+  /* ═════════ START SCREEN ═════════ */
+  .start-hero {
+    background:
+      radial-gradient(ellipse at 50% 100%, rgba(239,159,39,0.30) 0, transparent 60%),
+      linear-gradient(160deg, var(--teal-deeper) 0%, var(--teal-dark) 50%, #1a4a72 100%);
+    padding: 14px 20px 24px;
+    position: relative;
+    overflow: hidden;
+    color: white;
+  }
+  .start-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(2px 2px at 22% 30%, rgba(255,255,255,0.7) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 70% 18%, rgba(255,255,255,0.6) 50%, transparent 51%),
+      radial-gradient(2px 2px at 84% 38%, rgba(239,159,39,0.9) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 30% 60%, rgba(255,255,255,0.5) 50%, transparent 51%),
+      radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,0.6) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 14% 78%, rgba(239,159,39,0.7) 50%, transparent 51%);
+    pointer-events: none;
+  }
+  .start-hero::after { display: none; }
+  .start-hero > * { position: relative; z-index: 2; }
+  .start-hero { text-align: center; }
+
+  .start-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.10);
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 0.55rem; font-weight: 900;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(4px);
+  }
+  .start-chip .bd { width:5px; height:5px; border-radius:50%; background:var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .start-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem;
+    line-height: 0.95;
+    color: white;
+    margin-top: 10px;
+    letter-spacing: -0.01em;
+    text-shadow: 0 3px 0 rgba(0,0,0,0.2);
+  }
+  .start-title .accent {
+    color: var(--amber);
+    position: relative;
+    display: inline-block;
+    text-shadow: 0 3px 0 rgba(0,0,0,0.2), 0 0 18px rgba(239,159,39,0.45);
+  }
+  .start-title .accent::before {
+    content: '🪙';
+    position: absolute;
+    inset: -8px -10px -18px -10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.6rem;
+    opacity: 0.16;
+    filter: blur(0.4px) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    z-index: -1;
+    pointer-events: none;
+    -webkit-text-fill-color: initial;
+    text-shadow: none;
+    transform: rotate(-10deg);
+  }
+  .start-title .accent::after {
+    content: '';
+    display: block;
+    height: 5px; width: 65px;
+    background: rgba(239,159,39,0.45);
+    border-radius: 5px;
+    margin: 4px auto 0;
+  }
+  .start-sub {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.88);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .start-mascot-stage {
+    margin-top: 14px;
+    display: flex; justify-content: center; align-items: flex-end;
+    gap: 12px;
+    position: relative;
+    height: 130px;
+  }
+  .start-mascot-stage .m {
+    width: 90px;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
+    animation: bob 3.2s ease-in-out infinite;
+  }
+  .start-mascot-stage .m.m1 { width: 70px; animation-delay: 0s; transform-origin: bottom; }
+  .start-mascot-stage .m.m2 { width: 110px; animation-delay: 0.6s; z-index: 2; }
+  .start-mascot-stage .m.m3 { width: 70px; animation-delay: 1.2s; }
+  @keyframes bob {
+    0%,100% { transform: translateY(0) rotate(-2deg); }
+    50%     { transform: translateY(-8px) rotate(2deg); }
+  }
+  .start-mascot-stage .stage-shadow {
+    position: absolute;
+    bottom: -4px; left: 10%; right: 10%;
+    height: 14px;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,0,0,0.45) 0, transparent 70%);
+    filter: blur(6px);
+  }
+
+  .start-form {
+    padding: 18px 18px 24px;
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  .form-block { margin-bottom: 14px; }
+  .form-label {
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 900;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .form-label em { color: var(--coral); font-style: normal; }
+  .op-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  }
+  .op-tile {
+    aspect-ratio: 1;
+    border-radius: 14px;
+    border: 2.5px solid;
+    background: var(--white);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    transition: transform 0.1s;
+  }
+  .op-tile small {
+    font-family: 'Nunito';
+    font-size: 0.55rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    margin-top: -2px;
+    text-transform: uppercase;
+  }
+  .op-add { color: #1a5c1a; border-color: #1a5c1a; background: #e7f7e7; }
+  .op-sub { color: #8b0000; border-color: #8b0000; background: #ffe8e8; }
+  .op-mul { color: #7a5500; border-color: #7a5500; background: #fff5cc; opacity: 0.45; }
+  .op-div { color: #003e7a; border-color: #003e7a; background: #d8eeff; opacity: 0.45; }
+  .op-tile.active { box-shadow: 0 4px 0 currentColor; transform: translateY(-2px); }
+
+  .pill-row {
+    display: flex; flex-wrap: nowrap; gap: 4px;
+  }
+  .pill {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 2px;
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 11px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    color: var(--text);
+    text-align: center;
+    white-space: nowrap;
+  }
+  .pill.active {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: white;
+    box-shadow: 0 3px 0 #0a0524;
+  }
+
+  .btn-start {
+    margin-top: 18px;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--amber), #f8b347);
+    border: none;
+    border-radius: 16px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.25rem;
+    color: var(--teal-dark);
+    box-shadow: 0 4px 0 var(--amber-dark), 0 8px 20px rgba(239,159,39,0.3);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-start::after {
+    content: '→';
+    font-size: 1.4rem;
+  }
+
+  /* ═════════ GAME SCREEN ═════════ */
+  .game-screen {
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(239,159,39,0.18) 0, transparent 50%),
+      linear-gradient(180deg, var(--teal-deeper) 0%, var(--teal-dark) 100%);
+    color: white;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-screen::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(2px 2px at 22% 12%, rgba(255,255,255,0.7) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 70% 8%, rgba(255,255,255,0.5) 50%, transparent 51%),
+      radial-gradient(2px 2px at 88% 22%, rgba(239,159,39,0.8) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 12% 32%, rgba(255,255,255,0.5) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 92% 42%, rgba(255,255,255,0.4) 50%, transparent 51%);
+    pointer-events: none;
+  }
+  .game-screen > * { position: relative; z-index: 2; }
+
+  /* HUD chip row */
+  .game-hud {
+    display: flex;
+    gap: 6px;
+    padding: 0 14px;
+    margin-top: 2px;
+  }
+  .hud-chip {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 6px 8px;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hud-chip .icon {
+    width: 22px; height: 22px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+  }
+  .hud-chip.coins .icon { background: rgba(239,159,39,0.25); color: var(--amber); }
+  .hud-chip.streak .icon { background: rgba(216,90,48,0.25); color: #ff9a78; }
+  .hud-chip.progress .icon { background: rgba(29,158,117,0.25); color: #6ce0b3; }
+  .hud-chip .text { flex: 1; min-width: 0; }
+  .hud-chip .text small {
+    display: block;
+    font-size: 0.55rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.7;
+  }
+  .hud-chip .text b {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.92rem;
+    line-height: 1;
+    color: white;
+  }
+
+  /* Time ring around monster */
+  .arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px 4px;
+    position: relative;
+    min-height: 0;
+  }
+  .arena-stage {
+    width: 180px; height: 180px;
+    position: relative;
+  }
+  .arena-ring {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  .arena-ring .track {
+    fill: none;
+    stroke: rgba(255,255,255,0.1);
+    stroke-width: 8;
+  }
+  .arena-ring .progress {
+    fill: none;
+    stroke: url(#timeGradient);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 565;
+    stroke-dashoffset: 198;
+    filter: drop-shadow(0 0 8px rgba(239,159,39,0.6));
+  }
+  .arena-monster-frame {
+    position: absolute;
+    inset: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.12), transparent 60%),
+                radial-gradient(circle at 50% 100%, rgba(239,159,39,0.2), transparent 60%);
+    border: 2px solid rgba(255,255,255,0.18);
+    overflow: hidden;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .arena-monster {
+    width: 95%;
+    margin-bottom: -8px;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+    animation: monster-idle 3s ease-in-out infinite;
+  }
+  @keyframes monster-idle {
+    0%,100% { transform: translateY(0) rotate(-1deg); }
+    50%     { transform: translateY(-4px) rotate(1deg); }
+  }
+  /* Tile veil over monster */
+  .arena-tile-grid {
+    position: absolute;
+    inset: 18px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    pointer-events: none;
+  }
+  .arena-tile {
+    background: linear-gradient(135deg, var(--amber), #f8b347);
+    border: 1px solid rgba(0,0,0,0.15);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  }
+  .arena-tile.gone { opacity: 0; transform: scale(0) rotate(180deg); }
+
+  .arena-monster-badge {
+    position: absolute;
+    top: -2px; right: -6px;
+    background: var(--amber);
+    color: var(--teal-dark);
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.65rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 2px solid var(--teal-dark);
+    box-shadow: 0 3px 0 var(--amber-dark);
+  }
+
+  .arena-question {
+    margin-top: 10px;
+    background: white;
+    color: var(--teal-dark);
+    border-radius: 18px;
+    padding: 10px 18px;
+    position: relative;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.18);
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.9rem;
+    line-height: 1;
+    text-align: center;
+    letter-spacing: 0.02em;
+    min-width: 220px;
+  }
+  .arena-question::before {
+    /* speech bubble tail toward monster */
+    content: '';
+    position: absolute;
+    top: -10px; left: 50%;
+    transform: translateX(-50%);
+    width: 22px; height: 14px;
+    background: white;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
+  .arena-question .equals { color: var(--amber); }
+  .arena-question .qmark {
+    color: white;
+    background: var(--coral);
+    padding: 2px 12px;
+    border-radius: 12px;
+    margin-left: 4px;
+    display: inline-block;
+    line-height: 1.05;
+  }
+
+  /* ───── Skattekiste-arena ───── */
+  .chest-arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px 14px 0;
+    position: relative;
+    min-height: 0;
+  }
+  .chest-fuse {
+    width: 200px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    overflow: hidden;
+    margin: 2px 0 8px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .chest-fuse::after {
+    content: '';
+    position: absolute; inset: 0;
+    width: 65%;
+    background: linear-gradient(90deg, var(--coral) 0%, var(--amber) 60%, #ffd76b 100%);
+    box-shadow: 0 0 10px var(--amber);
+    border-radius: 999px;
+  }
+  .chest-stage {
+    width: 210px; height: 200px;
+    position: relative;
+  }
+  .chest-glow {
+    position: absolute;
+    left: 50%; top: 32px;
+    transform: translateX(-50%);
+    width: 150px; height: 90px;
+    background: radial-gradient(ellipse at center top, rgba(255,215,107,0.85), rgba(239,159,39,0.35) 45%, transparent 70%);
+    filter: blur(2px);
+    pointer-events: none;
+  }
+  .chest-lid {
+    position: absolute;
+    left: 50%; top: 10px;
+    transform: translateX(-50%) rotate(-14deg);
+    transform-origin: 10% 90%;
+    width: 160px; height: 56px;
+    background: linear-gradient(180deg, #8b5a2b 0%, #6b3f1e 70%, #4d2c12 100%);
+    border-radius: 80px 80px 6px 6px;
+    border: 2px solid #2c1808;
+    box-shadow: inset 0 4px 0 rgba(255,255,255,0.12), 0 6px 0 rgba(0,0,0,0.25);
+  }
+  .chest-lid::before, .chest-lid::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 9px;
+    background: linear-gradient(180deg, #f5c542, #c48a16);
+    border-top: 1.5px solid #2c1808;
+    border-bottom: 1.5px solid #2c1808;
+  }
+  .chest-lid::before { top: 30%; }
+  .chest-lid::after { display: none; }
+  .chest-monster {
+    position: absolute;
+    left: 50%; bottom: 56px;
+    transform: translateX(-50%);
+    width: 130px;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.45));
+    animation: monster-idle 3s ease-in-out infinite;
+    z-index: 2;
+  }
+  .chest-body {
+    position: absolute;
+    left: 50%; bottom: 6px;
+    transform: translateX(-50%);
+    width: 170px; height: 96px;
+    background: linear-gradient(180deg, #8b5a2b 0%, #6b3f1e 60%, #3d2210 100%);
+    border-radius: 8px 8px 10px 10px;
+    border: 2px solid #2c1808;
+    box-shadow: inset 0 4px 0 rgba(255,255,255,0.1), 0 8px 0 rgba(0,0,0,0.3);
+    z-index: 1;
+  }
+  .chest-band {
+    position: absolute;
+    left: -2px; right: -2px;
+    height: 10px;
+    background: linear-gradient(180deg, #f5c542, #c48a16);
+    border-top: 1.5px solid #2c1808;
+    border-bottom: 1.5px solid #2c1808;
+  }
+  .chest-band.top { top: 16px; }
+  .chest-band.bot { bottom: 18px; }
+  .chest-lock {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px; height: 30px;
+    background: radial-gradient(circle at 30% 30%, #ffd76b, #c48a16 70%);
+    border: 2px solid #2c1808;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 3;
+  }
+  /* Lock studs = tiles. 8 studs around lock. Glow on = revealed. */
+  .chest-studs {
+    position: absolute;
+    left: 50%; bottom: 6px;
+    transform: translateX(-50%);
+    width: 170px; height: 96px;
+    pointer-events: none;
+    z-index: 4;
+  }
+  .chest-stud {
+    position: absolute;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #2c1808;
+    border: 1.5px solid #c48a16;
+    transition: all .4s;
+  }
+  .chest-stud.lit {
+    background: radial-gradient(circle at 30% 30%, #ffe899, #f5c542);
+    box-shadow: 0 0 8px rgba(255,215,107,0.9);
+    border-color: #ffe899;
+  }
+  .chest-coins {
+    position: absolute;
+    left: 50%; bottom: -2px;
+    transform: translateX(-50%);
+    width: 200px; height: 32px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .chest-coins span {
+    position: absolute;
+    font-size: 1.1rem;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+  }
+  .chest-progress-badge {
+    position: absolute;
+    top: 4px; right: 6px;
+    background: var(--amber);
+    color: var(--teal-dark);
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.6rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 2px solid var(--teal-dark);
+    box-shadow: 0 2px 0 var(--amber-dark);
+    z-index: 6;
+  }
+
+  /* Numpad sheet */
+  .numsheet {
+    background: var(--white);
+    border-radius: 22px 22px 0 0;
+    padding: 10px 12px 12px;
+    margin-top: 6px;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.15);
+    flex: 0 0 auto;
+  }
+  .answer-box {
+    background: var(--bg);
+    border: 2.5px dashed var(--amber);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    color: var(--teal-dark);
+  }
+  .answer-box .ph { color: var(--coral); opacity: 0.45; }
+  .answer-cursor {
+    display: inline-block;
+    width: 3px; height: 22px;
+    background: var(--amber);
+    margin-left: 4px;
+    animation: blink 0.9s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .numgrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+  .numkey {
+    padding: 8px 0;
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 11px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.15rem;
+    color: var(--teal-dark);
+    text-align: center;
+  }
+  .numkey.clear { background: var(--coral-light); border-color: var(--coral); color: var(--coral); }
+  .numkey.submit {
+    background: linear-gradient(135deg, var(--amber), #f8b347);
+    border-color: var(--amber-dark);
+    color: var(--teal-dark);
+    box-shadow: 0 3px 0 var(--amber-dark);
+  }
+
+  /* ═════════ RESULT SCREEN ═════════ */
+  .result-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 18px 22px;
+  }
+  .result-card-hero {
+    background:
+      radial-gradient(ellipse at 50% 100%, rgba(239,159,39,0.30) 0, transparent 60%),
+      linear-gradient(160deg, var(--teal-deeper), var(--teal-dark));
+    color: white;
+    border-radius: 22px;
+    padding: 22px 20px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .result-card-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 18% 28%, rgba(255,255,255,0.6) 50%, transparent 51%),
+      radial-gradient(2px 2px at 74% 18%, rgba(239,159,39,0.8) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 32% 70%, rgba(255,255,255,0.5) 50%, transparent 51%);
+  }
+  .result-trophy {
+    width: 120px;
+    margin: 0 auto 8px;
+    display: block;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.4));
+    animation: bob 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+  }
+  .result-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: white;
+    position: relative; z-index: 1;
+  }
+  .result-title .accent { color: var(--amber); }
+  .result-sub {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+    margin-top: 4px;
+    position: relative; z-index: 1;
+  }
+  .result-coin-bar {
+    margin-top: 14px;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    position: relative; z-index: 1;
+  }
+  .result-coin-bar .coin-icon {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #FFD27A 0, var(--amber) 55%, #b8730a 100%);
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    color: #7a4a00;
+    font-size: 1rem;
+  }
+  .result-coin-bar .num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--amber);
+    line-height: 1;
+  }
+  .result-coin-bar .label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .stats-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .stat-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    box-shadow: 0 3px 0 rgba(30,15,82,0.05);
+  }
+  .stat-card .label {
+    font-size: 0.62rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .stat-card .value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    line-height: 1;
+  }
+  .stat-card.coins .value { color: var(--amber-dark); }
+  .stat-card.streak .value { color: var(--coral); }
+
+  .bank-bar {
+    margin-top: 12px;
+    background: linear-gradient(135deg, var(--green), var(--green-dark));
+    border-radius: 16px;
+    padding: 14px;
+    color: white;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .bank-bar .icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .bank-bar .text { flex: 1; min-width: 0; }
+  .bank-bar .text h5 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .bank-bar .text p {
+    font-size: 0.72rem;
+    opacity: 0.9;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .bank-bar .go {
+    width: 32px; height: 32px;
+    background: var(--amber);
+    color: var(--teal-dark);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 900;
+    box-shadow: 0 3px 0 var(--amber-dark);
+    flex-shrink: 0;
+  }
+
+  .replay-row {
+    display: flex; gap: 8px;
+    margin-top: 14px;
+  }
+  .btn-replay {
+    flex: 1;
+    background: linear-gradient(135deg, var(--amber), #f8b347);
+    color: var(--teal-dark);
+    border: none;
+    border-radius: 14px;
+    padding: 13px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    box-shadow: 0 4px 0 var(--amber-dark);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-settings {
+    flex: 0 0 auto;
+    background: var(--white);
+    border: 2px solid var(--border);
+    color: var(--teal-dark);
+    border-radius: 14px;
+    padding: 0 16px;
+    font-size: 1.2rem;
+    box-shadow: 0 3px 0 rgba(30,15,82,0.06);
+  }
+
+  /* Collection strip */
+  .collection-card {
+    margin-top: 14px;
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 3px 0 rgba(30,15,82,0.05);
+  }
+  .collection-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .collection-head h5 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: var(--teal-dark);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .collection-head .count {
+    font-size: 0.7rem;
+    font-weight: 900;
+    background: var(--amber-light);
+    color: #854F0B;
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+  .collection-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .col-cell {
+    aspect-ratio: 1;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: visible;
+    position: relative;
+  }
+  .col-cell .imgwrap {
+    width: 100%; height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: inherit;
+  }
+  .col-cell.locked {
+    background: linear-gradient(135deg, var(--bg), var(--bg-alt));
+  }
+  .col-cell.locked .imgwrap::after {
+    content: '?';
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: var(--border);
+  }
+  .col-cell.new::before {
+    content: 'NY!';
+    position: absolute;
+    top: -8px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.55rem;
+    background: var(--coral);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1.5px solid white;
+    z-index: 3;
+    letter-spacing: 0.05em;
+  }
+  .col-cell img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    padding: 2px;
+  }
+
+  /* ── RARITY TIERS ── */
+  .col-cell.r-common  { border-color: #b8b3a0; background: #f3eedf; }
+  .col-cell.r-uncommon{ border-color: #1D9E75; background: #E1F5EE; }
+  .col-cell.r-rare    { border-color: #1a5fa5; background: #dbeafe; }
+  .col-cell.r-epic    { border-color: #534AB7; background: #EEEDFE; }
+  .col-cell.r-legendary{
+    border-color: var(--amber);
+    background: linear-gradient(135deg, #FFF0C7 0%, #FAEEDA 50%, #FFE5B4 100%);
+    box-shadow: 0 0 0 2px rgba(239,159,39,0.25), 0 3px 0 rgba(239,159,39,0.4);
+    animation: legendary-glow 2.4s ease-in-out infinite;
+  }
+  @keyframes legendary-glow {
+    0%,100% { box-shadow: 0 0 0 2px rgba(239,159,39,0.25), 0 3px 0 rgba(239,159,39,0.4); }
+    50%     { box-shadow: 0 0 0 3px rgba(239,159,39,0.5), 0 0 14px rgba(239,159,39,0.5); }
+  }
+  .col-cell .gem {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid var(--white);
+    z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .col-cell.r-common  .gem { background: #b8b3a0; }
+  .col-cell.r-uncommon .gem { background: #1D9E75; }
+  .col-cell.r-rare    .gem { background: #1a5fa5; }
+  .col-cell.r-epic    .gem { background: #534AB7; }
+  .col-cell.r-legendary .gem {
+    background: radial-gradient(circle at 35% 35%, #FFD27A, var(--amber) 60%, #b8730a);
+  }
+  .col-cell.r-legendary .gem::after {
+    content: '★';
+    color: #fff;
+    font-size: 0.55rem;
+    line-height: 1;
+  }
+
+  /* Rarity legend */
+  .rarity-legend {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1.5px dashed var(--border);
+    flex-wrap: nowrap;
+    font-size: 0.58rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    justify-content: space-between;
+  }
+  .rarity-legend .leg {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+  }
+  .rarity-legend .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1px solid white;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  .rarity-legend .dot.c1 { background: #b8b3a0; }
+  .rarity-legend .dot.c2 { background: #1D9E75; }
+  .rarity-legend .dot.c3 { background: #1a5fa5; }
+  .rarity-legend .dot.c4 { background: #534AB7; }
+  .rarity-legend .dot.c5 { background: radial-gradient(circle at 35% 35%, #FFD27A, var(--amber) 60%, #b8730a); }
+
+  /* ═════════ Phone scale wrapper (so canvas isn't huge) ═════════ */
+  .phone-scale {
+    transform: scale(0.78);
+    transform-origin: top center;
+    margin-bottom: -180px;
+  }
+
+  /* ═════════ Footer note ═════════ */
+  .closing {
+    max-width: 880px;
+    margin: 28px auto 56px;
+    padding: 0 24px;
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.6;
+  }
+  .closing strong { color: var(--teal-dark); }
+</style>
+</head>
+<body class="proto-body">
+
+<div id="root"></div>
+
+<style>
+  .proto-body {
+    background: linear-gradient(160deg, #160a3d 0%, #1e0f52 50%, #1a4a72 100%);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .proto-phone {
+    width: 360px;
+    height: min(780px, 95vh);
+    background: var(--bg);
+    border-radius: 36px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 8px #0c0626, 0 0 0 10px #2a1d63;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .proto-phone .screen-body { height: 100%; overflow-y: auto; }
+  .proto-phone .game-screen { height: 100%; }
+  /* Toast */
+  .toast {
+    position: absolute;
+    top: 70px; left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    background: var(--teal-dark);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    opacity: 0;
+    transition: all .28s;
+    z-index: 80;
+    pointer-events: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.good { background: var(--green); }
+  .toast.bad  { background: var(--red); }
+  /* Trinn modal */
+  .trinn-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(10,5,30,0.55);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 90;
+  }
+  .trinn-sheet {
+    width: 100%;
+    background: var(--bg);
+    border-radius: 24px 24px 0 0;
+    padding: 18px 18px 22px;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.25);
+  }
+  .trinn-sheet h3 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .trinn-sheet p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .trinn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .trinn-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all .15s;
+    text-align: left;
+  }
+  .trinn-card.active {
+    border-color: var(--amber);
+    background: var(--amber-light);
+    box-shadow: 0 3px 0 var(--amber-dark);
+  }
+  .trinn-card .tlbl {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 0.95rem;
+  }
+  .trinn-card .tdesc {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  /* arena tile animation: per-tile delay handled inline */
+  .arena-tile { transition: opacity .45s ease, transform .45s ease; }
+  .arena-stage, .numsheet, .game-hud, .scr-nav { flex-shrink: 0; }
+  .arena { overflow: visible; padding: 6px 14px 8px !important; min-height: 240px; flex: 0 0 auto !important; justify-content: flex-start !important; gap: 10px; }
+  .arena-stage { width: 160px !important; height: 160px !important; }
+  .game-hud { padding: 10px 12px !important; gap: 6px !important; }
+  .game-hud .hud-chip { flex: 1 1 0 !important; min-width: 0 !important; overflow: hidden; padding: 6px 8px !important; }
+  .game-hud .hud-chip .text small { font-size: 0.55rem !important; }
+  .game-hud .hud-chip .text b { font-size: 0.85rem !important; }
+  .game-hud .hud-chip .icon { font-size: 1rem !important; }
+  .numsheet { padding: 8px 12px 10px !important; }
+  .arena-question { font-size: 1.5rem !important; padding: 8px 16px !important; min-width: 180px !important; }
+  /* time ring depletes via stroke-dashoffset, animated by React state */
+  .arena-ring .progress {
+    transition: stroke-dashoffset 0.9s linear, stroke 0.3s;
+  }
+  .arena-ring.lowtime .progress { stroke: var(--coral); filter: drop-shadow(0 0 8px var(--coral)); }
+  .arena-ring.crittime .progress { stroke: var(--red); animation: ring-pulse .5s ease-in-out infinite; }
+  @keyframes ring-pulse { 50% { opacity: 0.4; } }
+  /* numkey active */
+  .numkey { cursor: pointer; user-select: none; transition: transform .08s; }
+  .numkey:active { transform: scale(0.94); }
+  /* answer cursor blink */
+  .answer-cursor { animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  /* shake on wrong */
+  .shake { animation: shake .35s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  /* pop on correct */
+  .pop { animation: pop .35s ease; }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  .start-cta { cursor: pointer; }
+  .btn-replay { cursor: pointer; }
+  /* result simplified */
+  .result-line {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px;
+  }
+  .result-line .lbl {
+    color: var(--muted); font-weight: 800; font-size: 0.85rem;
+  }
+  .result-line .val {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.1rem;
+  }
+</style>
+
+<!-- ═════════════════ STUBBED OUT NOTAT (kept for asset registry) ═════════════════ -->
+<section class="designer-note" style="display:none">
+  <div class="note-tag"><span class="dot"></span>Forslag · Myntjakten redesign</div>
+  <h1 class="note-title">Monsteret stjeler <span class="accent">scenen</span>.</h1>
+  <p class="note-lede">
+    Dagens spill viser monsteret som et lite portrett oppe i hjørnet — det er
+    selve gulroten i spillet, men den ligger nesten gjemt. Forslaget her bytter
+    om på hierarkiet: monsteret er stort og midt i bildet, oppgaven kommer ut
+    av munnen som en snakkeboble, og tiden teller ned som en lysende ring rundt
+    hele arenaen. Det gjør hver oppgave til en liten duell.
+  </p>
+
+  <div class="note-grid">
+    <div class="note-box">
+      <h4>🎯 Sentral arena</h4>
+      <p>Monsteret + oppgave + tid samlet i én sirkulær komposisjon — øynene
+      vandrer ett sted, ikke over fire kort.</p>
+    </div>
+    <div class="note-box">
+      <h4>💬 Snakkeboble-oppgave</h4>
+      <p>«5 · 8 = ?» kommer fra monsteret som en utfordring. Mer lek, mindre
+      regneark.</p>
+    </div>
+    <div class="note-box">
+      <h4>📒 Monstersamling m/ sjeldenhet</h4>
+      <p>20 monstre fordelt på Normal, Sjelden, Episk og Legendarisk.
+      Hvert monster har en progressiv sjanse — du kan være heldig
+      og få en Episk allerede i første runde.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:18px; font-size: 0.85rem; color: var(--muted); font-weight:600;">
+    <span class="note-chip">Beholdes</span>
+    Myntland-paletten, Fredoka One + Nunito, mynt-økonomien, innskudd via QR,
+    progressivt monster-reveal, alle innstillinger.
+  </p>
+</section>
+
+<!-- canvas + closing hidden -->
+<section class="canvas-wrap" style="display:none">
+  <div class="canvas-inner">
+    <div class="canvas-label">📱 Tre skjermer, mobil-først</div>
+    <div class="canvas-sub">Sveip horisontalt for å se start → spill → resultat. Klikk en skjerm for å zoome inn.</div>
+    <div class="phone-row" id="phone-row"></div>
+  </div>
+</section>
+
+<section class="closing" style="display:none">
+  <p>
+    <strong>Neste steg hvis du liker retningen:</strong> jeg kan koble dette
+    sammen til en spillbar prototype mot samme Firebase-bank som dagens versjon,
+    eller utforske et par alternative arena-fasonger (sekskant, kortstokk,
+    skattekiste) før vi bygger. Si fra hvilken vei du vil gå.
+  </p>
+</section>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const MONSTERS = [
+  'monster-gold.png','monster-purple.png','monster-sky.png',
+  'monster-green.png','monster-red.png','monster-blue.png','monster-salmon.png'
+];
+
+const TRINN = [
+  { id: 1, lbl: 'Trinn 1', desc: '+ og −, opp til 10' },
+  { id: 2, lbl: 'Trinn 2', desc: '+ og −, opp til 20' },
+  { id: 3, lbl: 'Trinn 3', desc: '+ og −, opp til 100' },
+  { id: 4, lbl: 'Trinn 4', desc: 'Gangetabell 1–5' },
+  { id: 5, lbl: 'Trinn 5', desc: 'Gangetabell 1–10' },
+  { id: 6, lbl: 'Trinn 6', desc: '× og ÷, opp til 100' },
+];
+
+const TASKS_PER_ROUND = 10;
+const TIME_PER_TASK = 15;
+const TILES = 25;
+
+function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+function genQuestion(trinn) {
+  let a, b, op, ans;
+  switch (trinn) {
+    case 1:
+      op = Math.random() < 0.5 ? '+' : '−';
+      a = rnd(1, 10); b = rnd(1, 10);
+      if (op === '−' && b > a) [a, b] = [b, a];
+      ans = op === '+' ? a + b : a - b;
+      break;
+    case 2:
+      op = Math.random() < 0.5 ? '+' : '−';
+      a = rnd(2, 20); b = rnd(1, 20);
+      if (op === '−' && b > a) [a, b] = [b, a];
+      ans = op === '+' ? a + b : a - b;
+      break;
+    case 3:
+      op = Math.random() < 0.5 ? '+' : '−';
+      a = rnd(10, 80); b = rnd(5, 30);
+      if (op === '−' && b > a) [a, b] = [b, a];
+      ans = op === '+' ? a + b : a - b;
+      break;
+    case 4:
+      op = '×'; a = rnd(2, 5); b = rnd(2, 10); ans = a * b;
+      break;
+    case 5:
+      op = '×'; a = rnd(2, 10); b = rnd(2, 10); ans = a * b;
+      break;
+    case 6:
+      if (Math.random() < 0.5) { op = '×'; a = rnd(2, 10); b = rnd(2, 10); ans = a * b; }
+      else { op = '÷'; b = rnd(2, 10); ans = rnd(2, 10); a = b * ans; }
+      break;
+    default:
+      op = '+'; a = rnd(1, 10); b = rnd(1, 10); ans = a + b;
+  }
+  return { a, b, op, ans: String(ans) };
+}
+
+function makeTileOrder() {
+  const arr = Array.from({length: TILES}, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+const LS_COINS = 'myntjakten_coins';
+const LS_TRINN = 'myntjakten_trinn';
+
+function App() {
+  const [screen, setScreen] = useState('start'); // start | game | result
+  const [showTrinn, setShowTrinn] = useState(false);
+  const [trinn, setTrinn] = useState(() => parseInt(localStorage.getItem(LS_TRINN) || '3'));
+  const [totalCoins, setTotalCoins] = useState(() => parseInt(localStorage.getItem(LS_COINS) || '0'));
+  const [round, setRound] = useState(null);
+
+  useEffect(() => { localStorage.setItem(LS_TRINN, String(trinn)); }, [trinn]);
+  useEffect(() => { localStorage.setItem(LS_COINS, String(totalCoins)); }, [totalCoins]);
+
+  function startRound() {
+    setRound({
+      monster: MONSTERS[rnd(0, MONSTERS.length - 1)],
+      tileOrder: makeTileOrder(),
+      tasksDone: 0,
+      correct: 0,
+      streak: 0,
+      bestStreak: 0,
+      coinsThisRound: 0,
+      totalTimeMs: 0,
+      tilesRevealed: 0,
+      questions: Array.from({length: TASKS_PER_ROUND}, () => genQuestion(trinn)),
+    });
+    setScreen('game');
+  }
+
+  function finishRound(finalState) {
+    setTotalCoins(c => c + finalState.coinsThisRound);
+    setRound(finalState);
+    setScreen('result');
+  }
+
+  return (
+    <div className="proto-phone">
+      {screen === 'start' && (
+        <StartScreen
+          onStart={startRound}
+          onTrinn={() => setShowTrinn(true)}
+          trinn={trinn}
+          totalCoins={totalCoins}
+        />
+      )}
+      {screen === 'game' && (
+        <GameScreen
+          round={round}
+          setRound={setRound}
+          onFinish={finishRound}
+          onQuit={() => setScreen('start')}
+        />
+      )}
+      {screen === 'result' && (
+        <ResultScreen
+          round={round}
+          totalCoins={totalCoins}
+          onReplay={startRound}
+          onHome={() => setScreen('start')}
+        />
+      )}
+      {showTrinn && (
+        <TrinnPicker current={trinn} onPick={(t) => { setTrinn(t); setShowTrinn(false); }} onClose={() => setShowTrinn(false)} />
+      )}
+    </div>
+  );
+}
+
+function TrinnPicker({ current, onPick, onClose }) {
+  return (
+    <div className="trinn-backdrop" onClick={onClose}>
+      <div className="trinn-sheet" onClick={e => e.stopPropagation()}>
+        <h3>Velg trinn</h3>
+        <p>Hva slags hoderegning vil du øve på?</p>
+        <div className="trinn-grid">
+          {TRINN.map(t => (
+            <div key={t.id}
+              className={"trinn-card " + (t.id === current ? "active" : "")}
+              onClick={() => onPick(t.id)}>
+              <div className="tlbl">{t.lbl}</div>
+              <div className="tdesc">{t.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+function StartScreen({ onStart, onTrinn, trinn, totalCoins }) {
+  return (
+    <div className="screen-body" style={{display:'flex', flexDirection:'column', height:'100%'}}>
+      <div className="start-hero" style={{flex:'1', display:'flex', flexDirection:'column'}}>
+        <div className="scr-nav" style={{position:'relative'}}>
+          <div className="scr-back on-dark">‹</div>
+          <div className="start-chip" style={{position:'absolute', left:'50%', top:'50%', transform:'translate(-50%,-50%)'}}><span className="bd"></span>Hoderegning</div>
+          <div className="scr-iconbtn on-dark">⚙</div>
+        </div>
+        <h2 className="start-title" style={{marginTop:16}}>Mynt<span className="accent">Jakten</span>🪙</h2>
+        <p className="start-sub">Regn fort, fang mynter, og avdekk monsteret bak rutene!</p>
+        <div style={{flex:'1 1 auto', display:'flex', alignItems:'flex-end', justifyContent:'center', position:'relative', minHeight:0, paddingBottom:60}}>
+          <img src={MONSTERS[2]} alt="" style={{maxWidth:'72%', maxHeight:'240px', objectFit:'contain', filter:'drop-shadow(0 16px 24px rgba(0,0,0,0.4))'}} />
+        </div>
+      </div>
+      <div style={{padding:'16px 18px 22px', background:'var(--bg)'}}>
+        <div style={{display:'flex', alignItems:'center', gap:12, background:'white', border:'2px solid var(--border)', borderRadius:14, padding:'10px 14px', marginBottom:12, boxShadow:'0 3px 0 rgba(30,15,82,0.05)'}}>
+          <div style={{width:36, height:36, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem'}}>🪙</div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"'Fredoka One', cursive", color:'var(--teal-dark)', fontSize:'1.3rem', lineHeight:1}}>{totalCoins}</div>
+            <div style={{color:'var(--muted)', fontWeight:800, fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.05em', marginTop:2}}>Mynter samlet totalt</div>
+          </div>
+        </div>
+        <div style={{display:'flex', gap:8}}>
+          <button onClick={onStart} className="start-cta" style={{flex:1, background:'var(--amber)', color:'var(--teal-dark)', border:'none', padding:'14px', borderRadius:16, fontFamily:"'Fredoka One', cursive", fontSize:'1.05rem', boxShadow:'0 4px 0 var(--amber-dark)'}}>▶ Start ny runde</button>
+          <button onClick={onTrinn} style={{background:'white', border:'2px solid var(--border)', color:'var(--teal-dark)', padding:'0 14px', borderRadius:14, fontFamily:"'Fredoka One', cursive", fontSize:'0.95rem', boxShadow:'0 3px 0 rgba(30,15,82,0.06)', cursor:'pointer'}}>Trinn {trinn}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GameScreen({ round, setRound, onFinish, onQuit }) {
+  const qIdx = round.tasksDone;
+  const q = round.questions[qIdx];
+  const [answer, setAnswer] = useState('');
+  const [timeLeft, setTimeLeft] = useState(TIME_PER_TASK);
+  const [feedback, setFeedback] = useState(null); // 'good' | 'bad' | null
+  const [toast, setToast] = useState('');
+  const taskStartRef = useRef(Date.now());
+
+  useEffect(() => {
+    setAnswer('');
+    setTimeLeft(TIME_PER_TASK);
+    taskStartRef.current = Date.now();
+  }, [qIdx]);
+
+  useEffect(() => {
+    if (feedback) return;
+    const id = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 0.1) { clearInterval(id); handleTimeout(); return 0; }
+        return +(t - 0.1).toFixed(1);
+      });
+    }, 100);
+    return () => clearInterval(id);
+  }, [qIdx, feedback]);
+
+  const advance = useCallback((wasCorrect, elapsed) => {
+    setRound(r => {
+      const tilesGain = wasCorrect ? Math.ceil(TILES / TASKS_PER_ROUND) + (r.streak >= 2 ? 1 : 0) : 0;
+      const newStreak = wasCorrect ? r.streak + 1 : 0;
+      const coinsGain = wasCorrect ? (2 + (newStreak >= 3 ? 1 : 0)) : 0;
+      const next = {
+        ...r,
+        tasksDone: r.tasksDone + 1,
+        correct: r.correct + (wasCorrect ? 1 : 0),
+        streak: newStreak,
+        bestStreak: Math.max(r.bestStreak, newStreak),
+        coinsThisRound: r.coinsThisRound + coinsGain,
+        totalTimeMs: r.totalTimeMs + elapsed,
+        tilesRevealed: Math.min(TILES, r.tilesRevealed + tilesGain),
+      };
+      if (next.tasksDone >= TASKS_PER_ROUND) { setTimeout(() => onFinish(next), 100); }
+      return next;
+    });
+  }, [setRound, onFinish]);
+
+  function handleTimeout() {
+    setFeedback('bad');
+    setToast('⏰ Tiden gikk ut!');
+    setTimeout(() => { setToast(''); setFeedback(null); advance(false, TIME_PER_TASK * 1000); }, 900);
+  }
+
+  function submit() {
+    if (feedback || !answer) return;
+    const elapsed = Date.now() - taskStartRef.current;
+    if (answer === q.ans) {
+      setFeedback('good');
+      setToast('✓ Riktig!');
+      setTimeout(() => { setToast(''); setFeedback(null); advance(true, elapsed); }, 700);
+    } else {
+      setFeedback('bad');
+      setToast('✗ Riktig svar: ' + q.ans);
+      setTimeout(() => { setToast(''); setFeedback(null); advance(false, elapsed); }, 1100);
+    }
+  }
+
+  function tap(d) {
+    if (feedback) return;
+    if (d === 'C') setAnswer(a => a.slice(0, -1));
+    else if (d === 'OK') submit();
+    else if (answer.length < 4) setAnswer(a => a + d);
+  }
+
+  // ring math
+  const RING_R = 100;
+  const RING_C = 2 * Math.PI * RING_R; // ≈ 628.3
+  const ringOffset = RING_C * (1 - timeLeft / TIME_PER_TASK);
+  const ringCls = timeLeft <= 3 ? 'crittime' : timeLeft <= 6 ? 'lowtime' : '';
+
+  const tiles = Array.from({length: TILES}, (_, i) => {
+    const pos = round.tileOrder.indexOf(i);
+    return pos < round.tilesRevealed;
+  });
+
+  const answerCls = feedback === 'bad' ? 'answer-box shake' : feedback === 'good' ? 'answer-box pop' : 'answer-box';
+
+  return (
+    <div className="game-screen" style={{height:'100%', display:'flex', flexDirection:'column'}}>
+      <div className={"toast " + (toast ? "show " : "") + (feedback || '')}>{toast}</div>
+      <div className="scr-nav">
+        <div className="scr-back on-dark" onClick={onQuit} style={{cursor:'pointer'}}>‹</div>
+        <div className="scr-brand on-dark"><span className="bd"></span>MyntJakten</div>
+        <div className="scr-iconbtn on-dark" onClick={onQuit} style={{cursor:'pointer'}}>✕</div>
+      </div>
+      <div className="game-hud">
+        <div className="hud-chip progress"><div className="icon">📍</div><div className="text"><small>Oppgave</small><b>{qIdx + 1} / {TASKS_PER_ROUND}</b></div></div>
+        <div className="hud-chip coins"><div className="icon">🪙</div><div className="text"><small>Mynter</small><b>{round.coinsThisRound}</b></div></div>
+        <div className="hud-chip streak"><div className="icon">🔥</div><div className="text"><small>På rad</small><b>{round.streak}</b></div></div>
+      </div>
+      <div className="arena">
+        <div className="arena-stage">
+          <svg className={"arena-ring " + ringCls} viewBox="0 0 220 220">
+            <defs>
+              <linearGradient id="timeGradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#1D9E75"/>
+                <stop offset="100%" stopColor="#5cd6a3"/>
+              </linearGradient>
+            </defs>
+            <circle className="track" cx="110" cy="110" r={RING_R}/>
+            <circle className="progress" cx="110" cy="110" r={RING_R}
+              style={{strokeDasharray: RING_C, strokeDashoffset: ringOffset}}/>
+          </svg>
+          <div className="arena-monster-frame">
+            <img className="arena-monster" src={round.monster} alt="" />
+          </div>
+          <div className="arena-tile-grid">
+            {tiles.map((gone, i) => (
+              <div key={i} className={"arena-tile " + (gone ? "gone" : "")} />
+            ))}
+          </div>
+          <div className="arena-monster-badge">🔓 {round.tilesRevealed}/{TILES}</div>
+        </div>
+        <div className="arena-question">
+          {q.a} {q.op} {q.b} <span className="equals">=</span> <span className="qmark">{answer || '?'}</span>
+        </div>
+      </div>
+      <div className="numsheet">
+        <div className={answerCls}>
+          {answer.split('').map((d, i) => <span key={i}>{d}</span>)}
+          <span className="answer-cursor"></span>
+        </div>
+        <div className="numgrid">
+          {['1','2','3','4','5','6','7','8','9'].map(d => (
+            <div key={d} className="numkey" onClick={() => tap(d)}>{d}</div>
+          ))}
+          <div className="numkey clear" onClick={() => tap('C')}>⌫</div>
+          <div className="numkey" onClick={() => tap('0')}>0</div>
+          <div className="numkey submit" onClick={() => tap('OK')}>✓</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultScreen({ round, totalCoins, onReplay, onHome }) {
+  const avg = round.tasksDone ? (round.totalTimeMs / round.tasksDone / 1000).toFixed(1) : '–';
+  const great = round.correct >= TASKS_PER_ROUND * 0.8;
+  return (
+    <div className="screen-body" style={{background:'var(--bg)', height:'100%', overflowY:'auto'}}>
+      <div className="scr-nav">
+        <div className="scr-back" onClick={onHome} style={{cursor:'pointer'}}>‹</div>
+        <div className="scr-brand"><span className="bd"></span>Resultat</div>
+        <div className="scr-iconbtn">↗</div>
+      </div>
+      <div style={{padding:'4px 18px 22px'}}>
+        <div style={{textAlign:'center', padding:'8px 14px 18px'}}>
+          <img src={round.monster} alt="" style={{width:170, filter:'drop-shadow(0 12px 18px rgba(0,0,0,0.25))'}} />
+          <div style={{fontFamily:"'Fredoka One', cursive", fontSize:'1.8rem', color:'var(--teal-dark)', marginTop:6}}>
+            {great ? <>🏆 <span style={{color:'var(--amber)'}}>Mesterregner!</span></> : <>👏 Bra jobba!</>}
+          </div>
+          <div style={{color:'var(--muted)', fontWeight:700, fontSize:'0.88rem', marginTop:4}}>
+            {round.correct} av {TASKS_PER_ROUND} riktig · {avg}s i snitt
+          </div>
+        </div>
+        <div style={{background:'linear-gradient(135deg, var(--amber) 0%, #f5b54a 100%)', borderRadius:18, padding:'14px 18px', display:'flex', alignItems:'center', gap:14, color:'var(--teal-dark)', boxShadow:'0 4px 0 var(--amber-dark)'}}>
+          <div style={{width:46, height:46, borderRadius:'50%', background:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem', boxShadow:'inset 0 0 0 3px var(--amber-dark)'}}>🪙</div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"'Fredoka One', cursive", fontSize:'1.8rem', lineHeight:1}}>+{round.coinsThisRound}</div>
+            <div style={{fontWeight:900, fontSize:'0.75rem', textTransform:'uppercase', letterSpacing:'0.06em', opacity:0.85}}>Mynter denne runden</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontFamily:"'Fredoka One', cursive", fontSize:'1.1rem', lineHeight:1}}>{totalCoins}</div>
+            <div style={{fontWeight:900, fontSize:'0.65rem', textTransform:'uppercase', letterSpacing:'0.06em', opacity:0.75}}>Totalt</div>
+          </div>
+        </div>
+        <div className="result-line"><span className="lbl">✅ Riktige</span><span className="val">{round.correct} / {TASKS_PER_ROUND}</span></div>
+        <div className="result-line"><span className="lbl">🔥 Beste på rad</span><span className="val">{round.bestStreak}</span></div>
+        <div className="result-line"><span className="lbl">⏱ Snittid</span><span className="val">{avg}s</span></div>
+        <div className="result-line"><span className="lbl">🔓 Ruter avdekket</span><span className="val">{round.tilesRevealed} / {TILES}</span></div>
+
+        <div style={{marginTop:18, background:'white', border:'2px solid var(--border)', borderRadius:18, padding:'16px 16px 18px', boxShadow:'0 3px 0 rgba(30,15,82,0.05)'}}>
+          <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:10}}>
+            <div style={{fontSize:'1.4rem'}}>🏦</div>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:"'Fredoka One', cursive", color:'var(--teal-dark)', fontSize:'1rem'}}>Sett inn på kontoen</div>
+              <div style={{color:'var(--muted)', fontWeight:700, fontSize:'0.72rem'}}>Skann Myntland-kortet for å lagre myntene</div>
+            </div>
+          </div>
+          <div style={{display:'flex', alignItems:'center', justifyContent:'center', padding:'10px', background:'var(--bg)', borderRadius:14, border:'1.5px dashed var(--border)'}}>
+            <svg width="118" height="118" viewBox="0 0 29 29" shapeRendering="crispEdges">
+              <rect width="29" height="29" fill="#fff"/>
+              {(() => {
+                // Pseudo QR pattern (decorative)
+                const seed = round.coinsThisRound * 7 + 13;
+                const cells = [];
+                for (let y = 0; y < 29; y++) for (let x = 0; x < 29; x++) {
+                  const inFinder = (x < 7 && y < 7) || (x > 21 && y < 7) || (x < 7 && y > 21);
+                  const v = ((x * 31 + y * 17 + seed) * 9301 + 49297) % 233280;
+                  if (inFinder || (v / 233280) > 0.55) cells.push(<rect key={x+'-'+y} x={x} y={y} width="1" height="1" fill="#1e0f52"/>);
+                }
+                return cells;
+              })()}
+              {/* Finder squares */}
+              {[[0,0],[22,0],[0,22]].map(([fx,fy]) => (
+                <g key={fx+'-'+fy}>
+                  <rect x={fx} y={fy} width="7" height="7" fill="#1e0f52"/>
+                  <rect x={fx+1} y={fy+1} width="5" height="5" fill="#fff"/>
+                  <rect x={fx+2} y={fy+2} width="3" height="3" fill="#1e0f52"/>
+                </g>
+              ))}
+              {/* Coin in middle */}
+              <circle cx="14.5" cy="14.5" r="3.5" fill="#fff"/>
+              <circle cx="14.5" cy="14.5" r="3" fill="#EF9F27"/>
+              <text x="14.5" y="16.2" fontSize="4" textAnchor="middle" fill="#1e0f52" fontWeight="900">M</text>
+            </svg>
+          </div>
+          <div style={{textAlign:'center', marginTop:10, fontFamily:"'Fredoka One', cursive", color:'var(--teal-dark)', fontSize:'1.1rem'}}>
+            +{round.coinsThisRound} 🪙 → banken
+          </div>
+        </div>
+        <div style={{display:'flex', gap:8, marginTop:16}}>
+          <button onClick={onReplay} className="btn-replay" style={{flex:1, background:'var(--amber)', color:'var(--teal-dark)', border:'none', padding:'14px', borderRadius:16, fontFamily:"'Fredoka One', cursive", fontSize:'1.05rem', boxShadow:'0 4px 0 var(--amber-dark)'}}>🔄 Spill igjen</button>
+          <button onClick={onHome} style={{background:'white', border:'2px solid var(--border)', color:'var(--teal-dark)', padding:'0 14px', borderRadius:14, fontFamily:"'Fredoka One', cursive", fontSize:'0.95rem', cursor:'pointer'}}>🏠</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
