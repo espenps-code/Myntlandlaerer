@@ -839,7 +839,7 @@
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Generer handlelister på papir der elevene skriver inn pris og regner ut totalsummen.</p>
       <div class="form-grid">
         <div class="form-row"><label>Elevens navn (valgfritt)</label><input type="text" id="list-student" placeholder="La stå tomt for blank liste"></div>
-        <div class="form-row"><label>Antall varer per liste</label><input type="number" id="list-count" value="5" min="2" max="15"></div>
+        <div class="form-row"><label>Antall varer per liste</label><input type="number" id="list-count" value="5" min="2" max="8"></div>
       </div>
       <div class="form-row" style="max-width:280px;"><label>Antall sider (Det er 2 lister per side)</label><input type="number" id="list-pages" value="1" min="1" max="20"></div>
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Velg varer (la stå tomt for tilfeldig per side):</p>
@@ -2579,11 +2579,11 @@ function renderHandlelisteSelect() {
 }
 function generateShoppingList() {
   const sel = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
-  const count = parseInt(document.getElementById('list-count').value) || 5;
+  const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
   const items = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)).slice(0, count) : getRandom(window._groceries, count);
   renderListPreview(items);
 }
-function generateRandomList() { renderListPreview(getRandom(window._groceries, parseInt(document.getElementById('list-count').value)||5)); }
+function generateRandomList() { renderListPreview(getRandom(window._groceries, Math.min(8, parseInt(document.getElementById('list-count').value)||5))); }
 function getRandom(arr, n)    { return [...arr].sort(() => Math.random()-.5).slice(0, Math.min(n, arr.length)); }
 
 // Myntland-stil scoped CSS for preview (samme DNA som utskriften)
@@ -2623,7 +2623,11 @@ function myntListePreviewHTML(items, studentName, monsterIdx) {
   let monsterHTML = '';
   if (typeof window.makeAnimalSVG === 'function') {
     const el = window.makeAnimalSVG(monsterIdx * 13 + 7, 78);
-    monsterHTML = el ? el.outerHTML : '';
+    if (el) {
+      el.style.background = 'transparent';
+      el.style.borderRadius = '0';
+      monsterHTML = el.outerHTML;
+    }
   }
   return `<div class="liste">
     <div class="head">
@@ -2655,7 +2659,7 @@ function myntListePreviewHTML(items, studentName, monsterIdx) {
 function renderListPreview(items) {
   const sn    = document.getElementById('list-student').value;
   const pages = parseInt(document.getElementById('list-pages').value) || 1;
-  const count = parseInt(document.getElementById('list-count').value) || 5;
+  const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
   const itemsB = getRandom(window._groceries, count);
   document.getElementById('handleliste-preview').style.display = 'block';
   document.getElementById('handleliste-content').innerHTML =
@@ -2724,7 +2728,7 @@ function makeOneListPageHTML(sn, items, pageNum) {
 function printShoppingList() {
   const sn    = document.getElementById('list-student').value;
   const sel   = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
-  const count = parseInt(document.getElementById('list-count').value) || 5;
+  const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
   const pages = Math.max(1, Math.min(20, parseInt(document.getElementById('list-pages').value) || 1));
   const pool  = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)) : window._groceries;
   if (!pool.length) { alert('Ingen varer tilgjengelig.'); return; }
@@ -2734,9 +2738,14 @@ function printShoppingList() {
   // bildene laster i popup-vinduet.
   function monsterHTMLFor(idx) {
     if (typeof window.makeAnimalSVG !== 'function') return '';
-    // Seed nok så vi får varierte monstre på samme side.
+    // Seed så vi får varierte monstre på samme side.
     const el = window.makeAnimalSVG(idx * 13 + 7, 130);
-    return el ? el.outerHTML : '';
+    if (!el) return '';
+    // Fjern bakgrunnsfargen — handlelisten har sin egen monster-ramme
+    // (med pergament-bakgrunn) som monsteret legges oppå.
+    el.style.background = 'transparent';
+    el.style.borderRadius = '0';
+    return el.outerHTML;
   }
 
   function listHTML(arr, name, monsterIdx) {
