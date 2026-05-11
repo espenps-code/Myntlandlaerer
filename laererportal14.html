@@ -2619,9 +2619,12 @@ const MYNT_LIST_PREVIEW_CSS = `
 `;
 
 function myntListePreviewHTML(items, studentName, monsterIdx) {
-  const MONSTERS = ['blue','gold','green','grey','indigo','purple','red','salmon','sky','sunny']
-    .map(n => 'monster-' + n + '.png');
-  const monster = MONSTERS[monsterIdx % MONSTERS.length];
+  // Bruker ekte monster-engine (samme som bankkort/avatar).
+  let monsterHTML = '';
+  if (typeof window.makeAnimalSVG === 'function') {
+    const el = window.makeAnimalSVG(monsterIdx * 13 + 7, 78);
+    monsterHTML = el ? el.outerHTML : '';
+  }
   return `<div class="liste">
     <div class="head">
       <div class="title-block">
@@ -2633,7 +2636,7 @@ function myntListePreviewHTML(items, studentName, monsterIdx) {
           <div class="row"><span>Dato:</span><span class="line"></span></div>
         </div>
       </div>
-      <div class="monster"><span class="coin-tag">🪙</span><img src="${monster}" alt=""></div>
+      <div class="monster"><span class="coin-tag">🪙</span>${monsterHTML}</div>
     </div>
     <table>
       <thead><tr><th style="width:22px">#</th><th>Vare</th><th class="center" style="width:36px">Bilde</th><th class="right" style="width:90px">Pris 🪙</th></tr></thead>
@@ -2726,11 +2729,15 @@ function printShoppingList() {
   const pool  = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)) : window._groceries;
   if (!pool.length) { alert('Ingen varer tilgjengelig.'); return; }
 
-  // Bruk absolutt URL slik at bildene laster i popup-vinduet (som har
-  // about:blank som base — relative URL-er feiler der).
-  const monsterBase = new URL('.', window.location.href).href;
-  const MONSTERS = ['blue','gold','green','grey','indigo','purple','red','salmon','sky','sunny']
-    .map(n => monsterBase + 'monster-' + n + '.png');
+  // Bruker den ekte monster-engine i portalen (samme som bankkort/avatar).
+  // outerHTML konverterer img.src til absolutt URL automatisk, slik at
+  // bildene laster i popup-vinduet.
+  function monsterHTMLFor(idx) {
+    if (typeof window.makeAnimalSVG !== 'function') return '';
+    // Seed nok så vi får varierte monstre på samme side.
+    const el = window.makeAnimalSVG(idx * 13 + 7, 130);
+    return el ? el.outerHTML : '';
+  }
 
   function listHTML(arr, name, monsterIdx) {
     return `<div class="liste">
@@ -2744,7 +2751,7 @@ function printShoppingList() {
             <div class="row"><span>Dato:</span><span class="line"></span></div>
           </div>
         </div>
-        <div class="monster"><span class="coin-tag">🪙</span><img src="${MONSTERS[monsterIdx % MONSTERS.length]}" alt=""></div>
+        <div class="monster"><span class="coin-tag">🪙</span>${monsterHTMLFor(monsterIdx)}</div>
       </div>
       <table>
         <thead><tr><th style="width:8mm">#</th><th>Vare</th><th class="center" style="width:14mm">Bilde</th><th class="right" style="width:32mm">Pris 🪙</th></tr></thead>
