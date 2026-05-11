@@ -2418,7 +2418,8 @@ const MYNTLAND_BUTIKK_CSS = `
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:white;font-family:'Nunito',sans-serif;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{size:A4 portrait;margin:0}
-  .page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;background:var(--pergament)}
+  .page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;background:radial-gradient(ellipse 60% 80% at 50% 50%, rgba(255,255,255,0.4), transparent 75%),var(--pergament)}
+  .page::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle, rgba(42,31,61,0.04) 1px, transparent 1.5px);background-size:6px 6px;pointer-events:none}
   .page-corner{position:absolute;font-family:'Fraunces',serif;font-weight:900;font-style:italic;font-size:8.5pt;color:var(--blekk-myk);letter-spacing:.1em;z-index:5}
   .page-corner.tl{top:5mm;left:6mm}.page-corner.br{bottom:5mm;right:6mm}
   .vare-grid{position:absolute;inset:14mm 8mm 12mm 8mm;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:6mm}
@@ -2430,15 +2431,15 @@ const MYNTLAND_BUTIKK_CSS = `
   .vare .awning .kategori{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:8pt;letter-spacing:.04em;text-transform:uppercase;background:var(--blekk);color:var(--cat-accent-light,var(--gull-lys));padding:.8mm 2.6mm;border-radius:999px;border:1.2px solid var(--cat-accent-light,var(--gull-lys))}
   .vare.cat-korall .awning,.vare.cat-lilla .awning,.vare.cat-skog .awning{color:var(--pergament)}
   .vare .middle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5mm;padding:6mm 4mm 4mm;position:relative;z-index:1;min-height:0}
-  .vare .vare-emoji{font-size:96pt;line-height:1}
+  .vare .vare-emoji{font-size:96pt;line-height:1;filter:drop-shadow(0 4px 5px rgba(42,31,61,0.18))}
   .vare .name{font-family:'Fraunces',serif;font-weight:900;font-size:22pt;line-height:1;color:var(--blekk);text-align:center;letter-spacing:-.01em}
   .vare .foot{padding:0 4mm 5mm;display:flex;flex-direction:column;align-items:center;gap:3mm;position:relative;z-index:1}
   .vare .price-block{display:inline-flex;align-items:center;justify-content:center;gap:2.5mm;background:var(--cat-accent-light,var(--himmel));border:2px solid var(--blekk);border-radius:999px;padding:2mm 8mm 2mm 6mm;box-shadow:2.5px 2.5px 0 var(--blekk)}
   .vare .price-block .price{font-family:'Bowlby One',sans-serif;font-size:26pt;line-height:1;color:var(--blekk);display:flex;align-items:center;gap:2.5mm}
   .vare .price-block .price .emoji{font-size:22pt}
   .vare .qr{width:30mm;height:30mm;background:white;border:1.5px solid var(--blekk);border-radius:3px;padding:1mm}
-  .vare .qr svg{width:100%;height:100%;display:block}
   .vare .qr img{width:100%;height:100%;display:block}
+  .vare .qr svg{width:100%;height:100%;display:block}
   .vare.cat-gull{--cat-accent:var(--gull);--cat-accent-light:var(--gull-lys)}
   .vare.cat-turkis{--cat-accent:var(--turkis);--cat-accent-light:var(--himmel)}
   .vare.cat-korall{--cat-accent:var(--korall);--cat-accent-light:var(--rosa)}
@@ -2446,9 +2447,9 @@ const MYNTLAND_BUTIKK_CSS = `
   .vare.cat-lime{--cat-accent:var(--lime);--cat-accent-light:#E8F2A8}
   .vare.cat-skog{--cat-accent:var(--skog);--cat-accent-light:#A8D5B8}
   .vare.cat-himmel{--cat-accent:var(--himmel);--cat-accent-light:#E5F7F9}
-  .vare-back{width:100%;height:100%;background:var(--blekk);border:2px solid var(--blekk);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gull);text-align:center;padding:8mm;box-shadow:inset 0 0 0 4px var(--blekk),inset 0 0 0 5px var(--gull);position:relative}
+  .vare-back{width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%, var(--lilla) 0%, var(--blekk) 80%);border:2px solid var(--blekk);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gull);text-align:center;padding:8mm;box-shadow:inset 0 0 0 4px var(--blekk),inset 0 0 0 5px var(--gull);position:relative}
   .vare-back::before{content:"";position:absolute;inset:6mm;border:1.2px dashed rgba(245,200,73,0.35);border-radius:5px}
-  .vare-back .big-coin{font-size:60pt;line-height:1}
+  .vare-back .big-coin{font-size:60pt;line-height:1;filter:drop-shadow(0 3px 0 var(--blekk))}
   .vare-back .logo{font-family:'Bowlby One',sans-serif;font-size:20pt;color:var(--gull);-webkit-text-stroke:1.2px var(--blekk);text-shadow:2.5px 2.5px 0 var(--blekk);margin-top:6mm}
   .vare-back .logo small{display:block;font-family:'Fraunces',serif;font-style:italic;font-weight:900;-webkit-text-stroke:0;text-shadow:none;font-size:10pt;color:var(--pergament);letter-spacing:.08em;margin-top:2mm}
   .vare-back .scan-hint{margin-top:5mm;font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:8.5pt;letter-spacing:.12em;text-transform:uppercase;color:var(--pergament-dyp)}
@@ -2465,7 +2466,7 @@ const MYNTLAND_BUTIKK_CSS = `
   .liste .head .fields{margin-top:3mm;display:flex;flex-direction:column;gap:1.4mm}
   .liste .head .fields .row{display:flex;align-items:center;gap:2mm;font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:9pt;color:var(--blekk-myk)}
   .liste .head .fields .row .line{flex:1;border-bottom:1.2px solid var(--blekk);height:4mm}
-  .liste .head .monster{flex-shrink:0;width:34mm;height:34mm;background:var(--himmel);border:2px solid var(--blekk);border-radius:6px;display:flex;align-items:flex-end;justify-content:center;position:relative;overflow:hidden;box-shadow:3px 3px 0 var(--blekk);transform:rotate(2deg)}
+  .liste .head .monster{flex-shrink:0;width:34mm;height:34mm;background:radial-gradient(ellipse 70% 60% at 50% 60%, var(--himmel) 0%, var(--gull-lys) 100%);border:2px solid var(--blekk);border-radius:6px;display:flex;align-items:flex-end;justify-content:center;position:relative;overflow:hidden;box-shadow:3px 3px 0 var(--blekk);transform:rotate(2deg)}
   .liste .head .monster img{height:108%;width:auto;max-width:96%;object-fit:contain;object-position:bottom center}
   .liste .head .monster .coin-tag{position:absolute;top:1mm;left:1mm;font-size:14pt;transform:rotate(-12deg)}
   .liste table{width:100%;border-collapse:collapse;flex:1}
@@ -2501,7 +2502,7 @@ function generateGroceryPDF() {
     'Annet':            { klasse:'cat-skog',   navn:'ANNET' }
   };
 
-  const qrSVGFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }, 30);
+  const qrSvgFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }, 30);
 
   function vareHTML(v, idx) {
     const cat = CATS[v.category] || CATS['Annet'];
@@ -2514,7 +2515,7 @@ function generateGroceryPDF() {
         <div class="middle"><span class="vare-emoji">${v.emoji}</span><div class="name">${v.name}</div></div>
         <div class="foot">
           <div class="price-block"><div class="price"><span class="emoji">🪙</span><span>${v.price}</span></div></div>
-          <div class="qr">${qrSVGFor(v)}</div>
+          <div class="qr">${qrSvgFor(v)}</div>
         </div>
       </div>
     </div>`;
@@ -2553,13 +2554,13 @@ function generateGroceryPDF() {
   }
 
   const css = MYNTLAND_BUTIKK_CSS;
+  const _bv = window.buildPdfDownloadBanner('Slik laster du ned varekort', { twoSided: true });
   const win = window.open('', '_blank', 'width=900,height=700');
   win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
-    <style>${css}</style></head><body>${pagesHTML}
-    <script>setTimeout(function(){window.focus();window.print();},900);<\/script>
+    <style>${css}${_bv.bannerCSS}</style></head><body>${_bv.bannerHTML}${pagesHTML}
   </body></html>`);
   win.document.close();
 }
@@ -2768,6 +2769,7 @@ function printShoppingList() {
     </div>`;
   }
 
+  const _bh = window.buildPdfDownloadBanner('Slik laster du ned handlelister');
   const win = window.open('', '_blank', 'width=1100,height=700');
   win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2775,8 +2777,8 @@ function printShoppingList() {
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
     <style>${MYNTLAND_BUTIKK_CSS}
     @page{size:A4 landscape;margin:0}
-    </style></head><body>${allPages}
-    <script>setTimeout(function(){window.focus();window.print();},900);<\/script>
+    ${_bh.bannerCSS}
+    </style></head><body>${_bh.bannerHTML}${allPages}
   </body></html>`);
   win.document.close();
 }
@@ -2860,6 +2862,7 @@ function printSingleQR(elId, label) {
   const dataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
   if (!dataUrl) { alert('QR ikke klar – vent litt og prøv igjen.'); return; }
   const amount = parseInt(label);
+  const _br1 = window.buildPdfDownloadBanner('Slik laster du ned belønningskort');
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
@@ -2872,8 +2875,10 @@ function printSingleQR(elId, label) {
       .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
       .desc{font-size:3.5mm;color:#5a7a5a;text-align:center;font-weight:700;}
       .qr-wrap{display:flex;justify-content:center;align-items:center;}
+      ${_br1.bannerCSS}
     </style>
   </head><body>
+    ${_br1.bannerHTML}
     <div class="grid">
       ${[0,1,2,3].map(()=>`<div class="card">
         <div class="logo">🪙 Myntland</div>
@@ -2882,7 +2887,6 @@ function printSingleQR(elId, label) {
         <div class="desc">Belønning</div>
       </div>`).join('')}
     </div>
-    <script>setTimeout(()=>{window.focus();window.print();},300);<\/script>
   </body></html>`);
   win.document.close();
 }
@@ -2896,6 +2900,7 @@ function _printRewardCards(rewards) {
       <div class="desc">${r.desc}</div>
     </div>`
   ).join('');
+  const _br2 = window.buildPdfDownloadBanner('Slik laster du ned belønningskort');
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
@@ -2909,8 +2914,10 @@ function _printRewardCards(rewards) {
       .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
       .desc{font-size:3.5mm;color:#5a7a5a;text-align:center;font-weight:700;}
       .qr-wrap{display:flex;justify-content:center;align-items:center;}
+      ${_br2.bannerCSS}
     </style>
   </head><body>
+    ${_br2.bannerHTML}
     <div class="grid">${cardsHTML}</div>
     <script>
       var payloads=${JSON.stringify(payloads)};
@@ -2924,41 +2931,101 @@ function _printRewardCards(rewards) {
         }
         return done;
       }
-      var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>40){clearInterval(poll);setTimeout(function(){window.focus();window.print();},400);}},150);
+      // Bare bygg QR-kodene — vent på at læreren klikker "Last ned PDF"
+      var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>40){clearInterval(poll);}},150);
     <\/script>
   </body></html>`);
   win.document.close();
 }
 
 // ════════════════════════════════════════════════════════════════════
+// PDF-DOWNLOAD-BANNER — gjenbrukbar helper
+//
+// Skoleskrivere takler en ferdig PDF mye bedre enn en live utskrift
+// fra nettleseren (live = mange ulike effekter må prosesseres on the
+// fly; PDF = alt er ferdig flatpresset og pakket). Derfor: i stedet
+// for å auto-printe, viser vi et banner med instruksjon om å lagre
+// som PDF først, og deretter sende PDF-en til skoleskriveren.
+//
+// Returnerer { bannerHTML, bannerCSS } som skal injiseres i popup-en
+// før innholdet og inne i <style>-blokken.
+// ════════════════════════════════════════════════════════════════════
+window.buildPdfDownloadBanner = function(title, opts) {
+  title = title || 'Slik laster du ned og skriver ut';
+  opts = opts || {};
+  var twoSidedTip = opts.twoSided
+    ? '<li>I skriver-dialogen: velg <strong>tosidig utskrift, «vend langs lang kant»</strong> og <strong>skala 100 %</strong>.</li>'
+    : '<li>I skriver-dialogen: pass på at <strong>skala er 100 %</strong> og <strong>«skriv ut bakgrunnsgrafikk»</strong> er på.</li>';
+  var bannerHTML = ''
+    + '<div class="print-info-banner">'
+    +   '<div class="pib-inner">'
+    +     '<div class="pib-title">📋 ' + title + '</div>'
+    +     '<ol class="pib-list">'
+    +       '<li>Trykk <strong>«Last ned PDF»</strong> under.</li>'
+    +       '<li>I dialogen som åpnes: velg <strong>«Lagre som PDF»</strong> som mål (ikke en skriver).</li>'
+    +       '<li>Lagre filen, åpne den, og send <strong>den ferdige PDF-en til skoleskriveren</strong>.</li>'
+    +       twoSidedTip
+    +     '</ol>'
+    +     '<div class="pib-tip">💡 <em>Tips:</em> Skoleskrivere takler en ferdig PDF mye bedre enn utskrift sendt direkte fra nettleseren — derfor dette mellom-steget.</div>'
+    +     '<button class="pib-print-btn" onclick="window.print()">📄 Last ned PDF</button>'
+    +   '</div>'
+    + '</div>';
+
+  var bannerCSS = ''
+    + '@media screen{'
+    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
+    +   '.pib-inner{max-width:780px;margin:0 auto}'
+    +   '.pib-title{font-family:"Bowlby One","Fredoka One",sans-serif;font-size:14pt;margin-bottom:8px;letter-spacing:.02em}'
+    +   '.pib-list{margin:0 0 10px 22px;padding:0;font-size:10.5pt;line-height:1.55}'
+    +   '.pib-list li{margin-bottom:3px}'
+    +   '.pib-list strong{color:#2A1F3D}'
+    +   '.pib-tip{font-size:10pt;color:#4A3D5C;margin-bottom:12px;padding:8px 12px;background:rgba(42,31,61,.06);border-radius:6px;border-left:3px solid #F5C849}'
+    +   '.pib-print-btn{display:inline-block;background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One","Fredoka One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer;transition:all .15s}'
+    +   '.pib-print-btn:hover{background:#1A1228;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}'
+    +   'body{padding-top:260px}'
+    + '}'
+    + '@media print{.print-info-banner{display:none !important}body{padding-top:0 !important}}';
+
+  return { bannerHTML: bannerHTML, bannerCSS: bannerCSS };
+};
+
+// ════════════════════════════════════════════════════════════════════
 // QR-TIL-SVG — utskriftsvennlig, ingen ekstern PNG, ingen rasterisering
 //
-// Bruker qrcodejs (allerede lastet) til å beregne QR-modulmønsteret,
-// men i stedet for å lese ut pikslene fra dens canvas-output (sårbart
-// for antialiasing og varierende modulstørrelser), graver vi rett inn
-// i bibliotekets interne QRCodeModel-objekt som har eksakte
-// isDark(row,col) og getModuleCount(). Da blir resultatet alltid
-// piksel-perfekt, uavhengig av QR-versjon eller render-strategi.
+// Bruker qrcodejs (allerede lastet) til å beregne QR-mønsteret. Vi
+// gjør to forsøk for robusthet:
 //
-// Resultatet er vektor (ren svart/hvit SVG), typisk 1–3 KB per QR
-// (vs. 5–30 KB for PNG fra api.qrserver.com som så blir rasterisert
-// til mye større bitmap når printeren tar over).
+//   1. Direkte tilgang til den interne QRCodeModel-en (`_oQRCode`)
+//      som har isDark(row,col) og getModuleCount() — eksakt, ingen
+//      gjetting. Dette er den foretrukne veien.
+//
+//   2. Fallback: les ut pikslene fra qrcodejs sin canvas-output, og
+//      rekonstruér mønsteret. Brukes hvis interne objekter ikke er
+//      tilgjengelige (eldre nettlesere, fremtidige bibliotekversjoner).
+//
+//   3. Siste utvei: ekstern PNG fra api.qrserver.com, slik det var
+//      før. Trygt, men tyngre på printeren.
+//
+// Resultatet er vektor (ren svart/hvit SVG) på 1–3 KB per kort,
+// vs. 5–30 KB for PNG som blir rasterisert til mye større bitmap når
+// printeren tar over.
 // ════════════════════════════════════════════════════════════════════
 window.qrToSVG = function(payload, sizeMm) {
   sizeMm = sizeMm || 30;
   var text = typeof payload === 'string' ? payload : JSON.stringify(payload);
 
-  // Fallback hvis qrcodejs ikke er lastet (skal ikke skje i lærerportalen)
-  if (typeof QRCode === 'undefined') {
+  function fallbackImg(reason) {
     var url = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' +
               encodeURIComponent(text);
-    return '<img src="' + url + '" style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;display:block;" alt="QR">';
+    return '<img src="' + url + '" style="width:' + sizeMm + 'mm;height:' + sizeMm +
+           'mm;display:block;" alt="QR" data-fallback="' + reason + '">';
   }
 
+  if (typeof QRCode === 'undefined') return fallbackImg('no-lib');
+
   // Lag en QRCode-instans i en off-screen container.
-  // Vi trenger ikke selve renderingen — bare det interne modellobjektet.
   var tmp = document.createElement('div');
-  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;visibility:hidden';
+  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;visibility:hidden;width:200px;height:200px;';
   document.body.appendChild(tmp);
 
   var qr;
@@ -2970,36 +3037,94 @@ window.qrToSVG = function(payload, sizeMm) {
     });
   } catch(e) {
     document.body.removeChild(tmp);
-    return '<div style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:8pt;color:#999;">QR-feil</div>';
+    return fallbackImg('qr-throw');
   }
 
-  // Hent modulmodellen direkte fra biblioteket — eksakt, ingen pikselgjetting.
-  var model = qr._oQRCode;
-  if (!model || typeof model.getModuleCount !== 'function') {
-    document.body.removeChild(tmp);
-    return '<div style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;border:1px dashed #999;"></div>';
+  // ── Forsøk 1: bruk det interne QRCodeModel-objektet direkte ───────────
+  var grid = null;
+  var modules = 0;
+  try {
+    var model = qr._oQRCode;
+    if (model && typeof model.getModuleCount === 'function' &&
+        typeof model.isDark === 'function') {
+      modules = model.getModuleCount();
+      if (modules > 0) {
+        grid = [];
+        for (var r = 0; r < modules; r++) {
+          var row = [];
+          for (var c = 0; c < modules; c++) {
+            row.push(model.isDark(r, c) ? 1 : 0);
+          }
+          grid.push(row);
+        }
+      }
+    }
+  } catch(e) { grid = null; }
+
+  // ── Forsøk 2: les fra canvas hvis interne objektet ikke virket ────────
+  if (!grid) {
+    var canvas = tmp.querySelector('canvas');
+    if (canvas) {
+      try {
+        var ctx = canvas.getContext('2d');
+        var cw = canvas.width, ch = canvas.height;
+        var data = ctx.getImageData(0, 0, cw, ch).data;
+        function isDarkPx(x, y) {
+          var i = (y * cw + x) * 4;
+          return (data[i] + data[i+1] + data[i+2]) < 384;
+        }
+        // Finn første mørke piksel = topp-venstre av QR
+        var startX = -1, startY = -1;
+        for (var y = 0; y < ch && startY < 0; y++) {
+          for (var x = 0; x < cw; x++) {
+            if (isDarkPx(x, y)) { startX = x; startY = y; break; }
+          }
+        }
+        if (startX >= 0) {
+          // Mål modulstørrelse
+          var ms = 0;
+          while (startX + ms < cw && isDarkPx(startX + ms, startY)) ms++;
+          if (ms >= 2) {
+            modules = Math.round((cw - 2 * startX) / ms);
+            if (modules >= 21 && modules <= 177) {
+              grid = [];
+              for (var ry = 0; ry < modules; ry++) {
+                var rowG = [];
+                var py = startY + Math.floor(ry * ms + ms / 2);
+                for (var rx = 0; rx < modules; rx++) {
+                  var px = startX + Math.floor(rx * ms + ms / 2);
+                  rowG.push((px < cw && py < ch && isDarkPx(px, py)) ? 1 : 0);
+                }
+                grid.push(rowG);
+              }
+            }
+          }
+        }
+      } catch(e) { grid = null; }
+    }
   }
-  var modules = model.getModuleCount();
+
+  document.body.removeChild(tmp);
+
+  // ── Forsøk 3: ekstern PNG hvis alt feilet ─────────────────────────────
+  if (!grid || !modules) return fallbackImg('extract-failed');
 
   // Bygg én sammensatt path — én "M x y h1 v1 h-1 z" per mørk modul.
-  // Dette er den mest kompakte SVG-representasjonen av en QR.
   var pathParts = [];
-  for (var row = 0; row < modules; row++) {
-    for (var col = 0; col < modules; col++) {
-      if (model.isDark(row, col)) {
-        pathParts.push('M' + col + ' ' + row + 'h1v1h-1z');
+  for (var ry2 = 0; ry2 < modules; ry2++) {
+    for (var rx2 = 0; rx2 < modules; rx2++) {
+      if (grid[ry2][rx2]) {
+        pathParts.push('M' + rx2 + ',' + ry2 + 'h1v1h-1z');
       }
     }
   }
-  document.body.removeChild(tmp);
 
-  // Quiet zone på 2 moduler (standard er 4, men 2 holder for skanning og
-  // sparer plass på tett trykte kort).
+  // Quiet zone på 2 moduler — holder for skanning.
   var quiet = 2;
   var vb = modules + quiet * 2;
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' +
          (-quiet) + ' ' + (-quiet) + ' ' + vb + ' ' + vb +
-         '" style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;display:block;background:white;shape-rendering:crispEdges">' +
+         '" style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;display:block;background:#fff;shape-rendering:crispEdges">' +
          '<path d="' + pathParts.join('') + '" fill="#000"/></svg>';
 };
 
@@ -3016,9 +3141,8 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   var THEMES = ['theme-gull','theme-turkis','theme-korall','theme-lilla','theme-lime','theme-skog'];
 
   // QR genereres som inline SVG (vektor, ~1–3 KB per kort).
-  // Returnerer komplett <svg>-streng som plugges rett inn i markup.
   function qrSVG(payload) {
-    return window.qrToSVG(payload, 18); // 18mm = bankkort-QR
+    return window.qrToSVG(payload, 18);
   }
   function hashStr(str) {
     var h = 0, i; str = String(str||'');
@@ -3122,9 +3246,11 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '@page{size:A4 portrait;margin:0}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:#FBF2D6}'
+    + '.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,255,255,0.4),transparent 75%),#FBF2D6}'
     + '.page:last-of-type{page-break-after:auto}'
-    + '.page.back-page{background:#2A1F3D}'
+    + '.page::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.04) 1px,transparent 1.5px);background-size:6px 6px;pointer-events:none}'
+    + '.page.back-page{background:radial-gradient(ellipse 70% 80% at 50% 50%,#6B5BA8 0%,#2A1F3D 80%)}'
+    + '.page.back-page::before{background-image:radial-gradient(circle,rgba(245,200,73,0.05) 1px,transparent 1.5px);background-size:8px 8px}'
     + '.card-grid{position:absolute;inset:7mm 0 7mm 0;display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,70mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:1.5mm}'
     + '.card-slot-empty{visibility:hidden}'  /* skjul tomme slots på siste forside-side */
@@ -3140,20 +3266,21 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '.bank .band .mark .coin{width:4mm;height:4mm;border-radius:50%;background:#2A1F3D;color:var(--ca,#F5C849);display:inline-flex;align-items:center;justify-content:center;font-family:"Fraunces",serif;font-size:6.5pt;font-weight:900;font-style:italic;border:1px solid #2A1F3D}'
     + '.bank .band .klasse{font-family:"Fraunces",serif;font-style:italic;font-weight:900;font-size:8.5pt;letter-spacing:.04em;text-transform:uppercase;background:#2A1F3D;color:var(--cl,#FFE89A);padding:.8mm 3mm;border-radius:999px;border:1.2px solid var(--cl,#FFE89A)}'
     + '.bank .body{position:relative;z-index:1;display:grid;grid-template-columns:32mm 1fr;gap:3mm;padding:3mm 4mm 0 4mm;align-items:start}'
-    + '.bank .portrait{width:32mm;height:32mm;border:1.5px solid #2A1F3D;border-radius:5px;background:var(--cb,#BFEDF0);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:2mm}'
-    + '.bank .portrait > svg,.bank .portrait > img{position:relative;z-index:1;max-width:100%;max-height:100%;display:block}'
+    + '.bank .portrait{width:32mm;height:32mm;border:1.5px solid #2A1F3D;border-radius:5px;background:radial-gradient(ellipse 70% 60% at 50% 60%,var(--cb,#BFEDF0) 0%,var(--cl,#FFE89A) 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:2mm}'
+    + '.bank .portrait::after{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.10) .8px,transparent 1.2px);background-size:5px 5px;pointer-events:none}'
+    + '.bank .portrait > svg,.bank .portrait > img{position:relative;z-index:1;max-width:100%;max-height:100%;display:block;filter:drop-shadow(0 2px 3px rgba(42,31,61,0.25))}'
     + '.bank .portrait > svg{width:100%;height:100%}'
     + '.bank .ident{display:flex;flex-direction:column;justify-content:flex-start;min-width:0;padding-top:.5mm}'
     + '.bank .ident .label{font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.18em;text-transform:uppercase;color:#4A3D5C}'
     + '.bank .ident .navn{font-family:"Fraunces",serif;font-weight:900;font-size:13pt;line-height:1;color:#2A1F3D;margin-top:.6mm;letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
     + '.bank .pan-row{margin-top:2.5mm;display:flex;align-items:center;gap:2mm}'
-    + '.bank .chip{width:7mm;height:5mm;background:#F5C849;border:1px solid #2A1F3D;border-radius:1.2mm;position:relative;flex-shrink:0}'
-    + '.bank .chip::before{content:"";position:absolute;inset:1mm;border:.5px solid rgba(42,31,61,.55);border-radius:.5mm}'
+    + '.bank .chip{width:7mm;height:5mm;background:linear-gradient(135deg,#FFE89A 0%,#F5C849 60%,#C99517 100%);border:1px solid #2A1F3D;border-radius:1.2mm;position:relative;flex-shrink:0}'
+    + '.bank .chip::before{content:"";position:absolute;inset:.6mm;background:linear-gradient(0deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%),linear-gradient(90deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%);border:.5px solid rgba(42,31,61,.55);border-radius:.5mm}'
     + '.bank .pan{font-family:"JetBrains Mono",monospace;font-size:9pt;font-weight:700;letter-spacing:.05em;color:#2A1F3D}'
     + '.bank .foot{padding:2mm 4mm 3mm 4mm;display:grid;grid-template-columns:18mm 1fr auto;gap:3mm;align-items:end;position:relative;z-index:1}'
     + '.bank .qr{width:18mm;height:18mm;background:white;border:1.2px solid #2A1F3D;border-radius:2px;padding:1mm}'
-    + '.bank .qr svg{display:block;width:100%;height:100%}'
     + '.bank .qr img{display:block;width:100%;height:100%}'
+    + '.bank .qr svg{display:block;width:100%;height:100%}'
     + '.bank .pin-box{display:flex;flex-direction:column;align-items:flex-start;gap:.4mm}'
     + '.bank .pin-box .label{font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.18em;text-transform:uppercase;color:#4A3D5C}'
     + '.bank .pin-box .pin{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:14pt;letter-spacing:.18em;color:#2A1F3D;background:var(--cl,#FFE89A);border:1.2px solid #2A1F3D;padding:.4mm 2.4mm;border-radius:3px;line-height:1.05}'
@@ -3171,7 +3298,7 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '.bank.theme-korall .band,.bank.theme-lilla .band,.bank.theme-skog .band{color:#FBF2D6}'
     + '.bank.theme-korall .band .coin,.bank.theme-lilla .band .coin,.bank.theme-skog .band .coin{background:#FBF2D6;color:var(--cd)}'
     /* BACK CARD */
-    + '.back{width:100%;height:100%;background:#2A1F3D;border:2px solid #2A1F3D;border-radius:7px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 4px #2A1F3D,inset 0 0 0 5px #F5C849;display:flex;flex-direction:column;color:#F5C849}'
+    + '.back{width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%,#6B5BA8 0%,#2A1F3D 80%);border:2px solid #2A1F3D;border-radius:7px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 4px #2A1F3D,inset 0 0 0 5px #F5C849;display:flex;flex-direction:column;color:#F5C849}'
     + '.back::before{content:"";position:absolute;inset:5mm;border:1.2px dashed rgba(245,200,73,0.35);border-radius:4px;pointer-events:none}'
     + '.back .bstar{position:absolute;color:#F5C849;opacity:.35}'
     + '.back .stamp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:2;padding:2mm 6mm 4mm}'
@@ -3184,42 +3311,15 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
 
   // Info-banner som vises i forhåndsvisningen, men skjules ved utskrift
   // (via @media print). Gir læreren sjansen til å lese instruksjonen og
-  // selv trykke skriv ut — i stedet for at vi auto-printer øyeblikkelig.
-  var infoBanner = ''
-    + '<div class="print-info-banner">'
-    +   '<div class="pib-inner">'
-    +     '<div class="pib-title">📋 Før du skriver ut</div>'
-    +     '<ol class="pib-list">'
-    +       '<li>Velg <strong>tosidig utskrift</strong> i printer-dialogen.</li>'
-    +       '<li>For vending: velg <strong>«vend langs lang kant»</strong> (boklign) — ikke «kort kant».</li>'
-    +       '<li>Sett <strong>skala til 100 %</strong> (ikke «tilpass til side»).</li>'
-    +       '<li>Bakgrunnsfarger: pass på at <strong>«skriv ut bakgrunnsgrafikk»</strong> er på.</li>'
-    +     '</ol>'
-    +     '<div class="pib-tip">💡 <em>Tips:</em> Skriv ut én testside først for å sjekke at fargene blir riktige før du tar hele klassen.</div>'
-    +     '<button class="pib-print-btn" onclick="window.print()">🖨️ Skriv ut nå</button>'
-    +   '</div>'
-    + '</div>';
-
-  // CSS for banneret — skjules helt ved utskrift via @media print
-  var bannerCSS = ''
-    + '@media screen{'
-    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
-    +   '.pib-inner{max-width:780px;margin:0 auto}'
-    +   '.pib-title{font-family:"Bowlby One",sans-serif;font-size:14pt;margin-bottom:8px;letter-spacing:.02em}'
-    +   '.pib-list{margin:0 0 10px 22px;padding:0;font-size:10.5pt;line-height:1.55}'
-    +   '.pib-list li{margin-bottom:3px}'
-    +   '.pib-list strong{color:#2A1F3D}'
-    +   '.pib-tip{font-size:10pt;color:#4A3D5C;margin-bottom:12px;padding:8px 12px;background:rgba(42,31,61,.06);border-radius:6px;border-left:3px solid #F5C849}'
-    +   '.pib-print-btn{display:inline-block;background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer;transition:all .15s}'
-    +   '.pib-print-btn:hover{background:#1A1228;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}'
-    +   'body{padding-top:240px}'  /* gi plass til banneret slik at første side ikke skjules */
-    + '}'
-    + '@media print{.print-info-banner{display:none !important}body{padding-top:0 !important}}';
+  // Banner med PDF-download-instruks (skjules ved utskrift).
+  var _b = window.buildPdfDownloadBanner('Slik laster du ned bankkort', { twoSided: true });
+  var infoBanner = _b.bannerHTML;
+  var bannerCSS = _b.bannerCSS;
 
   return '<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>' + escapeHTML(title) + '</title>'
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
     + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-    + '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800&family=Bowlby+One&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">'
+    + '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700;1,9..144,900&family=Nunito:wght@400;600;700;800;900&family=Bowlby+One&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">'
     + '<style>' + css + bannerCSS + '</style>'
     + '</head><body>' + infoBanner + pagesHTML + '</body></html>';
 };
@@ -3840,7 +3940,6 @@ function printHendelseQRCard() {
   const btn = document.getElementById('hend-qr-print-btn');
   const h   = btn._hendelse;
   if (!h) { alert('Velg en hendelse først.'); return; }
-  // Generer QR som inline SVG (vektor, ~1–3 KB) — printervennlig.
   const qrSVG = window.qrToSVG({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }, 28);
   printHendelserCards14([{ ...h, qrSVG: qrSVG }]);
 }
@@ -3862,7 +3961,6 @@ function printHendelserCards14(cards) {
     const cls      = isIncome ? 'income' : 'expense';
     const sign     = isIncome ? '+' : '−';
     const label    = isIncome ? 'INNTEKT' : 'UTGIFT';
-    // Bruk inline SVG (qrSVG) hvis tilgjengelig — ellers fallback til img
     const qrMarkup = c.qrSVG
       ? c.qrSVG
       : `<img src="${c.qrUrl || c._dataUrl || ''}" width="130" height="130" alt="QR">`;
@@ -3913,6 +4011,7 @@ function printHendelserCards14(cards) {
       ${backsForFronts(group)}
     </div>`;
   }
+  const _bhend = window.buildPdfDownloadBanner('Slik laster du ned hendelseskort', { twoSided: true });
   win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3922,7 +4021,8 @@ function printHendelserCards14(cards) {
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
     @page{size:A4 portrait;margin:0}
-    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative;background:var(--pergament);padding:6mm;gap:4mm}
+    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,255,255,0.4),transparent 75%),var(--pergament);padding:6mm;gap:4mm}
+    .page-print::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.04) 1px,transparent 1.5px);background-size:6px 6px;pointer-events:none}
     .page-corner{position:absolute;font-family:'Fraunces',serif;font-weight:900;font-style:italic;font-size:8.5pt;color:var(--blekk-myk);letter-spacing:.1em;z-index:5}
     .page-corner.tl{top:3mm;left:5mm}.page-corner.br{bottom:3mm;right:5mm}
 
@@ -3939,32 +4039,34 @@ function printHendelserCards14(cards) {
     .crop.bl{bottom:1mm;left:1mm}.crop.br{bottom:1mm;right:1mm}
 
     .ribbon{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:9.5pt;letter-spacing:.18em;text-transform:uppercase;background:var(--blekk);color:var(--accent-light);padding:1.6mm 7mm;border-radius:999px;border:1.5px solid var(--accent);box-shadow:2px 2px 0 var(--blekk);margin-bottom:1mm}
-    .emoji{font-size:24mm;line-height:1;margin-top:1mm}
+    .emoji{font-size:24mm;line-height:1;filter:drop-shadow(0 3px 4px rgba(42,31,61,0.2));margin-top:1mm}
     .desc{font-family:'Fraunces',serif;font-weight:900;font-size:13pt;color:var(--blekk);line-height:1.18;max-width:80mm;letter-spacing:-.005em}
     .amount-pill{display:inline-flex;align-items:center;gap:2mm;background:var(--accent-light);border:2px solid var(--blekk);border-radius:999px;padding:1.5mm 6mm;box-shadow:2.5px 2.5px 0 var(--blekk);color:var(--accent-dark)}
     .amount-pill .sign{font-family:'Bowlby One',sans-serif;font-size:18pt;line-height:1;color:var(--accent-dark)}
     .amount-pill .coin{font-size:15pt;line-height:1}
     .amount-pill .num{font-family:'Bowlby One',sans-serif;font-size:22pt;line-height:1;color:var(--blekk);letter-spacing:.01em}
     .qr-wrap{display:flex;justify-content:center;padding:1.5mm;background:white;border:1.5px solid var(--blekk);border-radius:3px;margin-top:.5mm}
-    .qr-wrap svg{display:block;width:28mm;height:28mm}
     .qr-wrap img{display:block;width:28mm;height:28mm}
+    .qr-wrap svg{display:block;width:28mm;height:28mm}
     .scan-hint{font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:7.5pt;color:var(--blekk-myk);letter-spacing:.06em}
     .mark{font-family:'Bowlby One',sans-serif;font-size:7pt;color:var(--accent-dark);letter-spacing:.08em;margin-top:auto;padding-top:1mm}
 
-    /* ── Bakside (flat mørk lilla — ingen radial gradient) ── */
-    .page-print.back-page{background:var(--blekk)}
+    /* ── Bakside ── */
+    .page-print.back-page{background:radial-gradient(ellipse 70% 80% at 50% 50%,#6B5BA8 0%,var(--blekk) 80%)}
+    .page-print.back-page::before{background-image:radial-gradient(circle,rgba(245,200,73,0.05) 1px,transparent 1.5px);background-size:8px 8px}
     .back-page .page-corner{color:rgba(245,200,73,.55)}
     .back-page .crop::before,.back-page .crop::after{background:var(--gull);opacity:.45}
-    .hback{background:var(--blekk);border:2px solid var(--blekk);box-shadow:inset 0 0 0 4px var(--blekk),inset 0 0 0 5px var(--gull);color:var(--gull);justify-content:center;gap:4mm;padding:8mm;position:relative}
+    .hback{background:radial-gradient(ellipse at 50% 50%,#6B5BA8 0%,var(--blekk) 80%);border:2px solid var(--blekk);box-shadow:inset 0 0 0 4px var(--blekk),inset 0 0 0 5px var(--gull);color:var(--gull);justify-content:center;gap:4mm;padding:8mm;position:relative}
     .hback::before{content:"";position:absolute;inset:6mm;border:1.2px dashed rgba(245,200,73,0.35);border-radius:5px;pointer-events:none}
-    .hback .big-coin{font-size:46pt;line-height:1;z-index:1}
+    .hback .big-coin{font-size:46pt;line-height:1;filter:drop-shadow(0 2.5px 0 var(--blekk));z-index:1}
     .hback .hback-logo{font-family:'Bowlby One',sans-serif;font-size:18pt;color:var(--gull);-webkit-text-stroke:1.2px var(--blekk);text-shadow:2.5px 2.5px 0 var(--blekk);text-align:center;line-height:1;z-index:1}
     .hback .hback-logo small{display:block;font-family:'Fraunces',serif;font-style:italic;font-weight:900;-webkit-text-stroke:0;text-shadow:none;font-size:9pt;color:var(--pergament);letter-spacing:.1em;margin-top:2mm}
     .hback .hback-scan{font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:8pt;letter-spacing:.16em;color:var(--pergament-dyp);z-index:1;margin-top:1mm}
+    ${_bhend.bannerCSS}
   </style>
 </head><body>
+  ${_bhend.bannerHTML}
   ${pagesHTML}
-  <script>setTimeout(function(){window.focus();window.print();},800);<\/script>
 </body></html>`);
   win.document.close();
 }
