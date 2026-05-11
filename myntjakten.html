@@ -268,49 +268,65 @@ body {
   box-shadow: 0 3px 0 var(--teal-dark);
 }
 
-/* Trinn-pillar er smalere så alle 6 får plass på en rad */
-.pill-group-grade .pill-btn {
-  min-width: 0;
-  flex: 1 1 0;
-  padding: 12px 4px;
-}
-
-/* Regnearter med farger */
-.op-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-.op-btn {
-  padding: 14px 6px;
-  border-radius: 14px;
+/* Preset-grid (Trinn 1–6) — kompakt 2-kolonne kort som i designet */
+.setting-label-center {
+  text-align: center;
   font-family: 'Fredoka One', cursive;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
+  color: var(--teal-dark);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: normal;
+  margin-bottom: 2px;
+}
+.setting-help {
+  display: block;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.preset-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 12px 14px;
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
   cursor: pointer;
   transition: all 0.15s;
-  text-align: center;
-  border: 2.5px solid;
-  background: var(--white);
 }
-.op-add { color: #1a5c1a; border-color: #1a5c1a; background: #e7f7e7; }
-.op-sub { color: #8b0000; border-color: #8b0000; background: #ffe8e8; }
-.op-mul { color: #7a5500; border-color: #7a5500; background: #fff5cc; }
-.op-div { color: #003e7a; border-color: #003e7a; background: #d8eeff; }
-.op-btn:hover { transform: translateY(-2px); }
-.op-btn.active {
-  box-shadow: 0 4px 0 currentColor;
-  transform: translateY(-2px);
+.preset-btn:hover {
+  border-color: var(--amber);
+  background: #fffaf0;
 }
-.op-btn:not(.active) {
-  opacity: 0.45;
+.preset-btn.active {
+  border-color: var(--amber-dark);
+  background: #fff5d8;
+  box-shadow: 0 3px 0 var(--amber-dark);
+  transform: translateY(-1px);
 }
-.op-btn small {
-  display: block;
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 800;
-  margin-top: 2px;
-  letter-spacing: 0.05em;
+.preset-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.15rem;
+  color: var(--teal-dark);
+  line-height: 1.1;
+}
+.preset-btn.active .preset-title { color: var(--amber-dark); }
+.preset-desc {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-top: 4px;
 }
 
 /* Knapper */
@@ -773,9 +789,9 @@ body {
 
 /* Mobil-tilpasninger */
 @media (max-width: 520px) {
-  .op-grid { grid-template-columns: repeat(4, 1fr); }
-  .op-btn { font-size: 1.3rem; padding: 12px 4px; }
-  .op-btn small { font-size: 0.6rem; }
+  .preset-btn { padding: 10px 12px; }
+  .preset-title { font-size: 1.05rem; }
+  .preset-desc { font-size: 0.72rem; }
   .pill-btn { min-width: 70px; padding: 10px 8px; font-size: 0.9rem; }
   .start-card { padding: 22px 18px; }
   .start-title { font-size: 1.4rem; }
@@ -1110,6 +1126,187 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── INNLOGGINGS-SKJERM (kun for app-kontekst) ── */
+.login-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  padding: 28px 24px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.04);
+  text-align: center;
+}
+.login-icon {
+  font-size: 3.6rem;
+  margin-bottom: 8px;
+}
+.login-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.6rem;
+  color: var(--teal-dark);
+  margin-bottom: 6px;
+}
+.login-sub {
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+.login-student-info {
+  background: var(--teal-light);
+  border-radius: 14px;
+  padding: 14px;
+  margin: 14px 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.login-student-info-icon {
+  font-size: 1.8rem;
+}
+.login-student-info-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.3rem;
+  color: var(--teal-dark);
+}
+
+/* ── MYNTDEX (samling) ── */
+.myntdex-section {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  padding: 22px 20px;
+  margin-top: 16px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.04);
+}
+.myntdex-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.myntdex-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.3rem;
+  color: var(--teal-dark);
+}
+.myntdex-count {
+  font-weight: 800;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.myntdex-sub {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+.myntdex-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+@media (max-width: 480px) {
+  .myntdex-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+}
+.dex-slot {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.dex-slot.unlocked {
+  background: #fff;
+}
+.dex-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.dex-slot.locked img {
+  filter: brightness(0) opacity(0.18);
+}
+.dex-slot .dex-rarity-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.dex-slot.locked .dex-rarity-dot { opacity: 0.45; }
+
+/* Sjeldenhetsfarger (bakgrunn = lett tint, kant = farget) */
+.dex-slot.unlocked.rarity-normal      { border-color: #b6c0cb; }
+.dex-slot.unlocked.rarity-sjelden     { border-color: #2a8f4a; background: #ecf9ef; }
+.dex-slot.unlocked.rarity-episk       { border-color: #7a3eb8; background: #f3eafa; }
+.dex-slot.unlocked.rarity-legendarisk {
+  border-color: #d97706; background: #fff5db;
+  box-shadow: 0 0 0 2px rgba(217,119,6,0.22), 0 2px 0 #b35e00;
+}
+.dex-rarity-dot.rarity-normal      { background: #7a8a9a; }
+.dex-rarity-dot.rarity-sjelden     { background: #2a8f4a; }
+.dex-rarity-dot.rarity-episk       { background: #7a3eb8; }
+.dex-rarity-dot.rarity-legendarisk { background: #d97706; }
+
+/* ── NYTT MONSTER-BANNER (på resultatsiden) ── */
+.new-monster-banner {
+  background: linear-gradient(135deg, #fff5d8, #fde9a8);
+  border: 2.5px solid var(--amber-dark);
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: center;
+  margin: 0 0 14px;
+  position: relative;
+  animation: newPulse 1.6s ease-in-out infinite;
+}
+@keyframes newPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); transform: translateY(0); }
+  50%      { box-shadow: 0 0 0 8px rgba(217,119,6,0.18); transform: translateY(-2px); }
+}
+.new-monster-badge {
+  position: absolute;
+  top: -10px; left: 50%;
+  transform: translateX(-50%);
+  background: #d97706;
+  color: #fff;
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.85rem;
+  padding: 2px 12px;
+  border-radius: 12px;
+  letter-spacing: 0.08em;
+}
+.new-monster-img {
+  width: 70px; height: 70px;
+  object-fit: contain;
+  display: block;
+  margin: 6px auto 4px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+}
+.new-monster-rarity {
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+.new-monster-rarity.rarity-normal      { color: #7a8a9a; }
+.new-monster-rarity.rarity-sjelden     { color: #2a8f4a; }
+.new-monster-rarity.rarity-episk       { color: #7a3eb8; }
+.new-monster-rarity.rarity-legendarisk { color: #d97706; }
+.new-monster-msg {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.05rem;
+  color: var(--teal-dark);
+  margin-top: 2px;
+}
 </style>
 </head>
 <body>
@@ -1135,8 +1332,33 @@ body {
 
 <div class="container">
 
+  <!-- ════════ INNLOGGINGS-SKJERM (vises bare i app-kontekst) ════════ -->
+  <!-- Skanning her kobler spilløkten til en elev, slik at Myntdex og
+       bestetider lagres på elevens konto. Mynter overføres fortsatt
+       fra resultatsiden (samme PIN-flyt som før). -->
+  <div id="screen-login" class="screen">
+    <div class="login-card">
+      <div class="login-icon">🃏</div>
+      <div class="login-title">Skann kortet ditt først</div>
+      <div class="login-sub">
+        Slik husker vi bestetidene dine og legger monstrene
+        du fanger i Myntdex-en din.
+      </div>
+      <button class="btn-primary" id="btn-login-scan">📷 Skann kortet</button>
+      <button class="btn-ghost" id="btn-login-skip" style="margin-top:8px;">
+        Spill som gjest (uten lagring)
+      </button>
+    </div>
+  </div>
+
   <!-- ════════ START-SKJERM ════════ -->
-  <div id="screen-start" class="screen active">
+  <div id="screen-start" class="screen">
+    <!-- Innlogget-strip: vises bare når en elev er skannet inn -->
+    <div id="logged-in-strip" class="login-student-info" style="display:none; margin: 0 0 16px;">
+      <span class="login-student-info-icon">👋</span>
+      <span class="login-student-info-name" id="logged-in-name">Elev</span>
+    </div>
+
     <div class="start-card">
       <div class="start-mascot">
         <img id="start-mascot-img" src="worksheet/monsters/03.webp" alt="Bobo">
@@ -1145,33 +1367,33 @@ body {
       <div class="start-sub">Velg innstillinger og kjør i gang!</div>
 
       <div class="setting-block">
-        <span class="setting-label">🎯 Regnearter</span>
-        <div class="op-grid">
-          <button class="op-btn op-add active" data-op="add">+ <small>Pluss</small></button>
-          <button class="op-btn op-sub active" data-op="sub">− <small>Minus</small></button>
-          <button class="op-btn op-mul" data-op="mul">· <small>Gange</small></button>
-          <button class="op-btn op-div" data-op="div">: <small>Dele</small></button>
-        </div>
-      </div>
-
-      <div class="setting-block">
-        <span class="setting-label">🏫 Trinn</span>
-        <div class="pill-group pill-group-grade">
-          <button class="pill-btn" data-grade="2">2.</button>
-          <button class="pill-btn" data-grade="3">3.</button>
-          <button class="pill-btn active" data-grade="4">4.</button>
-          <button class="pill-btn" data-grade="5">5.</button>
-          <button class="pill-btn" data-grade="6">6.</button>
-          <button class="pill-btn" data-grade="7">7.</button>
-        </div>
-      </div>
-
-      <div class="setting-block">
-        <span class="setting-label">📊 Vanskelighetsgrad</span>
-        <div class="pill-group">
-          <button class="pill-btn" data-level="easy">😊 Lett</button>
-          <button class="pill-btn active" data-level="medium">😎 Middels</button>
-          <button class="pill-btn" data-level="hard">🔥 Hard</button>
+        <span class="setting-label setting-label-center">Velg trinn</span>
+        <div class="setting-help">Hva slags hoderegning vil du øve på?</div>
+        <div class="preset-grid">
+          <button class="preset-btn active" data-preset="1">
+            <span class="preset-title">Trinn 1</span>
+            <span class="preset-desc">+ og −, opp til 10</span>
+          </button>
+          <button class="preset-btn" data-preset="2">
+            <span class="preset-title">Trinn 2</span>
+            <span class="preset-desc">+ og −, opp til 20</span>
+          </button>
+          <button class="preset-btn" data-preset="3">
+            <span class="preset-title">Trinn 3</span>
+            <span class="preset-desc">+ og −, opp til 100</span>
+          </button>
+          <button class="preset-btn" data-preset="4">
+            <span class="preset-title">Trinn 4</span>
+            <span class="preset-desc">Gangetabell 1–5</span>
+          </button>
+          <button class="preset-btn" data-preset="5">
+            <span class="preset-title">Trinn 5</span>
+            <span class="preset-desc">Gangetabell 1–10</span>
+          </button>
+          <button class="preset-btn" data-preset="6">
+            <span class="preset-title">Trinn 6</span>
+            <span class="preset-desc">× og ÷, opp til 100</span>
+          </button>
         </div>
       </div>
 
@@ -1196,6 +1418,16 @@ body {
       </div>
 
       <button id="btn-start" class="btn-primary">✨ Start spillet!</button>
+    </div>
+
+    <!-- Myntdex (monstersamling) — vises alltid; innhold tilpasses om eleven er innlogget -->
+    <div id="myntdex-section" class="myntdex-section" style="display:none;">
+      <div class="myntdex-header">
+        <div class="myntdex-title">📖 Myntdex</div>
+        <div class="myntdex-count" id="myntdex-count">0 / 20</div>
+      </div>
+      <div class="myntdex-sub" id="myntdex-sub">Fang monstre ved å avdekke dem i Myntjakten!</div>
+      <div class="myntdex-grid" id="myntdex-grid"></div>
     </div>
   </div>
 
@@ -1275,6 +1507,14 @@ body {
 
       <div id="high-score-banner" class="high-score-banner" style="display:none;">
         🏆 Ny rekord! 🏆
+      </div>
+
+      <!-- Vises hvis eleven nettopp fanget et helt nytt monster -->
+      <div id="new-monster-banner" class="new-monster-banner" style="display:none;">
+        <div class="new-monster-badge">NY!</div>
+        <img id="new-monster-img" class="new-monster-img" src="" alt="">
+        <div class="new-monster-rarity" id="new-monster-rarity">Sjelden</div>
+        <div class="new-monster-msg">Lagt til i Myntdex!</div>
       </div>
 
       <div class="stats-grid">
@@ -1542,36 +1782,248 @@ function hasFreshAuthFor(student) {
 }
 
 // ═══════════════════════════════════════════════════════
-// MONSTER-BILDER (fra worksheet-mappa)
+// MONSTER-KATALOG (med sjeldenhetsgrader)
 // ═══════════════════════════════════════════════════════
-const MONSTER_IMGS = [
-  "worksheet/monsters/01.webp", "worksheet/monsters/02.webp",
-  "worksheet/monsters/03.webp", "worksheet/monsters/04.webp",
-  "worksheet/monsters/05.webp", "worksheet/monsters/06.webp",
-  "worksheet/monsters/07.webp", "worksheet/monsters/08.webp",
-  "worksheet/monsters/09.webp", "worksheet/monsters/10.webp",
-  "worksheet/monsters/11.webp", "worksheet/monsters/12.webp",
-  "worksheet/monsters/13.webp", "worksheet/monsters/14.webp",
-  "worksheet/monsters/15.webp", "worksheet/monsters/16.webp",
-  "worksheet/monsters/17.webp", "worksheet/monsters/18.webp",
-  "worksheet/monsters/19.webp", "worksheet/monsters/20.webp",
-  "worksheet/monsters/21.webp"
+// 20 monstre fordelt på sjeldenhet 60/25/10/5:
+//   - Normal       (12 stk, 60%)
+//   - Sjelden      ( 5 stk, 25%)
+//   - Episk        ( 2 stk, 10%)
+//   - Legendarisk  ( 1 stk,  5%)
+// Trekkingen er vektet på sjeldenhetsgrad, ikke på enkeltmonster:
+// først trekkes en sjeldenhetsgrad (60/25/10/5), så et tilfeldig monster
+// innenfor den gruppen. Det gjør at legendariske monstre er virkelig sjeldne
+// uavhengig av hvor mange vi har av hver sort.
+//
+// IDene er strenger ('01'…'20') så de mappes 1:1 til filnavn i worksheet/monsters/
+// og er trygge å bruke som Firebase-nøkler.
+const RARITY = {
+  normal:      { label: 'Normal',      weight: 60, color: '#7a8a9a', emoji: '⚪' },
+  sjelden:     { label: 'Sjelden',     weight: 25, color: '#2a8f4a', emoji: '🟢' },
+  episk:       { label: 'Episk',       weight: 10, color: '#7a3eb8', emoji: '🟣' },
+  legendarisk: { label: 'Legendarisk', weight:  5, color: '#d97706', emoji: '⭐' }
+};
+
+const MONSTERS = [
+  // Normal (12 stk — 01..12)
+  { id: '01', rarity: 'normal' },
+  { id: '02', rarity: 'normal' },
+  { id: '03', rarity: 'normal' },
+  { id: '04', rarity: 'normal' },
+  { id: '05', rarity: 'normal' },
+  { id: '06', rarity: 'normal' },
+  { id: '07', rarity: 'normal' },
+  { id: '08', rarity: 'normal' },
+  { id: '09', rarity: 'normal' },
+  { id: '10', rarity: 'normal' },
+  { id: '11', rarity: 'normal' },
+  { id: '12', rarity: 'normal' },
+  // Sjelden (5 stk — 13..17)
+  { id: '13', rarity: 'sjelden' },
+  { id: '14', rarity: 'sjelden' },
+  { id: '15', rarity: 'sjelden' },
+  { id: '16', rarity: 'sjelden' },
+  { id: '17', rarity: 'sjelden' },
+  // Episk (2 stk — 18..19)
+  { id: '18', rarity: 'episk' },
+  { id: '19', rarity: 'episk' },
+  // Legendarisk (1 stk — 20)
+  { id: '20', rarity: 'legendarisk' }
 ];
 
+function monsterImgPath(id) {
+  return `worksheet/monsters/${id}.webp`;
+}
+
+function getMonsterById(id) {
+  return MONSTERS.find(m => m.id === id) || null;
+}
+
+// Trekk et monster vektet etter sjeldenhetsgrad
+function pickWeightedMonster() {
+  const totalWeight = Object.values(RARITY).reduce((s, r) => s + r.weight, 0);
+  let roll = Math.random() * totalWeight;
+  let chosenRarity = 'normal';
+  for (const [key, info] of Object.entries(RARITY)) {
+    if (roll < info.weight) { chosenRarity = key; break; }
+    roll -= info.weight;
+  }
+  const pool = MONSTERS.filter(m => m.rarity === chosenRarity);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Tilfeldig bilde-sti (brukes for start-maskot, ren dekorativ — alle 20 stiller likt)
 function randomMonster() {
-  return MONSTER_IMGS[Math.floor(Math.random() * MONSTER_IMGS.length)];
+  const m = MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
+  return monsterImgPath(m.id);
+}
+
+// ═══════════════════════════════════════════════════════
+// INNLOGGET ELEV (for Myntdex og bestetider)
+// ═══════════════════════════════════════════════════════
+// `currentStudent` settes når eleven skanner kortet sitt på login-skjermen
+// (i app-kontekst) — IKKE når de skanner ved innskudd av mynter. Det er
+// fordi spillet ellers ikke vet hvem som spiller før runden er ferdig.
+//
+// For gjester (åpnet fra index.html) blir denne stående som null, og
+// Myntdex/bestetider lagres ikke i Firebase.
+//
+// caughtMonsters er en cache for å unngå Firebase-rundtur når vi sjekker
+// om et nylig fanget monster er nytt eller ikke. Holdes synkron med
+// elevens myntdex-node.
+let currentStudent = null;
+let caughtMonsters = new Set();   // IDer av monstre eleven allerede har fanget
+
+// Sti i Firebase: myntdex14/{fbKey}/{monsterId} eller myntdex57/...
+function myntdexNodeFor(student) {
+  if (!student || !student.node) return null;
+  // students14 → myntdex14, students57 → myntdex57
+  return student.node.replace('students', 'myntdex');
+}
+
+async function loadMyntdex(student) {
+  caughtMonsters = new Set();
+  if (!student) return;
+  if (DEMO_MODE) return; // demo-modus: ikke Firebase
+
+  try {
+    await waitForFirebase();
+    const node = myntdexNodeFor(student);
+    if (!node) return;
+    const snap = await window._get(window._ref(window._db, node + '/' + student.id));
+    const data = snap.val();
+    if (data && typeof data === 'object') {
+      Object.keys(data).forEach(id => caughtMonsters.add(id));
+    }
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke laste Myntdex:', e);
+  }
+}
+
+// Returnerer true hvis monsteret var NYTT (ikke fanget før)
+async function captureMonster(student, monster) {
+  if (!student || !monster) return false;
+  const wasNew = !caughtMonsters.has(monster.id);
+  caughtMonsters.add(monster.id);
+
+  if (DEMO_MODE) return wasNew;
+
+  try {
+    await waitForFirebase();
+    const node = myntdexNodeFor(student);
+    if (!node) return wasNew;
+    await window._update(
+      window._ref(window._db, node + '/' + student.id),
+      { [monster.id]: { rarity: monster.rarity, ts: Date.now() } }
+    );
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke lagre fanget monster:', e);
+  }
+  return wasNew;
+}
+
+// Bestetid per preset+tid+antall. Brukes som tillegg til localStorage-rekorden
+// for innloggede elever — slik at de ser samme rekord uavhengig av nettleser.
+async function loadCloudHighscore(student, key) {
+  if (!student || DEMO_MODE) return 0;
+  try {
+    await waitForFirebase();
+    const node = student.node.replace('students', 'myntjaktenScores');
+    const snap = await window._get(
+      window._ref(window._db, node + '/' + student.id + '/' + key)
+    );
+    return parseInt(snap.val() || 0);
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke laste bestetid:', e);
+    return 0;
+  }
+}
+
+async function saveCloudHighscore(student, key, score) {
+  if (!student || DEMO_MODE) return;
+  try {
+    await waitForFirebase();
+    const node = student.node.replace('students', 'myntjaktenScores');
+    await window._set(
+      window._ref(window._db, node + '/' + student.id + '/' + key),
+      score
+    );
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke lagre bestetid:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// MYNTDEX-VISNING (rendrer rutenettet på startsiden)
+// ═══════════════════════════════════════════════════════
+function renderMyntdex() {
+  const section = document.getElementById('myntdex-section');
+  const grid = document.getElementById('myntdex-grid');
+  const countEl = document.getElementById('myntdex-count');
+  const subEl = document.getElementById('myntdex-sub');
+  if (!section || !grid) return;
+
+  // Vis alltid Myntdex — også for gjester. Da ser eleven hva som finnes
+  // å samle på, og oppdager systemet selv om de ikke er logget inn.
+  section.style.display = '';
+
+  if (currentStudent) {
+    // Innlogget: vis fremgang og "fanget"-status
+    if (countEl) countEl.textContent = `${caughtMonsters.size} / ${MONSTERS.length}`;
+    if (subEl)   subEl.textContent  = 'Fang monstre ved å avdekke dem i Myntjakten!';
+  } else {
+    // Gjest: ingen fremgang, men oppfordring til å logge inn
+    if (countEl) countEl.textContent = `0 / ${MONSTERS.length}`;
+    if (subEl)   subEl.textContent  = 'Skann kortet ditt for å begynne å samle på monstre!';
+  }
+
+  grid.innerHTML = '';
+  MONSTERS.forEach(m => {
+    const slot = document.createElement('div');
+    const unlocked = currentStudent && caughtMonsters.has(m.id);
+    slot.className = `dex-slot ${unlocked ? 'unlocked' : 'locked'} rarity-${m.rarity}`;
+    slot.title = unlocked
+      ? `Monster #${m.id} — ${RARITY[m.rarity].label}`
+      : `Ukjent monster — ${RARITY[m.rarity].label}`;
+    slot.innerHTML = `
+      <img src="${monsterImgPath(m.id)}" alt="">
+      <span class="dex-rarity-dot rarity-${m.rarity}"></span>
+    `;
+    grid.appendChild(slot);
+  });
 }
 
 // ═══════════════════════════════════════════════════════
 // SPILL-INNSTILLINGER
 // ═══════════════════════════════════════════════════════
+// Presets erstatter de tidligere separate valgene for regneart,
+// trinn og vanskelighetsgrad. Hver preset definerer alle tre.
+const PRESETS = {
+  '1': { label: 'Trinn 1', desc: '+ og −, opp til 10',  ops: ['add','sub'],       grade: 2, level: 'easy'   },
+  '2': { label: 'Trinn 2', desc: '+ og −, opp til 20',  ops: ['add','sub'],       grade: 2, level: 'medium' },
+  '3': { label: 'Trinn 3', desc: '+ og −, opp til 100', ops: ['add','sub'],       grade: 3, level: 'hard'   },
+  '4': { label: 'Trinn 4', desc: 'Gangetabell 1–5',     ops: ['mul'],             grade: 3, level: 'easy'   },
+  '5': { label: 'Trinn 5', desc: 'Gangetabell 1–10',    ops: ['mul'],             grade: 4, level: 'medium' },
+  '6': { label: 'Trinn 6', desc: '× og ÷, opp til 100', ops: ['mul','div'],       grade: 5, level: 'medium' }
+};
+
 const settings = {
-  ops: ['add', 'sub'],   // valgte regnearter
-  grade: 4,              // 2.-7. trinn
-  level: 'medium',       // lett / middels / hard (justerer innenfor trinnet)
+  preset: '1',           // valgt preset-id
+  ops: ['add', 'sub'],   // utledet fra preset
+  grade: 2,              // utledet fra preset
+  level: 'easy',         // utledet fra preset
   timePerQuestion: 10,   // sekunder, 0 = ingen tid
   totalQuestions: 20
 };
+
+// Bruk valgt preset til å fylle ops/grade/level
+function applyPreset(presetId) {
+  const p = PRESETS[presetId];
+  if (!p) return;
+  settings.preset = presetId;
+  settings.ops = [...p.ops];
+  settings.grade = p.grade;
+  settings.level = p.level;
+}
 
 // Tallområder per trinn — basert på vanlige læreplanmål.
 // "level" (lett/middels/hard) skifter mellom enklere/midt/vanskeligere
@@ -1806,34 +2258,12 @@ function showScreen(name) {
 // INNSTILLINGS-UI (start-skjerm)
 // ═══════════════════════════════════════════════════════
 function bindStartScreen() {
-  // Regnearter (toggle, minst én må være aktiv)
-  document.querySelectorAll('.op-btn').forEach(btn => {
+  // Preset-knapper (Trinn 1–6) — én aktiv av gangen, setter ops/grade/level
+  document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const op = btn.dataset.op;
-      const isActive = btn.classList.contains('active');
-      // Forhindre å fjerne siste aktive
-      const activeCount = document.querySelectorAll('.op-btn.active').length;
-      if (isActive && activeCount === 1) return;
-      btn.classList.toggle('active');
-      updateOpsFromUI();
-    });
-  });
-
-  // Vanskelighetsgrad (single)
-  document.querySelectorAll('.pill-btn[data-level]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.pill-btn[data-level]').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      settings.level = btn.dataset.level;
-    });
-  });
-
-  // Trinn (single)
-  document.querySelectorAll('.pill-btn[data-grade]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.pill-btn[data-grade]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      settings.grade = parseInt(btn.dataset.grade);
+      applyPreset(btn.dataset.preset);
     });
   });
 
@@ -1860,11 +2290,6 @@ function bindStartScreen() {
 
   // Sett tilfeldig start-maskot
   document.getElementById('start-mascot-img').src = randomMonster();
-}
-
-function updateOpsFromUI() {
-  const active = Array.from(document.querySelectorAll('.op-btn.active'));
-  settings.ops = active.map(b => b.dataset.op);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1894,9 +2319,9 @@ function pickGridSize(totalQuestions) {
 }
 
 function setupReveal() {
-  // Velg et tilfeldig monster
-  state.revealMonster = randomMonster();
-  document.getElementById('reveal-img').src = state.revealMonster;
+  // Velg et monster vektet etter sjeldenhetsgrad
+  state.revealMonster = pickWeightedMonster();
+  document.getElementById('reveal-img').src = monsterImgPath(state.revealMonster.id);
 
   // Velg grid-størrelse
   const { cols, rows } = pickGridSize(state.questions.length);
@@ -2158,7 +2583,7 @@ function spawnCoinBurst(count) {
 // ═══════════════════════════════════════════════════════
 // SLUTT-SKJERM
 // ═══════════════════════════════════════════════════════
-function endGame() {
+async function endGame() {
   stopTimer();
 
   // Statistikk
@@ -2193,14 +2618,25 @@ function endGame() {
   }
   document.getElementById('result-title').textContent = title;
   document.getElementById('result-sub').textContent = sub;
-  document.getElementById('result-mascot').src = state.revealMonster || MONSTER_IMGS[0];
+  document.getElementById('result-mascot').src =
+    state.revealMonster ? monsterImgPath(state.revealMonster.id) : monsterImgPath('01');
 
-  // Highscore (per innstillingskombinasjon)
+  // ── HIGHSCORE: lokal alltid; sky for innloggede ──
   const hsKey = makeHighscoreKey();
-  const prev = parseInt(localStorage.getItem(hsKey) || '0');
+  const localPrev = parseInt(localStorage.getItem(hsKey) || '0');
+  let cloudPrev = 0;
+  if (currentStudent) {
+    cloudPrev = await loadCloudHighscore(currentStudent, hsKey);
+  }
+  const prev = Math.max(localPrev, cloudPrev);
   const isNewRecord = state.coins > prev;
+
   if (isNewRecord) {
-    localStorage.setItem(hsKey, state.coins);
+    localStorage.setItem(hsKey, String(state.coins));
+    if (currentStudent) {
+      // Vent ikke på lagring — UI skal være snappy. Logg eventuelle feil.
+      saveCloudHighscore(currentStudent, hsKey, state.coins);
+    }
     document.getElementById('high-score-banner').style.display = '';
   } else {
     document.getElementById('high-score-banner').style.display = 'none';
@@ -2208,14 +2644,33 @@ function endGame() {
   const best = Math.max(prev, state.coins);
   document.getElementById('best-score').textContent = best + ' mynter';
 
+  // ── MONSTERFANGST ──
+  // Eleven "fanger" monsteret kun når alle ruter er borte (90 %+ riktig på
+  // runden, gitt grid-mappingen). Lagres bare for innloggede elever.
+  const newBanner = document.getElementById('new-monster-banner');
+  newBanner.style.display = 'none';
+  if (fullyRevealed && state.revealMonster && currentStudent) {
+    const wasNew = await captureMonster(currentStudent, state.revealMonster);
+    if (wasNew) {
+      // Vis NY-banner
+      document.getElementById('new-monster-img').src = monsterImgPath(state.revealMonster.id);
+      const rarityInfo = RARITY[state.revealMonster.rarity];
+      const rarityEl = document.getElementById('new-monster-rarity');
+      rarityEl.textContent = `${rarityInfo.emoji} ${rarityInfo.label}`;
+      rarityEl.className = `new-monster-rarity rarity-${state.revealMonster.rarity}`;
+      newBanner.style.display = '';
+    }
+    // Oppdater dex-en i bakgrunnen (synlig når eleven går tilbake til start)
+    renderMyntdex();
+  }
+
   if (typeof onGameEndedHook === 'function') onGameEndedHook();
   showScreen('result');
 }
 
 function makeHighscoreKey() {
-  // Lag en nøkkel basert på alle innstillinger så hver kombinasjon har egen rekord
-  const opsSorted = [...settings.ops].sort().join(',');
-  return `myntjakten:g${settings.grade}:${opsSorted}:${settings.level}:${settings.timePerQuestion}:${settings.totalQuestions}`;
+  // Nøkkel per kombinasjon av preset + tid + antall — hver kombo har egen rekord
+  return `myntjakten:p${settings.preset}:${settings.timePerQuestion}:${settings.totalQuestions}`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2676,13 +3131,29 @@ const depositState = {
   student: null,
   pinBuffer: '',
   pendingAmount: 0,
-  alreadyDeposited: false   // hindre dobbelt-innskudd
+  alreadyDeposited: false,  // hindre dobbelt-innskudd
+  mode: 'deposit'            // 'deposit' eller 'login'
 };
 
 function openDepositFlow() {
   if (depositState.alreadyDeposited) return;
   depositState.pendingAmount = state ? state.coins : 0;
   if (depositState.pendingAmount <= 0) return;
+  depositState.mode = 'deposit';
+  depositState.student = null;
+  depositState.pinBuffer = '';
+  document.getElementById('deposit-modal').classList.add('open');
+  goToStep('scan');
+  startScanner();
+}
+
+// Login-flyt: brukes på login-skjermen for å koble spilløkten til en elev
+// før spillet starter. Bruker samme modal (scan → PIN → suksess) som
+// innskudd, bare i en annen "mode" så vi vet at vi IKKE skal trekke mynter
+// til slutt.
+function openLoginFlow() {
+  depositState.mode = 'login';
+  depositState.pendingAmount = 0;
   depositState.student = null;
   depositState.pinBuffer = '';
   document.getElementById('deposit-modal').classList.add('open');
@@ -2804,6 +3275,18 @@ async function handleStudentLookup(idText) {
       'Hei, ' + (student.name || 'elev') + '!';
     document.getElementById('pin-error').textContent = '';
 
+    // LOGIN-MODUS: bare verifiser PIN og sett currentStudent — ingen mynter.
+    // Hopper over policy-sjekk (den er for innskudd).
+    if (depositState.mode === 'login') {
+      // Fersk auth innen 5 min? Hopp rett til innlogging uten PIN.
+      if (hasFreshAuthFor(student)) {
+        await completeLogin(student);
+        return;
+      }
+      goToStep('pin');
+      return;
+    }
+
     // Policy-sjekk FØR vi spør om PIN. Læreren kan ha slått av opptjening,
     // eller eleven kan ha nådd dagstaket. Da slipper vi å skuffe etterpå.
     document.getElementById('scanner-status').textContent = 'Sjekker…';
@@ -2855,6 +3338,29 @@ async function handleStudentLookup(idText) {
     const msg = e && e.message ? e.message : 'Ukjent feil';
     showDepositError('Tilkoblingsfeil', msg);
   }
+}
+
+// Fullfør login-flyten: sett currentStudent, last Myntdex, vis start-skjerm
+async function completeLogin(student) {
+  currentStudent = student;
+  rememberFreshAuth(student);
+  goToStep('loading');
+  document.getElementById('loading-text').textContent = 'Henter Myntdex…';
+  try {
+    await loadMyntdex(student);
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke laste Myntdex:', e);
+  }
+  // Oppdater UI med innloggings-info
+  const strip = document.getElementById('logged-in-strip');
+  const nameEl = document.getElementById('logged-in-name');
+  if (strip && nameEl) {
+    nameEl.textContent = student.name || 'Elev';
+    strip.style.display = '';
+  }
+  renderMyntdex();
+  closeDepositFlow();
+  showScreen('start');
 }
 
 // ── MANUELL ID ──────────────────────────────────────────────────────
@@ -2937,7 +3443,13 @@ async function submitPin() {
     return;
   }
 
-  // PIN ok → sett inn mynter
+  // LOGIN-MODUS: vi har bare bekreftet hvem eleven er — ingen mynter trekkes.
+  if (depositState.mode === 'login') {
+    await completeLogin(student);
+    return;
+  }
+
+  // PIN ok → sett inn mynter (deposit-modus)
   document.getElementById('loading-text').textContent = 'Setter inn mynter…';
   try {
     const newBalance = await depositCoins(student, depositState.pendingAmount);
@@ -3038,14 +3550,47 @@ function onGameEndedHook() {
 }
 
 // ═══════════════════════════════════════════════════════
+// LOGIN-SKJERM (kun i app-kontekst)
+// ═══════════════════════════════════════════════════════
+function bindLoginScreen() {
+  const scanBtn = document.getElementById('btn-login-scan');
+  const skipBtn = document.getElementById('btn-login-skip');
+  if (scanBtn) {
+    scanBtn.addEventListener('click', openLoginFlow);
+  }
+  if (skipBtn) {
+    skipBtn.addEventListener('click', () => {
+      // Eleven spiller som gjest — ingen Myntdex eller bestetider lagres
+      currentStudent = null;
+      caughtMonsters = new Set();
+      const strip = document.getElementById('logged-in-strip');
+      if (strip) strip.style.display = 'none';
+      renderMyntdex();
+      showScreen('start');
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 (function init() {
+  // Sett standard preset (Trinn 1) før noe annet kjører
+  applyPreset(settings.preset);
   bindStartScreen();
+  bindLoginScreen();
   bindGameScreen();
   bindResultScreen();
   bindDepositModal();
-  updateOpsFromUI();
+
+  // Routing: app-brukere må logge inn først, gjester går rett til start
+  if (NAV_CONTEXT.isInApp) {
+    showScreen('login');
+  } else {
+    // Gjester: render Myntdex (i tom-tilstand) så de ser systemet
+    renderMyntdex();
+    showScreen('start');
+  }
 })();
 </script>
 
