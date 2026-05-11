@@ -2437,9 +2437,9 @@ const MYNTLAND_BUTIKK_CSS = `
   .vare .price-block{display:inline-flex;align-items:center;justify-content:center;gap:2.5mm;background:var(--cat-accent-light,var(--himmel));border:2px solid var(--blekk);border-radius:999px;padding:2mm 8mm 2mm 6mm;box-shadow:2.5px 2.5px 0 var(--blekk)}
   .vare .price-block .price{font-family:'Bowlby One',sans-serif;font-size:26pt;line-height:1;color:var(--blekk);display:flex;align-items:center;gap:2.5mm}
   .vare .price-block .price .emoji{font-size:22pt}
-  .vare .qr{width:30mm;height:30mm;background:white;border:1.5px solid var(--blekk);border-radius:3px;padding:1mm}
+  .vare .qr{width:30mm;height:30mm;background:white;border:1.5px solid var(--blekk);border-radius:3px;padding:1mm;display:flex;align-items:center;justify-content:center}
   .vare .qr img{width:100%;height:100%;display:block}
-  .vare .qr svg{width:100%;height:100%;display:block}
+  .vare .qr svg{display:block}
   .vare.cat-gull{--cat-accent:var(--gull);--cat-accent-light:var(--gull-lys)}
   .vare.cat-turkis{--cat-accent:var(--turkis);--cat-accent-light:var(--himmel)}
   .vare.cat-korall{--cat-accent:var(--korall);--cat-accent-light:var(--rosa)}
@@ -2502,7 +2502,7 @@ function generateGroceryPDF() {
     'Annet':            { klasse:'cat-skog',   navn:'ANNET' }
   };
 
-  const qrSvgFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }, 30);
+  const qrSvgFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }, 28);
 
   function vareHTML(v, idx) {
     const cat = CATS[v.category] || CATS['Annet'];
@@ -2726,8 +2726,11 @@ function printShoppingList() {
   const pool  = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)) : window._groceries;
   if (!pool.length) { alert('Ingen varer tilgjengelig.'); return; }
 
+  // Bruk absolutt URL slik at bildene laster i popup-vinduet (som har
+  // about:blank som base — relative URL-er feiler der).
+  const monsterBase = new URL('.', window.location.href).href;
   const MONSTERS = ['blue','gold','green','grey','indigo','purple','red','salmon','sky','sunny']
-    .map(n => 'monster-' + n + '.png');
+    .map(n => monsterBase + 'monster-' + n + '.png');
 
   function listHTML(arr, name, monsterIdx) {
     return `<div class="liste">
@@ -3122,9 +3125,13 @@ window.qrToSVG = function(payload, sizeMm) {
   // Quiet zone på 2 moduler — holder for skanning.
   var quiet = 2;
   var vb = modules + quiet * 2;
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' +
+  // SVG-en får eksplisitt størrelse i mm (mest pålitelig på tvers av nettlesere
+  // og PDF-eksport — CSS-prosent kan oppføre seg uforutsigbart i utskrift).
+  // preserveAspectRatio holder QR-en sentrert hvis container er litt større.
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + sizeMm + 'mm" height="' + sizeMm + 'mm" viewBox="' +
          (-quiet) + ' ' + (-quiet) + ' ' + vb + ' ' + vb +
-         '" style="width:' + sizeMm + 'mm;height:' + sizeMm + 'mm;display:block;background:#fff;shape-rendering:crispEdges">' +
+         '" preserveAspectRatio="xMidYMid meet"' +
+         ' style="display:block;background:#fff;shape-rendering:crispEdges">' +
          '<path d="' + pathParts.join('') + '" fill="#000"/></svg>';
 };
 
@@ -3141,8 +3148,9 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   var THEMES = ['theme-gull','theme-turkis','theme-korall','theme-lilla','theme-lime','theme-skog'];
 
   // QR genereres som inline SVG (vektor, ~1–3 KB per kort).
+  // 16mm = 18mm container minus 2×1mm padding.
   function qrSVG(payload) {
-    return window.qrToSVG(payload, 18);
+    return window.qrToSVG(payload, 16);
   }
   function hashStr(str) {
     var h = 0, i; str = String(str||'');
@@ -3278,9 +3286,9 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '.bank .chip::before{content:"";position:absolute;inset:.6mm;background:linear-gradient(0deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%),linear-gradient(90deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%);border:.5px solid rgba(42,31,61,.55);border-radius:.5mm}'
     + '.bank .pan{font-family:"JetBrains Mono",monospace;font-size:9pt;font-weight:700;letter-spacing:.05em;color:#2A1F3D}'
     + '.bank .foot{padding:2mm 4mm 3mm 4mm;display:grid;grid-template-columns:18mm 1fr auto;gap:3mm;align-items:end;position:relative;z-index:1}'
-    + '.bank .qr{width:18mm;height:18mm;background:white;border:1.2px solid #2A1F3D;border-radius:2px;padding:1mm}'
+    + '.bank .qr{width:18mm;height:18mm;background:white;border:1.2px solid #2A1F3D;border-radius:2px;padding:1mm;display:flex;align-items:center;justify-content:center}'
     + '.bank .qr img{display:block;width:100%;height:100%}'
-    + '.bank .qr svg{display:block;width:100%;height:100%}'
+    + '.bank .qr svg{display:block}'
     + '.bank .pin-box{display:flex;flex-direction:column;align-items:flex-start;gap:.4mm}'
     + '.bank .pin-box .label{font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.18em;text-transform:uppercase;color:#4A3D5C}'
     + '.bank .pin-box .pin{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:14pt;letter-spacing:.18em;color:#2A1F3D;background:var(--cl,#FFE89A);border:1.2px solid #2A1F3D;padding:.4mm 2.4mm;border-radius:3px;line-height:1.05}'
@@ -3940,7 +3948,7 @@ function printHendelseQRCard() {
   const btn = document.getElementById('hend-qr-print-btn');
   const h   = btn._hendelse;
   if (!h) { alert('Velg en hendelse først.'); return; }
-  const qrSVG = window.qrToSVG({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }, 28);
+  const qrSVG = window.qrToSVG({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }, 25);
   printHendelserCards14([{ ...h, qrSVG: qrSVG }]);
 }
 
@@ -3949,7 +3957,7 @@ function printHendelser() {
   if (!all.length) { alert('Ingen hendelser å skrive ut.'); return; }
   const cards = all.map(h => ({
     ...h,
-    qrSVG: window.qrToSVG({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }, 28)
+    qrSVG: window.qrToSVG({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }, 25)
   }));
   printHendelserCards14(cards);
 }
@@ -4045,9 +4053,9 @@ function printHendelserCards14(cards) {
     .amount-pill .sign{font-family:'Bowlby One',sans-serif;font-size:18pt;line-height:1;color:var(--accent-dark)}
     .amount-pill .coin{font-size:15pt;line-height:1}
     .amount-pill .num{font-family:'Bowlby One',sans-serif;font-size:22pt;line-height:1;color:var(--blekk);letter-spacing:.01em}
-    .qr-wrap{display:flex;justify-content:center;padding:1.5mm;background:white;border:1.5px solid var(--blekk);border-radius:3px;margin-top:.5mm}
+    .qr-wrap{display:flex;justify-content:center;align-items:center;padding:1.5mm;background:white;border:1.5px solid var(--blekk);border-radius:3px;margin-top:.5mm}
     .qr-wrap img{display:block;width:28mm;height:28mm}
-    .qr-wrap svg{display:block;width:28mm;height:28mm}
+    .qr-wrap svg{display:block}
     .scan-hint{font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:7.5pt;color:var(--blekk-myk);letter-spacing:.06em}
     .mark{font-family:'Bowlby One',sans-serif;font-size:7pt;color:var(--accent-dark);letter-spacing:.08em;margin-top:auto;padding-top:1mm}
 
