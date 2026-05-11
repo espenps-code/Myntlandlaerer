@@ -1258,6 +1258,46 @@ body {
 .dex-rarity-dot.rarity-episk       { background: #7a3eb8; }
 .dex-rarity-dot.rarity-legendarisk { background: #d97706; }
 
+/* Sjeldenhets-forklaring under Myntdex-rutenettet */
+.dex-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+.dex-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.dex-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+}
+.dex-legend-item.rarity-normal      { color: #5a6675; }
+.dex-legend-item.rarity-sjelden     { color: #1f7038; }
+.dex-legend-item.rarity-episk       { color: #5e2f8e; }
+.dex-legend-item.rarity-legendarisk { color: #b35e00; }
+.dex-legend-dot.rarity-normal      { background: #7a8a9a; }
+.dex-legend-dot.rarity-sjelden     { background: #2a8f4a; }
+.dex-legend-dot.rarity-episk       { background: #7a3eb8; }
+.dex-legend-dot.rarity-legendarisk { background: #d97706; }
+.dex-legend-pct {
+  color: var(--muted);
+  font-weight: 700;
+  margin-left: 2px;
+}
+
 /* ── NYTT MONSTER-BANNER (på resultatsiden) ── */
 .new-monster-banner {
   background: linear-gradient(135deg, #fff5d8, #fde9a8);
@@ -1306,6 +1346,65 @@ body {
   font-size: 1.05rem;
   color: var(--teal-dark);
   margin-top: 2px;
+}
+
+/* ── RØMT MONSTER-BANNER (når eleven ikke avdekker det) ── */
+.escaped-monster-banner {
+  background: linear-gradient(135deg, #e9eef4, #d4dce6);
+  border: 2.5px solid #6b7785;
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: center;
+  margin: 0 0 14px;
+  position: relative;
+}
+.escaped-monster-badge {
+  position: absolute;
+  top: -10px; left: 50%;
+  transform: translateX(-50%);
+  background: #6b7785;
+  color: #fff;
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.85rem;
+  padding: 2px 12px;
+  border-radius: 12px;
+  letter-spacing: 0.08em;
+}
+/* Silhuett — monsteret forsvinner i skyggen. Bruker brightness(0) for å
+   tvinge bildet til mørk silhuett uavhengig av faktisk farge. */
+.escaped-monster-img {
+  width: 70px; height: 70px;
+  object-fit: contain;
+  display: block;
+  margin: 6px auto 4px;
+  filter: brightness(0) opacity(0.35);
+  animation: escape 2.2s ease-in-out infinite;
+}
+@keyframes escape {
+  0%, 100% { transform: translateX(0); opacity: 0.45; }
+  50%      { transform: translateX(8px); opacity: 0.25; }
+}
+.escaped-monster-rarity {
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+.escaped-monster-rarity.rarity-normal      { color: #7a8a9a; }
+.escaped-monster-rarity.rarity-sjelden     { color: #2a8f4a; }
+.escaped-monster-rarity.rarity-episk       { color: #7a3eb8; }
+.escaped-monster-rarity.rarity-legendarisk { color: #d97706; }
+.escaped-monster-msg {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.05rem;
+  color: #4a5563;
+  margin-top: 2px;
+}
+.escaped-monster-sub {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6b7785;
+  margin-top: 4px;
+  font-style: italic;
 }
 </style>
 </head>
@@ -1428,6 +1527,20 @@ body {
       </div>
       <div class="myntdex-sub" id="myntdex-sub">Fang monstre ved å avdekke dem i Myntjakten!</div>
       <div class="myntdex-grid" id="myntdex-grid"></div>
+      <div class="dex-legend">
+        <span class="dex-legend-item rarity-normal">
+          <span class="dex-legend-dot rarity-normal"></span>Normal<span class="dex-legend-pct">60 %</span>
+        </span>
+        <span class="dex-legend-item rarity-sjelden">
+          <span class="dex-legend-dot rarity-sjelden"></span>Sjelden<span class="dex-legend-pct">25 %</span>
+        </span>
+        <span class="dex-legend-item rarity-episk">
+          <span class="dex-legend-dot rarity-episk"></span>Episk<span class="dex-legend-pct">10 %</span>
+        </span>
+        <span class="dex-legend-item rarity-legendarisk">
+          <span class="dex-legend-dot rarity-legendarisk"></span>Legendarisk<span class="dex-legend-pct">5 %</span>
+        </span>
+      </div>
     </div>
   </div>
 
@@ -1515,6 +1628,15 @@ body {
         <img id="new-monster-img" class="new-monster-img" src="" alt="">
         <div class="new-monster-rarity" id="new-monster-rarity">Sjelden</div>
         <div class="new-monster-msg">Lagt til i Myntdex!</div>
+      </div>
+
+      <!-- Vises hvis monsteret IKKE ble avdekket — det rømte med sjeldenhetsgrad intakt -->
+      <div id="escaped-monster-banner" class="escaped-monster-banner" style="display:none;">
+        <div class="escaped-monster-badge">RØMTE</div>
+        <img id="escaped-monster-img" class="escaped-monster-img" src="" alt="">
+        <div class="escaped-monster-rarity" id="escaped-monster-rarity">Sjelden</div>
+        <div class="escaped-monster-msg" id="escaped-monster-msg">Monsteret slapp unna…</div>
+        <div class="escaped-monster-sub">Kanskje neste gang?</div>
       </div>
 
       <div class="stats-grid">
@@ -2644,24 +2766,54 @@ async function endGame() {
   const best = Math.max(prev, state.coins);
   document.getElementById('best-score').textContent = best + ' mynter';
 
-  // ── MONSTERFANGST ──
+  // ── MONSTERFANGST / RØMNING ──
   // Eleven "fanger" monsteret kun når alle ruter er borte (90 %+ riktig på
   // runden, gitt grid-mappingen). Lagres bare for innloggede elever.
+  // Hvis monsteret IKKE ble avdekket, vises et "RØMTE"-banner i stedet —
+  // med full sjeldenhetsgrad så eleven ser hva som slapp unna. Litt slemt
+  // når Legendarisk forsvinner, men det skjerper konsentrasjonen.
   const newBanner = document.getElementById('new-monster-banner');
+  const escapedBanner = document.getElementById('escaped-monster-banner');
   newBanner.style.display = 'none';
-  if (fullyRevealed && state.revealMonster && currentStudent) {
-    const wasNew = await captureMonster(currentStudent, state.revealMonster);
-    if (wasNew) {
-      // Vis NY-banner
-      document.getElementById('new-monster-img').src = monsterImgPath(state.revealMonster.id);
-      const rarityInfo = RARITY[state.revealMonster.rarity];
-      const rarityEl = document.getElementById('new-monster-rarity');
+  escapedBanner.style.display = 'none';
+
+  if (state.revealMonster) {
+    const monster = state.revealMonster;
+    const rarityInfo = RARITY[monster.rarity];
+
+    if (fullyRevealed) {
+      // Avdekket! Fang det hvis eleven er innlogget.
+      if (currentStudent) {
+        const wasNew = await captureMonster(currentStudent, monster);
+        if (wasNew) {
+          document.getElementById('new-monster-img').src = monsterImgPath(monster.id);
+          const rarityEl = document.getElementById('new-monster-rarity');
+          rarityEl.textContent = `${rarityInfo.emoji} ${rarityInfo.label}`;
+          rarityEl.className = `new-monster-rarity rarity-${monster.rarity}`;
+          newBanner.style.display = '';
+        }
+        renderMyntdex();
+      }
+    } else {
+      // Rømte! Vis sjeldenhetsgrad. Tilpass undertekst basert på sjeldenhet
+      // og innloggings-status — Legendarisk fortjener et ekstra stikk.
+      document.getElementById('escaped-monster-img').src = monsterImgPath(monster.id);
+      const rarityEl = document.getElementById('escaped-monster-rarity');
       rarityEl.textContent = `${rarityInfo.emoji} ${rarityInfo.label}`;
-      rarityEl.className = `new-monster-rarity rarity-${state.revealMonster.rarity}`;
-      newBanner.style.display = '';
+      rarityEl.className = `escaped-monster-rarity rarity-${monster.rarity}`;
+
+      const msgEl = document.getElementById('escaped-monster-msg');
+      if (monster.rarity === 'legendarisk') {
+        msgEl.textContent = 'Et legendarisk monster slapp unna!';
+      } else if (monster.rarity === 'episk') {
+        msgEl.textContent = 'Et episk monster forsvant…';
+      } else if (monster.rarity === 'sjelden') {
+        msgEl.textContent = 'Et sjeldent monster rømte…';
+      } else {
+        msgEl.textContent = 'Monsteret slapp unna…';
+      }
+      escapedBanner.style.display = '';
     }
-    // Oppdater dex-en i bakgrunnen (synlig når eleven går tilbake til start)
-    renderMyntdex();
   }
 
   if (typeof onGameEndedHook === 'function') onGameEndedHook();
