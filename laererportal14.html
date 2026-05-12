@@ -3206,10 +3206,24 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     return '4900 41•• •••• ' + last4;
   }
   function coinPortraitSVG() {
-    return '<svg viewBox="0 0 60 60" preserveAspectRatio="xMidYMid meet">'
-      + '<circle cx="30" cy="30" r="22" fill="#F5C849" stroke="#2A1F3D" stroke-width="2.5"/>'
-      + '<circle cx="30" cy="30" r="17" fill="none" stroke="#C99517" stroke-width="1" stroke-dasharray="2,1.5"/>'
-      + '<text x="30" y="38" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="22" font-weight="900" font-style="italic" fill="#2A1F3D">M</text>'
+    // Stilig Myntland-mynt — ren vektor, ingen rastergrafikk.
+    // Holder ~1 KB i PDF mot ~10 KB for et webp-portrett.
+    return '<svg viewBox="0 0 60 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'
+      // Ytre mynt
+      + '<circle cx="30" cy="30" r="24" fill="#F5C849" stroke="#2A1F3D" stroke-width="2.5"/>'
+      // Indre kant (subtil)
+      + '<circle cx="30" cy="30" r="20" fill="none" stroke="#C99517" stroke-width="1"/>'
+      // Stiplet sirkel innenfor
+      + '<circle cx="30" cy="30" r="17" fill="none" stroke="#2A1F3D" stroke-width=".6" stroke-dasharray="1.5,1.5" opacity=".55"/>'
+      // Stor M i Fraunces-italic-stil
+      + '<text x="30" y="39" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="24" font-weight="900" font-style="italic" fill="#2A1F3D">M</text>'
+      // Fire små stjerner i kantene
+      + '<g fill="#2A1F3D" opacity=".6">'
+      +   '<circle cx="30" cy="9" r="1.4"/>'
+      +   '<circle cx="51" cy="30" r="1.4"/>'
+      +   '<circle cx="30" cy="51" r="1.4"/>'
+      +   '<circle cx="9" cy="30" r="1.4"/>'
+      + '</g>'
       + '</svg>';
   }
   function escapeHTML(s) {
@@ -3396,17 +3410,13 @@ function generateCardPDF() {
   const loginMode = (window._settings?.loginMode14 === 'qrpin') ? 'qrpin' : 'pin';
   const showPin = loginMode === 'pin';
 
-  // Bruk elevens animal-avatar som portrett — samme dyr som i appen.
-  function getAvatarSVG(s) {
-    if (typeof window.makeAnimalSVG !== 'function') return null;
-    const seed = s.avatarSeed || 0;
-    const svgEl = window.makeAnimalSVG(seed, 60);
-    return svgEl ? svgEl.outerHTML : null;
-  }
-
+  // På utskriften bruker vi en ren vektor-Myntland-mynt som portrett i stedet
+  // for elevens monster-avatar (.webp). Grunnen: 8 monstre per A4 × mange ark
+  // gjør PDF-en flere MB. Mynten er ren SVG (~1 KB per kort, ingen raster).
+  // Eleven sin egen monster-avatar vises fortsatt i appen og i lærerportalen.
   const html = window.buildMyntlandBankCardsHTML(students, {
     showPin: showPin,
-    getAvatarSVG: getAvatarSVG,
+    // getAvatarSVG bevisst utelatt → coinPortraitSVG() brukes
     title: 'Myntland · Bankkort'
   });
 
