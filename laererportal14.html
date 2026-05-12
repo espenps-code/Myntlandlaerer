@@ -2571,22 +2571,22 @@ function generateGroceryPDF() {
     .vare.cat-skog{background:var(--skog-lys)}     .vare.cat-skog .pill{background:var(--skog)}     .vare.cat-skog .price .num,.vare.cat-skog .price .coin-icon{color:var(--skog)}
     .vare.cat-himmel{background:var(--himmel-lys)} .vare.cat-himmel .pill{background:var(--himmel)} .vare.cat-himmel .price .num,.vare.cat-himmel .price .coin-icon{color:var(--himmel)}
 
-    /* Pill — større, mer luft, lett skygge for å løfte den fra bakgrunnen */
-    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:9.5pt;letter-spacing:.22em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:2mm;max-width:80mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    /* Pill — størst luft her, så den "puster" øverst */
+    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:9.5pt;letter-spacing:.22em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:6mm;max-width:80mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
     /* Emoji — litt større */
     .vare .emoji{font-size:28mm;line-height:1;margin-bottom:2mm}
 
     /* Tittel */
-    .vare .name{font-family:'Nunito',sans-serif;font-weight:900;font-size:13pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:2.5mm}
+    .vare .name{font-family:'Nunito',sans-serif;font-weight:900;font-size:13pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:2mm}
 
-    /* Pris */
-    .vare .price{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:3mm;line-height:1}
+    /* Pris — tett mot QR-en under */
+    .vare .price{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:0;line-height:1}
     .vare .price .coin-icon{font-size:18pt;line-height:1}
     .vare .price .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:26pt;line-height:1}
 
-    /* QR-blokk: QR + scan-hint som en gruppe, sentrert i ledig plass */
-    .qr-block{display:flex;flex-direction:column;align-items:center;gap:1.5mm;margin:auto 0 1mm}
+    /* QR-blokk: kommer rett etter pris, ikke sentrert i tomrom */
+    .qr-block{display:flex;flex-direction:column;align-items:center;gap:1.5mm;margin-top:3mm;margin-bottom:1mm}
     .qr-wrap{padding:2mm;background:white;border:1px solid rgba(42,31,61,.1);border-radius:2mm}
     .qr-wrap img,.qr-wrap svg{display:block;width:36mm;height:36mm}
 
@@ -2645,57 +2645,48 @@ function getRandom(arr, n)    { return [...arr].sort(() => Math.random()-.5).sli
 const MYNT_LIST_PREVIEW_CSS = `
 .mynt-preview-wrap{font-family:'Nunito',sans-serif;color:#2A1F3D}
 .mynt-preview-wrap .mynt-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.mynt-preview-wrap .liste{background:#FBF2D6;border:2px solid #2A1F3D;border-radius:8px;box-shadow:inset 0 0 0 4px #FBF2D6,inset 0 0 0 5px #F5C849,3px 3px 0 rgba(42,31,61,.15);padding:14px 16px;display:flex;flex-direction:column;position:relative;overflow:hidden}
-.mynt-preview-wrap .liste .head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-bottom:8px;border-bottom:2px solid #2A1F3D;margin-bottom:10px}
-.mynt-preview-wrap .liste .title-block{flex:1;min-width:0}
-.mynt-preview-wrap .liste .kicker{display:inline-block;background:#2A1F3D;color:#FFE89A;padding:2px 9px;border-radius:999px;font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;border:1.2px solid #F5C849;margin-bottom:4px}
-.mynt-preview-wrap .liste .title{font-family:'Bowlby One',sans-serif;font-size:1.6rem;line-height:.9;color:#C99517;-webkit-text-stroke:1.2px #2A1F3D;text-shadow:2px 2px 0 #2A1F3D;letter-spacing:-.01em}
-.mynt-preview-wrap .liste .sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:.75rem;color:#4A3D5C;margin-top:4px}
-.mynt-preview-wrap .liste .fields{margin-top:6px;display:flex;flex-direction:column;gap:3px}
-.mynt-preview-wrap .liste .fields .row{display:flex;align-items:center;gap:6px;font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:.72rem;color:#4A3D5C}
-.mynt-preview-wrap .liste .fields .row .line{flex:1;border-bottom:1.2px solid #2A1F3D;height:14px;color:#2A1F3D;font-style:normal;font-family:'Nunito',sans-serif;font-weight:800;padding-left:4px}
-.mynt-preview-wrap .liste .monster{flex-shrink:0;width:78px;height:78px;background:radial-gradient(ellipse 70% 60% at 50% 60%,#BFEDF0 0%,#FFE89A 100%);border:2px solid #2A1F3D;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;position:relative;overflow:hidden;box-shadow:2.5px 2.5px 0 #2A1F3D;transform:rotate(2deg)}
-.mynt-preview-wrap .liste .monster img{height:108%;width:auto;max-width:96%;object-fit:contain;object-position:bottom center}
-.mynt-preview-wrap .liste .monster .coin-tag{position:absolute;top:2px;left:3px;font-size:14px;transform:rotate(-12deg)}
+/* Lik utskriften: hvit bakgrunn, gull venstrekant signaliserer Myntland */
+.mynt-preview-wrap .liste{background:white;border-left:5px solid #C99517;border-radius:0;box-shadow:0 1px 4px rgba(42,31,61,.08);padding:14px 18px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+/* Header: tittel venstre, Navn/Dato i låst kolonne høyre — ingen kollisjon mulig */
+.mynt-preview-wrap .liste .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-bottom:8px;border-bottom:1.5px solid #2A1F3D;margin-bottom:10px}
+.mynt-preview-wrap .liste .title-block{flex:1 1 auto;min-width:0;overflow:hidden}
+.mynt-preview-wrap .liste .kicker{font-family:'Nunito',sans-serif;font-weight:800;font-size:.62rem;letter-spacing:.22em;color:#C99517;margin-bottom:3px;text-transform:uppercase;display:block}
+.mynt-preview-wrap .liste .title{font-family:'Bowlby One',sans-serif;font-size:1.5rem;line-height:.95;color:#2A1F3D;letter-spacing:.005em;white-space:nowrap}
+.mynt-preview-wrap .liste .sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:.72rem;color:#4A3D5C;margin-top:4px}
+.mynt-preview-wrap .liste .meta{display:flex;flex-direction:column;gap:5px;flex:0 0 130px;width:130px;align-self:flex-end}
+.mynt-preview-wrap .liste .meta .row{display:flex;align-items:baseline;gap:5px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.62rem;color:#4A3D5C;letter-spacing:.1em}
+.mynt-preview-wrap .liste .meta .row .label{text-transform:uppercase;flex:0 0 26px}
+.mynt-preview-wrap .liste .meta .row .line{flex:1;border-bottom:1px solid #2A1F3D;height:11px}
+/* Tabell — ren, ingen mørke bånd */
 .mynt-preview-wrap .liste table{width:100%;border-collapse:collapse;flex:1}
-.mynt-preview-wrap .liste th{background:#2A1F3D;color:#F5C849;font-family:'Fraunces',serif;font-style:italic;font-size:.65rem;padding:5px 8px;text-align:left;letter-spacing:.08em;text-transform:uppercase}
+.mynt-preview-wrap .liste th{background:transparent;color:#4A3D5C;font-family:'Nunito',sans-serif;font-weight:800;font-size:.62rem;padding:3px 8px 6px;text-align:left;letter-spacing:.16em;text-transform:uppercase;border-bottom:1px solid #2A1F3D}
 .mynt-preview-wrap .liste th.right{text-align:right}.mynt-preview-wrap .liste th.center{text-align:center}
-.mynt-preview-wrap .liste td{padding:7px 8px;border-bottom:1px dashed #4A3D5C;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;color:#2A1F3D;vertical-align:middle}
-.mynt-preview-wrap .liste td.num{color:#4A3D5C;width:22px;font-family:'Fraunces',serif;font-style:italic}
+.mynt-preview-wrap .liste td{padding:8px;border-bottom:1px dashed #4A3D5C;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;color:#2A1F3D;vertical-align:middle}
+.mynt-preview-wrap .liste td.num{color:#4A3D5C;width:22px;font-family:'Nunito',sans-serif;font-weight:800}
 .mynt-preview-wrap .liste td.em{font-size:1.3rem;text-align:center;width:36px;line-height:1}
 .mynt-preview-wrap .liste td.pris{text-align:right;width:90px}
 .mynt-preview-wrap .liste td.pris .cell{display:flex;align-items:center;justify-content:flex-end;gap:4px}
-.mynt-preview-wrap .liste td.pris .line{flex:1;height:16px;border:1.2px dashed #2A1F3D;border-radius:3px;background:white;max-width:66px}
-.mynt-preview-wrap .liste .sum{margin-top:10px;background:#2A1F3D;color:#F5C849;border:2px solid #2A1F3D;border-radius:4px;padding:8px 12px;display:grid;grid-template-columns:1fr 90px;align-items:center;gap:10px}
-.mynt-preview-wrap .liste .sum .lbl{font-family:'Bowlby One',sans-serif;font-size:.85rem;color:#F5C849;display:flex;align-items:center;gap:6px}
-.mynt-preview-wrap .liste .sum .sum-line{height:24px;background:white;border:1.5px dashed #F5C849;border-radius:3px}
-.mynt-preview-wrap .liste .foot-line{margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:.62rem;color:#4A3D5C;letter-spacing:.08em}
-.mynt-preview-wrap .liste .foot-line .stamp{font-family:'Bowlby One',sans-serif;font-style:normal;font-size:.7rem;color:#2A1F3D}
+.mynt-preview-wrap .liste td.pris .line{flex:1;height:16px;border-bottom:1.2px solid #2A1F3D;max-width:75px}
+/* Sum-linje — gull-lys bakgrunn, ingen mørk innfylling */
+.mynt-preview-wrap .liste .sum{margin-top:10px;background:#FFF7DD;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mynt-preview-wrap .liste .sum .lbl{font-family:'Bowlby One',sans-serif;font-size:.95rem;color:#2A1F3D;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+.mynt-preview-wrap .liste .sum .sum-line{width:120px;height:22px;border-bottom:1.5px solid #2A1F3D}
+.mynt-preview-wrap .liste .foot-line{margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-family:'Nunito',sans-serif;font-weight:400;font-size:.62rem;color:#4A3D5C}
+.mynt-preview-wrap .liste .foot-line .stamp{font-family:'Bowlby One',sans-serif;font-size:.66rem;color:#2A1F3D;letter-spacing:.04em}
 `;
 
 function myntListePreviewHTML(items, studentName, monsterIdx) {
-  // Bruker ekte monster-engine (samme som bankkort/avatar).
-  let monsterHTML = '';
-  if (typeof window.makeAnimalSVG === 'function') {
-    const el = window.makeAnimalSVG(monsterIdx * 13 + 7, 78);
-    if (el) {
-      el.style.background = 'transparent';
-      el.style.borderRadius = '0';
-      monsterHTML = el.outerHTML;
-    }
-  }
   return `<div class="liste">
     <div class="head">
       <div class="title-block">
         <span class="kicker">🪙 Myntland · Marked</span>
         <div class="title">HANDLELISTE</div>
-        <div class="sub">~ Min handletur i Myntland ~</div>
-        <div class="fields">
-          <div class="row"><span>Navn:</span><span class="line">${studentName||''}</span></div>
-          <div class="row"><span>Dato:</span><span class="line"></span></div>
-        </div>
+        <div class="sub">Min handletur i Myntland</div>
       </div>
-      <div class="monster"><span class="coin-tag">🪙</span>${monsterHTML}</div>
+      <div class="meta">
+        <div class="row"><span class="label">Navn</span><span class="line">${studentName||''}</span></div>
+        <div class="row"><span class="label">Dato</span><span class="line"></span></div>
+      </div>
     </div>
     <table>
       <thead><tr><th style="width:22px">#</th><th>Vare</th><th class="center" style="width:36px">Bilde</th><th class="right" style="width:90px">Pris 🪙</th></tr></thead>
@@ -2707,7 +2698,7 @@ function myntListePreviewHTML(items, studentName, monsterIdx) {
       </tr>`).join('')}</tbody>
     </table>
     <div class="sum"><div class="lbl"><span>🪙</span>SUM TOTALT</div><div class="sum-line"></div></div>
-    <div class="foot-line"><span>~ Regn ut total og gå til kassa ~</span><span class="stamp">🪙 MYNTLAND · MARKED</span></div>
+    <div class="foot-line"><span>Regn ut total og gå til kassa</span><span class="stamp">MYNTLAND · MARKED</span></div>
   </div>`;
 }
 
@@ -4120,8 +4111,8 @@ function printHendelserCards14(cards) {
     .page-print > .hcard:nth-child(1),
     .page-print > .hcard:nth-child(3){border-right:1px dashed var(--blekk-myk)}
 
-    /* Pill: farget bakgrunn, hvit tekst — større */
-    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:10pt;letter-spacing:.24em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:2mm}
+    /* Pill — størst luft her, så den "puster" øverst */
+    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:10pt;letter-spacing:.24em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:6mm}
     .income .pill{background:var(--gront)}
     .expense .pill{background:var(--rod)}
 
@@ -4129,18 +4120,18 @@ function printHendelserCards14(cards) {
     .emoji{font-size:26mm;line-height:1;margin-bottom:2mm}
 
     /* Tittel: midtstilt, max 2 linjer */
-    .desc{font-family:'Nunito',sans-serif;font-weight:900;font-size:12pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:2.5mm}
+    .desc{font-family:'Nunito',sans-serif;font-weight:900;font-size:12pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:2mm}
 
-    /* Beløp: tegn + mynt + tall i tema-farge */
-    .amount{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:3mm;line-height:1}
+    /* Beløp — tett mot QR-en under */
+    .amount{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:0;line-height:1}
     .amount .sign{font-family:'Nunito',sans-serif;font-weight:900;font-size:23pt;line-height:1}
     .amount .coin-icon{font-size:18pt;line-height:1}
     .amount .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:23pt;line-height:1}
     .income .amount .sign,.income .amount .num{color:var(--gront)}
     .expense .amount .sign,.expense .amount .num{color:var(--rod)}
 
-    /* QR-blokk: QR + hint som en gruppe, sentrert i ledig plass */
-    .qr-block{display:flex;flex-direction:column;align-items:center;gap:1.5mm;margin:auto 0 1mm}
+    /* QR-blokk: kommer rett etter beløp, ikke sentrert i tomrom */
+    .qr-block{display:flex;flex-direction:column;align-items:center;gap:1.5mm;margin-top:3mm;margin-bottom:1mm}
     .qr-wrap{padding:2mm;background:white;border:1px solid rgba(42,31,61,.1);border-radius:2mm}
     .qr-wrap img,.qr-wrap svg{display:block;width:34mm;height:34mm}
 
