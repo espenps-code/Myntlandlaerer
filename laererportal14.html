@@ -2504,7 +2504,7 @@ function generateGroceryPDF() {
     : window._groceries;
   if (!items.length) { alert('Ingen varer valgt.'); return; }
 
-  // Myntland-kategori → klasse + visningsnavn
+  // Myntland-kategori → tema-klasse + visningsnavn
   const CATS = {
     'Frukt & Grønt':    { klasse:'cat-lime',   navn:'FRUKT & GRØNT' },
     'Meieri':           { klasse:'cat-turkis', navn:'MEIERI' },
@@ -2515,65 +2515,120 @@ function generateGroceryPDF() {
     'Annet':            { klasse:'cat-skog',   navn:'ANNET' }
   };
 
-  const qrSvgFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }, 28);
+  const qrSvgFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }, 32, 'L');
 
-  function vareHTML(v, idx) {
+  function vareHTML(v) {
     const cat = CATS[v.category] || CATS['Annet'];
-    return `<div class="vare-slot">
-      <div class="vare ${cat.klasse}">
-        <div class="awning">
-          <div class="mark"><span class="coin">🪙</span>MYNTLAND&nbsp;·&nbsp;MARKED</div>
-          <div class="kategori">${cat.navn}</div>
-        </div>
-        <div class="middle"><span class="vare-emoji">${v.emoji}</span><div class="name">${v.name}</div></div>
-        <div class="foot">
-          <div class="price-block"><div class="price"><span class="emoji">🪙</span><span>${v.price}</span></div></div>
-          <div class="qr">${qrSvgFor(v)}</div>
-        </div>
-      </div>
+    return `<div class="vare ${cat.klasse}">
+      <div class="pill">${cat.navn}</div>
+      <div class="emoji">${v.emoji}</div>
+      <div class="name">${v.name}</div>
+      <div class="price"><span class="coin-icon">🪙</span><span class="num">${v.price}</span></div>
+      <div class="qr-wrap">${qrSvgFor(v)}</div>
+      <div class="scan-hint">Scan i kassa</div>
     </div>`;
   }
 
-  function backHTML() {
-    return `<div class="vare-slot"><div class="vare-back">
-      <div class="big-coin">🪙</div>
-      <div class="logo">MYNTLAND<small>~ KLASSENS BUTIKK ~</small></div>
-      <div class="scan-hint">SKANN MEG I KASSA</div>
-    </div></div>`;
+  function backHTML(klasse) {
+    return `<div class="vare ${klasse} hback">
+      <div class="back-coin">🪙</div>
+      <div class="back-logo">MYNTLAND</div>
+      <div class="back-sub">Klassens butikk</div>
+    </div>`;
   }
   function backsForFronts(arr) {
     const out = new Array(arr.length);
     for (let i = 0; i < arr.length; i += 2) {
-      out[i]   = arr[i+1] !== undefined ? backHTML() : '';
-      out[i+1] = backHTML();
+      const a = arr[i], b = arr[i+1];
+      const aKlasse = a ? (CATS[a.category] || CATS['Annet']).klasse : '';
+      const bKlasse = b ? (CATS[b.category] || CATS['Annet']).klasse : '';
+      out[i]   = b !== undefined ? backHTML(bKlasse) : '<div class="vare empty"></div>';
+      out[i+1] = a !== undefined ? backHTML(aKlasse) : '<div class="vare empty"></div>';
     }
     return out.join('');
   }
 
-  // chunk i grupper på 4
+  // chunk i grupper på 2 (stående A6, 2 per A4)
   let pagesHTML = '';
-  for (let i = 0; i < items.length; i += 4) {
-    const slice = items.slice(i, i + 4);
+  for (let i = 0; i < items.length; i += 2) {
+    const slice = items.slice(i, i + 2);
     pagesHTML += `<div class="page">
-      <div class="page-corner tl">Myntland · Markedet</div>
-      <div class="page-corner br">klipp langs strekene</div>
-      <div class="vare-grid">${slice.map(vareHTML).join('')}</div>
+      ${slice.map(vareHTML).join('')}
+      ${slice.length < 2 ? '<div class="vare empty"></div>' : ''}
     </div>`;
-    pagesHTML += `<div class="page">
-      <div class="page-corner tl">Myntland · Bakside</div>
-      <div class="page-corner br">vend langs lang kant</div>
-      <div class="vare-grid">${backsForFronts(slice)}</div>
+    pagesHTML += `<div class="page back-page">
+      ${backsForFronts(slice)}
     </div>`;
   }
 
-  const css = MYNTLAND_BUTIKK_CSS;
+  // ── Selvstendig CSS for varekort (uavhengig av MYNTLAND_BUTIKK_CSS som
+  // brukes til handleliste) — stående A6, midtstilt, lyst tonet bakgrunn ──
+  const varekortCSS = `
+    :root{
+      --blekk:#2A1F3D;--blekk-myk:#4A3D5C;
+      /* Tema-paletter: hver kategori har en sterk og en svært lys tone */
+      --gull:#C99517;--gull-lys:#FFF7DD;
+      --turkis:#0F8F94;--turkis-lys:#E0F5F5;
+      --korall:#C13D2F;--korall-lys:#FBE9E5;
+      --lilla:#6B5BA8;--lilla-lys:#EFEBF7;
+      --lime:#5A7A1F;--lime-lys:#F3F7E0;
+      --skog:#2F6B4A;--skog-lys:#E5F1EA;
+      --himmel:#0C7A8A;--himmel-lys:#E5F5F7;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    @page{size:A4 portrait;margin:0}
+    .page{width:210mm;height:297mm;display:grid;grid-template-columns:1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative}
+    .vare{padding:14mm 12mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid}
+    .vare.empty{visibility:hidden}
+    /* Klippelinje mellom de to kortene */
+    .page > .vare:first-child{border-bottom:1px dashed var(--blekk-myk)}
+
+    /* Tema-bakgrunner */
+    .vare.cat-gull{background:var(--gull-lys)}    .vare.cat-gull .pill{background:var(--gull)}    .vare.cat-gull .price .num,.vare.cat-gull .price .coin-icon{color:var(--gull)}
+    .vare.cat-turkis{background:var(--turkis-lys)} .vare.cat-turkis .pill{background:var(--turkis)} .vare.cat-turkis .price .num,.vare.cat-turkis .price .coin-icon{color:var(--turkis)}
+    .vare.cat-korall{background:var(--korall-lys)} .vare.cat-korall .pill{background:var(--korall)} .vare.cat-korall .price .num,.vare.cat-korall .price .coin-icon{color:var(--korall)}
+    .vare.cat-lilla{background:var(--lilla-lys)}   .vare.cat-lilla .pill{background:var(--lilla)}   .vare.cat-lilla .price .num,.vare.cat-lilla .price .coin-icon{color:var(--lilla)}
+    .vare.cat-lime{background:var(--lime-lys)}     .vare.cat-lime .pill{background:var(--lime)}     .vare.cat-lime .price .num,.vare.cat-lime .price .coin-icon{color:var(--lime)}
+    .vare.cat-skog{background:var(--skog-lys)}     .vare.cat-skog .pill{background:var(--skog)}     .vare.cat-skog .price .num,.vare.cat-skog .price .coin-icon{color:var(--skog)}
+    .vare.cat-himmel{background:var(--himmel-lys)} .vare.cat-himmel .pill{background:var(--himmel)} .vare.cat-himmel .price .num,.vare.cat-himmel .price .coin-icon{color:var(--himmel)}
+
+    /* Pill */
+    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:10pt;letter-spacing:.18em;color:white;padding:2.5mm 7mm;border-radius:999px;margin-bottom:5mm}
+
+    /* Emoji */
+    .vare .emoji{font-size:36mm;line-height:1;margin-bottom:4mm}
+
+    /* Tittel (varens navn) */
+    .vare .name{font-family:'Nunito',sans-serif;font-weight:900;font-size:17pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:5mm}
+
+    /* Pris */
+    .vare .price{display:flex;align-items:center;justify-content:center;gap:2.5mm;margin-bottom:6mm;line-height:1}
+    .vare .price .coin-icon{font-size:22pt;line-height:1}
+    .vare .price .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:32pt;line-height:1}
+
+    /* QR */
+    .qr-wrap{padding:2mm;background:white;margin-bottom:2mm}
+    .qr-wrap img,.qr-wrap svg{display:block;width:34mm;height:34mm}
+
+    /* Hint */
+    .scan-hint{font-family:'Nunito',sans-serif;font-size:8.5pt;color:var(--blekk-myk);font-weight:400}
+
+    /* ── Bakside ── samme tonete farge, sentral logo */
+    .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14mm}
+    .back-coin{font-size:42mm;line-height:1;margin-bottom:4mm}
+    .back-logo{font-family:'Bowlby One',sans-serif;font-size:26pt;color:var(--blekk);letter-spacing:.02em;line-height:1}
+    .back-sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:13pt;color:var(--blekk-myk);margin-top:3mm;letter-spacing:.08em}
+    .page.back-page > .vare:first-child{border-bottom:1px dashed var(--blekk-myk)}
+  `;
+
   const _bv = window.buildPdfDownloadBanner('Slik laster du ned varekort', { twoSided: true });
   const win = window.open('', '_blank', 'width=900,height=700');
   win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
-    <style>${css}${_bv.bannerCSS}</style></head><body>${_bv.bannerHTML}${pagesHTML}
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Bowlby+One&family=Fraunces:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
+    <style>${varekortCSS}${_bv.bannerCSS}</style></head><body>${_bv.bannerHTML}${pagesHTML}
   </body></html>`);
   win.document.close();
 }
@@ -4041,45 +4096,39 @@ function printHendelserCards14(cards) {
       ? c.qrSVG
       : `<img src="${c.qrUrl || c._dataUrl || ''}" width="130" height="130" alt="QR">`;
     return `<div class="hcard ${cls}">
-      <div class="ribbon">${label}</div>
+      <div class="pill">${label}</div>
       <div class="emoji">${c.emoji||'🎲'}</div>
       <div class="desc">${c.desc}</div>
-      <div class="amount-pill">
-        <span class="sign">${sign}</span>
-        <span class="coin">🪙</span>
-        <span class="num">${c.amount}</span>
-      </div>
+      <div class="amount"><span class="sign">${sign}</span><span class="coin-icon">🪙</span><span class="num">${c.amount}</span></div>
       <div class="qr-wrap">${qrMarkup}</div>
-      <div class="scan-hint">~ scan for å registrere ~</div>
-      <div class="mark">🪙 MYNTLAND</div>
+      <div class="scan-hint">Scan for å registrere</div>
     </div>`;
   };
   let pagesHTML = '';
-  const backHTML = () => `<div class="hcard hback">
-    <div class="big-coin">🪙</div>
-    <div class="hback-logo">MYNTLAND<small>~ HENDELSER ~</small></div>
-    <div class="hback-scan">SKANN MEG FOR Å REGISTRERE</div>
+  const backHTML = (cls) => `<div class="hcard ${cls} hback">
+    <div class="back-coin">🪙</div>
+    <div class="back-logo">MYNTLAND</div>
+    <div class="back-sub">Hendelser</div>
   </div>`;
-  // For long-edge flip: row-mirror each group so backs line up under fronts
+  // For long-edge flip: row-mirror så baksiden lander rett under forsiden
   const backsForFronts = (group) => {
     const out = new Array(group.length);
     for (let i = 0; i < group.length; i += 2) {
-      out[i]   = group[i+1] != null ? backHTML() : '<div class="hcard empty"></div>';
-      out[i+1] = group[i]   != null ? backHTML() : '<div class="hcard empty"></div>';
+      const a = group[i], b = group[i+1];
+      const aCls = a ? (a.type === 'income' ? 'income' : 'expense') : 'empty';
+      const bCls = b ? (b.type === 'income' ? 'income' : 'expense') : 'empty';
+      out[i]   = b != null ? backHTML(bCls) : '<div class="hcard empty"></div>';
+      out[i+1] = a != null ? backHTML(aCls) : '<div class="hcard empty"></div>';
     }
     return out.join('');
   };
-  for (let i = 0; i < cards.length; i += 4) {
-    const group = cards.slice(i, i+4);
-    while (group.length < 4) group.push(null);
+  for (let i = 0; i < cards.length; i += 2) {
+    const group = cards.slice(i, i+2);
+    while (group.length < 2) group.push(null);
     pagesHTML += `<div class="page-print">
-      <div class="page-corner tl">Myntland · Hendelser</div>
-      <div class="page-corner br">klipp langs strekene</div>
       ${group.map(c => c ? cardHTML(c) : '<div class="hcard empty"></div>').join('')}
     </div>`;
     pagesHTML += `<div class="page-print back-page">
-      <div class="page-corner tl">Myntland · Bakside</div>
-      <div class="page-corner br">vend langs lang kant</div>
       ${backsForFronts(group)}
     </div>`;
   }
@@ -4089,62 +4138,65 @@ function printHendelserCards14(cards) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
   <style>
-    :root{--gull:#F5C849;--gull-dyp:#C99517;--gull-lys:#FFE89A;--turkis:#2DC4C4;--himmel:#BFEDF0;--korall:#E64B3B;--korall-lys:#FFB8C7;--korall-dyp:#A82218;--lime:#B8DA3B;--rosa:#FFB8C7;--pergament:#FBF2D6;--pergament-dyp:#F0E1B0;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--skog:#2F6B4A;--skog-dyp:#1A3F2A;--skog-lys:#A8D5B8}
+    :root{
+      --blekk:#2A1F3D;--blekk-myk:#4A3D5C;
+      --gront:#1D9E75;--gront-dyp:#085041;--gront-mykt:#E5F5EE;
+      --rod:#C13D2F;--rod-dyp:#7A2218;--rod-mykt:#F9E8E5;
+    }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
     @page{size:A4 portrait;margin:0}
-    /* FLAT design for utskrift: ren pergament-bakgrunn, ingen mønstre, ingen gradients */
-    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative;background:var(--pergament);padding:6mm;gap:4mm}
-    .page-corner{position:absolute;font-family:'Fraunces',serif;font-weight:900;font-style:italic;font-size:8.5pt;color:var(--blekk-myk);letter-spacing:.1em;z-index:5}
-    .page-corner.tl{top:3mm;left:5mm}.page-corner.br{bottom:3mm;right:5mm}
 
-    /* Kort: ren ramme + tykk fargestripe i venstre kant (ingen dobbel inset-ramme) */
-    .hcard{position:relative;padding:8mm 7mm 7mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3mm;text-align:center;background:white;border:2px solid var(--blekk);border-left:6mm solid var(--accent,var(--gull));border-radius:6px}
-    .hcard.empty{background:transparent;border:1.2px dashed rgba(42,31,61,0.18)}
-    .hcard.income{--accent:var(--skog);--accent-dark:var(--skog-dyp);--accent-light:var(--skog-lys)}
-    .hcard.expense{--accent:var(--korall);--accent-dark:var(--korall-dyp);--accent-light:var(--korall-lys)}
+    /* Side: 2 stående A6 (105×148mm) per A4. Bakgrunn matches kortene. */
+    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative}
+    /* Forside-side: bakgrunnen vises kun under kortet (kortet fyller hele sin halvdel) */
 
-    .crop{position:absolute;width:3.5mm;height:3.5mm;z-index:6;pointer-events:none}
-    .crop::before,.crop::after{content:"";position:absolute;background:var(--blekk-myk);opacity:.4}
-    .crop::before{width:3.5mm;height:.4px;top:50%}
-    .crop::after{width:.4px;height:3.5mm;left:50%}
-    .crop.tl{top:1mm;left:1mm}.crop.tr{top:1mm;right:1mm}
-    .crop.bl{bottom:1mm;left:1mm}.crop.br{bottom:1mm;right:1mm}
+    /* Kortet: fyller hele sin halvdel. Tonet bakgrunn per type. */
+    .hcard{padding:14mm 12mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid}
+    .hcard.empty{visibility:hidden}
+    .hcard.income{background:var(--gront-mykt)}
+    .hcard.expense{background:var(--rod-mykt)}
 
-    /* Ribbon: behold offset-shadow (ren rektangulær form = trygt for utskrift) */
-    .ribbon{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:9.5pt;letter-spacing:.18em;text-transform:uppercase;background:var(--blekk);color:var(--accent-light);padding:1.6mm 7mm;border-radius:999px;border:1.5px solid var(--accent);box-shadow:2px 2px 0 var(--blekk);margin-bottom:1mm}
-    /* Emoji: ingen drop-shadow */
-    .emoji{font-size:24mm;line-height:1;margin-top:1mm}
-    .desc{font-family:'Fraunces',serif;font-weight:900;font-size:13pt;color:var(--blekk);line-height:1.18;max-width:80mm;letter-spacing:-.005em}
-    /* Amount-pill: behold offset-shadow */
-    .amount-pill{display:inline-flex;align-items:center;gap:2mm;background:var(--accent-light);border:2px solid var(--blekk);border-radius:999px;padding:1.5mm 6mm;box-shadow:2.5px 2.5px 0 var(--blekk);color:var(--accent-dark)}
-    .amount-pill .sign{font-family:'Bowlby One',sans-serif;font-size:18pt;line-height:1;color:var(--accent-dark)}
-    .amount-pill .coin{font-size:15pt;line-height:1}
-    .amount-pill .num{font-family:'Bowlby One',sans-serif;font-size:22pt;line-height:1;color:var(--blekk);letter-spacing:.01em}
-    .qr-wrap{display:flex;justify-content:center;align-items:center;padding:1.5mm;background:white;border:1.5px solid var(--blekk);border-radius:3px;margin-top:.5mm}
-    .qr-wrap img{display:block;width:28mm;height:28mm}
-    .qr-wrap svg{display:block}
-    .scan-hint{font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:7.5pt;color:var(--blekk-myk);letter-spacing:.06em}
-    .mark{font-family:'Bowlby One',sans-serif;font-size:7pt;color:var(--accent-dark);letter-spacing:.08em;margin-top:auto;padding-top:1mm}
+    /* Klippelinje mellom de to kortene på en side */
+    .page-print > .hcard:first-child{border-bottom:1px dashed var(--blekk-myk)}
 
-    /* ── Bakside: flat blekk-farge, ingen radial-gradient ── */
-    .page-print.back-page{background:var(--blekk)}
-    .back-page .page-corner{color:rgba(245,200,73,.55)}
-    .back-page .crop::before,.back-page .crop::after{background:var(--gull);opacity:.45}
-    .hback{background:var(--blekk);border:2px solid var(--gull);border-radius:6px;color:var(--gull);justify-content:center;align-items:center;gap:4mm;padding:8mm;position:relative;display:flex;flex-direction:column}
-    .hback::before{content:"";position:absolute;inset:5mm;border:1.5px dashed rgba(245,200,73,0.55);border-radius:4px;pointer-events:none}
-    /* Stor mynt: ingen drop-shadow */
-    .hback .big-coin{font-size:46pt;line-height:1;z-index:1}
-    /* Logo: flat — ingen text-stroke, ingen text-shadow */
-    .hback .hback-logo{font-family:'Bowlby One',sans-serif;font-size:18pt;color:var(--gull);text-align:center;line-height:1;z-index:1}
-    .hback .hback-logo small{display:block;font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:9pt;color:var(--pergament);letter-spacing:.1em;margin-top:2mm}
-    .hback .hback-scan{font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:8pt;letter-spacing:.16em;color:var(--pergament-dyp);z-index:1;margin-top:1mm}
+    /* Pill: farget bakgrunn, hvit tekst */
+    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:11pt;letter-spacing:.22em;color:white;padding:2.5mm 7mm;border-radius:999px;margin-bottom:4mm}
+    .income .pill{background:var(--gront)}
+    .expense .pill{background:var(--rod)}
+
+    /* Emoji: 30mm, midtstilt */
+    .emoji{font-size:32mm;line-height:1;margin-bottom:4mm}
+
+    /* Tittel: Fraunces bold, midtstilt, max 2 linjer */
+    .desc{font-family:'Nunito',sans-serif;font-weight:900;font-size:15pt;color:var(--blekk);line-height:1.25;max-width:80mm;margin-bottom:5mm}
+
+    /* Beløp: tegn + mynt-symbol + tall, alt i samme tema-farge */
+    .amount{display:flex;align-items:center;justify-content:center;gap:2.5mm;margin-bottom:6mm;line-height:1}
+    .amount .sign{font-family:'Nunito',sans-serif;font-weight:900;font-size:30pt;line-height:1}
+    .amount .coin-icon{font-size:22pt;line-height:1}
+    .amount .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:30pt;line-height:1}
+    .income .amount .sign,.income .amount .num{color:var(--gront)}
+    .expense .amount .sign,.expense .amount .num{color:var(--rod)}
+
+    /* QR: enkel hvit boks, ingen ramme rundt selve QR-en (luftig) */
+    .qr-wrap{padding:2mm;background:white;margin-bottom:2mm}
+    .qr-wrap img,.qr-wrap svg{display:block;width:32mm;height:32mm}
+
+    /* "Scan for å registrere" — liten, grå, italic */
+    .scan-hint{font-family:'Nunito',sans-serif;font-size:8.5pt;color:var(--blekk-myk);font-weight:400}
+
+    /* ── Bakside ── samme tonete farge, sentral logo */
+    .page-print.back-page{background:transparent}
+    .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14mm}
+    .back-coin{font-size:38mm;line-height:1;margin-bottom:4mm}
+    .back-logo{font-family:'Bowlby One',sans-serif;font-size:24pt;color:var(--blekk);letter-spacing:.02em;line-height:1}
+    .back-sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:13pt;color:var(--blekk-myk);margin-top:3mm;letter-spacing:.08em}
+    .page-print.back-page > .hback:first-child{border-bottom:1px dashed var(--blekk-myk)}
+
     ${_bhend.bannerCSS}
   </style>
-</head><body>
-  ${_bhend.bannerHTML}
-  ${pagesHTML}
-</body></html>`);
+  </head><body>${_bhend.bannerHTML}${pagesHTML}</body></html>`);
   win.document.close();
 }
 // ════════════════════════════════════════════════════════════
