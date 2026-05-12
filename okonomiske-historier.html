@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Økonomiske historier – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Myntland – Økonomiske historier" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  a { color: var(--green-dark); }
+
+  /* Topp-nav */
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    color: white;
+    padding: 3rem 1.5rem 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(216, 90, 48, 0.18) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  h1 .accent { color: var(--amber); }
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.1rem);
+    color: rgba(255,255,255,0.9);
+    max-width: 640px;
+    margin: 0 auto;
+    font-weight: 600;
+  }
+
+  /* Layout */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* Hjelp-blokk */
+  .help-box {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  .help-item {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+  }
+  .help-icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .help-icon.play {
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .help-icon.share {
+    background: var(--amber-light);
+    color: var(--amber-dark);
+  }
+  .help-text strong {
+    display: block;
+    color: var(--teal-dark);
+    margin-bottom: 2px;
+    font-size: 0.95rem;
+  }
+  .help-text span {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  /* Kategori-faner */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .tab {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 0.6rem 1.1rem;
+    border-radius: 24px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: inherit;
+  }
+  .tab:hover {
+    border-color: var(--green);
+    color: var(--green-dark);
+  }
+  .tab.active {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: white;
+  }
+  .tab-count {
+    background: rgba(255,255,255,0.2);
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+  }
+  .tab:not(.active) .tab-count {
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+
+  /* Galleri */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .story-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  .story-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(30, 15, 82, 0.1);
+    border-color: var(--green);
+  }
+  .story-card.coming {
+    opacity: 0.7;
+  }
+  .story-card.coming::after {
+    content: 'Kommer snart';
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--amber);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(239, 159, 39, 0.4);
+  }
+
+  .story-preview {
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, #f0f4f0, #e1f5ee);
+    position: relative;
+    overflow: hidden;
+  }
+  .story-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .story-preview .preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--green);
+    font-size: 4rem;
+    background: linear-gradient(135deg, var(--green-light), #f0f4f0);
+  }
+  .story-preview .duration-badge {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    background: rgba(30, 15, 82, 0.85);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    backdrop-filter: blur(4px);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .story-body {
+    padding: 1.1rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .story-meta {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .story-tag {
+    background: var(--amber-light);
+    color: var(--amber-dark);
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .story-tag.theme {
+    background: var(--purple-light);
+    color: var(--purple);
+  }
+
+  .story-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--teal-dark);
+    margin-bottom: 0.45rem;
+    line-height: 1.2;
+  }
+
+  .story-desc {
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    flex: 1;
+  }
+
+  .story-themes {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .theme-pill {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 0.7rem 0.6rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .action-btn:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .action-btn.primary {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: white;
+    flex: 1.5;
+  }
+  .action-btn.primary:hover {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: white;
+  }
+  .action-btn.secondary {
+    flex: 1;
+  }
+  .action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Tom kategori */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--muted);
+  }
+  .empty-state-emoji {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+  .empty-state h3 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    margin-bottom: 0.4rem;
+  }
+
+  /* Del-modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 8, 35, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  .modal.open { display: flex; }
+  .modal-content {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--bg);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: var(--muted);
+    font-family: inherit;
+  }
+  .modal-close:hover { background: var(--border); color: var(--text); }
+  .modal h2 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .modal p {
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+  .share-link-box {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--teal-dark);
+    word-break: break-all;
+    margin-bottom: 0.75rem;
+  }
+  .modal-buttons {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .modal-buttons .action-btn {
+    flex: 1;
+  }
+
+  @media (max-width: 600px) {
+    .help-box { grid-template-columns: 1fr; padding: 1.25rem; }
+    .gallery { grid-template-columns: 1fr; gap: 1.25rem; }
+  }
+
+  /* Footer */
+  footer {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  footer a { color: var(--muted); margin: 0 0.5rem; }
+  footer a:hover { color: var(--green-dark); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">For lærere</div>
+    <h1>Økonomiske <span class="accent">historier</span></h1>
+    <p class="hero-sub">Interaktive fortellinger der klassen tar økonomiske valg sammen — eller eleven utforsker på egen hånd. Med opplest stemme og bilder som blar automatisk.</p>
+  </div>
+</section>
+
+<main>
+
+  <!-- Hjelp-blokk -->
+  <div class="help-box">
+    <div class="help-item">
+      <div class="help-icon play">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <div class="help-text">
+        <strong>Spill av — for klasserommet</strong>
+        <span>Vis på smartboard eller projektor. Klassen velger sammen hvilken vei monsteret skal gå.</span>
+      </div>
+    </div>
+    <div class="help-item">
+      <div class="help-icon share">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </div>
+      <div class="help-text">
+        <strong>Del med elev — som lekse eller fordypning</strong>
+        <span>Send en lenke til enkeltelever som kan utforske historien på egen hånd hjemme eller på iPad.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kategori-faner -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-category="alle" role="tab">
+      Alle <span class="tab-count" data-count="alle">5</span>
+    </button>
+    <button class="tab" data-category="sparing" role="tab">
+      🪙 Sparing <span class="tab-count" data-count="sparing">1</span>
+    </button>
+    <button class="tab" data-category="forbruk" role="tab">
+      🛍️ Forbruk <span class="tab-count" data-count="forbruk">1</span>
+    </button>
+    <button class="tab" data-category="lan" role="tab">
+      💳 Lån og tillit <span class="tab-count" data-count="lan">1</span>
+    </button>
+    <button class="tab" data-category="risiko" role="tab">
+      📈 Risiko og fond <span class="tab-count" data-count="risiko">1</span>
+    </button>
+    <button class="tab" data-category="fellesskap" role="tab">
+      🎯 Fellesskap <span class="tab-count" data-count="fellesskap">1</span>
+    </button>
+  </div>
+
+  <!-- Galleri -->
+  <div class="gallery" id="gallery"></div>
+
+</main>
+
+<!-- Del-modal -->
+<div class="modal" id="shareModal">
+  <div class="modal-content">
+    <button class="modal-close" id="modalClose">×</button>
+    <h2>📤 Del med elev</h2>
+    <p>Send denne lenken til eleven via Myntland-portalen, mail eller læringsplattformen din. Eleven kan utforske historien på egen hånd.</p>
+    <div class="share-link-box" id="shareLinkBox"></div>
+    <div class="modal-buttons">
+      <button class="action-btn primary" id="copyLink">📋 Kopier lenke</button>
+      <button class="action-btn secondary" id="modalClose2">Lukk</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>🪙 Myntland © 2026</span><br>
+  <a href="index.html">Forsiden</a> ·
+  <a href="for-skoler.html">For skoler</a> ·
+  <a href="mailto:kontakt@myntland.no">Kontakt</a>
+</footer>
+
+<script>
+/* ===== Historieregister =====
+   Legg til nye historier her. Galleriet oppdateres automatisk.
+
+   Felter:
+     id           – kort identifikator (brukes i URL)
+     category     – 'sparing' | 'forbruk' | 'lan' | 'risiko' | 'fellesskap'
+     title        – navn som vises på kortet
+     character    – hovedkarakteren (f.eks. 'Bølge')
+     ingress      – kort innledning (1–3 setninger)
+     themes       – array med tema-pills (vises som små merker)
+     trinn        – f.eks. '1.–4. trinn' eller '5.–7. trinn'
+     duration     – estimert lengde i klasserommet
+     scenes       – antall scener i historien
+     thumb        – sti til thumbnail (4:3 bildeforhold, ~800px bred)
+     storyFile    – sti til den interaktive historien (HTML-fil)
+     status       – 'ready' | 'coming'
+*/
+const HISTORIER = [
+  {
+    id: 'bolge-sykkel',
+    category: 'sparing',
+    title: 'Bølge og drømmesykkelen',
+    character: 'Bølge',
+    ingress: 'Bølge ser drømmesykkelen i butikkvinduet hver dag — en rød racer til 800 mynter. Han har 120. Skal han gi opp, ta opp lån, eller spare og jobbe i mange uker?',
+    themes: ['Sparing', 'Lån', 'Tålmodighet'],
+    trinn: '1.–4. og 5.–7. trinn',
+    duration: '15–25 min',
+    scenes: 7,
+    thumb: 'historier/thumbs/bolge-sykkel.jpg',
+    storyFile: 'historier/bolge-sykkel.html',
+    status: 'ready'
+  },
+  {
+    id: 'stjerne-vennegave',
+    category: 'forbruk',
+    title: 'Stjernes vennegave',
+    character: 'Stjerne',
+    ingress: 'Det er bursdagsfest, og alle har kjøpt dyre gaver til Drage. Stjerne har spart til klassens turdag og må velge: bruke sparepengene, prøve å låne, eller stå støtt på sin egen plan?',
+    themes: ['Gruppepress', 'Behov vs ønsker', 'Prioritering'],
+    trinn: '1.–4. og 5.–7. trinn',
+    duration: '15–25 min',
+    scenes: 7,
+    thumb: 'historier/thumbs/stjerne-vennegave.jpg',
+    storyFile: 'historier/stjerne-vennegave.html',
+    status: 'coming'
+  },
+  {
+    id: 'mane-fond',
+    category: 'risiko',
+    title: 'Måne og det mystiske fondet',
+    character: 'Måne',
+    ingress: 'Fondet "Høy risiko" har gått opp 50 % på en uke. Vennene snakker om hvor mye de skal tjene. Skal Måne flytte alle sparepengene inn — eller la kontoen være som den er?',
+    themes: ['Risiko', 'Fond', 'Renter'],
+    trinn: '5.–7. trinn',
+    duration: '20–30 min',
+    scenes: 8,
+    thumb: 'historier/thumbs/mane-fond.jpg',
+    storyFile: 'historier/mane-fond.html',
+    status: 'coming'
+  },
+  {
+    id: 'bolge-iskremlan',
+    category: 'lan',
+    title: 'Bølges iskremlån',
+    character: 'Bølge',
+    ingress: 'Bølge har glemt bankkortet. Iskremmonsteret står midt i parken med yndlingssmaken. En venn tilbyr seg å låne ham 30 mynter — men når skal han betale tilbake?',
+    themes: ['Lån mellom venner', 'Tillit', 'Avtaler'],
+    trinn: '1.–4. og 5.–7. trinn',
+    duration: '10–20 min',
+    scenes: 6,
+    thumb: 'historier/thumbs/bolge-iskremlan.jpg',
+    storyFile: 'historier/bolge-iskremlan.html',
+    status: 'coming'
+  },
+  {
+    id: 'klassens-sparemal',
+    category: 'fellesskap',
+    title: 'Klassens sparemål',
+    character: 'Drage, Stjerne og Måne',
+    ingress: 'Klassen sparer til filmkveld, men det går tregt. Skal alle gi et ekstra bidrag, eller er skatten nok? Drage, Stjerne og Måne er uenige.',
+    themes: ['Skatt', 'Felles ansvar', 'Rettferdighet'],
+    trinn: '5.–7. trinn',
+    duration: '20–30 min',
+    scenes: 8,
+    thumb: 'historier/thumbs/klassens-sparemal.jpg',
+    storyFile: 'historier/klassens-sparemal.html',
+    status: 'coming'
+  }
+];
+
+const CATEGORY_LABELS = {
+  sparing: { emoji: '🪙', label: 'Sparing' },
+  forbruk: { emoji: '🛍️', label: 'Forbruk' },
+  lan: { emoji: '💳', label: 'Lån og tillit' },
+  risiko: { emoji: '📈', label: 'Risiko og fond' },
+  fellesskap: { emoji: '🎯', label: 'Fellesskap' }
+};
+
+// Oppdater fane-tellere
+function updateCounts() {
+  const counts = { alle: HISTORIER.length };
+  Object.keys(CATEGORY_LABELS).forEach(k => counts[k] = 0);
+  HISTORIER.forEach(h => { counts[h.category] = (counts[h.category] || 0) + 1; });
+  document.querySelectorAll('[data-count]').forEach(el => {
+    el.textContent = counts[el.dataset.count] ?? 0;
+  });
+}
+
+// Render et kort
+function renderCard(h) {
+  const card = document.createElement('article');
+  card.className = 'story-card' + (h.status === 'coming' ? ' coming' : '');
+  card.dataset.category = h.category;
+
+  const placeholderEmoji = CATEGORY_LABELS[h.category]?.emoji || '📖';
+
+  const isReady = h.status === 'ready';
+
+  card.innerHTML = `
+    <div class="story-preview">
+      <img src="${h.thumb}" alt="${h.title}" loading="lazy"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'preview-placeholder',textContent:'${placeholderEmoji}'}))">
+      <div class="duration-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${h.duration}
+      </div>
+    </div>
+    <div class="story-body">
+      <div class="story-meta">
+        <span class="story-tag">${h.trinn}</span>
+        <span class="story-tag theme">${CATEGORY_LABELS[h.category]?.label || ''}</span>
+      </div>
+      <h3 class="story-title">${h.title}</h3>
+      <p class="story-desc">${h.ingress}</p>
+      <div class="story-themes">
+        ${h.themes.map(t => `<span class="theme-pill">${t}</span>`).join('')}
+      </div>
+      <div class="action-row">
+        ${isReady ? `
+          <a href="${h.storyFile}" class="action-btn primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Spill historien
+          </a>
+          <button class="action-btn secondary" onclick="openShareModal('${h.id}', '${h.title.replace(/'/g, "\\'")}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Del
+          </button>
+        ` : `
+          <button class="action-btn primary" disabled>
+            Kommer snart
+          </button>
+        `}
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+// Render galleriet for en kategori
+function renderGallery(category) {
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = '';
+  const filtered = category === 'alle' ? HISTORIER : HISTORIER.filter(h => h.category === category);
+
+  if (filtered.length === 0) {
+    const cat = CATEGORY_LABELS[category] || { emoji: '📖', label: 'historier' };
+    gallery.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-emoji">${cat.emoji}</div>
+        <h3>Kommer snart!</h3>
+        <p>Vi jobber med flere historier i denne kategorien.</p>
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(h => gallery.appendChild(renderCard(h)));
+}
+
+// Del-modal
+const shareModal = document.getElementById('shareModal');
+const shareLinkBox = document.getElementById('shareLinkBox');
+let currentShareUrl = '';
+
+function openShareModal(id, title) {
+  const base = window.location.origin + window.location.pathname.replace('okonomiske-historier.html', '');
+  currentShareUrl = base + 'historier/' + id + '.html?elev=1';
+  shareLinkBox.textContent = currentShareUrl;
+  shareModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeShareModal() {
+  shareModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modalClose').addEventListener('click', closeShareModal);
+document.getElementById('modalClose2').addEventListener('click', closeShareModal);
+shareModal.addEventListener('click', (e) => {
+  if (e.target === shareModal) closeShareModal();
+});
+
+document.getElementById('copyLink').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(currentShareUrl);
+    const btn = document.getElementById('copyLink');
+    const original = btn.innerHTML;
+    btn.innerHTML = '✓ Kopiert!';
+    setTimeout(() => { btn.innerHTML = original; }, 1500);
+  } catch {
+    alert('Kunne ikke kopiere automatisk. Kopier lenken manuelt fra boksen.');
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && shareModal.classList.contains('open')) closeShareModal();
+});
+
+// Fane-bytting
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderGallery(tab.dataset.category);
+  });
+});
+
+// Eksponer for inline onclick
+window.openShareModal = openShareModal;
+
+// Init
+updateCounts();
+renderGallery('alle');
+</script>
+
+</body>
+</html>
