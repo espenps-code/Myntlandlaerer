@@ -3056,9 +3056,15 @@ window.buildPdfDownloadBanner = function(title, opts) {
 // vs. 5–30 KB for PNG som blir rasterisert til mye større bitmap når
 // printeren tar over.
 // ════════════════════════════════════════════════════════════════════
-window.qrToSVG = function(payload, sizeMm) {
+window.qrToSVG = function(payload, sizeMm, correctLevel) {
   sizeMm = sizeMm || 30;
   var text = typeof payload === 'string' ? payload : JSON.stringify(payload);
+  // correctLevel: 'L' = 7%, 'M' = 15% (default), 'Q' = 25%, 'H' = 30%
+  // L gir færre moduler → mindre PDF-filstørrelse. Trygt for digitalt rendrede QR
+  // som ikke utsettes for slitasje.
+  var ecLevel = (correctLevel && QRCode && QRCode.CorrectLevel && QRCode.CorrectLevel[correctLevel])
+    ? QRCode.CorrectLevel[correctLevel]
+    : (typeof QRCode !== 'undefined' ? QRCode.CorrectLevel.M : 1);
 
   function fallbackImg(reason) {
     var url = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' +
@@ -3079,7 +3085,7 @@ window.qrToSVG = function(payload, sizeMm) {
     qr = new QRCode(tmp, {
       text: text,
       width: 200, height: 200,
-      correctLevel: QRCode.CorrectLevel.M
+      correctLevel: ecLevel
     });
   } catch(e) {
     document.body.removeChild(tmp);
@@ -3190,10 +3196,12 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   var title      = opts.title || 'Myntland · Bankkort';
   var THEMES = ['theme-gull','theme-turkis','theme-korall','theme-lilla','theme-lime','theme-skog'];
 
-  // QR genereres som inline SVG (vektor, ~1–3 KB per kort).
+  // QR genereres som inline SVG (vektor).
+  // correctLevel 'L' (7%) gir færre moduler enn 'M' (15%) → ~30-40% mindre PDF-data.
+  // Trygt for innloggings-QR som ikke utsettes for slitasje.
   // 16mm = 18mm container minus 2×1mm padding.
   function qrSVG(payload) {
-    return window.qrToSVG(payload, 16);
+    return window.qrToSVG(payload, 16, 'L');
   }
   function hashStr(str) {
     var h = 0, i; str = String(str||'');
@@ -3308,15 +3316,18 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   }
 
   var css = ''
-    + '@page{size:A4 portrait;margin:0}'
+    /* 8mm skrivermargin på alle kanter — beskytter mot avkutting på skoleskrivere */
+    + '@page{size:A4 portrait;margin:8mm}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    /* FLAT pergament-bakgrunn — ingen radial-gradient, ingen mønster */
-    + '.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:#FBF2D6}'
+    /* FLAT pergament-bakgrunn — ingen radial-gradient, ingen mønster.
+       Sidehøyde reduseres tilsvarende margen så grid passer */
+    + '.page{width:194mm;height:281mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:#FBF2D6}'
     + '.page:last-of-type{page-break-after:auto}'
     /* Bakside: flat blekk-farge */
     + '.page.back-page{background:#2A1F3D}'
-    + '.card-grid{position:absolute;inset:7mm 0 7mm 0;display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,70mm);gap:0;justify-content:center}'
+    /* Krympet grid: 2×96mm=192mm bredde, 4×66mm=264mm høyde (passer i 281mm) */
+    + '.card-grid{position:absolute;inset:6mm 0 6mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:1.5mm}'
     + '.card-slot-empty{visibility:hidden}'
     + '.crop{position:absolute;width:4mm;height:4mm;z-index:10;pointer-events:none}'
@@ -4030,8 +4041,6 @@ function printHendelserCards14(cards) {
       ? c.qrSVG
       : `<img src="${c.qrUrl || c._dataUrl || ''}" width="130" height="130" alt="QR">`;
     return `<div class="hcard ${cls}">
-      <span class="crop tl"></span><span class="crop tr"></span>
-      <span class="crop bl"></span><span class="crop br"></span>
       <div class="ribbon">${label}</div>
       <div class="emoji">${c.emoji||'🎲'}</div>
       <div class="desc">${c.desc}</div>
@@ -4047,8 +4056,6 @@ function printHendelserCards14(cards) {
   };
   let pagesHTML = '';
   const backHTML = () => `<div class="hcard hback">
-    <span class="crop tl"></span><span class="crop tr"></span>
-    <span class="crop bl"></span><span class="crop br"></span>
     <div class="big-coin">🪙</div>
     <div class="hback-logo">MYNTLAND<small>~ HENDELSER ~</small></div>
     <div class="hback-scan">SKANN MEG FOR Å REGISTRERE</div>
