@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bølge og drømmesykkelen – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-title {
+    flex: 1;
+    text-align: center;
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1rem;
+  }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  @media (max-width: 700px) {
+    .topnav-title { display: none; }
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 2rem;
+  }
+
+  .story-frame {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(30, 15, 82, 0.06);
+  }
+
+  .scene {
+    min-height: 540px;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 0;
+  }
+
+  .scene-image {
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, #f0f4f0, #e1f5ee);
+    position: relative;
+    overflow: hidden;
+  }
+  .scene-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.5s ease;
+  }
+  .scene-image .loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .scene-text {
+    padding: 2rem 2.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .scene-tag {
+    align-self: flex-start;
+    background: var(--amber-light);
+    color: var(--amber-dark);
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 3px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .scene-tag.sti-a { background: var(--coral-light); color: var(--coral); }
+  .scene-tag.sti-b { background: var(--purple-light); color: var(--purple); }
+  .scene-tag.sti-c { background: var(--green-light); color: var(--green-dark); }
+
+  .scene-text h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.6rem, 2.5vw, 2rem);
+    color: var(--teal-dark);
+    line-height: 1.1;
+    margin-bottom: 1.25rem;
+  }
+  .scene-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .scene-text .moral {
+    background: var(--green-light);
+    border-left: 4px solid var(--green);
+    padding: 1rem 1.25rem;
+    border-radius: 4px 12px 12px 4px;
+    font-style: italic;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-top: 1rem;
+    font-size: 1rem;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+  .choice-btn {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text);
+  }
+  .choice-btn:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(29, 158, 117, 0.15);
+  }
+  .choice-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    width: 48px;
+    text-align: center;
+  }
+  .choice-content { flex: 1; }
+  .choice-title {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.05rem;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+  .choice-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .ending {
+    padding: 2rem 2.25rem;
+    border-top: 2px solid var(--border);
+    background: linear-gradient(180deg, var(--bg), var(--white));
+  }
+  .ending h3 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ending p {
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .ending ul {
+    list-style: none;
+    padding: 0;
+  }
+  .ending li {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.6rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    line-height: 1.5;
+  }
+  .ending li::before {
+    content: '💭';
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .ending-section { margin-bottom: 1.75rem; }
+  .ending-section:last-child { margin-bottom: 0; }
+
+  .controls {
+    background: var(--white);
+    border-top: 2px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .progress {
+    flex: 1;
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 120px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--green-dark));
+    width: 0%;
+    transition: width 0.4s ease;
+    border-radius: 4px;
+  }
+
+  .scene-counter {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+  }
+
+  .btn {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+  }
+  .btn:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn.primary {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: white;
+  }
+  .btn.primary:hover {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: white;
+  }
+  .btn.primary.playing {
+    background: var(--coral);
+    border-color: var(--coral);
+  }
+  .btn.icon-only {
+    padding: 0.6rem 0.7rem;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--teal-dark);
+    color: white;
+    padding: 0.85rem 1.5rem;
+    border-radius: 28px;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 800px) {
+    main { padding: 1rem; }
+    .scene { grid-template-columns: 1fr; min-height: auto; }
+    .scene-image { aspect-ratio: 4 / 3; }
+    .scene-text { padding: 1.5rem; }
+    .scene-text h2 { font-size: 1.4rem; }
+    .scene-text p { font-size: 1rem; }
+    .ending { padding: 1.5rem; }
+    .controls { padding: 0.85rem 1rem; }
+    .btn { padding: 0.55rem 0.85rem; font-size: 0.85rem; }
+  }
+
+  .scene-wrapper { transition: opacity 0.35s ease; }
+  .scene-wrapper.fading { opacity: 0; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="../index.html" class="topnav-logo">Myntland</a>
+    <div class="topnav-title">🚲 Bølge og drømmesykkelen</div>
+    <a href="../okonomiske-historier.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake
+    </a>
+  </div>
+</nav>
+
+<main>
+  <div class="story-frame">
+    <div class="scene-wrapper" id="sceneWrapper"></div>
+
+    <div class="controls">
+      <button class="btn icon-only" id="prevBtn" title="Forrige side">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="btn primary" id="playBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" id="playIcon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span id="playLabel">Spill av</span>
+      </button>
+      <button class="btn icon-only" id="nextBtn" title="Neste side">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="progress"><div class="progress-fill" id="progress"></div></div>
+      <div class="scene-counter" id="counter">1 / 1</div>
+      <button class="btn" id="restartBtn" title="Start fortellingen på nytt">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Start på nytt
+      </button>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// === BILDER (oppdaterte versjoner med tråsykkel og SYKLER-butikk) ===
+const BILDER = {
+  start: 'bilder/01_start.png',
+  pris: 'bilder/02_pris.png',
+  veiskille: 'bilder/03_veiskille.png',
+  sti_a: 'bilder/04_sti-a-1.png',
+  sti_a_slutt: 'bilder/05_sti-a-2.png',
+  sti_b: 'bilder/06_sti-b-1.png',
+  sti_b_slutt: 'bilder/07_sti-b-2.png',
+  sti_c: 'bilder/08_sti-c-1.png',
+  sti_c_jobb: 'bilder/09_sti-c-2.png',
+  sti_c_vekst: 'bilder/10_sti-c-3.png',
+  sti_c_slutt: 'bilder/11_sti-c-4.png',
+  diskusjon: 'bilder/12_diskusjon.png'
+};
+
+const LYD_BASE = 'lyd/';
+
+const SIDER = {
+  start: {
+    bilde: BILDER.start,
+    tag: 'Kapittel 1',
+    overskrift: 'Bølge og drømmesykkelen',
+    avsnitt: [
+      'Bølge er et lite, blått monster som bor i Myntland. Hver morgen går han forbi sykkelbutikken i sentrum.',
+      'Og hver morgen stopper han opp og kikker på den samme sykkelen i vinduet — en skinnende rød racer med sølvfarget styre og lyn på rammen.',
+      'Drømmesykkelen.'
+    ]
+  },
+  pris: {
+    bilde: BILDER.pris,
+    tag: 'Kapittel 2',
+    overskrift: 'Så mye?',
+    avsnitt: [
+      'Prislappen sier 800 mynter.',
+      'Bølge har 120 mynter på brukskontoen sin. Han kjenner det suger litt i magen.',
+      'Han setter seg ned på fortauet og tenker. Hva skal han gjøre?'
+    ]
+  },
+  veiskille: {
+    bilde: BILDER.veiskille,
+    tag: 'Veiskille',
+    overskrift: 'Tre veier framfor Bølge',
+    avsnitt: ['Hva skal Bølge gjøre? Klassen velger sammen!'],
+    valg: true
+  },
+
+  'sti-a-1': {
+    bilde: BILDER.sti_a,
+    tag: 'Vei A',
+    tagClass: 'sti-a',
+    overskrift: 'Jeg gjør ingenting',
+    avsnitt: [
+      'Bølge sukker. «Sykkelen er for dyr. Jeg klarer det aldri.» Han reiser seg og går hjem.',
+      'Hver dag går han forbi butikken. Hver dag står sykkelen der. Ukene blir til måneder.'
+    ]
+  },
+  'sti-a-2': {
+    bilde: BILDER.sti_a_slutt,
+    tag: 'Vei A',
+    tagClass: 'sti-a',
+    overskrift: 'Vinduet er tomt',
+    avsnitt: [
+      'En dag kommer Bølge forbi — og sykkelen er borte. Noen andre kjøpte den.',
+      'Vinduet er tomt. Bølge står igjen med 120 mynter og ingen sykkel.'
+    ],
+    moral: 'Det er greit å ikke kunne kjøpe alt med en gang. Men hvis vi aldri prøver, skjer det heller ingenting.',
+    erSlutt: true,
+    sti: 'A'
+  },
+
+  'sti-b-1': {
+    bilde: BILDER.sti_b,
+    tag: 'Vei B',
+    tagClass: 'sti-b',
+    overskrift: 'Kjøp nå, betal senere',
+    avsnitt: [
+      'Bølge går inn i butikken. «Kan jeg få sykkelen i dag og betale senere?»',
+      'Selgeren — et stort lilla monster med briller — smiler bredt. «Selvfølgelig! Du kan ta opp lån. Sykkelen koster 800 mynter, men med renter blir det 1200 mynter du må betale tilbake.»',
+      'Bølge tenker ikke så mye over det. Han vil ha sykkelen NÅ. Han skriver under.'
+    ]
+  },
+  'sti-b-2': {
+    bilde: BILDER.sti_b_slutt,
+    tag: 'Vei B',
+    tagClass: 'sti-b',
+    overskrift: 'Sykkelen ble mye dyrere',
+    avsnitt: [
+      'Hver fredag forsvinner mynter fra brukskontoen hans for å betale tilbake lånet.',
+      'Han har ikke råd til snacks. Han kan ikke være med på klassens sparemål.',
+      'Sykkelen er fin, men gleden blekner fort når magen knurrer og vennene spiser is uten ham.'
+    ],
+    moral: 'Den røde sykkelen ble ikke 800 mynter — den ble 1200. Det er prisen for å ikke vente.',
+    erSlutt: true,
+    sti: 'B'
+  },
+
+  'sti-c-1': {
+    bilde: BILDER.sti_c,
+    tag: 'Vei C',
+    tagClass: 'sti-c',
+    overskrift: 'Jeg sparer og jobber',
+    avsnitt: [
+      'Bølge går hjem og tar fram sparegrisen. «800 mynter. Det tar tid. Men jeg klarer det.»',
+      'Han søker på en fast jobb som klasseromsvasker — 100 mynter i uka. Hver fredag kommer lønna inn. 20 mynter går i skatt til klassens sparemål, 80 mynter blir igjen.'
+    ]
+  },
+  'sti-c-2': {
+    bilde: BILDER.sti_c_jobb,
+    tag: 'Vei C',
+    tagClass: 'sti-c',
+    overskrift: 'På jobb',
+    avsnitt: [
+      'Bølge jobber hardt hver uke. Han flytter halvparten av lønna over på sparekontoen, hvor de gir 2 % rente hver mandag.',
+      'Han tjener ekstra mynter på Myntjakten — hoderegning gir 10–20 mynter per runde.'
+    ]
+  },
+  'sti-c-3': {
+    bilde: BILDER.sti_c_vekst,
+    tag: 'Vei C',
+    tagClass: 'sti-c',
+    overskrift: 'Sakte men sikkert',
+    avsnitt: [
+      'Sakte men sikkert vokser sparekontoen: 200 mynter… 400… 600…',
+      'En morgen, etter mange uker, teller han: 820 mynter. Han har klart det.'
+    ]
+  },
+  'sti-c-4': {
+    bilde: BILDER.sti_c_slutt,
+    tag: 'Vei C',
+    tagClass: 'sti-c',
+    overskrift: 'Den deiligste sykkelturen',
+    avsnitt: [
+      'Han går inn i butikken. Han legger myntene på disken. Han ruller ut av sykkelbutikken på SIN sykkel — kjøpt med EGNE mynter.',
+      'Ingen lån. Ingen knurrende mage. Bare stolthet.',
+      'Og den røde sykkelen kjennes ti ganger så fin som hvis han hadde fått den med en gang.'
+    ],
+    moral: 'Når du venter og jobber for noe, blir gleden ikke 800 mynter verdt — den blir uvurderlig.',
+    erSlutt: true,
+    sti: 'C'
+  }
+};
+
+const STIER = {
+  A: ['sti-a-1', 'sti-a-2'],
+  B: ['sti-b-1', 'sti-b-2'],
+  C: ['sti-c-1', 'sti-c-2', 'sti-c-3', 'sti-c-4']
+};
+
+const VALG = [
+  { sti: 'A', ikon: '😔', tittel: 'Gjør ingenting', undertekst: 'Sykkelen er for dyr. Det blir nok aldri noe av.' },
+  { sti: 'B', ikon: '💳', tittel: 'Kjøp nå, betal senere', undertekst: 'Få sykkelen i dag. Betal med lån litt etter litt.' },
+  { sti: 'C', ikon: '💪', tittel: 'Spar og jobb', undertekst: 'Spar mynter og søk en jobb. Det tar tid, men det er mulig.' }
+];
+
+const DISKUSJON = [
+  'Hvilken av de tre veiene ville DU valgt? Hvorfor?',
+  'Hvorfor tror dere sykkelen kjentes ekstra fin for Bølge i slutten?',
+  'Hva er forskjellen mellom å trenge en sykkel og å ha lyst på en sykkel?',
+  'Har dere noen gang spart til noe selv? Hvor lang tid tok det?'
+];
+
+let aktivListe = [];
+let aktivIndeks = 0;
+let valgtSti = null;
+let spillerAv = false;
+let aktivLyd = null;
+let stemme = null;
+
+function byggIntroliste() {
+  aktivListe = ['start', 'pris', 'veiskille'];
+  aktivIndeks = 0;
+  valgtSti = null;
+}
+
+function velgSti(sti) {
+  stoppLyd();
+  valgtSti = sti;
+  aktivListe = ['start', 'pris', 'veiskille', ...STIER[sti]];
+  aktivIndeks = 3;
+  visSide();
+  if (spillerAv) lesOpp();
+}
+
+function startSti(sti) {
+  stoppLyd();
+  valgtSti = sti;
+  aktivListe = ['start', 'pris', 'veiskille', ...STIER[sti]];
+  aktivIndeks = 3;
+  visSide();
+  visToast(`Du valgte vei ${sti}!`);
+}
+
+function visSide() {
+  const wrapper = document.getElementById('sceneWrapper');
+  const sideId = aktivListe[aktivIndeks];
+  const side = SIDER[sideId];
+  if (!side) return;
+
+  wrapper.classList.add('fading');
+
+  setTimeout(() => {
+    let innhold = `
+      <div class="scene">
+        <div class="scene-image">
+          <div class="loader">Laster bilde…</div>
+          <img src="${side.bilde}" alt="${side.overskrift}"
+               onload="this.previousElementSibling.style.display='none'"
+               onerror="this.previousElementSibling.textContent='Bilde kunne ikke lastes'">
+        </div>
+        <div class="scene-text">
+          <span class="scene-tag ${side.tagClass || ''}">${side.tag}</span>
+          <h2>${side.overskrift}</h2>
+          ${side.avsnitt.map(p => `<p>${p}</p>`).join('')}
+    `;
+
+    if (side.valg) {
+      innhold += `<div class="choices">`;
+      VALG.forEach(v => {
+        innhold += `
+          <button class="choice-btn" onclick="velgSti('${v.sti}')">
+            <div class="choice-icon">${v.ikon}</div>
+            <div class="choice-content">
+              <div class="choice-title">${v.tittel}</div>
+              <div class="choice-sub">${v.undertekst}</div>
+            </div>
+          </button>
+        `;
+      });
+      innhold += `</div>`;
+    }
+
+    if (side.moral) {
+      innhold += `<div class="moral">${side.moral}</div>`;
+    }
+
+    innhold += `</div></div>`;
+
+    if (side.erSlutt) {
+      const sti = side.sti;
+      const andreStier = ['A', 'B', 'C'].filter(s => s !== sti);
+      const stiNavn = { A: 'Gjør ingenting', B: 'Kjøp nå, betal senere', C: 'Spar og jobb' };
+      const stiIkon = { A: '😔', B: '💳', C: '💪' };
+
+      innhold += `
+        <div class="ending">
+          <div class="ending-section">
+            <h3>🤔 Synes du dette var et godt valg?</h3>
+            <p>Vil du se hva som skjedde om Bølge hadde valgt annerledes?</p>
+            <div class="choices">
+              ${andreStier.map(s => `
+                <button class="choice-btn" onclick="startSti('${s}')">
+                  <div class="choice-icon">${stiIkon[s]}</div>
+                  <div class="choice-content">
+                    <div class="choice-title">Prøv vei ${s}: ${stiNavn[s]}</div>
+                    <div class="choice-sub">Se hva som skjer om Bølge tar dette valget i stedet.</div>
+                  </div>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="ending-section">
+            <h3>💬 Snakk sammen</h3>
+            <p>Bruk disse spørsmålene i klassen eller mens du tenker selv:</p>
+            <ul>
+              ${DISKUSJON.map(q => `<li>${q}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    wrapper.innerHTML = innhold;
+    wrapper.classList.remove('fading');
+
+    const total = aktivListe.length;
+    document.getElementById('counter').textContent = `${aktivIndeks + 1} / ${total}`;
+    document.getElementById('progress').style.width = `${((aktivIndeks + 1) / total) * 100}%`;
+
+    document.getElementById('prevBtn').disabled = aktivIndeks === 0;
+    document.getElementById('nextBtn').disabled =
+      aktivIndeks >= aktivListe.length - 1 || side.valg;
+
+  }, 200);
+}
+
+function spillScenelyd() {
+  const sideId = aktivListe[aktivIndeks];
+  const lydUrl = LYD_BASE + sideId + '.mp3';
+
+  return new Promise((resolve, reject) => {
+    const audio = new Audio(lydUrl);
+    aktivLyd = audio;
+
+    audio.addEventListener('ended', () => resolve('lyd'));
+    audio.addEventListener('error', () => reject('lyd-mangler'));
+    audio.addEventListener('canplaythrough', () => audio.play().catch(reject), { once: true });
+
+    audio.load();
+
+    setTimeout(() => {
+      if (audio.readyState < 3) reject('timeout');
+    }, 2500);
+  });
+}
+
+function spillNettleserstemme() {
+  return new Promise((resolve, reject) => {
+    if (!('speechSynthesis' in window)) return reject('ingen-tts');
+
+    const side = SIDER[aktivListe[aktivIndeks]];
+    let tekst = side.overskrift + '. ' + side.avsnitt.join(' ');
+    if (side.moral) tekst += ' ' + side.moral;
+
+    const u = new SpeechSynthesisUtterance(tekst);
+    u.lang = 'nb-NO';
+    u.rate = 0.92;
+    u.pitch = 1.0;
+    if (stemme) u.voice = stemme;
+    aktivLyd = u;
+
+    u.onend = () => resolve('stemme');
+    u.onerror = () => reject('stemme-feil');
+
+    speechSynthesis.speak(u);
+  });
+}
+
+async function lesOpp() {
+  stoppLyd();
+  const side = SIDER[aktivListe[aktivIndeks]];
+  if (!side) return;
+
+  try {
+    await spillScenelyd().catch(() => spillNettleserstemme());
+  } catch (e) {
+    console.warn('Kunne ikke spille av:', e);
+    spillerAv = false;
+    oppdaterPlayBtn();
+    return;
+  }
+
+  if (!spillerAv) return;
+
+  if (side.valg) {
+    visToast('Klassen velger en vei 👇');
+    return;
+  }
+  if (side.erSlutt) {
+    spillerAv = false;
+    oppdaterPlayBtn();
+    visToast('Fortellingen er ferdig 🪙');
+    return;
+  }
+  setTimeout(() => {
+    if (spillerAv && aktivIndeks < aktivListe.length - 1) {
+      aktivIndeks++;
+      visSide();
+      setTimeout(() => { if (spillerAv) lesOpp(); }, 450);
+    }
+  }, 600);
+}
+
+function stoppLyd() {
+  if (aktivLyd) {
+    if (aktivLyd instanceof Audio) {
+      aktivLyd.pause();
+      aktivLyd.currentTime = 0;
+    } else if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+    aktivLyd = null;
+  }
+}
+
+function oppdaterPlayBtn() {
+  const btn = document.getElementById('playBtn');
+  const icon = document.getElementById('playIcon');
+  const label = document.getElementById('playLabel');
+  if (spillerAv) {
+    btn.classList.add('playing');
+    icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    label.textContent = 'Pause';
+  } else {
+    btn.classList.remove('playing');
+    icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+    label.textContent = 'Spill av';
+  }
+}
+
+function visToast(tekst) {
+  const t = document.getElementById('toast');
+  t.textContent = tekst;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  spillerAv = !spillerAv;
+  oppdaterPlayBtn();
+  if (spillerAv) lesOpp();
+  else stoppLyd();
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  stoppLyd();
+  const naa = SIDER[aktivListe[aktivIndeks]];
+  if (naa.valg) {
+    visToast('Velg en vei først! 👇');
+    return;
+  }
+  if (aktivIndeks < aktivListe.length - 1) {
+    aktivIndeks++;
+    visSide();
+    if (spillerAv) setTimeout(() => { if (spillerAv) lesOpp(); }, 400);
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  stoppLyd();
+  if (aktivIndeks > 0) {
+    aktivIndeks--;
+    visSide();
+    if (spillerAv) setTimeout(() => { if (spillerAv) lesOpp(); }, 400);
+  }
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  stoppLyd();
+  spillerAv = false;
+  oppdaterPlayBtn();
+  byggIntroliste();
+  visSide();
+  visToast('Tilbake til start 🪙');
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+  if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+  if (e.key === ' ') { e.preventDefault(); document.getElementById('playBtn').click(); }
+});
+
+function init() {
+  byggIntroliste();
+  visSide();
+
+  Object.values(BILDER).forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+
+  if ('speechSynthesis' in window) {
+    const lastStemmer = () => {
+      const stemmer = speechSynthesis.getVoices();
+      stemme = stemmer.find(s => s.lang === 'nb-NO')
+            || stemmer.find(s => s.lang.startsWith('nb'))
+            || stemmer.find(s => s.lang.startsWith('no'))
+            || stemmer[0];
+    };
+    speechSynthesis.onvoiceschanged = lastStemmer;
+    lastStemmer();
+  }
+}
+
+window.velgSti = velgSti;
+window.startSti = startSti;
+init();
+</script>
+
+</body>
+</html>
