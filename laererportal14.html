@@ -3001,10 +3001,10 @@ window.buildPdfDownloadBanner = function(title, opts) {
     +     '<div class="pib-quality">'
     +       '<div class="pib-quality-label">Velg filstørrelse:</div>'
     +       '<div class="pib-quality-opts">'
-    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="tiny" onchange="updateEstimate()"><span><strong>🪶 Veldig liten</strong><small>~15 KB/side</small></span></label>'
-    +         '<label class="pib-q-opt pib-q-default"><input type="radio" name="pib-q" value="small" checked onchange="updateEstimate()"><span><strong>📄 Liten (anbefalt)</strong><small>~30 KB/side</small></span></label>'
-    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="balanced" onchange="updateEstimate()"><span><strong>⚖️ Balansert</strong><small>~60 KB/side</small></span></label>'
-    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="best" onchange="updateEstimate()"><span><strong>✨ Best kvalitet</strong><small>~120 KB/side</small></span></label>'
+    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="tiny" checked onchange="updateEstimate()"><span><strong>🪶 Veldig liten</strong><small>~25 KB/side</small></span></label>'
+    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="small" onchange="updateEstimate()"><span><strong>📄 Liten</strong><small>~70 KB/side</small></span></label>'
+    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="balanced" onchange="updateEstimate()"><span><strong>⚖️ Balansert</strong><small>~150 KB/side</small></span></label>'
+    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="best" onchange="updateEstimate()"><span><strong>✨ Best</strong><small>~280 KB/side</small></span></label>'
     +       '</div>'
     +       '<div class="pib-estimate" id="pib-estimate">Velg «Liten» for skoleskriver (rask, små filer). «Balansert» eller «Best» kun hvis du ser at kortene mangler detaljer.</div>'
     +     '</div>'
@@ -3057,15 +3057,15 @@ window.buildPdfDownloadBanner = function(title, opts) {
   var compressScript = '\n<script>\n'
     + 'window._MYNTLAND_PDF_FILE = ' + JSON.stringify(pdfFileName) + ';\n'
     + 'window._MYNTLAND_PDF_PROFILES = {\n'
-    + '  tiny:     { scale: 1.0, jpegQuality: 0.55 },\n'    // ~15 KB/side
-    + '  small:    { scale: 1.3, jpegQuality: 0.60 },\n'    // ~30 KB/side (default)
-    + '  balanced: { scale: 1.6, jpegQuality: 0.72 },\n'    // ~60 KB/side
-    + '  best:     { scale: 2.0, jpegQuality: 0.85 }\n'     // ~120 KB/side
+    + '  tiny:     { scale: 0.75, jpegQuality: 0.45 },\n'   // ~25 KB/side for bankkort
+    + '  small:    { scale: 1.0,  jpegQuality: 0.55 },\n'   // ~70 KB/side
+    + '  balanced: { scale: 1.4,  jpegQuality: 0.68 },\n'   // ~150 KB/side
+    + '  best:     { scale: 1.8,  jpegQuality: 0.82 }\n'    // ~280 KB/side
     + '};\n'
     + 'function getSelectedProfile(){\n'
     + '  var radios = document.querySelectorAll("input[name=\\"pib-q\\"]");\n'
     + '  for(var i=0;i<radios.length;i++) if(radios[i].checked) return radios[i].value;\n'
-    + '  return "small";\n'
+    + '  return "tiny";\n'
     + '}\n'
     + 'function countPages(){\n'
     + '  return document.querySelectorAll(".page, .page-print").length;\n'
@@ -3075,13 +3075,13 @@ window.buildPdfDownloadBanner = function(title, opts) {
     + '  if(!est) return;\n'
     + '  var p = getSelectedProfile();\n'
     + '  var pages = countPages();\n'
-    + '  var perPage = {tiny:15, small:30, balanced:60, best:120}[p] || 30;\n'
+    + '  var perPage = {tiny:25, small:70, balanced:150, best:280}[p] || 70;\n'
     + '  var totalKB = perPage * pages;\n'
     + '  var totalStr = totalKB < 1000 ? totalKB + " KB" : (totalKB/1024).toFixed(1) + " MB";\n'
     + '  est.textContent = "📐 " + pages + " sider × ~" + perPage + " KB ≈ " + totalStr + " total. " + (\n'
-    + '    p === "tiny"     ? "Veldig liten fil — perfekt for e-post og store jobber. Litt grovere, men fullt lesbart." :\n'
-    + '    p === "small"    ? "Anbefalt for skoleskriver — pen kvalitet og rask utskrift." :\n'
-    + '    p === "balanced" ? "Litt skarpere — bra hvis du vil se finere detaljer." :\n'
+    + '    p === "tiny"     ? "Mest aggressiv komprimering. Litt grovere, men fullt lesbart. Best for store jobber og e-post." :\n'
+    + '    p === "small"    ? "Anbefalt for skoleskriver — pen kvalitet, små filer." :\n'
+    + '    p === "balanced" ? "Skarpere, men større filer. Bruk for finere detaljer." :\n'
     + '                       "Maks kvalitet — store filer, kan ta tid på skoleskriver."\n'
     + '  );\n'
     + '}\n'
@@ -3089,7 +3089,7 @@ window.buildPdfDownloadBanner = function(title, opts) {
     + 'setTimeout(updateEstimate, 500);\n'                  // Backup hvis DOMContentLoaded allerede er fyrt
     + '\n'
     + 'async function compressAndDownloadPDF(btn){\n'
-    + '  var profile = window._MYNTLAND_PDF_PROFILES[getSelectedProfile()] || window._MYNTLAND_PDF_PROFILES.small;\n'
+    + '  var profile = window._MYNTLAND_PDF_PROFILES[getSelectedProfile()] || window._MYNTLAND_PDF_PROFILES.tiny;\n'
     + '  var fileName = window._MYNTLAND_PDF_FILE;\n'
     + '  var progress = document.getElementById("pib-progress");\n'
     + '  var fill = document.getElementById("pib-progress-fill");\n'
