@@ -18,9 +18,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Myntland – Lærerportal 1–4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<!-- jsPDF + html2canvas for komprimert PDF-eksport (bankkort, varekort, handlelister, hendelser) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getDatabase, ref, set, push, onValue, remove, update, get }
@@ -2416,27 +2413,33 @@ function togglePrintItem(key, el) {
 function selectAllGroceries() { window._groceries.forEach(g => selectedPrintItems.add(g.fbKey)); renderGroceryPrintSelect(); }
 
 // ── Myntland Butikk CSS (delt mellom varekort og handleliste) ──
+// FLAT, utskriftsvennlig design — ingen radial-gradients, ingen mønstre,
+// ingen drop-shadows, ingen text-shadows. Beholder offset box-shadow på pillere
+// og baksidekort siden de er trygge for utskrift.
 const MYNTLAND_BUTIKK_CSS = `
   :root{--gull:#F5C849;--gull-dyp:#C99517;--gull-lys:#FFE89A;--turkis:#2DC4C4;--turkis-dyp:#0C7A8A;--himmel:#BFEDF0;--korall:#E64B3B;--lime:#B8DA3B;--lilla:#6B5BA8;--lilla-dyp:#3D2E70;--rosa:#FFB8C7;--pergament:#FBF2D6;--pergament-dyp:#F0E1B0;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--skog:#2F6B4A;}
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:white;font-family:'Nunito',sans-serif;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{size:A4 portrait;margin:0}
-  .page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;background:radial-gradient(ellipse 60% 80% at 50% 50%, rgba(255,255,255,0.4), transparent 75%),var(--pergament)}
-  .page::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle, rgba(42,31,61,0.04) 1px, transparent 1.5px);background-size:6px 6px;pointer-events:none}
+  /* Flat pergament — ingen radial-gradient, ingen prikke-mønster */
+  .page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;background:var(--pergament)}
   .page-corner{position:absolute;font-family:'Fraunces',serif;font-weight:900;font-style:italic;font-size:8.5pt;color:var(--blekk-myk);letter-spacing:.1em;z-index:5}
   .page-corner.tl{top:5mm;left:6mm}.page-corner.br{bottom:5mm;right:6mm}
   .vare-grid{position:absolute;inset:14mm 8mm 12mm 8mm;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:6mm}
   .vare-slot{position:relative;outline:.4px dashed var(--blekk-myk);outline-offset:-1px}
-  .vare{width:100%;height:100%;background:var(--pergament);border:2px solid var(--blekk);border-radius:8px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 4px var(--pergament),inset 0 0 0 5px var(--cat-accent,var(--gull));display:grid;grid-template-rows:10mm 1fr auto}
+  /* Vare-kort: én ren ramme (ikke dobbel inset), hvit innside */
+  .vare{width:100%;height:100%;background:white;border:2px solid var(--blekk);border-radius:6px;position:relative;overflow:hidden;display:grid;grid-template-rows:10mm 1fr auto}
   .vare .awning{height:10mm;background:var(--cat-accent,var(--gull));border-bottom:2px solid var(--blekk);display:flex;align-items:center;justify-content:space-between;padding:0 4mm;color:var(--blekk);position:relative;z-index:2}
   .vare .awning .mark{font-family:'Bowlby One',sans-serif;font-size:9pt;display:flex;align-items:center;gap:4px;white-space:nowrap}
   .vare .awning .mark .coin{font-size:13pt;line-height:1}
   .vare .awning .kategori{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:8pt;letter-spacing:.04em;text-transform:uppercase;background:var(--blekk);color:var(--cat-accent-light,var(--gull-lys));padding:.8mm 2.6mm;border-radius:999px;border:1.2px solid var(--cat-accent-light,var(--gull-lys))}
   .vare.cat-korall .awning,.vare.cat-lilla .awning,.vare.cat-skog .awning{color:var(--pergament)}
   .vare .middle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5mm;padding:6mm 4mm 4mm;position:relative;z-index:1;min-height:0}
-  .vare .vare-emoji{font-size:96pt;line-height:1;filter:drop-shadow(0 4px 5px rgba(42,31,61,0.18))}
+  /* Vare-emoji: ingen drop-shadow */
+  .vare .vare-emoji{font-size:96pt;line-height:1}
   .vare .name{font-family:'Fraunces',serif;font-weight:900;font-size:22pt;line-height:1;color:var(--blekk);text-align:center;letter-spacing:-.01em}
   .vare .foot{padding:0 4mm 5mm;display:flex;flex-direction:column;align-items:center;gap:3mm;position:relative;z-index:1}
+  /* Pris-pill: behold offset-shadow (trygt for utskrift) */
   .vare .price-block{display:inline-flex;align-items:center;justify-content:center;gap:2.5mm;background:var(--cat-accent-light,var(--himmel));border:2px solid var(--blekk);border-radius:999px;padding:2mm 8mm 2mm 6mm;box-shadow:2.5px 2.5px 0 var(--blekk)}
   .vare .price-block .price{font-family:'Bowlby One',sans-serif;font-size:26pt;line-height:1;color:var(--blekk);display:flex;align-items:center;gap:2.5mm}
   .vare .price-block .price .emoji{font-size:22pt}
@@ -2450,26 +2453,33 @@ const MYNTLAND_BUTIKK_CSS = `
   .vare.cat-lime{--cat-accent:var(--lime);--cat-accent-light:#E8F2A8}
   .vare.cat-skog{--cat-accent:var(--skog);--cat-accent-light:#A8D5B8}
   .vare.cat-himmel{--cat-accent:var(--himmel);--cat-accent-light:#E5F7F9}
-  .vare-back{width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%, var(--lilla) 0%, var(--blekk) 80%);border:2px solid var(--blekk);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gull);text-align:center;padding:8mm;box-shadow:inset 0 0 0 4px var(--blekk),inset 0 0 0 5px var(--gull);position:relative}
-  .vare-back::before{content:"";position:absolute;inset:6mm;border:1.2px dashed rgba(245,200,73,0.35);border-radius:5px}
-  .vare-back .big-coin{font-size:60pt;line-height:1;filter:drop-shadow(0 3px 0 var(--blekk))}
-  .vare-back .logo{font-family:'Bowlby One',sans-serif;font-size:20pt;color:var(--gull);-webkit-text-stroke:1.2px var(--blekk);text-shadow:2.5px 2.5px 0 var(--blekk);margin-top:6mm}
-  .vare-back .logo small{display:block;font-family:'Fraunces',serif;font-style:italic;font-weight:900;-webkit-text-stroke:0;text-shadow:none;font-size:10pt;color:var(--pergament);letter-spacing:.08em;margin-top:2mm}
+  /* Bakside: flat blekk-farge, en stilig gull-ramme */
+  .vare-back{width:100%;height:100%;background:var(--blekk);border:2px solid var(--gull);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gull);text-align:center;padding:8mm;position:relative}
+  .vare-back::before{content:"";position:absolute;inset:5mm;border:1.5px dashed rgba(245,200,73,0.55);border-radius:4px}
+  /* Stor mynt: ingen drop-shadow */
+  .vare-back .big-coin{font-size:60pt;line-height:1}
+  /* Logo: flat — ingen text-stroke, ingen text-shadow */
+  .vare-back .logo{font-family:'Bowlby One',sans-serif;font-size:20pt;color:var(--gull);margin-top:6mm;line-height:1}
+  .vare-back .logo small{display:block;font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:10pt;color:var(--pergament);letter-spacing:.08em;margin-top:2mm}
   .vare-back .scan-hint{margin-top:5mm;font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:8.5pt;letter-spacing:.12em;text-transform:uppercase;color:var(--pergament-dyp)}
-  /* Handleliste */
+
+  /* ── Handleliste ── */
   @page landscape{size:A4 landscape;margin:0}
   .page.landscape{width:297mm;height:210mm}
   .liste-page{position:absolute;inset:10mm 10mm;display:grid;grid-template-columns:1fr 1fr;gap:8mm}
-  .liste{background:var(--pergament);border:2px solid var(--blekk);border-radius:8px;box-shadow:inset 0 0 0 4px var(--pergament),inset 0 0 0 5px var(--gull);padding:6mm 7mm;display:flex;flex-direction:column;position:relative;overflow:hidden}
+  /* Liste: hvit innside, gull venstrekant for tematisk farge */
+  .liste{background:white;border:2px solid var(--blekk);border-left:5mm solid var(--gull);border-radius:6px;padding:6mm 7mm;display:flex;flex-direction:column;position:relative;overflow:hidden}
   .liste .head{display:flex;justify-content:space-between;align-items:flex-start;gap:4mm;padding-bottom:3mm;border-bottom:2px solid var(--blekk);margin-bottom:4mm}
   .liste .head .title-block{flex:1}
   .liste .head .kicker{display:inline-block;background:var(--blekk);color:var(--gull-lys);padding:1mm 3mm;border-radius:999px;font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:7.5pt;letter-spacing:.16em;text-transform:uppercase;border:1.2px solid var(--gull);margin-bottom:1.5mm}
-  .liste .head .title{font-family:'Bowlby One',sans-serif;font-size:24pt;line-height:.9;color:var(--gull-dyp);-webkit-text-stroke:1.5px var(--blekk);text-shadow:2.5px 2.5px 0 var(--blekk)}
+  /* Tittel: flat — ingen text-stroke, ingen text-shadow */
+  .liste .head .title{font-family:'Bowlby One',sans-serif;font-size:24pt;line-height:.9;color:var(--blekk);letter-spacing:.01em}
   .liste .head .sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:9.5pt;color:var(--blekk-myk);margin-top:1.5mm}
   .liste .head .fields{margin-top:3mm;display:flex;flex-direction:column;gap:1.4mm}
   .liste .head .fields .row{display:flex;align-items:center;gap:2mm;font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:9pt;color:var(--blekk-myk)}
   .liste .head .fields .row .line{flex:1;border-bottom:1.2px solid var(--blekk);height:4mm}
-  .liste .head .monster{flex-shrink:0;width:34mm;height:34mm;background:radial-gradient(ellipse 70% 60% at 50% 60%, var(--himmel) 0%, var(--gull-lys) 100%);border:2px solid var(--blekk);border-radius:6px;display:flex;align-items:flex-end;justify-content:center;position:relative;overflow:hidden;box-shadow:3px 3px 0 var(--blekk);transform:rotate(2deg)}
+  /* Monster-boks: flat gull-bakgrunn (ingen radial-gradient), beholder offset-shadow */
+  .liste .head .monster{flex-shrink:0;width:34mm;height:34mm;background:var(--gull-lys);border:2px solid var(--blekk);border-radius:6px;display:flex;align-items:flex-end;justify-content:center;position:relative;overflow:hidden;box-shadow:3px 3px 0 var(--blekk);transform:rotate(2deg)}
   .liste .head .monster img{height:108%;width:auto;max-width:96%;object-fit:contain;object-position:bottom center}
   .liste .head .monster .coin-tag{position:absolute;top:1mm;left:1mm;font-size:14pt;transform:rotate(-12deg)}
   .liste table{width:100%;border-collapse:collapse;flex:1}
@@ -2563,7 +2573,6 @@ function generateGroceryPDF() {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
-    ${_bv.headScripts}
     <style>${css}${_bv.bannerCSS}</style></head><body>${_bv.bannerHTML}${pagesHTML}
   </body></html>`);
   win.document.close();
@@ -2798,7 +2807,6 @@ function printShoppingList() {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
-    ${_bh.headScripts}
     <style>${MYNTLAND_BUTIKK_CSS}
     @page{size:A4 landscape;margin:0}
     ${_bh.bannerCSS}
@@ -2889,70 +2897,75 @@ function printSingleQR(elId, label) {
   const _br1 = window.buildPdfDownloadBanner('Slik laster du ned belønningskort');
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
-    ${_br1.headScripts}
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,900;1,900&family=Bowlby+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
       @media print{@page{size:A4 portrait;margin:0}}
-      body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;}
-      .page{width:210mm;height:297mm;padding:8mm;box-sizing:border-box;background:white;page-break-after:always;}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
-      .card{border:1.5mm solid #1D9E75;border-radius:5mm;padding:7mm;display:flex;flex-direction:column;align-items:center;gap:4mm;page-break-inside:avoid;}
-      .logo{font-family:'Fredoka One',cursive;font-size:5mm;color:#085041;}
-      .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
-      .desc{font-size:3.5mm;color:#5a7a5a;text-align:center;font-weight:700;}
-      .qr-wrap{display:flex;justify-content:center;align-items:center;}
+      *{box-sizing:border-box}
+      body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .sheet{padding:12mm;display:grid;grid-template-columns:1fr 1fr;gap:8mm}
+      /* Flat Myntland-design: hvit innside, blekk-ramme, grønn topp-bånd */
+      .card{background:white;border:2px solid #2A1F3D;border-radius:6px;padding:0;display:flex;flex-direction:column;page-break-inside:avoid;overflow:hidden}
+      .card .top{background:#2F6B4A;color:#FBF2D6;padding:3mm 5mm;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #2A1F3D}
+      .card .top .logo{font-family:'Bowlby One',sans-serif;font-size:10pt;letter-spacing:.04em}
+      .card .top .ribbon{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:8pt;letter-spacing:.16em;text-transform:uppercase;background:#FBF2D6;color:#2F6B4A;padding:.8mm 3mm;border-radius:999px}
+      .card .middle{padding:7mm 6mm 4mm;display:flex;flex-direction:column;align-items:center;gap:4mm}
+      .card .amount{font-family:'Bowlby One',sans-serif;font-size:24pt;color:#2F6B4A;line-height:1;letter-spacing:.01em}
+      .card .qr-wrap{background:white;border:1.5px solid #2A1F3D;border-radius:3px;padding:1mm;display:flex;justify-content:center;align-items:center}
+      .card .qr-wrap img{width:30mm;height:30mm;display:block}
+      .card .desc{font-family:'Fraunces',serif;font-weight:900;font-size:11pt;color:#2A1F3D;text-align:center}
       ${_br1.bannerCSS}
     </style>
   </head><body>
     ${_br1.bannerHTML}
-    <div class="page"><div class="grid">
+    <div class="sheet">
       ${[0,1,2,3].map(()=>`<div class="card">
-        <div class="logo">🪙 Myntland</div>
-        <div class="amount">+${amount} 🪙</div>
-        <div class="qr-wrap"><img src="${dataUrl}" style="width:130px;height:130px;"></div>
-        <div class="desc">Belønning</div>
+        <div class="top"><span class="logo">🪙 MYNTLAND</span><span class="ribbon">Belønning</span></div>
+        <div class="middle">
+          <div class="amount">+${amount} 🪙</div>
+          <div class="qr-wrap"><img src="${dataUrl}"></div>
+          <div class="desc">Skann for å registrere</div>
+        </div>
       </div>`).join('')}
-    </div></div>
+    </div>
   </body></html>`);
   win.document.close();
 }
 function _printRewardCards(rewards) {
   const payloads = rewards.map(r => JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }));
-  // Pagineer i grupper på 8 (4 rader x 2 kolonner) per A4-side
-  let cardsHTML = '';
-  for (let p = 0; p < rewards.length; p += 8) {
-    const slice = rewards.slice(p, p + 8);
-    cardsHTML += `<div class="page"><div class="grid">${slice.map((r, j) => {
-      const i = p + j;
-      return `<div class="card">
-        <div class="logo">🪙 Myntland</div>
+  const cardsHTML = rewards.map((r, i) =>
+    `<div class="card">
+      <div class="top"><span class="logo">🪙 MYNTLAND</span><span class="ribbon">Belønning</span></div>
+      <div class="middle">
         <div class="amount">+${r.amount} 🪙</div>
         <div class="qr-wrap" id="pqr${i}"></div>
         <div class="desc">${r.desc}</div>
-      </div>`;
-    }).join('')}</div></div>`;
-  }
+      </div>
+    </div>`
+  ).join('');
   const _br2 = window.buildPdfDownloadBanner('Slik laster du ned belønningskort');
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,900;1,900&family=Bowlby+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-    ${_br2.headScripts}
     <style>
       @media print{@page{size:A4 portrait;margin:0}}
-      body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;}
-      .page{width:210mm;height:297mm;padding:8mm;box-sizing:border-box;background:white;page-break-after:always;}
-      .grid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6mm;height:100%;}
-      .card{border:1.5mm solid #1D9E75;border-radius:5mm;padding:7mm;display:flex;flex-direction:column;align-items:center;gap:4mm;page-break-inside:avoid;}
-      .logo{font-family:'Fredoka One',cursive;font-size:5mm;color:#085041;}
-      .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
-      .desc{font-size:3.5mm;color:#5a7a5a;text-align:center;font-weight:700;}
-      .qr-wrap{display:flex;justify-content:center;align-items:center;}
+      *{box-sizing:border-box}
+      body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .sheet{padding:12mm;display:grid;grid-template-columns:1fr 1fr;gap:8mm}
+      .card{background:white;border:2px solid #2A1F3D;border-radius:6px;padding:0;display:flex;flex-direction:column;page-break-inside:avoid;overflow:hidden}
+      .card .top{background:#2F6B4A;color:#FBF2D6;padding:3mm 5mm;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #2A1F3D}
+      .card .top .logo{font-family:'Bowlby One',sans-serif;font-size:10pt;letter-spacing:.04em}
+      .card .top .ribbon{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:8pt;letter-spacing:.16em;text-transform:uppercase;background:#FBF2D6;color:#2F6B4A;padding:.8mm 3mm;border-radius:999px}
+      .card .middle{padding:7mm 6mm 5mm;display:flex;flex-direction:column;align-items:center;gap:4mm}
+      .card .amount{font-family:'Bowlby One',sans-serif;font-size:24pt;color:#2F6B4A;line-height:1;letter-spacing:.01em}
+      .card .qr-wrap{background:white;border:1.5px solid #2A1F3D;border-radius:3px;padding:1mm;display:flex;justify-content:center;align-items:center;width:34mm;height:34mm}
+      .card .qr-wrap img,.card .qr-wrap canvas{width:30mm;height:30mm;display:block}
+      .card .desc{font-family:'Fraunces',serif;font-weight:900;font-size:11pt;color:#2A1F3D;text-align:center;line-height:1.2}
       ${_br2.bannerCSS}
     </style>
   </head><body>
     ${_br2.bannerHTML}
-    ${cardsHTML}
+    <div class="sheet">${cardsHTML}</div>
     <script>
       var payloads=${JSON.stringify(payloads)};
       function makeAll(){
@@ -2965,7 +2978,6 @@ function _printRewardCards(rewards) {
         }
         return done;
       }
-      // Bare bygg QR-kodene — vent på at læreren klikker "Last ned PDF"
       var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>40){clearInterval(poll);}},150);
     <\/script>
   </body></html>`);
@@ -2987,226 +2999,40 @@ function _printRewardCards(rewards) {
 window.buildPdfDownloadBanner = function(title, opts) {
   title = title || 'Slik laster du ned og skriver ut';
   opts = opts || {};
-
-  // Filnavn for den komprimerte PDF-en (basert på tittel).
-  // Tittelen er noe à la "Slik laster du ned bankkort" → bruk siste ord
-  // som filnavn-frø (bankkort/varekort/handlelister/hendelseskort).
-  var fileSeed = (title.match(/(?:laster du ned\s+)([a-zæøå]+)/i) || [,'myntland-utskrift'])[1].toLowerCase();
-  var pdfFileName = 'myntland-' + fileSeed + '.pdf';
-
+  var twoSidedTip = opts.twoSided
+    ? '<li>I skriver-dialogen: velg <strong>tosidig utskrift, «vend langs lang kant»</strong> og <strong>skala 100 %</strong>.</li>'
+    : '<li>I skriver-dialogen: pass på at <strong>skala er 100 %</strong> og <strong>«skriv ut bakgrunnsgrafikk»</strong> er på.</li>';
   var bannerHTML = ''
     + '<div class="print-info-banner">'
     +   '<div class="pib-inner">'
     +     '<div class="pib-title">📋 ' + title + '</div>'
-    +     '<div class="pib-quality">'
-    +       '<div class="pib-quality-label">Velg filstørrelse:</div>'
-    +       '<div class="pib-quality-opts">'
-    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="tiny" checked onchange="updateEstimate()"><span><strong>🪶 Veldig liten</strong><small>~25 KB/side</small></span></label>'
-    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="small" onchange="updateEstimate()"><span><strong>📄 Liten</strong><small>~70 KB/side</small></span></label>'
-    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="balanced" onchange="updateEstimate()"><span><strong>⚖️ Balansert</strong><small>~150 KB/side</small></span></label>'
-    +         '<label class="pib-q-opt"><input type="radio" name="pib-q" value="best" onchange="updateEstimate()"><span><strong>✨ Best</strong><small>~280 KB/side</small></span></label>'
-    +       '</div>'
-    +       '<div class="pib-estimate" id="pib-estimate">Velg «Liten» for skoleskriver (rask, små filer). «Balansert» eller «Best» kun hvis du ser at kortene mangler detaljer.</div>'
-    +     '</div>'
-    +     '<div class="pib-btn-row">'
-    +       '<button class="pib-print-btn" onclick="compressAndDownloadPDF(this)">📥 Last ned komprimert PDF</button>'
-    +       '<button class="pib-print-btn pib-secondary" onclick="window.print()" title="Sender direkte til skriver eller lar deg lagre som ukomprimert PDF via nettleser">🖨️ Vanlig utskrift (ukomprimert)</button>'
-    +     '</div>'
-    +     '<div class="pib-progress" id="pib-progress" style="display:none">'
-    +       '<div class="pib-progress-bar"><div class="pib-progress-fill" id="pib-progress-fill"></div></div>'
-    +       '<div class="pib-progress-text" id="pib-progress-text">Forbereder…</div>'
-    +     '</div>'
-    +     '<div class="pib-tip">💡 QR-koder forblir skannbare på alle kvalitetsnivå. Velg «Veldig liten» for store jobber (20+ ark) eller når du skal sende på e-post.</div>'
+    +     '<ol class="pib-list">'
+    +       '<li>Trykk <strong>«Last ned PDF»</strong> under.</li>'
+    +       '<li>I dialogen som åpnes: velg <strong>«Lagre som PDF»</strong> som mål (ikke en skriver).</li>'
+    +       '<li>Lagre filen, åpne den, og send <strong>den ferdige PDF-en til skoleskriveren</strong>.</li>'
+    +       twoSidedTip
+    +     '</ol>'
+    +     '<div class="pib-tip">💡 <em>Tips:</em> Skoleskrivere takler en ferdig PDF mye bedre enn utskrift sendt direkte fra nettleseren — derfor dette mellom-steget.</div>'
+    +     '<button class="pib-print-btn" onclick="window.print()">📄 Last ned PDF</button>'
     +   '</div>'
     + '</div>';
 
   var bannerCSS = ''
     + '@media screen{'
-    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:100vh;overflow-y:auto}'
-    +   '.pib-inner{max-width:880px;margin:0 auto}'
-    +   '.pib-title{font-family:"Bowlby One","Fredoka One",sans-serif;font-size:14pt;margin-bottom:10px;letter-spacing:.02em}'
-    +   '.pib-tip{font-size:9.5pt;color:#4A3D5C;margin-top:10px;padding:7px 11px;background:rgba(42,31,61,.06);border-radius:6px;border-left:3px solid #F5C849;line-height:1.45}'
-    +   '.pib-quality{margin-bottom:10px}'
-    +   '.pib-quality-label{font-weight:800;font-size:10pt;margin-bottom:5px;color:#2A1F3D}'
-    +   '.pib-quality-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}'
-    +   '@media (max-width:680px){.pib-quality-opts{grid-template-columns:repeat(2,1fr)}}'
-    +   '.pib-q-opt{display:flex;align-items:center;gap:6px;background:#FBF2D6;border:2px solid #2A1F3D;border-radius:7px;padding:6px 8px;cursor:pointer;transition:all .12s;font-size:9.5pt}'
-    +   '.pib-q-opt:hover{background:#FFE89A;transform:translateY(-1px)}'
-    +   '.pib-q-opt:has(input:checked){background:#2A1F3D;color:#F5C849;box-shadow:2px 2px 0 #1A1228}'
-    +   '.pib-q-opt:has(input:checked) small{color:#FFE89A}'
-    +   '.pib-q-opt input{margin:0;flex-shrink:0}'
-    +   '.pib-q-opt span{display:flex;flex-direction:column;line-height:1.2;min-width:0}'
-    +   '.pib-q-opt strong{font-size:9.5pt;font-weight:800}'
-    +   '.pib-q-opt small{font-size:8pt;color:#4A3D5C;opacity:.85;margin-top:1px}'
-    +   '.pib-estimate{font-size:9pt;color:#4A3D5C;font-style:italic;padding:4px 0}'
-    +   '.pib-btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}'
-    +   '.pib-print-btn{display:inline-block;background:#2A1F3D;color:#F5C849;border:none;padding:10px 22px;border-radius:8px;font-family:"Bowlby One","Fredoka One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer;transition:all .15s}'
+    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
+    +   '.pib-inner{max-width:780px;margin:0 auto}'
+    +   '.pib-title{font-family:"Bowlby One","Fredoka One",sans-serif;font-size:14pt;margin-bottom:8px;letter-spacing:.02em}'
+    +   '.pib-list{margin:0 0 10px 22px;padding:0;font-size:10.5pt;line-height:1.55}'
+    +   '.pib-list li{margin-bottom:3px}'
+    +   '.pib-list strong{color:#2A1F3D}'
+    +   '.pib-tip{font-size:10pt;color:#4A3D5C;margin-bottom:12px;padding:8px 12px;background:rgba(42,31,61,.06);border-radius:6px;border-left:3px solid #F5C849}'
+    +   '.pib-print-btn{display:inline-block;background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One","Fredoka One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer;transition:all .15s}'
     +   '.pib-print-btn:hover{background:#1A1228;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}'
-    +   '.pib-print-btn:disabled{opacity:.55;cursor:wait;transform:none}'
-    +   '.pib-print-btn.pib-secondary{background:#FBF2D6;color:#2A1F3D;border:2px solid #2A1F3D}'
-    +   '.pib-print-btn.pib-secondary:hover{background:#F0E1B0}'
-    +   '.pib-progress{margin-top:10px;padding:8px 12px;background:rgba(42,31,61,.08);border-radius:6px}'
-    +   '.pib-progress-bar{height:10px;background:rgba(42,31,61,.15);border-radius:999px;overflow:hidden;margin-bottom:6px}'
-    +   '.pib-progress-fill{height:100%;background:linear-gradient(90deg,#F5C849,#2DC4C4);width:0%;transition:width .25s ease}'
-    +   '.pib-progress-text{font-size:9.5pt;color:#4A3D5C;font-weight:700}'
-    +   'body{padding-top:320px}'
+    +   'body{padding-top:260px}'
     + '}'
     + '@media print{.print-info-banner{display:none !important}body{padding-top:0 !important}}';
 
-  // ── compressAndDownloadPDF: kjøres inne i popup-vinduet ─────────────
-  var compressScript = '\n<script>\n'
-    + 'window._MYNTLAND_PDF_FILE = ' + JSON.stringify(pdfFileName) + ';\n'
-    + 'window._MYNTLAND_PDF_PROFILES = {\n'
-    + '  tiny:     { scale: 0.75, jpegQuality: 0.45 },\n'   // ~25 KB/side for bankkort
-    + '  small:    { scale: 1.0,  jpegQuality: 0.55 },\n'   // ~70 KB/side
-    + '  balanced: { scale: 1.4,  jpegQuality: 0.68 },\n'   // ~150 KB/side
-    + '  best:     { scale: 1.8,  jpegQuality: 0.82 }\n'    // ~280 KB/side
-    + '};\n'
-    + 'function getSelectedProfile(){\n'
-    + '  var radios = document.querySelectorAll("input[name=\\"pib-q\\"]");\n'
-    + '  for(var i=0;i<radios.length;i++) if(radios[i].checked) return radios[i].value;\n'
-    + '  return "tiny";\n'
-    + '}\n'
-    + 'function countPages(){\n'
-    + '  return document.querySelectorAll(".page, .page-print").length;\n'
-    + '}\n'
-    + 'function updateEstimate(){\n'
-    + '  var est = document.getElementById("pib-estimate");\n'
-    + '  if(!est) return;\n'
-    + '  var p = getSelectedProfile();\n'
-    + '  var pages = countPages();\n'
-    + '  var perPage = {tiny:25, small:70, balanced:150, best:280}[p] || 70;\n'
-    + '  var totalKB = perPage * pages;\n'
-    + '  var totalStr = totalKB < 1000 ? totalKB + " KB" : (totalKB/1024).toFixed(1) + " MB";\n'
-    + '  est.textContent = "📐 " + pages + " sider × ~" + perPage + " KB ≈ " + totalStr + " total. " + (\n'
-    + '    p === "tiny"     ? "Mest aggressiv komprimering. Litt grovere, men fullt lesbart. Best for store jobber og e-post." :\n'
-    + '    p === "small"    ? "Anbefalt for skoleskriver — pen kvalitet, små filer." :\n'
-    + '    p === "balanced" ? "Skarpere, men større filer. Bruk for finere detaljer." :\n'
-    + '                       "Maks kvalitet — store filer, kan ta tid på skoleskriver."\n'
-    + '  );\n'
-    + '}\n'
-    + 'document.addEventListener("DOMContentLoaded", function(){ setTimeout(updateEstimate, 100); });\n'
-    + 'setTimeout(updateEstimate, 500);\n'                  // Backup hvis DOMContentLoaded allerede er fyrt
-    + '\n'
-    + 'async function compressAndDownloadPDF(btn){\n'
-    + '  var profile = window._MYNTLAND_PDF_PROFILES[getSelectedProfile()] || window._MYNTLAND_PDF_PROFILES.tiny;\n'
-    + '  var fileName = window._MYNTLAND_PDF_FILE;\n'
-    + '  var progress = document.getElementById("pib-progress");\n'
-    + '  var fill = document.getElementById("pib-progress-fill");\n'
-    + '  var text = document.getElementById("pib-progress-text");\n'
-    + '  function setProgress(pct, msg){\n'
-    + '    if(fill) fill.style.width = pct + "%";\n'
-    + '    if(text) text.textContent = msg;\n'
-    + '  }\n'
-    + '  try {\n'
-    + '    if(typeof window.jspdf === "undefined" || typeof window.html2canvas === "undefined"){\n'
-    + '      alert("PDF-biblioteket er ikke ferdig lastet enda. Vent et øyeblikk og prøv igjen.");\n'
-    + '      return;\n'
-    + '    }\n'
-    + '    if(btn){ btn.disabled = true; btn.textContent = "⏳ Forbereder..."; }\n'
-    + '    if(progress) progress.style.display = "block";\n'
-    + '    setProgress(2, "Venter på at fonter og bilder lastes...");\n'
-    + '\n'
-    + '    if(document.fonts && document.fonts.ready){\n'
-    + '      try { await document.fonts.ready; } catch(e){}\n'
-    + '    }\n'
-    + '    var imgs = Array.from(document.querySelectorAll("img"));\n'
-    + '    await Promise.all(imgs.map(function(img){\n'
-    + '      if(img.complete && img.naturalWidth > 0) return Promise.resolve();\n'
-    + '      return new Promise(function(res){\n'
-    + '        img.addEventListener("load", res, {once:true});\n'
-    + '        img.addEventListener("error", res, {once:true});\n'
-    + '        setTimeout(res, 4000);\n'
-    + '      });\n'
-    + '    }));\n'
-    + '\n'
-    + '    setProgress(6, "Finner sider...");\n'
-    + '    var pageEls = Array.from(document.querySelectorAll(".page, .page-print"));\n'
-    + '    pageEls = pageEls.filter(function(el){\n'
-    + '      var r = el.getBoundingClientRect();\n'
-    + '      return r.width > 50 && r.height > 50;\n'
-    + '    });\n'
-    + '    if(!pageEls.length){\n'
-    + '      alert("Fant ingen sider å eksportere. Prøv vanlig utskrift i stedet.");\n'
-    + '      if(btn){ btn.disabled = false; btn.textContent = "📥 Last ned komprimert PDF"; }\n'
-    + '      if(progress) progress.style.display = "none";\n'
-    + '      return;\n'
-    + '    }\n'
-    + '\n'
-    + '    function orientationOf(el){\n'
-    + '      var r = el.getBoundingClientRect();\n'
-    + '      return (r.width > r.height) ? "landscape" : "portrait";\n'
-    + '    }\n'
-    + '\n'
-    + '    var jsPDF = window.jspdf.jsPDF;\n'
-    + '    var pdf = null;\n'
-    + '    var totalBytes = 0;\n'
-    + '\n'
-    + '    for(var i = 0; i < pageEls.length; i++){\n'
-    + '      var el = pageEls[i];\n'
-    + '      var orient = orientationOf(el);\n'
-    + '      var pageW = orient === "landscape" ? 297 : 210;\n'
-    + '      var pageH = orient === "landscape" ? 210 : 297;\n'
-    + '\n'
-    + '      setProgress(10 + Math.round((i / pageEls.length) * 80), "Komprimerer side " + (i+1) + " av " + pageEls.length + " (" + getSelectedProfile() + ")...");\n'
-    + '\n'
-    + '      var canvas = await html2canvas(el, {\n'
-    + '        scale: profile.scale,\n'
-    + '        useCORS: true,\n'
-    + '        allowTaint: true,\n'
-    + '        backgroundColor: "#ffffff",\n'
-    + '        logging: false,\n'
-    + '        imageTimeout: 6000\n'
-    + '      });\n'
-    + '\n'
-    + '      var jpegData = canvas.toDataURL("image/jpeg", profile.jpegQuality);\n'
-    + '      totalBytes += Math.round(jpegData.length * 0.75);\n'
-    + '\n'
-    + '      if(!pdf){\n'
-    + '        pdf = new jsPDF({\n'
-    + '          orientation: orient,\n'
-    + '          unit: "mm",\n'
-    + '          format: "a4",\n'
-    + '          compress: true\n'
-    + '        });\n'
-    + '      } else {\n'
-    + '        pdf.addPage("a4", orient);\n'
-    + '      }\n'
-    + '      pdf.addImage(jpegData, "JPEG", 0, 0, pageW, pageH, undefined, "FAST");\n'
-    + '\n'
-    + '      canvas.width = 0; canvas.height = 0;\n'
-    + '      jpegData = null;\n'
-    + '      await new Promise(function(r){ setTimeout(r, 0); });\n'
-    + '    }\n'
-    + '\n'
-    + '    setProgress(95, "Lagrer PDF...");\n'
-    + '    var blob = pdf.output("blob");\n'
-    + '    var actualKB = Math.round(blob.size / 1024);\n'
-    + '    var actualStr = actualKB < 1000 ? actualKB + " KB" : (actualKB/1024).toFixed(2) + " MB";\n'
-    + '    // Last ned via blob-URL for å få faktisk filstørrelse\n'
-    + '    var url = URL.createObjectURL(blob);\n'
-    + '    var a = document.createElement("a");\n'
-    + '    a.href = url; a.download = fileName;\n'
-    + '    document.body.appendChild(a); a.click(); document.body.removeChild(a);\n'
-    + '    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);\n'
-    + '\n'
-    + '    setProgress(100, "✅ Ferdig! PDF-en (" + actualStr + ", " + pageEls.length + " sider) er lastet ned: " + fileName);\n'
-    + '    if(btn){ btn.disabled = false; btn.textContent = "📥 Last ned på nytt"; }\n'
-    + '  } catch(err){\n'
-    + '    console.error("PDF-eksport feilet:", err);\n'
-    + '    setProgress(0, "❌ Noe gikk galt: " + (err && err.message ? err.message : err) + ". Prøv «Vanlig utskrift» i stedet.");\n'
-    + '    if(btn){ btn.disabled = false; btn.textContent = "📥 Prøv på nytt"; }\n'
-    + '  }\n'
-    + '}\n'
-    + '<\/script>\n';
-
-  return {
-    bannerHTML: bannerHTML + compressScript,
-    bannerCSS: bannerCSS,
-    headScripts: ''
-      + '<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>'
-      + '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>'
-  };
+  return { bannerHTML: bannerHTML, bannerCSS: bannerCSS };
 };
 
 // ════════════════════════════════════════════════════════════════════
@@ -3471,36 +3297,38 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '@page{size:A4 portrait;margin:0}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,255,255,0.4),transparent 75%),#FBF2D6}'
+    /* FLAT pergament-bakgrunn — ingen radial-gradient, ingen mønster */
+    + '.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:#FBF2D6}'
     + '.page:last-of-type{page-break-after:auto}'
-    + '.page::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.04) 1px,transparent 1.5px);background-size:6px 6px;pointer-events:none}'
-    + '.page.back-page{background:radial-gradient(ellipse 70% 80% at 50% 50%,#6B5BA8 0%,#2A1F3D 80%)}'
-    + '.page.back-page::before{background-image:radial-gradient(circle,rgba(245,200,73,0.05) 1px,transparent 1.5px);background-size:8px 8px}'
+    /* Bakside: flat blekk-farge */
+    + '.page.back-page{background:#2A1F3D}'
     + '.card-grid{position:absolute;inset:7mm 0 7mm 0;display:grid;grid-template-columns:repeat(2,105mm);grid-template-rows:repeat(4,70mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:1.5mm}'
-    + '.card-slot-empty{visibility:hidden}'  /* skjul tomme slots på siste forside-side */
+    + '.card-slot-empty{visibility:hidden}'
     + '.crop{position:absolute;width:4mm;height:4mm;z-index:10;pointer-events:none}'
     + '.crop::before,.crop::after{content:"";position:absolute;background:#4A3D5C;opacity:.45}'
     + '.crop::before{width:4mm;height:.4px;top:50%}.crop::after{width:.4px;height:4mm;left:50%}'
     + '.crop.tl{top:-2mm;left:-2mm}.crop.tr{top:-2mm;right:-2mm}.crop.bl{bottom:-2mm;left:-2mm}.crop.br{bottom:-2mm;right:-2mm}'
     + '.back-page .crop::before,.back-page .crop::after{background:#F5C849;opacity:.45}'
-    /* FRONT CARD */
-    + '.bank{width:100%;height:100%;background:#FBF2D6;border:2px solid #2A1F3D;border-radius:7px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 4px #FBF2D6,inset 0 0 0 5px var(--ca,#F5C849);display:grid;grid-template-rows:8mm 1fr auto}'
+    /* FRONT CARD: ren hvit innside, enkel ramme. Bånd-fargen vises tydelig over toppen. */
+    + '.bank{width:100%;height:100%;background:white;border:2px solid #2A1F3D;border-radius:7px;position:relative;overflow:hidden;display:grid;grid-template-rows:8mm 1fr auto}'
     + '.bank .band{height:8mm;background:var(--ca,#F5C849);border-bottom:2px solid #2A1F3D;display:flex;align-items:center;justify-content:space-between;padding:0 3.5mm;color:#2A1F3D;position:relative;z-index:2}'
     + '.bank .band .mark{font-family:"Bowlby One",sans-serif;font-size:8.5pt;letter-spacing:.04em;display:flex;align-items:center;gap:4px}'
     + '.bank .band .mark .coin{width:4mm;height:4mm;border-radius:50%;background:#2A1F3D;color:var(--ca,#F5C849);display:inline-flex;align-items:center;justify-content:center;font-family:"Fraunces",serif;font-size:6.5pt;font-weight:900;font-style:italic;border:1px solid #2A1F3D}'
     + '.bank .band .klasse{font-family:"Fraunces",serif;font-style:italic;font-weight:900;font-size:8.5pt;letter-spacing:.04em;text-transform:uppercase;background:#2A1F3D;color:var(--cl,#FFE89A);padding:.8mm 3mm;border-radius:999px;border:1.2px solid var(--cl,#FFE89A)}'
     + '.bank .body{position:relative;z-index:1;display:grid;grid-template-columns:32mm 1fr;gap:3mm;padding:3mm 4mm 0 4mm;align-items:start}'
-    + '.bank .portrait{width:32mm;height:32mm;border:1.5px solid #2A1F3D;border-radius:5px;background:radial-gradient(ellipse 70% 60% at 50% 60%,var(--cb,#BFEDF0) 0%,var(--cl,#FFE89A) 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:2mm}'
-    + '.bank .portrait::after{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.10) .8px,transparent 1.2px);background-size:5px 5px;pointer-events:none}'
-    + '.bank .portrait > svg,.bank .portrait > img{position:relative;z-index:1;max-width:100%;max-height:100%;display:block;filter:drop-shadow(0 2px 3px rgba(42,31,61,0.25))}'
+    /* Portrett: flat lys-farge fra tema, ingen radial-gradient, ingen prikker, ingen drop-shadow på SVG */
+    + '.bank .portrait{width:32mm;height:32mm;border:1.5px solid #2A1F3D;border-radius:5px;background:var(--cl,#FFE89A);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:2mm}'
+    + '.bank .portrait > svg,.bank .portrait > img{position:relative;z-index:1;max-width:100%;max-height:100%;display:block}'
     + '.bank .portrait > svg{width:100%;height:100%}'
     + '.bank .ident{display:flex;flex-direction:column;justify-content:flex-start;min-width:0;padding-top:.5mm}'
     + '.bank .ident .label{font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.18em;text-transform:uppercase;color:#4A3D5C}'
     + '.bank .ident .navn{font-family:"Fraunces",serif;font-weight:900;font-size:13pt;line-height:1;color:#2A1F3D;margin-top:.6mm;letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
     + '.bank .pan-row{margin-top:2.5mm;display:flex;align-items:center;gap:2mm}'
-    + '.bank .chip{width:7mm;height:5mm;background:linear-gradient(135deg,#FFE89A 0%,#F5C849 60%,#C99517 100%);border:1px solid #2A1F3D;border-radius:1.2mm;position:relative;flex-shrink:0}'
-    + '.bank .chip::before{content:"";position:absolute;inset:.6mm;background:linear-gradient(0deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%),linear-gradient(90deg,transparent 45%,rgba(42,31,61,.45) 47%,transparent 49%);border:.5px solid rgba(42,31,61,.55);border-radius:.5mm}'
+    /* Chip: flat gull, ingen linear-gradient, men beholder de små indre linjene som er enkle og print-vennlige */
+    + '.bank .chip{width:7mm;height:5mm;background:#F5C849;border:1px solid #2A1F3D;border-radius:1.2mm;position:relative;flex-shrink:0}'
+    + '.bank .chip::before{content:"";position:absolute;inset:.6mm;border:.5px solid rgba(42,31,61,.55);border-radius:.5mm}'
+    + '.bank .chip::after{content:"";position:absolute;left:50%;top:.6mm;bottom:.6mm;width:.4px;background:rgba(42,31,61,.45)}'
     + '.bank .pan{font-family:"JetBrains Mono",monospace;font-size:9pt;font-weight:700;letter-spacing:.05em;color:#2A1F3D}'
     + '.bank .foot{padding:2mm 4mm 3mm 4mm;display:grid;grid-template-columns:18mm 1fr auto;gap:3mm;align-items:end;position:relative;z-index:1}'
     + '.bank .qr{width:18mm;height:18mm;background:white;border:1.2px solid #2A1F3D;border-radius:2px;padding:1mm;display:flex;align-items:center;justify-content:center}'
@@ -3522,16 +3350,18 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '.bank.theme-skog{--ca:#2F6B4A;--cd:#1A3F2A;--cl:#A8D5B8;--cb:#A8D5B8}'
     + '.bank.theme-korall .band,.bank.theme-lilla .band,.bank.theme-skog .band{color:#FBF2D6}'
     + '.bank.theme-korall .band .coin,.bank.theme-lilla .band .coin,.bank.theme-skog .band .coin{background:#FBF2D6;color:var(--cd)}'
-    /* BACK CARD */
-    + '.back{width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%,#6B5BA8 0%,#2A1F3D 80%);border:2px solid #2A1F3D;border-radius:7px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 4px #2A1F3D,inset 0 0 0 5px #F5C849;display:flex;flex-direction:column;color:#F5C849}'
-    + '.back::before{content:"";position:absolute;inset:5mm;border:1.2px dashed rgba(245,200,73,0.35);border-radius:4px;pointer-events:none}'
-    + '.back .bstar{position:absolute;color:#F5C849;opacity:.35}'
+    /* BACK CARD: flat blekk-farge, gull-ramme, ingen radial-gradient */
+    + '.back{width:100%;height:100%;background:#2A1F3D;border:2px solid #F5C849;border-radius:7px;position:relative;overflow:hidden;display:flex;flex-direction:column;color:#F5C849}'
+    + '.back::before{content:"";position:absolute;inset:4mm;border:1.5px dashed rgba(245,200,73,0.55);border-radius:4px;pointer-events:none}'
     + '.back .stamp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:2;padding:2mm 6mm 4mm}'
-    + '.back .stamp .logo{font-family:"Bowlby One",sans-serif;font-size:18pt;line-height:.95;color:#F5C849;-webkit-text-stroke:1px #2A1F3D;text-shadow:2px 2px 0 #2A1F3D;letter-spacing:-.01em}'
-    + '.back .stamp .logo small{display:block;font-family:"Fraunces",serif;font-style:italic;font-weight:900;-webkit-text-stroke:0;text-shadow:none;font-size:9pt;color:#FBF2D6;letter-spacing:.06em;margin-top:1.5mm}'
-    + '.back .sig{margin:0 6mm 3mm;height:6mm;background:repeating-linear-gradient(45deg,#FBF2D6 0 3px,#F0E1B0 3px 6px);border:1px solid #2A1F3D;border-radius:1mm;position:relative}'
+    + '.back .bstar{position:absolute;color:#F5C849;opacity:.45}'
+    /* Logo: flat — ingen text-stroke, ingen text-shadow */
+    + '.back .stamp .logo{font-family:"Bowlby One",sans-serif;font-size:18pt;line-height:.95;color:#F5C849;letter-spacing:.01em}'
+    + '.back .stamp .logo small{display:block;font-family:"Fraunces",serif;font-style:italic;font-weight:900;font-size:9pt;color:#FBF2D6;letter-spacing:.06em;margin-top:1.5mm}'
+    /* Signatur: enkel pergament-boks, ingen repeating-linear-gradient */
+    + '.back .sig{margin:0 6mm 3mm;height:6mm;background:#FBF2D6;border:1px solid #2A1F3D;border-radius:1mm;position:relative}'
     + '.back .sig::after{content:"Signatur";position:absolute;left:1.5mm;top:50%;transform:translateY(-50%);font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.14em;text-transform:uppercase;color:#4A3D5C}'
-    + '.back .footnote{padding:0 5mm 4mm;display:flex;justify-content:space-between;align-items:flex-end;color:rgba(255,232,154,0.78);font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.12em;z-index:2;position:relative}'
+    + '.back .footnote{padding:0 5mm 4mm;display:flex;justify-content:space-between;align-items:flex-end;color:#FBF2D6;font-family:"Fraunces",serif;font-style:italic;font-weight:700;font-size:6.5pt;letter-spacing:.12em;z-index:2;position:relative}'
     + '.back .footnote .bank-mark{font-family:"Bowlby One",sans-serif;font-style:normal;color:#F5C849;font-size:8pt;letter-spacing:.04em}';
 
   // Info-banner som vises i forhåndsvisningen, men skjules ved utskrift
@@ -3540,13 +3370,11 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   var _b = window.buildPdfDownloadBanner('Slik laster du ned bankkort', { twoSided: true });
   var infoBanner = _b.bannerHTML;
   var bannerCSS = _b.bannerCSS;
-  var headScripts = _b.headScripts;
 
   return '<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>' + escapeHTML(title) + '</title>'
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
     + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
     + '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700;1,9..144,900&family=Nunito:wght@400;600;700;800;900&family=Bowlby+One&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">'
-    + headScripts
     + '<style>' + css + bannerCSS + '</style>'
     + '</head><body>' + infoBanner + pagesHTML + '</body></html>';
 };
@@ -4243,19 +4071,19 @@ function printHendelserCards14(cards) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
-  ${_bhend.headScripts}
   <style>
     :root{--gull:#F5C849;--gull-dyp:#C99517;--gull-lys:#FFE89A;--turkis:#2DC4C4;--himmel:#BFEDF0;--korall:#E64B3B;--korall-lys:#FFB8C7;--korall-dyp:#A82218;--lime:#B8DA3B;--rosa:#FFB8C7;--pergament:#FBF2D6;--pergament-dyp:#F0E1B0;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--skog:#2F6B4A;--skog-dyp:#1A3F2A;--skog-lys:#A8D5B8}
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
     @page{size:A4 portrait;margin:0}
-    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,255,255,0.4),transparent 75%),var(--pergament);padding:6mm;gap:4mm}
-    .page-print::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.04) 1px,transparent 1.5px);background-size:6px 6px;pointer-events:none}
+    /* FLAT design for utskrift: ren pergament-bakgrunn, ingen mønstre, ingen gradients */
+    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative;background:var(--pergament);padding:6mm;gap:4mm}
     .page-corner{position:absolute;font-family:'Fraunces',serif;font-weight:900;font-style:italic;font-size:8.5pt;color:var(--blekk-myk);letter-spacing:.1em;z-index:5}
     .page-corner.tl{top:3mm;left:5mm}.page-corner.br{bottom:3mm;right:5mm}
 
-    .hcard{position:relative;padding:8mm 7mm 7mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3mm;text-align:center;background:var(--pergament);border:2px solid var(--blekk);border-radius:8px;box-shadow:inset 0 0 0 4px var(--pergament),inset 0 0 0 5px var(--accent,var(--gull))}
-    .hcard.empty{background:transparent;border:1.2px dashed rgba(42,31,61,0.18);box-shadow:none}
+    /* Kort: ren ramme + tykk fargestripe i venstre kant (ingen dobbel inset-ramme) */
+    .hcard{position:relative;padding:8mm 7mm 7mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3mm;text-align:center;background:white;border:2px solid var(--blekk);border-left:6mm solid var(--accent,var(--gull));border-radius:6px}
+    .hcard.empty{background:transparent;border:1.2px dashed rgba(42,31,61,0.18)}
     .hcard.income{--accent:var(--skog);--accent-dark:var(--skog-dyp);--accent-light:var(--skog-lys)}
     .hcard.expense{--accent:var(--korall);--accent-dark:var(--korall-dyp);--accent-light:var(--korall-lys)}
 
@@ -4266,9 +4094,12 @@ function printHendelserCards14(cards) {
     .crop.tl{top:1mm;left:1mm}.crop.tr{top:1mm;right:1mm}
     .crop.bl{bottom:1mm;left:1mm}.crop.br{bottom:1mm;right:1mm}
 
+    /* Ribbon: behold offset-shadow (ren rektangulær form = trygt for utskrift) */
     .ribbon{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:9.5pt;letter-spacing:.18em;text-transform:uppercase;background:var(--blekk);color:var(--accent-light);padding:1.6mm 7mm;border-radius:999px;border:1.5px solid var(--accent);box-shadow:2px 2px 0 var(--blekk);margin-bottom:1mm}
-    .emoji{font-size:24mm;line-height:1;filter:drop-shadow(0 3px 4px rgba(42,31,61,0.2));margin-top:1mm}
+    /* Emoji: ingen drop-shadow */
+    .emoji{font-size:24mm;line-height:1;margin-top:1mm}
     .desc{font-family:'Fraunces',serif;font-weight:900;font-size:13pt;color:var(--blekk);line-height:1.18;max-width:80mm;letter-spacing:-.005em}
+    /* Amount-pill: behold offset-shadow */
     .amount-pill{display:inline-flex;align-items:center;gap:2mm;background:var(--accent-light);border:2px solid var(--blekk);border-radius:999px;padding:1.5mm 6mm;box-shadow:2.5px 2.5px 0 var(--blekk);color:var(--accent-dark)}
     .amount-pill .sign{font-family:'Bowlby One',sans-serif;font-size:18pt;line-height:1;color:var(--accent-dark)}
     .amount-pill .coin{font-size:15pt;line-height:1}
@@ -4279,16 +4110,17 @@ function printHendelserCards14(cards) {
     .scan-hint{font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:7.5pt;color:var(--blekk-myk);letter-spacing:.06em}
     .mark{font-family:'Bowlby One',sans-serif;font-size:7pt;color:var(--accent-dark);letter-spacing:.08em;margin-top:auto;padding-top:1mm}
 
-    /* ── Bakside ── */
-    .page-print.back-page{background:radial-gradient(ellipse 70% 80% at 50% 50%,#6B5BA8 0%,var(--blekk) 80%)}
-    .page-print.back-page::before{background-image:radial-gradient(circle,rgba(245,200,73,0.05) 1px,transparent 1.5px);background-size:8px 8px}
+    /* ── Bakside: flat blekk-farge, ingen radial-gradient ── */
+    .page-print.back-page{background:var(--blekk)}
     .back-page .page-corner{color:rgba(245,200,73,.55)}
     .back-page .crop::before,.back-page .crop::after{background:var(--gull);opacity:.45}
-    .hback{background:radial-gradient(ellipse at 50% 50%,#6B5BA8 0%,var(--blekk) 80%);border:2px solid var(--blekk);box-shadow:inset 0 0 0 4px var(--blekk),inset 0 0 0 5px var(--gull);color:var(--gull);justify-content:center;gap:4mm;padding:8mm;position:relative}
-    .hback::before{content:"";position:absolute;inset:6mm;border:1.2px dashed rgba(245,200,73,0.35);border-radius:5px;pointer-events:none}
-    .hback .big-coin{font-size:46pt;line-height:1;filter:drop-shadow(0 2.5px 0 var(--blekk));z-index:1}
-    .hback .hback-logo{font-family:'Bowlby One',sans-serif;font-size:18pt;color:var(--gull);-webkit-text-stroke:1.2px var(--blekk);text-shadow:2.5px 2.5px 0 var(--blekk);text-align:center;line-height:1;z-index:1}
-    .hback .hback-logo small{display:block;font-family:'Fraunces',serif;font-style:italic;font-weight:900;-webkit-text-stroke:0;text-shadow:none;font-size:9pt;color:var(--pergament);letter-spacing:.1em;margin-top:2mm}
+    .hback{background:var(--blekk);border:2px solid var(--gull);border-radius:6px;color:var(--gull);justify-content:center;align-items:center;gap:4mm;padding:8mm;position:relative;display:flex;flex-direction:column}
+    .hback::before{content:"";position:absolute;inset:5mm;border:1.5px dashed rgba(245,200,73,0.55);border-radius:4px;pointer-events:none}
+    /* Stor mynt: ingen drop-shadow */
+    .hback .big-coin{font-size:46pt;line-height:1;z-index:1}
+    /* Logo: flat — ingen text-stroke, ingen text-shadow */
+    .hback .hback-logo{font-family:'Bowlby One',sans-serif;font-size:18pt;color:var(--gull);text-align:center;line-height:1;z-index:1}
+    .hback .hback-logo small{display:block;font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:9pt;color:var(--pergament);letter-spacing:.1em;margin-top:2mm}
     .hback .hback-scan{font-family:'Fraunces',serif;font-style:italic;font-weight:700;font-size:8pt;letter-spacing:.16em;color:var(--pergament-dyp);z-index:1;margin-top:1mm}
     ${_bhend.bannerCSS}
   </style>
