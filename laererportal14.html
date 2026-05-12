@@ -2434,16 +2434,17 @@ const MYNTLAND_BUTIKK_CSS = `
   .liste-page > .liste:first-child{padding-right:7mm;position:relative}
   .liste-page > .liste:first-child::after{content:"";position:absolute;top:0;right:-4mm;bottom:0;width:0;border-right:1px dashed var(--blekk-myk)}
 
-  /* Header: tittel venstre, dato-felt høyre */
-  .liste .head{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;padding-bottom:4mm;border-bottom:1.5px solid var(--blekk);margin-bottom:5mm}
-  .liste .head .title-block{flex:1;min-width:0}
+  /* Header: tittel venstre, dato-felt høyre. Meta-blokken har fast bredde
+     så tittelen ikke kan dytte oppå "Navn"/"Dato"-linjene. */
+  .liste .head{display:flex;justify-content:space-between;align-items:flex-end;gap:5mm;padding-bottom:4mm;border-bottom:1.5px solid var(--blekk);margin-bottom:5mm}
+  .liste .head .title-block{flex:1 1 auto;min-width:0;overflow:hidden}
   .liste .head .kicker{font-family:'Nunito',sans-serif;font-weight:800;font-size:8pt;letter-spacing:.22em;color:var(--gull);margin-bottom:1.5mm;text-transform:uppercase}
-  .liste .head .title{font-family:'Bowlby One',sans-serif;font-size:26pt;line-height:.9;color:var(--blekk);letter-spacing:.01em}
-  .liste .head .sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:10pt;color:var(--blekk-myk);margin-top:2mm}
-  .liste .head .meta{text-align:right;display:flex;flex-direction:column;gap:2mm;flex-shrink:0}
-  .liste .head .meta .row{display:flex;align-items:baseline;gap:2mm;font-family:'Nunito',sans-serif;font-weight:800;font-size:8.5pt;color:var(--blekk-myk);letter-spacing:.1em}
-  .liste .head .meta .row .label{text-transform:uppercase}
-  .liste .head .meta .row .line{width:38mm;border-bottom:1px solid var(--blekk);height:4mm}
+  .liste .head .title{font-family:'Bowlby One',sans-serif;font-size:22pt;line-height:.95;color:var(--blekk);letter-spacing:.005em;white-space:nowrap}
+  .liste .head .sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:9.5pt;color:var(--blekk-myk);margin-top:1.8mm}
+  .liste .head .meta{display:flex;flex-direction:column;gap:2.5mm;flex:0 0 50mm;width:50mm;align-self:flex-end}
+  .liste .head .meta .row{display:flex;align-items:baseline;gap:2.5mm;font-family:'Nunito',sans-serif;font-weight:800;font-size:8.5pt;color:var(--blekk-myk);letter-spacing:.1em}
+  .liste .head .meta .row .label{text-transform:uppercase;flex:0 0 9mm}
+  .liste .head .meta .row .line{flex:1;border-bottom:1px solid var(--blekk);height:4mm}
 
   /* Tabell */
   .liste table{width:100%;border-collapse:collapse;flex:1}
@@ -2491,8 +2492,11 @@ function generateGroceryPDF() {
       <div class="emoji">${v.emoji}</div>
       <div class="name">${v.name}</div>
       <div class="price"><span class="coin-icon">🪙</span><span class="num">${v.price}</span></div>
-      <div class="qr-wrap">${qrSvgFor(v)}</div>
-      <div class="scan-hint">Scan i kassa</div>
+      <div class="qr-block">
+        <div class="qr-wrap">${qrSvgFor(v)}</div>
+        <div class="scan-hint">Scan i kassa</div>
+      </div>
+      <div class="card-foot"><span class="foot-coin">🪙</span><span class="foot-stamp">MYNTLAND · MARKED</span></div>
     </div>`;
   }
 
@@ -2549,7 +2553,7 @@ function generateGroceryPDF() {
     /* 2x2 grid: 4 stående A6 (105×148mm) per A4 */
     .page{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative}
 
-    .vare{padding:9mm 8mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid}
+    .vare{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}
     .vare.empty{visibility:hidden}
 
     /* Klippelinjer mellom kort */
@@ -2567,26 +2571,32 @@ function generateGroceryPDF() {
     .vare.cat-skog{background:var(--skog-lys)}     .vare.cat-skog .pill{background:var(--skog)}     .vare.cat-skog .price .num,.vare.cat-skog .price .coin-icon{color:var(--skog)}
     .vare.cat-himmel{background:var(--himmel-lys)} .vare.cat-himmel .pill{background:var(--himmel)} .vare.cat-himmel .price .num,.vare.cat-himmel .price .coin-icon{color:var(--himmel)}
 
-    /* Pill */
-    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:8.5pt;letter-spacing:.18em;color:white;padding:1.8mm 5mm;border-radius:999px;margin-bottom:3mm;max-width:75mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    /* Pill — større, mer luft, lett skygge for å løfte den fra bakgrunnen */
+    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:9.5pt;letter-spacing:.22em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:2mm;max-width:80mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-    /* Emoji */
-    .vare .emoji{font-size:26mm;line-height:1;margin-bottom:3mm}
+    /* Emoji — litt større */
+    .vare .emoji{font-size:28mm;line-height:1;margin-bottom:2mm}
 
     /* Tittel */
-    .vare .name{font-family:'Nunito',sans-serif;font-weight:900;font-size:12.5pt;color:var(--blekk);line-height:1.2;max-width:75mm;margin-bottom:3.5mm}
+    .vare .name{font-family:'Nunito',sans-serif;font-weight:900;font-size:13pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:2.5mm}
 
     /* Pris */
-    .vare .price{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:4mm;line-height:1}
-    .vare .price .coin-icon{font-size:17pt;line-height:1}
-    .vare .price .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:24pt;line-height:1}
+    .vare .price{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:3mm;line-height:1}
+    .vare .price .coin-icon{font-size:18pt;line-height:1}
+    .vare .price .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:26pt;line-height:1}
 
-    /* QR */
-    .qr-wrap{padding:1.5mm;background:white;margin-bottom:1.5mm}
-    .qr-wrap img,.qr-wrap svg{display:block;width:26mm;height:26mm}
+    /* QR-blokk: QR + scan-hint som en gruppe, sentrert i ledig plass */
+    .qr-block{display:flex;flex-direction:column;align-items:center;gap:1.5mm;margin:auto 0 1mm}
+    .qr-wrap{padding:2mm;background:white;border:1px solid rgba(42,31,61,.1);border-radius:2mm}
+    .qr-wrap img,.qr-wrap svg{display:block;width:36mm;height:36mm}
 
     /* Hint */
-    .scan-hint{font-family:'Nunito',sans-serif;font-size:7.5pt;color:var(--blekk-myk);font-weight:400}
+    .scan-hint{font-family:'Nunito',sans-serif;font-size:8pt;color:var(--blekk-myk);font-weight:600;letter-spacing:.04em}
+
+    /* Footer: Myntland-stempel i bunn av kortet (forsiden) */
+    .card-foot{display:flex;align-items:center;justify-content:center;gap:2mm;padding-top:3mm;margin-top:auto;border-top:1px dashed var(--blekk-myk);width:78mm;max-width:88%}
+    .card-foot .foot-coin{font-size:9pt;line-height:1}
+    .card-foot .foot-stamp{font-family:'Bowlby One',sans-serif;font-size:8pt;color:var(--blekk);letter-spacing:.14em}
 
     /* ── Bakside ── */
     .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9mm}
@@ -4045,8 +4055,11 @@ function printHendelserCards14(cards) {
       <div class="emoji">${c.emoji||'🎲'}</div>
       <div class="desc">${c.desc}</div>
       <div class="amount"><span class="sign">${sign}</span><span class="coin-icon">🪙</span><span class="num">${c.amount}</span></div>
-      <div class="qr-wrap">${qrMarkup}</div>
-      <div class="scan-hint">Scan for å registrere</div>
+      <div class="qr-block">
+        <div class="qr-wrap">${qrMarkup}</div>
+        <div class="scan-hint">Scan for å registrere</div>
+      </div>
+      <div class="card-foot"><span class="foot-coin">🪙</span><span class="foot-stamp">MYNTLAND · HENDELSER</span></div>
     </div>`;
   };
   let pagesHTML = '';
@@ -4096,7 +4109,7 @@ function printHendelserCards14(cards) {
     .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative}
 
     /* Kortet: fyller hele sin firkant. Tonet bakgrunn per type. */
-    .hcard{padding:9mm 8mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid}
+    .hcard{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}
     .hcard.empty{visibility:hidden}
     .hcard.income{background:var(--gront-mykt)}
     .hcard.expense{background:var(--rod-mykt)}
@@ -4107,31 +4120,39 @@ function printHendelserCards14(cards) {
     .page-print > .hcard:nth-child(1),
     .page-print > .hcard:nth-child(3){border-right:1px dashed var(--blekk-myk)}
 
-    /* Pill: farget bakgrunn, hvit tekst */
-    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:9pt;letter-spacing:.22em;color:white;padding:1.8mm 6mm;border-radius:999px;margin-bottom:3mm}
+    /* Pill: farget bakgrunn, hvit tekst — større */
+    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:10pt;letter-spacing:.24em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:2mm}
     .income .pill{background:var(--gront)}
     .expense .pill{background:var(--rod)}
 
-    /* Emoji: dominerende, 24mm */
-    .emoji{font-size:24mm;line-height:1;margin-bottom:3mm}
+    /* Emoji: dominerende */
+    .emoji{font-size:26mm;line-height:1;margin-bottom:2mm}
 
     /* Tittel: midtstilt, max 2 linjer */
-    .desc{font-family:'Nunito',sans-serif;font-weight:900;font-size:11.5pt;color:var(--blekk);line-height:1.2;max-width:75mm;margin-bottom:3.5mm}
+    .desc{font-family:'Nunito',sans-serif;font-weight:900;font-size:12pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:2.5mm}
 
     /* Beløp: tegn + mynt + tall i tema-farge */
-    .amount{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:4mm;line-height:1}
-    .amount .sign{font-family:'Nunito',sans-serif;font-weight:900;font-size:22pt;line-height:1}
-    .amount .coin-icon{font-size:17pt;line-height:1}
-    .amount .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:22pt;line-height:1}
+    .amount{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:3mm;line-height:1}
+    .amount .sign{font-family:'Nunito',sans-serif;font-weight:900;font-size:23pt;line-height:1}
+    .amount .coin-icon{font-size:18pt;line-height:1}
+    .amount .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:23pt;line-height:1}
     .income .amount .sign,.income .amount .num{color:var(--gront)}
     .expense .amount .sign,.expense .amount .num{color:var(--rod)}
 
-    /* QR: hvit boks */
-    .qr-wrap{padding:1.5mm;background:white;margin-bottom:1.5mm}
-    .qr-wrap img,.qr-wrap svg{display:block;width:25mm;height:25mm}
+    /* QR-blokk: QR + hint som en gruppe, sentrert i ledig plass */
+    .qr-block{display:flex;flex-direction:column;align-items:center;gap:1.5mm;margin:auto 0 1mm}
+    .qr-wrap{padding:2mm;background:white;border:1px solid rgba(42,31,61,.1);border-radius:2mm}
+    .qr-wrap img,.qr-wrap svg{display:block;width:34mm;height:34mm}
 
     /* Hint */
-    .scan-hint{font-family:'Nunito',sans-serif;font-size:7.5pt;color:var(--blekk-myk);font-weight:400}
+    .scan-hint{font-family:'Nunito',sans-serif;font-size:8pt;color:var(--blekk-myk);font-weight:600;letter-spacing:.04em}
+
+    /* Footer: Myntland-stempel i bunn av kortet (forsiden) */
+    .card-foot{display:flex;align-items:center;justify-content:center;gap:2mm;padding-top:3mm;margin-top:auto;border-top:1px dashed var(--blekk-myk);width:78mm;max-width:88%}
+    .card-foot .foot-coin{font-size:9pt;line-height:1}
+    .card-foot .foot-stamp{font-family:'Bowlby One',sans-serif;font-size:8pt;color:var(--blekk);letter-spacing:.14em}
+    .income .card-foot{border-top-color:var(--gront-dyp)}
+    .expense .card-foot{border-top-color:var(--rod-dyp)}
 
     /* ── Bakside ── samme tonete farge, sentral logo */
     .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9mm}
