@@ -18,6 +18,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Myntland – Lærerportal 1–4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- jsPDF + html2canvas for komprimert PDF-eksport (bankkort, varekort, handlelister, hendelser) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getDatabase, ref, set, push, onValue, remove, update, get }
@@ -2560,6 +2563,7 @@ function generateGroceryPDF() {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
+    ${_bv.headScripts}
     <style>${css}${_bv.bannerCSS}</style></head><body>${_bv.bannerHTML}${pagesHTML}
   </body></html>`);
   win.document.close();
@@ -2794,6 +2798,7 @@ function printShoppingList() {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
+    ${_bh.headScripts}
     <style>${MYNTLAND_BUTIKK_CSS}
     @page{size:A4 landscape;margin:0}
     ${_bh.bannerCSS}
@@ -2885,9 +2890,11 @@ function printSingleQR(elId, label) {
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    ${_br1.headScripts}
     <style>
       @media print{@page{size:A4 portrait;margin:0}}
-      body{margin:0;padding:8mm;font-family:'Nunito',sans-serif;background:white;}
+      body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;}
+      .page{width:210mm;height:297mm;padding:8mm;box-sizing:border-box;background:white;page-break-after:always;}
       .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
       .card{border:1.5mm solid #1D9E75;border-radius:5mm;padding:7mm;display:flex;flex-direction:column;align-items:center;gap:4mm;page-break-inside:avoid;}
       .logo{font-family:'Fredoka One',cursive;font-size:5mm;color:#085041;}
@@ -2898,36 +2905,44 @@ function printSingleQR(elId, label) {
     </style>
   </head><body>
     ${_br1.bannerHTML}
-    <div class="grid">
+    <div class="page"><div class="grid">
       ${[0,1,2,3].map(()=>`<div class="card">
         <div class="logo">🪙 Myntland</div>
         <div class="amount">+${amount} 🪙</div>
         <div class="qr-wrap"><img src="${dataUrl}" style="width:130px;height:130px;"></div>
         <div class="desc">Belønning</div>
       </div>`).join('')}
-    </div>
+    </div></div>
   </body></html>`);
   win.document.close();
 }
 function _printRewardCards(rewards) {
   const payloads = rewards.map(r => JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }));
-  const cardsHTML = rewards.map((r, i) =>
-    `<div class="card">
-      <div class="logo">🪙 Myntland</div>
-      <div class="amount">+${r.amount} 🪙</div>
-      <div class="qr-wrap" id="pqr${i}"></div>
-      <div class="desc">${r.desc}</div>
-    </div>`
-  ).join('');
+  // Pagineer i grupper på 8 (4 rader x 2 kolonner) per A4-side
+  let cardsHTML = '';
+  for (let p = 0; p < rewards.length; p += 8) {
+    const slice = rewards.slice(p, p + 8);
+    cardsHTML += `<div class="page"><div class="grid">${slice.map((r, j) => {
+      const i = p + j;
+      return `<div class="card">
+        <div class="logo">🪙 Myntland</div>
+        <div class="amount">+${r.amount} 🪙</div>
+        <div class="qr-wrap" id="pqr${i}"></div>
+        <div class="desc">${r.desc}</div>
+      </div>`;
+    }).join('')}</div></div>`;
+  }
   const _br2 = window.buildPdfDownloadBanner('Slik laster du ned belønningskort');
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    ${_br2.headScripts}
     <style>
       @media print{@page{size:A4 portrait;margin:0}}
-      body{margin:0;padding:8mm;font-family:'Nunito',sans-serif;background:white;}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
+      body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;}
+      .page{width:210mm;height:297mm;padding:8mm;box-sizing:border-box;background:white;page-break-after:always;}
+      .grid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6mm;height:100%;}
       .card{border:1.5mm solid #1D9E75;border-radius:5mm;padding:7mm;display:flex;flex-direction:column;align-items:center;gap:4mm;page-break-inside:avoid;}
       .logo{font-family:'Fredoka One',cursive;font-size:5mm;color:#085041;}
       .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#1D9E75;}
@@ -2937,7 +2952,7 @@ function _printRewardCards(rewards) {
     </style>
   </head><body>
     ${_br2.bannerHTML}
-    <div class="grid">${cardsHTML}</div>
+    ${cardsHTML}
     <script>
       var payloads=${JSON.stringify(payloads)};
       function makeAll(){
@@ -2972,40 +2987,179 @@ function _printRewardCards(rewards) {
 window.buildPdfDownloadBanner = function(title, opts) {
   title = title || 'Slik laster du ned og skriver ut';
   opts = opts || {};
-  var twoSidedTip = opts.twoSided
-    ? '<li>I skriver-dialogen: velg <strong>tosidig utskrift, «vend langs lang kant»</strong> og <strong>skala 100 %</strong>.</li>'
-    : '<li>I skriver-dialogen: pass på at <strong>skala er 100 %</strong> og <strong>«skriv ut bakgrunnsgrafikk»</strong> er på.</li>';
+
+  // Filnavn for den komprimerte PDF-en (basert på tittel).
+  // Tittelen er noe à la "Slik laster du ned bankkort" → bruk siste ord
+  // som filnavn-frø (bankkort/varekort/handlelister/hendelseskort).
+  var fileSeed = (title.match(/(?:laster du ned\s+)([a-zæøå]+)/i) || [,'myntland-utskrift'])[1].toLowerCase();
+  var pdfFileName = 'myntland-' + fileSeed + '.pdf';
+
   var bannerHTML = ''
     + '<div class="print-info-banner">'
     +   '<div class="pib-inner">'
     +     '<div class="pib-title">📋 ' + title + '</div>'
     +     '<ol class="pib-list">'
-    +       '<li>Trykk <strong>«Last ned PDF»</strong> under.</li>'
-    +       '<li>I dialogen som åpnes: velg <strong>«Lagre som PDF»</strong> som mål (ikke en skriver).</li>'
-    +       '<li>Lagre filen, åpne den, og send <strong>den ferdige PDF-en til skoleskriveren</strong>.</li>'
-    +       twoSidedTip
+    +       '<li>Trykk <strong>«Last ned komprimert PDF»</strong> under.</li>'
+    +       '<li>PDF-en blir typisk <strong>under 500 KB selv for 10 ark</strong> — perfekt for skoleskrivere og e-post.</li>'
+    +       '<li>Åpne filen og <strong>send den ferdige PDF-en til skoleskriveren</strong>.</li>'
+    +       (opts.twoSided
+              ? '<li>I skriver-dialogen: velg <strong>tosidig, «vend langs lang kant»</strong> og <strong>skala 100 %</strong>.</li>'
+              : '<li>I skriver-dialogen: <strong>skala 100 %</strong>.</li>')
     +     '</ol>'
-    +     '<div class="pib-tip">💡 <em>Tips:</em> Skoleskrivere takler en ferdig PDF mye bedre enn utskrift sendt direkte fra nettleseren — derfor dette mellom-steget.</div>'
-    +     '<button class="pib-print-btn" onclick="window.print()">📄 Last ned PDF</button>'
+    +     '<div class="pib-tip">💡 <em>Tips:</em> Designet beholdes 1:1, men sidene komprimeres som JPEG (~45 KB per side) — derfor små filer som er trygge å sende videre.</div>'
+    +     '<div class="pib-btn-row">'
+    +       '<button class="pib-print-btn" onclick="compressAndDownloadPDF(this)">📥 Last ned komprimert PDF</button>'
+    +       '<button class="pib-print-btn pib-secondary" onclick="window.print()" title="Sender direkte til skriver eller lar deg lagre som ukomprimert PDF via nettleser">🖨️ Vanlig utskrift</button>'
+    +     '</div>'
+    +     '<div class="pib-progress" id="pib-progress" style="display:none">'
+    +       '<div class="pib-progress-bar"><div class="pib-progress-fill" id="pib-progress-fill"></div></div>'
+    +       '<div class="pib-progress-text" id="pib-progress-text">Forbereder…</div>'
+    +     '</div>'
     +   '</div>'
     + '</div>';
 
   var bannerCSS = ''
     + '@media screen{'
     +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
-    +   '.pib-inner{max-width:780px;margin:0 auto}'
+    +   '.pib-inner{max-width:820px;margin:0 auto}'
     +   '.pib-title{font-family:"Bowlby One","Fredoka One",sans-serif;font-size:14pt;margin-bottom:8px;letter-spacing:.02em}'
     +   '.pib-list{margin:0 0 10px 22px;padding:0;font-size:10.5pt;line-height:1.55}'
     +   '.pib-list li{margin-bottom:3px}'
     +   '.pib-list strong{color:#2A1F3D}'
     +   '.pib-tip{font-size:10pt;color:#4A3D5C;margin-bottom:12px;padding:8px 12px;background:rgba(42,31,61,.06);border-radius:6px;border-left:3px solid #F5C849}'
+    +   '.pib-btn-row{display:flex;gap:10px;flex-wrap:wrap}'
     +   '.pib-print-btn{display:inline-block;background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One","Fredoka One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer;transition:all .15s}'
     +   '.pib-print-btn:hover{background:#1A1228;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}'
-    +   'body{padding-top:260px}'
+    +   '.pib-print-btn:disabled{opacity:.55;cursor:wait;transform:none}'
+    +   '.pib-print-btn.pib-secondary{background:#FBF2D6;color:#2A1F3D;border:2px solid #2A1F3D}'
+    +   '.pib-print-btn.pib-secondary:hover{background:#F0E1B0}'
+    +   '.pib-progress{margin-top:12px;padding:8px 12px;background:rgba(42,31,61,.08);border-radius:6px}'
+    +   '.pib-progress-bar{height:10px;background:rgba(42,31,61,.15);border-radius:999px;overflow:hidden;margin-bottom:6px}'
+    +   '.pib-progress-fill{height:100%;background:linear-gradient(90deg,#F5C849,#2DC4C4);width:0%;transition:width .25s ease}'
+    +   '.pib-progress-text{font-size:9.5pt;color:#4A3D5C;font-weight:700}'
+    +   'body{padding-top:280px}'
     + '}'
     + '@media print{.print-info-banner{display:none !important}body{padding-top:0 !important}}';
 
-  return { bannerHTML: bannerHTML, bannerCSS: bannerCSS };
+  // ── compressAndDownloadPDF: kjøres inne i popup-vinduet ─────────────
+  // Definert som en streng som injiseres som <script> i popup-en så den
+  // har tilgang til popupens DOM, fonts, jsPDF og html2canvas.
+  var compressScript = '\n<script>\n'
+    + 'window._MYNTLAND_PDF_OPTS = {\n'
+    + '  fileName: ' + JSON.stringify(pdfFileName) + ',\n'
+    + '  jpegQuality: 0.72,\n'
+    + '  scale: 2\n'
+    + '};\n'
+    + 'async function compressAndDownloadPDF(btn){\n'
+    + '  var opts = window._MYNTLAND_PDF_OPTS;\n'
+    + '  var progress = document.getElementById("pib-progress");\n'
+    + '  var fill = document.getElementById("pib-progress-fill");\n'
+    + '  var text = document.getElementById("pib-progress-text");\n'
+    + '  function setProgress(pct, msg){\n'
+    + '    if(fill) fill.style.width = pct + "%";\n'
+    + '    if(text) text.textContent = msg;\n'
+    + '  }\n'
+    + '  try {\n'
+    + '    if(typeof window.jspdf === "undefined" || typeof window.html2canvas === "undefined"){\n'
+    + '      alert("PDF-biblioteket er ikke ferdig lastet enda. Vent et oeyeblikk og proev igjen.");\n'
+    + '      return;\n'
+    + '    }\n'
+    + '    if(btn){ btn.disabled = true; btn.textContent = "Forbereder..."; }\n'
+    + '    if(progress) progress.style.display = "block";\n'
+    + '    setProgress(2, "Venter paa at fonter og bilder lastes...");\n'
+    + '\n'
+    + '    if(document.fonts && document.fonts.ready){\n'
+    + '      try { await document.fonts.ready; } catch(e){}\n'
+    + '    }\n'
+    + '    var imgs = Array.from(document.querySelectorAll("img"));\n'
+    + '    await Promise.all(imgs.map(function(img){\n'
+    + '      if(img.complete && img.naturalWidth > 0) return Promise.resolve();\n'
+    + '      return new Promise(function(res){\n'
+    + '        img.addEventListener("load", res, {once:true});\n'
+    + '        img.addEventListener("error", res, {once:true});\n'
+    + '        setTimeout(res, 4000);\n'
+    + '      });\n'
+    + '    }));\n'
+    + '\n'
+    + '    setProgress(8, "Finner sider...");\n'
+    + '    var pageEls = Array.from(document.querySelectorAll(".page, .page-print"));\n'
+    + '    pageEls = pageEls.filter(function(el){\n'
+    + '      var r = el.getBoundingClientRect();\n'
+    + '      return r.width > 50 && r.height > 50;\n'
+    + '    });\n'
+    + '    if(!pageEls.length){\n'
+    + '      alert("Fant ingen sider aa eksportere. Proev vanlig utskrift i stedet.");\n'
+    + '      if(btn){ btn.disabled = false; btn.textContent = "Last ned komprimert PDF"; }\n'
+    + '      if(progress) progress.style.display = "none";\n'
+    + '      return;\n'
+    + '    }\n'
+    + '\n'
+    + '    function orientationOf(el){\n'
+    + '      var r = el.getBoundingClientRect();\n'
+    + '      return (r.width > r.height) ? "landscape" : "portrait";\n'
+    + '    }\n'
+    + '\n'
+    + '    var jsPDF = window.jspdf.jsPDF;\n'
+    + '    var pdf = null;\n'
+    + '    var totalBytes = 0;\n'
+    + '\n'
+    + '    for(var i = 0; i < pageEls.length; i++){\n'
+    + '      var el = pageEls[i];\n'
+    + '      var orient = orientationOf(el);\n'
+    + '      var pageW = orient === "landscape" ? 297 : 210;\n'
+    + '      var pageH = orient === "landscape" ? 210 : 297;\n'
+    + '\n'
+    + '      setProgress(10 + Math.round((i / pageEls.length) * 80), "Komprimerer side " + (i+1) + " av " + pageEls.length + "...");\n'
+    + '\n'
+    + '      var canvas = await html2canvas(el, {\n'
+    + '        scale: opts.scale,\n'
+    + '        useCORS: true,\n'
+    + '        allowTaint: true,\n'
+    + '        backgroundColor: "#ffffff",\n'
+    + '        logging: false,\n'
+    + '        imageTimeout: 6000\n'
+    + '      });\n'
+    + '\n'
+    + '      var jpegData = canvas.toDataURL("image/jpeg", opts.jpegQuality);\n'
+    + '      totalBytes += Math.round(jpegData.length * 0.75);\n'
+    + '\n'
+    + '      if(!pdf){\n'
+    + '        pdf = new jsPDF({\n'
+    + '          orientation: orient,\n'
+    + '          unit: "mm",\n'
+    + '          format: "a4",\n'
+    + '          compress: true\n'
+    + '        });\n'
+    + '      } else {\n'
+    + '        pdf.addPage("a4", orient);\n'
+    + '      }\n'
+    + '      pdf.addImage(jpegData, "JPEG", 0, 0, pageW, pageH, undefined, "FAST");\n'
+    + '\n'
+    + '      canvas.width = 0; canvas.height = 0;\n'
+    + '      await new Promise(function(r){ setTimeout(r, 0); });\n'
+    + '    }\n'
+    + '\n'
+    + '    setProgress(95, "Lagrer PDF...");\n'
+    + '    pdf.save(opts.fileName);\n'
+    + '\n'
+    + '    var sizeKB = Math.round(totalBytes / 1024);\n'
+    + '    setProgress(100, "Ferdig! PDF-en (~" + sizeKB + " KB) er lastet ned: " + opts.fileName);\n'
+    + '    if(btn){ btn.disabled = false; btn.textContent = "Last ned komprimert PDF paa nytt"; }\n'
+    + '  } catch(err){\n'
+    + '    console.error("PDF-eksport feilet:", err);\n'
+    + '    setProgress(0, "Noe gikk galt: " + (err && err.message ? err.message : err) + ". Proev Vanlig utskrift i stedet.");\n'
+    + '    if(btn){ btn.disabled = false; btn.textContent = "Proev paa nytt"; }\n'
+    + '  }\n'
+    + '}\n'
+    + '<\/script>\n';
+
+  return {
+    bannerHTML: bannerHTML + compressScript,
+    bannerCSS: bannerCSS,
+    headScripts: ''
+      + '<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>'
+      + '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>'
+  };
 };
 
 // ════════════════════════════════════════════════════════════════════
@@ -3339,11 +3493,13 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   var _b = window.buildPdfDownloadBanner('Slik laster du ned bankkort', { twoSided: true });
   var infoBanner = _b.bannerHTML;
   var bannerCSS = _b.bannerCSS;
+  var headScripts = _b.headScripts;
 
   return '<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>' + escapeHTML(title) + '</title>'
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
     + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
     + '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700;1,9..144,900&family=Nunito:wght@400;600;700;800;900&family=Bowlby+One&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">'
+    + headScripts
     + '<style>' + css + bannerCSS + '</style>'
     + '</head><body>' + infoBanner + pagesHTML + '</body></html>';
 };
@@ -4040,6 +4196,7 @@ function printHendelserCards14(cards) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
+  ${_bhend.headScripts}
   <style>
     :root{--gull:#F5C849;--gull-dyp:#C99517;--gull-lys:#FFE89A;--turkis:#2DC4C4;--himmel:#BFEDF0;--korall:#E64B3B;--korall-lys:#FFB8C7;--korall-dyp:#A82218;--lime:#B8DA3B;--rosa:#FFB8C7;--pergament:#FBF2D6;--pergament-dyp:#F0E1B0;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--skog:#2F6B4A;--skog-dyp:#1A3F2A;--skog-lys:#A8D5B8}
     *{box-sizing:border-box;margin:0;padding:0}
