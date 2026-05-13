@@ -274,6 +274,84 @@
   .ending-section { margin-bottom: 1.75rem; }
   .ending-section:last-child { margin-bottom: 0; }
 
+  /* Snakk sammen-side */
+  .snakk-sammen {
+    padding: 2.5rem 2.25rem;
+    background: linear-gradient(180deg, var(--green-light) 0%, var(--white) 60%);
+    min-height: 540px;
+  }
+  .snakk-header { margin-bottom: 2rem; text-align: center; }
+  .snakk-header .scene-tag { margin-bottom: 1rem; }
+  .snakk-header h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    color: var(--teal-dark);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+  .snakk-header p {
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-weight: 600;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .snakk-sporsmal {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2.5rem 0;
+    display: grid;
+    gap: 0.85rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .snakk-sporsmal li {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: all 0.2s ease;
+  }
+  .snakk-sporsmal li:hover {
+    border-color: var(--green);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(29, 158, 117, 0.1);
+  }
+  .snakk-sporsmal .sporsmal-nr {
+    background: var(--green-dark);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .snakk-sporsmal .sporsmal-tekst {
+    flex: 1;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: var(--text);
+    font-weight: 600;
+    padding-top: 4px;
+  }
+  .snakk-sammen .ending-section h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+    justify-content: center;
+  }
+  .snakk-sammen .choices {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
   .controls {
     background: var(--white);
     border-top: 2px solid var(--border);
@@ -380,6 +458,9 @@
     .scene-text h2 { font-size: 1.4rem; }
     .scene-text p { font-size: 1rem; }
     .ending { padding: 1.5rem; }
+    .snakk-sammen { padding: 1.75rem 1.25rem; min-height: auto; }
+    .snakk-sporsmal li { padding: 0.9rem 1rem; }
+    .snakk-sporsmal .sporsmal-tekst { font-size: 0.98rem; }
     .controls { padding: 0.85rem 1rem; }
     .btn { padding: 0.55rem 0.85rem; font-size: 0.85rem; }
   }
@@ -584,12 +665,27 @@ const VALG = [
   { sti: 'C', ikon: '💪', tittel: 'Spar og jobb', undertekst: 'Spar mynter og søk en jobb. Det tar tid, men det er mulig.' }
 ];
 
-const DISKUSJON = [
-  'Hvilken av de tre veiene ville DU valgt? Hvorfor?',
-  'Hvorfor tror dere sykkelen kjentes ekstra fin for Bølge i slutten?',
-  'Hva er forskjellen mellom å trenge en sykkel og å ha lyst på en sykkel?',
-  'Har dere noen gang spart til noe selv? Hvor lang tid tok det?'
-];
+// Diskusjonsspørsmål tilpasset hvilken vei klassen tok
+const DISKUSJON = {
+  A: [
+    'Hvordan tror dere Bølge følte seg da han så det tomme vinduet?',
+    'Hva kunne Bølge gjort annerledes for å få sykkelen?',
+    'Er det greit å gi opp før man har prøvd? Hvorfor / hvorfor ikke?',
+    'Har dere noen gang ombestemt dere fra å ikke prøve, og likevel klart noe?'
+  ],
+  B: [
+    'Hvorfor tror dere Bølge angret på lånet?',
+    'Hva er forskjellen mellom å betale 800 mynter og 1200 mynter for samme sykkel?',
+    'Når kan det være lurt å låne penger? Når er det dumt?',
+    'Hvorfor tror dere selgeren ville at Bølge skulle ta opp lån?'
+  ],
+  C: [
+    'Hvorfor tror dere sykkelen kjentes ekstra fin for Bølge i slutten?',
+    'Hva var det vanskeligste med å vente, tror dere?',
+    'Hva er forskjellen mellom å trenge en sykkel og å ha lyst på en sykkel?',
+    'Har dere noen gang spart til noe selv? Hvor lang tid tok det?'
+  ]
+};
 
 let aktivListe = [];
 let aktivIndeks = 0;
@@ -620,6 +716,65 @@ function startSti(sti) {
   aktivIndeks = 3;
   visSide();
   visToast(`Du valgte vei ${sti}!`);
+}
+
+function visSnakkSammen() {
+  stoppLyd();
+  spillerAv = false;
+  oppdaterPlayBtn();
+
+  const wrapper = document.getElementById('sceneWrapper');
+  wrapper.classList.add('fading');
+
+  setTimeout(() => {
+    const sti = valgtSti || 'C';
+    const stiNavn = { A: 'Vei A: Gjør ingenting', B: 'Vei B: Kjøp nå, betal senere', C: 'Vei C: Spar og jobb' };
+    const stiIkon = { A: '😔', B: '💳', C: '💪' };
+    const stiClass = { A: 'sti-a', B: 'sti-b', C: 'sti-c' };
+    const andreStier = ['A', 'B', 'C'].filter(s => s !== sti);
+    const sporsmal = DISKUSJON[sti] || DISKUSJON.C;
+
+    wrapper.innerHTML = `
+      <div class="snakk-sammen">
+        <div class="snakk-header">
+          <span class="scene-tag ${stiClass[sti]}">Etter ${stiNavn[sti]}</span>
+          <h2>💬 Snakk sammen</h2>
+          <p>Bruk disse spørsmålene i klassen, eller tenk gjennom dem på egen hånd.</p>
+        </div>
+
+        <ul class="snakk-sporsmal">
+          ${sporsmal.map((q, i) => `
+            <li>
+              <span class="sporsmal-nr">${i + 1}</span>
+              <span class="sporsmal-tekst">${q}</span>
+            </li>
+          `).join('')}
+        </ul>
+
+        <div class="ending-section">
+          <h3>🔄 Vil du se hva som skjedde om Bølge valgte annerledes?</h3>
+          <div class="choices">
+            ${andreStier.map(s => `
+              <button class="choice-btn" onclick="startSti('${s}')">
+                <div class="choice-icon">${stiIkon[s]}</div>
+                <div class="choice-content">
+                  <div class="choice-title">Prøv ${stiNavn[s]}</div>
+                  <div class="choice-sub">Spill fortellingen på nytt med dette valget.</div>
+                </div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    wrapper.classList.remove('fading');
+
+    // Oppdater progress til full
+    document.getElementById('counter').textContent = 'Slutt';
+    document.getElementById('progress').style.width = '100%';
+    document.getElementById('prevBtn').disabled = false;
+    document.getElementById('nextBtn').disabled = true;
+  }, 200);
 }
 
 function visSide() {
@@ -668,35 +823,20 @@ function visSide() {
     innhold += `</div></div>`;
 
     if (side.erSlutt) {
-      const sti = side.sti;
-      const andreStier = ['A', 'B', 'C'].filter(s => s !== sti);
-      const stiNavn = { A: 'Gjør ingenting', B: 'Kjøp nå, betal senere', C: 'Spar og jobb' };
-      const stiIkon = { A: '😔', B: '💳', C: '💪' };
-
       innhold += `
         <div class="ending">
           <div class="ending-section">
             <h3>🤔 Synes du dette var et godt valg?</h3>
-            <p>Vil du se hva som skjedde om Bølge hadde valgt annerledes?</p>
+            <p>Klikk videre for å snakke sammen om det Bølge opplevde — og se hva som skjedde hvis han hadde valgt annerledes.</p>
             <div class="choices">
-              ${andreStier.map(s => `
-                <button class="choice-btn" onclick="startSti('${s}')">
-                  <div class="choice-icon">${stiIkon[s]}</div>
-                  <div class="choice-content">
-                    <div class="choice-title">Prøv vei ${s}: ${stiNavn[s]}</div>
-                    <div class="choice-sub">Se hva som skjer om Bølge tar dette valget i stedet.</div>
-                  </div>
-                </button>
-              `).join('')}
+              <button class="choice-btn" onclick="visSnakkSammen()">
+                <div class="choice-icon">💬</div>
+                <div class="choice-content">
+                  <div class="choice-title">Gå videre — snakk sammen</div>
+                  <div class="choice-sub">Diskusjonsspørsmål og mulighet til å prøve en annen vei.</div>
+                </div>
+              </button>
             </div>
-          </div>
-
-          <div class="ending-section">
-            <h3>💬 Snakk sammen</h3>
-            <p>Bruk disse spørsmålene i klassen eller mens du tenker selv:</p>
-            <ul>
-              ${DISKUSJON.map(q => `<li>${q}</li>`).join('')}
-            </ul>
           </div>
         </div>
       `;
@@ -898,6 +1038,7 @@ function init() {
 
 window.velgSti = velgSti;
 window.startSti = startSti;
+window.visSnakkSammen = visSnakkSammen;
 init();
 </script>
 
