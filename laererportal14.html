@@ -2726,6 +2726,11 @@ function renderListPreview(items) {
        .preview-stage{position:relative;width:100%;background:#EFE9D8;border-radius:12px;padding:12px;overflow:hidden}
        .preview-scaler{transform-origin:top left;background:white;box-shadow:0 4px 16px rgba(42,31,61,.18);position:relative;--gull:#C99517;--gull-lys:#FFF7DD;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--pergament:#FBF2D6;font-family:'Nunito',sans-serif;color:#2A1F3D}
        ${scopedBokCss}
+       /* Override: lærerportalens hoved-CSS har «.page{display:none}» (kun
+          .page.active vises). Det treffer også .page-elementet inni
+          forhåndsvisningen. Tving det synlig her. */
+       .preview-scaler .page,
+       .preview-scaler .page.landscape{display:block !important}
      </style>
      <div class="preview-stage" id="preview-stage">
        <div class="preview-scaler" id="preview-scaler">${pageHTML}</div>
