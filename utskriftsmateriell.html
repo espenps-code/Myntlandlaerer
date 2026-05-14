@@ -182,6 +182,42 @@
     color: var(--green-dark);
   }
 
+  /* Trinn-faner (grønn = 1.-4., lilla = 5.-7.) */
+  .tab.trinn-14:hover {
+    border-color: var(--green);
+    color: var(--green-dark);
+  }
+  .tab.trinn-14.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+  .tab.trinn-14:not(.active) .tab-count {
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .tab.trinn-57:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+  .tab.trinn-57.active {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: white;
+  }
+  .tab.trinn-57:not(.active) .tab-count {
+    background: var(--purple-light);
+    color: var(--purple);
+  }
+
+  /* Skille mellom kategori-faner og trinn-faner */
+  .tab-divider {
+    width: 2px;
+    background: var(--border);
+    margin: 0 0.25rem;
+    border-radius: 2px;
+  }
+
   /* Galleri */
   .gallery {
     display: grid;
@@ -522,10 +558,10 @@
   <!-- Kategori-faner -->
   <div class="tabs" role="tablist">
     <button class="tab active" data-category="alle" role="tab">
-      Alle <span class="tab-count" data-count="alle">7</span>
+      Alle <span class="tab-count" data-count="alle">8</span>
     </button>
     <button class="tab" data-category="plakater" role="tab">
-      🖼️ Plakater <span class="tab-count" data-count="plakater">5</span>
+      🖼️ Plakater <span class="tab-count" data-count="plakater">6</span>
     </button>
     <button class="tab" data-category="monsterkort" role="tab">
       👾 Monsterkort <span class="tab-count" data-count="monsterkort">0</span>
@@ -538,6 +574,13 @@
     </button>
     <button class="tab" data-category="spillkort" role="tab">
       🎴 Spillkort <span class="tab-count" data-count="spillkort">0</span>
+    </button>
+    <div class="tab-divider" aria-hidden="true"></div>
+    <button class="tab trinn-14" data-trinn="14" role="tab">
+      🟢 1.–4. trinn <span class="tab-count" data-count="trinn-14">0</span>
+    </button>
+    <button class="tab trinn-57" data-trinn="57" role="tab">
+      🟣 5.–7. trinn <span class="tab-count" data-count="trinn-57">0</span>
     </button>
   </div>
 
@@ -578,6 +621,18 @@
      pngSize     – filstørrelse som tekst, f.eks. '1.4 MB'
 */
 const RESOURCES = [
+  {
+    id: 'pultstripe',
+    category: 'plakater',
+    title: 'Pultstripe – Min pult',
+    description: 'Klipp-og-bruk pultstripe med tallinje 0–50, hundrebrett, alfabet, tier-venner, mynter, sedler, ukedager og måneder. 3 stripper per A4-ark – klar til å klippe ut og lime på pulten. Felter for navn og klasse.',
+    trinn: '1.–4. trinn',
+    thumb: 'materiell/thumbs/pultstripe.jpg',
+    pdf: 'materiell/pdf/pultstripe.pdf',
+    pdfSize: '616 KB',
+    png: 'materiell/png/pultstripe.png',
+    pngSize: '275 KB'
+  },
   {
     id: 'personlig-okonomi-57',
     category: 'plakater',
@@ -709,10 +764,27 @@ const CATEGORY_LABELS = {
   spillkort: { emoji: '🎴', singular: 'spillkort' }
 };
 
+// Hjelper: matcher en ressurs et gitt trinn?
+// trinn-feltet kan være '1.–4. trinn', '5.–7. trinn' eller '1.–4. trinn og 5.–7. trinn'
+function matchesTrinn(resource, trinnKey) {
+  const t = resource.trinn || '';
+  if (trinnKey === '14') return t.includes('1.–4.');
+  if (trinnKey === '57') return t.includes('5.–7.');
+  return false;
+}
+
 // Oppdater fane-tellere
 function updateCounts() {
-  const counts = { alle: RESOURCES.length, plakater: 0, monsterkort: 0, diplomer: 0, skjemaer: 0, spillkort: 0 };
-  RESOURCES.forEach(r => { counts[r.category] = (counts[r.category] || 0) + 1; });
+  const counts = {
+    alle: RESOURCES.length,
+    plakater: 0, monsterkort: 0, diplomer: 0, skjemaer: 0, spillkort: 0,
+    'trinn-14': 0, 'trinn-57': 0
+  };
+  RESOURCES.forEach(r => {
+    counts[r.category] = (counts[r.category] || 0) + 1;
+    if (matchesTrinn(r, '14')) counts['trinn-14']++;
+    if (matchesTrinn(r, '57')) counts['trinn-57']++;
+  });
   document.querySelectorAll('[data-count]').forEach(el => {
     el.textContent = counts[el.dataset.count] ?? 0;
   });
@@ -747,19 +819,38 @@ function renderCard(r) {
   return card;
 }
 
-// Render galleriet for en kategori
-function renderGallery(category) {
+// Render galleriet basert på filter
+// filter: { type: 'category'|'trinn', value: '...' }
+function renderGallery(filter) {
   const gallery = document.getElementById('gallery');
   gallery.innerHTML = '';
-  const filtered = category === 'alle' ? RESOURCES : RESOURCES.filter(r => r.category === category);
+
+  let filtered;
+  if (!filter || filter.type === 'category') {
+    const category = filter ? filter.value : 'alle';
+    filtered = category === 'alle' ? RESOURCES : RESOURCES.filter(r => r.category === category);
+  } else if (filter.type === 'trinn') {
+    filtered = RESOURCES.filter(r => matchesTrinn(r, filter.value));
+  } else {
+    filtered = RESOURCES;
+  }
 
   if (filtered.length === 0) {
-    const cat = CATEGORY_LABELS[category] || { emoji: '📋', singular: 'ressurs' };
+    let emoji = '📋';
+    let title = 'Kommer snart!';
+    let desc = 'Vi jobber med flere ressurser her. Sjekk tilbake snart.';
+    if (filter && filter.type === 'category') {
+      const cat = CATEGORY_LABELS[filter.value];
+      if (cat) emoji = cat.emoji;
+    } else if (filter && filter.type === 'trinn') {
+      emoji = filter.value === '14' ? '🟢' : '🟣';
+      desc = `Vi jobber med flere ressurser for ${filter.value === '14' ? '1.–4.' : '5.–7.'} trinn. Sjekk tilbake snart.`;
+    }
     gallery.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-emoji">${cat.emoji}</div>
-        <h3>Kommer snart!</h3>
-        <p>Vi jobber med flere ressurser i denne kategorien. Sjekk tilbake snart.</p>
+        <div class="empty-state-emoji">${emoji}</div>
+        <h3>${title}</h3>
+        <p>${desc}</p>
       </div>
     `;
     return;
@@ -805,13 +896,17 @@ document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    renderGallery(tab.dataset.category);
+    if (tab.dataset.trinn) {
+      renderGallery({ type: 'trinn', value: tab.dataset.trinn });
+    } else {
+      renderGallery({ type: 'category', value: tab.dataset.category });
+    }
   });
 });
 
 // Init
 updateCounts();
-renderGallery('alle');
+renderGallery({ type: 'category', value: 'alle' });
 </script>
 
 </body>
