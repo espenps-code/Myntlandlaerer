@@ -2464,6 +2464,12 @@ const MYNTLAND_BUTIKK_CSS = `
   .liste .sum .sum-line{width:38mm;height:9mm;border-bottom:1.5px solid var(--blekk)}
   .liste .foot-line{margin-top:3mm;display:flex;justify-content:space-between;align-items:center;font-family:'Nunito',sans-serif;font-weight:400;font-size:8pt;color:var(--blekk-myk)}
   .liste .foot-line .stamp{font-family:'Bowlby One',sans-serif;font-size:8pt;color:var(--blekk);letter-spacing:.04em}
+
+  /* Page-corner-merker — posisjoneres absolutt på siden så de ikke kolliderer
+     med listene. Brukes både i forhåndsvisning og i utskrift. */
+  .page-corner{position:absolute;font-family:'Nunito',sans-serif;font-weight:800;font-size:7pt;letter-spacing:.18em;text-transform:uppercase;color:var(--blekk-myk);z-index:2}
+  .page-corner.tl{top:4mm;left:6mm}
+  .page-corner.br{bottom:4mm;right:6mm}
 `;
 
 function generateGroceryPDF() {
@@ -2641,64 +2647,42 @@ function generateShoppingList() {
 function generateRandomList() { renderListPreview(getRandom(window._groceries, Math.min(8, parseInt(document.getElementById('list-count').value)||5))); }
 function getRandom(arr, n)    { return [...arr].sort(() => Math.random()-.5).slice(0, Math.min(n, arr.length)); }
 
-// Myntland-stil scoped CSS for preview (samme DNA som utskriften)
-const MYNT_LIST_PREVIEW_CSS = `
-.mynt-preview-wrap{font-family:'Nunito',sans-serif;color:#2A1F3D}
-.mynt-preview-wrap .mynt-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-/* Lik utskriften: hvit bakgrunn, gull venstrekant signaliserer Myntland */
-.mynt-preview-wrap .liste{background:white;border-left:5px solid #C99517;border-radius:0;box-shadow:0 1px 4px rgba(42,31,61,.08);padding:14px 18px;display:flex;flex-direction:column;position:relative;overflow:hidden}
-/* Header: tittel venstre, Navn/Dato i låst kolonne høyre — ingen kollisjon mulig */
-.mynt-preview-wrap .liste .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-bottom:8px;border-bottom:1.5px solid #2A1F3D;margin-bottom:10px}
-.mynt-preview-wrap .liste .title-block{flex:1 1 auto;min-width:0;overflow:hidden}
-.mynt-preview-wrap .liste .kicker{font-family:'Nunito',sans-serif;font-weight:800;font-size:.62rem;letter-spacing:.22em;color:#C99517;margin-bottom:3px;text-transform:uppercase;display:block}
-.mynt-preview-wrap .liste .title{font-family:'Bowlby One',sans-serif;font-size:1.5rem;line-height:.95;color:#2A1F3D;letter-spacing:.005em;white-space:nowrap}
-.mynt-preview-wrap .liste .sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:.72rem;color:#4A3D5C;margin-top:4px}
-.mynt-preview-wrap .liste .meta{display:flex;flex-direction:column;gap:5px;flex:0 0 130px;width:130px;align-self:flex-end}
-.mynt-preview-wrap .liste .meta .row{display:flex;align-items:baseline;gap:5px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.62rem;color:#4A3D5C;letter-spacing:.1em}
-.mynt-preview-wrap .liste .meta .row .label{text-transform:uppercase;flex:0 0 26px}
-.mynt-preview-wrap .liste .meta .row .line{flex:1;border-bottom:1px solid #2A1F3D;height:11px}
-/* Tabell — ren, ingen mørke bånd */
-.mynt-preview-wrap .liste table{width:100%;border-collapse:collapse;flex:1}
-.mynt-preview-wrap .liste th{background:transparent;color:#4A3D5C;font-family:'Nunito',sans-serif;font-weight:800;font-size:.62rem;padding:3px 8px 6px;text-align:left;letter-spacing:.16em;text-transform:uppercase;border-bottom:1px solid #2A1F3D}
-.mynt-preview-wrap .liste th.right{text-align:right}.mynt-preview-wrap .liste th.center{text-align:center}
-.mynt-preview-wrap .liste td{padding:8px;border-bottom:1px dashed #4A3D5C;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;color:#2A1F3D;vertical-align:middle}
-.mynt-preview-wrap .liste td.num{color:#4A3D5C;width:22px;font-family:'Nunito',sans-serif;font-weight:800}
-.mynt-preview-wrap .liste td.em{font-size:1.3rem;text-align:center;width:36px;line-height:1}
-.mynt-preview-wrap .liste td.pris{text-align:right;width:90px}
-.mynt-preview-wrap .liste td.pris .cell{display:flex;align-items:center;justify-content:flex-end;gap:4px}
-.mynt-preview-wrap .liste td.pris .line{flex:1;height:16px;border-bottom:1.2px solid #2A1F3D;max-width:75px}
-/* Sum-linje — gull-lys bakgrunn, ingen mørk innfylling */
-.mynt-preview-wrap .liste .sum{margin-top:10px;background:#FFF7DD;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.mynt-preview-wrap .liste .sum .lbl{font-family:'Bowlby One',sans-serif;font-size:.95rem;color:#2A1F3D;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
-.mynt-preview-wrap .liste .sum .sum-line{width:120px;height:22px;border-bottom:1.5px solid #2A1F3D}
-.mynt-preview-wrap .liste .foot-line{margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-family:'Nunito',sans-serif;font-weight:400;font-size:.62rem;color:#4A3D5C}
-.mynt-preview-wrap .liste .foot-line .stamp{font-family:'Bowlby One',sans-serif;font-size:.66rem;color:#2A1F3D;letter-spacing:.04em}
-`;
+// Forhåndsvisning bruker NØYAKTIG samme CSS og HTML som utskriften
+// (MYNTLAND_BUTIKK_CSS + buildShoppingListPageHTML), bare skalert ned med
+// transform:scale slik at en ekte A4-landscape-side passer inn i kortet.
+// Slik er det umulig å få avvik mellom forhåndsvisning og utskrift.
 
-function myntListePreviewHTML(items, studentName, monsterIdx) {
-  return `<div class="liste">
-    <div class="head">
-      <div class="title-block">
-        <span class="kicker">🪙 Myntland · Marked</span>
-        <div class="title">HANDLELISTE</div>
-        <div class="sub">Min handletur i Myntland</div>
+function buildShoppingListPageHTML(arr1, arr2, sn) {
+  function listHTML(arr, name) {
+    return `<div class="liste">
+      <div class="head">
+        <div class="title-block">
+          <div class="kicker">🪙 Myntland · Marked</div>
+          <div class="title">HANDLELISTE</div>
+          <div class="sub">Min handletur i Myntland</div>
+        </div>
+        <div class="meta">
+          <div class="row"><span class="label">Navn</span><span class="line">${name||''}</span></div>
+          <div class="row"><span class="label">Dato</span><span class="line"></span></div>
+        </div>
       </div>
-      <div class="meta">
-        <div class="row"><span class="label">Navn</span><span class="line">${studentName||''}</span></div>
-        <div class="row"><span class="label">Dato</span><span class="line"></span></div>
-      </div>
-    </div>
-    <table>
-      <thead><tr><th style="width:22px">#</th><th>Vare</th><th class="center" style="width:36px">Bilde</th><th class="right" style="width:90px">Pris 🪙</th></tr></thead>
-      <tbody>${items.map((g,i) => `<tr>
-        <td class="num">${i+1}</td>
-        <td>${g.name}</td>
-        <td class="em">${g.emoji}</td>
-        <td class="pris"><div class="cell"><div class="line"></div></div></td>
-      </tr>`).join('')}</tbody>
-    </table>
-    <div class="sum"><div class="lbl"><span>🪙</span>SUM TOTALT</div><div class="sum-line"></div></div>
-    <div class="foot-line"><span>Regn ut total og gå til kassa</span><span class="stamp">MYNTLAND · MARKED</span></div>
+      <table>
+        <thead><tr><th style="width:8mm">#</th><th>Vare</th><th class="center" style="width:14mm">Bilde</th><th class="right" style="width:34mm">Pris 🪙</th></tr></thead>
+        <tbody>${arr.map((g,i) => `<tr>
+          <td class="num">${i+1}</td>
+          <td>${g.name}</td>
+          <td class="em">${g.emoji}</td>
+          <td class="pris"><div class="cell"><div class="line"></div></div></td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div class="sum"><div class="lbl"><span>🪙</span>SUM TOTALT</div><div class="sum-line"></div></div>
+      <div class="foot-line"><span>Regn ut total og gå til kassa</span><span class="stamp">MYNTLAND · MARKED</span></div>
+    </div>`;
+  }
+  return `<div class="page landscape" style="width:297mm;height:210mm;">
+    <div class="page-corner tl">Myntland · Handleliste</div>
+    <div class="page-corner br">klipp i to · gi til to elever</div>
+    <div class="liste-page">${listHTML(arr1, sn)}${listHTML(arr2, sn)}</div>
   </div>`;
 }
 
@@ -2706,17 +2690,73 @@ function renderListPreview(items) {
   const sn    = document.getElementById('list-student').value;
   const pages = parseInt(document.getElementById('list-pages').value) || 1;
   const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
+  // Side 1 viser samme to-listers oppsett som utskriften (to forskjellige tilfeldige sett)
   const itemsB = getRandom(window._groceries, count);
+  const pageHTML = buildShoppingListPageHTML(items, itemsB, sn);
+
   document.getElementById('handleliste-preview').style.display = 'block';
+
+  // Scope MYNTLAND_BUTIKK_CSS til .preview-scaler ved å prefikse hver selektor.
+  // Fjerner først regler som ikke gir mening i forhåndsvisningen
+  // (:root, html/body, @page) og prefikser deretter resten med .preview-scaler.
+  function scopePreviewCss(css) {
+    // Strip ut regler vi ikke vil ha
+    css = css
+      .replace(/:root\s*\{[^}]*\}/g, '')
+      .replace(/html\s*,\s*body\s*\{[^}]*\}/g, '')
+      .replace(/@page\s*\{[^}]*\}/g, '');
+    // Prefiks alle selektorer på toppnivå med .preview-scaler
+    // Vi splitter på blokker ({...}) og behandler selektordelen før hver blokk.
+    return css.replace(/(^|\})\s*([^{}]+)\{/g, function(_m, close, selectors) {
+      var prefixed = selectors.split(',').map(function(s){
+        s = s.trim();
+        if (!s) return s;
+        // Hvis allerede prefikset (defensiv) — la stå
+        if (s.indexOf('.preview-scaler') === 0) return s;
+        return '.preview-scaler ' + s;
+      }).join(', ');
+      return close + ' ' + prefixed + '{';
+    });
+  }
+  var scopedBokCss = scopePreviewCss(MYNTLAND_BUTIKK_CSS);
+
   document.getElementById('handleliste-content').innerHTML =
-    `<style>${MYNT_LIST_PREVIEW_CSS}</style>
-     <div class="mynt-preview-wrap">
-       <div class="mynt-row">
-         ${myntListePreviewHTML(items, sn, 0)}
-         ${myntListePreviewHTML(itemsB, sn, 1)}
-       </div>
+    `<style>
+       .preview-stage{position:relative;width:100%;background:#EFE9D8;border-radius:12px;padding:12px;overflow:hidden}
+       .preview-scaler{transform-origin:top left;background:white;box-shadow:0 4px 16px rgba(42,31,61,.18);position:relative;--gull:#C99517;--gull-lys:#FFF7DD;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--pergament:#FBF2D6;font-family:'Nunito',sans-serif;color:#2A1F3D}
+       ${scopedBokCss}
+     </style>
+     <div class="preview-stage" id="preview-stage">
+       <div class="preview-scaler" id="preview-scaler">${pageHTML}</div>
      </div>
-     <p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Forhåndsvisning av side 1. Totalt ${pages} side${pages>1?'r':''} genereres med unike, tilfeldige lister. Trykk «Skriv ut» for full utskrift.</p>`;
+     <p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Forhåndsvisning av side 1 (samme oppsett som utskriften). Totalt ${pages} side${pages>1?'r':''} genereres med unike, tilfeldige lister. Trykk «Skriv ut» for full utskrift.</p>`;
+
+  // Skaler ned slik at hele A4 landscape (297mm bred) passer i kortet
+  requestAnimationFrame(() => {
+    const stage = document.getElementById('preview-stage');
+    const scaler = document.getElementById('preview-scaler');
+    if (!stage || !scaler) return;
+    // 297mm i piksler ≈ 297 * 96 / 25.4 ≈ 1122.5 px
+    const A4_LANDSCAPE_WIDTH_PX  = 297 * 96 / 25.4;
+    const A4_LANDSCAPE_HEIGHT_PX = 210 * 96 / 25.4;
+    const fit = () => {
+      const available = stage.clientWidth - 24; // minus padding
+      const scale = Math.min(1, available / A4_LANDSCAPE_WIDTH_PX);
+      scaler.style.transform = `scale(${scale})`;
+      scaler.style.width  = A4_LANDSCAPE_WIDTH_PX + 'px';
+      scaler.style.height = A4_LANDSCAPE_HEIGHT_PX + 'px';
+      // Reserver høyde på containeren etter skalering
+      stage.style.height = (A4_LANDSCAPE_HEIGHT_PX * scale + 24) + 'px';
+    };
+    fit();
+    // Re-fit ved vindusendring (lytteren legges på én gang)
+    if (!window._previewResizeHooked) {
+      window._previewResizeHooked = true;
+      window.addEventListener('resize', () => {
+        if (document.getElementById('preview-scaler')) fit();
+      });
+    }
+  });
 }
 
 function makeOneListPageHTML(sn, items, pageNum) {
