@@ -559,9 +559,13 @@
     </div>
 
     <div class="merke-info-box" style="margin-top:1rem;">
-      💡 <strong>Visste du?</strong> Hver mandag pengene ligger på sparekontoen, får du 5 % i renter. Setter du inn på <strong>mandag</strong>, rekker pengene én mandag til – og du får renter <strong>flere ganger</strong>! Setter du inn på <strong>søndag</strong>, må de vente nesten en hel uke før første renter. 🐢 <strong>Jo lenger – jo mer!</strong> 🚀
-      <div style="margin-top:.6rem;padding-top:.6rem;border-top:1.5px dashed var(--border);font-weight:600;">
-        🏦 <strong>I ekte banker</strong> får du renter bare <strong>én gang i året</strong>. I Myntland får du det hver mandag – så her går det mye fortere!
+      💡 <strong>Visste du?</strong> Banken sjekker sparekontoen din <strong>hver dag</strong> og gir deg litt renter for hver dag pengene har ligget der. Hver mandag legger Myntland sammen alle dagene og betaler ut rentene. 📅
+      <div style="margin-top:.5rem;">
+        🚀 Innskudd <strong>mandag</strong> → pengene rekker 7 dager → mest renter!<br>
+        🐢 Innskudd <strong>søndag</strong> → pengene rekker bare 1 dag → veldig lite renter.
+      </div>
+      <div style="margin-top:.6rem;padding-top:.6rem;border-top:1.5px dashed var(--border);">
+        🏦 <strong>I ekte banker</strong> fungerer det på samme måte: renter regnes hver dag, men legges på kontoen din én gang i året.
       </div>
     </div>
 
@@ -1229,8 +1233,10 @@ async function loadTransactions(studentFbKey) {
 // ════════════════════════════════════════════════════════════
 // SPAREKONTO – 5 % ukentlig rente, utbetales mandag
 // ════════════════════════════════════════════════════════════
-let savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+let savingsState = { balance: 0, history: [], lastInterestPaid: 0, lockedBalance: 0, pendingDeposits: [] };
 let savingsAction = 'deposit'; // 'deposit' eller 'withdraw'
+const MS_PER_DAY = 24 * 3600 * 1000;
+const WEEKLY_RATE = 0.05; // 5 % per uke. Dagsrente = saldo * 0,05 * (dager/7)
 
 // Hjelpefunksjon: returnerer ms-tidspunktet for siste mandag kl 00:00 (lokal tid)
 function lastMondayTs(now) {
@@ -1244,23 +1250,29 @@ function lastMondayTs(now) {
 
 async function loadSavings(studentFbKey) {
   if (!window._get || !window._ref || !window._db) {
-    savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+    savingsState = { balance: 0, history: [], lastInterestPaid: 0, lockedBalance: 0, pendingDeposits: [] };
     return;
   }
   try {
     const snap = await window._get(window._ref(window._db, 'savings14/' + studentFbKey));
     const v = snap.val();
     if (v) {
+      const bal = v.balance || 0;
+      // Bakoverkompatibilitet: hvis gamle felter mangler, regn hele saldoen som "låst"
+      // (har stått lenge nok til å få full ukerente neste mandag).
+      const hasNewFields = (v.lockedBalance !== undefined) || (v.pendingDeposits !== undefined);
       savingsState = {
-        balance: v.balance || 0,
+        balance: bal,
         history: v.history ? Object.values(v.history).sort((a,b) => (a.ts||0) - (b.ts||0)) : [],
-        lastInterestPaid: v.lastInterestPaid || 0
+        lastInterestPaid: v.lastInterestPaid || 0,
+        lockedBalance: hasNewFields ? (v.lockedBalance || 0) : bal,
+        pendingDeposits: v.pendingDeposits ? Object.values(v.pendingDeposits) : []
       };
     } else {
-      savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+      savingsState = { balance: 0, history: [], lastInterestPaid: 0, lockedBalance: 0, pendingDeposits: [] };
     }
   } catch(e) {
-    savingsState = { balance: 0, history: [], lastInterestPaid: 0 };
+    savingsState = { balance: 0, history: [], lastInterestPaid: 0, lockedBalance: 0, pendingDeposits: [] };
   }
 }
 
@@ -1284,7 +1296,10 @@ async function setLastInterestPaid(studentFbKey, ts) {
   savingsState.lastInterestPaid = ts;
 }
 
-// Sjekker om det skal utbetales rente: 5 % per uke, telles per mandag som har passert siden lastInterestPaid
+// Sjekker om det skal utbetales rente. Ny modell (virkelighetsnær):
+// - "Låst saldo" (det som var der ved forrige mandag) får full ukerente: saldo * 5 %.
+// - Ventende innskudd (gjort midt i uka) får dagsrente: amount * 5 % * (dager/7), rundet ned.
+// - Hver mandag som har passert siden lastInterestPaid utløser én utbetaling.
 async function checkAndPayInterest(studentFbKey) {
   if (savingsState.balance <= 0) return;
   const now = Date.now();
@@ -1293,38 +1308,71 @@ async function checkAndPayInterest(studentFbKey) {
 
   if (lastPaid >= lastMon) return; // allerede utbetalt for denne mandagen
 
-  // Hvor mange mandager har passert? (vanligvis 1, men kan være flere ved langvarig fravær)
+  // Hvor mange mandager skal utbetales? (normalt 1, kan være flere ved langvarig fravær)
   let weeksToPay = 0;
   if (lastPaid === 0) {
-    weeksToPay = 1; // første gang: kun én utbetaling for forrige mandag
+    weeksToPay = 1;
   } else {
     const lastPaidMon = lastMondayTs(lastPaid);
-    weeksToPay = Math.round((lastMon - lastPaidMon) / (7 * 24 * 3600 * 1000));
+    weeksToPay = Math.round((lastMon - lastPaidMon) / (7 * MS_PER_DAY));
     if (weeksToPay < 1) weeksToPay = 1;
     if (weeksToPay > 8) weeksToPay = 8; // sikkerhetsgrense
   }
 
-  // Utbetal rentene én etter én – så grafen viser hver mandag
-  let bal = savingsState.balance;
   let totalInterestPaid = 0;
+
+  // Kopier inn state lokalt – oppdaterer Firebase samlet til slutt
+  let lockedBal = savingsState.lockedBalance || 0;
+  let pending   = Array.isArray(savingsState.pendingDeposits) ? [...savingsState.pendingDeposits] : [];
+
+  // Utbetal mandagene én for én, eldste først
   for (let i = 0; i < weeksToPay; i++) {
-    const interest = Math.floor(bal * 0.05);
-    if (interest <= 0) break;
-    bal += interest;
-    totalInterestPaid += interest;
-    // Tidsstempel for den aktuelle mandagen
-    const mondayTs = lastMon - (weeksToPay - 1 - i) * 7 * 24 * 3600 * 1000;
-    await saveSavingsRecord(studentFbKey, {
-      type: 'interest', amount: interest, ts: mondayTs, balanceAfter: bal
-    });
-    // Logg også i hovedtransaksjonene så det vises på Nettbank
-    await saveTransaction(studentFbKey, {
-      type: 'income', icon: '📈', desc: 'Renter på sparekonto (5 %)', amount: interest, ts: mondayTs
-    });
-    transactions.unshift({ type:'income', icon:'📈', desc:'Renter på sparekonto (5 %)', amount: interest, ts: mondayTs });
+    const mondayTs = lastMon - (weeksToPay - 1 - i) * 7 * MS_PER_DAY;
+
+    // 1) Full ukerente på låst saldo
+    let interestThisMonday = Math.floor(lockedBal * WEEKLY_RATE);
+
+    // 2) Dagsrente på ventende innskudd (kun for den FØRSTE mandagen vi utbetaler;
+    //    etter første utbetaling går alt over i låst saldo og er der hele uka)
+    if (i === 0 && pending.length) {
+      for (const dep of pending) {
+        const days = Math.max(0, Math.min(7, Math.floor((mondayTs - (dep.ts||0)) / MS_PER_DAY)));
+        const depInterest = Math.floor(dep.amount * WEEKLY_RATE * (days / 7));
+        interestThisMonday += depInterest;
+      }
+    }
+
+    if (interestThisMonday <= 0 && lockedBal <= 0 && pending.length === 0) break;
+
+    // Etter denne mandagen: alle ventende innskudd "låses" og blir en del av lockedBal,
+    // og renten legges også til lockedBal.
+    const pendingSum = pending.reduce((s, d) => s + (d.amount||0), 0);
+    lockedBal = lockedBal + pendingSum + interestThisMonday;
+    pending = [];
+
+    if (interestThisMonday > 0) {
+      totalInterestPaid += interestThisMonday;
+      await saveSavingsRecord(studentFbKey, {
+        type: 'interest', amount: interestThisMonday, ts: mondayTs, balanceAfter: lockedBal
+      });
+      await saveTransaction(studentFbKey, {
+        type: 'income', icon: '📈', desc: 'Renter på sparekonto (5 %)', amount: interestThisMonday, ts: mondayTs
+      });
+      transactions.unshift({ type:'income', icon:'📈', desc:'Renter på sparekonto (5 %)', amount: interestThisMonday, ts: mondayTs });
+    }
   }
-  await setSavingsBalance(studentFbKey, bal);
-  await setLastInterestPaid(studentFbKey, lastMon);
+
+  // Skriv ny tilstand til Firebase
+  await window._update(window._ref(window._db, 'savings14/' + studentFbKey), {
+    balance: lockedBal,
+    lockedBalance: lockedBal,
+    pendingDeposits: pending, // alltid tom her, men eksplisitt skriving rydder gamle data
+    lastInterestPaid: lastMon
+  });
+  savingsState.balance = lockedBal;
+  savingsState.lockedBalance = lockedBal;
+  savingsState.pendingDeposits = pending;
+  savingsState.lastInterestPaid = lastMon;
 
   // Spor rentebidraget for Rentemester-merket
   // Fikset: leser nåværende verdi fra Firebase i stedet for å stole på _currentStudent,
@@ -1734,13 +1782,23 @@ async function confirmSavingsAction() {
   try {
     if (savingsAction === 'deposit') {
       if (s.balance < amount) { errEl.textContent = 'Du har ikke nok på hovedkontoen.'; return; }
+      const now = Date.now();
       const newMain    = s.balance - amount;
       const newSavings = savingsState.balance + amount;
+
+      // Legg innskuddet i pendingDeposits (det får dagsrente til neste mandag)
+      const newPending = [...(savingsState.pendingDeposits || []), { amount, ts: now }];
+
       await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
       window._currentStudent.balance = newMain;
-      await setSavingsBalance(s.fbKey, newSavings);
-      await saveSavingsRecord(s.fbKey, { type:'deposit', amount, ts: Date.now(), balanceAfter: newSavings });
-      const tx = { type:'expense', icon:'🏦', desc:'Innskudd til sparekonto', amount: -amount, ts: Date.now() };
+      await window._update(window._ref(window._db, 'savings14/' + s.fbKey), {
+        balance: newSavings,
+        pendingDeposits: newPending
+      });
+      savingsState.balance = newSavings;
+      savingsState.pendingDeposits = newPending;
+      await saveSavingsRecord(s.fbKey, { type:'deposit', amount, ts: now, balanceAfter: newSavings });
+      const tx = { type:'expense', icon:'🏦', desc:'Innskudd til sparekonto', amount: -amount, ts: now };
       await saveTransaction(s.fbKey, tx);
       transactions.unshift(tx);
       document.getElementById('customer-balance').textContent = newMain;
@@ -1753,13 +1811,43 @@ async function confirmSavingsAction() {
       showSuccess('🏦','Satt inn!','+' + amount + ' 🪙', 'På sparekonto: ' + newSavings + ' mynter');
     } else {
       if (savingsState.balance < amount) { errEl.textContent = 'Ikke nok på sparekontoen.'; return; }
+      const now = Date.now();
       const newMain    = s.balance + amount;
       const newSavings = savingsState.balance - amount;
+
+      // Uttak: ta fra pendingDeposits først (nyeste først – LIFO), så fra lockedBalance.
+      // Dette er snillest mot eleven: ferske innskudd har minst opptjent rente.
+      let remaining = amount;
+      let newPending = [...(savingsState.pendingDeposits || [])];
+      // Sorter nyeste først
+      newPending.sort((a, b) => (b.ts||0) - (a.ts||0));
+      while (remaining > 0 && newPending.length) {
+        const top = newPending[0];
+        if (top.amount <= remaining) {
+          remaining -= top.amount;
+          newPending.shift();
+        } else {
+          top.amount -= remaining;
+          remaining = 0;
+        }
+      }
+      let newLocked = savingsState.lockedBalance || 0;
+      if (remaining > 0) {
+        newLocked = Math.max(0, newLocked - remaining);
+      }
+
       await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newMain });
       window._currentStudent.balance = newMain;
-      await setSavingsBalance(s.fbKey, newSavings);
-      await saveSavingsRecord(s.fbKey, { type:'withdraw', amount, ts: Date.now(), balanceAfter: newSavings });
-      const tx = { type:'income', icon:'🏦', desc:'Uttak fra sparekonto', amount: +amount, ts: Date.now() };
+      await window._update(window._ref(window._db, 'savings14/' + s.fbKey), {
+        balance: newSavings,
+        lockedBalance: newLocked,
+        pendingDeposits: newPending
+      });
+      savingsState.balance = newSavings;
+      savingsState.lockedBalance = newLocked;
+      savingsState.pendingDeposits = newPending;
+      await saveSavingsRecord(s.fbKey, { type:'withdraw', amount, ts: now, balanceAfter: newSavings });
+      const tx = { type:'income', icon:'🏦', desc:'Uttak fra sparekonto', amount: +amount, ts: now };
       await saveTransaction(s.fbKey, tx);
       transactions.unshift(tx);
       document.getElementById('customer-balance').textContent = newMain;
