@@ -455,6 +455,137 @@
     background: rgba(255,255,255,0.25);
   }
 
+  /* Monster-galleri-modal — for individuelle monsterkort-PNG-er */
+  .monster-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 8, 35, 0.92);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    z-index: 1000;
+    overflow-y: auto;
+  }
+  .monster-modal.open { display: flex; }
+  .monster-modal-inner {
+    background: var(--bg);
+    border-radius: 16px;
+    max-width: 1100px;
+    width: 100%;
+    padding: 1.5rem 1.5rem 2rem;
+    position: relative;
+    margin: auto;
+  }
+  .monster-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-right: 3rem;
+  }
+  .monster-modal-title {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    color: var(--teal-dark);
+    font-size: 1.4rem;
+    margin: 0;
+  }
+  .monster-modal-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+  .monster-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0,0,0,0.08);
+    border: none;
+    color: var(--teal-dark);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .monster-modal-close:hover { background: rgba(0,0,0,0.15); }
+  .monster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min, 160px), 1fr));
+    gap: 0.75rem;
+  }
+  .monster-tile {
+    background: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .monster-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  }
+  .monster-tile-img {
+    width: 100%;
+    aspect-ratio: var(--gallery-aspect, 105 / 148);
+    object-fit: cover;
+    display: block;
+    background: #f0f0f0;
+  }
+  .monster-tile-dl {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.55rem;
+    background: var(--green);
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    font-family: inherit;
+  }
+  .monster-tile-dl:hover { background: var(--green-dark); }
+  .monster-tile-name {
+    text-align: center;
+    padding: 0.4rem 0.5rem 0;
+    font-weight: 700;
+    color: var(--teal-dark);
+    font-size: 0.95rem;
+  }
+  .monster-tile-tema {
+    text-align: center;
+    padding: 0.1rem 0.5rem 0.5rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .dl-btn.gallery-btn {
+    background: var(--purple-light);
+    color: var(--purple);
+    border-color: var(--purple-light);
+  }
+  .dl-btn.gallery-btn:hover {
+    background: var(--purple);
+    color: white;
+    border-color: var(--purple);
+  }
+  .dl-btn.gallery-btn .dl-btn-size {
+    color: var(--purple);
+  }
+  .dl-btn.gallery-btn:hover .dl-btn-size {
+    color: rgba(255,255,255,0.8);
+  }
+
   /* Hjelp-blokk */
   .help-box {
     background: var(--white);
@@ -608,6 +739,20 @@
   <img class="lightbox-img" id="lightbox-img" alt="Forhåndsvisning">
 </div>
 
+<!-- Galleri-modal — vises når man trykker "Se alle"-knappen på en ressurs -->
+<div class="monster-modal" id="monster-modal" role="dialog" aria-modal="true" aria-labelledby="monster-modal-title">
+  <div class="monster-modal-inner">
+    <button class="monster-modal-close" aria-label="Lukk">×</button>
+    <div class="monster-modal-header">
+      <div>
+        <h2 class="monster-modal-title" id="monster-modal-title">👀 Galleri</h2>
+        <div class="monster-modal-sub">Trykk «Last ned» for å hente det du vil bruke.</div>
+      </div>
+    </div>
+    <div class="monster-grid" id="monster-grid"></div>
+  </div>
+</div>
+
 <footer>
   <span>🪙 Myntland © 2026</span><br>
   <a href="index.html">Forsiden</a> ·
@@ -701,8 +846,21 @@ const RESOURCES = [
     thumb: 'materiell/thumbs/personlig-okonomi-9-infografikker.jpg',
     pdf: 'materiell/pdf/personlig-okonomi-9-infografikker.pdf',
     pdfSize: '1.7 MB',
-    png: 'materiell/png/personlig-okonomi-9-infografikker.png',
-    pngSize: '292 KB'
+    gallery: [
+      { navn: 'Inntekt',           tema: '1', fil: 'infografikk-1-inntekt.png',           pill: '#EF9F27', mykt: '#FAEEDA', dyp: '#A35E00' },
+      { navn: 'Utgifter',          tema: '2', fil: 'infografikk-2-utgifter.png',          pill: '#E879B7', mykt: '#FBE9F4', dyp: '#A53D7E' },
+      { navn: 'Budsjett',          tema: '3', fil: 'infografikk-3-budsjett.png',          pill: '#0EA5E9', mykt: '#DCEEF9', dyp: '#075985' },
+      { navn: 'Sparing',           tema: '4', fil: 'infografikk-4-sparing.png',           pill: '#16A34A', mykt: '#E0F1E2', dyp: '#0B4A23' },
+      { navn: 'Renter',            tema: '5', fil: 'infografikk-5-renter.png',            pill: '#9333EA', mykt: '#EEDFFA', dyp: '#581C87' },
+      { navn: 'Lån',               tema: '6', fil: 'infografikk-6-lan.png',               pill: '#DC2626', mykt: '#FAE3E0', dyp: '#7A1F1A' },
+      { navn: 'Gjeld',             tema: '7', fil: 'infografikk-7-gjeld.png',             pill: '#4338CA', mykt: '#E5E4F8', dyp: '#2A2380' },
+      { navn: 'Behov vs. ønsker',  tema: '8', fil: 'infografikk-8-behov-vs-onsker.png',   pill: '#EAB308', mykt: '#FCF1C9', dyp: '#7A5800' },
+      { navn: 'Smart forbruk',     tema: '9', fil: 'infografikk-9-smart-forbruk.png',     pill: '#6B7280', mykt: '#EEF0F2', dyp: '#374151' }
+    ],
+    galleryDir: 'materiell/png/infografikk-enkelt/',
+    galleryLabel: '9 plakater',
+    galleryTitle: '👀 Alle 9 infografikker',
+    galleryAspect: '842 / 595'
   },
   {
     id: 'diplom-myntmester',
@@ -749,8 +907,32 @@ const RESOURCES = [
     thumb: 'materiell/thumbs/monsterkort.jpg',
     pdf: 'materiell/pdf/monsterkort.pdf',
     pdfSize: '2.4 MB',
-    png: 'materiell/png/monsterkort.png',
-    pngSize: '328 KB'
+    gallery: [
+      { navn: 'Bjørk',   tema: 'FELLESSKAP',  fil: 'monsterkort-bjørk.png',   pill: '#1D9E75', mykt: '#E5F5EE', dyp: '#085041' },
+      { navn: 'Glød',    tema: 'FORBRUK',     fil: 'monsterkort-glød.png',    pill: '#EF9F27', mykt: '#FAEEDA', dyp: '#A35E00' },
+      { navn: 'Rosa',    tema: 'FRISTELSE',   fil: 'monsterkort-rosa.png',    pill: '#E879B7', mykt: '#FBE9F4', dyp: '#A53D7E' },
+      { navn: 'Måne',    tema: 'LÅN',         fil: 'monsterkort-måne.png',    pill: '#6B7280', mykt: '#EEF0F2', dyp: '#374151' },
+      { navn: 'Skygge',  tema: 'ÆRLIGHET',    fil: 'monsterkort-skygge.png',  pill: '#6B3FA0', mykt: '#EFE7F7', dyp: '#3D2360' },
+      { navn: 'Bølge',   tema: 'SPARING',     fil: 'monsterkort-bølge.png',   pill: '#4338CA', mykt: '#E5E4F8', dyp: '#2A2380' },
+      { navn: 'Natt',    tema: 'SPARING',     fil: 'monsterkort-natt.png',    pill: '#1E3A8A', mykt: '#E2E8F4', dyp: '#0F1F4D' },
+      { navn: 'Plomme',  tema: 'RISIKO',      fil: 'monsterkort-plomme.png',  pill: '#9B2C2C', mykt: '#F5E4E2', dyp: '#5C1A18' },
+      { navn: 'Drage',   tema: 'IMPULS',      fil: 'monsterkort-drage.png',   pill: '#DC2626', mykt: '#FAE3E0', dyp: '#7A1F1A' },
+      { navn: 'Stjerne', tema: 'VENNELÅN',    fil: 'monsterkort-stjerne.png', pill: '#D97706', mykt: '#FCEFD8', dyp: '#7A3F00' },
+      { navn: 'Skog',    tema: 'VERDIER',     fil: 'monsterkort-skog.png',    pill: '#16A34A', mykt: '#E0F1E2', dyp: '#0B4A23' },
+      { navn: 'Rust',    tema: 'GRUPPEPRESS', fil: 'monsterkort-rust.png',    pill: '#B45309', mykt: '#F5E6D5', dyp: '#5C2A00' },
+      { navn: 'Fersken', tema: 'ÆRLIGHET',    fil: 'monsterkort-fersken.png', pill: '#F97316', mykt: '#FCE5D5', dyp: '#8A3A0A' },
+      { navn: 'Mynte',   tema: 'VENNELÅN',    fil: 'monsterkort-mynte.png',   pill: '#10B981', mykt: '#DEF5EC', dyp: '#065F46' },
+      { navn: 'Sol',     tema: 'GRUPPEPRESS', fil: 'monsterkort-sol.png',     pill: '#EAB308', mykt: '#FCF1C9', dyp: '#7A5800' },
+      { navn: 'Tang',    tema: 'PLANLEGGING', fil: 'monsterkort-tang.png',    pill: '#0891B2', mykt: '#D6EEF3', dyp: '#0A4A5C' },
+      { navn: 'Lilje',   tema: 'GAVER',       fil: 'monsterkort-lilje.png',   pill: '#9333EA', mykt: '#EEDFFA', dyp: '#581C87' },
+      { navn: 'Bamse',   tema: 'PRISING',     fil: 'monsterkort-bamse.png',   pill: '#0EA5E9', mykt: '#DCEEF9', dyp: '#075985' },
+      { navn: 'Sand',    tema: 'TÅLMODIGHET', fil: 'monsterkort-sand.png',    pill: '#A78B4A', mykt: '#F2EBDB', dyp: '#5C4720' },
+      { navn: 'Plask',   tema: 'FOMO',        fil: 'monsterkort-plask.png',   pill: '#06B6D4', mykt: '#D5F0F5', dyp: '#0A5466' }
+    ],
+    galleryDir: 'materiell/png/monsterkort-enkelt/',
+    galleryLabel: '20 kort',
+    galleryTitle: '👀 Alle 20 monsterkort',
+    galleryAspect: '105 / 148'
   },
   {
     id: 'kortstokk-spillkort',
@@ -760,9 +942,7 @@ const RESOURCES = [
     trinn: '1.–4. trinn og 5.–7. trinn',
     thumb: 'materiell/thumbs/kortstokk-spillkort.jpg',
     pdf: 'materiell/pdf/kortstokk-spillkort.pdf',
-    pdfSize: '3.1 MB',
-    png: 'materiell/png/kortstokk-spillkort.png',
-    pngSize: '361 KB'
+    pdfSize: '3.1 MB'
   },
   {
     id: 'memory-okonomi',
@@ -772,9 +952,7 @@ const RESOURCES = [
     trinn: '1.–4. trinn og 5.–7. trinn',
     thumb: 'materiell/thumbs/memory-okonomi.jpg',
     pdf: 'materiell/pdf/memory-okonomi.pdf',
-    pdfSize: '1.8 MB',
-    png: 'materiell/png/memory-okonomi.png',
-    pngSize: '1.1 MB'
+    pdfSize: '1.8 MB'
   }
   // Legg til flere ressurser her etterhvert som de blir klare
 ];
@@ -838,10 +1016,14 @@ function renderCard(r) {
           <span class="dl-btn-format">📥 PDF</span>
           <span class="dl-btn-size">${r.pdfSize}</span>
         </a>
-        <a href="${r.png}" class="dl-btn" download>
+        ${r.png ? `<a href="${r.png}" class="dl-btn" download>
           <span class="dl-btn-format">🖼️ PNG</span>
           <span class="dl-btn-size">${r.pngSize}</span>
-        </a>
+        </a>` : ''}
+        ${r.gallery ? `<button class="dl-btn gallery-btn" data-monster-gallery="${r.id}">
+          <span class="dl-btn-format">👀 Se alle</span>
+          <span class="dl-btn-size">${r.galleryLabel || (r.gallery.length + ' stk')}</span>
+        </button>` : ''}
       </div>
     </div>
   `;
@@ -918,6 +1100,62 @@ document.getElementById('gallery').addEventListener('click', (e) => {
   if (preview && preview.dataset.fullimg) {
     openLightbox(preview.dataset.fullimg, preview.querySelector('img')?.alt);
   }
+
+  // Galleri-knapp: åpne monster-modal
+  const galleryBtn = e.target.closest('[data-monster-gallery]');
+  if (galleryBtn) {
+    openMonsterGallery(galleryBtn.dataset.monsterGallery);
+  }
+});
+
+// Galleri-modal — bygger grid av individuelle PNG-er (brukes for både monsterkort og infografikker)
+const monsterModal = document.getElementById('monster-modal');
+const monsterGrid = document.getElementById('monster-grid');
+const monsterClose = monsterModal.querySelector('.monster-modal-close');
+const monsterTitle = document.getElementById('monster-modal-title');
+
+function openMonsterGallery(resourceId) {
+  const r = RESOURCES.find(x => x.id === resourceId);
+  if (!r || !r.gallery) return;
+  monsterTitle.textContent = r.galleryTitle || '👀 Galleri';
+  // Sett aspect-ratio på alle bilder
+  const aspect = r.galleryAspect || '105 / 148';
+  monsterGrid.style.setProperty('--gallery-aspect', aspect);
+  // For brede formater (infografikker): bredere tiles
+  const isWide = aspect.startsWith('842') || aspect.startsWith('4 /') || aspect.startsWith('3 /');
+  monsterGrid.style.setProperty('--tile-min', isWide ? '260px' : '160px');
+  monsterGrid.innerHTML = '';
+  r.gallery.forEach(item => {
+    const path = (r.galleryDir || '') + encodeURIComponent(item.fil);
+    const tile = document.createElement('div');
+    tile.className = 'monster-tile';
+    tile.style.borderColor = item.pill;
+    tile.innerHTML = `
+      <img class="monster-tile-img" src="${path}" alt="${item.navn}" loading="lazy"
+           style="background:${item.mykt}"
+           onerror="this.style.opacity='0.3'">
+      <div class="monster-tile-name" style="color:${item.dyp}">${item.navn}</div>
+      <div class="monster-tile-tema">${item.tema}</div>
+      <a href="${path}" download class="monster-tile-dl" style="background:${item.pill}">
+        📥 Last ned
+      </a>
+    `;
+    monsterGrid.appendChild(tile);
+  });
+  monsterModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMonsterGallery() {
+  monsterModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+monsterModal.addEventListener('click', (e) => {
+  if (e.target === monsterModal || e.target === monsterClose || e.target.closest('.monster-modal-close')) {
+    closeMonsterGallery();
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && monsterModal.classList.contains('open')) closeMonsterGallery();
 });
 
 // Fane-bytting
