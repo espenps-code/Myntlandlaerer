@@ -142,6 +142,12 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .tabs-trinn {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid var(--border);
@@ -208,14 +214,6 @@
   .tab.trinn-57:not(.active) .tab-count {
     background: var(--purple-light);
     color: var(--purple);
-  }
-
-  /* Skille mellom kategori-faner og trinn-faner */
-  .tab-divider {
-    width: 2px;
-    background: var(--border);
-    margin: 0 0.25rem;
-    border-radius: 2px;
   }
 
   /* Galleri */
@@ -302,17 +300,28 @@
     flex: 1;
   }
 
-  .resource-tag {
-    align-self: flex-start;
-    background: var(--amber-light, #FAEEDA);
-    color: var(--amber-dark);
+  .resource-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+  }
+  .trinn-pill {
     font-size: 0.7rem;
     font-weight: 900;
     padding: 3px 10px;
     border-radius: 20px;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .trinn-pill.t14 {
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .trinn-pill.t57 {
+    background: var(--purple-light);
+    color: var(--purple);
   }
 
   .resource-title {
@@ -558,10 +567,10 @@
   <!-- Kategori-faner -->
   <div class="tabs" role="tablist">
     <button class="tab active" data-category="alle" role="tab">
-      Alle <span class="tab-count" data-count="alle">8</span>
+      Alle <span class="tab-count" data-count="alle">11</span>
     </button>
     <button class="tab" data-category="plakater" role="tab">
-      🖼️ Plakater <span class="tab-count" data-count="plakater">6</span>
+      🖼️ Plakater <span class="tab-count" data-count="plakater">7</span>
     </button>
     <button class="tab" data-category="monsterkort" role="tab">
       👾 Monsterkort <span class="tab-count" data-count="monsterkort">0</span>
@@ -573,9 +582,11 @@
       📝 Skjemaer <span class="tab-count" data-count="skjemaer">1</span>
     </button>
     <button class="tab" data-category="spillkort" role="tab">
-      🎴 Spillkort <span class="tab-count" data-count="spillkort">0</span>
+      🎴 Spillkort <span class="tab-count" data-count="spillkort">2</span>
     </button>
-    <div class="tab-divider" aria-hidden="true"></div>
+  </div>
+
+  <div class="tabs-trinn" role="tablist" aria-label="Filtrer etter trinn">
     <button class="tab trinn-14" data-trinn="14" role="tab">
       🟢 1.–4. trinn <span class="tab-count" data-count="trinn-14">0</span>
     </button>
@@ -621,18 +632,6 @@
      pngSize     – filstørrelse som tekst, f.eks. '1.4 MB'
 */
 const RESOURCES = [
-  {
-    id: 'pultstripe',
-    category: 'plakater',
-    title: 'Pultstripe – Min pult',
-    description: 'Klipp-og-bruk pultstripe med tallinje 0–50, hundrebrett, alfabet, tier-venner, mynter, sedler, ukedager og måneder. 3 stripper per A4-ark – klar til å klippe ut og lime på pulten. Felter for navn og klasse.',
-    trinn: '1.–4. trinn',
-    thumb: 'materiell/thumbs/pultstripe.jpg',
-    pdf: 'materiell/pdf/pultstripe.pdf',
-    pdfSize: '616 KB',
-    png: 'materiell/png/pultstripe.png',
-    pngSize: '275 KB'
-  },
   {
     id: 'personlig-okonomi-57',
     category: 'plakater',
@@ -718,6 +717,18 @@ const RESOURCES = [
     pngSize: '132 KB'
   },
   {
+    id: 'pultstripe',
+    category: 'plakater',
+    title: 'Pultstripe – Min pult',
+    description: 'Klipp-og-bruk pultstripe med tallinje 0–50, hundrebrett, alfabet, tier-venner, mynter, sedler, ukedager og måneder. 3 stripper per A4-ark – klar til å klippe ut og lime på pulten. Felter for navn og klasse.',
+    trinn: '1.–4. trinn',
+    thumb: 'materiell/thumbs/pultstripe.jpg',
+    pdf: 'materiell/pdf/pultstripe.pdf',
+    pdfSize: '616 KB',
+    png: 'materiell/png/pultstripe.png',
+    pngSize: '275 KB'
+  },
+  {
     id: 'jobbsoknad',
     category: 'skjemaer',
     title: 'Jobbsøknad',
@@ -795,13 +806,19 @@ function renderCard(r) {
   const card = document.createElement('article');
   card.className = 'resource-card';
   card.dataset.category = r.category;
+
+  // Bygg trinn-piller basert på trinn-feltet
+  const pills = [];
+  if (matchesTrinn(r, '14')) pills.push('<span class="trinn-pill t14">1.–4. trinn</span>');
+  if (matchesTrinn(r, '57')) pills.push('<span class="trinn-pill t57">5.–7. trinn</span>');
+
   card.innerHTML = `
     <div class="resource-preview" data-fullimg="${r.png || r.thumb}">
       <img src="${r.thumb}" alt="${r.title}" loading="lazy"
            onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'preview-placeholder',innerHTML:'<svg width=\\'48\\' height=\\'48\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><polyline points=\\'21 15 16 10 5 21\\'/></svg><span>Forhåndsvisning kommer</span>'}))">
     </div>
     <div class="resource-body">
-      <span class="resource-tag">${r.trinn}</span>
+      <div class="resource-tags">${pills.join('')}</div>
       <h3 class="resource-title">${r.title}</h3>
       <p class="resource-desc">${r.description}</p>
       <div class="download-row">
