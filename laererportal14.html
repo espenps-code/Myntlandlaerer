@@ -2697,21 +2697,22 @@ function renderListPreview(items) {
   document.getElementById('handleliste-preview').style.display = 'block';
 
   // Scope MYNTLAND_BUTIKK_CSS til .preview-scaler ved å prefikse hver selektor.
-  // Fjerner først regler som ikke gir mening i forhåndsvisningen
-  // (:root, html/body, @page) og prefikser deretter resten med .preview-scaler.
+  // Fjerner først kommentarer og regler som ikke gir mening i forhåndsvisningen
+  // (:root, html/body, @page), og prefikser deretter resten med .preview-scaler.
   function scopePreviewCss(css) {
+    // VIKTIG: strip CSS-kommentarer først — ellers blir /*…*/ behandlet som
+    // selektor av regexen under, noe som ødelegger reglene rundt.
+    css = css.replace(/\/\*[\s\S]*?\*\//g, '');
     // Strip ut regler vi ikke vil ha
     css = css
       .replace(/:root\s*\{[^}]*\}/g, '')
       .replace(/html\s*,\s*body\s*\{[^}]*\}/g, '')
       .replace(/@page\s*\{[^}]*\}/g, '');
     // Prefiks alle selektorer på toppnivå med .preview-scaler
-    // Vi splitter på blokker ({...}) og behandler selektordelen før hver blokk.
     return css.replace(/(^|\})\s*([^{}]+)\{/g, function(_m, close, selectors) {
       var prefixed = selectors.split(',').map(function(s){
         s = s.trim();
         if (!s) return s;
-        // Hvis allerede prefikset (defensiv) — la stå
         if (s.indexOf('.preview-scaler') === 0) return s;
         return '.preview-scaler ' + s;
       }).join(', ');
