@@ -2639,19 +2639,43 @@ function renderHandlelisteSelect() {
     </div>`).join('');
 }
 function generateShoppingList() {
-  const sel = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
-  const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
-  const items = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)).slice(0, count) : getRandom(window._groceries, count);
-  renderListPreview(items);
+  // Trigger forhåndsvisning av side 1. Selve datasettet bygges felles
+  // for forhåndsvisning og utskrift slik at de garantert er identiske.
+  renderListPreview();
 }
-function generateRandomList() { renderListPreview(getRandom(window._groceries, Math.min(8, parseInt(document.getElementById('list-count').value)||5))); }
+function generateRandomList() {
+  // Når læreren ber om «tilfeldig», nullstiller vi valget i UI og lar
+  // den delte generatoren produsere helt tilfeldige lister.
+  document.querySelectorAll('#handleliste-select .grocery-item.selected').forEach(e => e.classList.remove('selected'));
+  // Tving nytt seed/pool så lærere kan trykke flere ganger og få noe nytt
+  window._lastShoppingListPages = null;
+  renderListPreview();
+}
 function getRandom(arr, n)    { return [...arr].sort(() => Math.random()-.5).slice(0, Math.min(n, arr.length)); }
 
-// Forhåndsvisning bruker NØYAKTIG samme CSS og HTML som utskriften
-// (MYNTLAND_BUTIKK_CSS + buildShoppingListPageHTML), bare skalert ned med
-// transform:scale slik at en ekte A4-landscape-side passer inn i kortet.
-// Slik er det umulig å få avvik mellom forhåndsvisning og utskrift.
+// ══════════════════════════════════════════════════════════
+// FELLES generator: produserer ferdige sider for handlelister.
+// Brukes av BÅDE forhåndsvisning og utskrift — slik at de viser
+// nøyaktig samme innhold (ikke bare samme oppsett).
+//
+// Returnerer { sn, count, pages, pagesData: [[a,b], [a,b], ...] }
+// hvor hver pages-rad er to lister (venstre + høyre på A4-arket).
+// ══════════════════════════════════════════════════════════
+function generateShoppingListPages() {
+  const sn    = document.getElementById('list-student').value;
+  const sel   = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
+  const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
+  const pages = Math.max(1, Math.min(20, parseInt(document.getElementById('list-pages').value) || 1));
+  const pool  = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)) : (window._groceries || []);
 
+  const pagesData = [];
+  for (let p = 0; p < pages; p++) {
+    pagesData.push([ getRandom(pool, count), getRandom(pool, count) ]);
+  }
+  return { sn, count, pages, pool, pagesData };
+}
+
+// Bygg HTML for én A4-side basert på to lister
 function buildShoppingListPageHTML(arr1, arr2, sn) {
   function listHTML(arr, name) {
     return `<div class="liste">
@@ -2686,13 +2710,15 @@ function buildShoppingListPageHTML(arr1, arr2, sn) {
   </div>`;
 }
 
-function renderListPreview(items) {
-  const sn    = document.getElementById('list-student').value;
-  const pages = parseInt(document.getElementById('list-pages').value) || 1;
-  const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
-  // Side 1 viser samme to-listers oppsett som utskriften (to forskjellige tilfeldige sett)
-  const itemsB = getRandom(window._groceries, count);
-  const pageHTML = buildShoppingListPageHTML(items, itemsB, sn);
+function renderListPreview() {
+  // Generer ALLE sidene NÅ og cache dem på window, slik at både
+  // forhåndsvisning og utskrift bruker samme datasett.
+  const data = generateShoppingListPages();
+  if (!data.pool.length) { alert('Ingen varer tilgjengelig.'); return; }
+  window._lastShoppingListPages = data;
+
+  const [a, b] = data.pagesData[0];
+  const pageHTML = buildShoppingListPageHTML(a, b, data.sn);
 
   document.getElementById('handleliste-preview').style.display = 'block';
 
@@ -2735,7 +2761,7 @@ function renderListPreview(items) {
      <div class="preview-stage" id="preview-stage">
        <div class="preview-scaler" id="preview-scaler">${pageHTML}</div>
      </div>
-     <p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Forhåndsvisning av side 1 (samme oppsett som utskriften). Totalt ${pages} side${pages>1?'r':''} genereres med unike, tilfeldige lister. Trykk «Skriv ut» for full utskrift.</p>`;
+     <p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;">💡 Forhåndsvisning av side 1 — nøyaktig det utskriften vil generere. Totalt ${data.pages} side${data.pages>1?'r':''}${data.pages>1?' (hver med to forskjellige lister)':''}. Trykk «Skriv ut» for full utskrift.</p>`;
 
   // Skaler ned slik at hele A4 landscape (297mm bred) passer i kortet
   requestAnimationFrame(() => {
@@ -2818,65 +2844,30 @@ function makeOneListPageHTML(sn, items, pageNum) {
 }
 
 function printShoppingList() {
-  const sn    = document.getElementById('list-student').value;
-  const sel   = [...document.querySelectorAll('#handleliste-select .grocery-item.selected')].map(e => e.dataset.key);
-  const count = Math.min(8, parseInt(document.getElementById('list-count').value) || 5);
-  const pages = Math.max(1, Math.min(20, parseInt(document.getElementById('list-pages').value) || 1));
-  const pool  = sel.length ? window._groceries.filter(g => sel.includes(g.fbKey)) : window._groceries;
-  if (!pool.length) { alert('Ingen varer tilgjengelig.'); return; }
+  // Bruk EKSAKT samme data som forhåndsvisningen viser. Hvis brukeren ikke
+  // har trykket «Generer» enda, bygg datasettet nå (slik var den gamle
+  // oppførselen). Etterpå mister vi cachen så «Generer» igjen lager et
+  // nytt sett av tilfeldige lister.
+  const data = window._lastShoppingListPages || generateShoppingListPages();
+  if (!data.pool.length) { alert('Ingen varer tilgjengelig.'); return; }
+  const { sn, pagesData } = data;
 
   // Bruker den ekte monster-engine i portalen (samme som bankkort/avatar).
   // outerHTML konverterer img.src til absolutt URL automatisk, slik at
   // bildene laster i popup-vinduet.
   function monsterHTMLFor(idx) {
     if (typeof window.makeAnimalSVG !== 'function') return '';
-    // Seed så vi får varierte monstre på samme side.
     const el = window.makeAnimalSVG(idx * 13 + 7, 130);
     if (!el) return '';
-    // Fjern bakgrunnsfargen — handlelisten har sin egen monster-ramme
-    // (med pergament-bakgrunn) som monsteret legges oppå.
     el.style.background = 'transparent';
     el.style.borderRadius = '0';
     return el.outerHTML;
   }
 
-  function listHTML(arr, name, monsterIdx) {
-    return `<div class="liste">
-      <div class="head">
-        <div class="title-block">
-          <div class="kicker">🪙 Myntland · Marked</div>
-          <div class="title">HANDLELISTE</div>
-          <div class="sub">Min handletur i Myntland</div>
-        </div>
-        <div class="meta">
-          <div class="row"><span class="label">Navn</span><span class="line">${name||''}</span></div>
-          <div class="row"><span class="label">Dato</span><span class="line"></span></div>
-        </div>
-      </div>
-      <table>
-        <thead><tr><th style="width:8mm">#</th><th>Vare</th><th class="center" style="width:14mm">Bilde</th><th class="right" style="width:34mm">Pris 🪙</th></tr></thead>
-        <tbody>${arr.map((g,i) => `<tr>
-          <td class="num">${i+1}</td>
-          <td>${g.name}</td>
-          <td class="em">${g.emoji}</td>
-          <td class="pris"><div class="cell"><div class="line"></div></div></td>
-        </tr>`).join('')}</tbody>
-      </table>
-      <div class="sum"><div class="lbl"><span>🪙</span>SUM TOTALT</div><div class="sum-line"></div></div>
-      <div class="foot-line"><span>Regn ut total og gå til kassa</span><span class="stamp">MYNTLAND · MARKED</span></div>
-    </div>`;
-  }
-
+  // Bygg alle sider fra det allerede genererte datasettet
   let allPages = '';
-  let mi = 0;
-  for (let p = 0; p < pages; p++) {
-    const a = getRandom(pool, count);
-    const b = getRandom(pool, count);
-    allPages += `<div class="page landscape" style="width:297mm;height:210mm;">
-      <div class="page-corner tl">Myntland · Handleliste</div>
-      <div class="page-corner br">klipp i to · gi til to elever</div>
-      <div class="liste-page">${listHTML(a, sn, mi++)}${listHTML(b, sn, mi++)}</div>
-    </div>`;
+  for (const [a, b] of pagesData) {
+    allPages += buildShoppingListPageHTML(a, b, sn);
   }
 
   const _bh = window.buildPdfDownloadBanner('Slik laster du ned handlelister');
