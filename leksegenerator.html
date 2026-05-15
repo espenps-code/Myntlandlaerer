@@ -490,20 +490,20 @@ body {
 
 /* ── PRINT ── */
 @media print {
-  /* Gi skriveren en liten sikkerhetssone (6mm) langs kantene så
-     bunntekst og andre elementer ikke havner i den ikke-utskrivbare
-     sonen på fysiske printere. Vi kompenserer for marginen i selve
-     .worksheet ved å trekke fra bredden/høyden. */
-  @page { size: A4; margin: 6mm; }
+  /* Ingen printer-margin — vi bruker hele A4-arket (210×297mm).
+     OBS: Fysiske printere har som regel en liten ikke-utskrivbar sone
+     (~3–5mm). Worksheet-innholdet har derfor egen padding (10/16/14mm)
+     som holder all tekst trygt innenfor utskriftsområdet. */
+  @page { size: A4; margin: 0; }
   body { background: none !important; padding: 0 !important; margin: 0; }
   .screen-only, .hero { display: none !important; }
   #worksheet-wrap { max-width: none; margin: 0; }
   .worksheet {
     box-shadow: none !important;
     border-radius: 0 !important;
-    width: 198mm !important;           /* 210 − 2·6 */
-    min-height: 285mm !important;      /* 297 − 2·6 */
-    max-height: 285mm !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
     margin: 0 !important;
     transform: none !important;
     overflow: hidden;
@@ -1126,11 +1126,11 @@ function buildPage(opts) {
 }
 
 // Omtrentlig høydebudsjett for innholdet på én A4-side.
-// Ved utskrift har vi 285mm tilgjengelig (297mm − 2·6mm @page margin),
+// Ved utskrift har vi 297mm tilgjengelig (full A4, @page margin: 0),
 // minus worksheet-padding (10mm topp + 14mm bunn = 24mm),
 // minus header (~20mm) + info-linje (~8mm) + footer (~12mm) = 40mm.
-// Det gir 285 - 24 - 40 = 221mm reell plass. Sett til 220 for sikkerhet.
-const PAGE_CONTENT_BUDGET_MM = 220;
+// Det gir 297 - 24 - 40 = 233mm reell plass. Sett til 232 for sikkerhet.
+const PAGE_CONTENT_BUDGET_MM = 232;
 
 // Estimert høyde i mm per seksjon.
 // add/sub bruker 4-kolonne-layout med fast rutehøyde, så høyden er nær konstant.
