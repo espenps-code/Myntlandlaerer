@@ -513,21 +513,31 @@ body {
 .ws-footer {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 4mm; padding-top: 3mm;
+  padding-right: 28mm; /* gi plass til QR-kode i hjørnet */
   border-top: 0.4mm dashed #ccc;
   font-size: 2.5mm; color: #aaa; font-weight: 800;
 }
 .footer-monster { width: 9mm; height: 9mm; object-fit: contain; filter: drop-shadow(0 0.5mm 1.5mm rgba(0,0,0,0.15)); }
 
-/* QR-kode for retteportal */
-.ws-qr-block {
+/* QR-kode for retteportal — plassert absolutt i nedre høyre hjørne
+   av arket slik at den IKKE spiser plass fra innholdsbudsjettet. */
+.ws-qr-corner {
+  position: absolute;
+  bottom: 4mm;
+  right: 4mm;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 2mm;
+  gap: 1mm;
+  z-index: 5;
 }
 .ws-qr-img {
-  width: 24mm;
-  height: 24mm;
+  width: 22mm;
+  height: 22mm;
   display: block;
+  background: white;
+  padding: 1mm;
+  border-radius: 1mm;
 }
 .ws-qr-img img, .ws-qr-img canvas {
   width: 100% !important;
@@ -535,12 +545,11 @@ body {
   display: block;
 }
 .ws-qr-label {
-  font-size: 2.2mm;
-  color: #999;
+  font-size: 2mm;
+  color: #888;
   font-weight: 700;
-  line-height: 1.2;
-  text-align: right;
-  max-width: 24mm;
+  line-height: 1.1;
+  text-align: center;
 }
 
 /* Separator between pages on screen */
@@ -1196,24 +1205,27 @@ function buildPage(opts) {
         <img class="footer-monster" src="${footerMonster}" alt="">
         <span>Myntland Mattelekse</span>
       </div>
-      <div style="display:flex;align-items:center;gap:3mm">
-        <span>${pageIndicator}<span>${cls}</span></span>
-        <div class="ws-qr-block">
-          <div class="ws-qr-label">Skann for<br>retting</div>
-          <div class="ws-qr-img" data-qr-target="1"></div>
-        </div>
-      </div>
+      <div>${pageIndicator}<span>${cls}</span></div>
     </div>
+  </div>
+
+  <!-- QR-kode posisjoneres absolutt i nedre høyre hjørne av arket
+       slik at den ikke spiser plass fra innholdet. -->
+  <div class="ws-qr-corner">
+    <div class="ws-qr-label">Skann for<br>retting</div>
+    <div class="ws-qr-img" data-qr-target="1"></div>
   </div>
 </div>`;
 }
 
-// Omtrentlig høydebudsjett for innholdet på én A4-side (297mm minus padding/header/info/footer)
 // Omtrentlig høydebudsjett for innholdet på én A4-side.
 // Ved utskrift har vi 285mm tilgjengelig (297mm − 2·6mm @page margin),
 // minus worksheet-padding (10mm topp + 14mm bunn = 24mm),
-// minus header+info+footer (ca. 28mm). Gir ca. 230mm for seksjoner.
-const PAGE_CONTENT_BUDGET_MM = 230;
+// minus header (~20mm) + info-linje (~8mm) + footer (~12mm) = 40mm.
+// Det gir 285 - 24 - 40 = 221mm reell plass.
+// QR-koden plasseres absolutt i nedre høyre hjørne, så den spiser
+// IKKE av dette budsjettet. Vi setter litt margin for sikkerhets skyld.
+const PAGE_CONTENT_BUDGET_MM = 220;
 
 // Estimert høyde i mm per seksjon.
 // add/sub bruker 4-kolonne-layout med fast rutehøyde, så høyden er nær konstant.
@@ -1328,7 +1340,11 @@ function buildFasitString(trinn, kravOppstilling, kravSvarsetning, tasks, week) 
   return `M1|t=${trinn}|o=${o}|s=${s}|w=${week}|a=${parts.join(',')}`;
 }
 
-// Tegn QR-koden inn i et target-element
+// Tegn QR-koden inn i et target-element.
+// Vi bruker LAVESTE feilkorreksjon (L) for å få STØRRE moduler (svarte
+// firkanter) i QR-koden. For printede ark trenger vi ikke høy
+// feilkorreksjon — papiret blir ikke skadet — og store moduler er
+// avgjørende for at telefonkameraer skal kunne skanne QR-en fra avstand.
 function renderQR(targetEl, data) {
   if (typeof QrCreator === 'undefined') {
     console.warn('QrCreator-biblioteket er ikke lastet — QR-kode genereres ikke');
@@ -1336,16 +1352,13 @@ function renderQR(targetEl, data) {
   }
   // Tøm i tilfelle re-generering
   targetEl.innerHTML = '';
-  // Bruk H (høyeste) feilkorreksjon så QR er lesbar selv om opptil 30%
-  // av den er skadet eller uskarp. Større pixel-størrelse (240) gir
-  // bedre printkvalitet — CSS skaler den ned til 18mm uansett.
   QrCreator.render({
     text: data,
-    radius: 0,        // skarpe kanter, lettest å skanne
-    ecLevel: 'H',     // høyeste feilkorreksjon
+    radius: 0,         // skarpe kanter, lettest å skanne
+    ecLevel: 'L',      // laveste feilkorreksjon → største moduler
     fill: '#000000',
     background: '#ffffff',
-    size: 240
+    size: 300          // 300px native, CSS skalerer til 30mm på arket
   }, targetEl);
 }
 
@@ -1419,21 +1432,34 @@ function generateWorksheet() {
   if (useDiv) sections.push({type:'div', html: buildSection('div','Divisjon',      ':','pill-div', imgs[imgIdx++], count, lvlDiv), heightMm: estimateSectionHeightMm('div', count, lvlDiv)});
   if (useTxt) sections.push({type:'txt', html: buildTextSection(imgs[imgIdx++], lvlTxt, allowedOps),                               heightMm: estimateSectionHeightMm('txt', count, lvlTxt)});
 
-  // Standardfordeling: add/sub/mul på side 1, div/tekst på side 2
-  const page1Types = new Set(['add','sub','mul']);
-  let page1 = sections.filter(s => page1Types.has(s.type));
-  let page2 = sections.filter(s => !page1Types.has(s.type));
-
-  // Smart sammenslåing: hvis alt får plass på én side, samle det der.
-  // Dette dekker både tilfellet "bare addisjon + subtraksjon + tekstoppgave"
-  // og andre kombinasjoner der side 2-innholdet lett får plass på side 1.
+  // ─────────────────────────────────────────────────────────────
+  // SIDEFORDELING — pakker seksjoner inn på sider på den mest
+  // plasseffektive måten:
+  // 1. Hvis alt får plass på én side → bruk én side
+  // 2. Ellers: legg seksjonene fortløpende inn på side 1 til den
+  //    er full, så fortsett på side 2. Foretrukket rekkefølge er
+  //    add → sub → mul → div → txt (lekse-naturlig progresjon).
+  // ─────────────────────────────────────────────────────────────
   const totalHeight = sections.reduce((sum, s) => sum + s.heightMm, 0);
+  let page1 = [], page2 = [];
+
   if (totalHeight <= PAGE_CONTENT_BUDGET_MM) {
+    // Alt får plass på én side
     page1 = sections;
-    page2 = [];
+  } else {
+    // Pakk seksjoner inn på side 1 til den er full, så side 2
+    let p1Height = 0;
+    for (const s of sections) {
+      if (p1Height + s.heightMm <= PAGE_CONTENT_BUDGET_MM) {
+        page1.push(s);
+        p1Height += s.heightMm;
+      } else {
+        page2.push(s);
+      }
+    }
   }
 
-  // Hvis side 1 er tom (brukeren valgte bare div/tekst), flytt side 2-innhold opp
+  // Hvis side 1 endte tom (kun én seksjon, og den er stor), flytt opp
   if (page1.length === 0 && page2.length > 0) {
     page1 = page2;
     page2 = [];
