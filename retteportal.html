@@ -660,12 +660,12 @@ async function rettLekse() {
     kravTekst.push('GANGE og DELE: Sjekk kun at svaret er riktig.');
   }
   if (kravLinjal) {
-    kravTekst.push('LINJAL PÅ STREKER: Streker under regnestykker (summestreker i pluss/minus, og under svarsetning på tekstoppgaver) skal tegnes med linjal. Linjal-streker er PERFEKT RETTE, har JEVN tykkelse hele veien, og slutter skarpt. Frihåndsstreker er bølgete, har ujevn tykkelse (tynnere/tykkere på ulike punkt), kan ha bøy eller dippe litt, eller har lett kurvet form. SE NØYE på hver enkelt strek. Hvis du ser tydelige tegn på frihånd (bølger, ujevn tykkelse, synlig kurve), gi status "partial" og påpek hvilken oppgave det gjelder. Hvis streken ser rett og jevn ut → anta linjal. Vær konkret i tilbakemeldingen: "Streken under svaret i oppgave 3 ser ut til å være tegnet på frihånd — bruk linjal neste gang."');
+    kravTekst.push('LINJAL PÅ STREKER: Streker som ELEVEN har tegnet med blyant under svaret skal være tegnet med linjal — altså PERFEKT RETTE, helt jevne, mørke streker. IGNORER rutenettet på arket (de lyse trykte linjene). Vær STRENG: hvis du ser antydning til bølge, kurve, ujevn tykkelse eller "skjev" strek — det er frihånd, ikke linjal. Lærere er strenge på dette. Hvis streken ikke ser ut som den kunne vært trukket med linjal (helt rett og jevn), så er det frihånd. Gi "partial" og påpek oppgaven.');
   } else {
     kravTekst.push('LINJAL: Ikke kommenter om linjal er brukt.');
   }
   if (kravToStrek) {
-    kravTekst.push('TO STREKER UNDER SVARET: Det matematiske svaret skal markeres med TO PARALLELLE streker under (=-tegnet visuelt under svaret). TELL strekene under hvert svar nøye: er det 0, 1 eller 2 streker? I oppstilling skal det være to streker under summen/differansen. Hvis svaret er riktig men du teller bare ÉN strek under (eller ingen), gi status "partial" og påpek konkret hvilken oppgave: "Du har bare én strek under svaret i oppgave 3 — husk to streker (=) under det matematiske svaret." Hvis du teller to streker, ikke kommenter dette.');
+    kravTekst.push('TO STREKER UNDER SVARET: Det matematiske svaret skal markeres med TO PARALLELLE blyantstreker UNDER svartallene (=-tegnet). VIKTIG: Ikke forveksle SUMMESTREKEN (mellom regnestykket og svaret, altså OVER svaret) med svarstrekene (UNDER svaret). Det er kun strekene UNDER svartallene som teller. Tell nøye: 0, 1 eller 2 håndtegnede streker UNDER svartallet? Hvis det er en summestrek over svaret men ingenting under, så er det 0 svarstreker. Hvis du teller 0, si "Du har glemt å sette streker under svaret". Hvis 1, si "Det er bare én strek der det skulle vært to". Hvis 2, ikke kommenter.');
   } else {
     kravTekst.push('TO STREKER: Ikke kommenter om det er to streker under svaret.');
   }
@@ -679,6 +679,24 @@ async function rettLekse() {
   const prompt = `Du retter en mattelekse for en elev på ${trinn}. trinn (${trinnTekst}).
 
 ${flerSidet ? `Leksen er på ${bilder.length} sider — ${bilder.map((_, i) => `side ${i + 1}`).join(' og ')} følger som separate bilder i samme rekkefølge.` : ''}
+
+═══════════════════════════════════════════════════════════════
+OM ARKET — LES FØRST:
+═══════════════════════════════════════════════════════════════
+
+Mattearket har et lyst, trykt rutenett (lyseblå eller lysegrå linjer)
+inni hver oppgaveboks. Dette rutenettet er en HJELP for at eleven skal
+skrive sifrene rett under hverandre — det er IKKE streker som eleven
+har tegnet.
+
+Når du skal sjekke streker under svar, skal du KUN telle MØRKE
+HÅNDTEGNEDE BLYANTSTREKER som eleven har tegnet selv. De er tydelig
+mørkere enn rutenettet, og går normalt rett under sifrene i svaret.
+
+VANLIG FEIL Å UNNGÅ: Ikke forveksle en rutenettlinje med en
+blyantstrek. Hvis det IKKE er en mørk blyantstrek under svaret, så
+har eleven IKKE tegnet en strek — det er 0 streker, selv om rutenettet
+har horisontale linjer der.
 
 ═══════════════════════════════════════════════════════════════
 DETTE ER DEN VIKTIGSTE INSTRUKSEN — LES NØYE:
@@ -696,14 +714,67 @@ For hver oppgave MÅ du følge denne prosessen i nøyaktig denne rekkefølgen:
           oppgaven (ikke det eleven har skrevet). Bruk dine egne
           matematiske ferdigheter. Skriv ut ditt utregnede svar
           i feltet "riktig_svar".
-  STEG 4: VISUELL OBSERVASJON — se NØYE på selve strekene under
-          svaret i denne oppgaven:
-          a) TELL strekene: er det 0, 1 eller 2 streker under svaret?
-          b) SE på strekene: er de rette og jevne (linjal) eller
-             bølgete/ujevne (frihånd)?
-          Skriv ned det du faktisk SER i feltene "antall_streker"
-          og "streker_med_linjal" — dette er observasjoner, ikke
-          gjetninger. Hvis du ikke kan se tydelig, skriv "usikker".
+  STEG 4: VISUELL OBSERVASJON av strekene under svaret:
+
+          VIKTIG OM RUTENETTET: Arket har et lyst, tynt rutenett trykt
+          på papiret (lyseblått eller lysegrått). Rutenettlinjer er
+          IKKE streker som eleven har tegnet — de skal IGNORERES helt.
+          
+          Du skal KUN telle MØRKE BLYANTSTREKER som eleven har tegnet
+          med hånden. Disse er tydelig mørkere enn rutenettet.
+
+          ═══ KRITISK: HVOR ER "UNDER SVARET"? ═══
+          
+          I en pluss-/minus-oppstilling er det TO FORSKJELLIGE typer
+          streker, og du må IKKE blande dem:
+          
+          (A) SUMMESTREKEN: Ligger MELLOM regnestykket og svaret
+              — altså OVER svartallet, ikke under.
+              Eksempel:
+                   496
+                 + 193
+                 ━━━━━   ← dette er SUMMESTREKEN (skal IGNORERES her)
+                 = 689   ← svaret
+                 ━━━━━   ← dette er svarstrek nr. 1
+                 ━━━━━   ← dette er svarstrek nr. 2
+          
+          (B) SVARSTREKER: Ligger UNDER svartallene. Det skal
+              være TO av disse (=-tegnet "rotert" som understrek).
+              DET ER KUN DISSE DU SKAL TELLE.
+          
+          Hvis det IKKE er noen mørke blyantstreker UNDER svartallene
+          (kun summestrek over svaret), så er svaret = 0 streker, IKKE 1.
+          
+          ═══ GJØR DETTE I REKKEFØLGE: ═══
+          
+          a) FINN først svartallet i ruten (f.eks. "689" eller "391").
+             Identifiser hvor det er.
+          
+          b) SE deretter på området RETT UNDER svartallet (ikke over!).
+             BESKRIV i feltet "strek_beskrivelse" (1-2 setninger):
+             - Eksempel: "Under svartallet 689 ser jeg to mørke
+               parallelle blyantstreker. Begge er litt bølgete."
+             - Eksempel: "Under svartallet 391 ser jeg ingen mørke
+               blyantstreker. Det er en summestrek OVER 391, men
+               ingenting under."
+             - Eksempel: "Under svaret 202 er det helt blankt — ingen
+               streker i det hele tatt."
+          
+          c) FYLL INN "antall_streker" basert på beskrivelsen:
+             - 0 = ingenting under svartallet
+             - 1 = én mørk strek under svartallet
+             - 2 = to mørke parallelle streker under svartallet
+          
+          d) Hvis det er minst én strek, vurder "streker_med_linjal":
+             - "ja" KUN hvis strekene er PERFEKT rette og jevne
+             - "nei" hvis du ser ANTYDNING til bølge, kurve eller
+               ujevn tykkelse — vær STRENG her, lærere er strenge på
+               dette. "Litt skjev" = "nei".
+             - "usikker" hvis bildet er for uklart til å se tydelig
+          
+          REGEL FOR USIKKERHET: Hvis bildet er uklart (skygge, dårlig
+          fokus), sett "antall_streker": -1. Da hopper vi over strek-
+          kommentaren helt. Bedre ingen kommentar enn feil kommentar.
   STEG 5: Sammenlign:
           a) Stemmer tallene eleven har skrevet med oppgaveteksten?
           b) Er elevens svar likt ditt utregnede svar?
@@ -745,6 +816,16 @@ TONE: ${tone} Skriv tilbakemelding direkte til eleven (du-form).
 Hvis svaret er feil: forklar HVA som er riktig svar og oppmuntre eleven
 til å prøve igjen.
 
+VIKTIG OM ROS OG STREKER: Ikke ros eleven for ting du ikke er sikker på.
+- Hvis antall_streker = -1 (usikker) eller 0 eller 1: IKKE skriv "bra
+  bruk av linjal" eller "fin strek" — det finnes ingen pene streker å
+  rose.
+- Bare nevn strekene i tilbakemeldingen hvis du faktisk har en
+  observasjon å dele (mangler streker, bølgete streker, etc.)
+- Hvis du er usikker på strekene, hopp helt over det temaet i
+  tilbakemeldingen. Da kan eleven få ros for svaret uten falsk
+  ros for streker.
+
 NÅR DU LESER BILDET${flerSidet ? 'ENE' : ''}:
 - Eleven skriver med blyant. Vær tolerant for utydelig skrift.
 - Hvis du er usikker på hva eleven skrev (f.eks. 1 vs 7, 0 vs 6), nevn det vennlig i tilbakemeldingen.
@@ -760,10 +841,11 @@ Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rund
       "elev_oppgave": "496 + 193",
       "riktig_svar": 689,
       "elev_svar": "689",
+      "strek_beskrivelse": "Jeg ser to mørke parallelle blyantstreker rett under tallet 689. Begge ser rette og pene ut.",
       "antall_streker": 2,
       "streker_med_linjal": "ja",
       "status": "correct",
-      "tilbakemelding": "Helt riktig! Flott oppstilling med pen linjal-strek og to streker under svaret."
+      "tilbakemelding": "Helt riktig svar — kjempebra jobbet!"
     },
     {
       "nummer": 2,
@@ -771,8 +853,9 @@ Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rund
       "elev_oppgave": "49 + 57",
       "riktig_svar": 126,
       "elev_svar": "96",
+      "strek_beskrivelse": "Jeg ser én tynn strek under svaret 96.",
       "antall_streker": 1,
-      "streker_med_linjal": "nei",
+      "streker_med_linjal": "usikker",
       "status": "wrong",
       "tilbakemelding": "Pass på her! Du har skrevet 49 i stedet for 69 fra oppgaven. Riktig regnestykke er 69 + 57 = 126. Sjekk at du har kopiert tallene riktig fra oppgaven, og prøv igjen!"
     }
@@ -785,8 +868,16 @@ Feltforklaring:
 - "elev_oppgave" = de tallene eleven faktisk har skrevet ned (kan være feilkopiert)
 - "riktig_svar" = svaret DU har regnet ut basert på den originale "oppgave"
 - "elev_svar" = det eleven har skrevet som svar
-- "antall_streker" = HELTALL: antall streker du faktisk ser under svaret (0, 1 eller 2). Hvis usikker, skriv -1.
-- "streker_med_linjal" = "ja" hvis strekene ser rette/jevne ut, "nei" hvis tydelig frihånd (bølgete/ujevne), "usikker" hvis du ikke kan se tydelig. Hvis det ikke er noen streker, skriv "ingen".
+- "strek_beskrivelse" = 1-2 setninger som beskriver HVA du ser av blyantstreker under svaret (ikke rutenett)
+- "antall_streker" = HELTALL: antall mørke blyantstreker du ser (0, 1, 2). Hvis usikker pga. dårlig bilde/skygge/uklart, skriv -1.
+- "streker_med_linjal" = "ja" / "nei" (tydelig bølgete) / "usikker" / "ingen" (hvis 0 streker)
+
+VIKTIG REGEL FOR STREK-KOMMENTARER I TILBAKEMELDING:
+- Hvis antall_streker = -1 (usikker): IKKE nevn streker eller linjal i tilbakemeldingen i det hele tatt. Bare ros svaret.
+- Hvis antall_streker = 2 og streker_med_linjal = "ja": kan eventuelt rose pen oppstilling, men trenger ikke nevne streker spesielt.
+- Hvis antall_streker = 2 og streker_med_linjal = "nei": "Strekene under svaret er litt bølgete — husk å bruke linjal."
+- Hvis antall_streker = 1: "Du har bare én strek under svaret — husk to streker (=)."
+- Hvis antall_streker = 0: "Du har glemt å sette streker under svaret. Husk to streker (=) under det matematiske svaret."
 
 Status:
 - "correct" hvis: elev_oppgave === oppgave AND elev_svar === riktig_svar AND alle krav oppfylt
@@ -816,7 +907,8 @@ Status:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
+        max_tokens: 8000,
+        thinking: { type: 'adaptive' },
         messages: [{ role: 'user', content: contentBlocks }]
       })
     });
@@ -832,7 +924,13 @@ Status:
     }
 
     const data = await response.json();
-    const text = data.content.map(c => c.text || '').join('').trim();
+    // Med adaptive thinking returneres "thinking"-blokker før "text"-blokker.
+    // Vi vil bare ha text-innholdet.
+    const text = data.content
+      .filter(c => c.type === 'text')
+      .map(c => c.text)
+      .join('')
+      .trim();
     const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 
     let parsed;
