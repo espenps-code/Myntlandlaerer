@@ -565,9 +565,8 @@ function fjernBilde(indeks) {
 }
 
 // Bruk jsQR til å lese QR-kode fra bildet. Skanning gjøres i flere
-// runder med ulike strategier for å takle vanskelige forhold som
-// telefon-bilder av skjerm (moiré-mønster, lav kontrast, små QR-koder
-// midt i et stort bilde).
+// runder med ulike strategier for å takle vanskelige forhold.
+// QR-koden er plassert øverst til høyre på arket (i header).
 function scanQRFromImage(dataUrl, indeks) {
   const img = new Image();
   img.onload = () => {
@@ -592,13 +591,24 @@ function scanQRFromImage(dataUrl, indeks) {
       return c;
     };
 
+    // Beskjær img til et rektangel av kildebildet, skaler til target-størrelse, prøv å skanne
+    const tryCrop = (sx, sy, sw, sh, targetSize = 800) => {
+      if (sx < 0 || sy < 0 || sx+sw > img.width || sy+sh > img.height) return null;
+      // Behold aspect ratio
+      const aspect = sw / sh;
+      const tw = aspect >= 1 ? targetSize : Math.round(targetSize * aspect);
+      const th = aspect >= 1 ? Math.round(targetSize / aspect) : targetSize;
+      const canvas = makeCanvas(tw, th);
+      canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
+      return tryScan(canvas);
+    };
+
     let found = null;
 
-    // STRATEGI 1: Hele bildet i ulike skala. QR-skannere fungerer
-    // best når QR-koden tar opp en betydelig del av bildet.
-    // Telefonbilder er ofte 4000×3000 mens QR-koden bare er 200×200,
-    // så nedskalering hjelper jsQR å se mønsteret tydeligere.
-    const skalaer = [1, 0.75, 0.5, 1.5, 0.35, 2];
+    // STRATEGI 1: Full bildeskanning på forskjellige skalaer.
+    // For store bilder hjelper nedskalering. For små bilder kan
+    // oppskalering hjelpe jsQR å finne mønstrene.
+    const skalaer = [0.5, 1, 0.75, 1.5, 0.35];
     for (const s of skalaer) {
       const w = Math.round(img.width * s);
       const h = Math.round(img.height * s);
@@ -609,51 +619,73 @@ function scanQRFromImage(dataUrl, indeks) {
       if (found) break;
     }
 
-    // STRATEGI 2: Beskjær til nedre høyre kvadrant (der QR-koden
-    // er printet). Dette fjerner forstyrrende elementer fra resten
-    // av arket og gir QR-koden mer "plass" i skanne-bildet.
+    // STRATEGI 2: Beskjær til øvre høyre region (der QR-koden er på arket).
+    // Vi prøver flere størrelser av utsnitt for å treffe QR-koden uansett
+    // hvor i bildet leksen er fotografert.
     if (!found) {
-      const kvadranter = [
-        // [xStart%, yStart%, bredde%, høyde%]
-        [0.55, 0.55, 0.45, 0.45], // nedre høyre kvadrant
-        [0.45, 0.45, 0.55, 0.55], // litt større nedre høyre
-        [0.65, 0.65, 0.35, 0.35], // mindre, mer presist
-        [0,    0.55, 1,    0.45], // hele bunnen
+      // [xStart%, yStart%, bredde%, høyde%]
+      const regioner = [
+        [0.50, 0.00, 0.50, 0.30], // øvre høyre kvadrant
+        [0.40, 0.00, 0.60, 0.40], // litt større
+        [0.60, 0.00, 0.40, 0.25], // tettere
+        [0.30, 0.00, 0.70, 0.50], // veldig romslig
+        [0.55, 0.05, 0.45, 0.25], // litt forskjøvet
       ];
-      for (const [xs, ys, ws, hs] of kvadranter) {
+      for (const [xs, ys, ws, hs] of regioner) {
         const sx = Math.round(img.width * xs);
         const sy = Math.round(img.height * ys);
         const sw = Math.round(img.width * ws);
         const sh = Math.round(img.height * hs);
-        // Tegn til en canvas på 600x600 for konsistent skannerstørrelse
-        const target = 600;
-        const canvas = makeCanvas(target, target);
-        canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, target, target);
-        found = tryScan(canvas);
+        found = tryCrop(sx, sy, sw, sh);
         if (found) break;
       }
     }
 
-    // STRATEGI 3: Kontrastforbedring — for skjermbilder med lav
-    // kontrast eller refleksjoner. Vi øker kontrasten kraftig og
-    // skanner igjen. Dette hjelper også mot moiré-mønstre.
+    // STRATEGI 3: Skann hele bildet i et rutenett av overlappende
+    // utsnitt. Dette er beste forsvar mot små QR-koder midt i store
+    // bilder — vi finner QR-en uansett hvor i bildet den er.
+    if (!found) {
+      // 3×4 rutenett med 25% overlapping
+      const gridX = 3, gridY = 4;
+      const cellW = img.width / gridX;
+      const cellH = img.height / gridY;
+      for (let gy = 0; gy < gridY && !found; gy++) {
+        for (let gx = 0; gx < gridX && !found; gx++) {
+          // Med overlapping: la hvert utsnitt være 1.5x cellestørrelse
+          const cx = gx * cellW;
+          const cy = gy * cellH;
+          const cw = Math.min(cellW * 1.5, img.width - cx);
+          const ch = Math.min(cellH * 1.5, img.height - cy);
+          found = tryCrop(Math.round(cx), Math.round(cy), Math.round(cw), Math.round(ch));
+        }
+      }
+    }
+
+    // STRATEGI 4: Kontrastforbedring (binarisering). For bilder med
+    // dårlig kontrast — særlig viktig for foto av papir under
+    // varierende lys, eller skjermbilder.
     if (!found) {
       const w = Math.min(img.width, 1500);
       const h = Math.round(img.height * (w / img.width));
       const canvas = makeCanvas(w, h);
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const data = imageData.data;
-      // Konverter til ren svart-hvitt med terskel — hjelper på
-      // skjermbilder hvor "svart" er mer som mørkegrå
-      for (let i = 0; i < data.length; i += 4) {
-        const grayscale = (data[i] + data[i+1] + data[i+2]) / 3;
-        const bw = grayscale < 128 ? 0 : 255;
-        data[i] = data[i+1] = data[i+2] = bw;
+      // Prøv flere terskler — papir under varierende lys kan ha
+      // svart-tekst som ligger på 80-150 i grayscale
+      for (const terskel of [128, 100, 150, 80, 170]) {
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const grayscale = (data[i] + data[i+1] + data[i+2]) / 3;
+          const bw = grayscale < terskel ? 0 : 255;
+          data[i] = data[i+1] = data[i+2] = bw;
+        }
+        ctx.putImageData(imageData, 0, 0);
+        found = tryScan(canvas);
+        if (found) break;
+        // Reset bildet for neste forsøk
+        ctx.drawImage(img, 0, 0, w, h);
       }
-      ctx.putImageData(imageData, 0, 0);
-      found = tryScan(canvas);
     }
 
     if (found) {
@@ -709,7 +741,7 @@ function renderPreviews() {
       <ul>
         <li><strong>Print arket på papir</strong> hvis mulig — bilder av skjermer er vanskelige å lese fordi de gir uskarpe striper (moiré-mønster).</li>
         <li>Hvis du må fotografere en skjerm: <strong>hold telefonen lenger unna</strong>, vinkle den litt skrått, og prøv flere bilder.</li>
-        <li>Sørg for at <strong>QR-koden nederst til høyre er tydelig synlig</strong> i bildet, ikke avkuttet.</li>
+        <li>Sørg for at <strong>QR-koden øverst i headeren er tydelig synlig</strong> i bildet, ikke avkuttet.</li>
         <li>Unngå skygger og refleksjoner over QR-koden.</li>
       </ul>
     `;

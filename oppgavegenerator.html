@@ -547,12 +547,16 @@ body {
   gap: 0.5mm;
 }
 .ws-qr-img {
+  /* QR-spesifikasjonen krever en "quiet zone" på minst 4 moduler hvit
+     margin rundt koden. Med 22mm QR og ~33 moduler trenger vi minst
+     ~2.7mm hvit padding for at skannere skal kunne finne og lese koden. */
   width: 22mm;
   height: 22mm;
   display: block;
   background: white;
-  padding: 1mm;
-  border-radius: 1mm;
+  padding: 3mm;
+  border-radius: 1.5mm;
+  flex-shrink: 0;
 }
 .ws-qr-img img, .ws-qr-img canvas {
   width: 100% !important;
