@@ -907,8 +907,7 @@ Status:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
-        thinking: { type: 'adaptive' },
+        max_tokens: 4000,
         messages: [{ role: 'user', content: contentBlocks }]
       })
     });
@@ -924,20 +923,39 @@ Status:
     }
 
     const data = await response.json();
+    
     // Med adaptive thinking returneres "thinking"-blokker før "text"-blokker.
-    // Vi vil bare ha text-innholdet.
+    // Filtrer ut kun text-innholdet.
     const text = data.content
       .filter(c => c.type === 'text')
       .map(c => c.text)
       .join('')
       .trim();
-    const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    
+    // Sjekk om svaret ble avkortet
+    const stopReason = data.stop_reason;
+    if (stopReason === 'max_tokens') {
+      console.warn('Svaret ble avkortet (max_tokens). Råsvar:', text);
+    }
+    
+    // Robust JSON-ekstraksjon: finn første { og siste } og parse det som ligger imellom.
+    // Dette håndterer prosa-tekst rundt JSON og markdown code fences.
+    let cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+    }
 
     let parsed;
     try {
       parsed = JSON.parse(cleaned);
     } catch (e) {
-      throw new Error('Klarte ikke å tolke svaret. Råsvar: ' + cleaned.slice(0, 200));
+      console.error('JSON-parsefeil. Råsvar:', text);
+      const hint = stopReason === 'max_tokens' 
+        ? ' (Svaret ble avkortet — modellen brukte for mange tokens på tenking. Prøv igjen, eller skru av thinking.)' 
+        : '';
+      throw new Error('Klarte ikke å tolke svaret.' + hint + ' Sjekk konsoll for hele svaret. Start: ' + text.slice(0, 300));
     }
 
     visResultater(parsed);
