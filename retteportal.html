@@ -660,21 +660,66 @@ async function rettLekse() {
 
 ${flerSidet ? `Leksen er på ${bilder.length} sider — ${bilder.map((_, i) => `side ${i + 1}`).join(' og ')} følger som separate bilder i samme rekkefølge.` : ''}
 
-DIN OPPGAVE:
-1. Les hver oppgave fra bildet (regnestykker og eventuelle tekstoppgaver)
-2. Regn ut riktig svar selv — det er ingen fasit å støtte seg på
-3. Sammenlign med hva eleven har skrevet
-4. Gi tilbakemelding etter kravene under
+═══════════════════════════════════════════════════════════════
+DETTE ER DEN VIKTIGSTE INSTRUKSEN — LES NØYE:
+═══════════════════════════════════════════════════════════════
+
+For hver oppgave MÅ du følge denne prosessen i nøyaktig denne rekkefølgen:
+
+  STEG 1: Les regnestykket fra OPPGAVETEKSTEN på arket
+          (f.eks. "69 + 57 ="). Dette er fasiten for hva tallene
+          skal være.
+  STEG 2: Se på hva ELEVEN har skrevet i ruten under (både tall
+          og svar). Tallene eleven har skrevet skal stemme med
+          tallene i oppgaveteksten.
+  STEG 3: REGN UT RIKTIG SVAR SELV basert på den ORIGINALE
+          oppgaven (ikke det eleven har skrevet). Bruk dine egne
+          matematiske ferdigheter. Skriv ut ditt utregnede svar
+          i feltet "riktig_svar".
+  STEG 4: Sammenlign:
+          a) Stemmer tallene eleven har skrevet med oppgaveteksten?
+          b) Er elevens svar likt ditt utregnede svar?
+
+  STATUS-VURDERING:
+  - Tallene er riktig kopiert OG svaret er riktig → "correct"
+    (eventuelt "partial" hvis oppstilling/svarsetning mangler)
+  - Tallene er feil kopiert fra oppgaven → "wrong" (forklar at
+    eleven må sjekke at hun har skrevet av tallene riktig)
+  - Tallene er riktig, men svaret er feil → "wrong" (forklar
+    riktig svar)
+  - Ruten er tom / eleven har ikke skrevet noe → "wrong"
+
+ADVARSEL: Elevens svar kan være FEIL på flere måter:
+- Eleven kan ha skrevet feil tall fra oppgaven (avskrivingsfeil)
+- Eleven kan ha regnet feil
+- Eleven kan ha glemt menteret/lånet
+Du må sjekke BÅDE at tallene er riktig kopiert OG at svaret er riktig.
+
+Eksempel 1: Oppgaven sier "69 + 57". Eleven har skrevet "49 + 57 = 96".
+Da har eleven (a) skrevet feil tall (49 i stedet for 69), og (b)
+selv med 49 + 57 ville svaret vært 106, ikke 96. Status: "wrong".
+Tilbakemelding: "Pass på! Oppgaven er 69 + 57, ikke 49 + 57. Skriv
+av tallene fra oppgaven på nytt, og prøv igjen."
+
+Eksempel 2: Oppgaven sier "496 + 193". Eleven har skrevet
+"496 + 195 = 691". Selv om utregningen 496+195=691 stemmer, har
+eleven skrevet feil tall (195 i stedet for 193). Status: "wrong".
+Tilbakemelding: "Pass på tallene! Oppgaven er 496 + 193, ikke
+496 + 195. Riktig svar skulle vært 689."
+
+═══════════════════════════════════════════════════════════════
 
 KRAV TIL ELEVEN PER REGNEART:
 ${kravTekst.map(k => '- ' + k).join('\n')}
 
 TONE: ${tone} Skriv tilbakemelding direkte til eleven (du-form).
+Hvis svaret er feil: forklar HVA som er riktig svar og oppmuntre eleven
+til å prøve igjen.
 
-VIKTIG når du leser bildet${flerSidet ? 'ene' : ''}:
+NÅR DU LESER BILDET${flerSidet ? 'ENE' : ''}:
 - Eleven skriver med blyant. Vær tolerant for utydelig skrift.
 - Hvis du er usikker på hva eleven skrev (f.eks. 1 vs 7, 0 vs 6), nevn det vennlig i tilbakemeldingen.
-- Hvis du ikke kan se en oppgave i bildet, marker den som "wrong" og forklar at du ikke kunne se den.
+- Hvis du ikke kan se en oppgave i bildet, marker den som "wrong" og si at du ikke kunne se den.
 ${flerSidet ? '- Oppgavenummer fortsetter på tvers av sidene (ikke begynn på 1 igjen på side 2).' : ''}
 
 Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rundt):
@@ -682,16 +727,36 @@ Returner KUN gyldig JSON i dette formatet (ingen markdown, ingen forklaring rund
   "oppgaver": [
     {
       "nummer": 1,
-      "oppgave": "247 + 158",
-      "elev_svar": "405",
+      "oppgave": "496 + 193",
+      "elev_oppgave": "496 + 193",
+      "riktig_svar": 689,
+      "elev_svar": "689",
       "status": "correct",
-      "tilbakemelding": "Helt riktig! Fin oppstilling med menteret."
+      "tilbakemelding": "Helt riktig! Flott oppstilling."
+    },
+    {
+      "nummer": 2,
+      "oppgave": "69 + 57",
+      "elev_oppgave": "49 + 57",
+      "riktig_svar": 126,
+      "elev_svar": "96",
+      "status": "wrong",
+      "tilbakemelding": "Pass på her! Du har skrevet 49 i stedet for 69 fra oppgaven. Riktig regnestykke er 69 + 57 = 126. Sjekk at du har kopiert tallene riktig fra oppgaven, og prøv igjen!"
     }
   ],
-  "oppsummering": "Bra jobbet! Du fikk 4 av 5 riktig."
+  "oppsummering": "Bra jobbet! Du fikk 1 av 2 riktig."
 }
 
-status kan være: "correct" (alt riktig), "partial" (svar riktig, men noe mangler som oppstilling/svarsetning/regnestykke der det er krav), eller "wrong" (feil svar).`;
+Feltforklaring:
+- "oppgave" = det som står i oppgaveteksten på arket
+- "elev_oppgave" = de tallene eleven faktisk har skrevet ned (kan være feilkopiert)
+- "riktig_svar" = svaret DU har regnet ut basert på den originale "oppgave"
+- "elev_svar" = det eleven har skrevet som svar
+
+Status:
+- "correct" hvis: elev_oppgave === oppgave AND elev_svar === riktig_svar AND alle krav oppfylt
+- "partial" hvis: elev_oppgave === oppgave AND elev_svar === riktig_svar MEN krav (oppstilling/svarsetning/regnestykke) mangler
+- "wrong" hvis: elev_oppgave !== oppgave ELLER elev_svar !== riktig_svar ELLER ruten er tom`;
 
   const contentBlocks = [];
   bilder.forEach((b, i) => {
