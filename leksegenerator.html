@@ -513,23 +513,23 @@ body {
 .ws-footer {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 4mm; padding-top: 3mm;
-  padding-right: 28mm; /* gi plass til QR-kode i hjørnet */
   border-top: 0.4mm dashed #ccc;
   font-size: 2.5mm; color: #aaa; font-weight: 800;
 }
 .footer-monster { width: 9mm; height: 9mm; object-fit: contain; filter: drop-shadow(0 0.5mm 1.5mm rgba(0,0,0,0.15)); }
 
-/* QR-kode for retteportal — plassert absolutt i nedre høyre hjørne
-   av arket slik at den IKKE spiser plass fra innholdsbudsjettet. */
-.ws-qr-corner {
-  position: absolute;
-  bottom: 4mm;
-  right: 4mm;
+/* QR-kode for retteportal — plassert i header, ved siden av Uke-pillen.
+   Tar IKKE plass fra innholdet siden header allerede er reservert plass. */
+.ws-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+}
+.ws-qr-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1mm;
-  z-index: 5;
+  gap: 0.5mm;
 }
 .ws-qr-img {
   width: 22mm;
@@ -545,11 +545,12 @@ body {
   display: block;
 }
 .ws-qr-label {
-  font-size: 2mm;
-  color: #888;
+  font-size: 1.8mm;
+  color: white;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
   text-align: center;
+  opacity: 0.85;
 }
 
 /* Separator between pages on screen */
@@ -1189,7 +1190,13 @@ function buildPage(opts) {
           <div class="ws-subtitle">${cls}</div>
         </div>
       </div>
-      <div class="ws-week-pill">Uke ${week}</div>
+      <div class="ws-header-right">
+        <div class="ws-week-pill">Uke ${week}</div>
+        <div class="ws-qr-header">
+          <div class="ws-qr-img" data-qr-target="1"></div>
+          <div class="ws-qr-label">Skann for retting</div>
+        </div>
+      </div>
     </div>
 
     <div class="ws-info-row">
@@ -1208,24 +1215,16 @@ function buildPage(opts) {
       <div>${pageIndicator}<span>${cls}</span></div>
     </div>
   </div>
-
-  <!-- QR-kode posisjoneres absolutt i nedre høyre hjørne av arket
-       slik at den ikke spiser plass fra innholdet. -->
-  <div class="ws-qr-corner">
-    <div class="ws-qr-label">Skann for<br>retting</div>
-    <div class="ws-qr-img" data-qr-target="1"></div>
-  </div>
 </div>`;
 }
 
 // Omtrentlig høydebudsjett for innholdet på én A4-side.
 // Ved utskrift har vi 285mm tilgjengelig (297mm − 2·6mm @page margin),
 // minus worksheet-padding (10mm topp + 14mm bunn = 24mm),
-// minus header (~20mm) + info-linje (~8mm) + footer (~12mm) = 40mm.
-// Det gir 285 - 24 - 40 = 221mm reell plass.
-// QR-koden plasseres absolutt i nedre høyre hjørne, så den spiser
-// IKKE av dette budsjettet. Vi setter litt margin for sikkerhets skyld.
-const PAGE_CONTENT_BUDGET_MM = 220;
+// minus header (~30mm — inneholder nå QR-kode 22mm + padding)
+//        + info-linje (~8mm) + footer (~12mm) = 50mm totalt.
+// Det gir 285 - 24 - 50 = 211mm reell plass. Sett til 210 for sikkerhet.
+const PAGE_CONTENT_BUDGET_MM = 210;
 
 // Estimert høyde i mm per seksjon.
 // add/sub bruker 4-kolonne-layout med fast rutehøyde, så høyden er nær konstant.
@@ -1436,62 +1435,53 @@ function generateWorksheet() {
   // SIDEFORDELING — pakker seksjoner inn på sider på den mest
   // plasseffektive måten:
   // 1. Hvis alt får plass på én side → bruk én side
-  // 2. Ellers: legg seksjonene fortløpende inn på side 1 til den
-  //    er full, så fortsett på side 2. Foretrukket rekkefølge er
-  //    add → sub → mul → div → txt (lekse-naturlig progresjon).
+  // 2. Ellers: legg seksjonene fortløpende inn på sider, der hver
+  //    side fylles opp til budsjettet før vi går videre til neste.
+  //    Foretrukket rekkefølge er add → sub → mul → div → txt
+  //    (lekse-naturlig progresjon).
   // ─────────────────────────────────────────────────────────────
   const totalHeight = sections.reduce((sum, s) => sum + s.heightMm, 0);
-  let page1 = [], page2 = [];
+  const pages = [[]];  // alltid minst én side
 
   if (totalHeight <= PAGE_CONTENT_BUDGET_MM) {
     // Alt får plass på én side
-    page1 = sections;
+    pages[0] = sections;
   } else {
-    // Pakk seksjoner inn på side 1 til den er full, så side 2
-    let p1Height = 0;
+    // Pakk seksjoner inn på sider, fyll én side om gangen
+    let currentPageHeight = 0;
     for (const s of sections) {
-      if (p1Height + s.heightMm <= PAGE_CONTENT_BUDGET_MM) {
-        page1.push(s);
-        p1Height += s.heightMm;
-      } else {
-        page2.push(s);
+      const fitsCurrent = currentPageHeight + s.heightMm <= PAGE_CONTENT_BUDGET_MM;
+      if (!fitsCurrent && pages[pages.length - 1].length > 0) {
+        // Start ny side
+        pages.push([]);
+        currentPageHeight = 0;
       }
+      pages[pages.length - 1].push(s);
+      currentPageHeight += s.heightMm;
     }
   }
 
-  // Hvis side 1 endte tom (kun én seksjon, og den er stor), flytt opp
-  if (page1.length === 0 && page2.length > 0) {
-    page1 = page2;
-    page2 = [];
-  }
-
-  const page1Html = page1.map(s => s.html).join('');
-  const page2Html = page2.map(s => s.html).join('');
-  const twoPages = page2Html.length > 0;
+  const numPages = pages.length;
+  const pagesHtml = pages.map(p => p.map(s => s.html).join(''));
 
   const wrap = document.getElementById('worksheet-wrap');
   let html = '';
 
-  html += buildPage({
-    week, cls,
-    sectionsHtml: page1Html,
-    headerMonster: imgs[0],
-    footerMonster: imgs[7],
-    cornerTl: imgs[8],  cornerTr: imgs[9],
-    cornerBl: imgs[10], cornerBr: imgs[11],
-    pageLabel: twoPages ? 'Side 1 av 2' : null
-  });
-
-  if (twoPages) {
+  // Vi har 24 monster-bilder å fordele over sidene. Hver side bruker
+  // 6 (header, footer, 4 hjørner), så vi har plass til 4 sider med
+  // unike bilder. For flere sider, gjenbruker vi fra start.
+  for (let p = 0; p < numPages; p++) {
+    const off = (p * 6) % 24;
     html += buildPage({
       week, cls,
-      sectionsHtml: page2Html,
-      // Bruk andre monster-bilder for side 2 så det blir variasjon
-      headerMonster: imgs[12],
-      footerMonster: imgs[13],
-      cornerTl: imgs[14], cornerTr: imgs[15],
-      cornerBl: imgs[16], cornerBr: imgs[17],
-      pageLabel: 'Side 2 av 2'
+      sectionsHtml: pagesHtml[p],
+      headerMonster: imgs[off],
+      footerMonster: imgs[(off + 1) % 24],
+      cornerTl: imgs[(off + 2) % 24],
+      cornerTr: imgs[(off + 3) % 24],
+      cornerBl: imgs[(off + 4) % 24],
+      cornerBr: imgs[(off + 5) % 24],
+      pageLabel: numPages > 1 ? `Side ${p+1} av ${numPages}` : null
     });
   }
 

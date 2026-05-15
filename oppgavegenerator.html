@@ -528,23 +528,23 @@ body {
 .ws-footer {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 2.5mm; padding-top: 2mm;
-  padding-right: 28mm; /* gi plass til QR-kode i hjørnet */
   border-top: 0.4mm dashed #ccc;
   font-size: 2.5mm; color: #aaa; font-weight: 800;
 }
 .footer-monster { width: 7mm; height: 7mm; object-fit: contain; filter: drop-shadow(0 0.5mm 1.5mm rgba(0,0,0,0.15)); }
 
-/* QR-kode for retteportal — plassert absolutt i nedre høyre hjørne
-   av arket slik at den IKKE spiser plass fra innholdsbudsjettet. */
-.ws-qr-corner {
-  position: absolute;
-  bottom: 4mm;
-  right: 4mm;
+/* QR-kode for retteportal — plassert i header, ved siden av side-pill.
+   Tar IKKE plass fra innholdet siden header allerede er reservert plass. */
+.ws-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+}
+.ws-qr-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1mm;
-  z-index: 5;
+  gap: 0.5mm;
 }
 .ws-qr-img {
   width: 22mm;
@@ -560,11 +560,12 @@ body {
   display: block;
 }
 .ws-qr-label {
-  font-size: 2mm;
-  color: #888;
+  font-size: 1.8mm;
+  color: white;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
   text-align: center;
+  opacity: 0.85;
 }
 
 /* Separator between pages on screen */
@@ -1371,7 +1372,13 @@ function buildPage(opts) {
           <div class="ws-subtitle">${cls}</div>
         </div>
       </div>
-      ${pagePill}
+      <div class="ws-header-right">
+        ${pagePill}
+        <div class="ws-qr-header">
+          <div class="ws-qr-img" data-qr-target="1"></div>
+          <div class="ws-qr-label">Skann for retting</div>
+        </div>
+      </div>
     </div>
 
     <div class="ws-info-row">
@@ -1389,13 +1396,6 @@ function buildPage(opts) {
       </div>
       <div>${pageIndicator}<span>${cls}</span></div>
     </div>
-  </div>
-
-  <!-- QR-kode posisjoneres absolutt i nedre høyre hjørne av arket
-       slik at den ikke spiser plass fra innholdet. -->
-  <div class="ws-qr-corner">
-    <div class="ws-qr-label">Skann for<br>retting</div>
-    <div class="ws-qr-img" data-qr-target="1"></div>
   </div>
 </div>`;
 }
