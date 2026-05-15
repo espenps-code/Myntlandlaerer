@@ -1192,33 +1192,101 @@ function generateWorksheet() {
   if (useTxt) sections.push({type:'txt', html: buildTextSection(imgs[imgIdx++], lvlTxt, allowedOps),                               heightMm: estimateSectionHeightMm('txt', count, lvlTxt)});
 
   // ─────────────────────────────────────────────────────────────
-  // SIDEFORDELING — pakker seksjoner inn på sider på den mest
-  // plasseffektive måten:
-  // 1. Hvis alt får plass på én side → bruk én side
-  // 2. Ellers: legg seksjonene fortløpende inn på sider, der hver
-  //    side fylles opp til budsjettet før vi går videre til neste.
-  //    Foretrukket rekkefølge er add → sub → mul → div → txt
-  //    (lekse-naturlig progresjon).
+  // SIDEFORDELING — finner den mest plasseffektive måten å pakke
+  // seksjoner på sider:
+  //   1. Hvis alt får plass på én side → bruk én side
+  //   2. Ellers: prøv ALLE måter å splitte seksjonene over 2 sider
+  //      og velg en fordeling der begge sider er innenfor budsjett.
+  //      Vi foretrekker fordelingen som gir minst høydeforskjell
+  //      (mest balansert layout). Logisk rekkefølge er
+  //      add → sub → mul → div → txt; vi sorterer hver side
+  //      etter denne rekkefølgen etter splitting.
+  //   3. Hvis ingen 2-side-fordeling passer (svært sjeldent),
+  //      fall tilbake til greedy som kan gi 3+ sider.
   // ─────────────────────────────────────────────────────────────
   const totalHeight = sections.reduce((sum, s) => sum + s.heightMm, 0);
-  const pages = [[]];  // alltid minst én side
+  let pages = [[]];
+
+  // Logisk rekkefølge for seksjoner innen en side
+  const sectionOrder = { add: 0, sub: 1, mul: 2, div: 3, txt: 4 };
+  const sortSections = arr => arr.slice().sort((a, b) =>
+    (sectionOrder[a.type] ?? 99) - (sectionOrder[b.type] ?? 99)
+  );
 
   if (totalHeight <= PAGE_CONTENT_BUDGET_MM) {
     // Alt får plass på én side
-    pages[0] = sections;
+    pages[0] = sortSections(sections);
   } else {
-    // Pakk seksjoner inn på sider, fyll én side om gangen
-    let currentPageHeight = 0;
-    for (const s of sections) {
-      const fitsCurrent = currentPageHeight + s.heightMm <= PAGE_CONTENT_BUDGET_MM;
-      if (!fitsCurrent && pages[pages.length - 1].length > 0) {
-        // Start ny side
-        pages.push([]);
-        currentPageHeight = 0;
+    // Prøv alle 2^N måter å splitte seksjonene over 2 sider.
+    // For hver fordeling, sjekk om begge sider er innenfor budsjett.
+    // Velg fordelingen som:
+    //   1. Bevarer logisk rekkefølge så godt som mulig (add→sub→mul→div→txt
+    //      bør være på "side 1 først, side 2 etterpå")
+    //   2. Ved likhet i rekkefølge: balanserer sidene best (minst diff)
+    const n = sections.length;
+    let bestSplit = null;
+    let bestScore = Infinity;
+
+    for (let mask = 1; mask < (1 << n) - 1; mask++) {
+      const p1 = [], p2 = [];
+      for (let i = 0; i < n; i++) {
+        if (mask & (1 << i)) p1.push(sections[i]);
+        else p2.push(sections[i]);
       }
-      pages[pages.length - 1].push(s);
-      currentPageHeight += s.heightMm;
+      const h1 = p1.reduce((s, x) => s + x.heightMm, 0);
+      const h2 = p2.reduce((s, x) => s + x.heightMm, 0);
+      if (h1 <= PAGE_CONTENT_BUDGET_MM && h2 <= PAGE_CONTENT_BUDGET_MM) {
+        const sortedP1 = sortSections(p1);
+        const sortedP2 = sortSections(p2);
+        // Bestem hvilken side som skal være "side 1" basert på første
+        // seksjon i logisk rekkefølge.
+        const firstP1 = sortedP1[0] ? (sectionOrder[sortedP1[0].type] ?? 99) : 99;
+        const firstP2 = sortedP2[0] ? (sectionOrder[sortedP2[0].type] ?? 99) : 99;
+        const side1 = firstP1 <= firstP2 ? sortedP1 : sortedP2;
+        const side2 = firstP1 <= firstP2 ? sortedP2 : sortedP1;
+
+        // Rekkefølge-poengsum: tell antall "brudd" på logisk rekkefølge.
+        // Et brudd er hvis side 2 har en seksjon som logisk kommer FØR
+        // en seksjon på side 1. Lavere er bedre.
+        const maxSide1 = Math.max(...side1.map(s => sectionOrder[s.type] ?? 99));
+        const minSide2 = Math.min(...side2.map(s => sectionOrder[s.type] ?? 99));
+        const brudd = maxSide1 > minSide2 ? 1 : 0;
+
+        // Balanse-poengsum: høydeforskjell normalisert (0-1)
+        const balanse = Math.abs(h1 - h2) / PAGE_CONTENT_BUDGET_MM;
+
+        // Hovedpoengsum: brudd veier mye mer enn balanse
+        const score = brudd * 100 + balanse;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestSplit = { side1, side2 };
+        }
+      }
     }
+
+    if (bestSplit) {
+      pages = [bestSplit.side1, bestSplit.side2];
+    } else {
+      // Fallback: greedy packing (kan gi 3+ sider). Skal i praksis
+      // aldri skje, men er en trygghet for ekstreme tilfeller.
+      pages = [[]];
+      let currentPageHeight = 0;
+      for (const s of sections) {
+        const fitsCurrent = currentPageHeight + s.heightMm <= PAGE_CONTENT_BUDGET_MM;
+        if (!fitsCurrent && pages[pages.length - 1].length > 0) {
+          pages.push([]);
+          currentPageHeight = 0;
+        }
+        pages[pages.length - 1].push(s);
+        currentPageHeight += s.heightMm;
+      }
+    }
+  }
+
+  // Sikkerhet: tom første side → flytt opp
+  if (pages[0].length === 0 && pages.length > 1) {
+    pages.shift();
   }
 
   const numPages = pages.length;
