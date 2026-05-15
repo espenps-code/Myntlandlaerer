@@ -464,6 +464,14 @@ body {
         <span>✏️ Krev at hele regnestykket er skrevet på gange/dele</span>
       </label>
       <label class="checkbox-item">
+        <input type="checkbox" id="kravLinjal" checked>
+        <span>📏 Krev linjal på streker (under oppstilling og svarsetning)</span>
+      </label>
+      <label class="checkbox-item">
+        <input type="checkbox" id="kravToStrek" checked>
+        <span>═ Krev to streker under svaret</span>
+      </label>
+      <label class="checkbox-item">
         <input type="checkbox" id="kravSvarsetning" checked>
         <span>📝 Krev svarsetning på tekstoppgaver</span>
       </label>
@@ -520,7 +528,7 @@ document.querySelectorAll('.trinn-btn').forEach(btn => {
 settTrinn(valgtTrinn);
 
 // ─── Krav (lagres lokalt) ───
-['kravOppstilling', 'kravRegnestykke', 'kravSvarsetning'].forEach(id => {
+['kravOppstilling', 'kravRegnestykke', 'kravLinjal', 'kravToStrek', 'kravSvarsetning'].forEach(id => {
   const el = document.getElementById(id);
   const stored = localStorage.getItem('myntland_' + id);
   if (stored !== null) el.checked = stored === '1';
@@ -629,6 +637,8 @@ async function rettLekse() {
   const trinn = valgtTrinn;
   const kravOppstilling = document.getElementById('kravOppstilling').checked;
   const kravRegnestykke = document.getElementById('kravRegnestykke').checked;
+  const kravLinjal = document.getElementById('kravLinjal').checked;
+  const kravToStrek = document.getElementById('kravToStrek').checked;
   const kravSvarsetning = document.getElementById('kravSvarsetning').checked;
 
   const trinnTekst = trinn <= 3 ? 'tidligtrinn (2-3)' : trinn <= 5 ? 'mellomtrinn (4-5)' : 'mellomtrinn-høyt (6-7)';
@@ -648,6 +658,16 @@ async function rettLekse() {
     kravTekst.push('GANGE og DELE: Krev at eleven har skrevet hele regnestykket (f.eks. "24 · 7 = 168" eller "144 : 6 = 24"), ikke bare svaret alene. Hvis bare svaret er skrevet uten regnestykket, gi status "partial" med vennlig påminnelse om å skrive hele regnestykket. Hvis regnestykket er skrevet og svaret er riktig, gi status "correct" — uansett hvordan eleven har stilt det opp.');
   } else {
     kravTekst.push('GANGE og DELE: Sjekk kun at svaret er riktig.');
+  }
+  if (kravLinjal) {
+    kravTekst.push('LINJAL PÅ STREKER: Streker under regnestykker (summestreker i pluss/minus, og under svarsetning på tekstoppgaver) bør tegnes med linjal — altså rette, jevne streker. Hvis svaret er riktig men en strek er tydelig krøllete eller skjev (frihåndstegnet i stedet for linjal), gi status "partial" med vennlig påminnelse om å bruke linjal neste gang. Vær tolerant — en litt skjev linje er greit, det er bare tydelig frihåndsstreker som skal påpekes. Hvis du er usikker, anta at linjal er brukt.');
+  } else {
+    kravTekst.push('LINJAL: Ikke kommenter om linjal er brukt.');
+  }
+  if (kravToStrek) {
+    kravTekst.push('TO STREKER UNDER SVARET: Det matematiske svaret skal markeres med to streker under (=). I oppstilling skal det være to streker under summen/differansen. Hvis svaret er riktig men det mangler to streker under, gi status "partial" med vennlig påminnelse. Hvis det er én strek der det skulle vært to, påpek det også.');
+  } else {
+    kravTekst.push('TO STREKER: Ikke kommenter om det er to streker under svaret.');
   }
   if (kravSvarsetning) {
     kravTekst.push('TEKSTOPPGAVER: Krev hel svarsetning ("Kari har 7 kr igjen"), ikke bare et tall. Hvis svaret er riktig men svarsetning mangler, gi status "partial".');
