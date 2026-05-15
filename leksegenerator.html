@@ -717,23 +717,51 @@ function niceNum(min, max, step) {
 // Tilfeldig element fra array
 function pick(arr) { return arr[rr(0, arr.length - 1)]; }
 
+// Monsternavn fra Myntland-universet — parallell-array til MONSTER_IMGS,
+// så hvert navn matcher bildet på samme indeks. På den måten viser
+// tekstoppgaven det monsteret som faktisk er på bildet ved siden av.
+// Bølge, Drage, Måne, Rosa har faste navn i hele Myntland-universet;
+// de øvrige er navngitt etter farge eller personlighet.
+const MONSTER_NAMES = [
+  'Glød',   // 0 — oransje
+  'Skog',   // 1 — gressgrønn
+  'Drage',  // 2 — ildrød
+  'Bamse',  // 3 — himmelblå (kosete bamse-aktig)
+  'Rosa',   // 4 — rosa
+  'Bølge',  // 5 — dyp blå
+  'Bjørk',  // 6 — lysegrønn
+  'Måne',   // 7 — grå
+  'Skygge'  // 8 — mørk lilla
+];
+// Slå opp riktig navn for et gitt monsterbilde. Hvis bildet ikke matcher
+// (skulle ikke skje), fall tilbake til første navn i listen.
+function nameForImg(src) {
+  const i = MONSTER_IMGS.indexOf(src);
+  return i >= 0 ? MONSTER_NAMES[i] : MONSTER_NAMES[0];
+}
+// Tekstoppgavemalene kaller pickName() for å få et monsternavn å bruke.
+// buildTextSection setter currentMonsterName til navnet som matcher
+// bildet som faktisk vises, så tekst og bilde alltid stemmer.
+let currentMonsterName = MONSTER_NAMES[0];
+function pickName() { return currentMonsterName; }
+
 // Realistiske tekstoppgaver. Hver mal har sin egen pick() som velger tall
 // tilpasset scenarioet (en is koster 20–50 kr, ikke 399 kr).
 const TEXTS = {
   easy:[
     // Kun addisjon og subtraksjon. Tall 10–99, hverdagsnære tellbare ting.
     {op:'add', pick:()=>[rr(12,60), rr(10,40)],
-      t:(a,b)=>`Lukas har ${a} klinkekuler. Han får ${b} til av bestefar. Hvor mange klinkekuler har han nå?`},
+      t:(a,b)=>{const n=pickName(); return `${n} har ${a} klinkekuler og får ${b} til av en venn. Hvor mange klinkekuler har ${n} nå?`;}},
     {op:'sub', pick:()=>{const a=rr(30,95); return [a, rr(5, a-5)];},
-      t:(a,b)=>`Ida har ${a} klistremerker. Hun gir ${b} til lillesøster. Hvor mange har hun igjen?`},
+      t:(a,b)=>{const n=pickName(); return `${n} har ${a} klistremerker og gir ${b} av dem til en venn. Hvor mange klistremerker har ${n} igjen?`;}},
     {op:'add', pick:()=>[rr(15,60), rr(10,40)],
       t:(a,b)=>`I klassen er det ${a} gutter og ${b} jenter. Hvor mange elever er det i klassen til sammen?`},
     {op:'sub', pick:()=>{const a=rr(40,95); return [a, rr(10, a-10)];},
       t:(a,b)=>`Det er ${a} bøker i bokhyllen. ${b} blir lånt ut. Hvor mange bøker står igjen i hyllen?`},
     {op:'add', pick:()=>[rr(15,50), rr(10,45)],
-      t:(a,b)=>`Emma plukket ${a} blåbær i går og ${b} blåbær i dag. Hvor mange har hun plukket til sammen?`},
+      t:(a,b)=>{const n=pickName(); return `${n} plukket ${a} blåbær i går og ${b} blåbær i dag. Hvor mange blåbær har ${n} plukket til sammen?`;}},
     {op:'sub', pick:()=>{const a=rr(25,70); return [a, rr(5, a-5)];},
-      t:(a,b)=>`Noa bakte ${a} boller. Familien spiste ${b} til kveldsmat. Hvor mange boller er igjen?`},
+      t:(a,b)=>{const n=pickName(); return `${n} bakte ${a} boller. Gjengen spiste ${b} til kveldsmat. Hvor mange boller er igjen?`;}},
     {op:'add', pick:()=>[rr(20,60), rr(10,40)],
       t:(a,b)=>`Det står ${a} biler på parkeringsplassen. Så kjører ${b} nye biler inn. Hvor mange biler er det nå?`},
     {op:'sub', pick:()=>{const a=rr(30,90); return [a, rr(10, a-10)];},
@@ -764,7 +792,7 @@ const TEXTS = {
     {op:'div', pick:()=>{const b=rr(4,10), k=rr(5,12); return [b*k, b];},
       t:(a,b)=>`En bonde skal fordele ${a} egg likt i ${b} kartonger. Hvor mange egg blir det i hver kartong?`,c:(a,b)=>a%b===0},
     {op:'div', pick:()=>{const b=rr(2,6), k=rr(8,20); return [b*k, b];},
-      t:(a,b)=>`Mia sparer ${a} kr og vil dele beløpet likt over ${b} måneder. Hvor mye kan hun bruke per måned?`,c:(a,b)=>a%b===0},
+      t:(a,b)=>{const n=pickName(); return `${n} sparer ${a} kr og vil dele beløpet likt over ${b} måneder. Hvor mye kan ${n} bruke per måned?`;},c:(a,b)=>a%b===0},
   ],
   hard:[
     // ────── Vanlige regnearter (utfordrende tall) ──────
@@ -790,14 +818,14 @@ const TEXTS = {
       t:(a,b)=>`En familiepizza koster ${a} kr. Hva blir prisen for ${b} pizzaer til klassefesten?`},
     // Veksel
     {op:'eco', pick:()=>{const a=niceNum(500,2000,50); return [a, niceNum(150,Math.min(a-50,800),10)];},
-      t:(a,b)=>`Sara har ${a} kr i lommeboken. Hun kjøper en bok til ${b} kr. Hvor mye har hun igjen?`,c:(a,b)=>a>b},
+      t:(a,b)=>{const n=pickName(); return `${n} har ${a} kr i lommeboken og kjøper en bok til ${b} kr. Hvor mye har ${n} igjen?`;},c:(a,b)=>a>b},
     {op:'eco', pick:()=>{const a=niceNum(1000,3000,100); return [a, niceNum(300,Math.min(a-100,1500),50)];},
-      t:(a,b)=>`Jonas har spart ${a} kr. Han kjøper et spill til ${b} kr. Hvor mye har han igjen?`,c:(a,b)=>a>b},
+      t:(a,b)=>{const n=pickName(); return `${n} har spart ${a} kr og kjøper et spill til ${b} kr. Hvor mye har ${n} igjen?`;},c:(a,b)=>a>b},
     // Lønn/jobb
     {op:'eco', pick:()=>[niceNum(150,220,10), rr(4,8)],
-      t:(a,b)=>`En ungdom tjener ${a} kr i timen på sommerjobb. Hvor mye tjener hun på en arbeidsdag med ${b} timer?`},
+      t:(a,b)=>{const n=pickName(); return `${n} tjener ${a} kr i timen på sommerjobb. Hvor mye tjener ${n} på en arbeidsdag med ${b} timer?`;}},
     {op:'eco', pick:()=>[niceNum(180,250,10), rr(10,30)],
-      t:(a,b)=>`En avisbud får ${a} kr per runde. Hvor mye tjener han på ${b} runder?`},
+      t:(a,b)=>{const n=pickName(); return `${n} har avisrunde og får ${a} kr per runde. Hvor mye tjener ${n} på ${b} runder?`;}},
     // Strøm
     {op:'eco', pick:()=>[niceNum(2,5,1), rr(200,800)],
       t:(a,b)=>`Strømprisen er ${a} kr per kWh. Familien bruker ${b} kWh i en måned. Hvor mye må de betale?`},
@@ -809,8 +837,8 @@ const TEXTS = {
 
     // ────── BRØK: 1/2, 1/3, 1/4 av hverdagslige mengder ──────
     {op:'frac', pick:()=>{const b=pick([2,3,4]); return [b*rr(5,20), b];},
-      t:(a,b)=>{const f=b===2?'halvparten':b===3?'en tredjedel':'en fjerdedel';
-        return `En pose inneholder ${a} karameller. Lillesøster spiser ${f} av dem. Hvor mange karameller spiste hun?`;},
+      t:(a,b)=>{const f=b===2?'halvparten':b===3?'en tredjedel':'en fjerdedel'; const n=pickName();
+        return `En pose inneholder ${a} karameller. ${n} spiser ${f} av dem. Hvor mange karameller spiste ${n}?`;},
       c:(a,b)=>a%b===0},
     {op:'frac', pick:()=>{const b=pick([2,4]); return [b*100*rr(2,6), b];},
       t:(a,b)=>{const f=b===2?'halvparten':'en fjerdedel';
@@ -829,7 +857,7 @@ const TEXTS = {
       t:(a,b)=>`En sykkel koster ${a} kr. Butikken gir ${b}% rabatt. Hvor mange kroner sparer du?`,
       c:(a,b)=>[10,20,50].includes(b)&&(a*b)%100===0},
     {op:'pct', pick:()=>{const p=pick([5,10]); const step=p===5?100:50; return [step*rr(10,50), p];},
-      t:(a,b)=>`Noah har ${a} kr på sparekontoen. Etter ett år får han ${b}% i rente. Hvor mye får han i renter?`,
+      t:(a,b)=>{const n=pickName(); return `${n} har ${a} kr på sparekontoen. Etter ett år får ${n} ${b}% i rente. Hvor mye blir det i renter?`;},
       c:(a,b)=>[5,10].includes(b)&&(a*b)%100===0},
     {op:'pct', pick:()=>[niceNum(200,1500,100), 25],
       t:(a,b)=>`Varen koster ${a} kr uten moms. Momsen er ${b}%. Hvor mye er momsen i kroner?`,
@@ -838,7 +866,7 @@ const TEXTS = {
     // ────── MÅLING: lengde, vekt, tid, volum ──────
     // Lengde: meter → km
     {op:'meas', pick:()=>[niceNum(400,1200,100), rr(5,10)],
-      t:(a,b)=>`Skoleveien til Aisha er ${a} meter én vei. Hvor mange kilometer går hun på ${b} skoledager (tur-retur)?`,
+      t:(a,b)=>{const n=pickName(); return `Skoleveien til ${n} er ${a} meter én vei. Hvor mange kilometer går ${n} på ${b} skoledager (tur-retur)?`;},
       c:(a,b)=>(a*2*b)%1000===0},
     // Vekt: gram → kg, eller kg addisjon
     {op:'meas', pick:()=>[niceNum(150,450,50), rr(4,12)],
@@ -1030,6 +1058,10 @@ function pickNumbersForText(op, level) {
 }
 
 function buildTextSection(monsterSrc, level, allowedOps) {
+  // Sett aktivt monsternavn til det som matcher bildet, så pickName() i
+  // tekstmalene returnerer navnet som hører til monsteret på bildet.
+  currentMonsterName = nameForImg(monsterSrc);
+
   const fullPool = TEXTS[level];
 
   // Filtrer poolen til kun maler som matcher valgte regnearter.
