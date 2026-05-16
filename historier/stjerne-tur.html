@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stjerne og turen til badelandet – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-title {
+    flex: 1;
+    text-align: center;
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1rem;
+  }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  @media (max-width: 700px) {
+    .topnav-title { display: none; }
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 2rem;
+  }
+
+  .story-frame {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(30, 15, 82, 0.06);
+  }
+
+  .scene {
+    min-height: 540px;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 0;
+  }
+
+  .scene-image {
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, #f0f4f0, #e1f5ee);
+    position: relative;
+    overflow: hidden;
+  }
+  .scene-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.5s ease;
+  }
+  .scene-image .loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .scene-text {
+    padding: 2rem 2.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .scene-tag {
+    align-self: flex-start;
+    background: var(--amber-light);
+    color: var(--amber-dark);
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 3px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .scene-tag.sti-a { background: var(--coral-light); color: var(--coral); }
+  .scene-tag.sti-b { background: var(--purple-light); color: var(--purple); }
+  .scene-tag.sti-c { background: var(--green-light); color: var(--green-dark); }
+
+  .scene-text h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.6rem, 2.5vw, 2rem);
+    color: var(--teal-dark);
+    line-height: 1.1;
+    margin-bottom: 1.25rem;
+  }
+  .scene-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .scene-text .moral {
+    background: var(--green-light);
+    border-left: 4px solid var(--green);
+    padding: 1rem 1.25rem;
+    border-radius: 4px 12px 12px 4px;
+    font-style: italic;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-top: 1rem;
+    font-size: 1rem;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+  .choice-btn {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text);
+  }
+  .choice-btn:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(29, 158, 117, 0.15);
+  }
+  .choice-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    width: 48px;
+    text-align: center;
+  }
+  .choice-content { flex: 1; }
+  .choice-title {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.05rem;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+  .choice-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .ending {
+    padding: 2rem 2.25rem;
+    border-top: 2px solid var(--border);
+    background: linear-gradient(180deg, var(--bg), var(--white));
+  }
+  .ending h3 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ending p {
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .ending ul {
+    list-style: none;
+    padding: 0;
+  }
+  .ending li {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.6rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    line-height: 1.5;
+  }
+  .ending li::before {
+    content: '💭';
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .ending-section { margin-bottom: 1.75rem; }
+  .ending-section:last-child { margin-bottom: 0; }
+
+  /* Snakk sammen-side */
+  .snakk-sammen {
+    padding: 2.5rem 2.25rem;
+    background: linear-gradient(180deg, var(--green-light) 0%, var(--white) 60%);
+    min-height: 540px;
+  }
+  .snakk-header { margin-bottom: 2rem; text-align: center; }
+  .snakk-header .scene-tag { margin-bottom: 1rem; }
+  .snakk-header h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    color: var(--teal-dark);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+  .snakk-header p {
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-weight: 600;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .snakk-sporsmal {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2.5rem 0;
+    display: grid;
+    gap: 0.85rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .snakk-sporsmal li {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: all 0.2s ease;
+  }
+  .snakk-sporsmal li:hover {
+    border-color: var(--green);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(29, 158, 117, 0.1);
+  }
+  .snakk-sporsmal .sporsmal-nr {
+    background: var(--green-dark);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .snakk-sporsmal .sporsmal-tekst {
+    flex: 1;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: var(--text);
+    font-weight: 600;
+    padding-top: 4px;
+  }
+  .snakk-sammen .ending-section h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+    justify-content: center;
+  }
+  .snakk-sammen .choices {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .controls {
+    background: var(--white);
+    border-top: 2px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .progress {
+    flex: 1;
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 120px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--green-dark));
+    width: 0%;
+    transition: width 0.4s ease;
+    border-radius: 4px;
+  }
+
+  .scene-counter {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+  }
+
+  .btn {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+  }
+  .btn:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn.primary {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: white;
+  }
+  .btn.primary:hover {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: white;
+  }
+  .btn.primary.playing {
+    background: var(--coral);
+    border-color: var(--coral);
+  }
+  .btn.icon-only {
+    padding: 0.6rem 0.7rem;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--teal-dark);
+    color: white;
+    padding: 0.85rem 1.5rem;
+    border-radius: 28px;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 800px) {
+    main { padding: 1rem; }
+    .scene { grid-template-columns: 1fr; min-height: auto; }
+    .scene-image { aspect-ratio: 4 / 3; }
+    .scene-text { padding: 1.5rem; }
+    .scene-text h2 { font-size: 1.4rem; }
+    .scene-text p { font-size: 1rem; }
+    .ending { padding: 1.5rem; }
+    .snakk-sammen { padding: 1.75rem 1.25rem; min-height: auto; }
+    .snakk-sporsmal li { padding: 0.9rem 1rem; }
+    .snakk-sporsmal .sporsmal-tekst { font-size: 0.98rem; }
+    .controls { padding: 0.85rem 1rem; }
+    .btn { padding: 0.55rem 0.85rem; font-size: 0.85rem; }
+  }
+
+  .scene-wrapper { transition: opacity 0.35s ease; }
+  .scene-wrapper.fading { opacity: 0; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="../index.html" class="topnav-logo">Myntland</a>
+    <div class="topnav-title">🎂 Stjerne og turen til badelandet</div>
+    <a href="../okonomiske-historier.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake
+    </a>
+  </div>
+</nav>
+
+<main>
+  <div class="story-frame">
+    <div class="scene-wrapper" id="sceneWrapper"></div>
+
+    <div class="controls">
+      <button class="btn icon-only" id="prevBtn" title="Forrige side">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="btn primary" id="playBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" id="playIcon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span id="playLabel">Spill av</span>
+      </button>
+      <button class="btn icon-only" id="nextBtn" title="Neste side">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="progress"><div class="progress-fill" id="progress"></div></div>
+      <div class="scene-counter" id="counter">1 / 1</div>
+      <button class="btn" id="restartBtn" title="Start fortellingen på nytt">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Start på nytt
+      </button>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================================================
+// MAL FOR MYNTLAND-HISTORIE
+// =============================================================================
+// Fyll inn alle plassholdere {{...}} og bytt ut Bølge-teksten med din historie.
+// Strukturen MÅ være: start → pris → veiskille → sti A (1-2) / B (1-2) / C (3-4)
+// Antall scener per sti:
+//   Vei A: 1–2 scener (helst 2)
+//   Vei B: 1–2 scener (helst 2)
+//   Vei C: 3–4 scener (helst 4 — gir rom for arbeid, vekst, triumf)
+// Totalt antall bilder: 10–12
+// =============================================================================
+
+// --- BILDER ---
+// Filnavn matches med Higgsfield-genereringer som lastes ned via last_ned_bilder.html.
+// Filene legges i bilder/-mappen ved siden av denne HTML-fila.
+const BILDER = {
+  start: 'bilder/01_start.png',
+  pris: 'bilder/02_pris.png',
+  veiskille: 'bilder/03_veiskille.png',
+  sti_a_1: 'bilder/04_sti-a-1.png',
+  sti_a_2: 'bilder/05_sti-a-2.png',
+  sti_b_1: 'bilder/06_sti-b-1.png',
+  sti_b_2: 'bilder/07_sti-b-2.png',
+  sti_c_1: 'bilder/08_sti-c-1.png',
+  sti_c_2: 'bilder/09_sti-c-2.png',
+  sti_c_3: 'bilder/10_sti-c-3.png',
+  diskusjon: 'bilder/12_diskusjon.png'
+};
+
+// --- LYD ---
+// Lydfiler genereres separat via ElevenLabs (se innleseskript-mal.md).
+// Filnavn: <scene-id>.mp3, plasseres i lyd/-mappen.
+// Hvis en mp3 mangler, faller systemet tilbake til nettleserstemmen.
+const LYD_BASE = 'lyd/';
+
+// --- SIDER ---
+// Hver scene har: bilde, tag, overskrift, avsnitt[], (frivillig) moral, erSlutt, sti, valg
+const SIDER = {
+  start: {
+    bilde: BILDER.start,
+    tag: 'Kapittel 1',
+    overskrift: 'Bursdagspengene',
+    avsnitt: [
+      'Stjerne er et lite, gult monster som bor i Myntland. I dag er det Stjernes bursdag.',
+      'I de små potene holder Stjerne en tung pung. Inni ligger tre hundre skinnende gullmynter — bursdagsgaven fra mormor.',
+      'Stjerne har aldri hatt så mye penger på én gang.'
+    ]
+  },
+  pris: {
+    bilde: BILDER.pris,
+    tag: 'Kapittel 2',
+    overskrift: 'Telefonen ringer',
+    avsnitt: [
+      'Hjemme på rommet drømmer Stjerne om et nytt dataspill. Spillet koster akkurat tre hundre mynter.',
+      'Da ringer telefonen. Det er vennene Drage og Måne. «Vi skal på tur til badelandet på lørdag! Men vi mangler mynter til bussen. Vil du være med?»',
+      'Stjerne kjenner det kribler i magen. Tre hundre mynter. Ett spill Stjerne har ønsket seg lenge — eller en hel dag på badelandet med vennene. Hva skal Stjerne gjøre?'
+    ]
+  },
+  veiskille: {
+    bilde: BILDER.veiskille,
+    tag: 'Veiskille',
+    overskrift: 'Tre veier framfor Stjerne',
+    avsnitt: ['Hva skal Stjerne gjøre med bursdagspengene? Klassen velger sammen!'],
+    valg: true
+  },
+
+  'sti-a-1': {
+    bilde: BILDER.sti_a_1,
+    tag: 'Vei A',
+    tagClass: 'sti-a',
+    overskrift: 'Stjerne kjøper spillet',
+    avsnitt: [
+      'Stjerne tenker: «Det er MINE bursdagspenger. Jeg har ventet så lenge på dette spillet.»',
+      'Stjerne løper rett til spillbutikken og kjøper det. Pungen er tom — men i potene ligger esken med dragen og regnbuen på. Hjertet hopper av glede.'
+    ]
+  },
+  'sti-a-2': {
+    bilde: BILDER.sti_a_2,
+    tag: 'Vei A',
+    tagClass: 'sti-a',
+    overskrift: 'Bussen drar uten Stjerne',
+    avsnitt: [
+      'Lørdag morgen sitter Stjerne alene på rommet og spiller. Drage og Måne fant en annen løsning — de pantet flasker og vasket bilen til naboen for å tjene de siste myntene selv.',
+      'Utenfor vinduet kjører bussen forbi. Stjerne ser Drage og Måne le og vinke fra vinduet — på vei til badelandet uten Stjerne.',
+      'Spillet er fint. Men rommet kjennes plutselig veldig stille. Mandag på skolen forteller Drage og Måne om vannsklier og iskrem, og Stjerne har ingenting å si.'
+    ],
+    moral: 'Stjerne hadde lov til å bruke pengene på seg selv. Men gleden ble mindre fordi vennene fikk en stor opplevelse uten Stjerne.',
+    erSlutt: true,
+    sti: 'A'
+  },
+
+  'sti-b-1': {
+    bilde: BILDER.sti_b_1,
+    tag: 'Vei B',
+    tagClass: 'sti-b',
+    overskrift: 'Stjerne gir alt',
+    avsnitt: [
+      'Stjerne kjenner i hjertet at noe må gjøres. Stjerne løper ut i sola og finner Drage og Måne på torget.',
+      '«Her,» sier Stjerne og tømmer hele pungen. Alle tre hundre myntene faller ned i felleskassen til bussen. Drage og Måne klemmer Stjerne. «Du er den beste vennen!»',
+      'Stjerne smiler stort. Men i potene ligger nå en helt tom pung.'
+    ]
+  },
+  'sti-b-2': {
+    bilde: BILDER.sti_b_2,
+    tag: 'Vei B',
+    tagClass: 'sti-b',
+    overskrift: 'Vennene spanderer',
+    avsnitt: [
+      'På badelandet er det fantastisk. Vannsklier, bølger, og en iskremvogn med tjue forskjellige smaker.',
+      'Drage og Måne springer til iskremvogna. «Du betalte hele bussen, Stjerne — vi spanderer is på deg!» De kjøper en sjokoladeis til Stjerne.',
+      'Stjerne smiler og takker. Men inni kjennes det rart. Stjerne ville helst hatt jordbær. Først ga Stjerne bort alle myntene sine — og nå er det vennene som bestemmer. Stjerne savner følelsen av å kunne velge selv.'
+    ],
+    moral: 'Det er fint å hjelpe vennene sine. Men hvis du gir bort alle pengene dine på én gang, gir du også bort retten til å velge selv. Det er greit å passe på seg selv også.',
+    erSlutt: true,
+    sti: 'B'
+  },
+
+  'sti-c-1': {
+    bilde: BILDER.sti_c_1,
+    tag: 'Vei C',
+    tagClass: 'sti-c',
+    overskrift: 'Stjerne deler i to',
+    avsnitt: [
+      'Stjerne setter seg ned ved bordet og tenker lenge. Så finner Stjerne en glasskrukke formet som en stjerne.',
+      'Stjerne teller myntene i to like store hauger. Ett hundre og femti mynter går i en pung til badelandsturen. Ett hundre og femti mynter blir igjen — til mat, is og småting.',
+      '«Jeg hjelper vennene mine. Og jeg passer på meg selv også. Begge deler.»'
+    ]
+  },
+  'sti-c-2': {
+    bilde: BILDER.sti_c_2,
+    tag: 'Vei C',
+    tagClass: 'sti-c',
+    overskrift: 'En dag full av latter',
+    avsnitt: [
+      'Lørdag på badelandet er helt magisk. Stjerne, Drage og Måne plasker i bølgebassenget, sklir nedover den lange blå sklia og ler så magen verker.',
+      'Til lunsj kjøper Stjerne en is med kuler i tre farger — for det er fortsatt mynter igjen i pungen. Vennene ler og spiser is sammen. Det er den beste dagen.'
+    ]
+  },
+  'sti-c-3': {
+    bilde: BILDER.sti_c_3,
+    tag: 'Vei C',
+    tagClass: 'sti-c',
+    overskrift: 'Spillet kommer senere',
+    avsnitt: [
+      'Etter turen sparer Stjerne videre. Hver uke kommer det litt lønn fra klassejobben. Litt går i sparekrukka, litt blir til en lørdagsis.',
+      'Mange uker senere er det tid for å telle: tre hundre mynter. Stjerne løper til spillbutikken og kjøper drømmespillet.',
+      'På rommet henger et bilde fra badelandet — Stjerne, Drage og Måne med iskrem på nesa. Stjerne fikk alt sammen. Bare ikke alt med en gang.'
+    ],
+    moral: 'Det smarteste var ikke å velge mellom seg selv eller vennene — men å gjøre litt av begge deler. Når vi deler opp pengene, kan vi få både gode opplevelser med andre og ting vi selv ønsker oss.',
+    erSlutt: true,
+    sti: 'C'
+  }
+};
+
+const STIER = {
+  A: ['sti-a-1', 'sti-a-2'],
+  B: ['sti-b-1', 'sti-b-2'],
+  C: ['sti-c-1', 'sti-c-2', 'sti-c-3']
+};
+
+const VALG = [
+  { sti: 'A', ikon: '🎮', tittel: 'Beholde alt selv', undertekst: 'Stjerne kjøper dataspillet Stjerne har ønsket seg.' },
+  { sti: 'B', ikon: '💛', tittel: 'Gi alt til vennene', undertekst: 'Stjerne gir hele bursdagsgaven til turen.' },
+  { sti: 'C', ikon: '⚖️', tittel: 'Dele i to', undertekst: 'Stjerne gir halvparten til turen og beholder resten.' }
+];
+
+// Diskusjonsspørsmål tilpasset hvilken vei klassen tok
+const DISKUSJON = {
+  A: [
+    'Hvordan tror dere Stjerne følte seg da Drage og Måne dro på tur uten Stjerne?',
+    'Hadde Stjerne lov til å bruke pengene på seg selv? Hvorfor / hvorfor ikke?',
+    'Drage og Måne pantet flasker og vasket bilen for å skaffe mynter. Kunne Stjerne også gjort det i tillegg til å kjøpe spillet?',
+    'Har dere noen gang valgt noe selv og angret etterpå når vennene gjorde noe gøy uten dere?'
+  ],
+  B: [
+    'Hvorfor tror dere Stjerne ga bort alle myntene på én gang?',
+    'Var det ekte glede for Stjerne å få sjokoladeisen av vennene? Hvorfor / hvorfor ikke?',
+    'Hva er forskjellen på å kjøpe noe selv og å få det av noen andre?',
+    'Hvorfor savnet Stjerne følelsen av å kunne velge selv, selv om Stjerne fikk is?'
+  ],
+  C: [
+    'Hvorfor tror dere det var smart av Stjerne å dele myntene i to?',
+    'Er det noen ganger lov å bruke litt på seg selv og litt på andre? Når?',
+    'Hva er forskjellen mellom å vente på noe og å aldri få det?',
+    'Har dere noen gang delt noe slik at både dere og andre fikk glede av det?'
+  ]
+};
+
+let aktivListe = [];
+let aktivIndeks = 0;
+let valgtSti = null;
+let spillerAv = false;
+let aktivLyd = null;
+let stemme = null;
+
+function byggIntroliste() {
+  aktivListe = ['start', 'pris', 'veiskille'];
+  aktivIndeks = 0;
+  valgtSti = null;
+}
+
+function velgSti(sti) {
+  stoppLyd();
+  valgtSti = sti;
+  aktivListe = ['start', 'pris', 'veiskille', ...STIER[sti]];
+  aktivIndeks = 3;
+  visSide();
+  if (spillerAv) lesOpp();
+}
+
+function startSti(sti) {
+  stoppLyd();
+  valgtSti = sti;
+  aktivListe = ['start', 'pris', 'veiskille', ...STIER[sti]];
+  aktivIndeks = 3;
+  visSide();
+  visToast(`Du valgte vei ${sti}!`);
+}
+
+function visSnakkSammen() {
+  stoppLyd();
+  spillerAv = false;
+  oppdaterPlayBtn();
+
+  const wrapper = document.getElementById('sceneWrapper');
+  wrapper.classList.add('fading');
+
+  setTimeout(() => {
+    const sti = valgtSti || 'C';
+    const stiNavn = { A: 'Vei A: Beholde alt selv', B: 'Vei B: Gi alt til vennene', C: 'Vei C: Dele i to' };
+    const stiIkon = { A: '🎮', B: '💛', C: '⚖️' };
+    const stiClass = { A: 'sti-a', B: 'sti-b', C: 'sti-c' };
+    const andreStier = ['A', 'B', 'C'].filter(s => s !== sti);
+    const sporsmal = DISKUSJON[sti] || DISKUSJON.C;
+
+    wrapper.innerHTML = `
+      <div class="snakk-sammen">
+        <div class="snakk-header">
+          <span class="scene-tag ${stiClass[sti]}">Etter ${stiNavn[sti]}</span>
+          <h2>💬 Snakk sammen</h2>
+          <p>Bruk disse spørsmålene i klassen, eller tenk gjennom dem på egen hånd.</p>
+        </div>
+
+        <ul class="snakk-sporsmal">
+          ${sporsmal.map((q, i) => `
+            <li>
+              <span class="sporsmal-nr">${i + 1}</span>
+              <span class="sporsmal-tekst">${q}</span>
+            </li>
+          `).join('')}
+        </ul>
+
+        <div class="ending-section">
+          <h3>🔄 Vil du se hva som skjedde om Stjerne valgte annerledes?</h3>
+          <div class="choices">
+            ${andreStier.map(s => `
+              <button class="choice-btn" onclick="startSti('${s}')">
+                <div class="choice-icon">${stiIkon[s]}</div>
+                <div class="choice-content">
+                  <div class="choice-title">Prøv ${stiNavn[s]}</div>
+                  <div class="choice-sub">Spill fortellingen på nytt med dette valget.</div>
+                </div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    wrapper.classList.remove('fading');
+
+    // Oppdater progress til full
+    document.getElementById('counter').textContent = 'Slutt';
+    document.getElementById('progress').style.width = '100%';
+    document.getElementById('prevBtn').disabled = false;
+    document.getElementById('nextBtn').disabled = true;
+  }, 200);
+}
+
+function visSide() {
+  const wrapper = document.getElementById('sceneWrapper');
+  const sideId = aktivListe[aktivIndeks];
+  const side = SIDER[sideId];
+  if (!side) return;
+
+  wrapper.classList.add('fading');
+
+  setTimeout(() => {
+    let innhold = `
+      <div class="scene">
+        <div class="scene-image">
+          <div class="loader">Laster bilde…</div>
+          <img src="${side.bilde}" alt="${side.overskrift}"
+               onload="this.previousElementSibling.style.display='none'"
+               onerror="this.previousElementSibling.textContent='Bilde kunne ikke lastes'">
+        </div>
+        <div class="scene-text">
+          <span class="scene-tag ${side.tagClass || ''}">${side.tag}</span>
+          <h2>${side.overskrift}</h2>
+          ${side.avsnitt.map(p => `<p>${p}</p>`).join('')}
+    `;
+
+    if (side.valg) {
+      innhold += `<div class="choices">`;
+      VALG.forEach(v => {
+        innhold += `
+          <button class="choice-btn" onclick="velgSti('${v.sti}')">
+            <div class="choice-icon">${v.ikon}</div>
+            <div class="choice-content">
+              <div class="choice-title">${v.tittel}</div>
+              <div class="choice-sub">${v.undertekst}</div>
+            </div>
+          </button>
+        `;
+      });
+      innhold += `</div>`;
+    }
+
+    if (side.moral) {
+      innhold += `<div class="moral">${side.moral}</div>`;
+    }
+
+    innhold += `</div></div>`;
+
+    if (side.erSlutt) {
+      innhold += `
+        <div class="ending">
+          <div class="ending-section">
+            <h3>🤔 Synes du dette var et godt valg?</h3>
+            <p>Klikk videre for å snakke sammen om det Stjerne opplevde — og se hva som skjedde hvis Stjerne hadde valgt annerledes.</p>
+            <div class="choices">
+              <button class="choice-btn" onclick="visSnakkSammen()">
+                <div class="choice-icon">💬</div>
+                <div class="choice-content">
+                  <div class="choice-title">Gå videre — snakk sammen</div>
+                  <div class="choice-sub">Diskusjonsspørsmål og mulighet til å prøve en annen vei.</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    wrapper.innerHTML = innhold;
+    wrapper.classList.remove('fading');
+
+    const total = aktivListe.length;
+    document.getElementById('counter').textContent = `${aktivIndeks + 1} / ${total}`;
+    document.getElementById('progress').style.width = `${((aktivIndeks + 1) / total) * 100}%`;
+
+    document.getElementById('prevBtn').disabled = aktivIndeks === 0;
+    document.getElementById('nextBtn').disabled =
+      aktivIndeks >= aktivListe.length - 1 || side.valg;
+
+  }, 200);
+}
+
+function spillScenelyd() {
+  const sideId = aktivListe[aktivIndeks];
+  const lydUrl = LYD_BASE + sideId + '.mp3';
+
+  return new Promise((resolve, reject) => {
+    const audio = new Audio(lydUrl);
+    aktivLyd = audio;
+
+    audio.addEventListener('ended', () => resolve('lyd'));
+    audio.addEventListener('error', () => reject('lyd-mangler'));
+    audio.addEventListener('canplaythrough', () => audio.play().catch(reject), { once: true });
+
+    audio.load();
+
+    setTimeout(() => {
+      if (audio.readyState < 3) reject('timeout');
+    }, 2500);
+  });
+}
+
+function spillNettleserstemme() {
+  return new Promise((resolve, reject) => {
+    if (!('speechSynthesis' in window)) return reject('ingen-tts');
+
+    const side = SIDER[aktivListe[aktivIndeks]];
+    let tekst = side.overskrift + '. ' + side.avsnitt.join(' ');
+    if (side.moral) tekst += ' ' + side.moral;
+
+    const u = new SpeechSynthesisUtterance(tekst);
+    u.lang = 'nb-NO';
+    u.rate = 0.92;
+    u.pitch = 1.0;
+    if (stemme) u.voice = stemme;
+    aktivLyd = u;
+
+    u.onend = () => resolve('stemme');
+    u.onerror = () => reject('stemme-feil');
+
+    speechSynthesis.speak(u);
+  });
+}
+
+async function lesOpp() {
+  stoppLyd();
+  const side = SIDER[aktivListe[aktivIndeks]];
+  if (!side) return;
+
+  try {
+    await spillScenelyd().catch(() => spillNettleserstemme());
+  } catch (e) {
+    console.warn('Kunne ikke spille av:', e);
+    spillerAv = false;
+    oppdaterPlayBtn();
+    return;
+  }
+
+  if (!spillerAv) return;
+
+  if (side.valg) {
+    visToast('Klassen velger en vei 👇');
+    return;
+  }
+  if (side.erSlutt) {
+    spillerAv = false;
+    oppdaterPlayBtn();
+    visToast('Fortellingen er ferdig 🪙');
+    return;
+  }
+  setTimeout(() => {
+    if (spillerAv && aktivIndeks < aktivListe.length - 1) {
+      aktivIndeks++;
+      visSide();
+      setTimeout(() => { if (spillerAv) lesOpp(); }, 450);
+    }
+  }, 600);
+}
+
+function stoppLyd() {
+  if (aktivLyd) {
+    if (aktivLyd instanceof Audio) {
+      aktivLyd.pause();
+      aktivLyd.currentTime = 0;
+    } else if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+    aktivLyd = null;
+  }
+}
+
+function oppdaterPlayBtn() {
+  const btn = document.getElementById('playBtn');
+  const icon = document.getElementById('playIcon');
+  const label = document.getElementById('playLabel');
+  if (spillerAv) {
+    btn.classList.add('playing');
+    icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    label.textContent = 'Pause';
+  } else {
+    btn.classList.remove('playing');
+    icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+    label.textContent = 'Spill av';
+  }
+}
+
+function visToast(tekst) {
+  const t = document.getElementById('toast');
+  t.textContent = tekst;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  spillerAv = !spillerAv;
+  oppdaterPlayBtn();
+  if (spillerAv) lesOpp();
+  else stoppLyd();
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  stoppLyd();
+  const naa = SIDER[aktivListe[aktivIndeks]];
+  if (naa.valg) {
+    visToast('Velg en vei først! 👇');
+    return;
+  }
+  if (aktivIndeks < aktivListe.length - 1) {
+    aktivIndeks++;
+    visSide();
+    if (spillerAv) setTimeout(() => { if (spillerAv) lesOpp(); }, 400);
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  stoppLyd();
+  if (aktivIndeks > 0) {
+    aktivIndeks--;
+    visSide();
+    if (spillerAv) setTimeout(() => { if (spillerAv) lesOpp(); }, 400);
+  }
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  stoppLyd();
+  spillerAv = false;
+  oppdaterPlayBtn();
+  byggIntroliste();
+  visSide();
+  visToast('Tilbake til start 🪙');
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+  if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+  if (e.key === ' ') { e.preventDefault(); document.getElementById('playBtn').click(); }
+});
+
+function init() {
+  byggIntroliste();
+  visSide();
+
+  Object.values(BILDER).forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+
+  if ('speechSynthesis' in window) {
+    const lastStemmer = () => {
+      const stemmer = speechSynthesis.getVoices();
+      stemme = stemmer.find(s => s.lang === 'nb-NO')
+            || stemmer.find(s => s.lang.startsWith('nb'))
+            || stemmer.find(s => s.lang.startsWith('no'))
+            || stemmer[0];
+    };
+    speechSynthesis.onvoiceschanged = lastStemmer;
+    lastStemmer();
+  }
+}
+
+window.velgSti = velgSti;
+window.startSti = startSti;
+window.visSnakkSammen = visSnakkSammen;
+init();
+</script>
+
+</body>
+</html>
