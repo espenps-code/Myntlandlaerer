@@ -1,0 +1,69 @@
+/* ============================================================
+   MYNTLAND – DELT STYLING
+   ============================================================
+
+   Dette er den delte CSS-fila for hele Myntland-siden. Den
+   lastes inn FØR hver sides egne <style>-blokker, så sider
+   kan fortsatt overstyre det de trenger.
+
+   MIGRERINGSSTATUS (mai 2026):
+   - Fase 1 (PÅGÅR): Fila inneholder kanonisk fargepalett +
+     font-import. Hver side har fortsatt sin egen inline
+     <style>-blokk som overstyrer det meste. Det betyr trygg
+     fallback hvis fila ikke laster – sidene ser ut akkurat
+     som før.
+   - Fase 2: Koble fila på alle sider, fortsatt med inline-
+     stiler intakt.
+   - Fase 3: Fjerne dupliserte palett-definisjoner fra hver
+     side. Det er da farger faktisk hentes herfra og det blir
+     én ting å vedlikeholde.
+
+   OM FARGENAVN:
+   --teal er en historisk uheldig navngivning. Verdien er BLÅ
+   (#1a5fa5), ikke teal. Vi beholder --teal for bakoverkompa-
+   tibilitet, men har lagt til --blue som alias for nyere kode.
+   --green er den ekte grønnen (#1D9E75) som elevapp/lærer-
+   portal 1–4 historisk har kalt --teal. Det rydder vi i fase 3.
+
+   ============================================================ */
+
+/* --- Fonter --------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+/* --- Kanonisk fargepalett ------------------------------------- */
+:root {
+  /* Blå (kalt --teal av historiske grunner) */
+  --teal: #1a5fa5;
+  --teal-light: #dbeafe;
+  --teal-dark: #1e0f52;
+
+  /* Alias for --teal – bruk dette i ny kode */
+  --blue: #1a5fa5;
+  --blue-light: #dbeafe;
+  --blue-dark: #1e0f52;
+
+  /* Grønn */
+  --green: #1D9E75;
+  --green-light: #E1F5EE;
+  --green-dark: #085041;
+
+  /* Amber / oransje */
+  --amber: #EF9F27;
+  --amber-light: #FAEEDA;
+  --amber-dark: #d4890f;
+
+  /* Korall */
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+
+  /* Lilla */
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+
+  /* Nøytraler */
+  --bg: #F7F9F7;
+  --white: #fff;
+  --text: #1a2e1a;
+  --muted: #5a7a5a;
+  --border: #c8dfc8;
+}
