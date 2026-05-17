@@ -421,17 +421,17 @@
       border-top:none;
       border-right:2px solid var(--border);
       position:static;
-      padding:14px 10px;
-      gap:6px;
+      padding:10px 8px;
+      gap:4px;
     }
     #screen-app .nav-item{
       flex-direction:column;
       justify-content:center;
       align-items:center;
-      gap:4px;
-      padding:11px 6px;
+      gap:2px;
+      padding:7px 4px;
       text-align:center;
-      border-radius:12px;
+      border-radius:10px;
       border:1.5px solid var(--border);
       background:white;
       opacity:1;
@@ -445,8 +445,8 @@
       border-color:var(--amber);
     }
     #screen-app .nav-item.active .nav-label{color:var(--teal-dark);font-weight:900;}
-    #screen-app .nav-icon{font-size:1.4rem;}
-    #screen-app .nav-label{font-size:1rem;font-weight:800;}
+    #screen-app .nav-icon{font-size:1.25rem;}
+    #screen-app .nav-label{font-size:.85rem;font-weight:800;}
 
     /* Innholdsområdet */
     #screen-app .tab-content{
@@ -1184,7 +1184,7 @@ function refreshAllDisplays(){
   document.getElementById('spare-main-val').textContent=spare;
   const rate=Math.round(getSavingsRate()*100);
   document.getElementById('spare-rate-sub').textContent=`${rate}% ukentlig rente · maks ${getMaxW()} uttak/uke`;
-  document.getElementById('spare-info-box').textContent=`💡 Sparekonto gir ${rate}% rente ukentlig (utbetales mandag). Maks ${getMaxW()} uttak per uke.`;
+  // spare-info-box inneholder den fyldige "Visste du?"-forklaringen i HTML – ikke overskriv.
   document.getElementById('fond-tax-pct').textContent=Math.round(getFundTax()*100);
   const usedW=s.withdrawalsThisWeek||0;
   const warnEl=document.getElementById('spare-withdrawal-warn');
