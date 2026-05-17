@@ -2459,8 +2459,8 @@ const MYNTLAND_BUTIKK_CSS = `
   html,body{margin:0;padding:0;background:white;font-family:'Nunito',sans-serif;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{size:A4 landscape;margin:0}
   /* Hvit side */
-  .page{width:297mm;height:210mm;position:relative;overflow:hidden;page-break-after:always;background:white}
-  .page.landscape{width:297mm;height:210mm}
+  .page{width:297mm;height:208mm;max-height:208mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}
+  .page.landscape{width:297mm;height:208mm;max-height:208mm}
   /* 2 lister side-om-side på en A4 landskap */
   .liste-page{position:absolute;inset:10mm 10mm;display:grid;grid-template-columns:1fr 1fr;gap:8mm}
   /* Liste: ren hvit, gull venstrekant signaliserer Myntland */
@@ -2592,7 +2592,7 @@ function generateGroceryPDF() {
     @page{size:A4 portrait;margin:0}
 
     /* 2x2 grid: 4 stående A6 (105×148mm) per A4 */
-    .page{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative}
+    .page{width:210mm;height:295mm;max-height:295mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
 
     .vare{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}
     .vare.empty{visibility:hidden}
@@ -2738,7 +2738,7 @@ function buildShoppingListPageHTML(arr1, arr2, sn) {
       <div class="foot-line"><span>Regn ut total og gå til kassa</span><span class="stamp">MYNTLAND · MARKED</span></div>
     </div>`;
   }
-  return `<div class="page landscape" style="width:297mm;height:210mm;">
+  return `<div class="page landscape" style="width:297mm;height:208mm;overflow:hidden;">
     <div class="page-corner tl">Myntland · Handleliste</div>
     <div class="page-corner br">klipp i to · gi til to elever</div>
     <div class="liste-page">${listHTML(arr1, sn)}${listHTML(arr2, sn)}</div>
@@ -4169,7 +4169,7 @@ function printHendelserCards14(cards) {
     @page{size:A4 portrait;margin:0}
 
     /* 2x2 grid: 4 stående A6 (105×148mm) per A4 */
-    .page-print{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;position:relative}
+    .page-print{width:210mm;height:295mm;max-height:295mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
 
     /* Kortet: fyller hele sin firkant. Tonet bakgrunn per type. */
     .hcard{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}

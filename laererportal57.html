@@ -3084,7 +3084,7 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '@page{size:A4 portrait;margin:0}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,255,255,0.4),transparent 75%),#FBF2D6}'
+    + '.page{width:210mm;height:295mm;max-height:295mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,255,255,0.4),transparent 75%),#FBF2D6}'
     + '.page:last-of-type{page-break-after:auto}'
     + '.page::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(42,31,61,0.04) 1px,transparent 1.5px);background-size:6px 6px;pointer-events:none}'
     + '.page.back-page{background:radial-gradient(ellipse 70% 80% at 50% 50%,#6B5BA8 0%,#2A1F3D 80%)}'
@@ -3353,7 +3353,7 @@ function printShopPDF() {
     <style>
       body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;}
       @media print{@page{size:A4 landscape;margin:0}}
-      .page{display:flex;width:297mm;height:210mm;page-break-after:always;box-sizing:border-box;}
+      .page{display:flex;width:297mm;height:208mm;max-height:208mm;overflow:hidden;page-break-after:always;break-after:page;box-sizing:border-box;}
       .item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;
             border:0.5mm solid #534AB7;padding:8mm;box-sizing:border-box;background:white;}
       .item-cat  {font-size:4.5mm;font-weight:900;color:#534AB7;text-transform:uppercase;letter-spacing:.3mm;}
@@ -3665,15 +3665,20 @@ function openHendelserPrintWindow(cards) {
     body { font-family: 'Nunito', sans-serif; background: white; }
     @media print { @page { size: A4 portrait; margin: 0; } }
 
-    /* A4 = 210 × 297mm. 4 kort: 2×2 rutenett, kuttlinjer mellom */
+    /* A4 = 210 × 297mm. Bruker 295mm + overflow:hidden som safety mot
+       iOS Safari sin print-quirk der innholdet ellers siger over til neste side. */
     .page {
       width: 210mm;
-      height: 297mm;
+      height: 295mm;
+      max-height: 295mm;
+      overflow: hidden;
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
       page-break-after: always;
+      break-after: page;
     }
+    .page:last-of-type { page-break-after: auto; break-after: auto; }
 
     /* Kuttlinjer: grønn stiplet linje mellom kortene */
     .page::after {
