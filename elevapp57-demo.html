@@ -322,8 +322,9 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
   /* ===== iPad / tablet-layout (kopiert fra elevapp57.html) =====
-     Slår inn først når BÅDE bredde og høyde er over 700px. */
-  @media (min-width: 700px) and (min-height: 700px) {
+     Demo: lavere høyde-terskel (600) for å fange iPad-portrett der iframen
+     ender på ca 810x648. Telefoner i landskap har lavere høyde og ryker ikke med. */
+  @media (min-width: 700px) and (min-height: 600px) {
     body{max-width:100%;}
     #screen-splash.active .big-splash-btn{max-width:430px;width:100%;}
     #screen-login.active{max-width:430px;margin:0 auto;}
@@ -3032,7 +3033,7 @@ function showSuccess(emoji,title,amount,text){
   if (!inIframe || !isIOS) return;
   // Hvis iframen er stor nok til iPad-sidebar-layouten, la den kjøre nativt.
   // iOS-iframe-modus sine height-override krasjer ellers med grid-layouten.
-  if (window.innerWidth >= 700 && window.innerHeight >= 700) return;
+  if (window.innerWidth >= 700 && window.innerHeight >= 600) return;
 
   const style = document.createElement('style');
   style.textContent = `
