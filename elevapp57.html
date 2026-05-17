@@ -22,7 +22,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
   import { getDatabase, ref, onValue, update, push, set, get }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
@@ -38,10 +38,18 @@
   const app=initializeApp(firebaseConfig);
 
   // App Check: stopper at API-nøkkelen brukes fra andre domener enn våre
-  initializeAppCheck(app, {
+  const appCheck = initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
     isTokenAutoRefreshEnabled: true
   });
+
+  // Vent på første App Check-token før databasen røres – ellers går den aller
+  // første forespørselen ved sideinnlasting uten token (race condition).
+  // Maks 3 sek, så vi ikke henger om reCAPTCHA er blokkert.
+  await Promise.race([
+    getToken(appCheck).catch(err => console.warn('[App Check] token-fetch feilet:', err)),
+    new Promise(r => setTimeout(r, 3000))
+  ]);
 
   const db=getDatabase(app);
   window._db=db; window._ref=ref; window._onValue=onValue;
