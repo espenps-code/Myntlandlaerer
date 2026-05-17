@@ -7,29 +7,10 @@
 <meta name="theme-color" content="#1e0f52" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
 
+<!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
+<link rel="stylesheet" href="../myntland.css">
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
-
-  :root {
-    --teal: #1a5fa5;
-    --teal-dark: #1e0f52;
-    --green: #1D9E75;
-    --green-light: #E1F5EE;
-    --green-dark: #085041;
-    --amber: #EF9F27;
-    --amber-dark: #d4890f;
-    --amber-light: #FAEEDA;
-    --coral: #D85A30;
-    --coral-light: #FAECE7;
-    --purple: #534AB7;
-    --purple-light: #EEEDFE;
-    --bg: #F7F9F7;
-    --white: #fff;
-    --text: #1a2e1a;
-    --muted: #5a7a5a;
-    --border: #c8dfc8;
-  }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
@@ -876,23 +857,31 @@ function visSide() {
   }, 200);
 }
 
+// iOS-fix: Gjenbruk ETT Audio-element for alle sider. iOS låser autoplay
+// per Audio-element — det første brukerklikket "låser opp" elementet, og
+// alle senere .src + .play() på samme element er tillatt uten ny klikk.
+let _sceneAudio = null;
 function spillScenelyd() {
   const sideId = aktivListe[aktivIndeks];
   const lydUrl = LYD_BASE + sideId + '.mp3';
 
   return new Promise((resolve, reject) => {
-    const audio = new Audio(lydUrl);
+    if (!_sceneAudio) _sceneAudio = new Audio();
+    const audio = _sceneAudio;
     aktivLyd = audio;
 
-    audio.addEventListener('ended', () => resolve('lyd'));
-    audio.addEventListener('error', () => reject('lyd-mangler'));
-    audio.addEventListener('canplaythrough', () => audio.play().catch(reject), { once: true });
+    // Property handlers erstatter forrige automatisk – ingen lytter-lekkasje
+    audio.onended = () => resolve('lyd');
+    audio.onerror = () => reject('lyd-mangler');
 
-    audio.load();
+    audio.src = lydUrl;
+    audio.currentTime = 0;
+    const p = audio.play();
+    if (p && typeof p.catch === 'function') p.catch(reject);
 
     setTimeout(() => {
-      if (audio.readyState < 3) reject('timeout');
-    }, 2500);
+      if (audio.readyState < 3 && audio.paused) reject('timeout');
+    }, 3000);
   });
 }
 
