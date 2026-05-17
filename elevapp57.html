@@ -425,11 +425,12 @@
       gap:6px;
     }
     #screen-app .nav-item{
-      flex-direction:row;
-      justify-content:flex-start;
-      gap:12px;
-      padding:9px 14px;
-      text-align:left;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:4px;
+      padding:11px 6px;
+      text-align:center;
       border-radius:12px;
       border:1.5px solid var(--border);
       background:white;
@@ -619,7 +620,7 @@
       <div class="account-card spare">
         <div class="acc-label">💰 Sparekonto</div>
         <div class="acc-val" id="bal-spare">0</div>
-        <div class="acc-sub" id="spare-sub">2% ukentlig rente</div>
+        <div class="acc-sub" id="spare-sub">5% ukentlig rente</div>
       </div>
       <div class="account-card fond">
         <div class="acc-label">📊 Fondskonto</div>
@@ -666,9 +667,19 @@
       <div class="account-card spare" style="border-radius:14px;padding:1.1rem;margin-bottom:.85rem;color:white">
         <div class="acc-label">💰 Sparekonto</div>
         <div class="acc-val" id="spare-main-val">0</div>
-        <div class="acc-sub" id="spare-rate-sub">2% ukentlig rente · maks 2 uttak/uke</div>
+        <div class="acc-sub" id="spare-rate-sub">5% ukentlig rente · maks 2 uttak/uke</div>
       </div>
-      <div class="info-box" id="spare-info-box">💡 Penger på sparekonto vokser med 2% hver uke (betales ut mandag). Maks 2 uttak per uke.</div>
+      <div class="info-box" id="spare-info-box">
+        💡 <strong>Visste du?</strong> Banken sjekker sparekontoen din <strong>hver dag</strong> og gir deg litt renter for hver dag pengene har ligget der. Hver mandag legger Myntland sammen alle dagene og betaler ut rentene. 📅
+        <div style="margin-top:.5rem;">
+          🚀 Innskudd <strong>mandag</strong> → pengene rekker 7 dager → mest renter!<br>
+          🐢 Innskudd <strong>søndag</strong> → pengene rekker bare 1 dag → veldig lite renter.
+        </div>
+        <div style="margin-top:.6rem;padding-top:.6rem;border-top:1.5px dashed #f0c060;">
+          🏦 <strong>I ekte banker</strong> fungerer det på samme måte: renter regnes hver dag, men legges på kontoen din én gang i året.
+        </div>
+        <div style="margin-top:.5rem;font-weight:800;">Maks 2 uttak per uke.</div>
+      </div>
       <div id="spare-withdrawal-warn" style="display:none" class="warn-box">⚠️ Du har brukt alle uttakene dine denne uken!</div>
       <div class="acc-action-grid">
         <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">➕ Sett inn fra brukskonto</button>
@@ -724,7 +735,6 @@
 
   <!-- KORT TAB -->
   <div class="tab-content content" id="tab-kort">
-    <button onclick="switchTab('bank',document.querySelector('.nav-item'));document.querySelector('.nav-item').classList.add('active')" style="background:transparent;border:none;color:var(--teal);font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;cursor:pointer;margin-bottom:.75rem;padding:0">← Tilbake til nettbank</button>
     <div style="background:linear-gradient(135deg,#1a1a18,#3a3a36);border-radius:20px;padding:1.4rem;color:white;position:relative;overflow:hidden;margin-bottom:1rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between">
       <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;border-radius:50%;background:rgba(239,159,39,.12)"></div>
       <div><div style="width:32px;height:24px;background:var(--amber);border-radius:5px;position:relative;z-index:1"></div><div style="font-family:'Fredoka One',cursive;font-size:1.2rem;letter-spacing:4px;opacity:.9;z-index:1;position:relative;margin-top:.5rem" id="card-number">•••• ••••</div></div>
@@ -935,7 +945,7 @@
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
 window._allStudents=[]; window._classGoals=[]; window._jobs=[]; window._fundHistory={};
-window._currentStudent=null; window._settings={taxRate:20,savingsInterest:2,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
+window._currentStudent=null; window._settings={taxRate:20,savingsInterest:5,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
 let currentPin='',confirmPin='',transactions=[];
 let scanMode=null,pendingPayAmount=0,scanActive=false,_scanCanvas=null,_scanCtx=null;
 let quizQs=[],quizIdx=0,quizOk=0,quizAnswered=false;
@@ -944,11 +954,124 @@ let _fondChart=null;
 
 function fbRef(p){return window._ref(window._db,p);}
 function getTax(){return (window._settings?.taxRate||20)/100;}
-function getSavingsRate(){return (window._settings?.savingsInterest||2)/100;}
+function getSavingsRate(){return (window._settings?.savingsInterest||5)/100;}
 function getFundTax(){return (window._settings?.fundTax||10)/100;}
 function getLoanRate(){return (window._settings?.loanInterest||10)/100;}
 function getLoanFactor(){return window._settings?.loanFactor||2;}
 function getMaxW(){return window._settings?.maxWithdrawals||2;}
+
+// ── SPAREMODELL: Daglig rente (samme som 1-4) ─────────────────────────────
+// Låst saldo (fra forrige mandag) får full ukentlig rente.
+// Ventende innskudd (gjort midt i uka) får dagsrente basert på antall dager
+// pengene har ligget der. Hver mandag utbetales rente og pending → locked.
+const MS_PER_DAY_57 = 24 * 3600 * 1000;
+function lastMondayTs57(now) {
+  const d = new Date(now);
+  d.setHours(0,0,0,0);
+  const day = d.getDay(); // 0=søn, 1=man, ..., 6=lør
+  const daysSinceMonday = (day === 0) ? 6 : (day - 1);
+  d.setDate(d.getDate() - daysSinceMonday);
+  return d.getTime();
+}
+// Normaliser pending (Firebase kan returnere array som objekt med numeriske keys)
+function normPending57(p) {
+  if (Array.isArray(p)) return [...p];
+  if (p && typeof p === 'object') return Object.values(p);
+  return [];
+}
+// Hent låst saldo med migrasjons-fallback: hvis savingsLocked ikke finnes,
+// behandle hele eksisterende savings-saldoen som låst (full rente neste mandag).
+function getLocked57(s) {
+  return (s.savingsLocked !== undefined && s.savingsLocked !== null)
+    ? s.savingsLocked
+    : (s.savings || 0);
+}
+
+async function checkAndPaySavingsInterest57(s) {
+  if (!s || !s.fbKey) return;
+  const totalSavings = s.savings || 0;
+  const now = Date.now();
+  const lastMon = lastMondayTs57(now);
+  const lastPaid = s.lastInterestPaid || 0;
+  const initialLocked = getLocked57(s);
+  const initialPending = normPending57(s.savingsPending);
+  const needsMigration = (s.savingsLocked === undefined || s.savingsLocked === null);
+
+  // Hvis ingenting å gjøre og ingen migrasjon, returner
+  if (lastPaid >= lastMon) {
+    if (needsMigration && totalSavings > 0) {
+      // Skriv migrert state én gang så fremtidige innskudd/uttak har feltene
+      const upd = { savingsLocked: initialLocked, savingsPending: initialPending };
+      patchStudent(s.fbKey, upd);
+      try { await window._update(fbRef('students57/'+s.fbKey), upd); } catch(e){}
+    }
+    return;
+  }
+  if (totalSavings <= 0 && !needsMigration) {
+    // Bare oppdater lastInterestPaid så vi ikke prøver igjen samme mandag
+    const upd = { lastInterestPaid: lastMon };
+    patchStudent(s.fbKey, upd);
+    try { await window._update(fbRef('students57/'+s.fbKey), upd); } catch(e){}
+    return;
+  }
+
+  // Antall mandager å utbetale (1 normalt, flere ved langt fravær)
+  let weeksToPay = 1;
+  if (lastPaid > 0) {
+    const lastPaidMon = lastMondayTs57(lastPaid);
+    weeksToPay = Math.round((lastMon - lastPaidMon) / (7 * MS_PER_DAY_57));
+    if (weeksToPay < 1) weeksToPay = 1;
+    if (weeksToPay > 8) weeksToPay = 8;
+  }
+
+  const rate = getSavingsRate();
+  let lockedBal = initialLocked;
+  let pending = [...initialPending];
+  let totalInterestPaid = 0;
+
+  for (let i = 0; i < weeksToPay; i++) {
+    const mondayTs = lastMon - (weeksToPay - 1 - i) * 7 * MS_PER_DAY_57;
+    // Full ukerente på låst saldo
+    let interestThisMonday = Math.floor(lockedBal * rate);
+    // Dagsrente på ventende innskudd (kun for første mandag vi utbetaler)
+    if (i === 0 && pending.length) {
+      for (const dep of pending) {
+        const days = Math.max(0, Math.min(7, Math.floor((mondayTs - (dep.ts||0)) / MS_PER_DAY_57)));
+        const depInterest = Math.floor((dep.amount||0) * rate * (days/7));
+        interestThisMonday += depInterest;
+      }
+    }
+    if (interestThisMonday <= 0 && lockedBal <= 0 && pending.length === 0) break;
+
+    // Etter mandag: pending låses inn + rente legges til låst saldo
+    const pendingSum = pending.reduce((acc, d) => acc + (d.amount||0), 0);
+    lockedBal = lockedBal + pendingSum + interestThisMonday;
+    pending = [];
+
+    if (interestThisMonday > 0) {
+      totalInterestPaid += interestThisMonday;
+      const rentePct = Math.round(rate * 100);
+      const renteDesc = 'Sparerente (' + rentePct + '%)';
+      try { await saveTx(s.fbKey, 'income', '✨', renteDesc, interestThisMonday); } catch(e){}
+      transactions.unshift({ type:'income', icon:'✨', desc:renteDesc, amount:interestThisMonday, ts:mondayTs });
+    }
+  }
+
+  const newSavings = lockedBal + pending.reduce((acc, d) => acc + (d.amount||0), 0);
+  const upd = {
+    savings: newSavings,
+    savingsLocked: lockedBal,
+    savingsPending: pending,
+    lastInterestPaid: lastMon
+  };
+  if (totalInterestPaid > 0) {
+    upd.badgeSavingsEarned = (s.badgeSavingsEarned || 0) + totalInterestPaid;
+  }
+  patchStudent(s.fbKey, upd);
+  try { await window._update(fbRef('students57/'+s.fbKey), upd); } catch(e){ console.log('Sparerente-write feilet:', e.message); }
+  refreshAllDisplays();
+  renderTransactions();
+}
 
 // ── SCREENS ────────────────────────────────────────────────────────────────
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
@@ -1021,6 +1144,7 @@ function tryLogin(){
     renderClassGoalsHome();
     loadTransactions(s.fbKey);
     checkAndResetQuiz(s);
+    checkAndPaySavingsInterest57(s);
     checkQuizStatus();
     renderLoan();
     checkLoanExpiry();
@@ -1472,7 +1596,16 @@ async function doTransfer(type, amt) {
 
   if (type === 'bruk-til-spare') {
     if (amt > (s.balance||0)) { alert('Ikke nok på brukskonto.'); return; }
-    const upd = { balance: (s.balance||0)-amt, savings: (s.savings||0)+amt };
+    // Nytt innskudd legges i pending (får dagsrente til neste mandag)
+    const curLocked = getLocked57(s);
+    const curPending = normPending57(s.savingsPending);
+    const newPending = [...curPending, { amount: amt, ts: Date.now() }];
+    const upd = {
+      balance: (s.balance||0)-amt,
+      savings: (s.savings||0)+amt,
+      savingsLocked: curLocked,
+      savingsPending: newPending
+    };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
     await saveTx(fbKey,'expense','💰','Overført til sparekonto',-amt);
@@ -1484,7 +1617,32 @@ async function doTransfer(type, amt) {
     if (amt > (s.savings||0)) { alert('Ikke nok på sparekonto.'); return; }
     const usedW = s.withdrawalsThisWeek||0;
     if (usedW >= getMaxW()) { alert(`Maks ${getMaxW()} uttak per uke. Prøv igjen neste uke.`); return; }
-    const upd = { balance: (s.balance||0)+amt, savings: (s.savings||0)-amt, withdrawalsThisWeek: usedW+1 };
+    // Uttak: LIFO fra pending først (nyeste innskudd har minst rente å miste),
+    // så fra låst saldo hvis nødvendig.
+    let remaining = amt;
+    let curPending = normPending57(s.savingsPending);
+    curPending.sort((a,b) => (b.ts||0) - (a.ts||0));
+    while (remaining > 0 && curPending.length) {
+      const top = curPending[0];
+      if ((top.amount||0) <= remaining) {
+        remaining -= (top.amount||0);
+        curPending.shift();
+      } else {
+        top.amount -= remaining;
+        remaining = 0;
+      }
+    }
+    let curLocked = getLocked57(s);
+    if (remaining > 0) {
+      curLocked = Math.max(0, curLocked - remaining);
+    }
+    const upd = {
+      balance: (s.balance||0)+amt,
+      savings: (s.savings||0)-amt,
+      savingsLocked: curLocked,
+      savingsPending: curPending,
+      withdrawalsThisWeek: usedW+1
+    };
     await window._update(fbRef('students57/'+fbKey), upd);
     patchStudent(fbKey, upd);
     await saveTx(fbKey,'income','💰','Uttak fra sparekonto',amt);
@@ -2459,33 +2617,12 @@ function checkAndResetQuiz(s) {
 
   if (lastReset !== today) {
     localStorage.setItem(resetKey, today);
-    var upd = {};
-    upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
-
-    // Legg til sparerente direkte fra elevappen (uavhengig av portal)
-    var interestRate = (window._settings && window._settings.savingsInterest || 2) / 100;
-    var savings = s.savings || 0;
-    if (savings > 0) {
-      var interest = Math.floor(savings * interestRate);
-      if (interest > 0) {
-        upd['students57/' + s.fbKey + '/savings'] = savings + interest;
-        upd['students57/' + s.fbKey + '/badgeSavingsEarned'] = (s.badgeSavingsEarned || 0) + interest;
-        patchStudent(s.fbKey, { savings: savings + interest, withdrawalsThisWeek: 0, badgeSavingsEarned: (s.badgeSavingsEarned || 0) + interest });
-        // Logg utbetalt rente som egen transaksjon (vises i sparehistorikken)
-        var rentePct = Math.round(interestRate * 100);
-        var renteDesc = 'Sparerente (' + rentePct + '%)';
-        saveTx(s.fbKey, 'income', '✨', renteDesc, interest);
-        transactions.unshift({ type:'income', icon:'✨', desc:renteDesc, amount:interest, ts:Date.now() });
-      } else {
-        patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
-      }
-    } else {
-      patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
-    }
-
-    window._update(window._ref(window._db, '/'), upd)
+    // Sparerente håndteres nå av checkAndPaySavingsInterest57 (kalles i selectStudent)
+    // Her nullstiller vi kun uttakstelleren.
+    patchStudent(s.fbKey, { withdrawalsThisWeek: 0 });
+    window._update(fbRef('students57/'+s.fbKey), { withdrawalsThisWeek: 0 })
       .then(function() { refreshAllDisplays(); })
-      .catch(function(err) { console.log('Sparerente/uttaksteller-reset feilet:', err.message); });
+      .catch(function(err) { console.log('Uttaksteller-reset feilet:', err.message); });
   }
 }
 
@@ -2797,7 +2934,7 @@ const QUIZ_POOL=[
   {q:'Hvorfor er det lurt å lage et budsjett?',opts:['Det er ikke lurt','For å ha oversikt og unngå å bruke mer enn du har','Bare rike lager budsjett','For å spare tid'],a:1},
   {q:'Hva betyr det å ha gjeld?',opts:['Du har mye penger','Du skylder penger til noen','Du er rik','Du har spart mye'],a:1},
   {q:'Hva er skatt?',opts:['Penger staten gir deg','Penger du betaler til staten for å finansiere fellesgoder','En type gave','Et lån'],a:1},
-  {q:'Du setter 500🪙 i sparebank med 2% rente per uke. Hva har du etter én uke?',opts:['502🪙','510🪙','490🪙','520🪙'],a:1},
+  {q:'Du setter 500🪙 i sparebank med 5% rente per uke. Hva har du etter én uke?',opts:['525🪙','550🪙','505🪙','510🪙'],a:0},
   {q:'Hva kalles det når en aksje stiger i verdi?',opts:['Tap','Kursfall','Kursøkning','Gjeld'],a:2},
   {q:'Hva er en brukskonto?',opts:['En konto du ikke kan bruke','En dagligkonto for inn og utbetalinger','En investeringskonto','En gjeldskonto'],a:1},
   {q:'Hva menes med "netto" lønn?',opts:['Lønn før skatt','Lønn etter skatt','Lønn + bonus','Lønn + renter'],a:1},
