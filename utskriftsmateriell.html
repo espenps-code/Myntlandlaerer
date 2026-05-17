@@ -667,7 +667,7 @@
   <div class="hero-inner">
     <div class="hero-tag">For lærere</div>
     <h1>Utskrifts<span class="accent">materiell</span></h1>
-    <p class="hero-sub">Plakater, monsterkort, diplomer og spillkort – ferdig til print. Gjør klasserommet til et levende Myntland.</p>
+    <p class="hero-sub">Plakater, monsterkort, diplomer, spillkort og arbeidshefter – ferdig til print. Gjør klasserommet til et levende Myntland.</p>
   </div>
 </section>
 
@@ -714,6 +714,9 @@
     </button>
     <button class="tab" data-category="spillkort" role="tab">
       🎴 Spillkort <span class="tab-count" data-count="spillkort">2</span>
+    </button>
+    <button class="tab" data-category="arbeidshefter" role="tab">
+      📓 Arbeidshefter <span class="tab-count" data-count="arbeidshefter">0</span>
     </button>
   </div>
 
@@ -953,6 +956,54 @@ const RESOURCES = [
     thumb: 'materiell/thumbs/memory-okonomi.jpg',
     pdf: 'materiell/pdf/memory-okonomi.pdf',
     pdfSize: '1.8 MB'
+  },
+  {
+    id: 'arbeidshefte-budsjett-57',
+    category: 'arbeidshefter',
+    title: 'Arbeidshefte – Budsjett (50-30-20)',
+    description: '8-siders arbeidshefte som lærer 50-30-20-regelen: 50 % behov, 30 % ønsker, 20 % sparing. Inneholder forklaringer, regneoppgaver, tekstoppgaver, ordleting, kryssord, refleksjon og diplom. Tilgjengelig på både bokmål og nynorsk.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/arbeidshefte-budsjett-57.jpg',
+    pdf: 'materiell/pdf/budsjetthefte_5-7_trinn_bokmal.pdf',
+    pdfSize: '271 KB',
+    pdfNN: 'materiell/pdf/budsjetthefte_5-7_trinn_nynorsk.pdf',
+    pdfNNSize: '271 KB'
+  },
+  {
+    id: 'arbeidshefte-renter-57',
+    category: 'arbeidshefter',
+    title: 'Arbeidshefte – Renter',
+    description: '8-siders arbeidshefte om renter som inntekt (sparing) og renter som utgift (lån). Inneholder forklaringer, renteformel, rentes rente, regneoppgaver, tekstoppgaver, ordleting, kryssord, refleksjon og diplom. Tilgjengelig på både bokmål og nynorsk.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/arbeidshefte-renter-57.jpg',
+    pdf: 'materiell/pdf/rentehefte_5-7_trinn_bokmal.pdf',
+    pdfSize: '249 KB',
+    pdfNN: 'materiell/pdf/rentehefte_5-7_trinn_nynorsk.pdf',
+    pdfNNSize: '249 KB'
+  },
+  {
+    id: 'arbeidshefte-gjeld-57',
+    category: 'arbeidshefter',
+    title: 'Arbeidshefte – Gjeld og lån',
+    description: '8-siders arbeidshefte om hvordan lån fungerer i den ekte verden – fra mynter til millioner. Lærer å skille smart lån (bolig, studie) fra dumt lån (forbruk, kreditt). Med regneoppgaver, tekstoppgaver, ordleting, kryssord og diplom. Tilgjengelig på både bokmål og nynorsk.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/arbeidshefte-gjeld-57.jpg',
+    pdf: 'materiell/pdf/gjeldhefte_5-7_trinn_bokmal.pdf',
+    pdfSize: '253 KB',
+    pdfNN: 'materiell/pdf/gjeldhefte_5-7_trinn_nynorsk.pdf',
+    pdfNNSize: '253 KB'
+  },
+  {
+    id: 'arbeidshefte-smart-shopping-57',
+    category: 'arbeidshefter',
+    title: 'Arbeidshefte – Smart shopping',
+    description: '8-siders arbeidshefte om å bli en pengeklok kjøper – sammenligne priser, kjenne igjen lokketriks, og skille behov fra ønsker. Med pris per enhet, 50-30-20-knytning, regneoppgaver, tekstoppgaver, ordleting, kryssord og diplom. Tilgjengelig på både bokmål og nynorsk.',
+    trinn: '5.–7. trinn',
+    thumb: 'materiell/thumbs/arbeidshefte-smart-shopping-57.jpg',
+    pdf: 'materiell/pdf/smart_shopping_bm.pdf',
+    pdfSize: '253 KB',
+    pdfNN: 'materiell/pdf/smart_shopping_nn.pdf',
+    pdfNNSize: '253 KB'
   }
   // Legg til flere ressurser her etterhvert som de blir klare
 ];
@@ -962,7 +1013,8 @@ const CATEGORY_LABELS = {
   monsterkort: { emoji: '👾', singular: 'monsterkort' },
   diplomer: { emoji: '🏆', singular: 'diplom' },
   skjemaer: { emoji: '📝', singular: 'skjema' },
-  spillkort: { emoji: '🎴', singular: 'spillkort' }
+  spillkort: { emoji: '🎴', singular: 'spillkort' },
+  arbeidshefter: { emoji: '📓', singular: 'arbeidshefte' }
 };
 
 // Hjelper: matcher en ressurs et gitt trinn?
@@ -978,7 +1030,7 @@ function matchesTrinn(resource, trinnKey) {
 function updateCounts() {
   const counts = {
     alle: RESOURCES.length,
-    plakater: 0, monsterkort: 0, diplomer: 0, skjemaer: 0, spillkort: 0,
+    plakater: 0, monsterkort: 0, diplomer: 0, skjemaer: 0, spillkort: 0, arbeidshefter: 0,
     'trinn-14': 0, 'trinn-57': 0
   };
   RESOURCES.forEach(r => {
@@ -1012,10 +1064,19 @@ function renderCard(r) {
       <h3 class="resource-title">${r.title}</h3>
       <p class="resource-desc">${r.description}</p>
       <div class="download-row">
+        ${r.pdfNN ? `
+        <a href="${r.pdf}" class="dl-btn primary" download>
+          <span class="dl-btn-format">📥 Bokmål</span>
+          <span class="dl-btn-size">${r.pdfSize}</span>
+        </a>
+        <a href="${r.pdfNN}" class="dl-btn primary" download>
+          <span class="dl-btn-format">📥 Nynorsk</span>
+          <span class="dl-btn-size">${r.pdfNNSize || r.pdfSize}</span>
+        </a>` : `
         <a href="${r.pdf}" class="dl-btn primary" download>
           <span class="dl-btn-format">📥 PDF</span>
           <span class="dl-btn-size">${r.pdfSize}</span>
-        </a>
+        </a>`}
         ${r.png ? `<a href="${r.png}" class="dl-btn" download>
           <span class="dl-btn-format">🖼️ PNG</span>
           <span class="dl-btn-size">${r.pngSize}</span>
