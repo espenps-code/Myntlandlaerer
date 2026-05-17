@@ -421,7 +421,7 @@
     align-items: center;
     justify-content: center;
     padding: 2rem 1rem;
-    z-index: 1000;
+    z-index: 1100;
     cursor: zoom-out;
   }
   .lightbox.open {
@@ -584,6 +584,54 @@
   }
   .dl-btn.gallery-btn:hover .dl-btn-size {
     color: rgba(255,255,255,0.8);
+  }
+
+  .dl-btn.preview-btn {
+    background: var(--purple-light);
+    color: var(--purple);
+    border-color: var(--purple-light);
+  }
+  .dl-btn.preview-btn:hover {
+    background: var(--purple);
+    color: white;
+    border-color: var(--purple);
+  }
+  .dl-btn.preview-btn .dl-btn-size {
+    color: var(--purple);
+  }
+  .dl-btn.preview-btn:hover .dl-btn-size {
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* Sidegalleri-tile (uten nedlasting per side) */
+  .page-tile {
+    background: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    position: relative;
+  }
+  .page-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    border-color: var(--purple);
+  }
+  .page-tile-img {
+    width: 100%;
+    aspect-ratio: 210 / 297;
+    object-fit: cover;
+    display: block;
+    background: #f0f0f0;
+  }
+  .page-tile-label {
+    text-align: center;
+    padding: 0.5rem;
+    font-weight: 700;
+    color: var(--teal-dark);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
   }
 
   /* Hjelp-blokk */
@@ -749,7 +797,7 @@
     <div class="monster-modal-header">
       <div>
         <h2 class="monster-modal-title" id="monster-modal-title">👀 Galleri</h2>
-        <div class="monster-modal-sub">Trykk «Last ned» for å hente det du vil bruke.</div>
+        <div class="monster-modal-sub" id="monster-modal-sub">Trykk «Last ned» for å hente det du vil bruke.</div>
       </div>
     </div>
     <div class="monster-grid" id="monster-grid"></div>
@@ -967,7 +1015,12 @@ const RESOURCES = [
     pdf: 'materiell/pdf/budsjetthefte_5-7_trinn_bokmal.pdf',
     pdfSize: '271 KB',
     pdfNN: 'materiell/pdf/budsjetthefte_5-7_trinn_nynorsk.pdf',
-    pdfNNSize: '271 KB'
+    pdfNNSize: '271 KB',
+    pageGallery: {
+      dir: 'materiell/preview/',
+      pages: 8,
+      prefix: 'arbeidshefte-budsjett-side'
+    }
   },
   {
     id: 'arbeidshefte-renter-57',
@@ -979,7 +1032,12 @@ const RESOURCES = [
     pdf: 'materiell/pdf/rentehefte_5-7_trinn_bokmal.pdf',
     pdfSize: '249 KB',
     pdfNN: 'materiell/pdf/rentehefte_5-7_trinn_nynorsk.pdf',
-    pdfNNSize: '249 KB'
+    pdfNNSize: '249 KB',
+    pageGallery: {
+      dir: 'materiell/preview/',
+      pages: 8,
+      prefix: 'arbeidshefte-renter-side'
+    }
   },
   {
     id: 'arbeidshefte-gjeld-57',
@@ -991,7 +1049,12 @@ const RESOURCES = [
     pdf: 'materiell/pdf/gjeldhefte_5-7_trinn_bokmal.pdf',
     pdfSize: '253 KB',
     pdfNN: 'materiell/pdf/gjeldhefte_5-7_trinn_nynorsk.pdf',
-    pdfNNSize: '253 KB'
+    pdfNNSize: '253 KB',
+    pageGallery: {
+      dir: 'materiell/preview/',
+      pages: 8,
+      prefix: 'arbeidshefte-gjeld-side'
+    }
   },
   {
     id: 'arbeidshefte-smart-shopping-57',
@@ -1003,7 +1066,12 @@ const RESOURCES = [
     pdf: 'materiell/pdf/smart_shopping_bm.pdf',
     pdfSize: '253 KB',
     pdfNN: 'materiell/pdf/smart_shopping_nn.pdf',
-    pdfNNSize: '253 KB'
+    pdfNNSize: '253 KB',
+    pageGallery: {
+      dir: 'materiell/preview/',
+      pages: 8,
+      prefix: 'arbeidshefte-smart-shopping-side'
+    }
   }
   // Legg til flere ressurser her etterhvert som de blir klare
 ];
@@ -1085,6 +1153,10 @@ function renderCard(r) {
           <span class="dl-btn-format">👀 Se alle</span>
           <span class="dl-btn-size">${r.galleryLabel || (r.gallery.length + ' stk')}</span>
         </button>` : ''}
+        ${r.pageGallery ? `<button class="dl-btn preview-btn" data-page-preview="${r.id}">
+          <span class="dl-btn-format">👀 Forhåndsvis</span>
+          <span class="dl-btn-size">${r.pageGallery.pages} sider</span>
+        </button>` : ''}
       </div>
     </div>
   `;
@@ -1144,7 +1216,11 @@ function openLightbox(src, alt) {
 }
 function closeLightbox() {
   lightbox.classList.remove('open');
-  document.body.style.overflow = '';
+  // Keep body scroll locked if monster-modal is still open
+  const mm = document.getElementById('monster-modal');
+  if (!mm || !mm.classList.contains('open')) {
+    document.body.style.overflow = '';
+  }
 }
 lightbox.addEventListener('click', (e) => {
   if (e.target === lightbox || e.target === closeBtn || e.target.closest('.lightbox-close')) {
@@ -1152,7 +1228,7 @@ lightbox.addEventListener('click', (e) => {
   }
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
 });
 
 // Event delegation for forhåndsvisning
@@ -1167,6 +1243,12 @@ document.getElementById('gallery').addEventListener('click', (e) => {
   if (galleryBtn) {
     openMonsterGallery(galleryBtn.dataset.monsterGallery);
   }
+
+  // Forhåndsvis-knapp: åpne side-modal
+  const previewBtn = e.target.closest('[data-page-preview]');
+  if (previewBtn) {
+    openPagePreview(previewBtn.dataset.pagePreview);
+  }
 });
 
 // Galleri-modal — bygger grid av individuelle PNG-er (brukes for både monsterkort og infografikker)
@@ -1174,11 +1256,13 @@ const monsterModal = document.getElementById('monster-modal');
 const monsterGrid = document.getElementById('monster-grid');
 const monsterClose = monsterModal.querySelector('.monster-modal-close');
 const monsterTitle = document.getElementById('monster-modal-title');
+const monsterSub = document.getElementById('monster-modal-sub');
 
 function openMonsterGallery(resourceId) {
   const r = RESOURCES.find(x => x.id === resourceId);
   if (!r || !r.gallery) return;
   monsterTitle.textContent = r.galleryTitle || '👀 Galleri';
+  monsterSub.textContent = 'Trykk «Last ned» for å hente det du vil bruke.';
   // Sett aspect-ratio på alle bilder
   const aspect = r.galleryAspect || '105 / 148';
   monsterGrid.style.setProperty('--gallery-aspect', aspect);
@@ -1213,8 +1297,40 @@ function closeMonsterGallery() {
 monsterModal.addEventListener('click', (e) => {
   if (e.target === monsterModal || e.target === monsterClose || e.target.closest('.monster-modal-close')) {
     closeMonsterGallery();
+    return;
+  }
+  // Klikk på en side-tile: åpne lightbox med full størrelse
+  const pageTile = e.target.closest('.page-tile');
+  if (pageTile && pageTile.dataset.src) {
+    openLightbox(pageTile.dataset.src, pageTile.dataset.alt || '');
   }
 });
+
+// Sideforhåndsvisning — for arbeidshefter (8 sider per hefte)
+function openPagePreview(resourceId) {
+  const r = RESOURCES.find(x => x.id === resourceId);
+  if (!r || !r.pageGallery) return;
+  monsterTitle.textContent = `👀 ${r.title}`;
+  monsterSub.textContent = 'Klikk en side for å se i full størrelse. Print fra hovednedlasting.';
+  // Gjenbruker monster-grid med justert tile-bredde for sidevisning
+  monsterGrid.style.setProperty('--tile-min', '180px');
+  monsterGrid.innerHTML = '';
+  for (let i = 1; i <= r.pageGallery.pages; i++) {
+    const path = `${r.pageGallery.dir}${r.pageGallery.prefix}${i}.jpg`;
+    const tile = document.createElement('div');
+    tile.className = 'page-tile';
+    tile.dataset.src = path;
+    tile.dataset.alt = `${r.title} – side ${i}`;
+    tile.innerHTML = `
+      <img class="page-tile-img" src="${path}" alt="Side ${i}" loading="lazy"
+           onerror="this.style.opacity='0.3'">
+      <div class="page-tile-label">Side ${i}</div>
+    `;
+    monsterGrid.appendChild(tile);
+  }
+  monsterModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && monsterModal.classList.contains('open')) closeMonsterGallery();
 });
