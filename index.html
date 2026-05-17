@@ -799,12 +799,13 @@
     z-index: 20;
     padding: 0;
   }
-  .preview-screen.is-ios .ios-floating-nav {
+  /* Floating-nav vises bare på iOS, og bare for trinnet som er aktivt (.active-trinn).
+     På større skjermer (iPad) tar demoen sin egen sidebar over – floating-nav skjules. */
+  .preview-screen.is-ios .ios-floating-nav.active-trinn {
     display: flex;
   }
-  /* Når preview viser iPad-rammen, har demoen sin egen sidebar – skjul floating-nav */
   @media (min-width: 768px) and (min-height: 700px) {
-    .preview-screen.is-ios .ios-floating-nav {
+    .preview-screen.is-ios .ios-floating-nav.active-trinn {
       display: none;
     }
   }
@@ -1626,16 +1627,16 @@ const MONSTERS = {
     const nav57 = document.getElementById('ios-nav-57');
     const previewCard = document.getElementById('preview-card');
 
-    // Vis riktig nav basert på aktiv trinn
+    // Vis riktig nav basert på aktiv trinn.
+    // Bruker class i stedet for inline style så CSS-media-queries kan skjule
+    // navet helt når preview viser iPad-sidebar-layouten.
     function syncFloatingNav() {
       const activeTrinn = previewCard.querySelector('.preview-tabs').getAttribute('data-active');
-      if (activeTrinn === '57') {
-        nav14.style.display = 'none';
-        nav57.style.display = 'flex';
-      } else {
-        nav14.style.display = 'flex';
-        nav57.style.display = 'none';
-      }
+      // Fjern inline-stiler som ville overstyrt CSS
+      nav14.style.display = '';
+      nav57.style.display = '';
+      nav14.classList.toggle('active-trinn', activeTrinn !== '57');
+      nav57.classList.toggle('active-trinn', activeTrinn === '57');
     }
     syncFloatingNav();
     // Observer trinn-bytte
