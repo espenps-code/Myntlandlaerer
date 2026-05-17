@@ -320,6 +320,64 @@
   .empty-icon{font-size:2.3rem;margin-bottom:.5rem;}
   .live-dot{display:inline-block;width:7px;height:7px;background:#4ade80;border-radius:50%;animation:pulse 1.5s infinite;margin-right:4px;}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* ===== iPad / tablet-layout (kopiert fra elevapp57.html) =====
+     Slår inn først når BÅDE bredde og høyde er over 700px. */
+  @media (min-width: 700px) and (min-height: 700px) {
+    body{max-width:100%;}
+    #screen-splash.active .big-splash-btn{max-width:430px;width:100%;}
+    #screen-login.active{max-width:430px;margin:0 auto;}
+
+    #screen-app.active{
+      display:grid;
+      grid-template-columns:260px minmax(0,1fr);
+      grid-template-rows:auto minmax(0,1fr);
+      grid-template-areas:"top top" "nav content";
+      height:100vh;
+      max-width:1400px;
+      margin:0 auto;
+    }
+    #screen-app .top-bar{grid-area:top;}
+    #screen-app .bottom-nav{
+      grid-area:nav;
+      flex-direction:column;
+      align-items:stretch;
+      border-top:none;
+      border-right:2px solid var(--border);
+      position:static;
+      padding:10px 8px;
+      gap:4px;
+    }
+    #screen-app .nav-item{
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:2px;
+      padding:7px 4px;
+      text-align:center;
+      border-radius:10px;
+      border:1.5px solid var(--border);
+      background:white;
+      opacity:1;
+    }
+    #screen-app .nav-item:not(.active) .nav-icon,
+    #screen-app .nav-item:not(.active) .nav-label{opacity:.7;}
+    #screen-app .nav-item.active{
+      background:var(--amber);
+      border-color:var(--amber);
+    }
+    #screen-app .nav-item.active .nav-label{color:var(--teal-dark);font-weight:900;}
+    #screen-app .nav-icon{font-size:1.25rem;}
+    #screen-app .nav-label{font-size:.85rem;font-weight:800;}
+    #screen-app .tab-content{
+      grid-area:content;
+      overflow-y:auto;
+      min-height:0;
+      padding:1.5rem 2rem;
+    }
+    #screen-app .account-grid{grid-template-columns:1fr 1fr;gap:14px;}
+    #screen-app #tab-kort{max-width:560px;margin:0 auto;}
+  }
 </style>
 </head>
 <body>
@@ -456,7 +514,7 @@
       <div class="account-card spare">
         <div class="acc-label">💰 Sparekonto</div>
         <div class="acc-val" id="bal-spare">0</div>
-        <div class="acc-sub" id="spare-sub">2% ukentlig rente</div>
+        <div class="acc-sub" id="spare-sub">5% ukentlig rente</div>
       </div>
       <div class="account-card fond">
         <div class="acc-label">📊 Fondskonto</div>
@@ -503,9 +561,19 @@
       <div class="account-card spare" style="border-radius:14px;padding:1.1rem;margin-bottom:.85rem;color:white">
         <div class="acc-label">💰 Sparekonto</div>
         <div class="acc-val" id="spare-main-val">0</div>
-        <div class="acc-sub" id="spare-rate-sub">2% ukentlig rente · maks 2 uttak/uke</div>
+        <div class="acc-sub" id="spare-rate-sub">5% ukentlig rente · maks 2 uttak/uke</div>
       </div>
-      <div class="info-box" id="spare-info-box">💡 Penger på sparekonto vokser med 2% hver uke (betales ut mandag). Maks 2 uttak per uke.</div>
+      <div class="info-box" id="spare-info-box">
+        💡 <strong>Visste du?</strong> Banken sjekker sparekontoen din <strong>hver dag</strong> og gir deg litt renter for hver dag pengene har ligget der. Hver mandag legger Myntland sammen alle dagene og betaler ut rentene. 📅
+        <div style="margin-top:.5rem;">
+          🚀 Innskudd <strong>mandag</strong> → pengene rekker 7 dager → mest renter!<br>
+          🐢 Innskudd <strong>søndag</strong> → pengene rekker bare 1 dag → veldig lite renter.
+        </div>
+        <div style="margin-top:.6rem;padding-top:.6rem;border-top:1.5px dashed #f0c060;">
+          🏦 <strong>I ekte banker</strong> fungerer det på samme måte: renter regnes hver dag, men legges på kontoen din én gang i året.
+        </div>
+        <div style="margin-top:.5rem;font-weight:800;">Maks 2 uttak per uke.</div>
+      </div>
       <div id="spare-withdrawal-warn" style="display:none" class="warn-box">⚠️ Du har brukt alle uttakene dine denne uken!</div>
       <div class="acc-action-grid">
         <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">➕ Sett inn fra brukskonto</button>
@@ -561,7 +629,6 @@
 
   <!-- KORT TAB -->
   <div class="tab-content content" id="tab-kort">
-    <button onclick="switchTab('bank',document.querySelector('.nav-item'));document.querySelector('.nav-item').classList.add('active')" style="background:transparent;border:none;color:var(--teal);font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;cursor:pointer;margin-bottom:.75rem;padding:0">← Tilbake til nettbank</button>
     <div style="background:linear-gradient(135deg,#1a1a18,#3a3a36);border-radius:20px;padding:1.4rem;color:white;position:relative;overflow:hidden;margin-bottom:1rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between">
       <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;border-radius:50%;background:rgba(239,159,39,.12)"></div>
       <div><div style="width:32px;height:24px;background:var(--amber);border-radius:5px;position:relative;z-index:1"></div><div style="font-family:'Fredoka One',cursive;font-size:1.2rem;letter-spacing:4px;opacity:.9;z-index:1;position:relative;margin-top:.5rem" id="card-number">•••• ••••</div></div>
@@ -893,7 +960,7 @@ function refreshAllDisplays(){
   document.getElementById('spare-main-val').textContent=spare;
   const rate=Math.round(getSavingsRate()*100);
   document.getElementById('spare-rate-sub').textContent=`${rate}% ukentlig rente · maks ${getMaxW()} uttak/uke`;
-  document.getElementById('spare-info-box').textContent=`💡 Sparekonto gir ${rate}% rente ukentlig (utbetales mandag). Maks ${getMaxW()} uttak per uke.`;
+  // spare-info-box inneholder den fyldige "Visste du?"-forklaringen i HTML – ikke overskriv.
   document.getElementById('fond-tax-pct').textContent=Math.round(getFundTax()*100);
   const usedW=s.withdrawalsThisWeek||0;
   const warnEl=document.getElementById('spare-withdrawal-warn');
@@ -2974,7 +3041,12 @@ function showSuccess(emoji,title,amount,text){
       height: auto !important;
       padding-bottom: 1rem !important;
     }
+    /* Skjul intern bottom-nav siden parent viser en egen ...
+       MEN behold den synlig som sidebar i iPad-format-preview */
     .bottom-nav { display: none !important; }
+    @media (min-width: 700px) and (min-height: 700px) {
+      .bottom-nav { display: flex !important; }
+    }
   `;
   document.head.appendChild(style);
 
