@@ -1617,6 +1617,11 @@ const MONSTERS = {
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if (!isIOS) return;
 
+    // På iPad-størrelse viewport: la demoens iPad-sidebar-layout styre seg selv.
+    // Aktiverer vi is-ios her, blir iframen height:auto og demo'ens 100vh-grid blir feil.
+    // Matcher samme breakpoint som iPad-preview-rammen.
+    if (window.innerWidth >= 768 && window.innerHeight >= 700) return;
+
     const screen = document.querySelector('.preview-screen');
     if (!screen) return;
     screen.classList.add('is-ios');
