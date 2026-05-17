@@ -36,18 +36,17 @@
 <link rel="stylesheet" href="myntland.css">
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
-  :root{--teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;--amber:#EF9F27;--amber-light:#FAEEDA;--coral:#D85A30;--coral-light:#FAECE7;--purple:#534AB7;--purple-light:#EEEDFE;--bg:#F0FAF5;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#b8dfc8;}
+  :root{--bg:#F0FAF5;--border:#b8dfc8;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;}
   .screen{display:none;min-height:100vh;flex-direction:column;}
   .screen.active{display:flex;}
 
   /* SPLASH */
-  #screen-splash{background:linear-gradient(160deg,var(--teal-dark) 0%,#1a6648 50%,var(--teal) 100%);align-items:center;justify-content:center;text-align:center;padding:2rem;}
-  .splash-coin{width:110px;height:110px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:4rem;color:var(--teal-dark);margin:0 auto 1rem;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:coinBounce 2.2s ease-in-out infinite;}
+  #screen-splash{background:linear-gradient(160deg,var(--green-dark) 0%,#1a6648 50%,var(--green) 100%);align-items:center;justify-content:center;text-align:center;padding:2rem;}
+  .splash-coin{width:110px;height:110px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:4rem;color:var(--green-dark);margin:0 auto 1rem;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:coinBounce 2.2s ease-in-out infinite;}
   .splash-stage{position:relative;width:200px;height:320px;margin:0 auto 1rem;}
-  .splash-coin-bg{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:120px;height:120px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:4.2rem;color:var(--teal-dark);box-shadow:0 8px 32px rgba(0,0,0,.3);animation:coinBounceBg 2.4s ease-in-out infinite;z-index:1;}
+  .splash-coin-bg{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:120px;height:120px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:4.2rem;color:var(--green-dark);box-shadow:0 8px 32px rgba(0,0,0,.3);animation:coinBounceBg 2.4s ease-in-out infinite;z-index:1;}
   @keyframes coinBounceBg{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-16px)}}
   .splash-monster{position:absolute;left:50%;top:0;transform:translateX(-50%);width:180px;height:180px;filter:drop-shadow(0 12px 20px rgba(0,0,0,.4));z-index:2;}
   @keyframes monsterBounce{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
@@ -56,7 +55,7 @@
   .splash-tagline{color:rgba(255,255,255,.8);font-size:1rem;font-weight:700;margin-bottom:3rem;}
   .role-btn{width:100%;padding:20px;border-radius:20px;border:none;font-family:'Fredoka One',cursive;font-size:1.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .15s;margin-bottom:14px;}
   .role-btn:active{transform:scale(.97);}
-  .role-btn-customer{background:var(--amber);color:var(--teal-dark);box-shadow:0 4px 20px rgba(239,159,39,.4);}
+  .role-btn-customer{background:var(--amber);color:var(--green-dark);box-shadow:0 4px 20px rgba(239,159,39,.4);}
   .role-btn-cashier{background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);}
 
   /* LOGIN */
@@ -64,22 +63,22 @@
   .login-card{background:white;border-radius:24px;padding:2rem;width:100%;border:2px solid var(--border);}
   .pin-dots{display:flex;gap:16px;justify-content:center;margin:1.5rem 0;}
   .pin-dot{width:22px;height:22px;border-radius:50%;border:3px solid var(--border);transition:all .15s;}
-  .pin-dot.filled{background:var(--teal);border-color:var(--teal);}
+  .pin-dot.filled{background:var(--green);border-color:var(--green);}
   .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-  .num-btn{background:var(--bg);border:2px solid var(--border);border-radius:16px;padding:18px;font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--teal-dark);cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center;}
-  .num-btn:active{transform:scale(.92);background:var(--teal-light);}
+  .num-btn{background:var(--bg);border:2px solid var(--border);border-radius:16px;padding:18px;font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--green-dark);cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center;}
+  .num-btn:active{transform:scale(.92);background:var(--green-light);}
   .num-btn.delete{font-size:1.3rem;color:var(--coral);}
   .num-btn.empty{background:transparent;border:none;cursor:default;}
 
   /* TOP BAR */
-  .top-bar{background:var(--teal-dark);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;color:white;flex-shrink:0;}
+  .top-bar{background:var(--green-dark);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;color:white;flex-shrink:0;}
   .top-bar-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);}
   .back-btn{background:rgba(255,255,255,.13);border:none;color:white;border-radius:10px;padding:8px 12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.85rem;}
 
   /* BOTTOM NAV */
   .bottom-nav{background:white;border-top:2px solid var(--border);display:flex;position:sticky;bottom:0;z-index:50;}
   .nav-item{flex:1;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;}
-  .nav-item.active{color:var(--teal);}.nav-item:not(.active){color:var(--muted);}
+  .nav-item.active{color:var(--green);}.nav-item:not(.active){color:var(--muted);}
   .nav-icon{font-size:1.4rem;}.nav-label{font-size:.68rem;font-weight:800;}
 
   /* SAVINGS */
@@ -87,7 +86,7 @@
   .home-savings-card:active{transform:scale(.98);background:#f0fdf4;}
   .home-savings-left{display:flex;align-items:center;gap:14px;}
   .home-savings-icon{font-size:2rem;}
-  .home-savings-label{font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.1rem;line-height:1;}
+  .home-savings-label{font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:1.1rem;line-height:1;}
   .home-savings-sub{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:3px;}
   .home-savings-right{display:flex;align-items:center;gap:8px;}
   .home-savings-amount{font-family:'Fredoka One',cursive;color:#15803d;font-size:1.3rem;}
@@ -96,39 +95,39 @@
   /* CLASS GOALS */
   .class-goals-card{background:white;border:2px solid var(--border);border-radius:18px;padding:14px 18px;margin-bottom:1.25rem;box-shadow:0 1px 3px rgba(15,81,50,.08);}
   .class-goals-header{margin-bottom:12px;}
-  .class-goals-title{font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.1rem;line-height:1;}
+  .class-goals-title{font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:1.1rem;line-height:1;}
   .class-goals-sub{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:3px;}
   .class-goal-row{padding:10px 0;border-top:1px solid var(--border);}
   .class-goal-row:first-child{border-top:none;padding-top:4px;}
   .class-goal-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
   .class-goal-emoji{font-size:1.5rem;}
-  .class-goal-name{flex:1;font-weight:800;font-size:.92rem;color:var(--teal-dark);line-height:1.2;}
+  .class-goal-name{flex:1;font-weight:800;font-size:.92rem;color:var(--green-dark);line-height:1.2;}
   .class-goal-name.done{color:#15803d;}
   .class-goal-bar{height:10px;background:var(--bg);border-radius:20px;overflow:hidden;border:1px solid var(--border);}
-  .class-goal-fill{height:100%;background:var(--teal);border-radius:20px;transition:width .4s;}
+  .class-goal-fill{height:100%;background:var(--green);border-radius:20px;transition:width .4s;}
   .class-goal-fill.done{background:#16a34a;}
   .class-goal-meta{display:flex;justify-content:space-between;font-size:.74rem;font-weight:700;color:var(--muted);margin-top:5px;}
-  .class-goal-meta .pct{color:var(--teal-dark);}
+  .class-goal-meta .pct{color:var(--green-dark);}
 
   .class-goal-row.mine{background:linear-gradient(90deg,#fff7ed 0%,white 100%);border-left:4px solid var(--amber);padding-left:10px;border-radius:8px;margin:6px -4px;}
-  .mine-badge{display:inline-block;background:var(--amber);color:var(--teal-dark);font-size:.62rem;padding:2px 7px;border-radius:10px;font-weight:900;margin-left:4px;vertical-align:middle;}
+  .mine-badge{display:inline-block;background:var(--amber);color:var(--green-dark);font-size:.62rem;padding:2px 7px;border-radius:10px;font-weight:900;margin-left:4px;vertical-align:middle;}
 
   .chosen-goal-banner{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 100%);border:1.5px solid var(--amber);border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
   .chosen-goal-banner:active{transform:scale(.98);}
   .chosen-goal-banner.empty{background:#fef2f2;border-color:#fca5a5;}
   .chosen-goal-left{flex:1;min-width:0;}
-  .chosen-goal-label{font-size:.7rem;font-weight:900;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.5px;}
-  .chosen-goal-name{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);line-height:1.1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .chosen-goal-edit{background:white;color:var(--teal-dark);font-weight:900;font-size:.78rem;padding:5px 12px;border-radius:8px;border:1.5px solid var(--amber);}
+  .chosen-goal-label{font-size:.7rem;font-weight:900;color:var(--green-dark);text-transform:uppercase;letter-spacing:.5px;}
+  .chosen-goal-name{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--green-dark);line-height:1.1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chosen-goal-edit{background:white;color:var(--green-dark);font-weight:900;font-size:.78rem;padding:5px 12px;border-radius:8px;border:1.5px solid var(--amber);}
 
   .choose-goal-row{width:100%;display:flex;align-items:center;gap:12px;background:white;border:2px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer;text-align:left;transition:all .12s;font-family:inherit;}
   .choose-goal-row:active{transform:scale(.98);}
   .choose-goal-row.selected{border-color:var(--amber);background:#fff7ed;}
   .choose-goal-emoji{font-size:1.8rem;flex-shrink:0;}
   .choose-goal-info{flex:1;min-width:0;}
-  .choose-goal-name{font-weight:900;color:var(--teal-dark);font-size:.92rem;line-height:1.2;margin-bottom:5px;}
+  .choose-goal-name{font-weight:900;color:var(--green-dark);font-size:.92rem;line-height:1.2;margin-bottom:5px;}
   .choose-goal-bar{height:6px;background:var(--bg);border-radius:10px;overflow:hidden;border:1px solid var(--border);}
-  .choose-goal-fill{height:100%;background:var(--teal);border-radius:10px;}
+  .choose-goal-fill{height:100%;background:var(--green);border-radius:10px;}
   .choose-goal-meta{font-size:.74rem;color:var(--muted);font-weight:700;margin-top:3px;}
   .choose-goal-check{font-size:1.4rem;color:var(--amber);flex-shrink:0;}
   .choose-goal-check.empty{color:var(--border);font-size:1.6rem;}
@@ -141,14 +140,14 @@
   .savings-currency{font-size:.95rem;opacity:.85;font-weight:700;position:relative;z-index:1;}
   .savings-rate{display:inline-flex;align-items:center;font-size:.78rem;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;margin-top:12px;font-weight:700;position:relative;z-index:1;}
   .savings-chart-card{background:white;border-radius:16px;padding:1.25rem;border:1.5px solid var(--border);}
-  .savings-chart-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);margin-bottom:.75rem;}
+  .savings-chart-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--green-dark);margin-bottom:.75rem;}
 
   /* CONTENT */
   .content{flex:1;overflow-y:auto;padding:1.5rem;-webkit-overflow-scrolling:touch;}
   .customer-tab-content{display:none;}.customer-tab-content.active{display:block;}
 
   /* BALANCE CARD */
-  .balance-card{background:linear-gradient(135deg,var(--teal-dark),var(--teal));border-radius:24px;padding:2rem;color:white;position:relative;overflow:hidden;margin-bottom:1.5rem;}
+  .balance-card{background:linear-gradient(135deg,var(--green-dark),var(--green));border-radius:24px;padding:2rem;color:white;position:relative;overflow:hidden;margin-bottom:1.5rem;}
   .balance-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);}
   .balance-label{font-size:.85rem;opacity:.8;font-weight:700;margin-bottom:4px;}
   .balance-amount{font-family:'Fredoka One',cursive;font-size:3.8rem;color:var(--amber);line-height:1;}
@@ -158,13 +157,13 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
   /* TRANSACTIONS */
-  .section-title{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--teal-dark);margin-bottom:1rem;}
+  .section-title{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--green-dark);margin-bottom:1rem;}
   .transaction-item{display:flex;align-items:center;gap:12px;padding:14px;background:white;border-radius:14px;margin-bottom:8px;border:1px solid var(--border);}
   .tx-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
-  .tx-icon.income{background:var(--teal-light);}.tx-icon.expense{background:var(--coral-light);}
+  .tx-icon.income{background:var(--green-light);}.tx-icon.expense{background:var(--coral-light);}
   .tx-desc{flex:1;}.tx-name{font-weight:700;font-size:.9rem;}.tx-date{font-size:.75rem;color:var(--muted);}
   .tx-amount{font-family:'Fredoka One',cursive;font-size:1.1rem;}
-  .tx-amount.income{color:var(--teal);}.tx-amount.expense{color:var(--coral);}
+  .tx-amount.income{color:var(--green);}.tx-amount.expense{color:var(--coral);}
 
   /* BANK CARD */
   .bank-card{background:linear-gradient(135deg,#2C2C2A,#444441);border-radius:20px;padding:1.5rem;color:white;position:relative;overflow:hidden;margin-bottom:1.5rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between;}
@@ -176,31 +175,31 @@
   .card-logo{font-family:'Fredoka One',cursive;color:var(--amber);font-size:1.1rem;}
 
   /* CASHIER */
-  .cashier-top{background:var(--teal-dark);padding:16px 18px;color:white;}
+  .cashier-top{background:var(--green-dark);padding:16px 18px;color:white;}
   .cashier-top-title{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--amber);text-align:center;}
   .cashier-content{padding:1.5rem;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-  .register-display{background:var(--teal-dark);border-radius:20px;padding:1.5rem;margin-bottom:1.5rem;text-align:center;}
+  .register-display{background:var(--green-dark);border-radius:20px;padding:1.5rem;margin-bottom:1.5rem;text-align:center;}
   .register-total{font-family:'Fredoka One',cursive;font-size:3rem;color:var(--amber);}
   .register-label{color:rgba(255,255,255,.7);font-size:.85rem;font-weight:700;}
   .cart-item{display:flex;align-items:center;gap:12px;background:white;padding:12px;border-radius:12px;margin-bottom:8px;border:1px solid var(--border);}
   .cart-emoji{font-size:1.8rem;}.cart-name{flex:1;font-weight:700;font-size:.9rem;}
-  .cart-price{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal);}
+  .cart-price{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--green);}
   .cart-remove{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--coral);padding:4px;}
   .action-btn{width:100%;padding:18px;border-radius:16px;border:none;font-family:'Fredoka One',cursive;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;margin-bottom:10px;}
   .action-btn:active{transform:scale(.97);}
-  .action-btn-amber{background:var(--amber);color:var(--teal-dark);}
-  .action-btn-ghost{background:white;color:var(--teal-dark);border:2px solid var(--border);}
+  .action-btn-amber{background:var(--amber);color:var(--green-dark);}
+  .action-btn-ghost{background:white;color:var(--green-dark);border:2px solid var(--border);}
 
   /* GROCERY GRID */
   .grocery-scan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
   .grocery-scan-btn{background:white;border:2px solid var(--border);border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .1s;font-family:'Nunito',sans-serif;}
-  .grocery-scan-btn:active{transform:scale(.94);background:var(--teal-light);border-color:var(--teal);}
-  .grocery-scan-btn .ge{font-size:1.8rem;}.grocery-scan-btn .gn{font-size:.72rem;font-weight:700;color:var(--text);text-align:center;}.grocery-scan-btn .gp{font-size:.8rem;color:var(--teal);font-weight:800;}
+  .grocery-scan-btn:active{transform:scale(.94);background:var(--green-light);border-color:var(--green);}
+  .grocery-scan-btn .ge{font-size:1.8rem;}.grocery-scan-btn .gn{font-size:.72rem;font-weight:700;color:var(--text);text-align:center;}.grocery-scan-btn .gp{font-size:.8rem;color:var(--green);font-weight:800;}
 
   /* CAMERA SCANNER OVERLAY */
   .scanner-overlay{display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column;}
   .scanner-overlay.open{display:flex;}
-  .scanner-header{background:var(--teal-dark);padding:16px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .scanner-header{background:var(--green-dark);padding:16px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
   .scanner-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);flex:1;}
   .scanner-close{background:rgba(255,255,255,.15);border:none;color:white;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.9rem;}
   .scanner-video-wrap{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;}
@@ -238,17 +237,17 @@
   .close-payment-btn{background:rgba(255,255,255,.15);color:white;border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:14px 32px;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;}
 
   /* SUCCESS */
-  .success-overlay{display:none;position:fixed;inset:0;background:var(--teal-dark);z-index:600;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+  .success-overlay{display:none;position:fixed;inset:0;background:var(--green-dark);z-index:600;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
   .success-overlay.open{display:flex;}
   .success-emoji{font-size:5rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
   @keyframes popIn{0%{transform:scale(0)}100%{transform:scale(1)}}
   .success-title{font-family:'Fredoka One',cursive;font-size:2.5rem;color:var(--amber);margin:1rem 0;}
   .success-amount{font-family:'Fredoka One',cursive;font-size:3rem;color:white;margin:.5rem 0;}
   .success-text{color:rgba(255,255,255,.8);font-size:1rem;font-weight:700;}
-  .success-close{background:var(--amber);color:var(--teal-dark);border:none;border-radius:16px;padding:16px 40px;font-family:'Fredoka One',cursive;font-size:1.4rem;cursor:pointer;margin-top:2rem;}
+  .success-close{background:var(--amber);color:var(--green-dark);border:none;border-radius:16px;padding:16px 40px;font-family:'Fredoka One',cursive;font-size:1.4rem;cursor:pointer;margin-top:2rem;}
 
-  .pay-instruction{background:var(--teal-light);border-radius:16px;padding:1.2rem;text-align:center;margin-bottom:1.5rem;border:2px solid #5DCAA5;}
-  .pay-instruction-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:6px;}
+  .pay-instruction{background:var(--green-light);border-radius:16px;padding:1.2rem;text-align:center;margin-bottom:1.5rem;border:2px solid #5DCAA5;}
+  .pay-instruction-title{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--green-dark);margin-bottom:6px;}
   .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);}
   .empty-icon{font-size:2.8rem;margin-bottom:.8rem;}
 
@@ -299,14 +298,14 @@
   .merke-card{background:white;border-radius:16px;border:1.5px solid var(--border);padding:1rem 1.1rem;margin-bottom:.85rem;overflow:hidden;position:relative;}
   .merke-card-header{display:flex;align-items:center;gap:12px;margin-bottom:.75rem;}
   .merke-icon{font-size:2rem;flex-shrink:0;}
-  .merke-name{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal-dark);}
+  .merke-name{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--green-dark);}
   .merke-desc{font-size:.75rem;color:var(--muted);font-weight:700;margin-top:1px;}
   .merke-levels{display:flex;flex-direction:column;gap:.5rem;}
   .merke-level-row{display:flex;align-items:center;gap:10px;padding:.6rem .8rem;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);}
   .merke-level-row.earned{border-color:var(--amber);background:linear-gradient(135deg,#fffbea,#fff8e0);}
   .merke-medal{font-size:1.4rem;flex-shrink:0;}
   .merke-level-info{flex:1;}
-  .merke-level-name{font-weight:800;font-size:.85rem;color:var(--teal-dark);}
+  .merke-level-name{font-weight:800;font-size:.85rem;color:var(--green-dark);}
   .merke-level-req{font-size:.73rem;color:var(--muted);font-weight:700;margin-top:1px;}
   .merke-prog-wrap{height:6px;background:var(--border);border-radius:20px;margin-top:4px;overflow:hidden;}
   .merke-prog-fill{height:100%;border-radius:20px;transition:width .6s;}
@@ -314,8 +313,8 @@
   .merke-prog-fill.sølv{background:linear-gradient(90deg,#9ea7aa,#c8d0d4);}
   .merke-prog-fill.gull{background:linear-gradient(90deg,#EF9F27,#FFD700);}
   .merke-bonus{font-family:'Fredoka One',cursive;font-size:.85rem;color:var(--amber);flex-shrink:0;}
-  .merke-earned-badge{background:linear-gradient(135deg,var(--amber),#FFD700);color:var(--teal-dark);font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:10px;flex-shrink:0;letter-spacing:.3px;}
-  .merke-info-box{background:var(--teal-light);border:1.5px solid var(--border);border-radius:12px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;}
+  .merke-earned-badge{background:linear-gradient(135deg,var(--amber),#FFD700);color:var(--green-dark);font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:10px;flex-shrink:0;letter-spacing:.3px;}
+  .merke-info-box{background:var(--green-light);border:1.5px solid var(--border);border-radius:12px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:var(--green-dark);font-weight:700;}
   /* MERKER END */
 </style>
 </head>
@@ -336,7 +335,7 @@
 <!-- LOGIN -->
 <div class="screen" id="screen-login">
   <div style="text-align:center;margin:3rem 0 1.5rem;font-size:3rem;">👛</div>
-  <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);margin-bottom:4px;">Logg inn</div>
+  <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--green-dark);margin-bottom:4px;">Logg inn</div>
   <div style="text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;font-weight:700;">Tast inn din 4-sifrede PIN-kode</div>
   <div style="width:100%;padding:0 1.5rem;flex:1;">
     <div class="login-card">
@@ -445,16 +444,16 @@
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;border:1.5px solid var(--border);">
       <div>
         <div style="font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">PIN-kode</div>
-        <div id="pin-display-14" style="font-family:'Fredoka One',cursive;font-size:1.4rem;letter-spacing:.4rem;color:var(--teal-dark);">••••</div>
+        <div id="pin-display-14" style="font-family:'Fredoka One',cursive;font-size:1.4rem;letter-spacing:.4rem;color:var(--green-dark);">••••</div>
       </div>
       <button id="pin-toggle-btn-14" onclick="togglePinDisplay14()"
-        style="background:var(--teal-light);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--teal-dark);cursor:pointer;">
+        style="background:var(--green-light);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--green-dark);cursor:pointer;">
         👁 Vis PIN
       </button>
     </div>
     <div class="pay-instruction">
       <div class="pay-instruction-title">💳 Slik bruker du kortet</div>
-      <div style="font-size:.88rem;color:var(--teal-dark);font-weight:700;">
+      <div style="font-size:.88rem;color:var(--green-dark);font-weight:700;">
         Skann QR-koder for å betale eller motta belønninger 📷
       </div>
     </div>
@@ -527,17 +526,17 @@
     </div>
     <div id="cart-list"></div>
 
-    <div style="background:var(--teal-light);border-radius:14px;padding:1rem;margin-bottom:1rem;">
+    <div style="background:var(--green-light);border-radius:14px;padding:1rem;margin-bottom:1rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:.78rem;font-weight:800;color:var(--teal-dark);">🛒 LEGG TIL VARE</div>
-        <button onclick="startCashierScan()" style="background:var(--teal);color:white;border:none;border-radius:10px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;">📷 Scan vare</button>
+        <div style="font-size:.78rem;font-weight:800;color:var(--green-dark);">🛒 LEGG TIL VARE</div>
+        <button onclick="startCashierScan()" style="background:var(--green);color:white;border:none;border-radius:10px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;">📷 Scan vare</button>
       </div>
       <div style="position:relative;margin-bottom:8px;">
         <input id="grocery-search" type="text" placeholder="🔍 Søk etter vare…"
                oninput="filterGrocerySearch(this.value)"
-               style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--teal);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;box-sizing:border-box;outline:none;background:white;">
+               style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--green);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;box-sizing:border-box;outline:none;background:white;">
       </div>
-      <div id="grocery-search-results" style="display:none;background:white;border-radius:10px;border:2px solid var(--teal);max-height:220px;overflow-y:auto;margin-bottom:4px;">
+      <div id="grocery-search-results" style="display:none;background:white;border-radius:10px;border:2px solid var(--green);max-height:220px;overflow-y:auto;margin-bottom:4px;">
       </div>
     </div>
 
@@ -634,17 +633,17 @@
 <!-- INNSKUDD/UTTAK MODAL -->
 <div class="pin-overlay" id="savings-modal">
   <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:340px;">
-    <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);text-align:center;margin-bottom:.25rem;" id="savings-modal-title">💰 Sett inn på sparekonto</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);text-align:center;margin-bottom:.25rem;" id="savings-modal-title">💰 Sett inn på sparekonto</div>
     <div style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1rem;font-weight:700;" id="savings-modal-info">Hovedkonto: 0 🪙</div>
     <div style="margin-bottom:1rem;">
       <label style="display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Beløp (mynter)</label>
       <input type="number" id="savings-modal-amount" min="1" placeholder="50"
-        style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);text-align:center;">
+        style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);text-align:center;">
     </div>
     <div id="savings-modal-error" style="color:var(--coral);font-size:.85rem;font-weight:700;margin-bottom:.5rem;text-align:center;min-height:1.2rem;"></div>
     <div style="display:flex;gap:8px;">
       <button onclick="closeSavingsModal()" style="flex:1;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Avbryt</button>
-      <button id="savings-modal-confirm" onclick="confirmSavingsAction()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--teal);color:white;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Bekreft</button>
+      <button id="savings-modal-confirm" onclick="confirmSavingsAction()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--green);color:white;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Bekreft</button>
     </div>
   </div>
 </div>
@@ -653,11 +652,11 @@
 <div class="pin-overlay" id="event-modal">
   <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:340px;text-align:center;">
     <div style="font-size:3.5rem;margin-bottom:.25rem;" id="event-modal-emoji">🎲</div>
-    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:.5rem;" id="event-modal-desc">Hendelse</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--green-dark);margin-bottom:.5rem;" id="event-modal-desc">Hendelse</div>
     <div style="font-family:'Fredoka One',cursive;font-size:2.2rem;line-height:1;margin-bottom:1rem;" id="event-modal-amount">+0 🪙</div>
     <div style="display:flex;gap:8px;">
       <button onclick="cancelEvent()" style="flex:1;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Avbryt</button>
-      <button onclick="acceptEvent()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--amber);color:var(--teal-dark);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">OK</button>
+      <button onclick="acceptEvent()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--amber);color:var(--green-dark);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">OK</button>
     </div>
   </div>
 </div>
@@ -665,7 +664,7 @@
 <!-- VELG SPAREMÅL MODAL -->
 <div class="pin-overlay" id="choose-goal-modal">
   <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:400px;">
-    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);text-align:center;margin-bottom:.5rem;">⭐ Velg sparemål</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--green-dark);text-align:center;margin-bottom:.5rem;">⭐ Velg sparemål</div>
     <div style="text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:1rem;font-weight:700;">Skatten din går til dette målet</div>
     <div id="choose-goal-list" style="max-height:60vh;overflow-y:auto;margin-bottom:1rem;"></div>
     <button onclick="closeChooseGoalModal()" style="width:100%;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Lukk</button>
@@ -1115,10 +1114,10 @@ function renderClassGoals(goals) {
   } else if (active.length) {
     headerHTML = `<div class="chosen-goal-banner empty" onclick="openChooseGoalModal()">
       <div class="chosen-goal-left">
-        <div class="chosen-goal-label" style="color:var(--teal-dark);">⭐ Velg et sparemål å støtte</div>
+        <div class="chosen-goal-label" style="color:var(--green-dark);">⭐ Velg et sparemål å støtte</div>
         <div class="chosen-goal-name" style="font-size:.85rem;color:var(--muted);">Skatten din fordeles jevnt til du velger</div>
       </div>
-      <div class="chosen-goal-edit" style="background:var(--amber);color:var(--teal-dark);">Velg</div>
+      <div class="chosen-goal-edit" style="background:var(--amber);color:var(--green-dark);">Velg</div>
     </div>`;
   }
 
@@ -2116,7 +2115,7 @@ function filterGrocerySearch(query) {
       'border-bottom:1px solid #e0ede0;cursor:pointer;font-family:Nunito,sans-serif;text-align:left;">'+
       '<span style="font-size:1.6rem;">'+x.emoji+'</span>'+
       '<span style="flex:1;font-weight:700;font-size:.88rem;">'+x.name+'</span>'+
-      '<span style="font-family:Fredoka One,cursive;color:var(--teal);font-size:.95rem;">🪙'+x.price+'</span>'+
+      '<span style="font-family:Fredoka One,cursive;color:var(--green);font-size:.95rem;">🪙'+x.price+'</span>'+
       '</button>';
   }).join('');
 }

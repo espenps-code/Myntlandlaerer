@@ -130,35 +130,27 @@
 <link rel="stylesheet" href="myntland.css">
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
-  :root{
-    --teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#085041;
-    --amber:#EF9F27;--amber-light:#FAEEDA;
-    --coral:#D85A30;--coral-light:#FAECE7;
-    --purple:#534AB7;--purple-light:#EEEDFE;
-    --bg:#F7F9F7;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#c8dfc8;
-  }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
   /* ── LOGIN SCREEN ─────────────────────────── */
-  #login-screen{display:flex;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--teal-dark),#1a6648,var(--teal));padding:2rem;}
+  #login-screen{display:flex;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--green-dark),#1a6648,var(--green));padding:2rem;}
   .login-box{background:white;border-radius:24px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
-  .login-logo{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--teal-dark);text-align:center;margin-bottom:.25rem;}
+  .login-logo{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--green-dark);text-align:center;margin-bottom:.25rem;}
   .login-sub{text-align:center;color:var(--muted);font-size:.9rem;font-weight:700;margin-bottom:2rem;}
   .login-profiles{display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem;}
   .profile-btn{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);border-radius:14px;cursor:pointer;background:var(--white);transition:all .15s;font-family:'Nunito',sans-serif;}
-  .profile-btn:hover{border-color:var(--teal);background:var(--teal-light);}
+  .profile-btn:hover{border-color:var(--green);background:var(--green-light);}
   .profile-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
   .profile-name{font-weight:800;font-size:1rem;color:var(--text);}
   .profile-role{font-size:.75rem;color:var(--muted);}
   .pin-section{display:none;margin-top:1rem;}
   .pin-input-row{display:flex;gap:8px;justify-content:center;margin:1rem 0;}
-  .pin-char{width:48px;height:56px;border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);}
-  .pin-char.filled{border-color:var(--teal);background:var(--teal-light);}
+  .pin-char{width:48px;height:56px;border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);}
+  .pin-char.filled{border-color:var(--green);background:var(--green-light);}
   .pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:.5rem;}
-  .pin-key{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--teal-dark);cursor:pointer;transition:all .1s;text-align:center;}
-  .pin-key:active{transform:scale(.92);background:var(--teal-light);}
+  .pin-key{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);cursor:pointer;transition:all .1s;text-align:center;}
+  .pin-key:active{transform:scale(.92);background:var(--green-light);}
   .pin-key.del{font-size:1rem;color:var(--coral);}
   .pin-key.empty{background:transparent;border:none;cursor:default;}
   .login-error{color:var(--coral);font-size:.85rem;font-weight:700;text-align:center;min-height:20px;}
@@ -166,7 +158,7 @@
   /* ── MAIN APP ─────────────────────────────── */
   #app{display:none;}
   header{
-    background:linear-gradient(160deg,var(--teal-dark),#1a6648,var(--teal));
+    background:linear-gradient(160deg,var(--green-dark),#1a6648,var(--green));
     padding:.6rem 1.5rem .45rem;
     position:sticky;top:0;z-index:100;
     box-shadow:0 6px 24px rgba(8,80,65,.25);
@@ -183,7 +175,7 @@
   }
   header > *{position:relative;z-index:1;}
   .logo{font-family:'Fredoka One',cursive;font-size:1.55rem;color:var(--amber);letter-spacing:.5px;display:flex;align-items:center;gap:8px;white-space:nowrap;grid-column:1;grid-row:1;text-shadow:0 2px 8px rgba(0,0,0,.2);}
-  .logo-coin{width:32px;height:32px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--teal-dark);font-weight:900;box-shadow:0 0 12px var(--amber);}
+  .logo-coin{width:32px;height:32px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--green-dark);font-weight:900;box-shadow:0 0 12px var(--amber);}
   .logo-monster{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));flex-shrink:0;transition:transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);}
   .logo-monster:hover{transform:rotate(-8deg) scale(1.15) translateY(-2px);}
   .logo-monster.flip{transform:scaleX(-1);}
@@ -198,32 +190,32 @@
   header nav{grid-column:1/-1;grid-row:2;display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:.4rem 0 .25rem;}
   header nav button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.9);font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;padding:.55rem 1.1rem;border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
   header nav button:hover{background:rgba(255,255,255,.22);color:#fff;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15);}
-  header nav button.active{background:var(--amber);color:var(--teal-dark);box-shadow:0 4px 14px rgba(239,159,39,.4);border-color:transparent;}
+  header nav button.active{background:var(--amber);color:var(--green-dark);box-shadow:0 4px 14px rgba(239,159,39,.4);border-color:transparent;}
   .nav-icon{font-size:1.2rem;line-height:1;}
   #fb-status{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.55);}
   main{max-width:1200px;margin:0 auto;padding:2rem;}
   .page{display:none;}.page.active{display:block;}
-  .page-title{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--teal-dark);margin-bottom:.35rem;letter-spacing:-.01em;line-height:1.1;}
+  .page-title{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--green-dark);margin-bottom:.35rem;letter-spacing:-.01em;line-height:1.1;}
   .page-subtitle{color:var(--muted);font-size:.95rem;margin-bottom:2rem;font-weight:600;}
 
   /* ── CARDS & LAYOUT ───────────────────────── */
   .card{background:var(--white);border-radius:20px;border:2px solid var(--border);padding:1.75rem;margin-bottom:1.5rem;transition:box-shadow .25s ease;}
   .card:hover{box-shadow:0 8px 24px rgba(8,80,65,.06);}
-  .card-title{font-size:1.1rem;font-weight:800;color:var(--teal-dark);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+  .card-title{font-size:1.1rem;font-weight:800;color:var(--green-dark);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
   .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;}
   .stat-row{display:flex;gap:1rem;margin-bottom:1.5rem;}
-  .stat-box{flex:1;background:var(--teal-light);border-radius:16px;padding:1.15rem;text-align:center;border:2px solid transparent;transition:all .2s;}
-  .stat-box:hover{border-color:var(--teal);transform:translateY(-2px);}
-  .stat-num{font-family:'Fredoka One',cursive;font-size:2.1rem;color:var(--teal-dark);line-height:1;}
+  .stat-box{flex:1;background:var(--green-light);border-radius:16px;padding:1.15rem;text-align:center;border:2px solid transparent;transition:all .2s;}
+  .stat-box:hover{border-color:var(--green);transform:translateY(-2px);}
+  .stat-num{font-family:'Fredoka One',cursive;font-size:2.1rem;color:var(--green-dark);line-height:1;}
   .stat-label{font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px;}
 
   /* ── BUTTONS ──────────────────────────────── */
   .btn{font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;padding:10px 20px;border-radius:14px;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
   .btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.12);}
   .btn:active{transform:translateY(0);}
-  .btn-primary{background:var(--teal);color:#fff;}.btn-primary:hover{background:var(--teal-dark);}
-  .btn-amber{background:var(--amber);color:var(--teal-dark);}.btn-amber:hover{background:#d4890f;}
+  .btn-primary{background:var(--green);color:#fff;}.btn-primary:hover{background:var(--green-dark);}
+  .btn-amber{background:var(--amber);color:var(--green-dark);}.btn-amber:hover{background:#d4890f;}
   .btn-coral{background:var(--coral);color:#fff;}.btn-coral:hover{background:#b84520;}
   .btn-purple{background:var(--purple);color:#fff;}.btn-purple:hover{background:#3d3490;}
   .btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);}.btn-ghost:hover{background:var(--bg);box-shadow:0 4px 12px rgba(0,0,0,.06);}
@@ -231,7 +223,7 @@
 
   /* ── FORMS ────────────────────────────────── */
   input[type=text],input[type=number],input[type=password],select{font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);color:var(--text);width:100%;outline:none;transition:border-color .15s;}
-  input:focus,select:focus{border-color:var(--teal);}
+  input:focus,select:focus{border-color:var(--green);}
   label{font-weight:700;font-size:.85rem;color:var(--muted);display:block;margin-bottom:6px;}
   .form-row{margin-bottom:1rem;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
 
@@ -240,7 +232,7 @@
   th{font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);}
   td{padding:12px;border-bottom:1px solid var(--bg);font-size:.95rem;vertical-align:middle;}
   tr{transition:background .15s;}
-  tr:hover td{background:var(--teal-light);}
+  tr:hover td{background:var(--green-light);}
   .balance-badge{display:inline-flex;align-items:center;gap:4px;background:var(--amber-light);color:#854F0B;font-weight:800;padding:4px 12px;border-radius:20px;font-size:.9rem;}
   .balance-actions{display:flex;gap:6px;align-items:center;}
   .class-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);}
@@ -249,51 +241,51 @@
   /* ── TABS ─────────────────────────────────── */
   .tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--bg);padding:5px;border-radius:14px;border:1px solid var(--border);}
   .tab{flex:1;padding:10px;text-align:center;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;color:var(--muted);transition:all .2s;}
-  .tab.active{background:var(--white);color:var(--teal-dark);box-shadow:0 2px 8px rgba(8,80,65,.1);}
+  .tab.active{background:var(--white);color:var(--green-dark);box-shadow:0 2px 8px rgba(8,80,65,.1);}
 
   /* ── MODALS ───────────────────────────────── */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,80,65,.45);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
   .modal{background:var(--white);border-radius:24px;padding:2rem;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
-  .modal-title{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);margin-bottom:1.5rem;}
+  .modal-title{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--green-dark);margin-bottom:1.5rem;}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
 
   /* ── ALERTS ───────────────────────────────── */
   .alert{padding:12px 16px;border-radius:12px;font-size:.9rem;font-weight:600;margin-bottom:1rem;}
-  .alert-success{background:var(--teal-light);color:var(--teal-dark);border:1px solid #5DCAA5;}
+  .alert-success{background:var(--green-light);color:var(--green-dark);border:1px solid #5DCAA5;}
   .alert-error{background:var(--coral-light);color:#4A1B0C;border:1px solid #F0997B;}
 
   /* ── GROCERY ──────────────────────────────── */
   .grocery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;}
   .grocery-item{border:2px solid var(--border);border-radius:16px;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .2s;background:var(--white);position:relative;}
-  .grocery-item:hover{border-color:var(--teal);background:var(--teal-light);transform:translateY(-2px);box-shadow:0 6px 16px rgba(8,80,65,.08);}
-  .grocery-item.selected{border-color:var(--teal);background:var(--teal-light);}
-  .grocery-item.selected::after{content:'✓';position:absolute;top:6px;right:8px;color:var(--teal);font-weight:900;font-size:1rem;}
+  .grocery-item:hover{border-color:var(--green);background:var(--green-light);transform:translateY(-2px);box-shadow:0 6px 16px rgba(8,80,65,.08);}
+  .grocery-item.selected{border-color:var(--green);background:var(--green-light);}
+  .grocery-item.selected::after{content:'✓';position:absolute;top:6px;right:8px;color:var(--green);font-weight:900;font-size:1rem;}
   .grocery-emoji{font-size:2.5rem;}.grocery-name{font-weight:700;font-size:.85rem;color:var(--text);text-align:center;}.grocery-price{font-size:.8rem;color:var(--muted);font-weight:600;}
 
   /* ── QR ───────────────────────────────────── */
   .qr-card{background:var(--white);border:2px solid var(--border);border-radius:20px;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:12px;}
-  .qr-card .amount-label{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--teal-dark);}
+  .qr-card .amount-label{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--green-dark);}
   .qr-wrap{background:white;padding:12px;border-radius:14px;border:2px solid var(--border);}
 
   /* ── GROUPS ───────────────────────────────── */
   .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .2s;}
   .color-swatch.selected{border-color:var(--text);transform:scale(1.18);}
   .group-card{background:var(--white);border-radius:20px;border:2px solid var(--border);padding:1.25rem;margin-bottom:1rem;transition:all .2s;}
-  .group-card:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:0 6px 16px rgba(8,80,65,.08);}
+  .group-card:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 6px 16px rgba(8,80,65,.08);}
   .group-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
   .group-members{display:flex;flex-wrap:wrap;gap:6px;}
 
   /* ── CSV ──────────────────────────────────── */
   .drop-zone{border:2px dashed var(--border);border-radius:16px;padding:2rem;text-align:center;color:var(--muted);cursor:pointer;transition:all .2s;}
-  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--teal);background:var(--teal-light);}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--green);background:var(--green-light);}
   .csv-preview{max-height:240px;overflow-y:auto;margin-top:1rem;}
   .csv-preview table{font-size:.82rem;}
-  .csv-preview th{background:var(--teal-light);color:var(--teal-dark);padding:6px 8px;}
+  .csv-preview th{background:var(--green-light);color:var(--green-dark);padding:6px 8px;}
 
   /* ── TEACHER ADMIN ────────────────────────── */
   .teacher-card{background:var(--white);border:2px solid var(--border);border-radius:16px;padding:1rem 1.25rem;display:flex;align-items:center;gap:14px;margin-bottom:10px;transition:all .2s;}
-  .teacher-card:hover{border-color:var(--teal);box-shadow:0 4px 12px rgba(8,80,65,.06);}
+  .teacher-card:hover{border-color:var(--green);box-shadow:0 4px 12px rgba(8,80,65,.06);}
   .teacher-card-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
   .teacher-card-info{flex:1;}
   .teacher-card-name{font-weight:800;font-size:.95rem;}
@@ -358,7 +350,7 @@
     table,table tbody,table tr,table td{display:block;width:100%;}
     table tr{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:.6rem .75rem;margin-bottom:.6rem;position:relative;}
     table tr:hover td{background:transparent;}
-    table tr:hover{background:var(--teal-light);border-color:var(--teal);}
+    table tr:hover{background:var(--green-light);border-color:var(--green);}
     table td{padding:3px 0;border:none;font-size:.9rem;display:flex;align-items:center;gap:8px;}
     table td::before{content:attr(data-label);font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;min-width:72px;flex-shrink:0;}
     table td:empty{display:none;}
@@ -385,7 +377,7 @@
       <div style="text-align:center;color:var(--muted);padding:1rem;font-size:.85rem;">Laster profiler…</div>
     </div>
     <div class="pin-section" id="pin-section">
-      <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.5rem;" id="pin-for-name"></div>
+      <div style="font-weight:800;color:var(--green-dark);margin-bottom:.5rem;" id="pin-for-name"></div>
       <div class="pin-input-row" id="pin-chars">
         <div class="pin-char" id="pc-0">·</div><div class="pin-char" id="pc-1">·</div>
         <div class="pin-char" id="pc-2">·</div><div class="pin-char" id="pc-3">·</div>
@@ -411,7 +403,7 @@
   <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileNav()" aria-label="Meny">
     <span></span><span></span><span></span>
   </button>
-  <div class="logo"><img class="logo-monster" src="monsters/groennhaar.webp" alt="">Myntland <span style="background:var(--amber);color:var(--teal-dark);font-size:.6rem;font-weight:900;padding:2px 8px;border-radius:20px;font-family:'Nunito',sans-serif;margin-left:4px;">1–4. trinn</span><img class="logo-monster flip right" src="monsters/mintgroenn.webp" alt=""></div>
+  <div class="logo"><img class="logo-monster" src="monsters/groennhaar.webp" alt="">Myntland <span style="background:var(--amber);color:var(--green-dark);font-size:.6rem;font-weight:900;padding:2px 8px;border-radius:20px;font-family:'Nunito',sans-serif;margin-left:4px;">1–4. trinn</span><img class="logo-monster flip right" src="monsters/mintgroenn.webp" alt=""></div>
   <nav>
     <button class="active" onclick="showPage('elever')" id="nav-elever"><span class="nav-icon">👩‍🎓</span> Elever</button>
     <button onclick="showPage('grupper')" id="nav-grupper"><span class="nav-icon">👥</span> Grupper</button>
@@ -451,10 +443,10 @@
     <div class="grid-2">
       <div class="card">
         <div class="card-title">➕ Opprett én elev</div>
-        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;background:var(--teal-light);border-radius:12px;padding:.75rem;">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;background:var(--green-light);border-radius:12px;padding:.75rem;">
           <div id="avatar-preview-wrap" style="flex-shrink:0;"></div>
           <div style="flex:1;">
-            <div id="avatar-preview-label" style="font-size:.75rem;font-weight:800;color:var(--teal-dark);margin-bottom:4px;">Ingen avatar ennå</div>
+            <div id="avatar-preview-label" style="font-size:.75rem;font-weight:800;color:var(--green-dark);margin-bottom:4px;">Ingen avatar ennå</div>
             <input type="hidden" id="avatar-seed-input" value="">
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
               <button type="button" class="btn btn-primary btn-sm" onclick="randomFictiveName()">🎲 Generer navn + avatar</button>
@@ -505,7 +497,7 @@
           </select>
         </div>
         <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort</button>
-        <div style="margin-top:1.25rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
+        <div style="margin-top:1.25rem;background:var(--green-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--green-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
       </div>
     </div>
   </div>
@@ -577,7 +569,7 @@
         <div style="overflow-x:auto;">
           <table style="width:100%;font-size:.85rem;">
             <thead>
-              <tr style="background:var(--teal-light);">
+              <tr style="background:var(--green-light);">
                 <th style="padding:8px 12px;text-align:left;">Avatar</th>
                 <th style="padding:8px 12px;text-align:left;">Fiktivt navn</th>
                 <th style="padding:8px 12px;text-align:left;">PIN</th>
@@ -711,11 +703,11 @@
       <p style="font-size:.9rem;color:var(--muted);margin-bottom:1.25rem;font-weight:600;">Butikken har tre deler – varer, handlelister og kassen. Slik henger de sammen:</p>
 
       <div style="display:grid;gap:1rem;">
-        <div style="display:flex;gap:1rem;background:var(--teal-light);border-radius:14px;padding:1rem;align-items:flex-start;">
+        <div style="display:flex;gap:1rem;background:var(--green-light);border-radius:14px;padding:1rem;align-items:flex-start;">
           <div style="font-size:2rem;line-height:1;flex-shrink:0;">1️⃣</div>
           <div>
-            <div style="font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.05rem;margin-bottom:.25rem;">🛍️ Legg inn varer</div>
-            <div style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.5;">Gå til <strong>«Varer»</strong>-fanen og legg til ting elevene kan kjøpe (melk, brød, eple, blyant osv.) med emoji og pris i mynter. Disse varene vises i kassen og dukker opp på handlelister.</div>
+            <div style="font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:1.05rem;margin-bottom:.25rem;">🛍️ Legg inn varer</div>
+            <div style="font-size:.88rem;color:var(--green-dark);font-weight:600;line-height:1.5;">Gå til <strong>«Varer»</strong>-fanen og legg til ting elevene kan kjøpe (melk, brød, eple, blyant osv.) med emoji og pris i mynter. Disse varene vises i kassen og dukker opp på handlelister.</div>
           </div>
         </div>
 
@@ -746,8 +738,8 @@
         <div style="display:flex;gap:1rem;background:#E8F8F2;border-radius:14px;padding:1rem;align-items:flex-start;">
           <div style="font-size:2rem;line-height:1;flex-shrink:0;">5️⃣</div>
           <div>
-            <div style="font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:1.05rem;margin-bottom:.25rem;">🛒 Slik betaler eleven</div>
-            <div style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.5;">
+            <div style="font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:1.05rem;margin-bottom:.25rem;">🛒 Slik betaler eleven</div>
+            <div style="font-size:.88rem;color:var(--green-dark);font-weight:600;line-height:1.5;">
               <strong>a)</strong> Kasse-betjenten scanner varelappene → varene legges i kassen.<br>
               <strong>b)</strong> Når kunden vil betale: kasse-betjenten trykker <strong>«📷 Scan elevens kort for betaling»</strong> og scanner kundens bankkort.<br>
               <strong>c)</strong> Kunden må taste inn <strong>PIN-koden</strong> sin for å bekrefte.<br>
@@ -972,9 +964,9 @@
     <div class="card">
       <div class="card-title">📋 Oversikt</div>
       <div id="hend-stats" style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
-        <div style="background:var(--teal-light);border-radius:10px;padding:.6rem 1rem;flex:1;min-width:100px;">
+        <div style="background:var(--green-light);border-radius:10px;padding:.6rem 1rem;flex:1;min-width:100px;">
           <div style="font-size:.72rem;color:var(--muted);font-weight:700;">TOTALT</div>
-          <div id="hend-count-total" style="font-size:1.4rem;font-weight:900;color:var(--teal-dark);">0</div>
+          <div id="hend-count-total" style="font-size:1.4rem;font-weight:900;color:var(--green-dark);">0</div>
         </div>
         <div style="background:#dcfce7;border-radius:10px;padding:.6rem 1rem;flex:1;min-width:100px;">
           <div style="font-size:.72rem;color:#15803d;font-weight:700;">INNTEKTER</div>
@@ -1037,7 +1029,7 @@
     </div>
     <!-- Bonuser -->
     <div style="background:var(--bg);border-radius:12px;padding:1rem;border:1.5px solid var(--border);margin-bottom:1rem;">
-      <div style="font-weight:800;color:var(--teal-dark);margin-bottom:.75rem;">🎁 Bonusmynter per merketype</div>
+      <div style="font-weight:800;color:var(--green-dark);margin-bottom:.75rem;">🎁 Bonusmynter per merketype</div>
       <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
         <div class="form-row"><label>🥉 Bronse-bonus</label><input type="number" id="bp14-bonusBronse" min="0" style="width:100px;"> 🪙</div>
         <div class="form-row"><label>🥈 Sølv-bonus</label><input type="number" id="bp14-bonusSolv" min="0" style="width:100px;"> 🪙</div>
@@ -1046,7 +1038,7 @@
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="saveBadgeParams14()">💾 Lagre merkeparametere</button>
-      <div id="bp14-save-alert" style="font-size:.85rem;font-weight:800;color:var(--teal-dark);"></div>
+      <div id="bp14-save-alert" style="font-size:.85rem;font-weight:800;color:var(--green-dark);"></div>
     </div>
   </div>
 
@@ -1100,10 +1092,10 @@
     <!-- Myntjakten-innstillinger -->
   <div class="card" style="margin-top:1.5rem;">
     <div class="card-title">🪙 Myntjakten</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Myntjakten er hoderegningsspillet på <code style="font-size:.8rem;background:var(--teal-light);padding:1px 6px;border-radius:4px;">myntland.no/myntjakten</code>. Elevene kan tjene mynter til kontoen sin ved å skanne kortet etter en runde. Slå av hvis du ikke ønsker at de skal opptjene mynter — eller sett et dagstak.</p>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Myntjakten er hoderegningsspillet på <code style="font-size:.8rem;background:var(--green-light);padding:1px 6px;border-radius:4px;">myntland.no/myntjakten</code>. Elevene kan tjene mynter til kontoen sin ved å skanne kortet etter en runde. Slå av hvis du ikke ønsker at de skal opptjene mynter — eller sett et dagstak.</p>
 
     <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
-      <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--teal-dark);cursor:pointer;">
+      <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--green-dark);cursor:pointer;">
         <input type="checkbox" id="myntjakten14-enabled" style="width:18px;height:18px;cursor:pointer;">
         <span>Tillat opptjening av mynter via Myntjakten</span>
       </label>
@@ -1116,10 +1108,10 @@
     </div>
 
     <!-- Dagens aktivitet -->
-    <div id="myntjakten14-stats" style="background:var(--teal-light);border-radius:10px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.85rem;color:var(--teal-dark);font-weight:700;">
+    <div id="myntjakten14-stats" style="background:var(--green-light);border-radius:10px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.85rem;color:var(--green-dark);font-weight:700;">
       <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.4rem;">Myntjakten i dag</div>
       <div id="myntjakten14-stats-summary" style="margin-bottom:.3rem;">Laster…</div>
-      <div id="myntjakten14-stats-top" style="font-size:.78rem;font-weight:600;color:var(--teal-dark);"></div>
+      <div id="myntjakten14-stats-top" style="font-size:.78rem;font-weight:600;color:var(--green-dark);"></div>
     </div>
 
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
@@ -1529,7 +1521,7 @@ function renderClassManager() {
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;">
       <span style="font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);">${c}</span>
       <span style="font-size:.8rem;color:var(--muted);">${count} elev${count!==1?'er':''}</span>
-      <button onclick="printExistingClassList('${c}')" style="margin-left:auto;background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:8px;padding:5px 12px;font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;">🖨️ Skriv ut</button>
+      <button onclick="printExistingClassList('${c}')" style="margin-left:auto;background:var(--green-light);color:var(--green-dark);border:none;border-radius:8px;padding:5px 12px;font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;">🖨️ Skriv ut</button>
     </div>`;
   }).join('') +
   `<div style="margin-top:12px;">
@@ -1649,9 +1641,9 @@ function randomFictiveName() {
   const display = document.getElementById('new-fictive-name-display');
   if (display) {
     display.textContent = n.firstname + ' ' + n.lastname;
-    display.style.color = 'var(--teal-dark)';
+    display.style.color = 'var(--green-dark)';
     display.style.borderStyle = 'solid';
-    display.style.background = 'var(--teal-light)';
+    display.style.background = 'var(--green-light)';
   }
   window._pendingAvatarSeed = s;
   renderPortalAvatarPreview(s);
@@ -2923,7 +2915,7 @@ function renderCustomRewards() {
   }
   el.innerHTML = window._customRewards.map((r, idx) => `
     <div style="display:flex;align-items:center;gap:12px;padding:.9rem 1rem;background:var(--bg);border-radius:12px;margin-bottom:8px;">
-      <div style="width:36px;height:36px;background:var(--teal-light);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:.8rem;flex-shrink:0;">🪙${r.amount}</div>
+      <div style="width:36px;height:36px;background:var(--green-light);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:.8rem;flex-shrink:0;">🪙${r.amount}</div>
       <div style="flex:1;">
         <div style="font-weight:800;font-size:.9rem;">+${r.amount} 🪙</div>
         <div style="font-size:.78rem;color:var(--muted);">${r.desc}</div>
@@ -3546,9 +3538,9 @@ function syncRealPaymentsToggle() {
 
   if (real) {
     // Ekte penger – grønn (teal)
-    box.style.background    = 'var(--teal-light)';
-    box.style.borderColor   = 'var(--teal)';
-    box.style.color         = 'var(--teal-dark)';
+    box.style.background    = 'var(--green-light)';
+    box.style.borderColor   = 'var(--green)';
+    box.style.color         = 'var(--green-dark)';
     iconEl.textContent      = '💰';
     labelEl.textContent     = 'Aktiv modus';
     titleEl.textContent     = 'Ekte mynter';
@@ -3886,7 +3878,7 @@ function renderClassGoalsPage() {
         <button onclick="deleteClassGoal('${g.fbKey}')" style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:1.1rem;">🗑️</button>
       </div>
       <div style="height:12px;background:var(--bg);border-radius:20px;overflow:hidden;margin-bottom:.5rem;border:1px solid var(--border);">
-        <div style="height:100%;background:${g.completed?'#16a34a':'var(--teal)'};border-radius:20px;width:${pct}%;transition:width .4s;"></div>
+        <div style="height:100%;background:${g.completed?'#16a34a':'var(--green)'};border-radius:20px;width:${pct}%;transition:width .4s;"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:700;color:var(--muted);">
         <span>🪙 ${g.saved||0} spart</span><span>${pct}%</span><span>🪙 ${Math.max(0,g.target-(g.saved||0))} igjen</span>
@@ -4012,7 +4004,7 @@ function renderHendelser() {
       <div style="display:flex;align-items:center;gap:.5rem;">
         <span style="font-size:1.6rem;">${h.emoji||'🎲'}</span>
         <div style="flex:1;">
-          <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);line-height:1.2;">${h.desc}</div>
+          <div style="font-weight:800;font-size:.88rem;color:var(--green-dark);line-height:1.2;">${h.desc}</div>
           <div style="font-size:.82rem;font-weight:900;color:${color};margin-top:2px;">${sign}🪙${h.amount}</div>
         </div>
         <div style="display:flex;gap:4px;">
@@ -4237,7 +4229,7 @@ async function saveBadgeParams14() {
     if (!window._settings) window._settings = {};
     window._settings.badgeParams14 = bp;
     alertEl.textContent = '✅ Lagret!';
-    alertEl.style.color = 'var(--teal-dark)';
+    alertEl.style.color = 'var(--green-dark)';
     setTimeout(() => alertEl.textContent = '', 2500);
     renderMerkerPage();
   } catch(e) {
