@@ -393,11 +393,9 @@
   @media (min-width: 700px) and (min-height: 700px) {
     body{max-width:100%;}
 
-    /* Splash: la gradienten fylle hele iPad-skjermen, men kapp knapper og logo
-       så de ikke blir gigantiske – flex sentrer dem automatisk */
-    #screen-splash.active .splash-coin,
-    #screen-splash.active .splash-logo,
-    #screen-splash.active .splash-tagline,
+    /* Splash: la gradienten fylle hele iPad-skjermen, men kapp knappene
+       så de ikke blir gigantiske – flex sentrer dem automatisk.
+       (Mynt-bobla har fast 110x110 – ikke rør den, ellers blir den oval) */
     #screen-splash.active .big-splash-btn{max-width:430px;width:100%;}
 
     /* Login forblir sentrert i telefon-bredde (mint bakgrunn matcher uansett) */
@@ -415,7 +413,7 @@
     }
     #screen-app .top-bar{grid-area:top;}
 
-    /* Sidebar med pill-knapper */
+    /* Sidebar med pill-knapper – alle har ramme, aktiv er tydelig amber */
     #screen-app .bottom-nav{
       grid-area:nav;
       flex-direction:column;
@@ -424,27 +422,30 @@
       border-right:2px solid var(--border);
       position:static;
       padding:14px 10px;
-      gap:4px;
+      gap:6px;
     }
     #screen-app .nav-item{
       flex-direction:row;
       justify-content:flex-start;
-      gap:14px;
-      padding:13px 16px;
+      gap:12px;
+      padding:9px 14px;
       text-align:left;
-      border-radius:14px;
+      border-radius:12px;
+      border:1.5px solid var(--border);
+      background:white;
       opacity:1;
-      transition:background .15s;
+      transition:background .15s, border-color .15s;
     }
     #screen-app .nav-item:not(.active) .nav-icon,
-    #screen-app .nav-item:not(.active) .nav-label{opacity:.55;}
+    #screen-app .nav-item:not(.active) .nav-label{opacity:.7;}
     #screen-app .nav-item:hover{background:var(--bg);}
     #screen-app .nav-item.active{
-      background:var(--amber-light);
+      background:var(--amber);
+      border-color:var(--amber);
     }
     #screen-app .nav-item.active .nav-label{color:var(--teal-dark);font-weight:900;}
-    #screen-app .nav-icon{font-size:1.55rem;}
-    #screen-app .nav-label{font-size:1.05rem;font-weight:800;}
+    #screen-app .nav-icon{font-size:1.4rem;}
+    #screen-app .nav-label{font-size:1rem;font-weight:800;}
 
     /* Innholdsområdet */
     #screen-app .tab-content{

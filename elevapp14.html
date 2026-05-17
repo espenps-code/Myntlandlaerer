@@ -125,7 +125,7 @@
   .splash-stage{position:relative;width:200px;height:320px;margin:0 auto 1rem;}
   .splash-coin-bg{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:120px;height:120px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:4.2rem;color:var(--green-dark);box-shadow:0 8px 32px rgba(0,0,0,.3);animation:coinBounceBg 2.4s ease-in-out infinite;z-index:1;}
   @keyframes coinBounceBg{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-16px)}}
-  .splash-monster{position:absolute;left:50%;top:0;transform:translateX(-50%);width:180px;height:180px;filter:drop-shadow(0 12px 20px rgba(0,0,0,.4));z-index:2;}
+  .splash-monster{display:none;}
   @keyframes monsterBounce{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
   @keyframes coinBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
   .splash-logo{font-family:'Fredoka One',cursive;font-size:3.5rem;color:var(--amber);}
@@ -424,7 +424,7 @@
     }
     #screen-customer .top-bar{grid-area:top;}
 
-    /* Sidebar med pill-knapper */
+    /* Sidebar med pill-knapper – alle har ramme, aktiv er tydelig amber */
     #screen-customer .bottom-nav{
       grid-area:nav;
       flex-direction:column;
@@ -433,27 +433,30 @@
       border-right:2px solid var(--border);
       position:static;
       padding:14px 10px;
-      gap:4px;
+      gap:6px;
     }
     #screen-customer .nav-item{
       flex-direction:row;
       justify-content:flex-start;
-      gap:14px;
-      padding:13px 16px;
+      gap:12px;
+      padding:9px 14px;
       text-align:left;
-      border-radius:14px;
+      border-radius:12px;
+      border:1.5px solid var(--border);
+      background:white;
       opacity:1;
-      transition:background .15s;
+      transition:background .15s, border-color .15s;
     }
     #screen-customer .nav-item:not(.active) .nav-icon,
-    #screen-customer .nav-item:not(.active) .nav-label{opacity:.55;}
+    #screen-customer .nav-item:not(.active) .nav-label{opacity:.7;}
     #screen-customer .nav-item:hover{background:var(--bg);}
     #screen-customer .nav-item.active{
-      background:var(--amber-light);
+      background:var(--amber);
+      border-color:var(--amber);
     }
     #screen-customer .nav-item.active .nav-label{color:var(--green-dark);font-weight:900;}
-    #screen-customer .nav-icon{font-size:1.55rem;}
-    #screen-customer .nav-label{font-size:1.05rem;font-weight:800;}
+    #screen-customer .nav-icon{font-size:1.4rem;}
+    #screen-customer .nav-label{font-size:1rem;font-weight:800;}
 
     /* Innholdsområdet */
     #screen-customer .customer-tab-content{
@@ -468,24 +471,28 @@
     #screen-customer .bank-card{max-width:100%;}
 
     /* ===== KASSEN (screen-cashier): 2-kolonners iPad-layout =====
-       Venstre: SUM-display + handlekurv  |  Høyre: legg til vare + handlingsknapper */
+       Venstre: SUM-display + handlekurv  |  Høyre: legg til vare + handlingsknapper
+       Høyre side er pakket i .cashier-actions så alt sitter pent i én stack */
     #screen-cashier.active{max-width:100%;margin:0;}
     #screen-cashier .cashier-content{
       max-width:1100px;
       margin:0 auto;
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:24px;
+      gap:20px;
       align-items:start;
     }
-    /* Plasser hvert direkte barn i riktig kolonne */
-    #screen-cashier .cashier-content > .register-display,
-    #screen-cashier .cashier-content > #cart-list{grid-column:1;}
-    #screen-cashier .cashier-content > div:nth-of-type(3),
-    #screen-cashier .cashier-content > #pay-btn,
-    #screen-cashier .cashier-content > .action-btn-ghost{grid-column:2;}
-    /* Knappene har margin-bottom som er upassende i grid – nullstill litt */
-    #screen-cashier .cashier-content > .action-btn{margin-bottom:8px;}
+    #screen-cashier .cashier-content > .register-display{grid-column:1;grid-row:1;}
+    #screen-cashier .cashier-content > #cart-list{grid-column:1;grid-row:2;}
+    #screen-cashier .cashier-actions{
+      grid-column:2;
+      grid-row:1 / span 2;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    /* Nullstill margin-bottom på knapper inni wrapperen – flex-gap håndterer mellomrom */
+    #screen-cashier .cashier-actions > .action-btn{margin-bottom:0;}
   }
 </style>
 </head>
@@ -720,6 +727,7 @@
     </div>
     <div id="cart-list"></div>
 
+    <div class="cashier-actions">
     <div style="background:var(--green-light);border-radius:14px;padding:1rem;margin-bottom:1rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <div style="font-size:.78rem;font-weight:800;color:var(--green-dark);">🛒 LEGG TIL VARE</div>
@@ -736,6 +744,7 @@
 
     <button class="action-btn action-btn-amber" onclick="startCustomerCardScan()" id="pay-btn" disabled style="opacity:.4;">📷 Scan elevens kort for betaling</button>
     <button class="action-btn action-btn-ghost" onclick="clearCart()">🗑️ Tøm kassen</button>
+    </div>
   </div>
 </div>
 
