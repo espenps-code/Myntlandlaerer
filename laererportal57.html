@@ -598,7 +598,14 @@
   .portal-header{background:linear-gradient(160deg,#1e0f52,#1a6648,var(--green));padding:28px 1.5rem;position:relative;overflow:hidden;}
   .portal-header::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(239,159,39,.15) 0%,transparent 45%),radial-gradient(circle at 80% 70%,rgba(29,158,117,.18) 0%,transparent 45%);pointer-events:none;}
   .portal-header-inner{max-width:1400px;margin:0 auto;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
-  .portal-header-left{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .portal-header-left{display:flex;flex-direction:row;align-items:center;gap:24px;}
+  .portal-header-titles{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .portal-monster{width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));flex-shrink:0;}
+  .portal-monster.left{animation:monsterDanceL 3s ease-in-out infinite;transform-origin:bottom center;}
+  .portal-monster.right{animation:monsterDanceR 3s ease-in-out infinite;animation-delay:-1.5s;transform-origin:bottom center;}
+  @keyframes monsterDanceL{0%,100%{transform:rotate(-6deg) translateY(0);}50%{transform:rotate(6deg) translateY(-6px);}}
+  @keyframes monsterDanceR{0%,100%{transform:rotate(6deg) translateY(0);}50%{transform:rotate(-6deg) translateY(-6px);}}
+  @media (prefers-reduced-motion: reduce){.portal-monster.left,.portal-monster.right{animation:none;}}
   .portal-brand-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 16px;border-radius:20px;font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap;}
   .portal-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);flex-shrink:0;}
   .portal-title{font-family:'Fredoka One',cursive;color:#fff;font-size:2.6rem;line-height:1;margin:0;text-align:center;}
@@ -741,10 +748,12 @@
     .site-topnav-logo{font-size:1.05rem;}
     .site-topnav-back{font-size:.78rem;}
 
-    .portal-header{padding:10px .75rem;}
+    .portal-header{padding:14px .75rem;}
     .portal-header-inner{gap:.5rem;}
+    .portal-header-left{gap:10px;}
+    .portal-monster{width:42px;height:42px;}
     .portal-brand-pill{display:none;}
-    .portal-title{font-size:1.15rem;}
+    .portal-title{font-size:1.6rem;}
     .portal-title .school{display:none;}
     .teacher-badge-name{display:none;}
     .teacher-badge-wrap{padding:4px 6px;}
@@ -829,8 +838,12 @@
   <div class="portal-header">
     <div class="portal-header-inner">
       <div class="portal-header-left">
-        <div class="portal-brand-pill"><span class="portal-brand-dot"></span>Lærerportal</div>
-        <h1 class="portal-title"><span class="accent">5–7</span></h1>
+        <img class="portal-monster left" src="monsters/lilla.webp" alt="">
+        <div class="portal-header-titles">
+          <div class="portal-brand-pill"><span class="portal-brand-dot"></span>Lærerportal</div>
+          <h1 class="portal-title"><span class="accent">5–7</span></h1>
+        </div>
+        <img class="portal-monster right" src="monsters/laksrosa.webp" alt="">
       </div>
       <div class="portal-header-right">
         <div class="teacher-badge-wrap">
