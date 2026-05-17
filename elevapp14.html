@@ -409,8 +409,16 @@
     #screen-splash.active .splash-tagline,
     #screen-splash.active .role-btn{max-width:430px;width:100%;}
 
-    /* Login forblir sentrert i telefon-bredde (mint bakgrunn matcher uansett) */
-    #screen-login.active{max-width:430px;margin:0 auto;}
+    /* Login forblir sentrert i telefon-bredde, men starter fra toppen
+       så numpaden ikke faller utenfor skjermen på iPad landscape */
+    #screen-login.active{
+      max-width:430px;margin:0 auto;
+      justify-content:flex-start;
+      padding-top:1.5rem;
+    }
+    /* Krymp emoji-margin og titler på iPad så alt får plass uten scroll */
+    #screen-login.active > div:first-child{margin:.5rem 0 .5rem !important;font-size:2.2rem !important;}
+    #screen-login.active > div:nth-child(2){font-size:1.55rem !important;margin-bottom:2px !important;}
 
     /* Hovedappen (kundemodus): sidebar til venstre, innhold til høyre */
     #screen-customer.active{
