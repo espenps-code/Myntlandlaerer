@@ -22,6 +22,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
   import { getDatabase, ref, onValue, update, push, set, get }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
@@ -35,6 +36,13 @@
     appId:"1:711264415533:web:644a77a1e8b234667b2da4"
   };
   const app=initializeApp(firebaseConfig);
+
+  // App Check: stopper at API-nøkkelen brukes fra andre domener enn våre
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled: true
+  });
+
   const db=getDatabase(app);
   window._db=db; window._ref=ref; window._onValue=onValue;
   window._update=update; window._push=push; window._set=set; window._get=get;

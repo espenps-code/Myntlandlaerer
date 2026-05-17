@@ -23,6 +23,7 @@
 <!-- Firebase: samme konfig som lærerportalene. Eksponerer window._db osv. -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
   import { getDatabase, ref, get, set, update, push, runTransaction }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
@@ -38,6 +39,13 @@
   };
 
   const app = initializeApp(firebaseConfig);
+
+  // App Check: stopper at API-nøkkelen brukes fra andre domener enn våre
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled: true
+  });
+
   const db  = getDatabase(app);
 
   window._db = db;

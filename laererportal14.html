@@ -20,6 +20,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
   import { getDatabase, ref, set, push, onValue, remove, update, get }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
@@ -37,6 +38,13 @@
   // ─────────────────────────────────────────────────────────────────────────
 
   const app = initializeApp(firebaseConfig);
+
+  // App Check: stopper at API-nøkkelen brukes fra andre domener enn våre
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled: true
+  });
+
   const db  = getDatabase(app);
 
   window._db = db; window._ref = ref; window._set = set; window._push = push;
