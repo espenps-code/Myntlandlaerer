@@ -396,6 +396,67 @@
   .merke-earned-badge{background:linear-gradient(135deg,var(--amber),#FFD700);color:var(--green-dark);font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:10px;flex-shrink:0;letter-spacing:.3px;}
   .merke-info-box{background:var(--green-light);border:1.5px solid var(--border);border-radius:12px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:var(--green-dark);font-weight:700;}
   /* MERKER END */
+
+  /* ===== iPad / tablet / Chromebook-layout =====
+     Slår inn først når BÅDE bredde og høyde er over 700px – så telefon i
+     landskap (typisk høyde ~390px) ryker ikke med. */
+  @media (min-width: 700px) and (min-height: 700px) {
+    body{max-width:100%;}
+
+    /* Splash: la gradienten fylle hele iPad-skjermen, men kapp logo og knapper
+       så de ikke blir gigantiske – flex sentrer dem automatisk */
+    #screen-splash.active .splash-logo,
+    #screen-splash.active .splash-tagline,
+    #screen-splash.active .role-btn{max-width:430px;width:100%;}
+
+    /* Login forblir sentrert i telefon-bredde (mint bakgrunn matcher uansett) */
+    #screen-login.active{max-width:430px;margin:0 auto;}
+
+    /* Hovedappen (kundemodus): sidebar til venstre, innhold til høyre */
+    #screen-customer.active{
+      display:grid;
+      grid-template-columns:240px minmax(0,1fr);
+      grid-template-rows:auto minmax(0,1fr);
+      grid-template-areas:"top top" "nav content";
+      height:100vh;
+      max-width:1400px;
+      margin:0 auto;
+    }
+    #screen-customer .top-bar{grid-area:top;}
+    #screen-customer .bottom-nav{
+      grid-area:nav;
+      flex-direction:column;
+      align-items:stretch;
+      border-top:none;
+      border-right:2px solid var(--border);
+      position:static;
+      padding:14px 0;
+      gap:4px;
+    }
+    #screen-customer .nav-item{
+      flex-direction:row;
+      justify-content:flex-start;
+      gap:14px;
+      padding:14px 20px;
+      text-align:left;
+    }
+    #screen-customer .nav-item.active{
+      background:var(--bg);
+      border-left:4px solid var(--amber);
+      padding-left:16px;
+    }
+    #screen-customer .nav-icon{font-size:1.4rem;}
+    #screen-customer .nav-label{font-size:.95rem;}
+    #screen-customer .customer-tab-content{
+      grid-area:content;
+      overflow-y:auto;
+      min-height:0;
+      padding:1.5rem 2rem;
+    }
+
+    /* Kasserer-modus: ingen faner, så bare sentrert og litt videre */
+    #screen-cashier.active{max-width:720px;margin:0 auto;}
+  }
 </style>
 </head>
 <body>

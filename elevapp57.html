@@ -386,6 +386,69 @@
   .empty-icon{font-size:2.3rem;margin-bottom:.5rem;}
   .live-dot{display:inline-block;width:7px;height:7px;background:#4ade80;border-radius:50%;animation:pulse 1.5s infinite;margin-right:4px;}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* ===== iPad / tablet / Chromebook-layout =====
+     Slår inn først når BÅDE bredde og høyde er over 700px – så telefon i
+     landskap (typisk høyde ~390px) ryker ikke med. */
+  @media (min-width: 700px) and (min-height: 700px) {
+    body{max-width:100%;}
+
+    /* Splash: la gradienten fylle hele iPad-skjermen, men kapp knapper og logo
+       så de ikke blir gigantiske – flex sentrer dem automatisk */
+    #screen-splash.active .splash-coin,
+    #screen-splash.active .splash-logo,
+    #screen-splash.active .splash-tagline,
+    #screen-splash.active .big-splash-btn{max-width:430px;width:100%;}
+
+    /* Login og butikk forblir sentrert i telefon-bredde (mint bakgrunn matcher uansett) */
+    #screen-login.active,
+    #screen-shop.active{max-width:430px;margin:0 auto;}
+
+    /* Hovedappen: sidebar til venstre, innhold til høyre */
+    #screen-app.active{
+      display:grid;
+      grid-template-columns:240px minmax(0,1fr);
+      grid-template-rows:auto minmax(0,1fr);
+      grid-template-areas:"top top" "nav content";
+      height:100vh;
+      max-width:1400px;
+      margin:0 auto;
+    }
+    #screen-app .top-bar{grid-area:top;}
+    #screen-app .bottom-nav{
+      grid-area:nav;
+      flex-direction:column;
+      align-items:stretch;
+      border-top:none;
+      border-right:2px solid var(--border);
+      position:static;
+      padding:14px 0;
+      gap:4px;
+    }
+    #screen-app .nav-item{
+      flex-direction:row;
+      justify-content:flex-start;
+      gap:14px;
+      padding:14px 20px;
+      text-align:left;
+    }
+    #screen-app .nav-item.active{
+      background:var(--bg);
+      border-left:4px solid var(--amber);
+      padding-left:16px;
+    }
+    #screen-app .nav-icon{font-size:1.4rem;}
+    #screen-app .nav-label{font-size:.95rem;}
+    #screen-app .tab-content{
+      grid-area:content;
+      overflow-y:auto;
+      min-height:0;
+      padding:1.5rem 2rem;
+    }
+
+    /* La kontokortene få mer plass på iPad – bruks-konto på topp, spare+fond ved siden av */
+    #screen-app .account-grid{grid-template-columns:1fr 1fr;gap:14px;}
+  }
 </style>
 </head>
 <body>
