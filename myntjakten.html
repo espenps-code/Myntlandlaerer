@@ -1679,7 +1679,31 @@ body {
       </div>
 
       <button class="btn-primary" id="btn-play-again">🔄 Spill igjen</button>
-      <button class="btn-secondary" id="btn-change-settings">⚙️ Endre innstillinger</button>
+      <button class="btn-secondary" id="btn-change-settings">🏠 Tilbake til start</button>
+
+      <!-- Myntdex (monstersamling) – vises også her så eleven ser fremgang -->
+      <div class="myntdex-section" style="display:none;">
+        <div class="myntdex-header">
+          <div class="myntdex-title">📖 Myntdex</div>
+          <div class="myntdex-count">0 / 20</div>
+        </div>
+        <div class="myntdex-sub">Fang monstre ved å avdekke dem i Myntjakten!</div>
+        <div class="myntdex-grid"></div>
+        <div class="dex-legend">
+          <span class="dex-legend-item rarity-normal">
+            <span class="dex-legend-dot rarity-normal"></span>Normal<span class="dex-legend-pct">75 %</span>
+          </span>
+          <span class="dex-legend-item rarity-sjelden">
+            <span class="dex-legend-dot rarity-sjelden"></span>Sjelden<span class="dex-legend-pct">20 %</span>
+          </span>
+          <span class="dex-legend-item rarity-episk">
+            <span class="dex-legend-dot rarity-episk"></span>Episk<span class="dex-legend-pct">4 %</span>
+          </span>
+          <span class="dex-legend-item rarity-legendarisk">
+            <span class="dex-legend-dot rarity-legendarisk"></span>Legendarisk<span class="dex-legend-pct">1 %</span>
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2090,39 +2114,41 @@ async function saveCloudHighscore(student, key, score) {
 // MYNTDEX-VISNING (rendrer rutenettet på startsiden)
 // ═══════════════════════════════════════════════════════
 function renderMyntdex() {
-  const section = document.getElementById('myntdex-section');
-  const grid = document.getElementById('myntdex-grid');
-  const countEl = document.getElementById('myntdex-count');
-  const subEl = document.getElementById('myntdex-sub');
-  if (!section || !grid) return;
+  // Støtter flere myntdex-instanser (f.eks. både på startsiden og resultatsiden).
+  const sections = document.querySelectorAll('.myntdex-section');
+  if (!sections.length) return;
 
-  // Vis alltid Myntdex — også for gjester. Da ser eleven hva som finnes
-  // å samle på, og oppdager systemet selv om de ikke er logget inn.
-  section.style.display = '';
+  const countText = currentStudent
+    ? `${caughtMonsters.size} / ${MONSTERS.length}`
+    : `0 / ${MONSTERS.length}`;
+  const subText = currentStudent
+    ? 'Fang monstre ved å avdekke dem i Myntjakten!'
+    : 'Skann kortet ditt for å begynne å samle på monstre!';
 
-  if (currentStudent) {
-    // Innlogget: vis fremgang og "fanget"-status
-    if (countEl) countEl.textContent = `${caughtMonsters.size} / ${MONSTERS.length}`;
-    if (subEl)   subEl.textContent  = 'Fang monstre ved å avdekke dem i Myntjakten!';
-  } else {
-    // Gjest: ingen fremgang, men oppfordring til å logge inn
-    if (countEl) countEl.textContent = `0 / ${MONSTERS.length}`;
-    if (subEl)   subEl.textContent  = 'Skann kortet ditt for å begynne å samle på monstre!';
-  }
+  sections.forEach(section => {
+    section.style.display = '';
+    const grid = section.querySelector('.myntdex-grid');
+    const countEl = section.querySelector('.myntdex-count');
+    const subEl = section.querySelector('.myntdex-sub');
+    if (!grid) return;
 
-  grid.innerHTML = '';
-  MONSTERS.forEach(m => {
-    const slot = document.createElement('div');
-    const unlocked = currentStudent && caughtMonsters.has(m.id);
-    slot.className = `dex-slot ${unlocked ? 'unlocked' : 'locked'} rarity-${m.rarity}`;
-    slot.title = unlocked
-      ? `Monster #${m.id} — ${RARITY[m.rarity].label}`
-      : `Ukjent monster — ${RARITY[m.rarity].label}`;
-    slot.innerHTML = `
-      <img src="${monsterImgPath(m.id)}" alt="">
-      <span class="dex-rarity-dot rarity-${m.rarity}"></span>
-    `;
-    grid.appendChild(slot);
+    if (countEl) countEl.textContent = countText;
+    if (subEl)   subEl.textContent   = subText;
+
+    grid.innerHTML = '';
+    MONSTERS.forEach(m => {
+      const slot = document.createElement('div');
+      const unlocked = currentStudent && caughtMonsters.has(m.id);
+      slot.className = `dex-slot ${unlocked ? 'unlocked' : 'locked'} rarity-${m.rarity}`;
+      slot.title = unlocked
+        ? `Monster #${m.id} — ${RARITY[m.rarity].label}`
+        : `Ukjent monster — ${RARITY[m.rarity].label}`;
+      slot.innerHTML = `
+        <img src="${monsterImgPath(m.id)}" alt="">
+        <span class="dex-rarity-dot rarity-${m.rarity}"></span>
+      `;
+      grid.appendChild(slot);
+    });
   });
 }
 
@@ -2829,6 +2855,8 @@ async function endGame() {
   }
 
   if (typeof onGameEndedHook === 'function') onGameEndedHook();
+  // Sørg for at Myntdex er oppdatert også på resultatsiden (gjest eller innlogget)
+  renderMyntdex();
   showScreen('result');
 }
 
