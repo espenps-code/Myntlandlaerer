@@ -144,6 +144,8 @@
 </script>
 <!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
 <link rel="stylesheet" href="myntland.css">
+<!-- Tabler-ikoner for header/nav -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/[email protected]/iconfont/tabler-icons.min.css">
 
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -173,42 +175,46 @@
 
   /* ── MAIN APP ─────────────────────────────── */
   #app{display:none;}
-  header{
-    background:linear-gradient(160deg,var(--green-dark),#1a6648,var(--green));
-    padding:.6rem 1.5rem .45rem;
-    position:sticky;top:0;z-index:100;
-    box-shadow:0 6px 24px rgba(8,80,65,.25);
-    display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;
-    align-items:center;gap:0 1rem;
-    overflow:hidden;
-  }
-  header::before{
-    content:'';position:absolute;inset:0;
-    background-image:
-      radial-gradient(circle at 20% 30%, rgba(239,159,39,.18) 0%, transparent 45%),
-      radial-gradient(circle at 80% 70%, rgba(29,158,117,.20) 0%, transparent 45%);
-    pointer-events:none;
-  }
-  header > *{position:relative;z-index:1;}
-  .logo{font-family:'Fredoka One',cursive;font-size:1.55rem;color:var(--amber);letter-spacing:.5px;display:flex;align-items:center;gap:8px;white-space:nowrap;grid-column:1;grid-row:1;text-shadow:0 2px 8px rgba(0,0,0,.2);}
-  .logo-coin{width:32px;height:32px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--green-dark);font-weight:900;box-shadow:0 0 12px var(--amber);}
-  .logo-monster{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));flex-shrink:0;transition:transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);}
-  .logo-monster:hover{transform:rotate(-8deg) scale(1.15) translateY(-2px);}
-  .logo-monster.flip{transform:scaleX(-1);}
-  .logo-monster.flip:hover{transform:scaleX(-1) rotate(-8deg) scale(1.15) translateY(-2px);}
-  @media(max-width:700px){.logo-monster{width:34px;height:34px;}.logo-monster.right{display:none;}}
-  .header-right{display:flex;align-items:center;gap:8px;grid-column:3;grid-row:1;}
-  .teacher-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(4px);}
-  .teacher-badge-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem;}
-  .teacher-badge-name{color:white;font-size:.9rem;font-weight:700;}
-  .logout-btn{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.95);padding:8px 15px;border-radius:20px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;transition:all .2s;white-space:nowrap;}
-  .logout-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);}
-  header nav{grid-column:1/-1;grid-row:2;display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:.4rem 0 .25rem;}
-  header nav button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.9);font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;padding:.55rem 1.1rem;border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
-  header nav button:hover{background:rgba(255,255,255,.22);color:#fff;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15);}
-  header nav button.active{background:var(--amber);color:var(--green-dark);box-shadow:0 4px 14px rgba(239,159,39,.4);border-color:transparent;}
-  .nav-icon{font-size:1.2rem;line-height:1;}
-  #fb-status{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.55);}
+
+  /* === NY 3-LAGS HEADER (samme grammatikk som laererportal57) === */
+  .site-header-stack{position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(8,80,65,.08);}
+
+  /* Lag 1: Lys topnav */
+  .site-topnav{background:var(--white);border-bottom:1px solid var(--border);padding:.7rem 1.5rem;}
+  .site-topnav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+  .site-topnav-logo{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--green-dark);text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+  .site-topnav-logo::before{content:'🪙';font-size:1.3rem;}
+  .site-topnav-back{font-size:.86rem;font-weight:700;color:var(--green-dark);text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:color .15s;}
+  .site-topnav-back:hover{color:var(--teal-dark);}
+
+  /* Lag 2: Gradient portal-stripe */
+  .portal-header{background:linear-gradient(160deg,var(--green-dark),#1a6648,var(--green));padding:14px 1.5rem;position:relative;overflow:hidden;}
+  .portal-header::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(239,159,39,.18) 0%,transparent 45%),radial-gradient(circle at 80% 70%,rgba(29,158,117,.2) 0%,transparent 45%);pointer-events:none;}
+  .portal-header-inner{max-width:1400px;margin:0 auto;position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+  .portal-header-left{display:flex;align-items:center;gap:12px;}
+  .portal-brand-pill{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);padding:4px 11px;border-radius:20px;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap;}
+  .portal-brand-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);flex-shrink:0;}
+  .portal-title{font-family:'Fredoka One',cursive;color:#fff;font-size:1.4rem;line-height:1;margin:0;}
+  .portal-title .accent{color:var(--amber);}
+  .portal-title .school{color:rgba(255,255,255,.6);font-size:.78rem;font-family:'Nunito',sans-serif;font-weight:500;margin-left:6px;}
+  .portal-header-right{display:flex;align-items:center;gap:8px;}
+  .teacher-badge,.teacher-badge-wrap{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);padding:5px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.14);color:#fff;font-size:.78rem;font-weight:500;}
+  .teacher-badge-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.7rem;}
+  .teacher-badge-name{color:#fff;font-size:.78rem;font-weight:500;}
+  .portal-icon-btn,.logout-btn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 11px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .15s;}
+  .portal-icon-btn{padding:6px 9px;}
+  .portal-icon-btn i,.logout-btn i{font-size:1rem;}
+  .portal-icon-btn:hover,.logout-btn:hover{background:rgba(255,255,255,.22);}
+
+  /* Lag 3: Pill-meny i mintstripe */
+  .portal-nav-strip{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 1.5rem;display:flex;justify-content:center;align-items:center;gap:1rem;}
+  header nav{display:inline-flex;background:var(--white);padding:5px;border-radius:999px;gap:2px;border:1px solid #d8e8df;box-shadow:0 1px 3px rgba(8,80,65,.06);flex-wrap:wrap;align-items:center;}
+  header nav button{background:transparent;color:var(--muted);border:0;padding:8px 16px;border-radius:999px;font-family:'Nunito',sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:color .15s,background .15s;}
+  header nav button:hover{color:var(--green-dark);background:var(--bg);}
+  header nav button.active{background:var(--amber-light);color:var(--green-dark);box-shadow:0 2px 6px rgba(8,80,65,.1);}
+  header nav button i.ti{font-size:1rem;line-height:1;}
+  .nav-icon{display:none;}
+  #fb-status{font-size:.72rem;font-weight:700;color:var(--muted);white-space:nowrap;}
   main{max-width:1200px;margin:0 auto;padding:2rem;}
   .page{display:none;}.page.active{display:block;}
   .page-title{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--green-dark);margin-bottom:.35rem;letter-spacing:-.01em;line-height:1.1;}
@@ -318,40 +324,39 @@
   .mobile-nav-label{display:none;font-size:.7rem;font-weight:800;color:rgba(255,255,255,.6);letter-spacing:.5px;text-transform:uppercase;grid-column:1/-1;grid-row:2;padding:.2rem 0 .1rem;}
   .active-nav-label{display:none;}
 
+  /* Hamburger ny styling (passer pill-meny-stripa) */
+  .hamburger-btn{background:var(--white) !important;border:1.5px solid var(--border) !important;color:var(--green-dark) !important;}
+  .hamburger-btn:hover{background:var(--bg) !important;transform:none !important;}
+  .hamburger-btn span{background:var(--green-dark) !important;}
+
   /* ── MOBILE TABLE → CARDS ─────────────────── */
   @media(max-width:700px){
     .grid-2,.grid-3{grid-template-columns:1fr;}
     main{padding:.75rem;}
-    header{padding:.4rem .75rem .3rem;overflow:visible;}
 
-    /* Hamburger show */
-    .hamburger-btn{display:flex;}
+    .site-topnav{padding:.55rem .75rem;}
+    .site-topnav-logo{font-size:1.05rem;}
+    .site-topnav-back{font-size:.78rem;}
 
-    /* Logo shrinks */
-    .logo{font-size:1.1rem;gap:4px;}
-    .logo-monster{width:26px;height:26px;}
-    .logo-monster.right{display:none;}
-
-    /* header-right: compact */
-    .header-right{gap:4px;flex-shrink:0;min-width:0;}
-    .teacher-badge{padding:4px 6px;gap:4px;}
+    .portal-header{padding:10px .75rem;}
+    .portal-header-inner{gap:.5rem;}
+    .portal-brand-pill{display:none;}
+    .portal-title{font-size:1.15rem;}
+    .portal-title .school{display:none;}
     .teacher-badge-name{display:none;}
-    .teacher-badge-avatar{width:28px;height:28px;font-size:.72rem;}
-    .logout-btn{font-size:.76rem;padding:5px 8px;}
+    .teacher-badge-wrap,.teacher-badge{padding:4px 6px;}
+    .teacher-badge-avatar{width:26px;height:26px;font-size:.7rem;}
+    .logout-btn{font-size:.72rem;padding:5px 9px;}
+    .logout-btn span{display:none;}
 
-    /* Nav hidden by default */
+    .portal-nav-strip{padding:8px .75rem;justify-content:flex-start;gap:.5rem;}
+    .hamburger-btn{display:flex;}
     header nav{
-      display:none;
-      flex-direction:column;
-      align-items:stretch;
-      gap:4px;
-      padding:.5rem 0 .4rem;
-      border-top:1px solid rgba(255,255,255,.1);
-      margin-top:.25rem;
-      grid-column:1/-1;
+      display:none;flex-direction:column;align-items:stretch;
+      gap:4px;padding:8px;border-radius:14px;width:100%;
     }
     header nav.open{display:flex;}
-    header nav button{font-size:.95rem;padding:.65rem 1rem;border-radius:10px;width:100%;justify-content:flex-start;}
+    header nav button{font-size:.92rem;padding:.65rem 1rem;width:100%;justify-content:flex-start;}
 
     /* Search + filter: stack vertically */
     #search-input{width:100% !important;min-width:0 !important;}
@@ -379,7 +384,7 @@
     .form-grid{grid-template-columns:1fr;}
     .page-title{font-size:1.5rem;}
   }
-  @media(min-width:900px){header nav button{font-size:1.05rem;padding:.6rem 1.25rem;}.nav-icon{font-size:1.3rem;}}
+  @media(min-width:900px){header nav button{font-size:.92rem;padding:9px 18px;}}
 </style>
 </head>
 <body>
@@ -415,27 +420,47 @@
 
 <!-- ═══════════════ MAIN APP ═══════════════ -->
 <div id="app">
-<header>
-  <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileNav()" aria-label="Meny">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="logo"><img class="logo-monster" src="monsters/groennhaar.webp" alt="">Myntland <span style="background:var(--amber);color:var(--green-dark);font-size:.6rem;font-weight:900;padding:2px 8px;border-radius:20px;font-family:'Nunito',sans-serif;margin-left:4px;">1–4. trinn</span><img class="logo-monster flip right" src="monsters/mintgroenn.webp" alt=""></div>
-  <nav>
-    <button class="active" onclick="showPage('elever')" id="nav-elever"><span class="nav-icon">👩‍🎓</span> Elever</button>
-    <button onclick="showPage('grupper')" id="nav-grupper"><span class="nav-icon">👥</span> Grupper</button>
-    <button onclick="showPage('saldo')" id="nav-saldo"><span class="nav-icon">💰</span> Saldo</button>
-    <button onclick="showPage('butikk')" id="nav-butikk"><span class="nav-icon">🛒</span> Butikk</button>
-    <button onclick="showPage('belonninger')" id="nav-belonninger"><span class="nav-icon">🎁</span> Belønninger</button>
-    <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;"><span class="nav-icon">⚙️</span> Lærere</button>
-  </nav>
-  <div class="header-right">
-    <div class="teacher-badge">
-      <div class="teacher-badge-avatar" id="header-avatar"></div>
-      <div class="teacher-badge-name" id="header-name"></div>
+<div class="site-header-stack">
+  <!-- Lag 1: Lys topnav (matcher okonomikalkulator.html) -->
+  <div class="site-topnav">
+    <div class="site-topnav-inner">
+      <a href="index.html" class="site-topnav-logo">Myntland</a>
+      <a href="index.html" class="site-topnav-back"><i class="ti ti-arrow-left" aria-hidden="true"></i>Tilbake til forsiden</a>
     </div>
-    <button class="logout-btn" onclick="doLogout()">Logg ut</button>
   </div>
-</header>
+
+  <!-- Lag 2: Gradient portal-stripe -->
+  <div class="portal-header">
+    <div class="portal-header-inner">
+      <div class="portal-header-left">
+        <div class="portal-brand-pill"><span class="portal-brand-dot"></span>Lærerportal</div>
+        <h1 class="portal-title"><span class="accent">1–4</span><span class="school">· Småtrinnet</span></h1>
+      </div>
+      <div class="portal-header-right">
+        <div class="teacher-badge">
+          <div class="teacher-badge-avatar" id="header-avatar"></div>
+          <div class="teacher-badge-name" id="header-name"></div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span>Logg ut</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lag 3: Pill-meny i mintstripe -->
+  <header class="portal-nav-strip">
+    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileNav()" aria-label="Meny">
+      <span></span><span></span><span></span>
+    </button>
+    <nav>
+      <button class="active" onclick="showPage('elever')" id="nav-elever"><i class="ti ti-users" aria-hidden="true"></i>Elever</button>
+      <button onclick="showPage('grupper')" id="nav-grupper"><i class="ti ti-users-group" aria-hidden="true"></i>Grupper</button>
+      <button onclick="showPage('saldo')" id="nav-saldo"><i class="ti ti-wallet" aria-hidden="true"></i>Saldo</button>
+      <button onclick="showPage('butikk')" id="nav-butikk"><i class="ti ti-shopping-cart" aria-hidden="true"></i>Butikk</button>
+      <button onclick="showPage('belonninger')" id="nav-belonninger"><i class="ti ti-medal" aria-hidden="true"></i>Belønninger</button>
+      <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;"><i class="ti ti-settings" aria-hidden="true"></i>Lærere</button>
+    </nav>
+  </header>
+</div>
 
 <main>
 
