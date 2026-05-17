@@ -188,16 +188,15 @@
   .site-topnav-back:hover{color:var(--teal-dark);}
 
   /* Lag 2: Gradient portal-stripe */
-  .portal-header{background:linear-gradient(160deg,var(--green-dark),#1a6648,var(--green));padding:14px 1.5rem;position:relative;overflow:hidden;}
+  .portal-header{background:linear-gradient(160deg,var(--green-dark),#1a6648,var(--green));padding:28px 1.5rem;position:relative;overflow:hidden;}
   .portal-header::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(239,159,39,.18) 0%,transparent 45%),radial-gradient(circle at 80% 70%,rgba(29,158,117,.2) 0%,transparent 45%);pointer-events:none;}
-  .portal-header-inner{max-width:1400px;margin:0 auto;position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
-  .portal-header-left{display:flex;align-items:center;gap:12px;}
-  .portal-brand-pill{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);padding:4px 11px;border-radius:20px;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap;}
-  .portal-brand-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);flex-shrink:0;}
-  .portal-title{font-family:'Fredoka One',cursive;color:#fff;font-size:1.4rem;line-height:1;margin:0;}
+  .portal-header-inner{max-width:1400px;margin:0 auto;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+  .portal-header-left{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .portal-brand-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 16px;border-radius:20px;font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap;}
+  .portal-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);flex-shrink:0;}
+  .portal-title{font-family:'Fredoka One',cursive;color:#fff;font-size:2.6rem;line-height:1;margin:0;text-align:center;}
   .portal-title .accent{color:var(--amber);}
-  .portal-title .school{color:rgba(255,255,255,.6);font-size:.78rem;font-family:'Nunito',sans-serif;font-weight:500;margin-left:6px;}
-  .portal-header-right{display:flex;align-items:center;gap:8px;}
+  .portal-header-right{position:absolute;right:1.5rem;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px;}
   .teacher-badge,.teacher-badge-wrap{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);padding:5px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.14);color:#fff;font-size:.78rem;font-weight:500;}
   .teacher-badge-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.7rem;}
   .teacher-badge-name{color:#fff;font-size:.78rem;font-weight:500;}
@@ -434,7 +433,7 @@
     <div class="portal-header-inner">
       <div class="portal-header-left">
         <div class="portal-brand-pill"><span class="portal-brand-dot"></span>Lærerportal</div>
-        <h1 class="portal-title"><span class="accent">1–4</span><span class="school">· Småtrinnet</span></h1>
+        <h1 class="portal-title"><span class="accent">1–4</span></h1>
       </div>
       <div class="portal-header-right">
         <div class="teacher-badge">
