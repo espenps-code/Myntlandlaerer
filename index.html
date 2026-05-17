@@ -787,9 +787,10 @@
   .preview-screen.is-ios .ios-floating-nav {
     display: flex;
   }
-  /* Når preview er stor nok til at iframe-en kjører iPad-sidebar-layouten,
+  /* Når preview er stor nok til at iframe-en kjører iPad-sidebar-layouten
+     (skjer kun ved parent-bredde > 1100px der iframen er 900x720),
      trenger vi ikke parent sin floating-nav lenger – sidebar inne i iframe overtar */
-  @media (min-width: 821px) {
+  @media (min-width: 1101px) {
     .preview-screen.is-ios .ios-floating-nav {
       display: none;
     }

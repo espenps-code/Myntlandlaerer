@@ -2373,6 +2373,9 @@ renderCart();
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (!inIframe || !isIOS) return;
+  // Hvis iframen er stor nok til iPad-sidebar-layouten, la den kjøre nativt.
+  // iOS-iframe-modus sine height-override krasjer ellers med grid-layouten.
+  if (window.innerWidth >= 700 && window.innerHeight >= 700) return;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -2384,12 +2387,8 @@ renderCart();
       height: auto !important;
       padding-bottom: 1rem !important;
     }
-    /* Skjul intern bottom-nav siden parent viser en egen ...
-       MEN behold den synlig som sidebar i iPad-format-preview */
+    /* Skjul intern bottom-nav siden parent viser en egen floating-nav */
     .bottom-nav { display: none !important; }
-    @media (min-width: 700px) and (min-height: 700px) {
-      .bottom-nav { display: flex !important; }
-    }
   `;
   document.head.appendChild(style);
 
