@@ -446,8 +446,12 @@ body {
 }
 .task-num { font-size: 2.5mm; font-weight: 900; color: #bbb; min-width: 4mm; }
 
-/* Grid writing field — eksakt 7mm × 10mm ruter, alltid hele ruter */
+/* Grid writing field — eksakt 7mm × 10mm ruter, alltid hele ruter.
+   box-sizing: content-box er kritisk: bredde/høyde gjelder innholdet
+   (der rutene tegnes), ikke utvendig mål. Ellers spiser rammen 1mm
+   av nederste rad og høyre kolonne. */
 .grid-field {
+  box-sizing: content-box;
   border: 0.5mm solid #333; border-radius: 1.5mm;
   overflow: hidden; background: white; position: relative;
 }
@@ -466,6 +470,7 @@ body {
 .txt-problem { font-size: 5mm; font-weight: 400; color: #222; line-height: 1.5; margin-bottom: 2.5mm; }
 .txt-answer-label { font-size: 2.5mm; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5mm; color: #888; margin-bottom: 1.5mm; clear: both; }
 .grid-field-tall {
+  box-sizing: content-box;
   border: 0.5mm solid #333; border-radius: 1.5mm;
   overflow: hidden; background: white; position: relative;
 }
@@ -756,7 +761,7 @@ function makeGridField(heightMm, widthMm) {
   </div>`;
 }
 
-function makeTallGridField(heightMm, widthMm = 175) {
+function makeTallGridField(heightMm, widthMm = 161) {
   const id = 'gp' + (gridCounter++);
   const w = snapWidthToCells(widthMm);
   const h = snapHeightToCells(heightMm);
@@ -1126,7 +1131,7 @@ function buildFullPageSection(type, level, monsterSrc, allowedOps) {
           <div class="txt-problem">${tmpl.t(a,b)}</div>
           <div style="clear:both"></div>
           <div class="txt-answer-label">Svar og utregning:</div>
-          ${makeTallGridField(60, 175)}
+          ${makeTallGridField(60, 161)}
         </div>`);
     }
     return `<div class="txt-fullpage-wrap">${items.join('')}</div>`;
@@ -1307,7 +1312,7 @@ function buildTextSection(monsterSrc, level, allowedOps) {
       <div class="txt-problem">${tmpl.t(a,b)}</div>
       <div style="clear:both"></div>
       <div class="txt-answer-label">Svar og utregning:</div>
-      ${makeTallGridField(50, 175)}
+      ${makeTallGridField(50, 161)}
     </div>`;
 }
 
