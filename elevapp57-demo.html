@@ -844,7 +844,7 @@
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
 window._allStudents=[]; window._classGoals=[]; window._jobs=[]; window._fundHistory={};
-window._currentStudent=null; window._settings={taxRate:20,savingsInterest:2,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
+window._currentStudent=null; window._settings={taxRate:20,savingsInterest:5,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
 let currentPin='',confirmPin='',transactions=[];
 let scanMode=null,pendingPayAmount=0,scanActive=false,_scanCanvas=null,_scanCtx=null;
 let quizQs=[],quizIdx=0,quizOk=0,quizAnswered=false;
@@ -853,7 +853,7 @@ let _fondChart=null;
 
 function fbRef(p){return window._ref(window._db,p);}
 function getTax(){return (window._settings?.taxRate||20)/100;}
-function getSavingsRate(){return (window._settings?.savingsInterest||2)/100;}
+function getSavingsRate(){return (window._settings?.savingsInterest||5)/100;}
 function getFundTax(){return (window._settings?.fundTax||10)/100;}
 function getLoanRate(){return (window._settings?.loanInterest||10)/100;}
 function getLoanFactor(){return window._settings?.loanFactor||2;}
@@ -2354,7 +2354,7 @@ function checkAndResetQuiz(s) {
     upd['students57/' + s.fbKey + '/withdrawalsThisWeek'] = 0;
 
     // Legg til sparerente direkte fra elevappen (uavhengig av portal)
-    var interestRate = (window._settings && window._settings.savingsInterest || 2) / 100;
+    var interestRate = (window._settings && window._settings.savingsInterest || 5) / 100;
     var savings = s.savings || 0;
     if (savings > 0) {
       var interest = Math.floor(savings * interestRate);
@@ -2844,7 +2844,7 @@ function showSuccess(emoji,title,amount,text){
   // ── Settings (already set by the original script as defaults; just confirm) ──
   window._settings = {
     taxRate: 20,
-    savingsInterest: 2,
+    savingsInterest: 5,
     fundLowMax: 5,
     fundHighMax: 10,
     maxWithdrawals: 2,
@@ -2964,7 +2964,7 @@ function showSuccess(emoji,title,amount,text){
     { type:'income',  icon:'📚', desc:'Lønn: Klassebibliotekar (uke)',     amount: +160, ts: now - 1 * DAY },
     { type:'expense', icon:'🪑', desc:'Leie av pult',                      amount: -300, ts: now - 4 * DAY },
     { type:'expense', icon:'⚡', desc:'Strøm denne uken',                  amount:  -85, ts: now - 4 * DAY },
-    { type:'income',  icon:'📈', desc:'Renter på sparekonto (2 %)',         amount:  +49, ts: now - 5 * DAY },
+    { type:'income',  icon:'📈', desc:'Renter på sparekonto (5 %)',         amount:  +49, ts: now - 5 * DAY },
     { type:'income',  icon:'🧠', desc:'Ukas økonomiquiz – 4 av 5',         amount:  +80, ts: now - 6 * DAY },
     { type:'expense', icon:'🍫', desc:'Sjokoladebit fra butikk',           amount:  -50, ts: now - 7 * DAY },
     { type:'income',  icon:'💼', desc:'Engangsoppdrag: lage plakat',        amount: +150, ts: now - 9 * DAY },
@@ -2972,7 +2972,7 @@ function showSuccess(emoji,title,amount,text){
     { type:'income',  icon:'⭐', desc:'Belønning: lest høyt i samling',     amount:  +30, ts: now - 12 * DAY },
     { type:'income',  icon:'📚', desc:'Lønn: Klassebibliotekar (uke)',     amount: +160, ts: now - 14 * DAY },
     { type:'expense', icon:'🪑', desc:'Leie av pult',                      amount: -300, ts: now - 18 * DAY },
-    { type:'income',  icon:'📈', desc:'Renter på sparekonto (2 %)',         amount:  +47, ts: now - 19 * DAY }
+    { type:'income',  icon:'📈', desc:'Renter på sparekonto (5 %)',         amount:  +47, ts: now - 19 * DAY }
   ];
 
   // Budget tab uses a separate cache built from transactions
