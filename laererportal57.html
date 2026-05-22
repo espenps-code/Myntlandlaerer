@@ -3748,11 +3748,11 @@ function openHendelserPrintWindow(cards) {
     .hcard.income{background:var(--gront-mykt)}
     .hcard.expense{background:var(--rod-mykt)}
 
-    /* Klippelinjer mellom kort (kun innvendige) */
-    .page-print > .hcard:nth-child(1),
-    .page-print > .hcard:nth-child(2){border-bottom:1px dashed var(--blekk-myk)}
-    .page-print > .hcard:nth-child(1),
-    .page-print > .hcard:nth-child(3){border-right:1px dashed var(--blekk-myk)}
+    /* Klippelinjer mellom kort — KUN på forsiden (ikke .back-page) */
+    .page-print:not(.back-page) > .hcard:nth-child(1),
+    .page-print:not(.back-page) > .hcard:nth-child(2){border-bottom:1px dashed var(--blekk-myk)}
+    .page-print:not(.back-page) > .hcard:nth-child(1),
+    .page-print:not(.back-page) > .hcard:nth-child(3){border-right:1px dashed var(--blekk-myk)}
 
     /* Pill — størst luft her, så den "puster" øverst */
     .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:10pt;letter-spacing:.24em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:6mm}
