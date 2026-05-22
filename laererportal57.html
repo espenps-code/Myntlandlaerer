@@ -3610,7 +3610,7 @@ function printHendelseQRCard() {
   const h   = btn._hendelse;
   const dataUrl = btn._qrDataUrl || '';
   if (!dataUrl || !h) { alert('QR ikke klar ennå – vent et sekund.'); return; }
-  printHendelserCards([{ ...h, _dataUrl: dataUrl }]);
+  openHendelserPrintWindow([{ ...h, _dataUrl: dataUrl }]);
 }
 
 // ── UTSKRIFT: 4 hendelser per A4, med kuttlinjer ──────────────────────────────
@@ -3627,125 +3627,179 @@ function printHendelser() {
   openHendelserPrintWindow(cards);
 }
 
+// ════════════════════════════════════════════════════════════════════
+// PDF-NEDLASTINGSBANNER — vises i forhåndsvisningen, skjules ved utskrift.
+// Skoleskrivere takler en ferdig PDF langt bedre enn utskrift sendt rett
+// fra nettleseren, så vi ber læreren lagre som PDF først.
+// Returnerer { bannerHTML, bannerCSS } som injiseres i popup-en.
+// ════════════════════════════════════════════════════════════════════
+if (!window.buildPdfDownloadBanner) {
+  window.buildPdfDownloadBanner = function(title, opts) {
+    title = title || 'Slik laster du ned og skriver ut';
+    opts = opts || {};
+    var twoSidedTip = opts.twoSided
+      ? '<li>I skriver-dialogen: velg <strong>tosidig utskrift, «vend langs lang kant»</strong> og <strong>skala 100 %</strong>.</li>'
+      : '<li>I skriver-dialogen: pass på at <strong>skala er 100 %</strong> og <strong>«skriv ut bakgrunnsgrafikk»</strong> er på.</li>';
+    var bannerHTML = ''
+      + '<div class="print-info-banner">'
+      +   '<div class="pib-inner">'
+      +     '<div class="pib-title">📋 ' + title + '</div>'
+      +     '<ol class="pib-list">'
+      +       '<li>Trykk <strong>«Last ned PDF»</strong> under.</li>'
+      +       '<li>I dialogen som åpnes: velg <strong>«Lagre som PDF»</strong> som mål (ikke en skriver).</li>'
+      +       '<li>Lagre filen, åpne den, og send <strong>den ferdige PDF-en til skoleskriveren</strong>.</li>'
+      +       twoSidedTip
+      +     '</ol>'
+      +     '<div class="pib-tip">💡 <em>Tips:</em> Skoleskrivere takler en ferdig PDF mye bedre enn utskrift sendt direkte fra nettleseren — derfor dette mellom-steget.</div>'
+      +     '<button class="pib-print-btn" onclick="window.print()">📄 Last ned PDF</button>'
+      +   '</div>'
+      + '</div>';
+    var bannerCSS = ''
+      + '@media screen{'
+      +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
+      +   '.pib-inner{max-width:780px;margin:0 auto}'
+      +   '.pib-title{font-family:"Bowlby One","Fredoka One",sans-serif;font-size:14pt;margin-bottom:8px;letter-spacing:.02em}'
+      +   '.pib-list{margin:0 0 10px 22px;padding:0;font-size:10.5pt;line-height:1.55}'
+      +   '.pib-list li{margin-bottom:3px}'
+      +   '.pib-list strong{color:#2A1F3D}'
+      +   '.pib-tip{font-size:10pt;color:#4A3D5C;margin-bottom:12px;padding:8px 12px;background:rgba(42,31,61,.06);border-radius:6px;border-left:3px solid #F5C849}'
+      +   '.pib-print-btn{display:inline-block;background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One","Fredoka One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer;transition:all .15s}'
+      +   '.pib-print-btn:hover{background:#1A1228;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}'
+      +   'body{padding-top:260px}'
+      + '}'
+      + '@media print{.print-info-banner{display:none !important}body{padding-top:0 !important}}';
+    return { bannerHTML: bannerHTML, bannerCSS: bannerCSS };
+  };
+}
+
 function openHendelserPrintWindow(cards) {
   const win = window.open('', '_blank', 'width=900,height=700');
-
   const cardHTML = (c) => {
     const isIncome = c.type === 'income';
-    const color    = isIncome ? '#15803d' : '#dc2626';
-    const bg       = isIncome ? '#f0fdf4' : '#fff1f2';
-    const border   = isIncome ? '#86efac' : '#fca5a5';
+    const cls      = isIncome ? 'income' : 'expense';
     const sign     = isIncome ? '+' : '−';
     const label    = isIncome ? 'INNTEKT' : 'UTGIFT';
-    const qrSrc    = c.qrUrl || (c._dataUrl || '');
-    return `<div class="card" style="background:${bg};border:2.5px solid ${border};">
-      <div class="type-label" style="background:${border};color:${color};">${label}</div>
-      <div class="emoji">${c.emoji}</div>
+    const qrMarkup = c.qrSVG
+      ? c.qrSVG
+      : `<img src="${c.qrUrl || c._dataUrl || ''}" width="130" height="130" alt="QR">`;
+    return `<div class="hcard ${cls}">
+      <div class="pill">${label}</div>
+      <div class="emoji">${c.emoji||'🎲'}</div>
       <div class="desc">${c.desc}</div>
-      <div class="amount" style="color:${color};">${sign} 🪙 ${c.amount}</div>
-      <div class="qr-wrap"><img src="${qrSrc}" width="130" height="130" alt="QR"></div>
-      <div class="scan-hint">Scan for å registrere</div>
+      <div class="amount"><span class="sign">${sign}</span><span class="coin-icon">🪙</span><span class="num">${c.amount}</span></div>
+      <div class="qr-block">
+        <div class="qr-wrap">${qrMarkup}</div>
+        <div class="scan-hint">Scan for å registrere</div>
+      </div>
+      <div class="card-foot"><span class="foot-coin">🪙</span><span class="foot-stamp">MYNTLAND · HENDELSER</span></div>
     </div>`;
   };
-
-  // Group into pages of 4
   let pagesHTML = '';
+  // Baksiden er ensfarget og nøytral — bevisst UTEN income/expense-klasse.
+  // Da avslører den ikke om kortet er inntekt eller utgift (viktig hvis
+  // hendelsene skal trekkes fysisk), og fargekanten synes ikke ved
+  // små forskyvninger i tosidig utskrift.
+  const backHTML = () => `<div class="hcard hback">
+    <div class="back-coin">🪙</div>
+    <div class="back-logo">MYNTLAND</div>
+    <div class="back-sub">Hendelser</div>
+  </div>`;
+  // For long-edge flip: speilvend hver rad så baksiden lander rett under forsiden
+  const backsForFronts = (group) => {
+    const out = new Array(group.length);
+    for (let i = 0; i < group.length; i += 2) {
+      const a = group[i], b = group[i+1];
+      out[i]   = b != null ? backHTML() : '<div class="hcard empty"></div>';
+      out[i+1] = a != null ? backHTML() : '<div class="hcard empty"></div>';
+    }
+    return out.join('');
+  };
   for (let i = 0; i < cards.length; i += 4) {
     const group = cards.slice(i, i+4);
     while (group.length < 4) group.push(null);
-    pagesHTML += `<div class="page">
-      ${group.map(c => c ? cardHTML(c) : '<div class="card empty"></div>').join('')}
+    pagesHTML += `<div class="page-print">
+      ${group.map(c => c ? cardHTML(c) : '<div class="hcard empty"></div>').join('')}
+    </div>`;
+    pagesHTML += `<div class="page-print back-page">
+      ${backsForFronts(group)}
     </div>`;
   }
-
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  const _bhend = window.buildPdfDownloadBanner('Slik laster du ned hendelseskort', { twoSided: true });
+  win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700;1,900&family=Nunito:wght@400;700;800;900&family=Bowlby+One&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Nunito', sans-serif; background: white; }
-    @media print { @page { size: A4 portrait; margin: 0; } }
+    :root{
+      --blekk:#2A1F3D;--blekk-myk:#4A3D5C;
+      --gront:#1D9E75;--gront-dyp:#085041;--gront-mykt:#E5F5EE;
+      --rod:#C13D2F;--rod-dyp:#7A2218;--rod-mykt:#F9E8E5;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    @page{size:A4 portrait;margin:0}
 
-    /* A4 = 210 × 297mm. Bruker 295mm + overflow:hidden som safety mot
-       iOS Safari sin print-quirk der innholdet ellers siger over til neste side. */
-    .page {
-      width: 210mm;
-      height: 295mm;
-      max-height: 295mm;
-      overflow: hidden;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      page-break-after: always;
-      break-after: page;
-    }
-    .page:last-of-type { page-break-after: auto; break-after: auto; }
+    /* 2x2 grid: 4 stående A6 (105×148mm) per A4 */
+    .page-print{width:210mm;height:295mm;max-height:295mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
 
-    /* Kuttlinjer: grønn stiplet linje mellom kortene */
-    .page::after {
-      content: '';
-      position: absolute;
-      pointer-events: none;
-    }
+    /* Kortet: fyller hele sin firkant. Tonet bakgrunn per type. */
+    .hcard{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}
+    .hcard.empty{visibility:hidden}
+    .hcard.income{background:var(--gront-mykt)}
+    .hcard.expense{background:var(--rod-mykt)}
 
-    /* Stiplet kuttlinje vertikalt (midten) */
-    .page {
-      position: relative;
-    }
-    .page::before {
-      content: '';
-      position: absolute;
-      left: 50%;
-      top: 8mm;
-      bottom: 8mm;
-      width: 0;
-      border-left: 1.5px dashed #1D9E75;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .page::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 8mm;
-      right: 8mm;
-      height: 0;
-      border-top: 1.5px dashed #1D9E75;
-      z-index: 10;
-      pointer-events: none;
-    }
+    /* Klippelinjer mellom kort (kun innvendige) */
+    .page-print > .hcard:nth-child(1),
+    .page-print > .hcard:nth-child(2){border-bottom:1px dashed var(--blekk-myk)}
+    .page-print > .hcard:nth-child(1),
+    .page-print > .hcard:nth-child(3){border-right:1px dashed var(--blekk-myk)}
 
-    .card {
-      padding: 7mm 8mm;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3.5mm;
-      text-align: center;
-      border: none;  /* outer border removed – kuttlinje erstatter */
-      outline: 0.5px solid #d1d5db;
-      outline-offset: -1px;
-    }
-    .card.empty { background: white; }
+    /* Pill — størst luft her, så den "puster" øverst */
+    .pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:10pt;letter-spacing:.24em;color:white;padding:2.2mm 7mm;border-radius:999px;margin-bottom:6mm}
+    .income .pill{background:var(--gront)}
+    .expense .pill{background:var(--rod)}
 
-    .type-label {
-      font-size: 3.5mm;
-      font-weight: 900;
-      letter-spacing: 0.5mm;
-      padding: 1.5mm 5mm;
-      border-radius: 3mm;
-      text-transform: uppercase;
-    }
-    .emoji    { font-size: 22mm; line-height: 1.05; }
-    .desc     { font-size: 5mm; font-weight: 800; color: #1a1040; line-height: 1.3; max-width: 80mm; }
-    .amount   { font-family: 'Fredoka One', cursive; font-size: 11mm; line-height: 1; }
-    .qr-wrap  { display: flex; justify-content: center; }
-    .scan-hint{ font-size: 3mm; color: #6b7280; font-weight: 700; }
+    /* Emoji: dominerende */
+    .emoji{font-size:26mm;line-height:1;margin-bottom:2mm}
+
+    /* Tittel: midtstilt, max 2 linjer */
+    .desc{font-family:'Nunito',sans-serif;font-weight:900;font-size:12pt;color:var(--blekk);line-height:1.2;max-width:80mm;margin-bottom:2mm}
+
+    /* Beløp — tett mot QR-en under */
+    .amount{display:flex;align-items:center;justify-content:center;gap:2mm;margin-bottom:0;line-height:1}
+    .amount .sign{font-family:'Nunito',sans-serif;font-weight:900;font-size:23pt;line-height:1}
+    .amount .coin-icon{font-size:18pt;line-height:1}
+    .amount .num{font-family:'Nunito',sans-serif;font-weight:900;font-size:23pt;line-height:1}
+    .income .amount .sign,.income .amount .num{color:var(--gront)}
+    .expense .amount .sign,.expense .amount .num{color:var(--rod)}
+
+    /* QR-blokk: kommer rett etter beløp, ikke sentrert i tomrom */
+    .qr-block{display:flex;flex-direction:column;align-items:center;gap:1.5mm;margin-top:3mm;margin-bottom:1mm}
+    .qr-wrap{padding:2mm;background:white;border:1px solid rgba(42,31,61,.1);border-radius:2mm}
+    .qr-wrap img,.qr-wrap svg{display:block;width:34mm;height:34mm}
+
+    /* Hint */
+    .scan-hint{font-family:'Nunito',sans-serif;font-size:8pt;color:var(--blekk-myk);font-weight:600;letter-spacing:.04em}
+
+    /* Footer: Myntland-stempel i bunn av kortet (forsiden) */
+    .card-foot{display:flex;align-items:center;justify-content:center;gap:2mm;padding-top:3mm;margin-top:auto;border-top:1px dashed var(--blekk-myk);width:78mm;max-width:88%}
+    .card-foot .foot-coin{font-size:9pt;line-height:1}
+    .card-foot .foot-stamp{font-family:'Bowlby One',sans-serif;font-size:8pt;color:var(--blekk);letter-spacing:.14em}
+    .income .card-foot{border-top-color:var(--gront-dyp)}
+    .expense .card-foot{border-top-color:var(--rod-dyp)}
+
+    /* ── Bakside ── ensfarget og nøytral, uten klippelinjer.
+       Nøytral farge (ikke grønn/rød) slik at baksiden ikke avslører
+       om kortet er inntekt eller utgift ved fysisk trekning. */
+    .hcard.hback{background:#FFF6E0}
+    .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9mm}
+    .back-coin{font-size:30mm;line-height:1;margin-bottom:3mm}
+    .back-logo{font-family:'Bowlby One',sans-serif;font-size:18pt;color:var(--blekk);letter-spacing:.02em;line-height:1}
+    .back-sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:11pt;color:var(--blekk-myk);margin-top:2mm;letter-spacing:.08em}
+
+    ${_bhend.bannerCSS}
   </style>
-</head><body>
-  ${pagesHTML}
-  <script>setTimeout(function(){ window.focus(); window.print(); }, 800);<\/script>
-</body></html>`);
+  </head><body>${_bhend.bannerHTML}${pagesHTML}</body></html>`);
   win.document.close();
 }
 

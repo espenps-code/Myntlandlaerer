@@ -2541,8 +2541,10 @@ function generateGroceryPDF() {
     </div>`;
   }
 
-  function backHTML(klasse) {
-    return `<div class="vare ${klasse} hback">
+  // Baksiden er bevisst ensfarget og uten kategorifarge: da synes ikke
+  // små forskyvninger i tosidig utskrift som en fargekant langs klippet.
+  function backHTML() {
+    return `<div class="vare hback">
       <div class="back-coin">🪙</div>
       <div class="back-logo">MYNTLAND</div>
       <div class="back-sub">Klassens butikk</div>
@@ -2552,10 +2554,8 @@ function generateGroceryPDF() {
     const out = new Array(arr.length);
     for (let i = 0; i < arr.length; i += 2) {
       const a = arr[i], b = arr[i+1];
-      const aKlasse = a ? (CATS[a.category] || CATS['Annet']).klasse : '';
-      const bKlasse = b ? (CATS[b.category] || CATS['Annet']).klasse : '';
-      out[i]   = b != null ? backHTML(bKlasse) : '<div class="vare empty"></div>';
-      out[i+1] = a != null ? backHTML(aKlasse) : '<div class="vare empty"></div>';
+      out[i]   = b != null ? backHTML() : '<div class="vare empty"></div>';
+      out[i+1] = a != null ? backHTML() : '<div class="vare empty"></div>';
     }
     return out.join('');
   }
@@ -2639,15 +2639,13 @@ function generateGroceryPDF() {
     .card-foot .foot-coin{font-size:9pt;line-height:1}
     .card-foot .foot-stamp{font-family:'Bowlby One',sans-serif;font-size:8pt;color:var(--blekk);letter-spacing:.14em}
 
-    /* ── Bakside ── */
+    /* ── Bakside ── ensfarget, og helt uten klippelinjer: da blir ikke
+       små forskyvninger i tosidig utskrift synlige langs kanten. */
+    .vare.hback{background:#FFF6E0}
     .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9mm}
     .back-coin{font-size:32mm;line-height:1;margin-bottom:3mm}
     .back-logo{font-family:'Bowlby One',sans-serif;font-size:20pt;color:var(--blekk);letter-spacing:.02em;line-height:1}
     .back-sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:11pt;color:var(--blekk-myk);margin-top:2mm;letter-spacing:.08em}
-    .page.back-page > .vare:nth-child(1),
-    .page.back-page > .vare:nth-child(2){border-bottom:1px dashed var(--blekk-myk)}
-    .page.back-page > .vare:nth-child(1),
-    .page.back-page > .vare:nth-child(3){border-right:1px dashed var(--blekk-myk)}
   `;
 
   const _bv = window.buildPdfDownloadBanner('Slik laster du ned varekort', { twoSided: true });
@@ -4126,7 +4124,11 @@ function printHendelserCards14(cards) {
     </div>`;
   };
   let pagesHTML = '';
-  const backHTML = (cls) => `<div class="hcard ${cls} hback">
+  // Baksiden er ensfarget og nøytral — bevisst UTEN income/expense-klasse.
+  // Da avslører den ikke om kortet er inntekt eller utgift (viktig hvis
+  // hendelsene skal trekkes fysisk), og fargekanten synes ikke ved
+  // små forskyvninger i tosidig utskrift.
+  const backHTML = () => `<div class="hcard hback">
     <div class="back-coin">🪙</div>
     <div class="back-logo">MYNTLAND</div>
     <div class="back-sub">Hendelser</div>
@@ -4136,10 +4138,8 @@ function printHendelserCards14(cards) {
     const out = new Array(group.length);
     for (let i = 0; i < group.length; i += 2) {
       const a = group[i], b = group[i+1];
-      const aCls = a ? (a.type === 'income' ? 'income' : 'expense') : 'empty';
-      const bCls = b ? (b.type === 'income' ? 'income' : 'expense') : 'empty';
-      out[i]   = b != null ? backHTML(bCls) : '<div class="hcard empty"></div>';
-      out[i+1] = a != null ? backHTML(aCls) : '<div class="hcard empty"></div>';
+      out[i]   = b != null ? backHTML() : '<div class="hcard empty"></div>';
+      out[i+1] = a != null ? backHTML() : '<div class="hcard empty"></div>';
     }
     return out.join('');
   };
@@ -4217,15 +4217,14 @@ function printHendelserCards14(cards) {
     .income .card-foot{border-top-color:var(--gront-dyp)}
     .expense .card-foot{border-top-color:var(--rod-dyp)}
 
-    /* ── Bakside ── samme tonete farge, sentral logo */
+    /* ── Bakside ── ensfarget og nøytral, uten klippelinjer.
+       Nøytral farge (ikke grønn/rød) slik at baksiden ikke avslører
+       om kortet er inntekt eller utgift ved fysisk trekning. */
+    .hcard.hback{background:#FFF6E0}
     .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9mm}
     .back-coin{font-size:30mm;line-height:1;margin-bottom:3mm}
     .back-logo{font-family:'Bowlby One',sans-serif;font-size:18pt;color:var(--blekk);letter-spacing:.02em;line-height:1}
     .back-sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:11pt;color:var(--blekk-myk);margin-top:2mm;letter-spacing:.08em}
-    .page-print.back-page > .hback:nth-child(1),
-    .page-print.back-page > .hback:nth-child(2){border-bottom:1px dashed var(--blekk-myk)}
-    .page-print.back-page > .hback:nth-child(1),
-    .page-print.back-page > .hback:nth-child(3){border-right:1px dashed var(--blekk-myk)}
 
     ${_bhend.bannerCSS}
   </style>
