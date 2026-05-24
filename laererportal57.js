@@ -2023,7 +2023,7 @@ async function wpCheckCompletion(planKey, studentKey){
 }
 
 // ── FORESATTBREV ────────────────────────────────────────────
-const WP_FORESATT_URL='https://espenps-code.github.io/Myntlandlaerer/foresatt.html';
+const WP_FORESATT_URL='www.myntland.no/foresatt';
 async function openGuardianLetters(){
   const students=(window._students||[]).slice()
     .sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
@@ -2058,57 +2058,74 @@ function printGuardianLetters(){
   const codes=window._guardianCodes||{};
   const letters=students.map(s=>{
     const code=codes[s.fbKey]?.code||'—';
-    const fn=wpEscAttr(s.firstname);
-    return `<div class="letter">
+    const navn=wpEscAttr(s.firstname||'');
+    const klasse=wpEscAttr(s.class||'');
+    return `<div class="sheet"><div class="letter">
+      <div class="lt-ident">Til foresatte · ${navn} · ${klasse}</div>
       <div class="lt-top">🪙 Myntland · Arbeidsplan</div>
-      <h1>Følg med på ${fn} sin arbeidsplan</h1>
-      <p>Hei! Klassen til ${fn} bruker <strong>Myntland</strong> til å jobbe med læringsmål i en
-      «trapp» – eleven jobber seg oppover ett trinn om gangen. Som foresatt kan du logge inn,
-      se hvordan det går, og bekrefte trinn som krever et blikk hjemmefra.</p>
+      <h1>Følg med på arbeidsplanen til barnet ditt</h1>
+      <div class="lt-intro">Klassen bruker <strong>Myntland</strong> til å jobbe med læringsmål i en
+      «trapp» — eleven jobber seg oppover ett trinn om gangen. Som foresatt kan du logge inn,
+      følge med, og gi klarsignal på de trinnene som trenger et blikk hjemmefra.</div>
+      <div class="lt-h">Slik logger du inn</div>
       <div class="lt-steps">
-        <div><b>1</b> Gå til&nbsp; <span class="lt-url">${WP_FORESATT_URL}</span></div>
+        <div><b>1</b> Gå til&nbsp;<span class="lt-url">${WP_FORESATT_URL}</span></div>
         <div><b>2</b> Skriv inn den personlige koden nedenfor</div>
-        <div><b>3</b> Se framgangen – trykk «Sett» for å bekrefte at du har sett den</div>
+        <div><b>3</b> Du ser framgangen med en gang</div>
       </div>
-      <div class="lt-code-label">${fn} sin personlige kode</div>
+      <div class="lt-code-label">Personlig kode</div>
       <div class="lt-code">${wpEscAttr(code)}</div>
-      <p class="lt-fine">Koden gir bare innsyn i ${fn} sin arbeidsplan, og ingen sensitive
-      opplysninger er knyttet til den. Ta vare på dette brevet.</p>
-      <div class="lt-sign">Vennlig hilsen<br>kontaktlæreren · kontakt@myntland.no</div>
-    </div>`;
+      <div class="lt-h">Når du er logget inn, ser du to ting</div>
+      <div class="lt-feat">
+        <div class="lt-feat-title">📋 Siden sist</div>
+        <div class="lt-feat-text">Øverst får du en kort oppsummering av hva som har skjedd siden
+        forrige gang du var innom. Stikk innom jevnlig — gjerne et par minutter i uka — så følger
+        du framgangen steg for steg.</div>
+      </div>
+      <div class="lt-feat">
+        <div class="lt-feat-title">✅ Dette kan du godkjenne</div>
+        <div class="lt-feat-text">Noen trinn venter på et lite klarsignal fra deg. Når barnet har
+        gjort arbeidet og læreren har sett over det, bekrefter du at du også har sett framgangen —
+        og da er trinnet fullført. Andre trinn ordner læreren alene; der trenger du ikke gjøre noe.</div>
+      </div>
+      <div class="lt-coop">Et lite blikk fra deg betyr mye. Når barnet merker at både skole og hjem
+      følger med, blir læringsmålene noe vi jobber mot sammen — og det syns på motivasjonen.</div>
+      <div class="lt-fine">Koden gir bare innsyn i denne ene arbeidsplanen, og ingen sensitive
+      opplysninger er knyttet til den. Ta vare på brevet.</div>
+      <div class="lt-sign">Vennlig hilsen<br>kontaktlæreren</div>
+    </div></div>`;
   });
-  let pages='';
-  for(let i=0;i<letters.length;i+=2){
-    pages+='<div class="sheet">'+letters[i]
-      +'<div class="cut">✂ – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – –</div>'
-      +(letters[i+1]||'')+'</div>';
-  }
   const css=`
     @page{size:A4;margin:0;}
-    *{box-sizing:border-box;margin:0;padding:0;}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:'Nunito',Arial,sans-serif;color:#1a2e1a;}
-    .sheet{width:210mm;height:297mm;padding:12mm 16mm;display:flex;flex-direction:column;page-break-after:always;}
-    .cut{text-align:center;color:#bbb;font-size:9pt;margin:5mm 0;letter-spacing:1px;}
-    .letter{flex:1;border:2px solid #c8dfc8;border-radius:14px;padding:9mm 10mm;display:flex;flex-direction:column;}
+    .sheet{width:210mm;min-height:297mm;padding:15mm 17mm;page-break-after:always;}
+    .letter{border:2px solid #c8dfc8;border-radius:16px;padding:10mm 11mm;}
+    .lt-ident{font-size:8.5pt;color:#5a7a5a;font-weight:700;letter-spacing:.3px;margin-bottom:4mm;}
     .lt-top{font-weight:800;color:#1a5fa5;font-size:10pt;letter-spacing:.5px;}
-    .letter h1{font-size:16pt;color:#1e0f52;margin:3mm 0 4mm;}
-    .letter p{font-size:10.5pt;line-height:1.5;margin-bottom:3mm;}
-    .lt-steps{background:#F7F9F7;border-radius:10px;padding:4mm 5mm;margin:1mm 0 4mm;}
-    .lt-steps div{font-size:10pt;margin:1.5mm 0;}
-    .lt-steps b{display:inline-block;width:6mm;height:6mm;line-height:6mm;text-align:center;
-      background:#1a5fa5;color:#fff;border-radius:50%;font-size:8.5pt;margin-right:2mm;}
+    .letter h1{font-size:17pt;color:#1e0f52;margin:2mm 0 3.5mm;line-height:1.2;}
+    .lt-intro{font-size:10.5pt;line-height:1.5;margin-bottom:3.5mm;}
+    .lt-h{font-weight:800;color:#1e0f52;font-size:11pt;margin-bottom:2mm;}
+    .lt-steps{background:#F7F9F7;border-radius:10px;padding:3.5mm 5mm;margin-bottom:3.5mm;}
+    .lt-steps div{font-size:10pt;margin:1.4mm 0;}
+    .lt-steps b{display:inline-block;width:5.5mm;height:5.5mm;line-height:5.5mm;text-align:center;
+      background:#1a5fa5;color:#fff;border-radius:50%;font-size:8pt;margin-right:2mm;}
     .lt-url{font-weight:800;color:#1a5fa5;}
-    .lt-code-label{font-size:9pt;font-weight:800;color:#5a7a5a;text-transform:uppercase;letter-spacing:1px;}
+    .lt-code-label{font-size:8.5pt;font-weight:800;color:#5a7a5a;text-transform:uppercase;letter-spacing:1px;}
     .lt-code{font-family:'Fredoka One',Arial,sans-serif;font-size:26pt;color:#1e0f52;
-      letter-spacing:3px;background:#FAEEDA;border:2px dashed #EF9F27;border-radius:12px;
-      text-align:center;padding:4mm;margin:1.5mm 0 4mm;}
-    .lt-fine{font-size:8.5pt;color:#5a7a5a;}
-    .lt-sign{margin-top:auto;font-size:10pt;font-weight:700;padding-top:4mm;}
+      letter-spacing:4px;background:#FAEEDA;border:2px dashed #EF9F27;border-radius:12px;
+      text-align:center;padding:3.5mm;margin:1.5mm 0 4mm;}
+    .lt-feat{background:#E1F5EE;border-radius:10px;padding:3mm 4.5mm;margin-bottom:2.5mm;}
+    .lt-feat-title{font-family:'Fredoka One',Arial,sans-serif;font-size:11pt;color:#085041;margin-bottom:.8mm;}
+    .lt-feat-text{font-size:9.5pt;line-height:1.5;}
+    .lt-coop{font-size:10pt;line-height:1.5;color:#085041;font-weight:600;margin:1.5mm 0 3.5mm;}
+    .lt-fine{font-size:8.5pt;color:#5a7a5a;line-height:1.4;}
+    .lt-sign{font-size:10pt;font-weight:700;margin-top:4mm;}
   `;
   const win=window.open('','_blank');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Foresattbrev</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">'
-    +'<style>'+css+'</style></head><body>'+pages
+    +'<style>'+css+'</style></head><body>'+letters.join('')
     +'<script>setTimeout(function(){window.print();},500);<\/script></body></html>');
   win.document.close();
 }
