@@ -1148,6 +1148,38 @@
       <p style="font-size:.78rem;color:var(--muted);margin-top:.4rem;">Når en elev har tjent dette antallet mynter via Myntjakten i dag, kan de fortsatt spille — men får ikke flere mynter på kontoen før i morgen.</p>
     </div>
 
+    <!-- Aktive nivå -->
+    <div class="form-row">
+      <label>📊 Aktive nivå i Myntjakten</label>
+      <p style="font-size:.78rem;color:var(--muted);margin:.1rem 0 .7rem;">Velg hvilke nivå elevene kan spille når de starter Myntjakten fra elevappen. Nivå du slår av vises som låst. (Åpner noen spillet rett fra forsiden, er alle nivå tilgjengelige.)</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;max-width:540px;">
+        <label style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .65rem;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:#fff;">
+          <input type="checkbox" id="myntjakten14-level-1" checked style="width:18px;height:18px;margin-top:1px;cursor:pointer;">
+          <span style="line-height:1.25;"><strong>Nivå 1</strong><br><span style="color:var(--muted);font-size:.76rem;">+ og −, opp til 10</span></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .65rem;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:#fff;">
+          <input type="checkbox" id="myntjakten14-level-2" checked style="width:18px;height:18px;margin-top:1px;cursor:pointer;">
+          <span style="line-height:1.25;"><strong>Nivå 2</strong><br><span style="color:var(--muted);font-size:.76rem;">+ og −, opp til 20</span></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .65rem;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:#fff;">
+          <input type="checkbox" id="myntjakten14-level-3" checked style="width:18px;height:18px;margin-top:1px;cursor:pointer;">
+          <span style="line-height:1.25;"><strong>Nivå 3</strong><br><span style="color:var(--muted);font-size:.76rem;">+ og −, opp til 100</span></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .65rem;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:#fff;">
+          <input type="checkbox" id="myntjakten14-level-4" checked style="width:18px;height:18px;margin-top:1px;cursor:pointer;">
+          <span style="line-height:1.25;"><strong>Nivå 4</strong><br><span style="color:var(--muted);font-size:.76rem;">Gangetabell 1–5</span></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .65rem;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:#fff;">
+          <input type="checkbox" id="myntjakten14-level-5" checked style="width:18px;height:18px;margin-top:1px;cursor:pointer;">
+          <span style="line-height:1.25;"><strong>Nivå 5</strong><br><span style="color:var(--muted);font-size:.76rem;">Gangetabell 1–10</span></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .65rem;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:#fff;">
+          <input type="checkbox" id="myntjakten14-level-6" checked style="width:18px;height:18px;margin-top:1px;cursor:pointer;">
+          <span style="line-height:1.25;"><strong>Nivå 6</strong><br><span style="color:var(--muted);font-size:.76rem;">× og ÷, opp til 100</span></span>
+        </label>
+      </div>
+    </div>
+
     <!-- Dagens aktivitet -->
     <div id="myntjakten14-stats" style="background:var(--green-light);border-radius:10px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.85rem;color:var(--green-dark);font-weight:700;">
       <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.4rem;">Myntjakten i dag</div>
@@ -2468,7 +2500,7 @@ function renderGroceryList() {
       <div class="grocery-price">🪙 ${x.price}</div>
       <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-align:center;">${x.category || 'Annet'}</div>
       <div style="display:flex;gap:6px;margin-top:4px;">
-        <button class="btn btn-amber btn-sm" onclick="editGrocery('${x.fbKey}')">✏️</button>
+        <button class="btn btn-purple btn-sm" onclick="editGrocery('${x.fbKey}')">✏️</button>
         <button class="btn btn-coral btn-sm" onclick="removeGrocery('${x.fbKey}')">🗑️</button>
       </div>
     </div>`).join('');
@@ -3655,6 +3687,12 @@ function syncMyntjakten14Form() {
   const maxEl     = document.getElementById('myntjakten14-daily-max');
   if (enabledEl) enabledEl.checked = mj.enabled !== false;
   if (maxEl)     maxEl.value       = (mj.dailyMax != null) ? mj.dailyMax : 0;
+  // Aktive nivå — mangler feltet (eldre datasett) → alle nivå på
+  const al = mj.activeLevels;
+  for (let i = 1; i <= 6; i++) {
+    const cb = document.getElementById('myntjakten14-level-' + i);
+    if (cb) cb.checked = !al || al[i] !== false;
+  }
   // Statistikk oppdateres samtidig
   renderMyntjaktenStats14();
 }
@@ -3708,6 +3746,19 @@ async function saveMyntjakten14Settings() {
     return;
   }
 
+  // Aktive nivå — minst ett må være på
+  const activeLevels = {};
+  let levelCount = 0;
+  for (let i = 1; i <= 6; i++) {
+    const on = !!document.getElementById('myntjakten14-level-' + i).checked;
+    activeLevels[i] = on;
+    if (on) levelCount++;
+  }
+  if (levelCount === 0) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Minst ett nivå må være aktivt i Myntjakten.</div>';
+    return;
+  }
+
   if (!window._db || !window._update || !window._ref) {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Database ikke klar. Prøv igjen.</div>';
     return;
@@ -3715,16 +3766,17 @@ async function saveMyntjakten14Settings() {
 
   try {
     await window._update(window._ref(window._db, 'settings'), {
-      myntjakten14: { enabled, dailyMax, updated: Date.now() }
+      myntjakten14: { enabled, dailyMax, activeLevels, updated: Date.now() }
     });
     if (!window._settings) window._settings = {};
-    window._settings.myntjakten14 = { enabled, dailyMax };
+    window._settings.myntjakten14 = { enabled, dailyMax, activeLevels };
 
-    const status = enabled
+    const levelNote = levelCount < 6 ? ` ${levelCount} av 6 nivå er aktive.` : '';
+    const status = (enabled
       ? (dailyMax > 0
           ? `✅ Lagret. Elevene kan tjene opp til 🪙 ${dailyMax} per dag via Myntjakten.`
           : '✅ Lagret. Ingen dagstak — elevene kan tjene fritt.')
-      : '✅ Lagret. Opptjening via Myntjakten er slått av.';
+      : '✅ Lagret. Opptjening via Myntjakten er slått av.') + levelNote;
     alertEl.innerHTML = '<div class="alert alert-success">' + status + '</div>';
     setTimeout(() => alertEl.innerHTML = '', 3500);
   } catch(e) {

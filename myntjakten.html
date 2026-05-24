@@ -269,7 +269,7 @@ body {
   box-shadow: 0 3px 0 var(--teal-dark);
 }
 
-/* Preset-grid (Trinn 1–6) — kompakt 2-kolonne kort som i designet */
+/* Preset-grid (Nivå 1–6) — kompakt 2-kolonne kort som i designet */
 .setting-label-center {
   text-align: center;
   font-family: 'Fredoka One', cursive;
@@ -323,6 +323,21 @@ body {
   line-height: 1.1;
 }
 .preset-btn.active .preset-title { color: var(--amber-dark); }
+/* Låst nivå — slått av av læreren. Vises grått og kan ikke velges. */
+.preset-btn.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f4f4f4;
+  border-color: var(--border);
+}
+.preset-btn.locked:hover {
+  border-color: var(--border);
+  background: #f4f4f4;
+}
+.preset-btn.locked .preset-title::after {
+  content: ' 🔒';
+  font-size: 0.85rem;
+}
 .preset-desc {
   font-size: 0.78rem;
   font-weight: 700;
@@ -1467,31 +1482,31 @@ body {
       <div class="start-sub">Velg innstillinger og kjør i gang!</div>
 
       <div class="setting-block">
-        <span class="setting-label setting-label-center">Velg trinn</span>
+        <span class="setting-label setting-label-center">Velg nivå</span>
         <div class="setting-help">Hva slags hoderegning vil du øve på?</div>
         <div class="preset-grid">
           <button class="preset-btn active" data-preset="1">
-            <span class="preset-title">Trinn 1</span>
+            <span class="preset-title">Nivå 1</span>
             <span class="preset-desc">+ og −, opp til 10</span>
           </button>
           <button class="preset-btn" data-preset="2">
-            <span class="preset-title">Trinn 2</span>
+            <span class="preset-title">Nivå 2</span>
             <span class="preset-desc">+ og −, opp til 20</span>
           </button>
           <button class="preset-btn" data-preset="3">
-            <span class="preset-title">Trinn 3</span>
+            <span class="preset-title">Nivå 3</span>
             <span class="preset-desc">+ og −, opp til 100</span>
           </button>
           <button class="preset-btn" data-preset="4">
-            <span class="preset-title">Trinn 4</span>
+            <span class="preset-title">Nivå 4</span>
             <span class="preset-desc">Gangetabell 1–5</span>
           </button>
           <button class="preset-btn" data-preset="5">
-            <span class="preset-title">Trinn 5</span>
+            <span class="preset-title">Nivå 5</span>
             <span class="preset-desc">Gangetabell 1–10</span>
           </button>
           <button class="preset-btn" data-preset="6">
-            <span class="preset-title">Trinn 6</span>
+            <span class="preset-title">Nivå 6</span>
             <span class="preset-desc">× og ÷, opp til 100</span>
           </button>
         </div>
@@ -2158,12 +2173,12 @@ function renderMyntdex() {
 // Presets erstatter de tidligere separate valgene for regneart,
 // trinn og vanskelighetsgrad. Hver preset definerer alle tre.
 const PRESETS = {
-  '1': { label: 'Trinn 1', desc: '+ og −, opp til 10',  ops: ['add','sub'],       grade: 2, level: 'easy'   },
-  '2': { label: 'Trinn 2', desc: '+ og −, opp til 20',  ops: ['add','sub'],       grade: 2, level: 'medium' },
-  '3': { label: 'Trinn 3', desc: '+ og −, opp til 100', ops: ['add','sub'],       grade: 3, level: 'hard'   },
-  '4': { label: 'Trinn 4', desc: 'Gangetabell 1–5',     ops: ['mul'],             grade: 3, level: 'easy'   },
-  '5': { label: 'Trinn 5', desc: 'Gangetabell 1–10',    ops: ['mul'],             grade: 4, level: 'medium' },
-  '6': { label: 'Trinn 6', desc: '× og ÷, opp til 100', ops: ['mul','div'],       grade: 5, level: 'medium' }
+  '1': { label: 'Nivå 1', desc: '+ og −, opp til 10',  ops: ['add','sub'],       grade: 2, level: 'easy'   },
+  '2': { label: 'Nivå 2', desc: '+ og −, opp til 20',  ops: ['add','sub'],       grade: 2, level: 'medium' },
+  '3': { label: 'Nivå 3', desc: '+ og −, opp til 100', ops: ['add','sub'],       grade: 3, level: 'hard'   },
+  '4': { label: 'Nivå 4', desc: 'Gangetabell 1–5',     ops: ['mul'],             grade: 3, level: 'easy'   },
+  '5': { label: 'Nivå 5', desc: 'Gangetabell 1–10',    ops: ['mul'],             grade: 4, level: 'medium' },
+  '6': { label: 'Nivå 6', desc: '× og ÷, opp til 100', ops: ['mul','div'],       grade: 5, level: 'medium' }
 };
 
 const settings = {
@@ -2418,9 +2433,11 @@ function showScreen(name) {
 // INNSTILLINGS-UI (start-skjerm)
 // ═══════════════════════════════════════════════════════
 function bindStartScreen() {
-  // Preset-knapper (Trinn 1–6) — én aktiv av gangen, setter ops/grade/level
+  // Preset-knapper (Nivå 1–6) — én aktiv av gangen, setter ops/grade/level
   document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      // Låste nivå (slått av av læreren) kan ikke velges
+      if (btn.classList.contains('locked')) return;
       document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       applyPreset(btn.dataset.preset);
@@ -3763,17 +3780,81 @@ function bindLoginScreen() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// NIVÅ-POLICY — hvilke nivå læreren har slått på
+// ═══════════════════════════════════════════════════════════════════════
+// Når Myntjakten åpnes fra en elevapp (?from=elevapp14 / ?from=elevapp57)
+// henter vi lærerens nivåvalg fra settings/myntjakten14|57.activeLevels.
+// Nivå som ikke er aktive vises som låst/grått og kan ikke velges.
+//
+// Åpnet rett fra forsiden (ingen ?from): spillet vet ikke hvilken klasse
+// eleven tilhører — da er alle 6 nivå tilgjengelige.
+//
+// activeLevels lagres som { "1": true, "2": false, ... }. Mangler feltet
+// (eldre datasett, eller læreren har aldri rørt det) → alle nivå på.
+// ═══════════════════════════════════════════════════════════════════════
+async function applyLevelPolicy() {
+  // NAV_CONTEXT.isInApp er allerede utledet — men vi trenger selve key'en
+  const from = new URLSearchParams(window.location.search).get('from');
+  let key = null;
+  if (from === 'elevapp14') key = 'myntjakten14';
+  else if (from === 'elevapp57') key = 'myntjakten57';
+  if (!key) return; // forsiden — ingen begrensning
+
+  let activeLevels = null;
+  try {
+    await waitForFirebase();
+    const snap = await window._get(window._ref(window._db, 'settings/' + key + '/activeLevels'));
+    activeLevels = snap.val();
+  } catch (e) {
+    console.warn('[Myntjakten] Kunne ikke laste nivå-policy:', e);
+    return; // trygg standard — alle nivå tilgjengelig
+  }
+
+  if (!activeLevels) return; // ingen innstilling lagret → alle nivå på
+
+  // Et nivå er aktivt hvis det ikke er eksplisitt slått av.
+  const isActive = id => activeLevels[id] !== false;
+
+  // Sikkerhetsnett: hvis alt er slått av, behold alle på (ellers blir
+  // spillet uspillbart). Læreren har neppe ment det.
+  const anyActive = Object.keys(PRESETS).some(id => isActive(id));
+  if (!anyActive) return;
+
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    if (!isActive(btn.dataset.preset)) {
+      btn.classList.add('locked');
+      btn.setAttribute('aria-disabled', 'true');
+    }
+  });
+
+  // Hvis det forhåndsvalgte nivået nå er låst, flytt valget til det
+  // første tilgjengelige nivået.
+  const activeBtn = document.querySelector('.preset-btn.active');
+  if (activeBtn && activeBtn.classList.contains('locked')) {
+    activeBtn.classList.remove('active');
+    const firstOpen = document.querySelector('.preset-btn:not(.locked)');
+    if (firstOpen) {
+      firstOpen.classList.add('active');
+      applyPreset(firstOpen.dataset.preset);
+    }
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 (function init() {
-  // Sett standard preset (Trinn 1) før noe annet kjører
+  // Sett standard preset (Nivå 1) før noe annet kjører
   applyPreset(settings.preset);
   bindStartScreen();
   bindLoginScreen();
   bindGameScreen();
   bindResultScreen();
   bindDepositModal();
+
+  // Lås nivå som læreren har slått av (kun når spillet åpnes fra elevappen)
+  applyLevelPolicy();
 
   // Routing: app-brukere må logge inn først, gjester går rett til start
   if (NAV_CONTEXT.isInApp) {
