@@ -1,0 +1,237 @@
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* ── LOGIN SCREEN ─────────────────────────── */
+  #login-screen{display:flex;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--green-dark),#1a6648,var(--green));padding:2rem;}
+  .login-box{background:white;border-radius:24px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .login-logo{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--green-dark);text-align:center;margin-bottom:.25rem;}
+  .login-sub{text-align:center;color:var(--muted);font-size:.9rem;font-weight:700;margin-bottom:2rem;}
+  .login-profiles{display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem;}
+  .profile-btn{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);border-radius:14px;cursor:pointer;background:var(--white);transition:all .15s;font-family:'Nunito',sans-serif;}
+  .profile-btn:hover{border-color:var(--green);background:var(--green-light);}
+  .profile-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
+  .profile-name{font-weight:800;font-size:1rem;color:var(--text);}
+  .profile-role{font-size:.75rem;color:var(--muted);}
+  .pin-section{display:none;margin-top:1rem;}
+  .pin-input-row{display:flex;gap:8px;justify-content:center;margin:1rem 0;}
+  .pin-char{width:48px;height:56px;border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);}
+  .pin-char.filled{border-color:var(--green);background:var(--green-light);}
+  .pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:.5rem;}
+  .pin-key{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);cursor:pointer;transition:all .1s;text-align:center;}
+  .pin-key:active{transform:scale(.92);background:var(--green-light);}
+  .pin-key.del{font-size:1rem;color:var(--coral);}
+  .pin-key.empty{background:transparent;border:none;cursor:default;}
+  .login-error{color:var(--coral);font-size:.85rem;font-weight:700;text-align:center;min-height:20px;}
+
+  /* ── MAIN APP ─────────────────────────────── */
+  #app{display:none;}
+
+  /* === NY 3-LAGS HEADER (samme grammatikk som laererportal57) === */
+  .site-header-stack{box-shadow:0 4px 16px rgba(8,80,65,.08);}
+
+  /* Lag 1: Lys topnav — eneste sticky lag */
+  .site-topnav{background:var(--white);border-bottom:1px solid var(--border);padding:.7rem 1.5rem;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(8,80,65,.07);}
+  .site-topnav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+  .site-topnav-logo{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--green-dark);text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+  .site-topnav-logo::before{content:'🪙';font-size:1.3rem;}
+  .site-topnav-back{font-size:.86rem;font-weight:700;color:var(--green-dark);text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:color .15s;}
+  .site-topnav-back:hover{color:var(--teal-dark);}
+
+  /* Lag 2: Gradient portal-stripe */
+  .portal-header{background:linear-gradient(160deg,#1e0f52,#1a6648,var(--green));padding:28px 1.5rem;position:relative;overflow:hidden;}
+  .portal-header::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(239,159,39,.18) 0%,transparent 45%),radial-gradient(circle at 80% 70%,rgba(29,158,117,.2) 0%,transparent 45%);pointer-events:none;}
+  .portal-header-inner{max-width:1400px;margin:0 auto;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+  .portal-header-left{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .portal-brand-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 16px;border-radius:20px;font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap;}
+  .portal-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);flex-shrink:0;}
+  .portal-title{font-family:'Fredoka One',cursive;color:#fff;font-size:2.6rem;line-height:1;margin:0;text-align:center;}
+  .portal-title .accent{color:var(--amber);}
+  .portal-header-right{position:absolute;right:1.5rem;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px;}
+  .teacher-badge,.teacher-badge-wrap{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);padding:5px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.14);color:#fff;font-size:.78rem;font-weight:500;}
+  .teacher-badge-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.7rem;}
+  .teacher-badge-name{color:#fff;font-size:.78rem;font-weight:500;}
+  .portal-icon-btn,.logout-btn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 11px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .15s;}
+  .portal-icon-btn{padding:6px 9px;}
+  .portal-icon-btn i,.logout-btn i{font-size:1rem;}
+  .portal-icon-btn:hover,.logout-btn:hover{background:rgba(255,255,255,.22);}
+
+  /* Lag 3: Pill-meny i mintstripe */
+  .portal-nav-strip{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 1.5rem;display:flex;justify-content:center;align-items:center;gap:1rem;}
+  header nav{display:inline-flex;background:var(--white);padding:5px;border-radius:999px;gap:2px;border:1px solid #d8e8df;box-shadow:0 1px 3px rgba(8,80,65,.06);flex-wrap:wrap;align-items:center;}
+  header nav button{background:transparent;color:var(--muted);border:0;padding:8px 16px;border-radius:999px;font-family:'Nunito',sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:color .15s,background .15s;}
+  header nav button:hover{color:var(--green-dark);background:var(--bg);}
+  header nav button.active{background:var(--amber-light);color:var(--green-dark);box-shadow:0 2px 6px rgba(8,80,65,.1);}
+  header nav button i.ti{font-size:1rem;line-height:1;}
+  .nav-icon{display:none;}
+  #fb-status{font-size:.72rem;font-weight:700;color:var(--muted);white-space:nowrap;}
+  main{max-width:1200px;margin:0 auto;padding:2rem;}
+  .page{display:none;}.page.active{display:block;}
+  .page-title{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--green-dark);margin-bottom:.35rem;letter-spacing:-.01em;line-height:1.1;}
+  .page-subtitle{color:var(--muted);font-size:.95rem;margin-bottom:2rem;font-weight:600;}
+
+  /* ── CARDS & LAYOUT ───────────────────────── */
+  .card{background:var(--white);border-radius:20px;border:2px solid var(--border);padding:1.75rem;margin-bottom:1.5rem;transition:box-shadow .25s ease;}
+  .card:hover{box-shadow:0 8px 24px rgba(8,80,65,.06);}
+  .card-title{font-size:1.1rem;font-weight:800;color:var(--green-dark);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;}
+  .stat-row{display:flex;gap:1rem;margin-bottom:1.5rem;}
+  .stat-box{flex:1;background:var(--green-light);border-radius:16px;padding:1.15rem;text-align:center;border:2px solid transparent;transition:all .2s;}
+  .stat-box:hover{border-color:var(--green);transform:translateY(-2px);}
+  .stat-num{font-family:'Fredoka One',cursive;font-size:2.1rem;color:var(--green-dark);line-height:1;}
+  .stat-label{font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px;}
+
+  /* ── BUTTONS ──────────────────────────────── */
+  .btn{font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;padding:10px 20px;border-radius:14px;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.12);}
+  .btn:active{transform:translateY(0);}
+  .btn-primary{background:var(--green);color:#fff;}.btn-primary:hover{background:var(--green-dark);}
+  .btn-amber{background:var(--amber);color:var(--green-dark);}.btn-amber:hover{background:#d4890f;}
+  .btn-coral{background:var(--coral);color:#fff;}.btn-coral:hover{background:#b84520;}
+  .btn-purple{background:var(--purple);color:#fff;}.btn-purple:hover{background:#3d3490;}
+  .btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);}.btn-ghost:hover{background:var(--bg);box-shadow:0 4px 12px rgba(0,0,0,.06);}
+  .btn-sm{padding:6px 12px;font-size:.82rem;border-radius:10px;}
+
+  /* ── FORMS ────────────────────────────────── */
+  input[type=text],input[type=number],input[type=password],select{font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);color:var(--text);width:100%;outline:none;transition:border-color .15s;}
+  input:focus,select:focus{border-color:var(--green);}
+  label{font-weight:700;font-size:.85rem;color:var(--muted);display:block;margin-bottom:6px;}
+  .form-row{margin-bottom:1rem;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+
+  /* ── TABLE ────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);}
+  td{padding:12px;border-bottom:1px solid var(--bg);font-size:.95rem;vertical-align:middle;}
+  tr{transition:background .15s;}
+  tr:hover td{background:var(--green-light);}
+  .balance-badge{display:inline-flex;align-items:center;gap:4px;background:var(--amber-light);color:#854F0B;font-weight:800;padding:4px 12px;border-radius:20px;font-size:.9rem;}
+  .balance-actions{display:flex;gap:6px;align-items:center;}
+  .class-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);}
+  .group-badge{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;border:1.5px solid;display:inline-flex;align-items:center;gap:4px;}
+
+  /* ── TABS ─────────────────────────────────── */
+  .tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--bg);padding:5px;border-radius:14px;border:1px solid var(--border);}
+  .tab{flex:1;padding:10px;text-align:center;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;color:var(--muted);transition:all .2s;}
+  .tab.active{background:var(--white);color:var(--green-dark);box-shadow:0 2px 8px rgba(8,80,65,.1);}
+
+  /* ── MODALS ───────────────────────────────── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,80,65,.45);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--white);border-radius:24px;padding:2rem;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .modal-title{font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--green-dark);margin-bottom:1.5rem;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+
+  /* ── ALERTS ───────────────────────────────── */
+  .alert{padding:12px 16px;border-radius:12px;font-size:.9rem;font-weight:600;margin-bottom:1rem;}
+  .alert-success{background:var(--green-light);color:var(--green-dark);border:1px solid #5DCAA5;}
+  .alert-error{background:var(--coral-light);color:#4A1B0C;border:1px solid #F0997B;}
+
+  /* ── GROCERY ──────────────────────────────── */
+  .grocery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;}
+  .grocery-item{border:2px solid var(--border);border-radius:16px;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .2s;background:var(--white);position:relative;}
+  .grocery-item:hover{border-color:var(--green);background:var(--green-light);transform:translateY(-2px);box-shadow:0 6px 16px rgba(8,80,65,.08);}
+  .grocery-item.selected{border-color:var(--green);background:var(--green-light);}
+  .grocery-item.selected::after{content:'✓';position:absolute;top:6px;right:8px;color:var(--green);font-weight:900;font-size:1rem;}
+  .grocery-emoji{font-size:2.5rem;}.grocery-name{font-weight:700;font-size:.85rem;color:var(--text);text-align:center;}.grocery-price{font-size:.8rem;color:var(--muted);font-weight:600;}
+
+  /* ── QR ───────────────────────────────────── */
+  .qr-card{background:var(--white);border:2px solid var(--border);border-radius:20px;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .qr-card .amount-label{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--green-dark);}
+  .qr-wrap{background:white;padding:12px;border-radius:14px;border:2px solid var(--border);}
+
+  /* ── GROUPS ───────────────────────────────── */
+  .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .2s;}
+  .color-swatch.selected{border-color:var(--text);transform:scale(1.18);}
+  .group-card{background:var(--white);border-radius:20px;border:2px solid var(--border);padding:1.25rem;margin-bottom:1rem;transition:all .2s;}
+  .group-card:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 6px 16px rgba(8,80,65,.08);}
+  .group-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+  .group-members{display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* ── CSV ──────────────────────────────────── */
+  .drop-zone{border:2px dashed var(--border);border-radius:16px;padding:2rem;text-align:center;color:var(--muted);cursor:pointer;transition:all .2s;}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--green);background:var(--green-light);}
+  .csv-preview{max-height:240px;overflow-y:auto;margin-top:1rem;}
+  .csv-preview table{font-size:.82rem;}
+  .csv-preview th{background:var(--green-light);color:var(--green-dark);padding:6px 8px;}
+
+  /* ── TEACHER ADMIN ────────────────────────── */
+  .teacher-card{background:var(--white);border:2px solid var(--border);border-radius:16px;padding:1rem 1.25rem;display:flex;align-items:center;gap:14px;margin-bottom:10px;transition:all .2s;}
+  .teacher-card:hover{border-color:var(--green);box-shadow:0 4px 12px rgba(8,80,65,.06);}
+  .teacher-card-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;}
+  .teacher-card-info{flex:1;}
+  .teacher-card-name{font-weight:800;font-size:.95rem;}
+  .teacher-card-meta{font-size:.78rem;color:var(--muted);}
+  .admin-only{background:var(--amber-light);border:2px solid var(--amber);border-radius:14px;padding:.85rem 1rem;font-size:.82rem;color:#854F0B;font-weight:700;margin-bottom:1rem;}
+
+  /* ── HAMBURGER MENU ───────────────────────── */
+  .hamburger-btn{display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:#fff;width:40px;height:40px;border-radius:14px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;transition:all .2s;}
+  .hamburger-btn:hover{background:rgba(255,255,255,.28);transform:translateY(-1px);}
+  .hamburger-btn span{display:block;width:20px;height:2px;background:#fff;border-radius:2px;transition:all .25s;}
+  .hamburger-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger-btn.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+  .hamburger-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+  .mobile-nav-label{display:none;font-size:.7rem;font-weight:800;color:rgba(255,255,255,.6);letter-spacing:.5px;text-transform:uppercase;grid-column:1/-1;grid-row:2;padding:.2rem 0 .1rem;}
+  .active-nav-label{display:none;}
+
+  /* Hamburger ny styling (passer pill-meny-stripa) */
+  .hamburger-btn{background:var(--white) !important;border:1.5px solid var(--border) !important;color:var(--green-dark) !important;}
+  .hamburger-btn:hover{background:var(--bg) !important;transform:none !important;}
+  .hamburger-btn span{background:var(--green-dark) !important;}
+
+  /* ── MOBILE TABLE → CARDS ─────────────────── */
+  @media(max-width:700px){
+    .grid-2,.grid-3{grid-template-columns:1fr;}
+    main{padding:.75rem;}
+
+    .site-topnav{padding:.55rem .75rem;}
+    .site-topnav-logo{font-size:1.05rem;}
+    .site-topnav-back{font-size:.78rem;}
+
+    .portal-header{padding:14px .75rem;}
+    .portal-header-inner{gap:.5rem;}
+    .portal-brand-pill{display:none;}
+    .portal-title{font-size:1.6rem;}
+    .portal-title .school{display:none;}
+    .teacher-badge-name{display:none;}
+    .teacher-badge-wrap,.teacher-badge{padding:4px 6px;}
+    .teacher-badge-avatar{width:26px;height:26px;font-size:.7rem;}
+    .logout-btn{font-size:.72rem;padding:5px 9px;}
+    .logout-btn span{display:none;}
+
+    .portal-nav-strip{padding:8px .75rem;justify-content:flex-start;gap:.5rem;}
+    .hamburger-btn{display:flex;}
+    header nav{
+      display:none;flex-direction:column;align-items:stretch;
+      gap:4px;padding:8px;border-radius:14px;width:100%;
+    }
+    header nav.open{display:flex;}
+    header nav button{font-size:.92rem;padding:.65rem 1rem;width:100%;justify-content:flex-start;}
+
+    /* Search + filter: stack vertically */
+    #search-input{width:100% !important;min-width:0 !important;}
+    #filter-class-select{width:100% !important;min-width:0 !important;}
+    .card-title{flex-wrap:wrap;gap:6px;}
+    .card-title > div[style]{flex-direction:column;width:100%;}
+    .card-title > div > input,
+    .card-title > div > select{width:100% !important;min-width:0;}
+
+    /* Table → card stacking */
+    table thead{display:none;}
+    table,table tbody,table tr,table td{display:block;width:100%;}
+    table tr{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:.6rem .75rem;margin-bottom:.6rem;position:relative;}
+    table tr:hover td{background:transparent;}
+    table tr:hover{background:var(--green-light);border-color:var(--green);}
+    table td{padding:3px 0;border:none;font-size:.9rem;display:flex;align-items:center;gap:8px;}
+    table td::before{content:attr(data-label);font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;min-width:72px;flex-shrink:0;}
+    table td:empty{display:none;}
+    .balance-actions{flex-wrap:wrap;}
+    .stat-row{flex-wrap:wrap;}
+    .stat-box{min-width:120px;}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;gap:3px;}
+    .tab{flex-shrink:0;font-size:.82rem;padding:8px 10px;}
+    .grocery-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.6rem;}
+    .form-grid{grid-template-columns:1fr;}
+    .page-title{font-size:1.5rem;}
+  }
+  @media(min-width:900px){header nav button{font-size:.92rem;padding:9px 18px;}}
