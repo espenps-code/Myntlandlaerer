@@ -3372,18 +3372,11 @@ window.qrToSVG = function(payload, sizeMm, correctLevel) {
 // ════════════════════════════════════════════════════════════════════
 window.buildMyntlandBankCardsHTML = function(students, opts) {
   opts = opts || {};
-  var showPin    = !!opts.showPin;
-  var getAvatar  = opts.getAvatarSVG;            // function(student) -> svg/html string, or null
-  var title      = opts.title || 'Myntland · Bankkort';
+  var showPin   = !!opts.showPin;
+  var getAvatar = opts.getAvatarSVG;            // beholdt for kompatibilitet
+  var title     = opts.title || 'Myntland · Bankkort';
   var THEMES = ['theme-gull','theme-turkis','theme-korall','theme-lilla','theme-lime','theme-skog'];
 
-  // QR genereres som inline SVG (vektor).
-  // correctLevel 'L' (7%) gir færre moduler enn 'M' (15%) → ~30-40% mindre PDF-data.
-  // Trygt for innloggings-QR som ikke utsettes for slitasje.
-  // 16mm = 18mm container minus 2×1mm padding.
-  function qrSVG(payload) {
-    return window.qrToSVG(payload, 16, 'L');
-  }
   function hashStr(str) {
     var h = 0, i; str = String(str||'');
     for (i = 0; i < str.length; i++) h = ((h<<5) - h) + str.charCodeAt(i);
@@ -3394,53 +3387,68 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     var last4 = String(h % 10000).padStart(4, '0');
     return '4900 41•• •••• ' + last4;
   }
-  function coinPortraitSVG() {
-    // Stilig Myntland-mynt — ren vektor, ingen rastergrafikk.
-    // Holder ~1 KB i PDF mot ~10 KB for et webp-portrett.
-    return '<svg viewBox="0 0 60 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'
-      // Ytre mynt
-      + '<circle cx="30" cy="30" r="24" fill="#F5C849" stroke="#2A1F3D" stroke-width="2.5"/>'
-      // Indre kant (subtil)
-      + '<circle cx="30" cy="30" r="20" fill="none" stroke="#C99517" stroke-width="1"/>'
-      // Stiplet sirkel innenfor
-      + '<circle cx="30" cy="30" r="17" fill="none" stroke="#2A1F3D" stroke-width=".6" stroke-dasharray="1.5,1.5" opacity=".55"/>'
-      // Stor M i Fraunces-italic-stil
-      + '<text x="30" y="39" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="24" font-weight="900" font-style="italic" fill="#2A1F3D">M</text>'
-      // Fire små stjerner i kantene
-      + '<g fill="#2A1F3D" opacity=".6">'
-      +   '<circle cx="30" cy="9" r="1.4"/>'
-      +   '<circle cx="51" cy="30" r="1.4"/>'
-      +   '<circle cx="30" cy="51" r="1.4"/>'
-      +   '<circle cx="9" cy="30" r="1.4"/>'
-      + '</g>'
-      + '</svg>';
-  }
   function escapeHTML(s) {
     return String(s||'').replace(/[&<>"']/g, function(c){
       return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
     });
   }
 
+  // QR: inline-vektor hvis qrToSVG finnes (1.–4.-portalen), ellers QR-bilde-API.
+  // Selve kortdesignen blir lik uansett — kun teknikken bak QR-en varierer.
+  function qrMarkup(payload) {
+    if (typeof window.qrToSVG === 'function') return window.qrToSVG(payload, 16, 'L');
+    var url = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data='
+      + encodeURIComponent(JSON.stringify(payload));
+    return '<img src="' + url + '" alt="QR" crossorigin="anonymous">';
+  }
+
+  // Myntland-mynt — logo-emblem i båndet og på baksiden. Ren vektor.
+  function coinSVG() {
+    return '<svg viewBox="0 0 60 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'
+      + '<circle cx="30" cy="30" r="24" fill="#F5C849" stroke="#2A1F3D" stroke-width="2.5"/>'
+      + '<circle cx="30" cy="30" r="20" fill="none" stroke="#C99517" stroke-width="1"/>'
+      + '<circle cx="30" cy="30" r="17" fill="none" stroke="#2A1F3D" stroke-width=".6" stroke-dasharray="1.5,1.5" opacity=".55"/>'
+      + '<text x="30" y="39" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="24" font-weight="900" font-style="italic" fill="#2A1F3D">M</text>'
+      + '</svg>';
+  }
+  // Liten chip — gir kortet et umiddelbart bankkort-preg. Ren vektor.
+  function chipSVG() {
+    return '<svg viewBox="0 0 46 34" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'
+      + '<rect x="1" y="1" width="44" height="32" rx="5" fill="#E9BE44" stroke="#B8901F" stroke-width="1.5"/>'
+      + '<line x1="1" y1="12.3" x2="45" y2="12.3" stroke="#B8901F" stroke-width="1.2"/>'
+      + '<line x1="1" y1="21.7" x2="45" y2="21.7" stroke="#B8901F" stroke-width="1.2"/>'
+      + '<line x1="16" y1="1" x2="16" y2="33" stroke="#B8901F" stroke-width="1.2"/>'
+      + '<line x1="30" y1="1" x2="30" y2="33" stroke="#B8901F" stroke-width="1.2"/>'
+      + '</svg>';
+  }
+
   function frontHTML(s, idx) {
     var theme   = THEMES[idx % THEMES.length];
     var display = escapeHTML((s.firstname||'') + ' ' + (s.lastname||'').charAt(0) + '.');
-    var qr = qrSVG({ type:'login', fbKey:s.fbKey });
-    var pinHTML = showPin && s.pin
-      ? '<div class="pin-row"><span class="pin-label">PIN</span><span class="pin-val">' + escapeHTML(s.pin) + '</span></div>'
-      : '<div class="pin-row"><span class="pin-label">PIN</span><span class="pin-val pin-blank">– – – –</span></div>';
+    var pinHTML = (showPin && s.pin)
+      ? '<span class="pin-val">' + escapeHTML(s.pin) + '</span>'
+      : '<span class="pin-val pin-blank">– – – –</span>';
+    var klasse = s.class ? 'KLASSE ' + escapeHTML(s.class) : '';
     return ''
       + '<div class="card-slot">'
       +   '<div class="bank ' + theme + '">'
       +     '<div class="band">'
       +       '<span class="brand">MYNTLAND</span>'
-      +       '<span class="klasse">' + escapeHTML(s.class||'') + '</span>'
+      +       '<span class="emblem">' + coinSVG() + '</span>'
       +     '</div>'
       +     '<div class="body">'
-      +       '<div class="info">'
-      +         '<div class="navn">' + display + '</div>'
-      +         pinHTML
+      +       '<div class="r-top">'
+      +         '<div class="top-left">'
+      +           '<span class="chip">' + chipSVG() + '</span>'
+      +           '<span class="klasse">' + klasse + '</span>'
+      +         '</div>'
+      +         '<div class="qr">' + qrMarkup({ type:'login', fbKey:s.fbKey }) + '</div>'
       +       '</div>'
-      +       '<div class="qr">' + qr + '</div>'
+      +       '<div class="cardnum">' + fakePAN(s) + '</div>'
+      +       '<div class="r-bot">'
+      +         '<div class="holder"><span class="lbl">KORTHOLDER</span><span class="navn">' + display + '</span></div>'
+      +         '<div class="pin"><span class="lbl">PIN</span>' + pinHTML + '</div>'
+      +       '</div>'
       +     '</div>'
       +   '</div>'
       + '</div>';
@@ -3449,31 +3457,21 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     return ''
       + '<div class="card-slot">'
       +   '<div class="back">'
-      +     '<div class="back-coin">🪙</div>'
+      +     '<div class="back-coin">' + coinSVG() + '</div>'
       +     '<div class="back-logo">MYNTLAND</div>'
       +     '<div class="back-sub">Klassens sparebank</div>'
+      +     '<div class="back-name"><span class="bn-lbl">ELEVENS NAVN</span><span class="bn-line"></span></div>'
       +   '</div>'
       + '</div>';
   }
 
-  // Bygg sider — 8 kort/side, forside + bakside annenhver side.
-  //
-  // Tosidig utskrift: forside-siden og bakside-siden veksler. Læreren må
-  // velge "tosidig utskrift, vend langs lang kant" i printerdialogen for
-  // at fysiske kort skal ende opp riktig (forside og bakside på samme ark).
-  //
-  // Ettersom baksiden er identisk for alle kort (samme Myntland-stempel),
-  // spiller eksakt fysisk posisjon ingen rolle — bakside #5 ser lik ut
-  // som bakside #1. Vi fyller likevel alltid 8 bakside-slots så
-  // grid-layouten ikke kollapser visuelt.
+  // Bygg sider — 8 kort per A4, forside + bakside annenhver side.
   var pagesHTML = '';
   var emptySlot = '<div class="card-slot card-slot-empty"></div>';
   for (var i = 0; i < students.length; i += 8) {
     var chunk = students.slice(i, i + 8);
     var fronts = chunk.map(function(s, j){ return frontHTML(s, i + j); }).join('');
-    // Fyll opp til 8 forside-slots med tomme slots, så grid forblir 2x4
     for (var fp = chunk.length; fp < 8; fp++) fronts += emptySlot;
-    // 8 baksider alltid — én per fysisk kort-posisjon
     var backs = '';
     for (var k = 0; k < 8; k++) backs += backHTML();
     pagesHTML += '<div class="page"><div class="card-grid">' + fronts + '</div></div>';
@@ -3481,70 +3479,81 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   }
 
   var css = ''
-    /* 8mm skrivermargin på alle kanter — beskytter mot avkutting på skoleskrivere */
     + '@page{size:A4 portrait;margin:8mm}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    /* Hvit side, sidehøyde reduseres tilsvarende margen */
     + '.page{width:194mm;height:281mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
     + '.page:last-of-type{page-break-after:auto}'
-    /* Krympet grid: 2×96mm=192mm bredde, 4×66mm=264mm høyde (passer i 281mm) */
     + '.card-grid{position:absolute;inset:6mm 0 6mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:0}'
     + '.card-slot-empty{visibility:hidden}'
-    /* Klippelinjer mellom kortene (innvendige cellegrenser) */
-    + '.card-slot{border-right:1px dashed #B0A8C0;border-bottom:1px dashed #B0A8C0}'
-    + '.card-grid > .card-slot:nth-child(2n){border-right:none}'
-    + '.card-grid > .card-slot:nth-child(n+7){border-bottom:none}'
+    /* Klippelinjer — KUN på forsidearket, aldri på baksiden */
+    + '.page:not(.back-page) .card-slot{border-right:1px dashed #B0A8C0;border-bottom:1px dashed #B0A8C0}'
+    + '.page:not(.back-page) .card-grid>.card-slot:nth-child(2n){border-right:none}'
+    + '.page:not(.back-page) .card-grid>.card-slot:nth-child(n+7){border-bottom:none}'
+    /* FORSIDE — dus temabakgrunn, farget bånd */
+    + '.bank{width:100%;height:100%;background:var(--cbg,#FFFFFF);display:grid;grid-template-rows:9mm 1fr;overflow:hidden}'
+    + '.bank .band{background:var(--ca,#F5C849);display:flex;align-items:center;justify-content:space-between;padding:0 5mm}'
+    + '.bank .band .brand{font-family:"Bowlby One",sans-serif;font-size:9pt;letter-spacing:.06em;color:#2A1F3D}'
+    + '.bank .band .emblem{width:6mm;height:6mm}'
+    + '.bank .band .emblem svg{display:block;width:100%;height:100%}'
+    + '.bank.theme-korall .band .brand,.bank.theme-lilla .band .brand,.bank.theme-skog .band .brand{color:#FBF2D6}'
+    + '.bank .body{display:grid;grid-template-rows:auto auto 1fr;padding:4mm 5mm}'
+    + '.bank .r-top{display:flex;justify-content:space-between;align-items:flex-start}'
+    + '.bank .top-left{display:flex;flex-direction:column;gap:2.5mm}'
+    + '.bank .chip{display:block}'
+    + '.bank .chip svg{display:block;width:11mm;height:8.1mm}'
+    + '.bank .klasse{font-family:"Nunito",sans-serif;font-weight:800;font-size:8pt;letter-spacing:.1em;color:#6E6480}'
+    + '.bank .qr{width:20mm;height:20mm;background:#fff;border:.3mm solid #2A1F3D;border-radius:1.5mm;padding:2mm}'
+    + '.bank .qr svg,.bank .qr img{display:block;width:100%;height:100%}'
+    + '.bank .cardnum{margin-top:3mm;font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12pt;letter-spacing:.06em;color:#2A1F3D;white-space:nowrap}'
+    + '.bank .r-bot{display:flex;justify-content:space-between;align-items:flex-end;gap:3mm}'
+    + '.bank .holder{display:flex;flex-direction:column;min-width:0}'
+    + '.bank .pin{display:flex;flex-direction:column}'
+    + '.bank .lbl{font-family:"Nunito",sans-serif;font-weight:800;font-size:7pt;letter-spacing:.16em;color:#6E6480;margin-bottom:.6mm}'
+    + '.bank .navn{font-family:"Nunito",sans-serif;font-weight:900;font-size:13pt;line-height:1;color:#2A1F3D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+    + '.bank .pin-val{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12pt;letter-spacing:.18em;color:#2A1F3D;line-height:1}'
+    + '.bank .pin-val.pin-blank{color:#6E6480;opacity:.55}'
+    /* TEMA — bånd-farge (--ca) + dus bakgrunnsfarge (--cbg) */
+    + '.bank.theme-gull{--ca:#F5C849;--cbg:#FBF4DD}'
+    + '.bank.theme-turkis{--ca:#2DC4C4;--cbg:#E1F4F3}'
+    + '.bank.theme-korall{--ca:#C13D2F;--cbg:#F8E7E1}'
+    + '.bank.theme-lilla{--ca:#6B5BA8;--cbg:#ECE9F4}'
+    + '.bank.theme-lime{--ca:#B8DA3B;--cbg:#F1F4DC}'
+    + '.bank.theme-skog{--ca:#2F6B4A;--cbg:#E4EDE7}'
+    /* BAKSIDE — felles for alle kort, med skrivefelt for elevens navn */
+    + '.back{width:100%;height:100%;background:#FBF2D6;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5mm;text-align:center}'
+    + '.back .back-coin{width:15mm;height:15mm}'
+    + '.back .back-coin svg{display:block;width:100%;height:100%}'
+    + '.back .back-logo{font-family:"Bowlby One",sans-serif;font-size:13pt;color:#2A1F3D;letter-spacing:.04em;margin-top:2mm}'
+    + '.back .back-sub{font-family:"Fraunces",serif;font-style:italic;font-weight:900;font-size:8.5pt;color:#6E6480;letter-spacing:.06em;margin-top:1mm}'
+    + '.back .back-name{width:74mm;background:#fff;border:.3mm solid #D8C9A0;border-radius:2mm;padding:2.4mm 4mm 2mm;margin-top:5mm}'
+    + '.back .bn-lbl{display:block;font-family:"Nunito",sans-serif;font-weight:800;font-size:6.5pt;letter-spacing:.16em;color:#6E6480}'
+    + '.back .bn-line{display:block;border-bottom:.4mm solid #B0A8C0;height:5mm;margin-top:.6mm}';
 
-    /* FRONT CARD: hvit innside, tema-farge som topp-bånd */
-    + '.bank{width:100%;height:100%;background:white;display:flex;flex-direction:column;padding:0;position:relative}'
-    /* Topp-bånd med tema-farge: rommer brand + klasse */
-    + '.bank .band{height:9mm;background:var(--ca,#F5C849);display:flex;align-items:center;justify-content:space-between;padding:0 5mm;color:#2A1F3D}'
-    + '.bank .band .brand{font-family:"Bowlby One",sans-serif;font-size:9pt;letter-spacing:.06em}'
-    + '.bank .band .klasse{font-family:"Nunito",sans-serif;font-weight:800;font-size:9pt;letter-spacing:.06em;color:#2A1F3D}'
-    /* For mørke tema-farger: lys brand-tekst */
-    + '.bank.theme-korall .band,.bank.theme-lilla .band,.bank.theme-skog .band{color:white}'
-    + '.bank.theme-korall .band .klasse,.bank.theme-lilla .band .klasse,.bank.theme-skog .band .klasse{color:white}'
-
-    /* Body: info venstre + QR høyre */
-    + '.bank .body{flex:1;display:grid;grid-template-columns:1fr 28mm;gap:4mm;padding:5mm 5mm 4mm 5mm;align-items:center}'
-
-    /* Info-blokk */
-    + '.bank .info{display:flex;flex-direction:column;justify-content:center;gap:3mm;min-width:0}'
-    /* Navn: stor, fet, primær */
-    + '.bank .navn{font-family:"Nunito",sans-serif;font-weight:900;font-size:15pt;line-height:1;color:#2A1F3D;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-    /* PIN-rad: label + verdi inline */
-    + '.bank .pin-row{display:flex;align-items:baseline;gap:3mm}'
-    + '.bank .pin-label{font-family:"Nunito",sans-serif;font-weight:800;font-size:8pt;letter-spacing:.18em;color:#4A3D5C}'
-    + '.bank .pin-val{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:14pt;letter-spacing:.22em;color:#2A1F3D;line-height:1}'
-    + '.bank .pin-val.pin-blank{color:#4A3D5C;opacity:.5;letter-spacing:.16em}'
-
-    /* QR */
-    + '.bank .qr{width:28mm;height:28mm;display:flex;align-items:center;justify-content:center;background:white}'
-    + '.bank .qr svg{display:block;width:100%;height:100%}'
-    + '.bank .qr img{display:block;width:100%;height:100%}'
-
-    /* THEMES — bånd-farger */
-    + '.bank.theme-gull{--ca:#F5C849}'
-    + '.bank.theme-turkis{--ca:#2DC4C4}'
-    + '.bank.theme-korall{--ca:#C13D2F}'
-    + '.bank.theme-lilla{--ca:#6B5BA8}'
-    + '.bank.theme-lime{--ca:#B8DA3B}'
-    + '.bank.theme-skog{--ca:#2F6B4A}'
-
-    /* BACK CARD: lyst nøytral bakgrunn, sentral logo */
-    + '.back{width:100%;height:100%;background:#FBF2D6;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#2A1F3D;padding:5mm}'
-    + '.back .back-coin{font-size:18mm;line-height:1;margin-bottom:2mm}'
-    + '.back .back-logo{font-family:"Bowlby One",sans-serif;font-size:14pt;color:#2A1F3D;letter-spacing:.04em;line-height:1}'
-    + '.back .back-sub{font-family:"Fraunces",serif;font-style:italic;font-weight:900;font-size:8.5pt;color:#4A3D5C;margin-top:1.5mm;letter-spacing:.08em}';
-
-  // Info-banner som vises i forhåndsvisningen, men skjules ved utskrift
-  // (via @media print). Gir læreren sjansen til å lese instruksjonen og
-  // Banner med PDF-download-instruks (skjules ved utskrift).
-  var _b = window.buildPdfDownloadBanner('Slik laster du ned bankkort', { twoSided: true });
-  var infoBanner = _b.bannerHTML;
-  var bannerCSS = _b.bannerCSS;
+  // Info-banner i forhåndsvisningen — skjules ved utskrift.
+  var infoBanner = ''
+    + '<div class="print-info-banner"><div class="pib-inner">'
+    +   '<div class="pib-title">Slik skriver du ut bankkortene</div>'
+    +   '<ol class="pib-list">'
+    +     '<li>Velg <strong>tosidig utskrift</strong> og <strong>«vend langs lang kant»</strong>.</li>'
+    +     '<li>Sett <strong>skala til 100 %</strong> — ikke «tilpass til side».</li>'
+    +     '<li>Skru på <strong>«skriv ut bakgrunnsgrafikk»</strong> så fargene blir med.</li>'
+    +     '<li>Klipp langs de stiplede linjene på forsidearket. Skriv elevens navn på baksiden før du laminerer.</li>'
+    +   '</ol>'
+    +   '<button class="pib-print-btn" onclick="window.print()">Skriv ut nå</button>'
+    + '</div></div>';
+  var bannerCSS = ''
+    + '@media screen{'
+    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
+    +   '.pib-inner{max-width:760px;margin:0 auto}'
+    +   '.pib-title{font-family:"Bowlby One",sans-serif;font-size:13pt;margin-bottom:8px;letter-spacing:.02em}'
+    +   '.pib-list{margin:0 0 10px 20px;padding:0;font-size:10.5pt;line-height:1.55}'
+    +   '.pib-list li{margin-bottom:3px}'
+    +   '.pib-print-btn{background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer}'
+    +   'body{padding-top:215px}'
+    + '}'
+    + '@media print{.print-info-banner{display:none!important}body{padding-top:0!important}}';
 
   return '<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>' + escapeHTML(title) + '</title>'
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
@@ -4314,142 +4323,4 @@ function printHendelserCards14(cards) {
     .card-foot .foot-coin{font-size:9pt;line-height:1}
     .card-foot .foot-stamp{font-family:'Bowlby One',sans-serif;font-size:8pt;color:var(--blekk);letter-spacing:.14em}
     .income .card-foot{border-top-color:var(--gront-dyp)}
-    .expense .card-foot{border-top-color:var(--rod-dyp)}
-
-    /* ── Bakside ── ensfarget og nøytral, uten klippelinjer.
-       Nøytral farge (ikke grønn/rød) slik at baksiden ikke avslører
-       om kortet er inntekt eller utgift ved fysisk trekning. */
-    .hcard.hback{background:#FFF6E0}
-    .hback{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9mm}
-    .back-coin{font-size:30mm;line-height:1;margin-bottom:3mm}
-    .back-logo{font-family:'Bowlby One',sans-serif;font-size:18pt;color:var(--blekk);letter-spacing:.02em;line-height:1}
-    .back-sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:11pt;color:var(--blekk-myk);margin-top:2mm;letter-spacing:.08em}
-
-    ${_bhend.bannerCSS}
-  </style>
-  </head><body>${_bhend.bannerHTML}${pagesHTML}</body></html>`);
-  win.document.close();
-}
-// ════════════════════════════════════════════════════════════
-// MERKER (1–4)
-// ════════════════════════════════════════════════════════════
-
-const DEFAULT_BADGE_PARAMS_14 = {
-  renterBronse: 50,  renterSolv: 150, renterGull: 300,
-  quizBronse:   25,  quizSolv:    50, quizGull:    75,
-  bonusBronse:  100, bonusSolv:   500, bonusGull:  1000
-};
-
-function loadBadgeParamsToForm() {
-  const bp = window._settings?.badgeParams14 || DEFAULT_BADGE_PARAMS_14;
-  const fields = ['renterBronse','renterSolv','renterGull','quizBronse','quizSolv','quizGull','bonusBronse','bonusSolv','bonusGull'];
-  fields.forEach(f => {
-    const el = document.getElementById('bp14-' + f);
-    if (el) el.value = bp[f] !== undefined ? bp[f] : DEFAULT_BADGE_PARAMS_14[f];
-  });
-}
-
-async function saveBadgeParams14() {
-  const alertEl = document.getElementById('bp14-save-alert');
-  const fields = ['renterBronse','renterSolv','renterGull','quizBronse','quizSolv','quizGull','bonusBronse','bonusSolv','bonusGull'];
-  const bp = {};
-  for (const f of fields) {
-    const v = parseInt(document.getElementById('bp14-' + f)?.value);
-    if (isNaN(v) || v < 0) {
-      alertEl.textContent = '⚠️ Alle felter må være positive tall';
-      alertEl.style.color = 'var(--coral)';
-      return;
-    }
-    bp[f] = v;
-  }
-  try {
-    await window._update(fbRef('settings'), { badgeParams14: bp });
-    if (!window._settings) window._settings = {};
-    window._settings.badgeParams14 = bp;
-    alertEl.textContent = '✅ Lagret!';
-    alertEl.style.color = 'var(--green-dark)';
-    setTimeout(() => alertEl.textContent = '', 2500);
-    renderMerkerPage();
-  } catch(e) {
-    alertEl.textContent = '⚠️ Feilet: ' + e.message;
-    alertEl.style.color = 'var(--coral)';
-  }
-}
-
-async function confirmBadgeReset14() {
-  const cls = document.getElementById('badge14-reset-class').value;
-  const alertEl = document.getElementById('badge14-reset-alert');
-  const target = cls ? cls : 'alle elever';
-  if (!confirm(`⚠️ Vil du virkelig slette ALLE merker og nullstille fremgang for ${target}? Dette kan ikke angres!`)) return;
-
-  try {
-    const students = window._students.filter(s => !cls || s.class === cls);
-    const updates = {};
-    for (const s of students) {
-      updates['students14/' + s.fbKey + '/badges'] = null;
-      updates['students14/' + s.fbKey + '/badgeRenterEarned'] = 0;
-      updates['students14/' + s.fbKey + '/quizCorrectTotal'] = 0;
-    }
-    await window._update(fbRef('/'), updates);
-    alertEl.innerHTML = `<div class="alert alert-success">✅ Merker nullstilt for ${students.length} elever!</div>`;
-    setTimeout(() => alertEl.innerHTML = '', 3500);
-    renderMerkerPage();
-  } catch(e) {
-    alertEl.innerHTML = `<div class="alert alert-error">⚠️ Feilet: ${e.message}</div>`;
-  }
-}
-
-function badgeLevelBadge14(earned, level) {
-  const labels = { bronse: '🥉', sølv: '🥈', gull: '🥇' };
-  if (earned) return `<span title="Oppnådd ${level}" style="font-size:1.1rem;">${labels[level]}</span>`;
-  return `<span title="Ikke oppnådd ${level}" style="opacity:.25;font-size:1.1rem;">${labels[level]}</span>`;
-}
-
-function renderMerkerPage() {
-  loadBadgeParamsToForm();
-  const tbody = document.getElementById('merker14-table-body'); if (!tbody) return;
-  const cls = document.getElementById('merker14-class-filter')?.value || '';
-  const bp = window._settings?.badgeParams14 || DEFAULT_BADGE_PARAMS_14;
-  const students = (window._students || []).filter(s => !cls || s.class === cls);
-
-  if (!students.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever</td></tr>';
-    return;
-  }
-
-  // Sort by lastname, firstname
-  const sorted = [...students].sort((a,b) => {
-    return (a.lastname||'').localeCompare(b.lastname||'') || (a.firstname||'').localeCompare(b.firstname||'');
-  });
-
-  tbody.innerHTML = sorted.map(s => {
-    const badges = s.badges || {};
-    const renter = s.badgeRenterEarned || 0;
-    const quiz   = s.quizCorrectTotal  || 0;
-
-    const renterLevels = badgeLevelBadge14(!!badges.renter_bronse,'bronse')
-                       + badgeLevelBadge14(!!badges.renter_sølv,'sølv')
-                       + badgeLevelBadge14(!!badges.renter_gull,'gull');
-    const quizLevels   = badgeLevelBadge14(!!badges.quiz_bronse,'bronse')
-                       + badgeLevelBadge14(!!badges.quiz_sølv,'sølv')
-                       + badgeLevelBadge14(!!badges.quiz_gull,'gull');
-
-    const renterPct = Math.min(100, Math.round(renter / bp.renterGull * 100));
-    const quizPct   = Math.min(100, Math.round(quiz   / bp.quizGull   * 100));
-
-    const miniBar = (pct, color) => `<div style="height:4px;background:#e5e7eb;border-radius:4px;margin-top:3px;overflow:hidden;width:80px;display:inline-block;"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px;"></div></div>`;
-
-    return `<tr>
-      <td data-label="Elev"><div style="font-weight:800;font-size:.88rem;">${s.firstname||''} ${s.lastname||''}</div></td>
-      <td data-label="Klasse"><span class="class-badge">${s.class||''}</span></td>
-      <td data-label="Renter"><div style="font-weight:800;">🪙 ${renter}</div>${miniBar(renterPct, '#16a34a')}</td>
-      <td data-label="Nivå">${renterLevels}</td>
-      <td data-label="Quiz"><div style="font-weight:800;">${quiz}</div>${miniBar(quizPct, '#7c3aed')}</td>
-      <td data-label="Nivå">${quizLevels}</td>
-    </tr>`;
-  }).join('');
-}
-
-</script>
-</body>
-</html>
+    .expe
