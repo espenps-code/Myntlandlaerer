@@ -1674,12 +1674,20 @@
       <div class="form-row"><label>Ikon (emoji)</label><input type="text" id="wp-emoji" placeholder="📖" maxlength="2"></div>
       <div class="form-row"><label>Fag</label><input type="text" id="wp-subject" placeholder="f.eks. Norsk"></div>
     </div>
-    <div class="form-row" id="wp-class-row"><label>Klasse</label>
-      <select id="wp-class">
-        <option value="5. klasse">5. klasse</option>
-        <option value="6. klasse">6. klasse</option>
-        <option value="7. klasse">7. klasse</option>
-      </select>
+    <div class="form-grid">
+      <div class="form-row" id="wp-class-row"><label>Klasse</label>
+        <select id="wp-class">
+          <option value="5. klasse">5. klasse</option>
+          <option value="6. klasse">6. klasse</option>
+          <option value="7. klasse">7. klasse</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Hvem må godkjenne hvert trinn?</label>
+        <select id="wp-approval">
+          <option value="teacher">Bare lærer</option>
+          <option value="both">Lærer + foresatt</option>
+        </select>
+      </div>
     </div>
     <div style="font-weight:800;color:var(--teal-dark);margin:1.25rem 0 .5rem;">Trinn i trappa</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
@@ -3521,6 +3529,8 @@ function openPlanEditor(planKey){
     document.getElementById('wp-emoji').value=p.emoji||'📘';
     document.getElementById('wp-subject').value=p.subject||'';
     if(p.class) clsSel.value=p.class;
+    document.getElementById('wp-approval').value=
+      (p.approval||(p.steps&&p.steps[0]&&p.steps[0].approval)||'teacher')==='both'?'both':'teacher';
     _wpEditSteps=JSON.parse(JSON.stringify(p.steps||[]));
     _wpEditSteps.forEach(st=>{ if(!st.reqs||!st.reqs.length) st.reqs=[{text:'',img:'',link:''}]; });
     if(!_wpEditSteps.length){ _wpEditSteps=[wpBlankStep()]; _wpActiveStep=0; }
@@ -3529,6 +3539,7 @@ function openPlanEditor(planKey){
     document.getElementById('wp-editor-title').textContent='➕ Ny periodeplan';
     document.getElementById('wp-emoji').value='📘';
     document.getElementById('wp-subject').value='';
+    document.getElementById('wp-approval').value='teacher';
     _wpEditSteps=[wpBlankStep()];
     _wpActiveStep=0;
   }
@@ -3552,7 +3563,6 @@ function wpCaptureActiveStep(){
     title:b.querySelector('.wp-step-title').value.trim(),
     goal: b.querySelector('.wp-step-goal').value,
     bonus:parseInt(b.querySelector('.wp-step-bonus').value)||0,
-    approval:b.querySelector('.wp-step-approval').value,
     reqs:Array.from(b.querySelectorAll('.wp-req-row')).map(r=>({
       text:r.querySelector('.wp-req-text').value.trim(),
       link:r.querySelector('.wp-req-link').value.trim()
@@ -3616,7 +3626,7 @@ function wpStepRowHTML(st,i){
     <div style="flex:1;min-width:0;">
       <div style="font-weight:800;color:var(--teal-dark);">${titleHtml}</div>
       <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
-        ${nReq} arbeidskrav · ${st.approval==='both'?'lærer + foresatt':'bare lærer'}${st.bonus?' · 🪙 '+st.bonus:''}
+        ${nReq} arbeidskrav${st.bonus?' · 🪙 '+st.bonus:''}
       </div>
     </div>
     <button class="btn btn-ghost btn-sm" onclick="wpEditStep(${i})">✏️ Rediger</button>
@@ -3635,15 +3645,8 @@ function wpStepEditorHTML(st,i){
       <label>Læringsmål – hva eleven skal mestre</label>
       <textarea class="wp-step-goal" placeholder="Jeg kan …">${wpEscAttr(st.goal)}</textarea>
     </div>
-    <div class="form-grid">
-      <div class="form-row"><label>Bonus når trinnet er fullført (mynter)</label>
-        <input type="number" class="wp-step-bonus" min="0" value="${st.bonus||0}"></div>
-      <div class="form-row"><label>Hvem må godkjenne?</label>
-        <select class="wp-step-approval">
-          <option value="teacher"${st.approval!=='both'?' selected':''}>Bare lærer</option>
-          <option value="both"${st.approval==='both'?' selected':''}>Lærer + foresatt</option>
-        </select></div>
-    </div>
+    <div class="form-row"><label>Bonus når trinnet er fullført (mynter)</label>
+      <input type="number" class="wp-step-bonus" min="0" value="${st.bonus||0}"></div>
     <div class="wp-mini-label" style="margin-bottom:6px;">Arbeidskrav</div>
     ${(st.reqs||[]).map((r,j)=>`
       <div class="wp-req-row">
@@ -3687,12 +3690,14 @@ async function savePlan(publish){
   const emoji=document.getElementById('wp-emoji').value.trim()||'📘';
   const subject=document.getElementById('wp-subject').value.trim();
   const cls=document.getElementById('wp-class').value;
+  // Godkjenningsvalg gjelder hele periodeplanen – kopieres inn på hvert trinn.
+  const approval=document.getElementById('wp-approval').value==='both'?'both':'teacher';
   if(!subject){ wpEdAlert('Skriv inn hvilket fag periodeplanen gjelder.','error'); return; }
   // Behold kun trinn med tittel (tomme «neste trinn» faller bort).
   const steps=_wpEditSteps
     .filter(s=>(s.title||'').trim())
     .map(st=>({
-      title:st.title.trim(), goal:st.goal||'', bonus:st.bonus||0, approval:st.approval||'teacher',
+      title:st.title.trim(), goal:st.goal||'', bonus:st.bonus||0, approval:approval,
       reqs:(st.reqs||[]).filter(r=>r.text||r.link)
         .map(r=>({text:r.text||'',link:r.link||''}))
     }));
@@ -3704,10 +3709,10 @@ async function savePlan(publish){
   const willActive = publish ? true : (_wpEditKey ? (ex.active!==false) : false);
   if(_wpEditKey){
     await window._update(fbRef('workPlans/'+_wpEditKey),
-      { emoji, subject, class:cls, steps, active:willActive });
+      { emoji, subject, class:cls, approval, steps, active:willActive });
   } else {
     await window._set(window._push(fbRef('workPlans')),
-      { emoji, subject, class:cls, steps, active:willActive, created:Date.now() });
+      { emoji, subject, class:cls, approval, steps, active:willActive, created:Date.now() });
   }
   closePlanEditor();
 }
