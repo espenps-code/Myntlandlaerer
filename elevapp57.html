@@ -1201,6 +1201,14 @@ let _apStepIdx=0;
 function apEsc(s){
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+// Sørg for at lenker har https:// foran – ellers tolkes de som relative
+// adresser og havner under myntland.no/...
+function apFixUrl(u){
+  u=String(u||'').trim();
+  if(!u) return '';
+  if(/^(https?:\/\/|mailto:)/i.test(u)) return u;
+  return 'https://'+u;
+}
 function apIsTablet(){
   return window.matchMedia('(min-width:700px) and (min-height:700px)').matches;
 }
@@ -1352,39 +1360,49 @@ function apRenderStepDetail(){
          +apEsc(st.goal).replace(/\n/g,'<br>')+'</div></div>';
   }
   const reqs=st.reqs||[];
-  if(reqs.length){
-    html+='<div class="section-title" style="margin-top:.3rem">✅ Arbeidskrav</div>';
-    reqs.forEach((r,j)=>{
-      const on=!!checks[j];
-      const ro=!isActive;
-      html+=`<div class="ap-req">
-        <div class="ap-check${on?' on':''}${ro?' ro':''}" ${isActive?`onclick="apToggleCheck(${j})"`:''}>${on?'✓':''}</div>
-        <div style="flex:1">
-          <div class="ap-req-text">${apEsc(r.text)}</div>
-          ${r.link?`<a class="ap-req-link" href="${apEsc(r.link)}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
-        </div></div>`;
-    });
+  // Første gang eleven åpner trinnet vises bare læringsmålene. Arbeidskravene
+  // kommer fram når eleven bekrefter «Jeg har lest læringsmålene».
+  const goalsGate = isActive && st.goal && !ss.goalsRead;
+  if(goalsGate){
+    html+='<div class="info-box">👆 Les læringsmålene over. Når du har lest dem, '
+         +'henter du fram arbeidskravene.</div>';
+    html+='<button onclick="apMarkGoalsRead()" class="big-btn bb-teal" style="margin-top:.4rem">'
+         +'✅ Jeg har lest læringsmålene</button>';
   } else {
-    html+='<div class="info-box">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
-  }
-  // status
-  if(isDone){
-    html+='<div class="ap-status-box ap-status-ok">✓ Dette trinnet er fullført og godkjent. Bra jobba!</div>';
-  } else if(isActive){
-    const needBoth=st.approval==='both';
-    if(ss.teacherApproved && needBoth && !ss.guardianApproved){
-      html+='<div class="ap-status-box ap-status-wait">✓ Læreren har godkjent. Nå venter vi på at en voksen hjemme bekrefter.</div>';
-    } else if(ss.teacherApproved){
-      html+='<div class="ap-status-box ap-status-ok">✓ Læreren har godkjent trinnet ditt!</div>';
+    if(reqs.length){
+      html+='<div class="section-title" style="margin-top:.3rem">✅ Arbeidskrav</div>';
+      reqs.forEach((r,j)=>{
+        const on=!!checks[j];
+        const ro=!isActive;
+        html+=`<div class="ap-req">
+          <div class="ap-check${on?' on':''}${ro?' ro':''}" ${isActive?`onclick="apToggleCheck(${j})"`:''}>${on?'✓':''}</div>
+          <div style="flex:1">
+            <div class="ap-req-text">${apEsc(r.text)}</div>
+            ${r.link?`<a class="ap-req-link" href="${apEsc(apFixUrl(r.link))}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
+          </div></div>`;
+      });
     } else {
-      const nDone=reqs.filter((r,j)=>checks[j]).length;
-      const allChecked=reqs.length>0 && nDone===reqs.length;
-      html+='<div class="ap-status-box ap-status-wait">'
-           +(allChecked?'🌟 Alt er huket av! Vis arbeidet til læreren og scan godkjennings-QR-en.'
-                       :`Huk av etter hvert som du blir ferdig (${nDone}/${reqs.length}).`)
-           +'</div>';
-      html+='<button onclick="startScan(\'wpapprove\')" class="big-btn bb-teal" style="margin-top:.85rem">'
-           +'📷 Scan godkjenning fra læreren</button>';
+      html+='<div class="info-box">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
+    }
+    // status
+    if(isDone){
+      html+='<div class="ap-status-box ap-status-ok">✓ Dette trinnet er fullført og godkjent. Bra jobba!</div>';
+    } else if(isActive){
+      const needBoth=st.approval==='both';
+      if(ss.teacherApproved && needBoth && !ss.guardianApproved){
+        html+='<div class="ap-status-box ap-status-wait">✓ Læreren har godkjent. Nå venter vi på at en voksen hjemme bekrefter.</div>';
+      } else if(ss.teacherApproved){
+        html+='<div class="ap-status-box ap-status-ok">✓ Læreren har godkjent trinnet ditt!</div>';
+      } else {
+        const nDone=reqs.filter((r,j)=>checks[j]).length;
+        const allChecked=reqs.length>0 && nDone===reqs.length;
+        html+='<div class="ap-status-box ap-status-wait">'
+             +(allChecked?'🌟 Alt er huket av! Vis arbeidet til læreren og scan godkjennings-QR-en.'
+                         :`Huk av etter hvert som du blir ferdig (${nDone}/${reqs.length}).`)
+             +'</div>';
+        html+='<button onclick="startScan(\'wpapprove\')" class="big-btn bb-teal" style="margin-top:.85rem">'
+             +'📷 Scan godkjenning fra læreren</button>';
+      }
     }
   }
   html+='<button onclick="apBack()" class="ap-detail-back" style="width:100%;margin-top:1rem;background:var(--white);'
@@ -1402,6 +1420,13 @@ async function apToggleCheck(reqIdx){
     fbRef('workPlanProgress/'+sk+'/'+_apPlanKey+'/steps/'+_apStepIdx+'/checks'),
     { [reqIdx]: !cur });
   // apRefresh skjer via onValue-lytteren
+}
+// Eleven bekrefter at læringsmålene er lest → arbeidskravene vises.
+async function apMarkGoalsRead(){
+  const sk=window._currentStudent?.fbKey; if(!sk||!_apPlanKey) return;
+  await window._update(
+    fbRef('workPlanProgress/'+sk+'/'+_apPlanKey+'/steps/'+_apStepIdx),
+    { goalsRead:true });
 }
 // Felles fullføringslogikk (samme som lærerportal/foresattside).
 async function apCheckCompletion(planKey){

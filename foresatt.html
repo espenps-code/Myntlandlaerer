@@ -261,6 +261,13 @@ function fgEsc(s){
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function fgRef(p){return window._ref(window._db,p);}
+// Sørg for at lenker har https:// foran – ellers tolkes de som relative adresser.
+function fgFixUrl(u){
+  u=String(u||'').trim();
+  if(!u) return '';
+  if(/^(https?:\/\/|mailto:)/i.test(u)) return u;
+  return 'https://'+u;
+}
 function fgShow(which){
   document.getElementById('fg-login-section').style.display = which==='login'?'block':'none';
   document.getElementById('fg-app-section').style.display   = which==='app'  ?'block':'none';
@@ -432,7 +439,7 @@ function fgRenderStep(){
         <div class="ap-check${on?' on':''}">${on?'✓':''}</div>
         <div style="flex:1">
           <div class="ap-req-text">${fgEsc(r.text)}</div>
-          ${r.link?`<a class="ap-req-link" href="${fgEsc(r.link)}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
+          ${r.link?`<a class="ap-req-link" href="${fgEsc(fgFixUrl(r.link))}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
         </div></div>`;
     });
     const nDone=reqs.filter((r,j)=>checks[j]).length;

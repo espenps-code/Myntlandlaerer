@@ -911,7 +911,7 @@
       <button onclick="showPage('butikk57')" id="nav-butikk57"><i class="ti ti-shopping-cart" aria-hidden="true"></i>Butikk</button>
       <button onclick="showPage('belonninger')" id="nav-belonninger"><i class="ti ti-medal" aria-hidden="true"></i>Belønninger</button>
       <button onclick="showPage('budsjett')" id="nav-budsjett"><i class="ti ti-chart-bar" aria-hidden="true"></i>Budsjett</button>
-      <button onclick="showPage('arbeidsplan')" id="nav-arbeidsplan"><i class="ti ti-stairs-up" aria-hidden="true"></i>Arbeidsplan</button>
+      <button onclick="showPage('arbeidsplan')" id="nav-arbeidsplan"><i class="ti ti-stairs-up" aria-hidden="true"></i>Periodeplan</button>
       <button onclick="showPage('laerere')" id="nav-laerere" style="display:none"><i class="ti ti-settings" aria-hidden="true"></i>Lærere</button>
     </nav>
   </header>
@@ -1647,13 +1647,13 @@
 
 <!-- ═══════ ARBEIDSPLAN ═══════ -->
 <div class="page" id="page-arbeidsplan">
-  <div class="page-title">🪜 Arbeidsplan</div>
+  <div class="page-title">🪜 Periodeplan</div>
   <div class="page-subtitle">Læringsmål i en trapp – elevene jobber seg oppover, ett trinn om gangen.</div>
 
   <div id="wp-list"></div>
 
   <div class="card" style="background:var(--teal-light);border-color:var(--teal);">
-    <div class="card-title">ℹ️ Slik fungerer arbeidsplaner</div>
+    <div class="card-title">ℹ️ Slik fungerer periodeplaner</div>
     <p style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.55;margin-bottom:1rem;">
       Lag én trapp per fag med 3–6 trinn. Hvert trinn har arbeidskrav med valgfrie lenker,
       og en bonus eleven får på kontoen når trinnet er godkjent. Eleven ser bare ett aktivt trinn om
@@ -1661,7 +1661,7 @@
       bare deg, eller av deg <em>og</em> en foresatt.
     </p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="openPlanEditor(null)"><i class="ti ti-plus"></i> Ny arbeidsplan</button>
+      <button class="btn btn-primary" onclick="openPlanEditor(null)"><i class="ti ti-plus"></i> Ny periodeplan</button>
       <button class="btn btn-amber" onclick="openGuardianLetters()">📨 Lag foresattbrev</button>
       <button class="btn btn-amber" onclick="showWpQR()">📱 Godkjennings-QR</button>
     </div>
@@ -1669,7 +1669,7 @@
 
   <!-- Plan-editor (skjult til man oppretter/redigerer) -->
   <div class="card" id="wp-editor" style="display:none;">
-    <div class="card-title" id="wp-editor-title">➕ Ny arbeidsplan</div>
+    <div class="card-title" id="wp-editor-title">➕ Ny periodeplan</div>
     <div class="form-grid">
       <div class="form-row"><label>Ikon (emoji)</label><input type="text" id="wp-emoji" placeholder="📖" maxlength="2"></div>
       <div class="form-row"><label>Fag</label><input type="text" id="wp-subject" placeholder="f.eks. Norsk"></div>
@@ -1734,7 +1734,7 @@
     <p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
       Hver elev får et eget brev med en unik kode. Foresatte bruker koden på foresatt-siden
       for å se elevens framgang og godkjenne trinn. Kodene er tilfeldige og knyttes ikke til
-      noe annet enn arbeidsplanen.
+      noe annet enn periodeplanen.
     </p>
     <div id="modal-wp-letters-body"></div>
     <div class="modal-actions">
@@ -1749,7 +1749,7 @@
   <div class="modal" style="max-width:420px;text-align:center;">
     <div class="modal-title" id="modal-wp-qr-title">📱 Godkjennings-QR</div>
     <p style="font-size:.86rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
-      Én QR for alle fag og arbeidsplaner. Skriv den ut og vis den til elever som
+      Én QR for alle fag og periodeplaner. Skriv den ut og vis den til elever som
       har fullført arbeidet sitt. Eleven scanner den fra trinnet sitt i elevappen,
       og akkurat det trinnet blir godkjent av lærer.
     </p>
@@ -3517,7 +3517,7 @@ function openPlanEditor(planKey){
   else { clsRow.style.display='block'; }
   if(planKey){
     const p=(window._workPlans||[]).find(x=>x.fbKey===planKey)||{};
-    document.getElementById('wp-editor-title').textContent='✏️ Rediger arbeidsplan';
+    document.getElementById('wp-editor-title').textContent='✏️ Rediger periodeplan';
     document.getElementById('wp-emoji').value=p.emoji||'📘';
     document.getElementById('wp-subject').value=p.subject||'';
     if(p.class) clsSel.value=p.class;
@@ -3526,7 +3526,7 @@ function openPlanEditor(planKey){
     if(!_wpEditSteps.length){ _wpEditSteps=[wpBlankStep()]; _wpActiveStep=0; }
     else { _wpActiveStep=-1; }   // lagrede trinn vises sammenslått
   } else {
-    document.getElementById('wp-editor-title').textContent='➕ Ny arbeidsplan';
+    document.getElementById('wp-editor-title').textContent='➕ Ny periodeplan';
     document.getElementById('wp-emoji').value='📘';
     document.getElementById('wp-subject').value='';
     _wpEditSteps=[wpBlankStep()];
@@ -3677,7 +3677,7 @@ function wpRenderSteps(){
   const pubBtn=document.getElementById('wp-publish-btn');
   if(pubBtn){
     pubBtn.disabled=titled<3;
-    pubBtn.title=titled<3?'Lagre minst 3 trinn for å publisere':'Publiser arbeidsplanen for elevene';
+    pubBtn.title=titled<3?'Lagre minst 3 trinn for å publisere':'Publiser periodeplanen for elevene';
   }
 }
 // publish=true → synlig for elevene. publish=false → lagre som kladd.
@@ -3687,7 +3687,7 @@ async function savePlan(publish){
   const emoji=document.getElementById('wp-emoji').value.trim()||'📘';
   const subject=document.getElementById('wp-subject').value.trim();
   const cls=document.getElementById('wp-class').value;
-  if(!subject){ wpEdAlert('Skriv inn hvilket fag arbeidsplanen gjelder.','error'); return; }
+  if(!subject){ wpEdAlert('Skriv inn hvilket fag periodeplanen gjelder.','error'); return; }
   // Behold kun trinn med tittel (tomme «neste trinn» faller bort).
   const steps=_wpEditSteps
     .filter(s=>(s.title||'').trim())
@@ -3715,7 +3715,7 @@ async function togglePlanActive(planKey){
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
   const turningOn=!(p.active!==false);
   if(turningOn && (p.steps||[]).length<3){
-    alert('Arbeidsplanen må ha minst 3 trinn før den kan publiseres. Åpne den og legg til flere trinn.');
+    alert('Periodeplanen må ha minst 3 trinn før den kan publiseres. Åpne den og legg til flere trinn.');
     renderWorkPlans();
     return;
   }
@@ -3723,7 +3723,7 @@ async function togglePlanActive(planKey){
 }
 async function deletePlan(planKey){
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey);
-  if(!confirm(`Slette arbeidsplanen «${p?.subject||''}»?\nElevenes framgang i denne planen slettes også.`)) return;
+  if(!confirm(`Slette periodeplanen «${p?.subject||''}»?\nElevenes framgang i denne planen slettes også.`)) return;
   await window._remove(fbRef('workPlans/'+planKey));
   const upd={};
   Object.keys(window._wpProgress||{}).forEach(sk=>{
@@ -3739,17 +3739,17 @@ function renderWorkPlans(){
   if(!plans.length){
     el.innerHTML='<div class="card" style="text-align:center;color:var(--muted);">'
       +'<div style="font-size:2.4rem;margin-bottom:.4rem;">🪜</div>'
-      +'<div style="font-weight:800;">Ingen arbeidsplaner ennå</div>'
-      +'<div style="font-size:.86rem;margin-top:4px;">Bruk «Ny arbeidsplan»-knappen under for å lage den første trappa.</div></div>';
+      +'<div style="font-weight:800;">Ingen periodeplaner ennå</div>'
+      +'<div style="font-size:.86rem;margin-top:4px;">Bruk «Ny periodeplan»-knappen under for å lage den første trappa.</div></div>';
     return;
   }
   const active=plans.filter(p=>p.active!==false);
   const drafts=plans.filter(p=>p.active===false);
   let html='';
-  html+='<div class="wp-cat-pill aktiv">✅ Aktive arbeidsplaner ('+active.length+')</div>';
+  html+='<div class="wp-cat-pill aktiv">✅ Aktive periodeplaner ('+active.length+')</div>';
   html+= active.length
     ? active.map(wpPlanCardHTML).join('')
-    : '<div class="wp-cat-empty">Ingen publiserte arbeidsplaner ennå.</div>';
+    : '<div class="wp-cat-empty">Ingen publiserte periodeplaner ennå.</div>';
   html+='<div class="wp-cat-pill kladd">📝 Ikke publisert ('+drafts.length+')</div>';
   html+= drafts.length
     ? drafts.map(wpPlanCardHTML).join('')
