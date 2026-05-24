@@ -2138,21 +2138,36 @@ function showWpQR(){
 }
 
 function printWpQR(){
-  /* REKONSTRUERT AV CLAUDE 2026-05-24 — se note over. Verifiser mot original. */
+  /* Myntland-stil utskrift — restylet 2026-05-24 (mindre QR, ramme, bakgrunn). */
   const payload = window._wpQrPayload || JSON.stringify({ type:'wpApprove' });
-  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=' + encodeURIComponent(payload);
-  const win = window.open('', '', 'width=520,height=640');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Godkjennings-QR</title><style>' +
-    '@media print{@page{size:A6;margin:6mm}}' +
-    'body{font-family:sans-serif;text-align:center;padding:10mm;margin:0;color:#1e0f52;}' +
-    'h2{font-size:18px;margin:.4rem 0;}' +
-    '.hint{font-size:11px;color:#5a7a5a;line-height:1.5;margin-top:.6rem;}' +
-    '</style></head><body>' +
-    '<p style="font-size:13px;font-weight:700;color:#085041">🪙 Myntland</p>' +
-    '<h2>📱 Godkjennings-QR</h2>' +
-    '<img src="' + qrUrl + '" style="width:230px;height:230px;margin:.5rem auto;display:block;">' +
-    '<div class="hint">Vis denne til elever som har fullført arbeidet sitt.<br>Eleven scanner den fra trinnet sitt i elevappen.</div>' +
-    '<script>setTimeout(function(){window.print();},400);<\/script></body></html>');
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=4&data=' + encodeURIComponent(payload);
+  const win = window.open('', '', 'width=520,height=700');
+  win.document.write(
+    '<!DOCTYPE html><html lang="no"><head><meta charset="UTF-8"><title>Godkjennings-QR</title>'
+    + '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">'
+    + '<style>'
+    + '@page{size:A6;margin:0}'
+    + '*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}'
+    + 'body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;'
+    +      'padding:8mm;font-family:Nunito,sans-serif;background:#fff}'
+    + '.card{width:100%;padding:8mm 6mm;border:3px solid #1D9E75;border-radius:20px;'
+    +       'background:#E1F5EE;text-align:center;color:#085041}'
+    + '.brand{font-family:"Fredoka One",cursive;font-size:13pt;color:#1D9E75}'
+    + '.title{font-family:"Fredoka One",cursive;font-size:17pt;color:#085041;margin:1mm 0 4mm}'
+    + '.qrbox{display:inline-block;background:#fff;border:2px solid #c8dfc8;border-radius:14px;padding:9px}'
+    + '.qrbox img{display:block;width:42mm;height:42mm}'
+    + '.hint{font-size:9.5pt;font-weight:700;color:#5a7a5a;line-height:1.5;margin-top:5mm}'
+    + '</style></head><body>'
+    + '<div class="card">'
+    +   '<div class="brand">🪙 Myntland</div>'
+    +   '<div class="title">📱 Godkjennings-QR</div>'
+    +   '<div class="qrbox"><img src="' + qrUrl + '" alt="Godkjennings-QR"></div>'
+    +   '<div class="hint">Vis denne til elever som har fullført arbeidet sitt.<br>'
+    +     'Eleven scanner den fra trinnet sitt i elevappen.</div>'
+    + '</div>'
+    + '<script>setTimeout(function(){window.print();},500);<\/script>'
+    + '</body></html>'
+  );
   win.document.close();
 }
 
