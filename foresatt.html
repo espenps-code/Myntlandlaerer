@@ -124,6 +124,22 @@
   .fg-sb-name{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);}
   .fg-logout{width:auto;margin-top:0;padding:10px 18px;font-size:.95rem;flex-shrink:0;}
 
+  /* ── OPPSUMMERING ── */
+  .fg-summary-card{margin-bottom:1.25rem;}
+  .fg-sum-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);margin-bottom:.5rem;}
+  .fg-sum-text{font-size:.9rem;font-weight:600;color:var(--muted);line-height:1.5;}
+  .fg-sum-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .fg-sum-list li{font-size:.9rem;font-weight:700;color:var(--text);background:var(--bg);
+    border-radius:10px;padding:8px 12px;}
+  .fg-sum-list b{color:var(--teal-dark);}
+  .fg-approve-list{display:flex;flex-direction:column;gap:8px;}
+  .fg-approve-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    width:100%;text-align:left;background:var(--amber-light);border:1.5px solid #f0c060;
+    border-radius:12px;padding:11px 14px;cursor:pointer;font-family:'Nunito',sans-serif;
+    font-size:.9rem;font-weight:700;color:#854F0B;}
+  .fg-approve-item:hover{background:#f6e3bd;}
+  .fg-approve-go{font-weight:800;white-space:nowrap;color:var(--teal);}
+
   /* ── FAGMENY ── */
   .fg-subjects{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem;}
   .fg-subj-btn{display:flex;align-items:center;gap:6px;padding:9px 17px;border-radius:999px;
@@ -236,6 +252,7 @@
       </div>
       <button class="fg-btn ghost fg-logout" onclick="fgLogout()">Logg ut</button>
     </div>
+    <div id="fg-summary"></div>
     <div class="fg-subjects" id="fg-subjects"></div>
     <div id="fg-body"></div>
   </section>
@@ -256,6 +273,7 @@ let _progress={};          // workPlanProgress for denne eleven
 let _fgPlanKey=null;
 let _fgView='trapp';       // 'trapp' | 'step'
 let _fgStepIdx=0;
+let _guardianLastSeen=0;   // tidspunkt for forrige innlogging (fra forrige besøk)
 
 function fgEsc(s){
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -294,6 +312,7 @@ async function fgLogin(){
       return;
     }
     _studentKey=foundKey;
+    _guardianLastSeen=(all[foundKey]&&all[foundKey].lastSeen)||0;
     startGuardian();
   }catch(e){
     console.error(e);
@@ -302,7 +321,7 @@ async function fgLogin(){
 }
 function fgLogout(){
   _studentKey=null; _student=null; _workPlans=[]; _progress={};
-  _fgPlanKey=null; _fgView='trapp';
+  _fgPlanKey=null; _fgView='trapp'; _guardianLastSeen=0;
   document.getElementById('fg-code-input').value='';
   document.getElementById('fg-login-err').textContent='';
   fgShow('login');
@@ -314,6 +333,8 @@ function startGuardian(){
   fgShow('app');
   window.scrollTo(0,0);
   _fgView='trapp';
+  // Lagre dette besøket som «sist sett» – brukes til oppsummeringen neste gang.
+  window._update(fgRef('guardianCodes/'+_studentKey),{lastSeen:Date.now()}).catch(()=>{});
   window._onValue(fgRef('students57/'+_studentKey),snap=>{
     _student=snap.val();
     if(_student) document.getElementById('fg-student-name').textContent=
@@ -343,9 +364,71 @@ function fgProgress(planKey){
   return _progress?.[planKey] || { current:0, steps:{} };
 }
 
+// ── OPPSUMMERING ────────────────────────────────────────────
+function fgGoToApprovable(planKey,idx){
+  _fgPlanKey=planKey; _fgStepIdx=idx; _fgView='step';
+  fgRender(); window.scrollTo(0,0);
+}
+function fgRenderSummary(){
+  const host=document.getElementById('fg-summary');
+  if(!host) return;
+  const plans=fgPlans();
+  if(!plans.length){ host.innerHTML=''; return; }
+  const fn=fgEsc(_student?.firstname||'eleven');
+  const events=[], canApprove=[];
+  plans.forEach(p=>{
+    const steps=p.steps||[];
+    const pr=fgProgress(p.fbKey);
+    const cur=pr.current||0;
+    Object.keys(pr.steps||{}).forEach(k=>{
+      const idx=parseInt(k); if(isNaN(idx)) return;
+      const ss=pr.steps[k]||{};
+      const step=steps[idx]; if(!step) return;
+      if(ss.completed && (ss.completedTs||0)>_guardianLastSeen){
+        events.push({ts:ss.completedTs||0,
+          html:'✅ Fullført <b>Trinn '+(idx+1)+': '+fgEsc(step.title)+'</b> ('+fgEsc(p.subject)+')'});
+      } else if(ss.teacherApproved && (ss.teacherApprovedTs||0)>_guardianLastSeen){
+        events.push({ts:ss.teacherApprovedTs||0,
+          html:'👍 Læreren godkjente <b>Trinn '+(idx+1)+': '+fgEsc(step.title)+'</b> ('+fgEsc(p.subject)+')'});
+      }
+    });
+    if(cur<steps.length){
+      const step=steps[cur];
+      const ss=pr.steps?.[cur]||{};
+      const allChecked=(step.reqs||[]).every((r,j)=>(ss.checks||{})[j]);
+      if(step.approval==='both' && ss.teacherApproved && !ss.guardianApproved && allChecked){
+        canApprove.push({planKey:p.fbKey, idx:cur, subject:p.subject, title:step.title});
+      }
+    }
+  });
+  events.sort((a,b)=>b.ts-a.ts);
+  let html='<div class="fg-card fg-summary-card">';
+  html+='<div class="fg-sum-title">📋 Siden sist</div>';
+  if(!_guardianLastSeen){
+    html+='<div class="fg-sum-text">Velkommen! Dette er første gang du er innom. '
+         +'Logg innom jevnlig, så får du en oppsummering av hva som har skjedd siden sist.</div>';
+  } else if(!events.length){
+    html+='<div class="fg-sum-text">Ingen nye framskritt for '+fn+' siden sist du var innom.</div>';
+  } else {
+    html+='<ul class="fg-sum-list">'+events.map(e=>'<li>'+e.html+'</li>').join('')+'</ul>';
+  }
+  html+='<div class="fg-sum-title" style="margin-top:1.1rem">✅ Dette kan du godkjenne</div>';
+  if(!canApprove.length){
+    html+='<div class="fg-sum-text">Ingenting venter på deg akkurat nå. 👍</div>';
+  } else {
+    html+='<div class="fg-approve-list">'+canApprove.map(c=>
+      `<button class="fg-approve-item" onclick="fgGoToApprovable('${c.planKey}',${c.idx})">`
+      +'<span><b>'+fgEsc(c.subject)+'</b> · Trinn '+(c.idx+1)+': '+fgEsc(c.title)+'</span>'
+      +'<span class="fg-approve-go">Gå til trinnet →</span></button>').join('')+'</div>';
+  }
+  html+='</div>';
+  host.innerHTML=html;
+}
+
 // ── RENDER ──────────────────────────────────────────────────
 function fgRender(){
   if(!_studentKey) return;
+  fgRenderSummary();
   const plans=fgPlans();
   const subjEl=document.getElementById('fg-subjects');
   const body=document.getElementById('fg-body');
