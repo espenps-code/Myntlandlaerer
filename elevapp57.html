@@ -526,12 +526,14 @@
   /* paner: trinn-meny + detalj */
   .ap-pane{flex:1;overflow-y:auto;padding:1.1rem 1rem 2rem;min-height:0;}
   /* trapp */
-  .ap-step{display:flex;gap:13px;position:relative;}
-  .ap-railwrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:56px;}
-  .ap-ring{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-family:'Fredoka One',cursive;font-size:1.3rem;border:7px solid var(--border);background:var(--white);
+  .ap-step{display:flex;gap:11px;position:relative;}
+  .ap-railwrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:34px;}
+  .ap-ring{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'Fredoka One',cursive;font-size:.95rem;border:4px solid var(--border);background:var(--white);
     color:var(--muted);z-index:1;flex-shrink:0;}
-  .ap-rail{width:5px;flex:1;min-height:18px;background:var(--border);border-radius:3px;margin:2px 0;}
+  .ap-rail{width:5px;flex:1;min-height:14px;background:var(--border);border-radius:3px;margin:2px 0;}
+  .ap-monster{width:64px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .ap-monster img{width:100%;height:auto;display:block;}
   .ap-step:last-child .ap-rail{display:none;}
   .ap-card{flex:1;border-radius:16px;padding:.9rem 1rem;border:2px solid var(--border);
     background:var(--white);margin-bottom:.55rem;}
@@ -1332,9 +1334,27 @@ function apRenderTrapp(){
       <div class="ap-card" ${tappable?`onclick="apOpenStep(${i})"`:''}>
         <div class="ap-card-title">Trinn ${i+1}: ${apEsc(st.title)}</div>
         <div class="ap-card-status">${status}</div>
-      </div></div>`;
+      </div>
+      <div class="ap-monster" ${tappable?`onclick="apOpenStep(${i})"`:''}>${wpMonsterImg(_apPlanKey,i,i<cur)}</div>
+    </div>`;
   }
   host.innerHTML=html;
+}
+// Hvert trinn får sitt eget monster (samme 20 som forsiden). Godkjent trinn
+// viser tommel-opp-versjonen fra monsters/tommel/.
+const WP_MONSTERS=['groennhaar','appelsin','rosa','graa','moerkelilla','indigo',
+  'marineblaa','vinroed','ildkatt','gullgul','gressgroenn','rustbrun','laksrosa',
+  'mintgroenn','solskinn','turkis','lilla','himmelblaa','beige','havblaa'];
+function wpHash(s){
+  let h=0; s=String(s||'');
+  for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0;
+  return Math.abs(h);
+}
+function wpMonsterImg(planKey,stepIdx,done){
+  const name=WP_MONSTERS[(wpHash(planKey)+stepIdx)%WP_MONSTERS.length];
+  const url=done?'monsters/tommel/'+name+'.webp':'monsters/'+name+'.webp';
+  return '<img src="'+url+'" alt="" loading="lazy"'
+    +(done?' onerror="this.onerror=null;this.src=\'monsters/'+name+'.webp\'"':'')+'>';
 }
 function apOpenStep(idx){
   _apStepIdx=idx; _apView='step';
