@@ -835,7 +835,7 @@
   <!-- ── 3) VARER (var: dagligvarer/butikk-rediger) ── -->
   <div id="butikk-rediger" style="display:none;">
     <div class="card">
-      <div class="card-title">➕ Legg til vare</div>
+      <div class="card-title" id="grocery-form-title">➕ Legg til vare</div>
       <div class="form-grid">
         <div class="form-row"><label>Emoji</label><input type="text" id="item-emoji" placeholder="🥛" maxlength="2"></div>
         <div class="form-row"><label>Varenavn</label><input type="text" id="item-name" placeholder="Melk"></div>
@@ -844,7 +844,8 @@
           <select id="item-category"><option>Meieri</option><option>Brød & Bakeri</option><option>Frukt & Grønt</option><option>Kjøtt & Fisk</option><option>Drikke</option><option>Godteri & Snacks</option><option>Annet</option></select>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="addGroceryItem()">Legg til vare</button>
+      <button class="btn btn-primary" id="grocery-save-btn" onclick="addGroceryItem()">Legg til vare</button>
+      <button class="btn btn-ghost" id="grocery-cancel-btn" onclick="cancelGroceryEdit()" style="display:none;margin-left:8px;">Avbryt</button>
     </div>
     <div class="card"><div class="card-title">🏪 Butikkens varer</div><div class="grocery-grid" id="grocery-list"><p style="color:var(--muted);font-size:.9rem;">Laster varer…</p></div></div>
   </div>
@@ -2405,6 +2406,9 @@ async function confirmDelete() { await window._remove(fbRef('students14/' + curr
 // ══════════════════════════════════════════════════════════
 // GROCERIES
 // ══════════════════════════════════════════════════════════
+// Holder styr på hvilken vare som redigeres. null = skjemaet legger til ny vare.
+let editingGroceryKey = null;
+
 async function addGroceryItem() {
   if (!ready()) return;
   const emoji = document.getElementById('item-emoji').value || '📦';
@@ -2412,24 +2416,67 @@ async function addGroceryItem() {
   const price = parseInt(document.getElementById('item-price').value) || 1;
   const cat   = document.getElementById('item-category').value;
   if (!name) return;
-  await window._set(window._push(fbRef('groceries')), { emoji, name, price, category: cat });
+  if (editingGroceryKey) {
+    // Oppdater eksisterende vare på samme nøkkel.
+    await window._set(fbRef('groceries/' + editingGroceryKey), { emoji, name, price, category: cat });
+    cancelGroceryEdit();
+  } else {
+    await window._set(window._push(fbRef('groceries')), { emoji, name, price, category: cat });
+    document.getElementById('item-emoji').value = '';
+    document.getElementById('item-name').value  = '';
+    document.getElementById('item-price').value = '';
+  }
+}
+
+// Last en eksisterende vare inn i skjemaet for redigering.
+function editGrocery(fbKey) {
+  const item = (window._groceries || []).find(g => g.fbKey === fbKey);
+  if (!item) return;
+  editingGroceryKey = fbKey;
+  document.getElementById('item-emoji').value    = item.emoji || '';
+  document.getElementById('item-name').value     = item.name  || '';
+  document.getElementById('item-price').value    = item.price || '';
+  document.getElementById('item-category').value = item.category || 'Annet';
+  document.getElementById('grocery-form-title').textContent = '✏️ Rediger vare';
+  document.getElementById('grocery-save-btn').textContent   = 'Lagre endringer';
+  document.getElementById('grocery-cancel-btn').style.display = '';
+  renderGroceryList();
+  document.getElementById('grocery-form-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Avbryt redigering og still skjemaet tilbake til "legg til ny vare".
+function cancelGroceryEdit() {
+  editingGroceryKey = null;
   document.getElementById('item-emoji').value = '';
   document.getElementById('item-name').value  = '';
   document.getElementById('item-price').value = '';
+  document.getElementById('item-category').selectedIndex = 0;
+  document.getElementById('grocery-form-title').textContent = '➕ Legg til vare';
+  document.getElementById('grocery-save-btn').textContent   = 'Legg til vare';
+  document.getElementById('grocery-cancel-btn').style.display = 'none';
+  renderGroceryList();
 }
+
 function renderGroceryList() {
   const el = document.getElementById('grocery-list');
   if (!el) return;
   if (!window._groceries.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Ingen varer ennå.</p>'; return; }
   el.innerHTML = window._groceries.map(x => `
-    <div class="grocery-item">
+    <div class="grocery-item${editingGroceryKey === x.fbKey ? ' selected' : ''}">
       <div class="grocery-emoji">${x.emoji}</div>
       <div class="grocery-name">${x.name}</div>
       <div class="grocery-price">🪙 ${x.price}</div>
-      <button class="btn btn-coral btn-sm" style="margin-top:4px;" onclick="removeGrocery('${x.fbKey}')">🗑️</button>
+      <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-align:center;">${x.category || 'Annet'}</div>
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button class="btn btn-amber btn-sm" onclick="editGrocery('${x.fbKey}')">✏️</button>
+        <button class="btn btn-coral btn-sm" onclick="removeGrocery('${x.fbKey}')">🗑️</button>
+      </div>
     </div>`).join('');
 }
-async function removeGrocery(fbKey) { await window._remove(fbRef('groceries/' + fbKey)); }
+async function removeGrocery(fbKey) {
+  if (editingGroceryKey === fbKey) cancelGroceryEdit();
+  await window._remove(fbRef('groceries/' + fbKey));
+}
 
 function renderGroceryPrintSelect() {
   const el = document.getElementById('grocery-print-select');

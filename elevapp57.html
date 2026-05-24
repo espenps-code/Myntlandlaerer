@@ -2293,7 +2293,9 @@ function tryJsQR(){
 function handleScan(text){
   if(!scanActive)return;stopScan();
   try{
-    const raw=JSON.parse(text);
+    // qrcodejs legger til et usynlig BOM-tegn (U+FEFF) foran teksten naar QR-koden
+    // inneholder norske tegn (oe/ae/aa). Det maa fjernes, ellers feiler JSON.parse.
+    const raw=JSON.parse(String(text).replace(/^\uFEFF/, ''));
     // Normaliser kompakt format ({t,s,a,d}) til langt format ({type,subtype,amount,desc})
     // slik at scanner-koden under fungerer for både gamle og nye QR-koder.
     const d = (raw && raw.t && !raw.type) ? {
@@ -3091,9 +3093,4 @@ function togglePinDisplay57() {
 }
 function showSuccess(emoji,title,amount,text){
   document.getElementById('suc-emoji').textContent=emoji;document.getElementById('suc-title').textContent=title;
-  document.getElementById('suc-amount').textContent=amount;document.getElementById('suc-text').textContent=text;
-  document.getElementById('success-overlay').classList.add('open');
-}
-</script>
-</body>
-</html>
+  document.g

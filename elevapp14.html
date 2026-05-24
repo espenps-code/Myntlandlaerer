@@ -2124,7 +2124,9 @@ function tryJsQR(video) {
 function handleScanResult(text) {
   if (!scanActive) return; // guard against double-fire
   try {
-    const data = JSON.parse(text);
+    // qrcodejs legger til et usynlig BOM-tegn (U+FEFF) foran teksten naar QR-koden
+    // inneholder norske tegn (oe/ae/aa). Det maa fjernes, ellers feiler JSON.parse.
+    const data = JSON.parse(String(text).replace(/^\uFEFF/, ''));
     if (scanMode === 'cashier') {
       if (data.type === 'grocery') {
         playScanBeep();
@@ -3205,12 +3207,4 @@ document.addEventListener('keydown', function(e) {
 function showSuccess(emoji, title, amount, text) {
   document.getElementById('success-emoji').textContent  = emoji;
   document.getElementById('success-title').textContent  = title;
-  document.getElementById('success-amount').textContent = amount;
-  document.getElementById('success-text').textContent   = text;
-  document.getElementById('success-overlay').classList.add('open');
-}
-
-renderCart();
-</script>
-</body>
-</html>
+  document.getElementById('success-amount').
