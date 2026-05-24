@@ -462,9 +462,18 @@ function fgRenderStep(){
       html+='<div class="ap-status-box ap-status-ok">✓ Du har bekreftet dette trinnet.'
            +(ss.teacherApproved?'':' Det fullføres når læreren også har godkjent.')+'</div>';
     } else {
-      html+='<div class="ap-status-box ap-status-wait">👀 Når du har sett over framgangen, '
-           +'bekreft at du har sett den. Trinnet fullføres når både du og læreren har godkjent.</div>';
-      html+=`<button class="fg-btn amber" onclick="fgApprove()">✓ Jeg har sett dette – bekreft trinnet</button>`;
+      const allChecked=reqs.every((r,j)=>checks[j]);
+      if(!allChecked){
+        html+='<div class="ap-status-box ap-status-info">⏳ Eleven har ikke huket av alle '
+             +'arbeidskravene ennå. Du kan bekrefte trinnet når alt er huket av og læreren har godkjent.</div>';
+      } else if(!ss.teacherApproved){
+        html+='<div class="ap-status-box ap-status-info">⏳ Eleven har gjort arbeidskravene. '
+             +'Du kan bekrefte trinnet så snart læreren har godkjent det.</div>';
+      } else {
+        html+='<div class="ap-status-box ap-status-wait">👀 Læreren har godkjent. Når du har sett '
+             +'over framgangen, bekreft at du har sett den – så er trinnet fullført.</div>';
+        html+=`<button class="fg-btn amber" onclick="fgApprove()">✓ Jeg har sett dette – bekreft trinnet</button>`;
+      }
     }
   } else {
     html+='<div class="ap-status-box ap-status-info">🔒 Dette trinnet er ikke startet ennå.</div>';
@@ -483,6 +492,16 @@ async function fgApprove(){
   const cur=pr.current||0;
   if(cur>=(plan.steps||[]).length) return;
   if(_fgStepIdx!==cur) return;
+  const step=plan.steps[cur]||{};
+  const ssNow=(pr.steps&&pr.steps[cur])||{};
+  if(!(step.reqs||[]).every((r,j)=>(ssNow.checks||{})[j])){
+    alert('Eleven må huke av alle arbeidskravene før trinnet kan bekreftes.');
+    return;
+  }
+  if(!ssNow.teacherApproved){
+    alert('Læreren må godkjenne trinnet før du kan bekrefte det.');
+    return;
+  }
   if(!confirm('Bekrefte at du har sett framgangen på dette trinnet?')) return;
   await window._update(fgRef('workPlanProgress/'+_studentKey+'/'+planKey+'/steps/'+cur),
     { guardianApproved:true, guardianApprovedTs:Date.now() });

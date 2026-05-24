@@ -552,6 +552,9 @@
   .ap-detail-goal .g{font-size:.95rem;font-weight:700;color:var(--teal-dark);line-height:1.5;}
   .ap-req{display:flex;gap:11px;align-items:flex-start;background:var(--white);border:2px solid var(--border);
     border-radius:14px;padding:.8rem;margin-bottom:.65rem;}
+  .ap-goalcheck{display:flex;gap:11px;align-items:center;background:var(--teal-light);
+    border:2px solid var(--teal);border-radius:14px;padding:.8rem;margin-bottom:.9rem;}
+  .ap-goalcheck .ap-req-text{color:var(--teal-dark);font-size:.95rem;}
   .ap-check{width:30px;height:30px;border-radius:9px;border:2.5px solid var(--teal);flex-shrink:0;
     display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;
     background:var(--white);color:#fff;}
@@ -1360,15 +1363,16 @@ function apRenderStepDetail(){
          +apEsc(st.goal).replace(/\n/g,'<br>')+'</div></div>';
   }
   const reqs=st.reqs||[];
-  // Første gang eleven åpner trinnet vises bare læringsmålene. Arbeidskravene
-  // kommer fram når eleven bekrefter «Jeg har lest læringsmålene».
-  const goalsGate = isActive && st.goal && !ss.goalsRead;
-  if(goalsGate){
-    html+='<div class="info-box">👆 Les læringsmålene over. Når du har lest dem, '
-         +'henter du fram arbeidskravene.</div>';
-    html+='<button onclick="apMarkGoalsRead()" class="big-btn bb-teal" style="margin-top:.4rem">'
-         +'✅ Jeg har lest læringsmålene</button>';
-  } else {
+  const goalsRead=!!ss.goalsRead;
+  // På aktivt trinn vises alltid «Jeg har lest læringsmålene». Avkrysningen blir
+  // uaktiv (grå) etter at den er huket av – og arbeidskravene kommer fram da.
+  if(isActive && st.goal){
+    html+=`<div class="ap-goalcheck">
+      <div class="ap-check${goalsRead?' on ro':''}" ${goalsRead?'':'onclick="apMarkGoalsRead()"'}>${goalsRead?'✓':''}</div>
+      <div class="ap-req-text">Jeg har lest læringsmålene</div>
+    </div>`;
+  }
+  if(goalsRead || !(isActive && st.goal)){
     if(reqs.length){
       html+='<div class="section-title" style="margin-top:.3rem">✅ Arbeidskrav</div>';
       reqs.forEach((r,j)=>{
@@ -1395,15 +1399,20 @@ function apRenderStepDetail(){
         html+='<div class="ap-status-box ap-status-ok">✓ Læreren har godkjent trinnet ditt!</div>';
       } else {
         const nDone=reqs.filter((r,j)=>checks[j]).length;
-        const allChecked=reqs.length>0 && nDone===reqs.length;
+        const allChecked=reqs.every((r,j)=>checks[j]);
         html+='<div class="ap-status-box ap-status-wait">'
              +(allChecked?'🌟 Alt er huket av! Vis arbeidet til læreren og scan godkjennings-QR-en.'
-                         :`Huk av etter hvert som du blir ferdig (${nDone}/${reqs.length}).`)
+                         :`Huk av alle arbeidskravene først – da kan du scanne godkjenning (${nDone}/${reqs.length}).`)
              +'</div>';
-        html+='<button onclick="startScan(\'wpapprove\')" class="big-btn bb-teal" style="margin-top:.85rem">'
+        html+='<button onclick="startScan(\'wpapprove\')" class="big-btn bb-teal" '
+             +(allChecked?'':'disabled ')
+             +'style="margin-top:.85rem'+(allChecked?'':';opacity:.45;cursor:not-allowed')+'">'
              +'📷 Scan godkjenning fra læreren</button>';
       }
     }
+  } else {
+    html+='<div class="info-box">👆 Huk av «Jeg har lest læringsmålene» når du har lest dem '
+         +'– da kommer arbeidskravene fram.</div>';
   }
   html+='<button onclick="apBack()" class="ap-detail-back" style="width:100%;margin-top:1rem;background:var(--white);'
        +'border:2px solid var(--border);color:var(--muted);padding:12px;border-radius:12px;'
@@ -1477,9 +1486,13 @@ async function doWpApproveScan(){
   if(ss.teacherApproved){
     showSuccess('✅','Allerede godkjent','','Læreren har alt godkjent dette trinnet'); return;
   }
+  const step=steps[cur];
+  if(!(step.reqs||[]).every((r,j)=>(ss.checks||{})[j])){
+    showSuccess('📋','Ikke ferdig ennå','','Huk av alle arbeidskravene på trinnet ditt før du scanner godkjenning.');
+    return;
+  }
   await window._update(fbRef('workPlanProgress/'+sk+'/'+planKey+'/steps/'+cur),
     { teacherApproved:true, teacherApprovedTs:Date.now() });
-  const step=steps[cur];
   const completed=await apCheckCompletion(planKey);
   if(completed){
     showSuccess('🎉','Trinn fullført!', (step.bonus>0?'+🪙 '+step.bonus:''),
