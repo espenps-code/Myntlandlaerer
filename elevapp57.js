@@ -132,7 +132,7 @@ async function checkAndPaySavingsInterest57(s) {
 // ── SCREENS ────────────────────────────────────────────────────────────────
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function goToSplash(){stopScan();window._loginIntent=null;window._currentStudent=null;window._preselectedStudent=null;currentPin='';transactions=[];const pre=document.getElementById('login-preselect');if(pre)pre.style.display='none';const btn=document.getElementById('login-scan-btn');if(btn)btn.style.display='block';const card=document.getElementById('login-card');if(card)card.style.display='none';const sub=document.getElementById('login-subtitle');if(sub)sub.textContent='Scan bankkortet ditt for å logge inn';showScreen('screen-splash');}
-function selectRole(){window._loginIntent=null;showScreen('screen-login');}
+function selectRole(){window._loginIntent=null;showScreen('screen-login');recallLoginCard();}
 
 // ── ARBEIDSPLAN ─────────────────────────────────────────────────────────────
 let _apPlanKey=null;     // valgt fag (workPlan-nøkkel)
@@ -167,6 +167,7 @@ function goToArbeidsplan(){
   window._loginIntent='arbeidsplan';
   document.getElementById('login-subtitle').textContent='Scan bankkortet ditt for å se arbeidsplanen';
   showScreen('screen-login');
+  recallLoginCard();
 }
 function apActivePlans(){
   const s=window._currentStudent; if(!s) return [];
@@ -469,10 +470,35 @@ function goToMyntjakten(){window.location.href='myntjakten.html?from=elevapp57';
 // Kort-scan er påkrevd. PIN-en må matche nøyaktig den eleven kortet tilhører.
 window._preselectedStudent=null;
 
-function handleLoginCardScan(fbKey){
+// ── Husk scannet kort i 60 min ─────────────────────────────────────────────
+// Eleven slipper å scanne på nytt ved hver innlogging. Bare kort-ID lagres,
+// aldri PIN-en. Etter 60 min (regnet fra skanningen) må kortet scannes igjen.
+var _CARD_KEY_57='myntland_loginCard_57';
+function rememberLoginCard(fbKey){
+  try{ localStorage.setItem(_CARD_KEY_57, JSON.stringify({fbKey:fbKey,exp:Date.now()+60*60*1000})); }catch(e){}
+}
+function forgetLoginCard(){
+  try{ localStorage.removeItem(_CARD_KEY_57); }catch(e){}
+}
+function recallLoginCard(){
+  try{
+    var raw=localStorage.getItem(_CARD_KEY_57);
+    if(!raw) return false;
+    var d=JSON.parse(raw);
+    if(!d||!d.fbKey||!d.exp||Date.now()>d.exp){ forgetLoginCard(); return false; }
+    var all=window._allStudents||[];
+    if(!all.length) return false;
+    if(!all.some(function(x){return x.fbKey===d.fbKey;})){ forgetLoginCard(); return false; }
+    handleLoginCardScan(d.fbKey);
+    return true;
+  }catch(e){ return false; }
+}
+
+function handleLoginCardScan(fbKey,fromScan){
   const s=(window._allStudents||[]).find(x=>x.fbKey===fbKey);
   if(!s){showSuccess('❌','Ukjent kort','','Be læreren om et nytt kort');return;}
   window._preselectedStudent=s;
+  if(fromScan) rememberLoginCard(fbKey);
   document.getElementById('login-preselect-name').textContent=s.firstname+' '+s.lastname.charAt(0)+'.';
   document.getElementById('login-preselect').style.display='block';
   document.getElementById('login-scan-btn').style.display='none';
@@ -484,6 +510,7 @@ function handleLoginCardScan(fbKey){
 }
 
 function clearPreselected(){
+  forgetLoginCard();
   window._preselectedStudent=null;
   document.getElementById('login-preselect').style.display='none';
   document.getElementById('login-scan-btn').style.display='block';
@@ -1680,7 +1707,7 @@ function handleScan(text){
       fbKey:   raw.fbKey, name: raw.name, price: raw.price, emoji: raw.emoji,
       pay:     raw.pay,   title: raw.title
     } : raw;
-    if(scanMode==='loginCard'&&d.type==='login'&&d.fbKey){handleLoginCardScan(d.fbKey);}
+    if(scanMode==='loginCard'&&d.type==='login'&&d.fbKey){handleLoginCardScan(d.fbKey,true);}
     else if(scanMode==='loginShop'&&d.type==='login'&&d.fbKey){handleShopLoginCardScan(d.fbKey);}
     else if(scanMode==='payment'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
     else if(scanMode==='reward'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc);

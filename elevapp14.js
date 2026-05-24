@@ -192,6 +192,7 @@ function applyLoginMode() {
     if (subtitle) subtitle.textContent = 'Scan bankkortet ditt for å logge inn';
     if (scanBtn)  scanBtn.style.display = 'block';
     if (card)     card.style.display = 'none';
+    recallLoginCard();
   } else {
     if (subtitle) subtitle.textContent = 'Tast inn din 4-sifrede PIN-kode';
     if (scanBtn)  scanBtn.style.display = 'none';
@@ -213,13 +214,38 @@ function resetLoginScreen() {
   }
 }
 
-function handleLoginCardScan(fbKey) {
+// ── Husk scannet kort i 60 min (QR+PIN-modus) ──────────────────────────────
+// Eleven slipper å scanne på nytt ved hver innlogging. Bare kort-ID lagres,
+// aldri PIN-en. Etter 60 min (regnet fra skanningen) må kortet scannes igjen.
+var _CARD_KEY_14='myntland_loginCard_14';
+function rememberLoginCard(fbKey){
+  try{ localStorage.setItem(_CARD_KEY_14, JSON.stringify({fbKey:fbKey,exp:Date.now()+60*60*1000})); }catch(e){}
+}
+function forgetLoginCard(){
+  try{ localStorage.removeItem(_CARD_KEY_14); }catch(e){}
+}
+function recallLoginCard(){
+  try{
+    var raw=localStorage.getItem(_CARD_KEY_14);
+    if(!raw) return false;
+    var d=JSON.parse(raw);
+    if(!d||!d.fbKey||!d.exp||Date.now()>d.exp){ forgetLoginCard(); return false; }
+    var all=window._allStudents||[];
+    if(!all.length) return false;
+    if(!all.some(function(x){return x.fbKey===d.fbKey;})){ forgetLoginCard(); return false; }
+    handleLoginCardScan(d.fbKey);
+    return true;
+  }catch(e){ return false; }
+}
+
+function handleLoginCardScan(fbKey, fromScan) {
   const s = (window._allStudents || []).find(x => x.fbKey === fbKey);
   if (!s) {
     showSuccess('❌','Ukjent kort','','Be læreren om et nytt kort');
     return;
   }
   window._preselectedStudent = s;
+  if (fromScan) rememberLoginCard(fbKey);
   document.getElementById('login-preselect-name').textContent =
     s.firstname + ' ' + (s.lastname ? s.lastname.charAt(0) + '.' : '');
   document.getElementById('login-preselect').style.display = 'block';
@@ -232,6 +258,7 @@ function handleLoginCardScan(fbKey) {
 }
 
 function clearPreselected() {
+  forgetLoginCard();
   window._preselectedStudent = null;
   document.getElementById('login-preselect').style.display = 'none';
   document.getElementById('login-scan-btn').style.display = 'block';
@@ -1184,7 +1211,7 @@ function handleScanResult(text) {
       if (data.type === 'login' && data.fbKey) {
         playScanBeep();
         stopScan();
-        handleLoginCardScan(data.fbKey);
+        handleLoginCardScan(data.fbKey, true);
         return;
       }
     } else if (scanMode === 'cashierCustomerCard') {
