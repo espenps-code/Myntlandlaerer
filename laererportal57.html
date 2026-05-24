@@ -817,6 +817,15 @@
   .wp-step-edit{background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.85rem;}
   .wp-step-edit-head{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;}
   .wp-step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:#fff;font-family:'Fredoka One',cursive;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+  .wp-step-done{display:flex;align-items:center;gap:10px;background:var(--teal-light);border:1.5px solid var(--border);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;}
+  .wp-publish-hint{font-size:.8rem;color:var(--muted);font-weight:700;margin:.25rem 0 .6rem;}
+  .wp-cat-pill{display:inline-flex;align-items:center;gap:7px;font-family:'Fredoka One',cursive;font-size:1rem;padding:8px 20px;border-radius:999px;margin:.25rem 0 1rem;}
+  .wp-cat-pill.aktiv{background:var(--teal-light);color:var(--teal-dark);}
+  .wp-cat-pill.kladd{background:var(--amber-light);color:#854F0B;}
+  .wp-cat-pill:not(:first-child){margin-top:1.5rem;}
+  .wp-cat-empty{color:var(--muted);font-size:.86rem;font-weight:600;padding:.25rem 0 .5rem;}
+  button.btn:disabled{opacity:.45;cursor:not-allowed;}
+  button.btn:disabled:hover{transform:none;box-shadow:none;}
   .wp-req-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;}
   .wp-req-row .wp-req-fields{flex:1;display:grid;grid-template-columns:1fr;gap:5px;}
   .wp-mini-label{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
@@ -1641,10 +1650,12 @@
   <div class="page-title">🪜 Arbeidsplan</div>
   <div class="page-subtitle">Læringsmål i en trapp – elevene jobber seg oppover, ett trinn om gangen.</div>
 
+  <div id="wp-list"></div>
+
   <div class="card" style="background:var(--teal-light);border-color:var(--teal);">
     <div class="card-title">ℹ️ Slik fungerer arbeidsplaner</div>
     <p style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.55;margin-bottom:1rem;">
-      Lag én trapp per fag med 3–6 trinn. Hvert trinn har arbeidskrav (med valgfrie bilder og lenker)
+      Lag én trapp per fag med 3–6 trinn. Hvert trinn har arbeidskrav med valgfrie lenker,
       og en bonus eleven får på kontoen når trinnet er godkjent. Eleven ser bare ett aktivt trinn om
       gangen og må få det godkjent før neste låses opp. Du velger om hvert trinn skal godkjennes av
       bare deg, eller av deg <em>og</em> en foresatt.
@@ -1652,6 +1663,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="openPlanEditor(null)"><i class="ti ti-plus"></i> Ny arbeidsplan</button>
       <button class="btn btn-amber" onclick="openGuardianLetters()">📨 Lag foresattbrev</button>
+      <button class="btn btn-amber" onclick="showWpQR()">📱 Godkjennings-QR</button>
     </div>
   </div>
 
@@ -1669,17 +1681,20 @@
         <option value="7. klasse">7. klasse</option>
       </select>
     </div>
-    <div style="font-weight:800;color:var(--teal-dark);margin:1rem 0 .5rem;">Trinn i trappa (3–6)</div>
+    <div style="font-weight:800;color:var(--teal-dark);margin:1.25rem 0 .5rem;">Trinn i trappa</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
+      Fyll ut ett trinn om gangen. Trykk «Lagre trinnet» når du er ferdig – da legger
+      det seg sammen, og neste trinn kommer opp. En trapp trenger 3–6 trinn for å publiseres.
+    </p>
     <div id="wp-steps-container"></div>
-    <button class="btn btn-ghost btn-sm" id="wp-add-step-btn" onclick="wpAddStep()"><i class="ti ti-plus"></i> Legg til trinn</button>
     <div id="wp-editor-alert" style="margin-top:1rem;"></div>
-    <div class="modal-actions" style="justify-content:flex-start;">
-      <button class="btn btn-primary" onclick="savePlan()">💾 Lagre arbeidsplan</button>
+    <div class="modal-actions" style="justify-content:flex-start;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="savePlan(false)">💾 Lagre kladd</button>
+      <button class="btn btn-primary" id="wp-publish-btn" onclick="savePlan(true)">🚀 Publiser for elevene</button>
       <button class="btn btn-ghost" onclick="closePlanEditor()">Avbryt</button>
     </div>
   </div>
 
-  <div id="wp-list"></div>
 </div>
 
 <!-- Modal: Hendelse QR -->
@@ -1725,6 +1740,25 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-wp-letters')">Lukk</button>
       <button class="btn btn-primary" id="wp-letters-print-btn" onclick="printGuardianLetters()">🖨️ Skriv ut alle brev</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Arbeidsplan – godkjennings-QR -->
+<div class="modal-overlay" id="modal-wp-qr">
+  <div class="modal" style="max-width:420px;text-align:center;">
+    <div class="modal-title" id="modal-wp-qr-title">📱 Godkjennings-QR</div>
+    <p style="font-size:.86rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
+      Én QR for alle fag og arbeidsplaner. Skriv den ut og vis den til elever som
+      har fullført arbeidet sitt. Eleven scanner den fra trinnet sitt i elevappen,
+      og akkurat det trinnet blir godkjent av lærer.
+    </p>
+    <div style="display:flex;justify-content:center;margin-bottom:1rem;">
+      <div id="modal-wp-qr-box" style="background:white;padding:10px;border-radius:10px;border:2px solid var(--border);display:inline-block;"></div>
+    </div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" onclick="printWpQR()">🖨️ Skriv ut</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-wp-qr')">Lukk</button>
     </div>
   </div>
 </div>
@@ -3438,6 +3472,7 @@ function renderClassGoalsPage() {
 // ════════════════════════════════════════════════════════════
 let _wpEditKey = null;     // firebase-nøkkel som redigeres (null = ny plan)
 let _wpEditSteps = [];     // arbeidskopi av trinn under redigering
+let _wpActiveStep = -1;    // hvilket trinn som er åpent for redigering (-1 = ingen)
 let _wpApproveKey = null;  // plan-nøkkel åpen i godkjenn-modalen
 
 function wpEscAttr(s){
@@ -3469,6 +3504,7 @@ function wpBlankStep(){
 }
 
 // ── EDITOR ──────────────────────────────────────────────────
+// Ett trinn redigeres om gangen. Lagrede trinn vises sammenslått øverst.
 function openPlanEditor(planKey){
   _wpEditKey=planKey;
   const ed=document.getElementById('wp-editor');
@@ -3487,123 +3523,203 @@ function openPlanEditor(planKey){
     if(p.class) clsSel.value=p.class;
     _wpEditSteps=JSON.parse(JSON.stringify(p.steps||[]));
     _wpEditSteps.forEach(st=>{ if(!st.reqs||!st.reqs.length) st.reqs=[{text:'',img:'',link:''}]; });
+    if(!_wpEditSteps.length){ _wpEditSteps=[wpBlankStep()]; _wpActiveStep=0; }
+    else { _wpActiveStep=-1; }   // lagrede trinn vises sammenslått
   } else {
     document.getElementById('wp-editor-title').textContent='➕ Ny arbeidsplan';
     document.getElementById('wp-emoji').value='📘';
     document.getElementById('wp-subject').value='';
-    _wpEditSteps=[wpBlankStep(),wpBlankStep(),wpBlankStep()];
+    _wpEditSteps=[wpBlankStep()];
+    _wpActiveStep=0;
   }
   wpRenderSteps();
   ed.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function closePlanEditor(){
   document.getElementById('wp-editor').style.display='none';
-  _wpEditKey=null; _wpEditSteps=[];
+  _wpEditKey=null; _wpEditSteps=[]; _wpActiveStep=-1;
 }
 function wpEdAlert(msg,type){
   document.getElementById('wp-editor-alert').innerHTML=
     `<div class="alert alert-${type==='error'?'error':'success'}">${type==='error'?'⚠️':'✅'} ${msg}</div>`;
 }
-function wpReadEditorSteps(){
-  const blocks=document.querySelectorAll('#wp-steps-container .wp-step-edit');
-  _wpEditSteps=Array.from(blocks).map(b=>({
+// Les det ÅPNE trinnet fra DOM inn i _wpEditSteps.
+function wpCaptureActiveStep(){
+  if(_wpActiveStep<0) return;
+  const b=document.querySelector('#wp-steps-container .wp-step-edit');
+  if(!b) return;
+  _wpEditSteps[_wpActiveStep]={
     title:b.querySelector('.wp-step-title').value.trim(),
     goal: b.querySelector('.wp-step-goal').value,
     bonus:parseInt(b.querySelector('.wp-step-bonus').value)||0,
     approval:b.querySelector('.wp-step-approval').value,
     reqs:Array.from(b.querySelectorAll('.wp-req-row')).map(r=>({
       text:r.querySelector('.wp-req-text').value.trim(),
-      img: r.querySelector('.wp-req-img').value.trim(),
       link:r.querySelector('.wp-req-link').value.trim()
     }))
-  }));
+  };
 }
 function wpAddStep(){
-  wpReadEditorSteps();
+  wpCaptureActiveStep();
   if(_wpEditSteps.length>=6){ wpEdAlert('En trapp kan ha maks 6 trinn.','error'); return; }
-  _wpEditSteps.push(wpBlankStep()); wpRenderSteps();
+  _wpEditSteps.push(wpBlankStep());
+  _wpActiveStep=_wpEditSteps.length-1;
+  wpRenderSteps();
+  document.getElementById('wp-editor-alert').innerHTML='';
 }
-function wpRemoveStep(i){
-  wpReadEditorSteps();
-  if(_wpEditSteps.length<=3){ wpEdAlert('En trapp må ha minst 3 trinn.','error'); return; }
-  _wpEditSteps.splice(i,1); wpRenderSteps();
+// Lagre det åpne trinnet → slå det sammen, og åpne neste tomme trinn.
+function wpSaveStep(){
+  wpCaptureActiveStep();
+  const st=_wpEditSteps[_wpActiveStep];
+  if(!st || !st.title){ wpEdAlert('Gi trinnet en tittel før du lagrer det.','error'); return; }
+  _wpActiveStep=-1;
+  if(_wpEditSteps.length<6){
+    _wpEditSteps.push(wpBlankStep());
+    _wpActiveStep=_wpEditSteps.length-1;
+  }
+  wpRenderSteps();
+  document.getElementById('wp-editor-alert').innerHTML='';
+}
+function wpEditStep(i){
+  wpCaptureActiveStep();
+  _wpActiveStep=i;
+  wpRenderSteps();
+  document.getElementById('wp-editor-alert').innerHTML='';
+}
+function wpDiscardStep(i){
+  const st=_wpEditSteps[i];
+  if((st&&st.title||'').trim() && !confirm('Forkaste trinn '+(i+1)+'?')) return;
+  _wpEditSteps.splice(i,1);
+  if(_wpActiveStep===i) _wpActiveStep=-1;
+  else if(_wpActiveStep>i) _wpActiveStep--;
+  wpRenderSteps();
 }
 function wpAddReq(stepIdx){
-  wpReadEditorSteps();
-  _wpEditSteps[stepIdx].reqs.push({text:'',img:'',link:''}); wpRenderSteps();
+  wpCaptureActiveStep();
+  _wpEditSteps[stepIdx].reqs.push({text:'',img:'',link:''});
+  wpRenderSteps();
 }
 function wpRemoveReq(stepIdx,reqIdx){
-  wpReadEditorSteps();
+  wpCaptureActiveStep();
   _wpEditSteps[stepIdx].reqs.splice(reqIdx,1);
   if(!_wpEditSteps[stepIdx].reqs.length) _wpEditSteps[stepIdx].reqs.push({text:'',img:'',link:''});
   wpRenderSteps();
 }
+// Sammenslått rad for et lagret trinn.
+function wpStepRowHTML(st,i){
+  const t=(st.title||'').trim();
+  const nReq=(st.reqs||[]).filter(r=>r.text||r.link).length;
+  const titleHtml=t ? wpEscAttr(t)
+    : '<span style="color:var(--muted);font-weight:600;">Trinn uten tittel</span>';
+  return `<div class="wp-step-done">
+    <div class="wp-step-num">${i+1}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:800;color:var(--teal-dark);">${titleHtml}</div>
+      <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
+        ${nReq} arbeidskrav · ${st.approval==='both'?'lærer + foresatt':'bare lærer'}${st.bonus?' · 🪙 '+st.bonus:''}
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="wpEditStep(${i})">✏️ Rediger</button>
+    <button class="btn btn-coral btn-sm" onclick="wpDiscardStep(${i})" title="Forkast trinn">🗑️</button>
+  </div>`;
+}
+// Utvidet redigering for det åpne trinnet.
+function wpStepEditorHTML(st,i){
+  return `<div class="wp-step-edit">
+    <div class="wp-step-edit-head">
+      <div class="wp-step-num">${i+1}</div>
+      <input type="text" class="wp-step-title" placeholder="Tittel, f.eks. Addisjon"
+             value="${wpEscAttr(st.title)}" style="flex:1;">
+    </div>
+    <div class="form-row">
+      <label>Læringsmål – hva eleven skal mestre</label>
+      <textarea class="wp-step-goal" placeholder="Jeg kan …">${wpEscAttr(st.goal)}</textarea>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Bonus når trinnet er fullført (mynter)</label>
+        <input type="number" class="wp-step-bonus" min="0" value="${st.bonus||0}"></div>
+      <div class="form-row"><label>Hvem må godkjenne?</label>
+        <select class="wp-step-approval">
+          <option value="teacher"${st.approval!=='both'?' selected':''}>Bare lærer</option>
+          <option value="both"${st.approval==='both'?' selected':''}>Lærer + foresatt</option>
+        </select></div>
+    </div>
+    <div class="wp-mini-label" style="margin-bottom:6px;">Arbeidskrav</div>
+    ${(st.reqs||[]).map((r,j)=>`
+      <div class="wp-req-row">
+        <div class="wp-req-fields">
+          <input type="text" class="wp-req-text" placeholder="Arbeidskrav, f.eks. Gjør oppgave 1–8 på s. 24" value="${wpEscAttr(r.text)}">
+          <input type="text" class="wp-req-link" placeholder="🔗 Lenke-URL (valgfritt)" value="${wpEscAttr(r.link)}">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="wpRemoveReq(${i},${j})" title="Fjern arbeidskrav">✕</button>
+      </div>`).join('')}
+    <button class="btn btn-ghost btn-sm" onclick="wpAddReq(${i})"><i class="ti ti-plus"></i> Legg til arbeidskrav</button>
+    <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap;border-top:1.5px dashed var(--border);padding-top:1rem;">
+      <button class="btn btn-primary btn-sm" onclick="wpSaveStep()">💾 Lagre trinnet</button>
+      <button class="btn btn-ghost btn-sm" onclick="wpDiscardStep(${i})">🗑️ Forkast trinnet</button>
+    </div>
+  </div>`;
+}
 function wpRenderSteps(){
   const cont=document.getElementById('wp-steps-container');
-  cont.innerHTML=_wpEditSteps.map((st,i)=>`
-    <div class="wp-step-edit">
-      <div class="wp-step-edit-head">
-        <div class="wp-step-num">${i+1}</div>
-        <input type="text" class="wp-step-title" placeholder="Tittel, f.eks. Addisjon"
-               value="${wpEscAttr(st.title)}" style="flex:1;">
-        <button class="btn btn-coral btn-sm" onclick="wpRemoveStep(${i})" title="Fjern trinn">🗑️</button>
-      </div>
-      <div class="form-row">
-        <label>Læringsmål – hva eleven skal mestre</label>
-        <textarea class="wp-step-goal" placeholder="Jeg kan …">${wpEscAttr(st.goal)}</textarea>
-      </div>
-      <div class="form-grid">
-        <div class="form-row"><label>Bonus når trinnet er fullført (mynter)</label>
-          <input type="number" class="wp-step-bonus" min="0" value="${st.bonus||0}"></div>
-        <div class="form-row"><label>Hvem må godkjenne?</label>
-          <select class="wp-step-approval">
-            <option value="teacher"${st.approval!=='both'?' selected':''}>Bare lærer</option>
-            <option value="both"${st.approval==='both'?' selected':''}>Lærer + foresatt</option>
-          </select></div>
-      </div>
-      <div class="wp-mini-label" style="margin-bottom:6px;">Arbeidskrav</div>
-      ${(st.reqs||[]).map((r,j)=>`
-        <div class="wp-req-row">
-          <div class="wp-req-fields">
-            <input type="text" class="wp-req-text" placeholder="Arbeidskrav, f.eks. Gjør oppgave 1–8 på s. 24" value="${wpEscAttr(r.text)}">
-            <input type="text" class="wp-req-img"  placeholder="🖼️ Bilde-URL (valgfritt)" value="${wpEscAttr(r.img)}">
-            <input type="text" class="wp-req-link" placeholder="🔗 Lenke-URL (valgfritt)" value="${wpEscAttr(r.link)}">
-          </div>
-          <button class="btn btn-ghost btn-sm" onclick="wpRemoveReq(${i},${j})" title="Fjern arbeidskrav">✕</button>
-        </div>`).join('')}
-      <button class="btn btn-ghost btn-sm" onclick="wpAddReq(${i})"><i class="ti ti-plus"></i> Arbeidskrav</button>
-    </div>`).join('');
-  document.getElementById('wp-add-step-btn').style.display=_wpEditSteps.length>=6?'none':'';
+  let html='';
+  _wpEditSteps.forEach((st,i)=>{
+    html+=(i===_wpActiveStep) ? wpStepEditorHTML(st,i) : wpStepRowHTML(st,i);
+  });
+  if(_wpActiveStep<0 && _wpEditSteps.length<6){
+    html+='<button class="btn btn-ghost btn-sm" onclick="wpAddStep()"><i class="ti ti-plus"></i> Legg til trinn</button>';
+  }
+  const titled=_wpEditSteps.filter(s=>(s.title||'').trim()).length;
+  html+='<div class="wp-publish-hint">'+(titled<3
+      ? '📝 '+titled+' av 3 trinn lagret. Trappa kan publiseres når minst 3 trinn er lagret.'
+      : '✅ '+titled+' trinn lagret – klar til å publiseres.')+'</div>';
+  cont.innerHTML=html;
+  const pubBtn=document.getElementById('wp-publish-btn');
+  if(pubBtn){
+    pubBtn.disabled=titled<3;
+    pubBtn.title=titled<3?'Lagre minst 3 trinn for å publisere':'Publiser arbeidsplanen for elevene';
+  }
 }
-async function savePlan(){
+// publish=true → synlig for elevene. publish=false → lagre som kladd.
+async function savePlan(publish){
   if(!ready()){ wpEdAlert('Firebase ikke klar – prøv igjen om et øyeblikk.','error'); return; }
-  wpReadEditorSteps();
+  wpCaptureActiveStep();
   const emoji=document.getElementById('wp-emoji').value.trim()||'📘';
   const subject=document.getElementById('wp-subject').value.trim();
   const cls=document.getElementById('wp-class').value;
   if(!subject){ wpEdAlert('Skriv inn hvilket fag arbeidsplanen gjelder.','error'); return; }
-  if(_wpEditSteps.length<3){ wpEdAlert('En trapp må ha minst 3 trinn.','error'); return; }
-  for(let i=0;i<_wpEditSteps.length;i++){
-    if(!_wpEditSteps[i].title){ wpEdAlert(`Trinn ${i+1} mangler tittel.`,'error'); return; }
+  // Behold kun trinn med tittel (tomme «neste trinn» faller bort).
+  const steps=_wpEditSteps
+    .filter(s=>(s.title||'').trim())
+    .map(st=>({
+      title:st.title.trim(), goal:st.goal||'', bonus:st.bonus||0, approval:st.approval||'teacher',
+      reqs:(st.reqs||[]).filter(r=>r.text||r.link)
+        .map(r=>({text:r.text||'',link:r.link||''}))
+    }));
+  if(publish && steps.length<3){
+    wpEdAlert('Du må ha minst 3 lagrede trinn for å publisere.','error'); return;
   }
-  const steps=_wpEditSteps.map(st=>({
-    title:st.title, goal:st.goal||'', bonus:st.bonus||0, approval:st.approval||'teacher',
-    reqs:(st.reqs||[]).filter(r=>r.text||r.img||r.link)
-      .map(r=>({text:r.text||'',img:r.img||'',link:r.link||''}))
-  }));
+  if(steps.length>6){ wpEdAlert('En trapp kan ha maks 6 trinn.','error'); return; }
+  const ex=_wpEditKey?((window._workPlans||[]).find(x=>x.fbKey===_wpEditKey)||{}):{};
+  const willActive = publish ? true : (_wpEditKey ? (ex.active!==false) : false);
   if(_wpEditKey){
-    const ex=(window._workPlans||[]).find(x=>x.fbKey===_wpEditKey)||{};
     await window._update(fbRef('workPlans/'+_wpEditKey),
-      { emoji, subject, class:cls, steps, active: ex.active!==false });
+      { emoji, subject, class:cls, steps, active:willActive });
   } else {
     await window._set(window._push(fbRef('workPlans')),
-      { emoji, subject, class:cls, steps, active:true, created:Date.now() });
+      { emoji, subject, class:cls, steps, active:willActive, created:Date.now() });
   }
   closePlanEditor();
 }
 async function togglePlanActive(planKey){
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
-  await window._update(fbRef('workPlans/'+planKey), { active: !(p.active!==false) });
+  const turningOn=!(p.active!==false);
+  if(turningOn && (p.steps||[]).length<3){
+    alert('Arbeidsplanen må ha minst 3 trinn før den kan publiseres. Åpne den og legg til flere trinn.');
+    renderWorkPlans();
+    return;
+  }
+  await window._update(fbRef('workPlans/'+planKey), { active: turningOn });
 }
 async function deletePlan(planKey){
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey);
@@ -3624,36 +3740,48 @@ function renderWorkPlans(){
     el.innerHTML='<div class="card" style="text-align:center;color:var(--muted);">'
       +'<div style="font-size:2.4rem;margin-bottom:.4rem;">🪜</div>'
       +'<div style="font-weight:800;">Ingen arbeidsplaner ennå</div>'
-      +'<div style="font-size:.86rem;margin-top:4px;">Trykk «Ny arbeidsplan» for å lage den første trappa.</div></div>';
+      +'<div style="font-size:.86rem;margin-top:4px;">Bruk «Ny arbeidsplan»-knappen under for å lage den første trappa.</div></div>';
     return;
   }
-  el.innerHTML=plans.map(p=>{
-    const students=wpStudentsInClass(p.class);
-    const nSteps=(p.steps||[]).length;
-    let done=0;
-    students.forEach(s=>{ if((wpGetProgress(s.fbKey,p.fbKey).current||0)>=nSteps && nSteps>0) done++; });
-    const active=p.active!==false;
-    return `<div class="wp-plan-card${active?'':' inactive'}">
-      <div class="wp-plan-head">
-        <div class="wp-plan-emoji">${p.emoji||'📘'}</div>
-        <div style="flex:1;min-width:140px;">
-          <div style="font-weight:800;font-size:1.05rem;color:var(--teal-dark);">${wpEscAttr(p.subject)}</div>
-          <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:2px;">
-            <span class="class-badge">${p.class}</span> · ${nSteps} trinn · ${students.length} elever · ${done} fullført
-          </div>
+  const active=plans.filter(p=>p.active!==false);
+  const drafts=plans.filter(p=>p.active===false);
+  let html='';
+  html+='<div class="wp-cat-pill aktiv">✅ Aktive arbeidsplaner ('+active.length+')</div>';
+  html+= active.length
+    ? active.map(wpPlanCardHTML).join('')
+    : '<div class="wp-cat-empty">Ingen publiserte arbeidsplaner ennå.</div>';
+  html+='<div class="wp-cat-pill kladd">📝 Ikke publisert ('+drafts.length+')</div>';
+  html+= drafts.length
+    ? drafts.map(wpPlanCardHTML).join('')
+    : '<div class="wp-cat-empty">Ingen kladder.</div>';
+  el.innerHTML=html;
+}
+function wpPlanCardHTML(p){
+  const students=wpStudentsInClass(p.class);
+  const nSteps=(p.steps||[]).length;
+  let done=0;
+  students.forEach(s=>{ if((wpGetProgress(s.fbKey,p.fbKey).current||0)>=nSteps && nSteps>0) done++; });
+  const active=p.active!==false;
+  return `<div class="wp-plan-card${active?'':' inactive'}">
+    <div class="wp-plan-head">
+      <div class="wp-plan-emoji">${p.emoji||'📘'}</div>
+      <div style="flex:1;min-width:140px;">
+        <div style="font-weight:800;font-size:1.05rem;color:var(--teal-dark);">${wpEscAttr(p.subject)}</div>
+        <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:2px;">
+          <span class="class-badge">${p.class}</span> · ${nSteps} trinn · ${students.length} elever · ${done} fullført
         </div>
-        <label class="wp-toggle" title="${active?'Aktiv – synlig for elevene':'Skjult for elevene'}">
-          <input type="checkbox" ${active?'checked':''} onchange="togglePlanActive('${p.fbKey}')">
-          <span class="wp-slider"></span>
-        </label>
       </div>
-      <div class="wp-plan-actions">
-        <button class="btn btn-primary btn-sm" onclick="openApprove('${p.fbKey}')">👀 Elevoversikt &amp; godkjenning</button>
-        <button class="btn btn-ghost btn-sm" onclick="openPlanEditor('${p.fbKey}')">✏️ Rediger</button>
-        <button class="btn btn-coral btn-sm" onclick="deletePlan('${p.fbKey}')">🗑️ Slett</button>
-      </div>
-    </div>`;
-  }).join('');
+      <label class="wp-toggle" title="${active?'Aktiv – synlig for elevene':'Skjult for elevene'}">
+        <input type="checkbox" ${active?'checked':''} onchange="togglePlanActive('${p.fbKey}')">
+        <span class="wp-slider"></span>
+      </label>
+    </div>
+    <div class="wp-plan-actions">
+      <button class="btn btn-primary btn-sm" onclick="openApprove('${p.fbKey}')">👀 Elevoversikt &amp; godkjenning</button>
+      <button class="btn btn-ghost btn-sm" onclick="openPlanEditor('${p.fbKey}')">✏️ Rediger</button>
+      <button class="btn btn-coral btn-sm" onclick="deletePlan('${p.fbKey}')">🗑️ Slett</button>
+    </div>
+  </div>`;
 }
 
 // ── GODKJENNING ─────────────────────────────────────────────
@@ -3843,6 +3971,59 @@ function printGuardianLetters(){
     +'<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">'
     +'<style>'+css+'</style></head><body>'+pages
     +'<script>setTimeout(function(){window.print();},500);<\/script></body></html>');
+  win.document.close();
+}
+
+// ── GODKJENNINGS-QR ─────────────────────────────────────────
+// Én generell QR for alle arbeidsplaner. Den bærer ingen fag-info –
+// elevappen godkjenner trinnet eleven står på når QR-en scannes.
+function showWpQR(){
+  const payload=JSON.stringify({ type:'wpApprove' });
+  window._wpQrPayload=payload;
+  const box=document.getElementById('modal-wp-qr-box');
+  document.getElementById('modal-wp-qr-title').textContent='📱 Godkjennings-QR';
+  box.innerHTML='<div style="width:230px;height:230px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.8rem;">Genererer QR…</div>';
+  document.getElementById('modal-wp-qr').classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    box.innerHTML='';
+    let ok=false;
+    try {
+      new QRCode(box, { text:payload, width:230, height:230, correctLevel:QRCode.CorrectLevel.M });
+      ok=!!box.querySelector('canvas, img');
+    } catch(e){ ok=false; }
+    if(!ok){
+      box.innerHTML='';
+      const img=new Image(); img.width=230; img.height=230;
+      img.src='https://api.qrserver.com/v1/create-qr-code/?size=230x230&data='+encodeURIComponent(payload);
+      box.appendChild(img);
+    }
+  }));
+}
+function printWpQR(){
+  const payload=window._wpQrPayload || JSON.stringify({ type:'wpApprove' });
+  const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=440x440&margin=8&data='+encodeURIComponent(payload);
+  const win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Godkjennings-QR</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">'
+    +'<style>@page{size:A4;margin:0;}*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:"Nunito",sans-serif;color:#1a2e1a;}'
+    +'.pg{width:210mm;height:297mm;padding:24mm 20mm;display:flex;flex-direction:column;align-items:center;text-align:center;}'
+    +'.top{font-weight:800;color:#1a5fa5;font-size:13pt;letter-spacing:1px;}'
+    +'h1{font-family:"Fredoka One",cursive;font-size:30pt;color:#1e0f52;margin:6mm 0 2mm;}'
+    +'.sub{font-size:14pt;color:#5a7a5a;font-weight:700;margin-bottom:10mm;}'
+    +'.qr{border:3px solid #c8dfc8;border-radius:18px;padding:9mm;}'
+    +'.qr img{display:block;width:118mm;height:118mm;}'
+    +'.note{margin-top:10mm;font-size:12pt;line-height:1.6;max-width:150mm;}'
+    +'.note b{color:#1e0f52;}</style></head><body>'
+    +'<div class="pg"><div class="top">🪙 MYNTLAND · ARBEIDSPLAN</div>'
+    +'<h1>Godkjennings-QR</h1>'
+    +'<div class="sub">Gjelder alle fag og arbeidsplaner</div>'
+    +'<div class="qr"><img src="'+qrUrl+'"></div>'
+    +'<div class="note">Vis denne til elever som har <b>fullført arbeidet</b> på trinnet sitt. '
+    +'Eleven åpner <b>Arbeidsplan</b> i elevappen, går inn på trinnet sitt og trykker '
+    +'<b>«Scan godkjenning fra læreren»</b>. Trinnet eleven står på blir da godkjent av lærer – '
+    +'og fullført dersom det ikke også krever godkjenning hjemmefra.</div></div>'
+    +'<script>setTimeout(function(){window.print();},700);<\/script></body></html>');
   win.document.close();
 }
 
