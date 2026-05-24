@@ -116,6 +116,26 @@
 
     onValue(ref(db, 'hendelser'), onHendelserSnap);
 
+    // ── Arbeidsplaner ─────────────────────────────────────────────────────
+    onValue(ref(db, 'workPlans'), snap => {
+      window._workPlans = snap.val()
+        ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+        : [];
+      if (typeof renderWorkPlans === 'function'
+          && document.getElementById('page-arbeidsplan')?.classList.contains('active'))
+        renderWorkPlans();
+    });
+    onValue(ref(db, 'workPlanProgress'), snap => {
+      window._wpProgress = snap.val() || {};
+      if (typeof renderWorkPlans === 'function'
+          && document.getElementById('page-arbeidsplan')?.classList.contains('active'))
+        renderWorkPlans();
+      if (typeof refreshApproveModal === 'function') refreshApproveModal();
+    });
+    onValue(ref(db, 'guardianCodes'), snap => {
+      window._guardianCodes = snap.val() || {};
+    });
+
     // ── Budsjett-innstillinger (faste utgifter, onsdagshendelser) ─────────
     onValue(ref(db, 'budgetSettings'), snap => {
       window._budgetSettings = snap.val() || { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50, wedEventsEnabled:true };
@@ -780,6 +800,33 @@
     .page-title{font-size:1.5rem;}
   }
   @media(min-width:900px){header nav button{font-size:.92rem;padding:9px 18px;}}
+
+  /* ── ARBEIDSPLAN ─────────────────────────────── */
+  .wp-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;}
+  .wp-toggle input{opacity:0;width:0;height:0;}
+  .wp-slider{position:absolute;cursor:pointer;inset:0;background:#cbd5cb;border-radius:26px;transition:.2s;}
+  .wp-slider::before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .wp-toggle input:checked + .wp-slider{background:#1D9E75;}
+  .wp-toggle input:checked + .wp-slider::before{transform:translateX(20px);}
+  .wp-plan-card{background:var(--white);border-radius:18px;border:2px solid var(--border);padding:1.25rem;margin-bottom:1rem;transition:box-shadow .2s;}
+  .wp-plan-card:hover{box-shadow:0 6px 18px rgba(30,15,82,.07);}
+  .wp-plan-card.inactive{opacity:.62;}
+  .wp-plan-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .wp-plan-emoji{font-size:1.9rem;line-height:1;}
+  .wp-plan-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:1rem;}
+  .wp-step-edit{background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.85rem;}
+  .wp-step-edit-head{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;}
+  .wp-step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:#fff;font-family:'Fredoka One',cursive;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+  .wp-req-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;}
+  .wp-req-row .wp-req-fields{flex:1;display:grid;grid-template-columns:1fr;gap:5px;}
+  .wp-mini-label{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  .wp-approve-row{display:flex;align-items:center;gap:12px;padding:.85rem;border:1.5px solid var(--border);border-radius:12px;margin-bottom:.6rem;flex-wrap:wrap;}
+  .wp-pill{font-size:.74rem;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .wp-pill-ok{background:#dcfce7;color:#15803d;}
+  .wp-pill-wait{background:var(--amber-light);color:#854F0B;}
+  .wp-pill-na{background:var(--bg);color:var(--muted);}
+  .wp-pill-done{background:var(--teal-light);color:var(--teal-dark);}
+  @media(max-width:700px){.wp-req-row .wp-req-fields{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -855,6 +902,7 @@
       <button onclick="showPage('butikk57')" id="nav-butikk57"><i class="ti ti-shopping-cart" aria-hidden="true"></i>Butikk</button>
       <button onclick="showPage('belonninger')" id="nav-belonninger"><i class="ti ti-medal" aria-hidden="true"></i>Belønninger</button>
       <button onclick="showPage('budsjett')" id="nav-budsjett"><i class="ti ti-chart-bar" aria-hidden="true"></i>Budsjett</button>
+      <button onclick="showPage('arbeidsplan')" id="nav-arbeidsplan"><i class="ti ti-stairs-up" aria-hidden="true"></i>Arbeidsplan</button>
       <button onclick="showPage('laerere')" id="nav-laerere" style="display:none"><i class="ti ti-settings" aria-hidden="true"></i>Lærere</button>
     </nav>
   </header>
@@ -1588,6 +1636,52 @@
 </div>
 
 
+<!-- ═══════ ARBEIDSPLAN ═══════ -->
+<div class="page" id="page-arbeidsplan">
+  <div class="page-title">🪜 Arbeidsplan</div>
+  <div class="page-subtitle">Læringsmål i en trapp – elevene jobber seg oppover, ett trinn om gangen.</div>
+
+  <div class="card" style="background:var(--teal-light);border-color:var(--teal);">
+    <div class="card-title">ℹ️ Slik fungerer arbeidsplaner</div>
+    <p style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.55;margin-bottom:1rem;">
+      Lag én trapp per fag med 3–6 trinn. Hvert trinn har arbeidskrav (med valgfrie bilder og lenker)
+      og en bonus eleven får på kontoen når trinnet er godkjent. Eleven ser bare ett aktivt trinn om
+      gangen og må få det godkjent før neste låses opp. Du velger om hvert trinn skal godkjennes av
+      bare deg, eller av deg <em>og</em> en foresatt.
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="openPlanEditor(null)"><i class="ti ti-plus"></i> Ny arbeidsplan</button>
+      <button class="btn btn-amber" onclick="openGuardianLetters()">📨 Lag foresattbrev</button>
+    </div>
+  </div>
+
+  <!-- Plan-editor (skjult til man oppretter/redigerer) -->
+  <div class="card" id="wp-editor" style="display:none;">
+    <div class="card-title" id="wp-editor-title">➕ Ny arbeidsplan</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Ikon (emoji)</label><input type="text" id="wp-emoji" placeholder="📖" maxlength="2"></div>
+      <div class="form-row"><label>Fag</label><input type="text" id="wp-subject" placeholder="f.eks. Norsk"></div>
+    </div>
+    <div class="form-row" id="wp-class-row"><label>Klasse</label>
+      <select id="wp-class">
+        <option value="5. klasse">5. klasse</option>
+        <option value="6. klasse">6. klasse</option>
+        <option value="7. klasse">7. klasse</option>
+      </select>
+    </div>
+    <div style="font-weight:800;color:var(--teal-dark);margin:1rem 0 .5rem;">Trinn i trappa (3–6)</div>
+    <div id="wp-steps-container"></div>
+    <button class="btn btn-ghost btn-sm" id="wp-add-step-btn" onclick="wpAddStep()"><i class="ti ti-plus"></i> Legg til trinn</button>
+    <div id="wp-editor-alert" style="margin-top:1rem;"></div>
+    <div class="modal-actions" style="justify-content:flex-start;">
+      <button class="btn btn-primary" onclick="savePlan()">💾 Lagre arbeidsplan</button>
+      <button class="btn btn-ghost" onclick="closePlanEditor()">Avbryt</button>
+    </div>
+  </div>
+
+  <div id="wp-list"></div>
+</div>
+
 <!-- Modal: Hendelse QR -->
 <div class="modal-overlay" id="modal-hend-qr">
   <div class="modal" style="max-width:360px;">
@@ -1607,6 +1701,33 @@
 </div><!-- /#app -->
 
 <!-- MODALS -->
+
+<!-- Modal: Arbeidsplan – elevoversikt / godkjenning -->
+<div class="modal-overlay" id="modal-wp-approve">
+  <div class="modal" style="max-width:660px;">
+    <div class="modal-title" id="modal-wp-approve-title">Elevoversikt</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;" id="modal-wp-approve-sub"></p>
+    <div id="modal-wp-approve-body"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-wp-approve')">Lukk</button></div>
+  </div>
+</div>
+
+<!-- Modal: Foresattbrev -->
+<div class="modal-overlay" id="modal-wp-letters">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title">📨 Foresattbrev</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
+      Hver elev får et eget brev med en unik kode. Foresatte bruker koden på foresatt-siden
+      for å se elevens framgang og godkjenne trinn. Kodene er tilfeldige og knyttes ikke til
+      noe annet enn arbeidsplanen.
+    </p>
+    <div id="modal-wp-letters-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-wp-letters')">Lukk</button>
+      <button class="btn btn-primary" id="wp-letters-print-btn" onclick="printGuardianLetters()">🖨️ Skriv ut alle brev</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="modal-pin">
   <div class="modal" style="max-width:320px;">
@@ -1882,6 +2003,7 @@ function showPage(page) {
   if (page === 'butikk57') renderShop57List();
   if (page === 'laerere')  renderTeacherList();
   if (page === 'budsjett') renderBudgetPage();
+  if (page === 'arbeidsplan') { if (typeof renderWorkPlans === 'function') renderWorkPlans(); }
   if (page === 'belonninger') {
     // Render alle tabs som kan være synlig — billig og gjør at innholdet
     // er klart uansett hvilken fane læreren bytter til.
@@ -3309,6 +3431,419 @@ function renderClassGoalsPage() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// ARBEIDSPLAN (periodeplanlegger)
+// ════════════════════════════════════════════════════════════
+let _wpEditKey = null;     // firebase-nøkkel som redigeres (null = ny plan)
+let _wpEditSteps = [];     // arbeidskopi av trinn under redigering
+let _wpApproveKey = null;  // plan-nøkkel åpen i godkjenn-modalen
+
+function wpEscAttr(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function wpRandomCode(){
+  const a='ABCDEFGHJKLMNPQRSTUVWXYZ', n='23456789';
+  let s='';
+  for(let i=0;i<3;i++) s+=a[Math.floor(Math.random()*a.length)];
+  s+='-';
+  for(let i=0;i<3;i++) s+=n[Math.floor(Math.random()*n.length)];
+  return s;
+}
+function wpPlansForTeacher(){
+  const t=window._currentTeacher, all=window._workPlans||[];
+  if(t?.role==='admin' || !t?.class) return all;
+  return all.filter(p=>p.class===t.class);
+}
+function wpStudentsInClass(cls){
+  return (window._students||[]).filter(s=>s.class===cls)
+    .sort((a,b)=>(a.firstname||'').localeCompare(b.firstname||'','no'));
+}
+function wpGetProgress(studentKey, planKey){
+  return (window._wpProgress?.[studentKey]?.[planKey]) || { current:0, steps:{} };
+}
+function wpBlankStep(){
+  return { title:'', goal:'', bonus:50, approval:'teacher', reqs:[{text:'',img:'',link:''}] };
+}
+
+// ── EDITOR ──────────────────────────────────────────────────
+function openPlanEditor(planKey){
+  _wpEditKey=planKey;
+  const ed=document.getElementById('wp-editor');
+  ed.style.display='block';
+  document.getElementById('wp-editor-alert').innerHTML='';
+  const t=window._currentTeacher;
+  const clsRow=document.getElementById('wp-class-row');
+  const clsSel=document.getElementById('wp-class');
+  if(t?.class && t.role!=='admin'){ clsSel.value=t.class; clsRow.style.display='none'; }
+  else { clsRow.style.display='block'; }
+  if(planKey){
+    const p=(window._workPlans||[]).find(x=>x.fbKey===planKey)||{};
+    document.getElementById('wp-editor-title').textContent='✏️ Rediger arbeidsplan';
+    document.getElementById('wp-emoji').value=p.emoji||'📘';
+    document.getElementById('wp-subject').value=p.subject||'';
+    if(p.class) clsSel.value=p.class;
+    _wpEditSteps=JSON.parse(JSON.stringify(p.steps||[]));
+    _wpEditSteps.forEach(st=>{ if(!st.reqs||!st.reqs.length) st.reqs=[{text:'',img:'',link:''}]; });
+  } else {
+    document.getElementById('wp-editor-title').textContent='➕ Ny arbeidsplan';
+    document.getElementById('wp-emoji').value='📘';
+    document.getElementById('wp-subject').value='';
+    _wpEditSteps=[wpBlankStep(),wpBlankStep(),wpBlankStep()];
+  }
+  wpRenderSteps();
+  ed.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closePlanEditor(){
+  document.getElementById('wp-editor').style.display='none';
+  _wpEditKey=null; _wpEditSteps=[];
+}
+function wpEdAlert(msg,type){
+  document.getElementById('wp-editor-alert').innerHTML=
+    `<div class="alert alert-${type==='error'?'error':'success'}">${type==='error'?'⚠️':'✅'} ${msg}</div>`;
+}
+function wpReadEditorSteps(){
+  const blocks=document.querySelectorAll('#wp-steps-container .wp-step-edit');
+  _wpEditSteps=Array.from(blocks).map(b=>({
+    title:b.querySelector('.wp-step-title').value.trim(),
+    goal: b.querySelector('.wp-step-goal').value,
+    bonus:parseInt(b.querySelector('.wp-step-bonus').value)||0,
+    approval:b.querySelector('.wp-step-approval').value,
+    reqs:Array.from(b.querySelectorAll('.wp-req-row')).map(r=>({
+      text:r.querySelector('.wp-req-text').value.trim(),
+      img: r.querySelector('.wp-req-img').value.trim(),
+      link:r.querySelector('.wp-req-link').value.trim()
+    }))
+  }));
+}
+function wpAddStep(){
+  wpReadEditorSteps();
+  if(_wpEditSteps.length>=6){ wpEdAlert('En trapp kan ha maks 6 trinn.','error'); return; }
+  _wpEditSteps.push(wpBlankStep()); wpRenderSteps();
+}
+function wpRemoveStep(i){
+  wpReadEditorSteps();
+  if(_wpEditSteps.length<=3){ wpEdAlert('En trapp må ha minst 3 trinn.','error'); return; }
+  _wpEditSteps.splice(i,1); wpRenderSteps();
+}
+function wpAddReq(stepIdx){
+  wpReadEditorSteps();
+  _wpEditSteps[stepIdx].reqs.push({text:'',img:'',link:''}); wpRenderSteps();
+}
+function wpRemoveReq(stepIdx,reqIdx){
+  wpReadEditorSteps();
+  _wpEditSteps[stepIdx].reqs.splice(reqIdx,1);
+  if(!_wpEditSteps[stepIdx].reqs.length) _wpEditSteps[stepIdx].reqs.push({text:'',img:'',link:''});
+  wpRenderSteps();
+}
+function wpRenderSteps(){
+  const cont=document.getElementById('wp-steps-container');
+  cont.innerHTML=_wpEditSteps.map((st,i)=>`
+    <div class="wp-step-edit">
+      <div class="wp-step-edit-head">
+        <div class="wp-step-num">${i+1}</div>
+        <input type="text" class="wp-step-title" placeholder="Tittel, f.eks. Addisjon"
+               value="${wpEscAttr(st.title)}" style="flex:1;">
+        <button class="btn btn-coral btn-sm" onclick="wpRemoveStep(${i})" title="Fjern trinn">🗑️</button>
+      </div>
+      <div class="form-row">
+        <label>Læringsmål – hva eleven skal mestre</label>
+        <textarea class="wp-step-goal" placeholder="Jeg kan …">${wpEscAttr(st.goal)}</textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label>Bonus når trinnet er fullført (mynter)</label>
+          <input type="number" class="wp-step-bonus" min="0" value="${st.bonus||0}"></div>
+        <div class="form-row"><label>Hvem må godkjenne?</label>
+          <select class="wp-step-approval">
+            <option value="teacher"${st.approval!=='both'?' selected':''}>Bare lærer</option>
+            <option value="both"${st.approval==='both'?' selected':''}>Lærer + foresatt</option>
+          </select></div>
+      </div>
+      <div class="wp-mini-label" style="margin-bottom:6px;">Arbeidskrav</div>
+      ${(st.reqs||[]).map((r,j)=>`
+        <div class="wp-req-row">
+          <div class="wp-req-fields">
+            <input type="text" class="wp-req-text" placeholder="Arbeidskrav, f.eks. Gjør oppgave 1–8 på s. 24" value="${wpEscAttr(r.text)}">
+            <input type="text" class="wp-req-img"  placeholder="🖼️ Bilde-URL (valgfritt)" value="${wpEscAttr(r.img)}">
+            <input type="text" class="wp-req-link" placeholder="🔗 Lenke-URL (valgfritt)" value="${wpEscAttr(r.link)}">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="wpRemoveReq(${i},${j})" title="Fjern arbeidskrav">✕</button>
+        </div>`).join('')}
+      <button class="btn btn-ghost btn-sm" onclick="wpAddReq(${i})"><i class="ti ti-plus"></i> Arbeidskrav</button>
+    </div>`).join('');
+  document.getElementById('wp-add-step-btn').style.display=_wpEditSteps.length>=6?'none':'';
+}
+async function savePlan(){
+  if(!ready()){ wpEdAlert('Firebase ikke klar – prøv igjen om et øyeblikk.','error'); return; }
+  wpReadEditorSteps();
+  const emoji=document.getElementById('wp-emoji').value.trim()||'📘';
+  const subject=document.getElementById('wp-subject').value.trim();
+  const cls=document.getElementById('wp-class').value;
+  if(!subject){ wpEdAlert('Skriv inn hvilket fag arbeidsplanen gjelder.','error'); return; }
+  if(_wpEditSteps.length<3){ wpEdAlert('En trapp må ha minst 3 trinn.','error'); return; }
+  for(let i=0;i<_wpEditSteps.length;i++){
+    if(!_wpEditSteps[i].title){ wpEdAlert(`Trinn ${i+1} mangler tittel.`,'error'); return; }
+  }
+  const steps=_wpEditSteps.map(st=>({
+    title:st.title, goal:st.goal||'', bonus:st.bonus||0, approval:st.approval||'teacher',
+    reqs:(st.reqs||[]).filter(r=>r.text||r.img||r.link)
+      .map(r=>({text:r.text||'',img:r.img||'',link:r.link||''}))
+  }));
+  if(_wpEditKey){
+    const ex=(window._workPlans||[]).find(x=>x.fbKey===_wpEditKey)||{};
+    await window._update(fbRef('workPlans/'+_wpEditKey),
+      { emoji, subject, class:cls, steps, active: ex.active!==false });
+  } else {
+    await window._set(window._push(fbRef('workPlans')),
+      { emoji, subject, class:cls, steps, active:true, created:Date.now() });
+  }
+  closePlanEditor();
+}
+async function togglePlanActive(planKey){
+  const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
+  await window._update(fbRef('workPlans/'+planKey), { active: !(p.active!==false) });
+}
+async function deletePlan(planKey){
+  const p=(window._workPlans||[]).find(x=>x.fbKey===planKey);
+  if(!confirm(`Slette arbeidsplanen «${p?.subject||''}»?\nElevenes framgang i denne planen slettes også.`)) return;
+  await window._remove(fbRef('workPlans/'+planKey));
+  const upd={};
+  Object.keys(window._wpProgress||{}).forEach(sk=>{
+    if(window._wpProgress[sk]?.[planKey]) upd['workPlanProgress/'+sk+'/'+planKey]=null;
+  });
+  if(Object.keys(upd).length) await window._update(fbRef('/'),upd);
+}
+
+// ── LISTE ───────────────────────────────────────────────────
+function renderWorkPlans(){
+  const el=document.getElementById('wp-list'); if(!el) return;
+  const plans=wpPlansForTeacher();
+  if(!plans.length){
+    el.innerHTML='<div class="card" style="text-align:center;color:var(--muted);">'
+      +'<div style="font-size:2.4rem;margin-bottom:.4rem;">🪜</div>'
+      +'<div style="font-weight:800;">Ingen arbeidsplaner ennå</div>'
+      +'<div style="font-size:.86rem;margin-top:4px;">Trykk «Ny arbeidsplan» for å lage den første trappa.</div></div>';
+    return;
+  }
+  el.innerHTML=plans.map(p=>{
+    const students=wpStudentsInClass(p.class);
+    const nSteps=(p.steps||[]).length;
+    let done=0;
+    students.forEach(s=>{ if((wpGetProgress(s.fbKey,p.fbKey).current||0)>=nSteps && nSteps>0) done++; });
+    const active=p.active!==false;
+    return `<div class="wp-plan-card${active?'':' inactive'}">
+      <div class="wp-plan-head">
+        <div class="wp-plan-emoji">${p.emoji||'📘'}</div>
+        <div style="flex:1;min-width:140px;">
+          <div style="font-weight:800;font-size:1.05rem;color:var(--teal-dark);">${wpEscAttr(p.subject)}</div>
+          <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:2px;">
+            <span class="class-badge">${p.class}</span> · ${nSteps} trinn · ${students.length} elever · ${done} fullført
+          </div>
+        </div>
+        <label class="wp-toggle" title="${active?'Aktiv – synlig for elevene':'Skjult for elevene'}">
+          <input type="checkbox" ${active?'checked':''} onchange="togglePlanActive('${p.fbKey}')">
+          <span class="wp-slider"></span>
+        </label>
+      </div>
+      <div class="wp-plan-actions">
+        <button class="btn btn-primary btn-sm" onclick="openApprove('${p.fbKey}')">👀 Elevoversikt &amp; godkjenning</button>
+        <button class="btn btn-ghost btn-sm" onclick="openPlanEditor('${p.fbKey}')">✏️ Rediger</button>
+        <button class="btn btn-coral btn-sm" onclick="deletePlan('${p.fbKey}')">🗑️ Slett</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── GODKJENNING ─────────────────────────────────────────────
+function openApprove(planKey){
+  _wpApproveKey=planKey;
+  document.getElementById('modal-wp-approve').classList.add('open');
+  refreshApproveModal();
+}
+function refreshApproveModal(){
+  const modal=document.getElementById('modal-wp-approve');
+  if(!modal || !modal.classList.contains('open') || !_wpApproveKey) return;
+  const p=(window._workPlans||[]).find(x=>x.fbKey===_wpApproveKey);
+  if(!p){ closeModal('modal-wp-approve'); return; }
+  document.getElementById('modal-wp-approve-title').textContent=(p.emoji||'📘')+' '+p.subject;
+  document.getElementById('modal-wp-approve-sub').textContent=
+    p.class+' · '+(p.steps||[]).length+' trinn. Godkjenn trinnet eleven jobber med nå.';
+  const students=wpStudentsInClass(p.class);
+  const nSteps=(p.steps||[]).length;
+  const body=document.getElementById('modal-wp-approve-body');
+  if(!students.length){ body.innerHTML='<p style="color:var(--muted);">Ingen elever i denne klassen.</p>'; return; }
+  body.innerHTML=students.map(s=>{
+    const pr=wpGetProgress(s.fbKey,_wpApproveKey);
+    const cur=pr.current||0;
+    const nm=`${wpEscAttr(s.firstname)} ${s.lastname?wpEscAttr(s.lastname.charAt(0))+'.':''}`;
+    if(cur>=nSteps){
+      return `<div class="wp-approve-row"><div style="flex:1;font-weight:800;">${nm}</div>`
+        +`<span class="wp-pill wp-pill-done">🎉 Fullført hele trappa</span></div>`;
+    }
+    const step=p.steps[cur]||{};
+    const ss=pr.steps?.[cur]||{};
+    const nReqs=(step.reqs||[]).length;
+    const nChk=Object.values(ss.checks||{}).filter(Boolean).length;
+    const tOk=!!ss.teacherApproved, needG=step.approval==='both', gOk=!!ss.guardianApproved;
+    const tPill=tOk?'<span class="wp-pill wp-pill-ok">✓ Lærer</span>'
+      :'<span class="wp-pill wp-pill-wait">⏳ Lærer</span>';
+    const gPill=!needG?'<span class="wp-pill wp-pill-na">Foresatt ikke nødvendig</span>'
+      :gOk?'<span class="wp-pill wp-pill-ok">✓ Foresatt</span>'
+      :'<span class="wp-pill wp-pill-wait">⏳ Foresatt</span>';
+    return `<div class="wp-approve-row">
+      <div style="flex:1;min-width:130px;">
+        <div style="font-weight:800;">${nm}</div>
+        <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
+          Trinn ${cur+1}/${nSteps}: ${wpEscAttr(step.title)} · ${nChk}/${nReqs} huket av
+        </div>
+      </div>
+      ${tPill}${gPill}
+      ${tOk
+        ? `<button class="btn btn-ghost btn-sm" onclick="teacherUnapprove('${s.fbKey}')">Angre</button>`
+        : `<button class="btn btn-primary btn-sm" onclick="teacherApproveStep('${s.fbKey}')">Godkjenn</button>`}
+    </div>`;
+  }).join('');
+}
+async function teacherApproveStep(studentKey){
+  const planKey=_wpApproveKey;
+  const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
+  const cur=wpGetProgress(studentKey,planKey).current||0;
+  if(cur>=(p.steps||[]).length) return;
+  await window._update(fbRef('workPlanProgress/'+studentKey+'/'+planKey+'/steps/'+cur),
+    { teacherApproved:true, teacherApprovedTs:Date.now() });
+  await wpCheckCompletion(planKey, studentKey);
+}
+async function teacherUnapprove(studentKey){
+  const planKey=_wpApproveKey;
+  const pr=wpGetProgress(studentKey,planKey);
+  const cur=pr.current||0;
+  if(pr.steps?.[cur]?.completed){
+    alert('Trinnet er allerede fullført og bonus er utbetalt – det kan ikke angres.');
+    return;
+  }
+  await window._update(fbRef('workPlanProgress/'+studentKey+'/'+planKey+'/steps/'+cur),
+    { teacherApproved:false, teacherApprovedTs:null });
+}
+// Felles fullføringslogikk – brukes når lærer (her) eller foresatt godkjenner.
+async function wpCheckCompletion(planKey, studentKey){
+  const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
+  const steps=p.steps||[];
+  const snap=await window._get(fbRef('workPlanProgress/'+studentKey+'/'+planKey));
+  const pr=snap.val()||{current:0,steps:{}};
+  const cur=pr.current||0;
+  if(cur>=steps.length) return;
+  const step=steps[cur];
+  const ss=(pr.steps&&pr.steps[cur])||{};
+  if(ss.completed) return;
+  const ok = ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved);
+  if(!ok) return;
+  const base='workPlanProgress/'+studentKey+'/'+planKey;
+  const upd={};
+  upd[base+'/steps/'+cur+'/completed']=true;
+  upd[base+'/steps/'+cur+'/completedTs']=Date.now();
+  upd[base+'/steps/'+cur+'/bonusPaid']=true;
+  upd[base+'/current']=cur+1;
+  await window._update(fbRef('/'),upd);
+  if((step.bonus||0)>0 && !ss.bonusPaid){
+    const sSnap=await window._get(fbRef('students57/'+studentKey));
+    const sv=sSnap.val()||{};
+    await window._update(fbRef('students57/'+studentKey),{balance:(sv.balance||0)+step.bonus});
+    await logTx(studentKey,'income','🪙',
+      'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført',step.bonus);
+  }
+}
+
+// ── FORESATTBREV ────────────────────────────────────────────
+const WP_FORESATT_URL='https://espenps-code.github.io/Myntlandlaerer/foresatt.html';
+async function openGuardianLetters(){
+  const students=(window._students||[]).slice()
+    .sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
+  if(!students.length){ alert('Ingen elever å lage brev for.'); return; }
+  const codes=window._guardianCodes||{};
+  const used=new Set(Object.values(codes).map(c=>c&&c.code).filter(Boolean));
+  const upd={};
+  students.forEach(s=>{
+    if(!codes[s.fbKey]?.code){
+      let c=wpRandomCode();
+      while(used.has(c)) c=wpRandomCode();
+      used.add(c);
+      upd['guardianCodes/'+s.fbKey]={code:c};
+    }
+  });
+  if(Object.keys(upd).length) await window._update(fbRef('/'),upd);
+  const fresh=(await window._get(fbRef('guardianCodes'))).val()||{};
+  window._guardianCodes=fresh;
+  document.getElementById('modal-wp-letters-body').innerHTML=
+    '<div style="max-height:300px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px;">'
+    +students.map(s=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid var(--bg);">
+      <span style="font-weight:700;">${wpEscAttr(s.firstname)} ${wpEscAttr(s.lastname||'')}
+        <span style="color:var(--muted);font-size:.8rem;">(${s.class})</span></span>
+      <span style="font-family:'Fredoka One',cursive;color:var(--teal);">${wpEscAttr(fresh[s.fbKey]?.code||'—')}</span>
+    </div>`).join('')+'</div>';
+  document.getElementById('modal-wp-letters').classList.add('open');
+}
+function printGuardianLetters(){
+  const students=(window._students||[]).slice()
+    .sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
+  if(!students.length){ alert('Ingen elever.'); return; }
+  const codes=window._guardianCodes||{};
+  const letters=students.map(s=>{
+    const code=codes[s.fbKey]?.code||'—';
+    const fn=wpEscAttr(s.firstname);
+    return `<div class="letter">
+      <div class="lt-top">🪙 Myntland · Arbeidsplan</div>
+      <h1>Følg med på ${fn} sin arbeidsplan</h1>
+      <p>Hei! Klassen til ${fn} bruker <strong>Myntland</strong> til å jobbe med læringsmål i en
+      «trapp» – eleven jobber seg oppover ett trinn om gangen. Som foresatt kan du logge inn,
+      se hvordan det går, og bekrefte trinn som krever et blikk hjemmefra.</p>
+      <div class="lt-steps">
+        <div><b>1</b> Gå til&nbsp; <span class="lt-url">${WP_FORESATT_URL}</span></div>
+        <div><b>2</b> Skriv inn den personlige koden nedenfor</div>
+        <div><b>3</b> Se framgangen – trykk «Sett» for å bekrefte at du har sett den</div>
+      </div>
+      <div class="lt-code-label">${fn} sin personlige kode</div>
+      <div class="lt-code">${wpEscAttr(code)}</div>
+      <p class="lt-fine">Koden gir bare innsyn i ${fn} sin arbeidsplan, og ingen sensitive
+      opplysninger er knyttet til den. Ta vare på dette brevet.</p>
+      <div class="lt-sign">Vennlig hilsen<br>kontaktlæreren · kontakt@myntland.no</div>
+    </div>`;
+  });
+  let pages='';
+  for(let i=0;i<letters.length;i+=2){
+    pages+='<div class="sheet">'+letters[i]
+      +'<div class="cut">✂ – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – –</div>'
+      +(letters[i+1]||'')+'</div>';
+  }
+  const css=`
+    @page{size:A4;margin:0;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',Arial,sans-serif;color:#1a2e1a;}
+    .sheet{width:210mm;height:297mm;padding:12mm 16mm;display:flex;flex-direction:column;page-break-after:always;}
+    .cut{text-align:center;color:#bbb;font-size:9pt;margin:5mm 0;letter-spacing:1px;}
+    .letter{flex:1;border:2px solid #c8dfc8;border-radius:14px;padding:9mm 10mm;display:flex;flex-direction:column;}
+    .lt-top{font-weight:800;color:#1a5fa5;font-size:10pt;letter-spacing:.5px;}
+    .letter h1{font-size:16pt;color:#1e0f52;margin:3mm 0 4mm;}
+    .letter p{font-size:10.5pt;line-height:1.5;margin-bottom:3mm;}
+    .lt-steps{background:#F7F9F7;border-radius:10px;padding:4mm 5mm;margin:1mm 0 4mm;}
+    .lt-steps div{font-size:10pt;margin:1.5mm 0;}
+    .lt-steps b{display:inline-block;width:6mm;height:6mm;line-height:6mm;text-align:center;
+      background:#1a5fa5;color:#fff;border-radius:50%;font-size:8.5pt;margin-right:2mm;}
+    .lt-url{font-weight:800;color:#1a5fa5;}
+    .lt-code-label{font-size:9pt;font-weight:800;color:#5a7a5a;text-transform:uppercase;letter-spacing:1px;}
+    .lt-code{font-family:'Fredoka One',Arial,sans-serif;font-size:26pt;color:#1e0f52;
+      letter-spacing:3px;background:#FAEEDA;border:2px dashed #EF9F27;border-radius:12px;
+      text-align:center;padding:4mm;margin:1.5mm 0 4mm;}
+    .lt-fine{font-size:8.5pt;color:#5a7a5a;}
+    .lt-sign{margin-top:auto;font-size:10pt;font-weight:700;padding-top:4mm;}
+  `;
+  const win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Foresattbrev</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">'
+    +'<style>'+css+'</style></head><body>'+pages
+    +'<script>setTimeout(function(){window.print();},500);<\/script></body></html>');
+  win.document.close();
 }
 
 // ════════════════════════════════════════════════════════════

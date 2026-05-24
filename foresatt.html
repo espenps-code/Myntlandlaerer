@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e0f52">
+<title>Myntland – Foresatt-innsyn</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0OCIgZmlsbD0iI0VGOUYyNyIvPjx0ZXh0IHg9IjUwIiB5PSI2OCIgZm9udC1zaXplPSI1NiIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxZTBmNTIiPk08L3RleHQ+PC9zdmc+">
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getDatabase, ref, onValue, update, push, set, get }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:"AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain:"myntland.firebaseapp.com",
+    databaseURL:"https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"myntland",
+    storageBucket:"myntland.firebasestorage.app",
+    messagingSenderId:"711264415533",
+    appId:"1:711264415533:web:644a77a1e8b234667b2da4"
+  };
+  const app=initializeApp(firebaseConfig);
+  const appCheck=initializeAppCheck(app,{
+    provider:new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled:true
+  });
+  await Promise.race([
+    getToken(appCheck).catch(err=>console.warn('[App Check]',err)),
+    new Promise(r=>setTimeout(r,3000))
+  ]);
+  const db=getDatabase(app);
+  window._db=db; window._ref=ref; window._onValue=onValue;
+  window._update=update; window._push=push; window._set=set; window._get=get;
+  window._fbReady=true;
+  // Forhåndsutfyll kode fra ?kode= i URL-en
+  const urlCode=new URLSearchParams(location.search).get('kode');
+  if(urlCode){
+    const inp=document.getElementById('fg-code-input');
+    if(inp){ inp.value=urlCode; }
+  }
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+  :root{
+    --teal:#1a5fa5;--teal-light:#dbeafe;--teal-dark:#1e0f52;
+    --amber:#EF9F27;--amber-light:#FAEEDA;
+    --coral:#D85A30;--coral-light:#FAECE7;
+    --green:#16a34a;--green-light:#dcfce7;
+    --bg:#F0FAF5;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#b8dfc8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;max-width:520px;margin:0 auto;}
+  .screen{display:none;min-height:100vh;flex-direction:column;}
+  .screen.active{display:flex;}
+
+  /* LOGIN */
+  #screen-login{background:linear-gradient(160deg,var(--teal-dark),#1a6648,var(--teal));
+    align-items:center;justify-content:center;padding:1.5rem;}
+  .login-box{background:white;border-radius:24px;padding:2.2rem 1.8rem;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.28);}
+  .login-coin{width:74px;height:74px;background:var(--amber);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;
+    font-size:2.3rem;color:var(--teal-dark);margin:0 auto 1rem;}
+  .login-title{font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--teal-dark);
+    text-align:center;line-height:1.1;}
+  .login-sub{text-align:center;color:var(--muted);font-size:.9rem;font-weight:700;
+    margin:.4rem 0 1.6rem;line-height:1.45;}
+  .fg-label{font-weight:800;font-size:.85rem;color:var(--muted);display:block;margin-bottom:7px;}
+  #fg-code-input{width:100%;font-family:'Fredoka One',cursive;font-size:1.5rem;text-align:center;
+    letter-spacing:3px;text-transform:uppercase;padding:14px;border-radius:14px;
+    border:2px solid var(--border);outline:none;color:var(--teal-dark);}
+  #fg-code-input:focus{border-color:var(--teal);}
+  .fg-btn{width:100%;padding:15px;border-radius:14px;border:none;background:var(--teal);color:#fff;
+    font-family:'Fredoka One',cursive;font-size:1.15rem;cursor:pointer;margin-top:1rem;
+    transition:transform .1s;}
+  .fg-btn:active{transform:scale(.98);}
+  .fg-btn.amber{background:var(--amber);color:var(--teal-dark);}
+  .fg-btn.ghost{background:var(--white);border:2px solid var(--border);color:var(--muted);}
+  .login-err{color:var(--coral);font-size:.88rem;font-weight:800;text-align:center;
+    min-height:22px;margin-top:.7rem;}
+  .login-help{font-size:.78rem;color:var(--muted);font-weight:600;text-align:center;
+    margin-top:1.2rem;line-height:1.5;}
+
+  /* TOP BAR */
+  .top-bar{background:var(--teal-dark);padding:13px 18px;display:flex;align-items:center;
+    justify-content:space-between;flex-shrink:0;gap:10px;}
+  .top-bar-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--amber);}
+  .top-bar-sub{font-size:.78rem;color:rgba(255,255,255,.8);font-weight:700;}
+  .tb-logout{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:10px;
+    padding:8px 12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.82rem;}
+
+  .fg-subjects{display:flex;gap:8px;padding:11px 12px;overflow-x:auto;background:var(--white);
+    border-bottom:2px solid var(--border);flex-shrink:0;}
+  .fg-subj-btn{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 15px;
+    border-radius:999px;border:2px solid var(--border);background:var(--white);
+    font-family:'Nunito',sans-serif;font-weight:800;font-size:.92rem;color:var(--muted);
+    cursor:pointer;white-space:nowrap;}
+  .fg-subj-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+  .content{flex:1;overflow-y:auto;padding:1.2rem 1rem 2.4rem;}
+  .section-title{font-family:'Fredoka One',cursive;font-size:1.12rem;color:var(--teal-dark);
+    margin:.4rem 0 .8rem;}
+  .fg-intro{background:var(--amber-light);border:1px solid #f0c060;border-radius:12px;
+    padding:.8rem .95rem;font-size:.83rem;font-weight:700;color:#854F0B;margin-bottom:1.1rem;line-height:1.45;}
+  .fg-empty{text-align:center;color:var(--muted);padding:3rem 1rem;}
+  .fg-empty .e{font-size:3rem;margin-bottom:.5rem;}
+
+  /* TRAPP */
+  .ap-step{display:flex;gap:13px;}
+  .ap-railwrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:56px;}
+  .ap-ring{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-family:'Fredoka One',cursive;font-size:1.3rem;
+    border:7px solid var(--border);background:var(--white);color:var(--muted);z-index:1;}
+  .ap-rail{width:5px;flex:1;min-height:18px;background:var(--border);border-radius:3px;margin:2px 0;}
+  .ap-step:last-child .ap-rail{display:none;}
+  .ap-card{flex:1;border-radius:16px;padding:.9rem 1rem;border:2px solid var(--border);
+    background:var(--white);margin-bottom:.55rem;}
+  .ap-card-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);line-height:1.2;}
+  .ap-card-status{font-size:.8rem;font-weight:800;margin-top:4px;}
+  .ap-step.done .ap-ring{border-color:var(--green);color:var(--green);}
+  .ap-step.done .ap-rail{background:var(--green);}
+  .ap-step.done .ap-card{background:var(--green-light);border-color:var(--green);cursor:pointer;}
+  .ap-step.done .ap-card-status{color:#15803d;}
+  .ap-step.active .ap-ring{border-color:var(--amber);color:#854F0B;box-shadow:0 0 0 5px var(--amber-light);}
+  .ap-step.active .ap-card{border-color:var(--amber);background:var(--amber-light);cursor:pointer;
+    box-shadow:0 4px 14px rgba(239,159,39,.28);}
+  .ap-step.active .ap-card-status{color:#854F0B;}
+  .ap-step.locked{opacity:.55;}
+  .ap-step.locked .ap-card-status{color:var(--muted);}
+
+  /* STEG-DETALJ */
+  .ap-detail-goal{background:var(--teal-light);border-radius:14px;padding:.95rem 1.05rem;margin-bottom:1rem;}
+  .ap-detail-goal .g{font-size:.95rem;font-weight:700;color:var(--teal-dark);line-height:1.5;}
+  .ap-req{display:flex;gap:11px;align-items:flex-start;background:var(--white);
+    border:2px solid var(--border);border-radius:14px;padding:.8rem;margin-bottom:.65rem;}
+  .ap-check{width:28px;height:28px;border-radius:8px;border:2.5px solid var(--border);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff;background:var(--white);}
+  .ap-check.on{background:var(--green);border-color:var(--green);}
+  .ap-req-text{font-weight:700;font-size:.93rem;color:var(--text);}
+  .ap-req-img{width:100%;border-radius:10px;margin-top:8px;display:block;}
+  .ap-req-link{display:inline-flex;align-items:center;gap:4px;margin-top:7px;font-weight:800;
+    color:var(--teal);font-size:.86rem;text-decoration:none;}
+  .ap-status-box{border-radius:14px;padding:.95rem 1.05rem;margin-top:1rem;font-weight:800;
+    font-size:.9rem;line-height:1.45;}
+  .ap-status-wait{background:var(--amber-light);color:#854F0B;border:1.5px solid #f0c060;}
+  .ap-status-ok{background:var(--green-light);color:#15803d;border:1.5px solid var(--green);}
+  .ap-status-info{background:var(--teal-light);color:var(--teal-dark);border:1.5px solid #8fb8e0;}
+  .fg-back{width:100%;margin-top:1rem;background:var(--white);border:2px solid var(--border);
+    color:var(--muted);padding:12px;border-radius:12px;font-family:'Nunito',sans-serif;
+    font-weight:800;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- ═══════ LOGIN ═══════ -->
+<div class="screen active" id="screen-login">
+  <div class="login-box">
+    <div class="login-coin">M</div>
+    <div class="login-title">Foresatt-innsyn</div>
+    <div class="login-sub">Følg med på barnet ditt sin arbeidsplan i Myntland.</div>
+    <label class="fg-label" for="fg-code-input">Skriv inn koden fra brevet</label>
+    <input type="text" id="fg-code-input" placeholder="ABC-123" autocomplete="off"
+           onkeydown="if(event.key==='Enter')fgLogin()">
+    <div class="login-err" id="fg-login-err"></div>
+    <button class="fg-btn" onclick="fgLogin()">Logg inn</button>
+    <div class="login-help">
+      Koden står i brevet du fikk fra læreren. Hver elev har sin egen kode.
+      Får du ikke logget inn, ta kontakt med kontaktlæreren.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ INNSYN ═══════ -->
+<div class="screen" id="screen-main">
+  <div class="top-bar">
+    <div>
+      <div class="top-bar-title">🪙 Myntland</div>
+      <div class="top-bar-sub" id="fg-student-name"></div>
+    </div>
+    <button class="tb-logout" onclick="fgLogout()">Logg ut</button>
+  </div>
+  <div class="fg-subjects" id="fg-subjects"></div>
+  <div class="content" id="fg-body"></div>
+</div>
+
+<script>
+// ── STATE ───────────────────────────────────────────────────
+let _studentKey=null;
+let _student=null;
+let _workPlans=[];
+let _progress={};          // workPlanProgress for denne eleven
+let _fgPlanKey=null;
+let _fgView='trapp';       // 'trapp' | 'step'
+let _fgStepIdx=0;
+
+function fgEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fgRef(p){return window._ref(window._db,p);}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── LOGIN ───────────────────────────────────────────────────
+async function fgLogin(){
+  const errEl=document.getElementById('fg-login-err');
+  errEl.textContent='';
+  if(!window._fbReady){ errEl.textContent='Kobler til … prøv igjen om et øyeblikk.'; return; }
+  let code=(document.getElementById('fg-code-input').value||'').trim().toUpperCase();
+  if(!code){ errEl.textContent='Skriv inn koden fra brevet.'; return; }
+  // Godta kode med eller uten bindestrek
+  const norm=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  errEl.textContent='Sjekker …';
+  try{
+    const snap=await window._get(fgRef('guardianCodes'));
+    const all=snap.val()||{};
+    let foundKey=null;
+    Object.entries(all).forEach(([sk,v])=>{
+      if(v && norm(v.code)===norm(code)) foundKey=sk;
+    });
+    if(!foundKey){
+      errEl.textContent='Fant ingen elev med denne koden. Sjekk at den er skrevet riktig.';
+      return;
+    }
+    _studentKey=foundKey;
+    startGuardian();
+  }catch(e){
+    console.error(e);
+    errEl.textContent='Noe gikk galt. Prøv igjen.';
+  }
+}
+function fgLogout(){
+  _studentKey=null; _student=null; _workPlans=[]; _progress={};
+  _fgPlanKey=null; _fgView='trapp';
+  document.getElementById('fg-code-input').value='';
+  document.getElementById('fg-login-err').textContent='';
+  showScreen('screen-login');
+}
+
+function startGuardian(){
+  document.getElementById('fg-login-err').textContent='';
+  showScreen('screen-main');
+  _fgView='trapp';
+  // Lyttere – oppdaterer live
+  window._onValue(fgRef('students57/'+_studentKey),snap=>{
+    _student=snap.val();
+    if(_student) document.getElementById('fg-student-name').textContent=
+      (_student.firstname||'')+' '+(_student.class||'');
+    fgRender();
+  });
+  window._onValue(fgRef('workPlans'),snap=>{
+    _workPlans=snap.val()
+      ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k}))
+      : [];
+    fgRender();
+  });
+  window._onValue(fgRef('workPlanProgress/'+_studentKey),snap=>{
+    _progress=snap.val()||{};
+    fgRender();
+  });
+}
+
+// ── DATA ────────────────────────────────────────────────────
+function fgPlans(){
+  if(!_student) return [];
+  return _workPlans
+    .filter(p=>p.active!==false && p.class===_student.class)
+    .sort((a,b)=>(a.created||0)-(b.created||0));
+}
+function fgProgress(planKey){
+  return _progress?.[planKey] || { current:0, steps:{} };
+}
+
+// ── RENDER ──────────────────────────────────────────────────
+function fgRender(){
+  if(!document.getElementById('screen-main').classList.contains('active')) return;
+  const plans=fgPlans();
+  const subjEl=document.getElementById('fg-subjects');
+  const body=document.getElementById('fg-body');
+  if(!plans.length){
+    subjEl.innerHTML='';
+    body.innerHTML='<div class="fg-empty"><div class="e">📋</div>'
+      +'<div style="font-weight:800;color:var(--text)">Ingen arbeidsplan ennå</div>'
+      +'<div style="font-size:.88rem;margin-top:4px">Læreren har ikke laget en arbeidsplan til klassen enda.</div></div>';
+    return;
+  }
+  if(!plans.some(p=>p.fbKey===_fgPlanKey)) _fgPlanKey=plans[0].fbKey;
+  subjEl.innerHTML=plans.map(p=>
+    `<button class="fg-subj-btn${p.fbKey===_fgPlanKey?' active':''}" onclick="fgSelectSubject('${p.fbKey}')">`
+    +`${p.emoji||'📘'} ${fgEsc(p.subject)}</button>`).join('');
+  if(_fgView==='step') fgRenderStep();
+  else fgRenderTrapp();
+}
+function fgSelectSubject(planKey){
+  _fgPlanKey=planKey; _fgView='trapp'; _fgStepIdx=0; fgRender();
+}
+function fgRenderTrapp(){
+  const plan=_workPlans.find(p=>p.fbKey===_fgPlanKey);
+  const body=document.getElementById('fg-body');
+  if(!plan){ body.innerHTML=''; return; }
+  const steps=plan.steps||[];
+  const pr=fgProgress(_fgPlanKey);
+  const cur=pr.current||0;
+  const allDone=cur>=steps.length;
+  const fn=fgEsc(_student?.firstname||'eleven');
+  let html='';
+  html+='<div class="fg-intro">🪜 Her ser du hvordan det går med '+fn+' i '+fgEsc(plan.subject)
+       +'. Trykk på et trinn for å se detaljene. På trinn som er merket «venter på deg» '
+       +'bekrefter du at du har sett framgangen.</div>';
+  if(allDone){
+    html+='<div class="ap-status-box ap-status-ok" style="margin:0 0 1rem">🎉 '+fn
+         +' har fullført hele '+fgEsc(plan.subject)+'-trappa!</div>';
+  }
+  steps.forEach((st,i)=>{
+    let cls='locked',ring='🔒',status='🔒 Ikke startet ennå';
+    if(i<cur){ cls='done'; ring='✓'; status='✓ Fullført og godkjent'; }
+    else if(i===cur){
+      cls='active'; ring=(i+1);
+      const ss=pr.steps?.[i]||{};
+      if(st.approval==='both' && ss.teacherApproved && !ss.guardianApproved)
+        status='⏳ Venter på deg – trykk for å bekrefte';
+      else if(st.approval==='both' && !ss.teacherApproved && ss.guardianApproved)
+        status='✓ Du har bekreftet – venter på læreren';
+      else if(ss.teacherApproved)
+        status='✓ Læreren har godkjent';
+      else status='✏️ Jobber med dette nå';
+    } else { ring=(i+1); }
+    const tappable=(i<=cur);
+    html+=`<div class="ap-step ${cls}">
+      <div class="ap-railwrap"><div class="ap-ring">${ring}</div><div class="ap-rail"></div></div>
+      <div class="ap-card" ${tappable?`onclick="fgOpenStep(${i})"`:''}>
+        <div class="ap-card-title">Trinn ${i+1}: ${fgEsc(st.title)}</div>
+        <div class="ap-card-status">${status}</div>
+      </div></div>`;
+  });
+  body.innerHTML=html;
+  body.scrollTop=0;
+}
+function fgOpenStep(idx){ _fgStepIdx=idx; _fgView='step'; fgRenderStep(); }
+
+function fgRenderStep(){
+  const plan=_workPlans.find(p=>p.fbKey===_fgPlanKey);
+  const body=document.getElementById('fg-body');
+  if(!plan){ body.innerHTML=''; return; }
+  const i=_fgStepIdx;
+  const st=(plan.steps||[])[i];
+  if(!st){ _fgView='trapp'; fgRenderTrapp(); return; }
+  const pr=fgProgress(_fgPlanKey);
+  const cur=pr.current||0;
+  const ss=pr.steps?.[i]||{};
+  const isActive=(i===cur), isDone=(i<cur);
+  const checks=ss.checks||{};
+  const reqs=st.reqs||[];
+  let html='';
+  html+=`<div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:.6rem">`
+       +`Trinn ${i+1}: ${fgEsc(st.title)}</div>`;
+  if(st.goal){
+    html+='<div class="ap-detail-goal"><div class="g">'
+         +fgEsc(st.goal).replace(/\n/g,'<br>')+'</div></div>';
+  }
+  if(reqs.length){
+    html+='<div class="section-title">✅ Arbeidskrav</div>';
+    reqs.forEach((r,j)=>{
+      const on=!!checks[j];
+      html+=`<div class="ap-req">
+        <div class="ap-check${on?' on':''}">${on?'✓':''}</div>
+        <div style="flex:1">
+          <div class="ap-req-text">${fgEsc(r.text)}</div>
+          ${r.img?`<img class="ap-req-img" src="${fgEsc(r.img)}" alt="" onerror="this.style.display='none'">`:''}
+          ${r.link?`<a class="ap-req-link" href="${fgEsc(r.link)}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
+        </div></div>`;
+    });
+    const nDone=reqs.filter((r,j)=>checks[j]).length;
+    html+=`<div style="font-size:.8rem;font-weight:800;color:var(--muted);margin:.2rem 0 .4rem">`
+         +`${nDone} av ${reqs.length} huket av av eleven</div>`;
+  } else {
+    html+='<div class="fg-intro">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
+  }
+  // STATUS / GODKJENNING
+  if(isDone){
+    html+='<div class="ap-status-box ap-status-ok">✓ Dette trinnet er fullført og godkjent.</div>';
+  } else if(isActive){
+    const needBoth=st.approval==='both';
+    if(!needBoth){
+      html+='<div class="ap-status-box ap-status-info">'
+           +(ss.teacherApproved?'✓ Læreren har godkjent dette trinnet.'
+            :'Dette trinnet godkjennes av læreren. Du trenger ikke gjøre noe her.')
+           +'</div>';
+    } else if(ss.guardianApproved){
+      html+='<div class="ap-status-box ap-status-ok">✓ Du har bekreftet dette trinnet.'
+           +(ss.teacherApproved?'':' Det fullføres når læreren også har godkjent.')+'</div>';
+    } else {
+      html+='<div class="ap-status-box ap-status-wait">👀 Når du har sett over framgangen, '
+           +'bekreft at du har sett den. Trinnet fullføres når både du og læreren har godkjent.</div>';
+      html+=`<button class="fg-btn amber" onclick="fgApprove()">✓ Jeg har sett dette – bekreft trinnet</button>`;
+    }
+  } else {
+    html+='<div class="ap-status-box ap-status-info">🔒 Dette trinnet er ikke startet ennå.</div>';
+  }
+  html+='<button class="fg-back" onclick="fgBackToTrapp()">← Tilbake til trappa</button>';
+  body.innerHTML=html;
+  body.scrollTop=0;
+}
+function fgBackToTrapp(){ _fgView='trapp'; fgRender(); }
+
+// ── GODKJENNING ─────────────────────────────────────────────
+async function fgApprove(){
+  const planKey=_fgPlanKey;
+  const plan=_workPlans.find(p=>p.fbKey===planKey);
+  if(!plan) return;
+  const pr=fgProgress(planKey);
+  const cur=pr.current||0;
+  if(cur>=(plan.steps||[]).length) return;
+  if(_fgStepIdx!==cur) return;
+  if(!confirm('Bekrefte at du har sett framgangen på dette trinnet?')) return;
+  await window._update(fgRef('workPlanProgress/'+_studentKey+'/'+planKey+'/steps/'+cur),
+    { guardianApproved:true, guardianApprovedTs:Date.now() });
+  await fgCheckCompletion(planKey);
+}
+// Samme fullføringslogikk som i lærerportalen.
+async function fgCheckCompletion(planKey){
+  const plan=_workPlans.find(p=>p.fbKey===planKey);
+  if(!plan) return;
+  const steps=plan.steps||[];
+  const snap=await window._get(fgRef('workPlanProgress/'+_studentKey+'/'+planKey));
+  const pr=snap.val()||{current:0,steps:{}};
+  const cur=pr.current||0;
+  if(cur>=steps.length) return;
+  const step=steps[cur];
+  const ss=(pr.steps&&pr.steps[cur])||{};
+  if(ss.completed) return;
+  const ok=ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved);
+  if(!ok) return;
+  const base='workPlanProgress/'+_studentKey+'/'+planKey;
+  const upd={};
+  upd[base+'/steps/'+cur+'/completed']=true;
+  upd[base+'/steps/'+cur+'/completedTs']=Date.now();
+  upd[base+'/steps/'+cur+'/bonusPaid']=true;
+  upd[base+'/current']=cur+1;
+  await window._update(fgRef('/'),upd);
+  if((step.bonus||0)>0 && !ss.bonusPaid){
+    const sSnap=await window._get(fgRef('students57/'+_studentKey));
+    const sv=sSnap.val()||{};
+    await window._update(fgRef('students57/'+_studentKey),{balance:(sv.balance||0)+step.bonus});
+    await window._set(window._push(fgRef('transactions57/'+_studentKey)),{
+      type:'income', icon:'🪙',
+      desc:'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført', amount:step.bonus, ts:Date.now()
+    });
+  }
+}
+</script>
+</body>
+</html>

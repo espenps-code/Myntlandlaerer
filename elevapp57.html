@@ -107,6 +107,17 @@
     window._budgetSettings=snap.val()||{rentDesk:300,powerMin:50,powerMax:150,rentIpad:50,wedEventsEnabled:true};
     if(document.getElementById('tab-budsjett')?.classList.contains('active')) renderBudgetTab();
   });
+  onValue(ref(db,'workPlans'),snap=>{
+    window._workPlans=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];
+    if(typeof updateArbeidsplanSplashBtn==='function') updateArbeidsplanSplashBtn();
+    if(typeof apRefresh==='function'
+       && document.getElementById('screen-arbeidsplan')?.classList.contains('active')) apRefresh();
+  });
+  onValue(ref(db,'workPlanProgress'),snap=>{
+    window._wpProgress=snap.val()||{};
+    if(typeof apRefresh==='function'
+       && document.getElementById('screen-arbeidsplan')?.classList.contains('active')) apRefresh();
+  });
 </script>
 <!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
 <link rel="stylesheet" href="myntland.css">
@@ -499,6 +510,59 @@
     /* Nullstill items' inline margin-bottom i grid-konteksten */
     #screen-shop #shop-logged-list > div > div:not(:first-child){margin-bottom:0;}
   }
+
+  /* ── ARBEIDSPLAN ─────────────────────────────── */
+  #screen-arbeidsplan{background:var(--bg);}
+  .ap-subjects{display:flex;gap:8px;padding:11px 12px;overflow-x:auto;background:var(--white);
+    border-bottom:2px solid var(--border);flex-shrink:0;}
+  .ap-subj-btn{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 15px;border-radius:999px;
+    border:2px solid var(--border);background:var(--white);font-family:'Nunito',sans-serif;font-weight:800;
+    font-size:.92rem;color:var(--muted);cursor:pointer;white-space:nowrap;}
+  .ap-subj-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .ap-intro{background:var(--amber-light);border:1px solid #f0c060;border-radius:12px;padding:.75rem .9rem;
+    font-size:.82rem;font-weight:700;color:#854F0B;margin-bottom:1rem;}
+  .ap-empty{text-align:center;color:var(--muted);padding:3rem 1rem;}
+  .ap-empty .e{font-size:3rem;margin-bottom:.5rem;}
+  /* trapp */
+  .ap-step{display:flex;gap:13px;position:relative;}
+  .ap-railwrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:56px;}
+  .ap-ring{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'Fredoka One',cursive;font-size:1.3rem;border:7px solid var(--border);background:var(--white);
+    color:var(--muted);z-index:1;flex-shrink:0;}
+  .ap-rail{width:5px;flex:1;min-height:18px;background:var(--border);border-radius:3px;margin:2px 0;}
+  .ap-step:last-child .ap-rail{display:none;}
+  .ap-card{flex:1;border-radius:16px;padding:.9rem 1rem;border:2px solid var(--border);
+    background:var(--white);margin-bottom:.55rem;}
+  .ap-card-title{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--teal-dark);line-height:1.2;}
+  .ap-card-status{font-size:.8rem;font-weight:800;margin-top:4px;}
+  .ap-step.done .ap-ring{border-color:var(--green);color:var(--green);}
+  .ap-step.done .ap-rail{background:var(--green);}
+  .ap-step.done .ap-card{background:var(--green-light);border-color:var(--green);cursor:pointer;}
+  .ap-step.done .ap-card-status{color:#15803d;}
+  .ap-step.active .ap-ring{border-color:var(--amber);color:#854F0B;box-shadow:0 0 0 5px var(--amber-light);}
+  .ap-step.active .ap-card{border-color:var(--amber);background:var(--amber-light);cursor:pointer;
+    box-shadow:0 4px 14px rgba(239,159,39,.28);}
+  .ap-step.active .ap-card-status{color:#854F0B;}
+  .ap-step.locked{opacity:.55;}
+  .ap-step.locked .ap-card-status{color:var(--muted);}
+  /* step detail */
+  .ap-detail-goal{background:var(--teal-light);border-radius:14px;padding:.95rem 1.05rem;margin-bottom:1rem;}
+  .ap-detail-goal .g{font-size:.95rem;font-weight:700;color:var(--teal-dark);line-height:1.5;}
+  .ap-req{display:flex;gap:11px;align-items:flex-start;background:var(--white);border:2px solid var(--border);
+    border-radius:14px;padding:.8rem;margin-bottom:.65rem;}
+  .ap-check{width:30px;height:30px;border-radius:9px;border:2.5px solid var(--teal);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;
+    background:var(--white);color:#fff;}
+  .ap-check.on{background:var(--teal);}
+  .ap-check.ro{border-color:var(--border);cursor:default;}
+  .ap-check.on.ro{background:var(--muted);border-color:var(--muted);}
+  .ap-req-text{font-weight:700;font-size:.93rem;color:var(--text);}
+  .ap-req-img{width:100%;border-radius:10px;margin-top:8px;display:block;}
+  .ap-req-link{display:inline-flex;align-items:center;gap:4px;margin-top:7px;font-weight:800;
+    color:var(--teal);font-size:.86rem;text-decoration:none;}
+  .ap-status-box{border-radius:14px;padding:.95rem 1.05rem;margin-top:1rem;font-weight:800;font-size:.9rem;}
+  .ap-status-wait{background:var(--amber-light);color:#854F0B;border:1.5px solid #f0c060;}
+  .ap-status-ok{background:var(--green-light);color:#15803d;border:1.5px solid var(--green);}
 </style>
 </head>
 <body>
@@ -510,6 +574,7 @@
   <button class="big-splash-btn" onclick="selectRole()">🏦 Min nettbank</button>
   <button class="big-splash-btn" onclick="showShopScreen()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🛒 Butikken</button>
   <button class="big-splash-btn" onclick="goToMyntjakten()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🪙 Myntjakten</button>
+  <button class="big-splash-btn" id="splash-arbeidsplan-btn" onclick="goToArbeidsplan()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem;display:none">📋 Arbeidsplan</button>
 </div>
 
 <!-- BUTIKK – PIN LOGIN -->
@@ -866,6 +931,20 @@
   </div>
 </div>
 
+<!-- ARBEIDSPLAN -->
+<div class="screen" id="screen-arbeidsplan">
+  <div class="top-bar">
+    <button class="back-btn" onclick="apBack()" id="ap-back-btn">← Ut</button>
+    <div style="text-align:center">
+      <div class="top-bar-title">📋 Arbeidsplan</div>
+      <div class="top-bar-sub" id="ap-sub"></div>
+    </div>
+    <div style="width:54px"></div>
+  </div>
+  <div class="ap-subjects" id="ap-subjects"></div>
+  <div class="content" id="ap-body"></div>
+</div>
+
 <!-- OVERLAYS -->
 <div class="scanner-overlay" id="scanner-overlay">
   <div class="scanner-header"><div class="scanner-title" id="scanner-title">Scan QR</div><button class="scanner-close" onclick="stopScan()">✕</button></div>
@@ -1091,8 +1170,187 @@ async function checkAndPaySavingsInterest57(s) {
 
 // ── SCREENS ────────────────────────────────────────────────────────────────
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goToSplash(){stopScan();window._currentStudent=null;window._preselectedStudent=null;currentPin='';transactions=[];const pre=document.getElementById('login-preselect');if(pre)pre.style.display='none';const btn=document.getElementById('login-scan-btn');if(btn)btn.style.display='block';const card=document.getElementById('login-card');if(card)card.style.display='none';const sub=document.getElementById('login-subtitle');if(sub)sub.textContent='Scan bankkortet ditt for å logge inn';showScreen('screen-splash');}
-function selectRole(){showScreen('screen-login');}
+function goToSplash(){stopScan();window._loginIntent=null;window._currentStudent=null;window._preselectedStudent=null;currentPin='';transactions=[];const pre=document.getElementById('login-preselect');if(pre)pre.style.display='none';const btn=document.getElementById('login-scan-btn');if(btn)btn.style.display='block';const card=document.getElementById('login-card');if(card)card.style.display='none';const sub=document.getElementById('login-subtitle');if(sub)sub.textContent='Scan bankkortet ditt for å logge inn';showScreen('screen-splash');}
+function selectRole(){window._loginIntent=null;showScreen('screen-login');}
+
+// ── ARBEIDSPLAN ─────────────────────────────────────────────────────────────
+let _apPlanKey=null;     // valgt fag (workPlan-nøkkel)
+let _apView='trapp';     // 'trapp' | 'step'
+let _apStepIdx=0;
+
+function apEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function updateArbeidsplanSplashBtn(){
+  const btn=document.getElementById('splash-arbeidsplan-btn');
+  if(!btn) return;
+  const any=(window._workPlans||[]).some(p=>p.active!==false);
+  btn.style.display=any?'flex':'none';
+}
+function goToArbeidsplan(){
+  window._loginIntent='arbeidsplan';
+  document.getElementById('login-subtitle').textContent='Scan bankkortet ditt for å se arbeidsplanen';
+  showScreen('screen-login');
+}
+function apActivePlans(){
+  const s=window._currentStudent; if(!s) return [];
+  return (window._workPlans||[])
+    .filter(p=>p.active!==false && p.class===s.class)
+    .sort((a,b)=>(a.created||0)-(b.created||0));
+}
+function apProgress(planKey){
+  const sk=window._currentStudent?.fbKey;
+  return (window._wpProgress?.[sk]?.[planKey]) || { current:0, steps:{} };
+}
+function enterArbeidsplan(){
+  const plans=apActivePlans();
+  _apPlanKey=plans.length?plans[0].fbKey:null;
+  _apView='trapp'; _apStepIdx=0;
+  showScreen('screen-arbeidsplan');
+  apRefresh();
+}
+function apBack(){
+  if(_apView==='step'){ _apView='trapp'; apRefresh(); }
+  else { goToSplash(); }
+}
+function apRefresh(){
+  const plans=apActivePlans();
+  const sub=document.getElementById('ap-sub');
+  const body=document.getElementById('ap-body');
+  const subjEl=document.getElementById('ap-subjects');
+  if(window._currentStudent) sub.textContent=window._currentStudent.firstname;
+  if(!plans.length){
+    subjEl.innerHTML='';
+    body.innerHTML='<div class="ap-empty"><div class="e">📋</div>'
+      +'<div style="font-weight:800;color:var(--text)">Ingen arbeidsplan ennå</div>'
+      +'<div style="font-size:.88rem;margin-top:4px">Læreren har ikke laget en arbeidsplan til klassen din enda.</div></div>';
+    return;
+  }
+  if(!plans.some(p=>p.fbKey===_apPlanKey)) _apPlanKey=plans[0].fbKey;
+  // fagmeny
+  subjEl.innerHTML=plans.map(p=>
+    `<button class="ap-subj-btn${p.fbKey===_apPlanKey?' active':''}" onclick="apSelectSubject('${p.fbKey}')">`
+    +`${p.emoji||'📘'} ${apEsc(p.subject)}</button>`).join('');
+  if(_apView==='step') apRenderStepDetail();
+  else apRenderTrapp();
+}
+function apSelectSubject(planKey){
+  _apPlanKey=planKey; _apView='trapp'; _apStepIdx=0; apRefresh();
+}
+function apRenderTrapp(){
+  const plan=(window._workPlans||[]).find(p=>p.fbKey===_apPlanKey);
+  const body=document.getElementById('ap-body');
+  if(!plan){ body.innerHTML=''; return; }
+  const steps=plan.steps||[];
+  const pr=apProgress(_apPlanKey);
+  const cur=pr.current||0;
+  const allDone=cur>=steps.length;
+  let html='<div class="ap-trapp" style="padding:1.1rem 1rem 2rem">';
+  html+='<div class="ap-intro">🪜 Jobb deg oppover trappa! Du kan bare jobbe med ett trinn om gangen. '
+       +'Når læreren'+(steps.some(s=>s.approval==='both')?' (og en voksen hjemme)':'')+' har godkjent, låses neste trinn opp.</div>';
+  if(allDone){
+    html+='<div class="ap-status-box ap-status-ok" style="margin:0 0 1rem">🎉 Du har fullført hele '
+         +apEsc(plan.subject)+'-trappa! Veldig bra jobba!</div>';
+  }
+  steps.forEach((st,i)=>{
+    let cls='locked', ring='🔒', status='🔒 Låst – fullfør trinnet under først';
+    if(i<cur){ cls='done'; ring='✓'; status='✓ Fullført'; }
+    else if(i===cur){
+      cls='active'; ring=(i+1);
+      const ss=pr.steps?.[i]||{};
+      if(ss.teacherApproved && st.approval==='both' && !ss.guardianApproved)
+        status='✓ Læreren har godkjent – venter på en voksen hjemme';
+      else if(ss.teacherApproved)
+        status='✓ Læreren har godkjent';
+      else status='👉 Trykk for å se hva du skal gjøre';
+    } else { ring=(i+1); }
+    const tappable=(i<=cur);
+    html+=`<div class="ap-step ${cls}">
+      <div class="ap-railwrap"><div class="ap-ring">${ring}</div><div class="ap-rail"></div></div>
+      <div class="ap-card" ${tappable?`onclick="apOpenStep(${i})"`:''}>
+        <div class="ap-card-title">Trinn ${i+1}: ${apEsc(st.title)}</div>
+        <div class="ap-card-status">${status}</div>
+      </div></div>`;
+  });
+  html+='</div>';
+  body.innerHTML=html;
+  body.scrollTop=0;
+}
+function apOpenStep(idx){
+  _apStepIdx=idx; _apView='step'; apRenderStepDetail();
+}
+function apRenderStepDetail(){
+  const plan=(window._workPlans||[]).find(p=>p.fbKey===_apPlanKey);
+  const body=document.getElementById('ap-body');
+  if(!plan){ body.innerHTML=''; return; }
+  const i=_apStepIdx;
+  const st=(plan.steps||[])[i];
+  if(!st){ _apView='trapp'; apRenderTrapp(); return; }
+  const pr=apProgress(_apPlanKey);
+  const cur=pr.current||0;
+  const ss=pr.steps?.[i]||{};
+  const isActive=(i===cur);
+  const isDone=(i<cur);
+  const checks=ss.checks||{};
+  let html='<div class="ap-detail" style="padding:1.1rem 1rem 2rem">';
+  html+=`<div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:.6rem">`
+       +`Trinn ${i+1}: ${apEsc(st.title)}</div>`;
+  if(st.goal){
+    html+='<div class="ap-detail-goal"><div class="g">'
+         +apEsc(st.goal).replace(/\n/g,'<br>')+'</div></div>';
+  }
+  const reqs=st.reqs||[];
+  if(reqs.length){
+    html+='<div class="section-title" style="margin-top:.3rem">✅ Arbeidskrav</div>';
+    reqs.forEach((r,j)=>{
+      const on=!!checks[j];
+      const ro=!isActive;
+      html+=`<div class="ap-req">
+        <div class="ap-check${on?' on':''}${ro?' ro':''}" ${isActive?`onclick="apToggleCheck(${j})"`:''}>${on?'✓':''}</div>
+        <div style="flex:1">
+          <div class="ap-req-text">${apEsc(r.text)}</div>
+          ${r.img?`<img class="ap-req-img" src="${apEsc(r.img)}" alt="" onerror="this.style.display='none'">`:''}
+          ${r.link?`<a class="ap-req-link" href="${apEsc(r.link)}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
+        </div></div>`;
+    });
+  } else {
+    html+='<div class="info-box">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
+  }
+  // status
+  if(isDone){
+    html+='<div class="ap-status-box ap-status-ok">✓ Dette trinnet er fullført og godkjent. Bra jobba!</div>';
+  } else if(isActive){
+    const needBoth=st.approval==='both';
+    if(ss.teacherApproved && needBoth && !ss.guardianApproved){
+      html+='<div class="ap-status-box ap-status-wait">✓ Læreren har godkjent. Nå venter vi på at en voksen hjemme bekrefter.</div>';
+    } else if(ss.teacherApproved){
+      html+='<div class="ap-status-box ap-status-ok">✓ Læreren har godkjent trinnet ditt!</div>';
+    } else {
+      const nDone=reqs.filter((r,j)=>checks[j]).length;
+      const allChecked=reqs.length>0 && nDone===reqs.length;
+      html+='<div class="ap-status-box ap-status-wait">'
+           +(allChecked?'🌟 Alt er huket av! Vis læreren så hen kan godkjenne trinnet.'
+                       :`Huk av etter hvert som du blir ferdig (${nDone}/${reqs.length}). Vis læreren når alt er gjort.`)
+           +'</div>';
+    }
+  }
+  html+='<button onclick="apBack()" style="width:100%;margin-top:1rem;background:var(--white);'
+       +'border:2px solid var(--border);color:var(--muted);padding:12px;border-radius:12px;'
+       +"font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer\">← Tilbake til trappa</button>";
+  html+='</div>';
+  body.innerHTML=html;
+  body.scrollTop=0;
+}
+async function apToggleCheck(reqIdx){
+  const sk=window._currentStudent?.fbKey; if(!sk||!_apPlanKey) return;
+  const pr=apProgress(_apPlanKey);
+  if(_apStepIdx!==(pr.current||0)) return;   // bare aktivt trinn
+  const cur=!!(pr.steps?.[_apStepIdx]?.checks?.[reqIdx]);
+  await window._update(
+    fbRef('workPlanProgress/'+sk+'/'+_apPlanKey+'/steps/'+_apStepIdx+'/checks'),
+    { [reqIdx]: !cur });
+  // apRefresh skjer via onValue-lytteren
+}
 
 // Naviger til Myntjakten med kontekst-flagg så tilbakeknappen
 // der peker hit i stedet for til markedsføringssiden.
@@ -1164,8 +1422,13 @@ function tryLogin(){
     checkQuizStatus();
     renderLoan();
     checkLoanExpiry();
-    switchTab('bank',document.querySelector('.nav-item'));
-    showScreen('screen-app');
+    if(window._loginIntent==='arbeidsplan'){
+      window._loginIntent=null;
+      enterArbeidsplan();
+    } else {
+      switchTab('bank',document.querySelector('.nav-item'));
+      showScreen('screen-app');
+    }
   } else {
     document.getElementById('login-error').textContent='❌ Feil PIN-kode!';
   }
