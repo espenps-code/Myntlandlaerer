@@ -1872,6 +1872,49 @@ async function deletePlan(planKey){
 }
 
 // ── LISTE ───────────────────────────────────────────────────
+function wpLeadLimitCardHTML(){
+  const plans=wpPlansForTeacher();
+  const classes=Array.from(new Set(plans.map(p=>p.class).filter(Boolean))).sort();
+  if(!classes.length) return '';
+  const lim=(window._settings&&window._settings.wpLeadLimit)||{};
+  const rows=classes.map(c=>{
+    const v=lim[c];
+    return `<div style="display:flex;align-items:center;gap:9px;margin:.45rem 0;flex-wrap:wrap;">
+      <span class="class-badge">${c}</span>
+      <span style="font-size:.85rem;color:var(--muted);font-weight:700;">maks</span>
+      <input type="number" min="0" max="99" placeholder="av" value="${(v!=null&&v>0)?v:''}"
+        onchange="saveWpLeadLimit('${c}',this)" style="width:74px;text-align:center;">
+      <span style="font-size:.85rem;color:var(--muted);font-weight:700;">trinn forsprang</span>
+    </div>`;
+  }).join('');
+  return `<div class="card">
+    <div class="card-title">⚖️ Forsprangsbegrensning</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:.6rem;line-height:1.5;">
+    Hindrer at en elev jobber seg for langt foran på ett fag mens hen ligger bak på et annet.
+    Tomt felt = av (standard). Tallet er hvor mange trinn forsprang som tillates.</p>
+    ${rows}
+    <div id="wp-leadlimit-alert" style="margin-top:.4rem;"></div>
+  </div>`;
+}
+async function saveWpLeadLimit(cls,inp){
+  const raw=parseInt(inp.value,10);
+  const val=(isNaN(raw)||raw<=0)?null:Math.min(99,raw);
+  const a=document.getElementById('wp-leadlimit-alert');
+  try{
+    await window._update(window._ref(window._db,'settings/wpLeadLimit'),{[cls]:val});
+    if(!window._settings) window._settings={};
+    if(!window._settings.wpLeadLimit) window._settings.wpLeadLimit={};
+    window._settings.wpLeadLimit[cls]=val;
+    if(a){
+      a.innerHTML='<div class="alert alert-success">'
+        +(val?('✅ '+cls+': maks '+val+' trinn forsprang.'):('✅ '+cls+': forsprangsbegrensning av.'))+'</div>';
+      setTimeout(function(){a.innerHTML='';},3500);
+    }
+  }catch(e){
+    if(a) a.innerHTML='<div class="alert alert-error">⚠️ Lagring feilet: '+e.message+'</div>';
+  }
+}
+
 function renderWorkPlans(){
   const el=document.getElementById('wp-list'); if(!el) return;
   const plans=wpPlansForTeacher();
@@ -1885,6 +1928,7 @@ function renderWorkPlans(){
   const active=plans.filter(p=>p.active!==false);
   const drafts=plans.filter(p=>p.active===false);
   let html='';
+  html+=wpLeadLimitCardHTML();
   html+='<div class="wp-cat-pill aktiv">✅ Aktive periodeplaner ('+active.length+')</div>';
   html+= active.length
     ? active.map(wpPlanCardHTML).join('')

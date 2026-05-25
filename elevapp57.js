@@ -179,6 +179,28 @@ function apProgress(planKey){
   const sk=window._currentStudent?.fbKey;
   return (window._wpProgress?.[sk]?.[planKey]) || { current:0, steps:{} };
 }
+// ── Forsprangsbegrensning ──────────────────────────────────────────────────
+// Et fag er låst hvis eleven ligger mer enn «grensa» trinn foran det faget hen
+// ligger lengst bak på. Grensa settes per klasse i lærerportalen. Tom = av.
+function apLeadLockedPlans(){
+  const cls=window._currentStudent&&window._currentStudent.class;
+  const lim=cls&&window._settings&&window._settings.wpLeadLimit&&window._settings.wpLeadLimit[cls];
+  if(!lim||lim<=0) return {};
+  const plans=apActivePlans();
+  const nonDone=plans.filter(p=>(apProgress(p.fbKey).current||0)<((p.steps||[]).length));
+  if(nonDone.length<=1) return {};
+  const minCur=Math.min.apply(null,nonDone.map(p=>apProgress(p.fbKey).current||0));
+  const locked={};
+  plans.forEach(p=>{ if((apProgress(p.fbKey).current||0)-minCur>lim) locked[p.fbKey]=true; });
+  return locked;
+}
+function apLaggingSubjects(){
+  const plans=apActivePlans();
+  const nonDone=plans.filter(p=>(apProgress(p.fbKey).current||0)<((p.steps||[]).length));
+  if(!nonDone.length) return '';
+  const minCur=Math.min.apply(null,nonDone.map(p=>apProgress(p.fbKey).current||0));
+  return nonDone.filter(p=>(apProgress(p.fbKey).current||0)===minCur).map(p=>p.subject).join(' og ');
+}
 function enterArbeidsplan(){
   const plans=apActivePlans();
   _apPlanKey=plans.length?plans[0].fbKey:null;
@@ -217,9 +239,10 @@ function apRefresh(scrollActive){
   }
   if(!plans.some(p=>p.fbKey===_apPlanKey)) _apPlanKey=plans[0].fbKey;
   // fagmeny
+  const apLk=apLeadLockedPlans();
   subjEl.innerHTML=plans.map(p=>
     `<button class="ap-subj-btn${p.fbKey===_apPlanKey?' active':''}" onclick="apSelectSubject('${p.fbKey}')">`
-    +`${p.emoji||'📘'} ${apEsc(p.subject)}</button>`).join('');
+    +`${p.emoji||'📘'} ${apEsc(p.subject)}${apLk[p.fbKey]?' 🔒':''}</button>`).join('');
   apRenderTrapp();
   apRenderStepDetail();
   apShowPane();
@@ -241,6 +264,7 @@ function apRenderTrapp(){
   const steps=plan.steps||[];
   const pr=apProgress(_apPlanKey);
   const cur=pr.current||0;
+  const leadLocked=!!apLeadLockedPlans()[_apPlanKey];
   const allDone=cur>=steps.length;
   let html='';
   html+='<div class="ap-intro">🪜 Jobb deg oppover trappa – trinn 1 nederst! Du jobber med ett trinn '
@@ -263,6 +287,7 @@ function apRenderTrapp(){
       else if(ss.teacherApproved)
         status='✓ Læreren har godkjent';
       else status='👉 Trykk for å se hva du skal gjøre';
+      if(leadLocked) status='🔒 Låst – du ligger for langt foran';
     } else { ring=(i+1); }
     const tappable=(i<=cur);
     const sel=(i===_apStepIdx)?' ap-step-sel':'';
@@ -318,6 +343,14 @@ function apRenderStepDetail(){
   if(st.goal){
     html+='<div class="ap-detail-goal"><div class="g">'
          +apEsc(st.goal).replace(/\n/g,'<br>')+'</div></div>';
+  }
+  if(isActive && apLeadLockedPlans()[_apPlanKey]){
+    const lag=apLaggingSubjects();
+    html+='<div class="ap-status-box ap-status-wait">📌 Du ligger langt foran her. Jobb deg videre på '
+         +(lag?apEsc(lag):'de andre fagene')+' før du fortsetter på dette faget.</div>';
+    html+='<button onclick="apBack()" class="ap-detail-back" style="width:100%;margin-top:1rem;background:var(--white);border:2px solid var(--border);color:var(--muted);padding:12px;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;cursor:pointer">← Tilbake til trappa</button>';
+    host.innerHTML=html; host.scrollTop=0;
+    return;
   }
   const reqs=st.reqs||[];
   const goalsRead=!!ss.goalsRead;
