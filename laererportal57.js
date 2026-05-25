@@ -1872,13 +1872,14 @@ async function deletePlan(planKey){
 }
 
 // ── LISTE ───────────────────────────────────────────────────
+function wpClassKey(c){ return encodeURIComponent(String(c==null?'':c)).replace(/\./g,'%2E'); }
 function wpLeadLimitCardHTML(){
   const plans=wpPlansForTeacher();
   const classes=Array.from(new Set(plans.map(p=>p.class).filter(Boolean))).sort();
   if(!classes.length) return '';
   const lim=(window._settings&&window._settings.wpLeadLimit)||{};
   const rows=classes.map(c=>{
-    const v=lim[c];
+    const v=lim[wpClassKey(c)];
     return `<div style="display:flex;align-items:center;gap:9px;margin:.45rem 0;flex-wrap:wrap;">
       <span class="class-badge">${c}</span>
       <span style="font-size:.85rem;color:var(--muted);font-weight:700;">maks</span>
@@ -1901,10 +1902,10 @@ async function saveWpLeadLimit(cls,inp){
   const val=(isNaN(raw)||raw<=0)?null:Math.min(99,raw);
   const a=document.getElementById('wp-leadlimit-alert');
   try{
-    await window._update(window._ref(window._db,'settings/wpLeadLimit'),{[cls]:val});
+    await window._update(window._ref(window._db,'settings/wpLeadLimit'),{[wpClassKey(cls)]:val});
     if(!window._settings) window._settings={};
     if(!window._settings.wpLeadLimit) window._settings.wpLeadLimit={};
-    window._settings.wpLeadLimit[cls]=val;
+    window._settings.wpLeadLimit[wpClassKey(cls)]=val;
     if(a){
       a.innerHTML='<div class="alert alert-success">'
         +(val?('✅ '+cls+': maks '+val+' trinn forsprang.'):('✅ '+cls+': forsprangsbegrensning av.'))+'</div>';

@@ -182,9 +182,10 @@ function apProgress(planKey){
 // ── Forsprangsbegrensning ──────────────────────────────────────────────────
 // Et fag er låst hvis eleven ligger mer enn «grensa» trinn foran det faget hen
 // ligger lengst bak på. Grensa settes per klasse i lærerportalen. Tom = av.
+function wpClassKey(c){ return encodeURIComponent(String(c==null?'':c)).replace(/\./g,'%2E'); }
 function apLeadLockedPlans(){
   const cls=window._currentStudent&&window._currentStudent.class;
-  const lim=cls&&window._settings&&window._settings.wpLeadLimit&&window._settings.wpLeadLimit[cls];
+  const lim=cls&&window._settings&&window._settings.wpLeadLimit&&window._settings.wpLeadLimit[wpClassKey(cls)];
   if(!lim||lim<=0) return {};
   const plans=apActivePlans();
   const nonDone=plans.filter(p=>(apProgress(p.fbKey).current||0)<((p.steps||[]).length));
