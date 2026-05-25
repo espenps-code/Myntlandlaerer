@@ -359,7 +359,7 @@ function apRenderStepDetail(){
         const allChecked=reqs.every((r,j)=>checks[j]);
         html+='<div class="ap-status-box ap-status-wait">'
              +(allChecked?'🌟 Alt er huket av! Vis arbeidet til læreren og scan godkjennings-QR-en.'
-                         :`Huk av alle arbeidskravene først – da kan du scanne godkjenning (${nDone}/${reqs.length}).`)
+                         :`Huk av alle arbeidskrav – vis arbeidet ditt til læreren eller ta prøven for godkjenning (${nDone}/${reqs.length})`)
              +'</div>';
         html+='<button onclick="startScan(\'wpapprove\')" class="big-btn bb-teal" '
              +(allChecked?'':'disabled ')
