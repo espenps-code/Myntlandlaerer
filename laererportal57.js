@@ -2,7 +2,7 @@
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-window._students = []; window._groups = []; window._jobs = [];
+window._students = []; window._jobs = [];
 window._shop57 = []; window._teachers = []; window._customRewards57 = []; window._hendelser = [];
 window._currentTeacher = null;
 
@@ -11,7 +11,6 @@ let currentEditJobKey = null, currentEditGroupKey = null;
 let currentDeleteTeacherId = null;
 let searchFilter = '', classFilter = '';
 let csvParsed = [];
-let selectedGroupColor = '#1D9E75';
 let selectedTeacherColor = '#1D9E75';
 const TAX_RATE = 0.20;
 
@@ -198,7 +197,6 @@ function showPage(page) {
   document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-'  + page).classList.add('active');
-  if (page === 'grupper')  renderGroupsPage();
   if (page === 'oppdrag')  { refreshJobSelects(); if (typeof setJobType === 'function') setJobType(window._currentJobType || 'task'); }
   if (page === 'butikk57') renderShop57List();
   if (page === 'laerere')  renderTeacherList();
@@ -303,18 +301,13 @@ function renderStudentTable() {
     const name = (s.firstname + ' ' + s.lastname).toLowerCase();
     return name.includes(searchFilter.toLowerCase()) && (!classFilter || s.class === classFilter);
   });
-  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever funnet</td></tr>'; return; }
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever funnet</td></tr>'; return; }
   tbody.innerHTML = filtered.map(s => {
-    const grp = s.groupKey ? window._groups.find(g => g.fbKey === s.groupKey) : null;
-    const grpBadge = grp
-      ? `<span class="group-badge" style="color:${grp.color};border-color:${grp.color};background:${grp.color}18;">${grp.emoji||'👥'} ${grp.name}</span>`
-      : `<span style="color:var(--muted);font-size:.8rem;">–</span>`;
     return `<tr>
       <td data-label="Elev"><div style="display:flex;align-items:center;gap:8px;">
         <div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark);">${s.firstname[0]}${s.lastname[0]}</div>
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
       <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
-      <td data-label="Gruppe">${grpBadge}</td>
       <td data-label="PIN"><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
       <td data-label="Saldo"><span class="balance-badge">🪙 ${s.balance||0}</span></td>
       <td data-label=""><div class="balance-actions">
@@ -670,124 +663,6 @@ async function logTx(sk, type, icon, desc, amount) {
   if (!window._push || !window._set) return;
   await window._set(window._push(fbRef('transactions57/' + sk)), { type, icon, desc, amount, ts: Date.now() });
 }
-
-// ════════════════════════════════════════════════════════════
-// GRUPPER
-// ════════════════════════════════════════════════════════════
-function selectColor(el) {
-  document.querySelectorAll('#color-picker .color-swatch').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedGroupColor = el.dataset.color;
-}
-
-async function submitGroup() {
-  if (!ready()) return;
-  const name  = document.getElementById('new-group-name').value.trim();
-  const emoji = document.getElementById('new-group-emoji').value || '👥';
-  const alertEl = document.getElementById('group-create-alert');
-  if (!name) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et gruppenavn.</div>'; return; }
-  if (currentEditGroupKey) {
-    await window._update(fbRef('groups/' + currentEditGroupKey), { name, emoji, color: selectedGroupColor });
-    alertEl.innerHTML = '<div class="alert alert-success">✅ Gruppe oppdatert!</div>';
-    cancelEditGroup();
-  } else {
-    await window._set(window._push(fbRef('groups')), { name, emoji, color: selectedGroupColor, created: Date.now() });
-    alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» opprettet!</div>`;
-    document.getElementById('new-group-name').value  = '';
-    document.getElementById('new-group-emoji').value = '';
-  }
-  setTimeout(() => alertEl.innerHTML = '', 3000);
-}
-
-function openEditGroup(fbKey) {
-  const g = window._groups.find(x => x.fbKey === fbKey); if (!g) return;
-  currentEditGroupKey = fbKey;
-  document.getElementById('new-group-name').value  = g.name;
-  document.getElementById('new-group-emoji').value = g.emoji || '';
-  document.querySelectorAll('#color-picker .color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === g.color));
-  selectedGroupColor = g.color;
-  document.getElementById('group-form-title').textContent = '✏️ Rediger gruppe';
-  document.getElementById('group-submit-btn').textContent = 'Lagre endringer';
-  document.getElementById('group-cancel-btn').style.display = '';
-  document.getElementById('new-group-name').focus();
-}
-
-function cancelEditGroup() {
-  currentEditGroupKey = null;
-  document.getElementById('new-group-name').value  = '';
-  document.getElementById('new-group-emoji').value = '';
-  document.getElementById('group-form-title').textContent = '➕ Opprett ny gruppe';
-  document.getElementById('group-submit-btn').textContent = 'Opprett gruppe';
-  document.getElementById('group-cancel-btn').style.display = 'none';
-}
-
-async function deleteGroup(fbKey, name) {
-  if (!confirm(`Slett gruppen «${name}»? Elever beholdes.`)) return;
-  const updates = {};
-  window._students.filter(s => s.groupKey === fbKey).forEach(s => { updates['students57/' + s.fbKey + '/groupKey'] = null; });
-  if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
-  await window._remove(fbRef('groups/' + fbKey));
-}
-
-function renderGroupsPage() { renderGroupsList(); renderAssignSelects(); }
-
-function renderGroupsList() {
-  const el = document.getElementById('groups-list'); if (!el) return;
-  if (!window._groups.length) {
-    el.innerHTML = `<div class="card" style="text-align:center;padding:2.5rem;color:var(--muted);"><div style="font-size:2.5rem;margin-bottom:.75rem;">👥</div><div style="font-weight:700;">Ingen grupper ennå</div><div style="font-size:.85rem;margin-top:.25rem;">Opprett din første gruppe ovenfor!</div></div>`;
-    return;
-  }
-  el.innerHTML = window._groups.map(g => {
-    const members = window._students.filter(s => s.groupKey === g.fbKey);
-    const total   = members.reduce((a,s) => a + (s.balance||0), 0);
-    return `<div class="group-card">
-      <div class="group-card-header">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:44px;height:44px;border-radius:12px;background:${g.color}22;border:2px solid ${g.color};display:flex;align-items:center;justify-content:center;font-size:1.5rem;">${g.emoji||'👥'}</div>
-          <div>
-            <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:${g.color};">${g.name}</div>
-            <div style="font-size:.8rem;color:var(--muted);font-weight:700;">${members.length} elev${members.length!==1?'er':''} · 🪙 ${total} totalt</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-ghost btn-sm" onclick="openEditGroup('${g.fbKey}')">✏️ Rediger</button>
-          <button class="btn btn-coral btn-sm" onclick="deleteGroup('${g.fbKey}','${g.name.replace(/'/g,"\\'")}')">🗑️</button>
-        </div>
-      </div>
-      <div class="group-members">
-        ${members.length ? members.map(s => `
-          <div style="display:flex;align-items:center;gap:6px;background:${g.color}12;border:1px solid ${g.color}44;border-radius:20px;padding:4px 10px;">
-            <div style="width:22px;height:22px;background:${g.color}33;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:${g.color};">${s.firstname[0]}${s.lastname[0]}</div>
-            <span style="font-size:.82rem;font-weight:700;">${s.firstname} ${s.lastname}</span>
-            <span style="font-size:.75rem;color:var(--muted);">🪙${s.balance||0}</span>
-            <button onclick="removeFromGroup('${s.fbKey}')" style="background:none;border:none;cursor:pointer;color:${g.color};font-size:.9rem;padding:0 2px;" title="Fjern">✕</button>
-          </div>`).join('')
-        : '<span style="font-size:.82rem;color:var(--muted);font-style:italic;">Ingen elever ennå</span>'}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderAssignSelects() {
-  const ss = document.getElementById('assign-student-select');
-  const gs = document.getElementById('assign-group-select');
-  if (!ss || !gs) return;
-  ss.innerHTML = '<option value="">– Velg elev –</option>' + window._students.map(s => `<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('');
-  gs.innerHTML = '<option value="">– Velg gruppe –</option>' + window._groups.map(g => `<option value="${g.fbKey}">${g.emoji||'👥'} ${g.name}</option>`).join('');
-}
-
-async function assignStudentToGroup() {
-  const sk = document.getElementById('assign-student-select').value;
-  const gk = document.getElementById('assign-group-select').value;
-  if (!sk || !gk) { alert('Velg både elev og gruppe.'); return; }
-  await window._update(fbRef('students57/' + sk), { groupKey: gk });
-}
-async function removeStudentFromGroup() {
-  const sk = document.getElementById('assign-student-select').value;
-  if (!sk) { alert('Velg en elev først.'); return; }
-  await window._update(fbRef('students57/' + sk), { groupKey: null });
-}
-async function removeFromGroup(sk) { await window._update(fbRef('students57/' + sk), { groupKey: null }); }
 
 // ════════════════════════════════════════════════════════════
 // OPPDRAG

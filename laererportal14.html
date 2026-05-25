@@ -90,10 +90,6 @@
       if (document.getElementById('page-belonninger')?.classList.contains('active')) renderCustomRewards();
     });
 
-    onValue(ref(db, 'groups'), snap => {
-      window._groups = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-      if (document.getElementById('page-grupper').classList.contains('active')) renderGroupsPage();
-    });
 
     onValue(ref(db, 'classGoals14'), snap => {
       window._classGoals = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
@@ -215,7 +211,6 @@
     </button>
     <nav>
       <button class="active" onclick="showPage('elever')" id="nav-elever"><i class="ti ti-users" aria-hidden="true"></i>Elever</button>
-      <button onclick="showPage('grupper')" id="nav-grupper"><i class="ti ti-users-group" aria-hidden="true"></i>Grupper</button>
       <button onclick="showPage('saldo')" id="nav-saldo"><i class="ti ti-wallet" aria-hidden="true"></i>Saldo</button>
       <button onclick="showPage('butikk')" id="nav-butikk"><i class="ti ti-shopping-cart" aria-hidden="true"></i>Butikk</button>
       <button onclick="showPage('belonninger')" id="nav-belonninger"><i class="ti ti-medal" aria-hidden="true"></i>Belønninger</button>
@@ -422,51 +417,12 @@
         </select>
       </div>
     </div>
-    <table><thead><tr><th>Elev</th><th>Klasse</th><th>Gruppe</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
+    <table><thead><tr><th>Elev</th><th>Klasse</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
     <tbody id="student-table-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Laster elever…</td></tr></tbody></table>
   </div>
 
 </div>
 
-<!-- ===== GRUPPER ===== -->
-<div class="page" id="page-grupper">
-  <div class="page-title">👥 Grupper</div>
-  <div class="page-subtitle">Opprett og navngi grupper – knytt elever til grupper for aktiviteter</div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title" id="group-form-title">➕ Opprett ny gruppe</div>
-      <div class="form-row"><label>Gruppenavn</label><input type="text" id="new-group-name" placeholder="f.eks. Røde Ørner"></div>
-      <div class="form-row"><label>Emoji</label><input type="text" id="new-group-emoji" placeholder="🦅" maxlength="2"></div>
-      <div class="form-row"><label>Farge</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="color-picker">
-          <div class="color-swatch selected" data-color="#1D9E75" style="background:#1D9E75;" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#EF9F27" style="background:#EF9F27;" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#534AB7" style="background:#534AB7;" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30;" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#D4537E" style="background:#D4537E;" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5;" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#639922" style="background:#639922;" onclick="selectColor(this)"></div>
-          <div class="color-swatch" data-color="#888780" style="background:#888780;" onclick="selectColor(this)"></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:.5rem;">
-        <button class="btn btn-primary" id="group-submit-btn" onclick="submitGroup()">Opprett gruppe</button>
-        <button class="btn btn-ghost" id="group-cancel-btn" onclick="cancelEditGroup()" style="display:none;">Avbryt</button>
-      </div>
-      <div id="group-create-alert" style="margin-top:1rem;"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">👤 Legg elev til gruppe</div>
-      <div class="form-row"><label>Velg elev</label><select id="assign-student-select"><option value="">– Velg elev –</option></select></div>
-      <div class="form-row"><label>Velg gruppe</label><select id="assign-group-select"><option value="">– Velg gruppe –</option></select></div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary" onclick="assignStudentToGroup()">Legg til i gruppe</button>
-        <button class="btn btn-ghost" onclick="removeStudentFromGroup()">Fjern fra gruppe</button>
-      </div>
-    </div>
-  </div>
-  <div id="groups-list"></div>
-</div>
 
 <!-- ===== SALDO ===== -->
 <div class="page" id="page-saldo">
