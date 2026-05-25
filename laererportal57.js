@@ -1650,7 +1650,7 @@ function wpBlankStep(){
 function openPlanEditor(planKey){
   _wpEditKey=planKey;
   const ed=document.getElementById('wp-editor');
-  ed.style.display='block';
+  showWpTab('ny');
   document.getElementById('wp-editor-alert').innerHTML='';
   const t=window._currentTeacher;
   const clsRow=document.getElementById('wp-class-row');
@@ -1681,7 +1681,7 @@ function openPlanEditor(planKey){
   ed.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function closePlanEditor(){
-  document.getElementById('wp-editor').style.display='none';
+  showWpTab('liste');
   _wpEditKey=null; _wpEditSteps=[]; _wpActiveStep=-1;
 }
 function wpEdAlert(msg,type){
@@ -1916,6 +1916,24 @@ async function saveWpLeadLimit(cls,inp){
   }
 }
 
+function showWpTab(tab, btnEl){
+  ['hjelp','ny','liste','innst'].forEach(t=>{
+    const el=document.getElementById('wp-tab-'+t);
+    if(el) el.style.display=(t===tab)?'block':'none';
+  });
+  const btn=btnEl||document.getElementById('wp-tabbtn-'+tab);
+  if(btn&&btn.closest){
+    btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  if(tab==='liste' && typeof renderWorkPlans==='function') renderWorkPlans();
+  if(tab==='innst' && typeof renderWpSettings==='function') renderWpSettings();
+}
+function renderWpSettings(){
+  const el=document.getElementById('wp-settings');
+  if(el) el.innerHTML=wpLeadLimitCardHTML();
+}
+
 function renderWorkPlans(){
   const el=document.getElementById('wp-list'); if(!el) return;
   const plans=wpPlansForTeacher();
@@ -1929,7 +1947,6 @@ function renderWorkPlans(){
   const active=plans.filter(p=>p.active!==false);
   const drafts=plans.filter(p=>p.active===false);
   let html='';
-  html+=wpLeadLimitCardHTML();
   html+='<div class="wp-cat-pill aktiv">✅ Aktive periodeplaner ('+active.length+')</div>';
   html+= active.length
     ? active.map(wpPlanCardHTML).join('')

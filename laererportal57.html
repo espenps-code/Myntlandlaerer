@@ -1374,25 +1374,28 @@
   <div class="page-title">🪜 Periodeplan</div>
   <div class="page-subtitle">Læringsmål i en trapp – elevene jobber seg oppover, ett trinn om gangen.</div>
 
-  <div id="wp-list"></div>
+  <div class="tabs">
+    <button class="tab active" id="wp-tabbtn-hjelp" onclick="showWpTab('hjelp', this)">ℹ️ Slik fungerer det</button>
+    <button class="tab" id="wp-tabbtn-ny" onclick="openPlanEditor(null)">➕ Ny periodeplan</button>
+    <button class="tab" id="wp-tabbtn-liste" onclick="showWpTab('liste', this)">🪜 Periodeplaner</button>
+    <button class="tab" id="wp-tabbtn-innst" onclick="showWpTab('innst', this)">⚙️ Innstillinger</button>
+  </div>
 
-  <div class="card" style="background:var(--teal-light);border-color:var(--teal);">
-    <div class="card-title">ℹ️ Slik fungerer periodeplaner</div>
-    <p style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.55;margin-bottom:1rem;">
-      Lag én trapp per fag med 3–6 trinn. Hvert trinn har arbeidskrav med valgfrie lenker,
-      og en bonus eleven får på kontoen når trinnet er godkjent. Eleven ser bare ett aktivt trinn om
-      gangen og må få det godkjent før neste låses opp. Du velger om hvert trinn skal godkjennes av
-      bare deg, eller av deg <em>og</em> en foresatt.
-    </p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="openPlanEditor(null)"><i class="ti ti-plus"></i> Ny periodeplan</button>
-      <button class="btn btn-amber" onclick="openGuardianLetters()">📨 Lag foresattbrev</button>
-      <button class="btn btn-amber" onclick="showWpQR()">📱 Godkjennings-QR</button>
+  <div id="wp-tab-hjelp">
+    <div class="card" style="background:var(--teal-light);border-color:var(--teal);">
+      <div class="card-title">ℹ️ Slik fungerer periodeplaner</div>
+      <p style="font-size:.88rem;color:var(--teal-dark);font-weight:600;line-height:1.55;margin-bottom:1rem;">
+        Lag én trapp per fag med 3–6 trinn. Hvert trinn har arbeidskrav med valgfrie lenker,
+        og en bonus eleven får på kontoen når trinnet er godkjent. Eleven ser bare ett aktivt trinn om
+        gangen og må få det godkjent før neste låses opp. Du velger om hvert trinn skal godkjennes av
+        bare deg, eller av deg <em>og</em> en foresatt.
+      </p>
+      <button class="btn btn-primary" onclick="openPlanEditor(null)"><i class="ti ti-plus"></i> Lag en periodeplan</button>
     </div>
   </div>
 
-  <!-- Plan-editor (skjult til man oppretter/redigerer) -->
-  <div class="card" id="wp-editor" style="display:none;">
+  <div id="wp-tab-ny" style="display:none;">
+  <div class="card" id="wp-editor">
     <div class="card-title" id="wp-editor-title">➕ Ny periodeplan</div>
     <div class="form-grid">
       <div class="form-row"><label>Ikon (emoji)</label><input type="text" id="wp-emoji" placeholder="📖" maxlength="2"></div>
@@ -1425,6 +1428,26 @@
       <button class="btn btn-primary" id="wp-publish-btn" onclick="savePlan(true)">🚀 Publiser for elevene</button>
       <button class="btn btn-ghost" onclick="closePlanEditor()">Avbryt</button>
     </div>
+  </div>
+  </div>
+
+  <div id="wp-tab-liste" style="display:none;">
+    <div id="wp-list"></div>
+  </div>
+
+  <div id="wp-tab-innst" style="display:none;">
+    <div class="card">
+      <div class="card-title">📨 Foresattbrev og godkjennings-QR</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:.7rem;line-height:1.5;">
+        Foresattbrevet gir hver elev en personlig kode til foresattsiden. Godkjennings-QR-en
+        viser du til elever som har fullført et trinn og skal få det godkjent.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-amber" onclick="openGuardianLetters()">📨 Lag foresattbrev</button>
+        <button class="btn btn-amber" onclick="showWpQR()">📱 Godkjennings-QR</button>
+      </div>
+    </div>
+    <div id="wp-settings"></div>
   </div>
 
 </div>
