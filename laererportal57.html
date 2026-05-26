@@ -672,17 +672,8 @@
       </div>
       <div class="card">
         <div class="card-title">💳 Skriv ut bankkort</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og QR-kode – 8 per A4-side.</p>
-        <div class="form-row">
-          <label>Velg klasse</label>
-          <select id="card-class-filter">
-            <option value="">Alle klasser</option>
-            <option value="5. klasse">5. klasse</option>
-            <option value="6. klasse">6. klasse</option>
-            <option value="7. klasse">7. klasse</option>
-          </select>
-        </div>
-        <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort</button>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og QR-kode – 8 per A4-side. Du velger hvilke elever du vil skrive ut for.</p>
+        <button class="btn btn-amber" onclick="openCardSelect()">💳 Velg elever og skriv ut</button>
         <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Dataene lagres i Firebase og synkroniseres på alle enheter.</div>
       </div>
     </div>
@@ -1439,17 +1430,33 @@
 
 <!-- Modal: Foresattbrev -->
 <div class="modal-overlay" id="modal-wp-letters">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-title">📨 Foresattbrev</div>
     <p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
-      Hver elev får et eget brev med en unik kode. Foresatte bruker koden på foresatt-siden
-      for å se elevens framgang og godkjenne trinn. Kodene er tilfeldige og knyttes ikke til
-      noe annet enn periodeplanen.
+      Hver elev får et eget brev med en unik kode. Hak av hvem du vil skrive ut for —
+      du kan velge enkeltelever, en hel klasse, eller alle. Koden er tilfeldig og knyttes
+      ikke til noe annet enn periodeplanen.
     </p>
     <div id="modal-wp-letters-body"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-wp-letters')">Lukk</button>
-      <button class="btn btn-primary" id="wp-letters-print-btn" onclick="printGuardianLetters()">🖨️ Skriv ut alle brev</button>
+      <button class="btn btn-primary" id="wp-letters-print-btn" onclick="printGuardianLetters()">🖨️ Skriv ut valgte brev</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Velg elever for bankkortutskrift -->
+<div class="modal-overlay" id="modal-card-select">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title">💳 Velg elever for bankkortutskrift</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
+      Hak av hvilke elever du vil skrive ut bankkort for. Du kan velge enkeltelever,
+      en hel klasse, eller alle. Det blir 8 kort per A4-side.
+    </p>
+    <div id="modal-card-select-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-card-select')">Lukk</button>
+      <button class="btn btn-amber" id="card-select-print-btn" onclick="generateCardPDF();closeModal('modal-card-select');">💳 Skriv ut valgte bankkort</button>
     </div>
   </div>
 </div>

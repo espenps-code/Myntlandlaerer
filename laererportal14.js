@@ -2129,14 +2129,76 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
 
 // ══════════════════════════════════════════════════════════
 // BANKKORT PDF — Myntland-design (forside + bakside annenhver side)
+// Elevvalget gjøres i modalen `modal-card-select` (avhukingsbokser
+// per klasse). Selve utskriften henter alle avhukede elever derfra.
 // ══════════════════════════════════════════════════════════
+function cs14Esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function openCardSelect(){
+  const t=window._currentTeacher;
+  let students=(window._students||[]).slice();
+  if(t?.class && t.role!=='admin') students=students.filter(s=>s.class===t.class);
+  students.sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
+  if(!students.length){ alert('Ingen elever å skrive ut kort for.'); return; }
+
+  // Grupper per klasse
+  const byClass={};
+  students.forEach(s=>{ (byClass[s.class||'(uten klasse)']=byClass[s.class||'(uten klasse)']||[]).push(s); });
+  const classes=Object.keys(byClass).sort();
+
+  const groupsHTML=classes.map(cls=>{
+    const rows=byClass[cls].map(s=>{
+      const navn=`${cs14Esc(s.firstname||'')} ${cs14Esc(s.lastname||'')}`;
+      return `<label class="cs-row" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--bg);cursor:pointer;">
+        <input type="checkbox" class="cs-cb" data-fbkey="${cs14Esc(s.fbKey)}" data-class="${cs14Esc(cls)}" checked onchange="cardSelectUpdateCount()" style="width:18px;height:18px;cursor:pointer;flex:0 0 auto;">
+        <span style="flex:1;font-weight:700;">${navn}</span>
+      </label>`;
+    }).join('');
+    return `<div class="cs-class-group" style="margin-bottom:.6rem;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-bottom:1.5px solid var(--border);flex-wrap:wrap;">
+        <span class="class-badge">${cs14Esc(cls)}</span>
+        <span style="flex:1;font-size:.78rem;color:var(--muted);font-weight:700;">${byClass[cls].length} elever</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectClassToggle('${cs14Esc(cls)}',true)">Alle</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectClassToggle('${cs14Esc(cls)}',false)">Ingen</button>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  document.getElementById('modal-card-select-body').innerHTML=
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem;">
+       <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectAll(true)">✓ Merk alle</button>
+       <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectAll(false)">✕ Fjern alle</button>
+       <div id="cs-count" style="flex:1;text-align:right;font-weight:800;color:var(--teal-dark);align-self:center;">${students.length} elever valgt</div>
+     </div>
+     <div style="max-height:380px;overflow-y:auto;">${groupsHTML}</div>`;
+  document.getElementById('modal-card-select').classList.add('open');
+}
+function cardSelectAll(check){
+  document.querySelectorAll('#modal-card-select-body .cs-cb').forEach(cb=>{ cb.checked=!!check; });
+  cardSelectUpdateCount();
+}
+function cardSelectClassToggle(cls,check){
+  document.querySelectorAll('#modal-card-select-body .cs-cb').forEach(cb=>{
+    if(cb.dataset.class===cls) cb.checked=!!check;
+  });
+  cardSelectUpdateCount();
+}
+function cardSelectUpdateCount(){
+  const n=document.querySelectorAll('#modal-card-select-body .cs-cb:checked').length;
+  const el=document.getElementById('cs-count');
+  if(el) el.textContent=n+' elever valgt';
+  const btn=document.getElementById('card-select-print-btn');
+  if(btn) btn.disabled=n===0;
+}
 function generateCardPDF() {
-  const classFilter = document.getElementById('card-class-filter')?.value || '';
-  const students = classFilter
-    ? window._students.filter(s => s.class === classFilter)
-    : window._students;
+  const checked=new Set(Array.from(document.querySelectorAll('#modal-card-select-body .cs-cb:checked'))
+    .map(cb=>cb.dataset.fbkey));
+  const students=(window._students||[]).filter(s=>checked.has(s.fbKey));
   if (!students.length) {
-    alert(classFilter ? `Ingen elever i ${classFilter}.` : 'Ingen elever å skrive ut kort for.');
+    alert('Velg minst én elev å skrive ut kort for.');
     return;
   }
   // Innloggingsmodus: 'qrpin' = bare QR + PIN (PIN ikke trykket på kortet)

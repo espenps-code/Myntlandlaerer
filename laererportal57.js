@@ -1396,14 +1396,72 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
 
 // ════════════════════════════════════════════════════════════
 // BANKKORT PDF — Myntland-design (forside + bakside annenhver side)
+// Elevvalget gjøres i modalen `modal-card-select` (avhukingsbokser per
+// klasse). Selve utskriften henter alle avhukede elever derfra.
 // ════════════════════════════════════════════════════════════
+function openCardSelect(){
+  const t=window._currentTeacher;
+  let students=(window._students||[]).slice();
+  if(t?.class && t.role!=='admin') students=students.filter(s=>s.class===t.class);
+  students.sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
+  if(!students.length){ alert('Ingen elever å skrive ut kort for.'); return; }
+
+  // Grupper per klasse
+  const byClass={};
+  students.forEach(s=>{ (byClass[s.class||'(uten klasse)']=byClass[s.class||'(uten klasse)']||[]).push(s); });
+  const classes=Object.keys(byClass).sort();
+
+  const groupsHTML=classes.map(cls=>{
+    const rows=byClass[cls].map(s=>{
+      const navn=`${wpEscAttr(s.firstname||'')} ${wpEscAttr(s.lastname||'')}`;
+      return `<label class="cs-row" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--bg);cursor:pointer;">
+        <input type="checkbox" class="cs-cb" data-fbkey="${wpEscAttr(s.fbKey)}" data-class="${wpEscAttr(cls)}" checked onchange="cardSelectUpdateCount()" style="width:18px;height:18px;cursor:pointer;flex:0 0 auto;">
+        <span style="flex:1;font-weight:700;">${navn}</span>
+      </label>`;
+    }).join('');
+    return `<div class="cs-class-group" style="margin-bottom:.6rem;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-bottom:1.5px solid var(--border);flex-wrap:wrap;">
+        <span class="class-badge">${wpEscAttr(cls)}</span>
+        <span style="flex:1;font-size:.78rem;color:var(--muted);font-weight:700;">${byClass[cls].length} elever</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectClassToggle('${wpEscAttr(cls)}',true)">Alle</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectClassToggle('${wpEscAttr(cls)}',false)">Ingen</button>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  document.getElementById('modal-card-select-body').innerHTML=
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem;">
+       <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectAll(true)">✓ Merk alle</button>
+       <button type="button" class="btn btn-ghost btn-sm" onclick="cardSelectAll(false)">✕ Fjern alle</button>
+       <div id="cs-count" style="flex:1;text-align:right;font-weight:800;color:var(--teal-dark);align-self:center;">${students.length} elever valgt</div>
+     </div>
+     <div style="max-height:380px;overflow-y:auto;">${groupsHTML}</div>`;
+  document.getElementById('modal-card-select').classList.add('open');
+}
+function cardSelectAll(check){
+  document.querySelectorAll('#modal-card-select-body .cs-cb').forEach(cb=>{ cb.checked=!!check; });
+  cardSelectUpdateCount();
+}
+function cardSelectClassToggle(cls,check){
+  document.querySelectorAll('#modal-card-select-body .cs-cb').forEach(cb=>{
+    if(cb.dataset.class===cls) cb.checked=!!check;
+  });
+  cardSelectUpdateCount();
+}
+function cardSelectUpdateCount(){
+  const n=document.querySelectorAll('#modal-card-select-body .cs-cb:checked').length;
+  const el=document.getElementById('cs-count');
+  if(el) el.textContent=n+' elever valgt';
+  const btn=document.getElementById('card-select-print-btn');
+  if(btn) btn.disabled=n===0;
+}
 function generateCardPDF() {
-  const cardClassFilter = document.getElementById('card-class-filter')?.value || '';
-  const printStudents = cardClassFilter
-    ? window._students.filter(s => s.class === cardClassFilter)
-    : window._students;
+  const checked=new Set(Array.from(document.querySelectorAll('#modal-card-select-body .cs-cb:checked'))
+    .map(cb=>cb.dataset.fbkey));
+  const printStudents=(window._students||[]).filter(s=>checked.has(s.fbKey));
   if (!printStudents.length) {
-    alert(cardClassFilter ? `Ingen elever i ${cardClassFilter}.` : 'Ingen elever å skrive ut.');
+    alert('Velg minst én elev å skrive ut kort for.');
     return;
   }
   // Skriv ut bankkort med samme design som "Bankkort - Myntland" — uten PIN på 5–7
@@ -1962,8 +2020,10 @@ async function wpCheckCompletion(planKey, studentKey){
 // ── FORESATTBREV ────────────────────────────────────────────
 const WP_FORESATT_URL='www.myntland.no/foresatt';
 async function openGuardianLetters(){
-  const students=(window._students||[]).slice()
-    .sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
+  const t=window._currentTeacher;
+  let students=(window._students||[]).slice();
+  if(t?.class && t.role!=='admin') students=students.filter(s=>s.class===t.class);
+  students.sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
   if(!students.length){ alert('Ingen elever å lage brev for.'); return; }
   const codes=window._guardianCodes||{};
   const used=new Set(Object.values(codes).map(c=>c&&c.code).filter(Boolean));
@@ -1979,19 +2039,68 @@ async function openGuardianLetters(){
   if(Object.keys(upd).length) await window._update(fbRef('/'),upd);
   const fresh=(await window._get(fbRef('guardianCodes'))).val()||{};
   window._guardianCodes=fresh;
+
+  // Grupper elever per klasse, sorter klasser stigende
+  const byClass={};
+  students.forEach(s=>{ (byClass[s.class||'(uten klasse)']=byClass[s.class||'(uten klasse)']||[]).push(s); });
+  const classes=Object.keys(byClass).sort();
+
+  const groupsHTML=classes.map(cls=>{
+    const rows=byClass[cls].map(s=>{
+      const code=fresh[s.fbKey]?.code||'—';
+      return `<label class="gl-row" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--bg);cursor:pointer;">
+        <input type="checkbox" class="gl-cb" data-fbkey="${wpEscAttr(s.fbKey)}" data-class="${wpEscAttr(cls)}" checked onchange="wpGuardianUpdateCount()" style="width:18px;height:18px;cursor:pointer;flex:0 0 auto;">
+        <span style="flex:1;font-weight:700;">${wpEscAttr(s.firstname)} ${wpEscAttr(s.lastname||'')}</span>
+        <span style="font-family:'Fredoka One',cursive;color:var(--teal);font-size:.95rem;">${wpEscAttr(code)}</span>
+      </label>`;
+    }).join('');
+    return `<div class="gl-class-group" style="margin-bottom:.6rem;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-bottom:1.5px solid var(--border);flex-wrap:wrap;">
+        <span class="class-badge">${wpEscAttr(cls)}</span>
+        <span style="flex:1;font-size:.78rem;color:var(--muted);font-weight:700;">${byClass[cls].length} elever</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="wpGuardianClassToggle('${wpEscAttr(cls)}',true)">Alle</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="wpGuardianClassToggle('${wpEscAttr(cls)}',false)">Ingen</button>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+
   document.getElementById('modal-wp-letters-body').innerHTML=
-    '<div style="max-height:300px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px;">'
-    +students.map(s=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid var(--bg);">
-      <span style="font-weight:700;">${wpEscAttr(s.firstname)} ${wpEscAttr(s.lastname||'')}
-        <span style="color:var(--muted);font-size:.8rem;">(${s.class})</span></span>
-      <span style="font-family:'Fredoka One',cursive;color:var(--teal);">${wpEscAttr(fresh[s.fbKey]?.code||'—')}</span>
-    </div>`).join('')+'</div>';
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem;">
+       <button type="button" class="btn btn-ghost btn-sm" onclick="wpGuardianSelectAll(true)">✓ Merk alle</button>
+       <button type="button" class="btn btn-ghost btn-sm" onclick="wpGuardianSelectAll(false)">✕ Fjern alle</button>
+       <div id="gl-count" style="flex:1;text-align:right;font-weight:800;color:var(--teal-dark);align-self:center;">${students.length} elever valgt</div>
+     </div>
+     <div style="max-height:340px;overflow-y:auto;">${groupsHTML}</div>`;
   document.getElementById('modal-wp-letters').classList.add('open');
 }
+
+// Hjelpere for elevvalget i foresattbrev-modalen
+function wpGuardianSelectAll(check){
+  document.querySelectorAll('#modal-wp-letters-body .gl-cb').forEach(cb=>{ cb.checked=!!check; });
+  wpGuardianUpdateCount();
+}
+function wpGuardianClassToggle(cls,check){
+  document.querySelectorAll('#modal-wp-letters-body .gl-cb').forEach(cb=>{
+    if(cb.dataset.class===cls) cb.checked=!!check;
+  });
+  wpGuardianUpdateCount();
+}
+function wpGuardianUpdateCount(){
+  const n=document.querySelectorAll('#modal-wp-letters-body .gl-cb:checked').length;
+  const el=document.getElementById('gl-count');
+  if(el) el.textContent=n+' elever valgt';
+  const btn=document.getElementById('wp-letters-print-btn');
+  if(btn) btn.disabled=n===0;
+}
 function printGuardianLetters(){
+  // Bare elever som er avhuket i modalen
+  const checked=new Set(Array.from(document.querySelectorAll('#modal-wp-letters-body .gl-cb:checked'))
+    .map(cb=>cb.dataset.fbkey));
   const students=(window._students||[]).slice()
+    .filter(s=>checked.has(s.fbKey))
     .sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
-  if(!students.length){ alert('Ingen elever.'); return; }
+  if(!students.length){ alert('Velg minst én elev å skrive ut brev for.'); return; }
   const codes=window._guardianCodes||{};
   const letters=students.map(s=>{
     const code=codes[s.fbKey]?.code||'—';
@@ -2036,7 +2145,8 @@ function printGuardianLetters(){
     @page{size:A4;margin:0;}
     *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:'Nunito',Arial,sans-serif;color:#1a2e1a;}
-    .sheet{width:210mm;min-height:297mm;padding:15mm 17mm;page-break-after:always;}
+    .sheet{padding:15mm 17mm;page-break-after:always;}
+    .sheet:last-of-type{page-break-after:auto;}
     .letter{border:2px solid #c8dfc8;border-radius:16px;padding:10mm 11mm;}
     .lt-ident{font-size:8.5pt;color:#5a7a5a;font-weight:700;letter-spacing:.3px;margin-bottom:4mm;}
     .lt-top{font-weight:800;color:#1a5fa5;font-size:10pt;letter-spacing:.5px;}

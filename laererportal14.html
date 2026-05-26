@@ -284,17 +284,7 @@
           <div id="login-mode-hint" style="margin-top:.5rem;font-size:.78rem;color:var(--muted);font-weight:600;"></div>
         </div>
 
-        <div class="form-row">
-          <label>Velg klasse</label>
-          <select id="card-class-filter">
-            <option value="">Alle klasser</option>
-            <option value="1. klasse">1. klasse</option>
-            <option value="2. klasse">2. klasse</option>
-            <option value="3. klasse">3. klasse</option>
-            <option value="4. klasse">4. klasse</option>
-          </select>
-        </div>
-        <button class="btn btn-amber" onclick="generateCardPDF()">💳 Skriv ut bankkort</button>
+        <button class="btn btn-amber" onclick="openCardSelect()">💳 Velg elever og skriv ut</button>
         <div style="margin-top:1.25rem;background:var(--green-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--green-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
       </div>
     </div>
@@ -1017,6 +1007,22 @@
     <div class="modal-title">⚠️ Slett lærerprofil?</div>
     <p id="modal-delete-teacher-text" style="color:var(--muted);margin-bottom:1rem;"></p>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-delete-teacher')">Avbryt</button><button class="btn btn-coral" onclick="confirmDeleteTeacher()">Slett</button></div>
+  </div>
+</div>
+
+<!-- Modal: Velg elever for bankkortutskrift -->
+<div class="modal-overlay" id="modal-card-select">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title">💳 Velg elever for bankkortutskrift</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
+      Hak av hvilke elever du vil skrive ut bankkort for. Du kan velge enkeltelever,
+      en hel klasse, eller alle. Det blir 8 kort per A4-side.
+    </p>
+    <div id="modal-card-select-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-card-select')">Lukk</button>
+      <button class="btn btn-amber" id="card-select-print-btn" onclick="generateCardPDF();closeModal('modal-card-select');">💳 Skriv ut valgte bankkort</button>
+    </div>
   </div>
 </div>
 
