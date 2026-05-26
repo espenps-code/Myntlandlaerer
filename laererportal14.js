@@ -2036,8 +2036,14 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     var chunk = students.slice(i, i + 8);
     var fronts = chunk.map(function(s, j){ return frontHTML(s, i + j); }).join('');
     for (var fp = chunk.length; fp < 8; fp++) fronts += emptySlot;
+    // Like mange baksider som forsider. Plasseringen SPEILES horisontalt
+    // (kol 0 ↔ kol 1, dvs. slot k ↔ slot k XOR 1) slik at hver bakside lander
+    // bak sin forside når sida vendes ved tosidig utskrift med «vend langs
+    // lang kant». Resten av baksidearket er tomt — ingen sløsing.
+    var hasBack = new Array(8).fill(false);
+    for (var bk = 0; bk < chunk.length; bk++) hasBack[bk ^ 1] = true;
     var backs = '';
-    for (var k = 0; k < 8; k++) backs += backHTML();
+    for (var k = 0; k < 8; k++) backs += hasBack[k] ? backHTML() : emptySlot;
     pagesHTML += '<div class="page"><div class="card-grid">' + fronts + '</div></div>';
     pagesHTML += '<div class="page back-page"><div class="card-grid">' + backs + '</div></div>';
   }
