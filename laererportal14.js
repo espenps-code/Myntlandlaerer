@@ -254,8 +254,9 @@ function toggleMobileNav() {
 }
 
 function showElevTab(tab, btn) {
-  ['manuell','klasse','klasser'].forEach(t => {
-    document.getElementById('elev-tab-' + t).style.display = t === tab ? 'block' : 'none';
+  ['manuell','klasse','bankkort','klasser'].forEach(t => {
+    const el = document.getElementById('elev-tab-' + t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
   });
   btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -497,10 +498,22 @@ function renderStudentTable() {
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="rerollStudentMonster('${s.fbKey}')" title="Bytt monsteravatar">🎲</button>
         <button class="btn btn-coral btn-sm" onclick="openDeleteModal('${s.fbKey}','${s.firstname} ${s.lastname}')">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// Bytt monsteravatar for én elev — kun avatarSeed endres, navnet beholdes.
+async function rerollStudentMonster(fbKey) {
+  if (!ready()) { alert('Firebase ikke klar – prøv igjen om et øyeblikk.'); return; }
+  const newSeed = Math.floor(Math.random() * 99999);
+  try {
+    await window._update(fbRef('students14/' + fbKey), { avatarSeed: newSeed });
+  } catch (e) {
+    alert('Kunne ikke bytte monster: ' + e.message);
+  }
 }
 
 

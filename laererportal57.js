@@ -10,7 +10,6 @@ let currentAction = null, currentStudentId = null, bulkAction = null;
 let currentEditJobKey = null, currentEditGroupKey = null;
 let currentDeleteTeacherId = null;
 let searchFilter = '', classFilter = '';
-let csvParsed = [];
 let selectedTeacherColor = '#1D9E75';
 const TAX_RATE = 0.20;
 
@@ -244,12 +243,14 @@ function toggleMobileNav() {
 }
 
 function showElevTab(tab, btn) {
-  ['manuell','csv','klasser'].forEach(t => {
-    document.getElementById('elev-tab-' + t).style.display = t === tab ? 'block' : 'none';
+  ['manuell','klasse','bankkort','klasser'].forEach(t => {
+    const el = document.getElementById('elev-tab-' + t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
   });
   btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (tab === 'klasser') renderClassManager();
+  if (tab === 'klasse') populatePrintClassSelect();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -264,16 +265,30 @@ async function createStudent() {
   const cls = document.getElementById('new-class').value || (window._currentTeacher?.class || '5. klasse');
   const bal = parseInt(document.getElementById('new-balance').value) || 0;
   const alertEl = document.getElementById('create-alert');
-  if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn fornavn og etternavn.</div>'; return; }
+  if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn først.</div>'; return; }
   const pin = generatePIN();
+  const avatarSeed = window._pendingAvatarSeed || Math.floor(Math.random()*99999);
   await window._set(window._push(fbRef('students57')), {
     firstname: fn, lastname: ln, class: cls, pin, balance: bal,
-    loan: 0, savings: 0, fund_low: 0, fund_high: 0, created: Date.now()
+    loan: 0, savings: 0, fund_low: 0, fund_high: 0,
+    avatarSeed, created: Date.now()
   });
   document.getElementById('new-firstname').value = '';
   document.getElementById('new-lastname').value  = '';
   document.getElementById('new-balance').value   = '100';
-  alertEl.innerHTML = `<div class="alert alert-success">✅ ${fn} ${ln} opprettet! PIN: <strong>${pin}</strong></div>`;
+  window._pendingAvatarSeed = null;
+  const wrap = document.getElementById('avatar-preview-wrap');
+  if (wrap) wrap.innerHTML = '';
+  const display = document.getElementById('new-fictive-name-display');
+  if (display) {
+    display.textContent = 'Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn';
+    display.style.color = 'var(--muted)';
+    display.style.borderStyle = 'dashed';
+    display.style.background = 'var(--bg)';
+  }
+  const label = document.getElementById('avatar-preview-label');
+  if (label) label.textContent = 'Ingen avatar ennå';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${fn} ${ln} (${window.getAnimalName(avatarSeed)}) opprettet! PIN: <strong>${pin}</strong></div>`;
 }
 
 function getClassNames() {
@@ -303,9 +318,14 @@ function renderStudentTable() {
   });
   if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Ingen elever funnet</td></tr>'; return; }
   tbody.innerHTML = filtered.map(s => {
+    // Avatar: monster når avatarSeed finnes, ellers initialer (bakoverkompatibelt med elever fra før).
+    const hasSeed = (s.avatarSeed !== undefined && s.avatarSeed !== null);
+    const avatarHTML = hasSeed
+      ? `<div id="av57-${s.fbKey}" data-seed="${s.avatarSeed}" style="width:36px;height:36px;flex-shrink:0;"></div>`
+      : `<div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark);flex-shrink:0;">${(s.firstname||'?')[0]}${(s.lastname||'?')[0]}</div>`;
     return `<tr>
       <td data-label="Elev"><div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:32px;height:32px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:var(--teal-dark);">${s.firstname[0]}${s.lastname[0]}</div>
+        ${avatarHTML}
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
       <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
       <td data-label="PIN"><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
@@ -315,10 +335,21 @@ function renderStudentTable() {
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
         <button class="btn btn-ghost btn-sm" onclick="openPinModal('${s.fbKey}')" title="Endre PIN">🔑</button>
+        <button class="btn btn-ghost btn-sm" onclick="rerollStudentMonster('${s.fbKey}')" title="Bytt monsteravatar">🎲</button>
         <button class="btn btn-coral btn-sm" onclick="openDeleteModal('${s.fbKey}','${s.firstname} ${s.lastname}')">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
+  // Tegn monstrene asynkront slik at SVG-elementene faktisk havner inn etter at HTML er satt.
+  if (typeof window.makeAnimalSVG === 'function') {
+    setTimeout(() => {
+      filtered.forEach(s => {
+        if (s.avatarSeed === undefined || s.avatarSeed === null) return;
+        const el = document.getElementById('av57-' + s.fbKey);
+        if (el && !el.firstChild) el.appendChild(window.makeAnimalSVG(s.avatarSeed, 36));
+      });
+    }, 0);
+  }
 }
 
 function filterStudents(v) { searchFilter = v; renderStudentTable(); }
@@ -363,65 +394,291 @@ async function renameClass() {
 }
 
 // ════════════════════════════════════════════════════════════
-// CSV IMPORT  (identisk med 1–4-portalen)
+// MONSTERAVATAR ENGINE (kopiert fra 1–4 — uendret motor)
+// Seed-basert: samme seed → samme monster alltid
 // ════════════════════════════════════════════════════════════
-const dropZone = document.getElementById('csv-drop-zone');
-dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleCSVFile(e.dataTransfer.files[0]); });
+(function() {
+const MONSTER_IMAGES = [
+  {name:"Grønnhår", src:"monsters/groennhaar.webp"},
+  {name:"Appelsin", src:"monsters/appelsin.webp"},
+  {name:"Rosa", src:"monsters/rosa.webp"},
+  {name:"Grå", src:"monsters/graa.webp"},
+  {name:"Mørkelilla", src:"monsters/moerkelilla.webp"},
+  {name:"Indigo", src:"monsters/indigo.webp"},
+  {name:"Marineblå", src:"monsters/marineblaa.webp"},
+  {name:"Vinrød", src:"monsters/vinroed.webp"},
+  {name:"Ildkatt", src:"monsters/ildkatt.webp"},
+  {name:"Gullgul", src:"monsters/gullgul.webp"},
+  {name:"Gressgrønn", src:"monsters/gressgroenn.webp"},
+  {name:"Rustbrun", src:"monsters/rustbrun.webp"},
+  {name:"Laksrosa", src:"monsters/laksrosa.webp"},
+  {name:"Mintgrønn", src:"monsters/mintgroenn.webp"},
+  {name:"Solskinn", src:"monsters/solskinn.webp"},
+  {name:"Turkis", src:"monsters/turkis.webp"},
+  {name:"Lilla", src:"monsters/lilla.webp"},
+  {name:"Himmelblå", src:"monsters/himmelblaa.webp"},
+  {name:"Beige", src:"monsters/beige.webp"},
+  {name:"Havblå", src:"monsters/havblaa.webp"},
+];
 
-function handleCSVFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => parseCSV(e.target.result);
-  reader.readAsText(file, 'UTF-8');
-}
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
-  if (!lines.length) return;
-  const first = lines[0].toLowerCase();
-  const hasHeader = first.includes('fornavn') || first.includes('navn') || first.includes('firstname');
-  const dataLines = hasHeader ? lines.slice(1) : lines;
-  csvParsed = dataLines.map(line => {
-    const parts = line.split(/[,;]/).map(p => p.trim().replace(/^"|"$/g, ''));
-    return { firstname: parts[0]||'', lastname: parts[1]||'', class: (parts[2] || window._currentTeacher?.class || '5. klasse').trim() };
-  }).filter(r => r.firstname || r.lastname);
-
-  document.getElementById('csv-preview-body').innerHTML = csvParsed.map(r =>
-    `<tr><td style="padding:6px 8px;">${r.firstname}</td><td style="padding:6px 8px;">${r.lastname}</td><td style="padding:6px 8px;">${r.class}</td><td style="padding:6px 8px;color:var(--teal);">✓</td></tr>`
-  ).join('');
-  document.getElementById('csv-preview-title').textContent = `${csvParsed.length} elever funnet`;
-  document.getElementById('csv-preview-area').style.display = 'block';
-  document.getElementById('csv-import-alert').innerHTML = '';
-}
-
-async function importCSV() {
-  if (!ready() || !csvParsed.length) return;
-  const bal = parseInt(document.getElementById('csv-default-balance').value) || 100;
-  const alertEl = document.getElementById('csv-import-alert');
-  alertEl.innerHTML = '<div class="alert alert-success">⏳ Importerer…</div>';
-  let count = 0;
-  for (const r of csvParsed) {
-    if (!r.firstname && !r.lastname) continue;
-    await window._set(window._push(fbRef('students57')), {
-      firstname: r.firstname, lastname: r.lastname, class: r.class,
-      pin: generatePIN(), balance: bal,
-      loan: 0, savings: 0, fund_low: 0, fund_high: 0, created: Date.now()
-    });
-    count++;
+  function sr(seed, max) {
+    let x = Math.sin(seed * 9301 + 49297) * 233280;
+    return Math.floor((x - Math.floor(x)) * max);
   }
-  alertEl.innerHTML = `<div class="alert alert-success">✅ ${count} elever importert!</div>`;
-  csvParsed = [];
-  setTimeout(resetCSV, 2500);
+
+  // Definer kun hvis 1–4-motoren ikke allerede har lastet inn samme funksjoner i samme tab.
+  if (typeof window.makeAnimalSVG !== 'function') {
+    window.makeAnimalSVG = function(seed, size=80) {
+      const idx = sr(seed+7, MONSTER_IMAGES.length);
+      const m = MONSTER_IMAGES[idx];
+      const wrap = document.createElement('div');
+      wrap.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;display:block;background:#f0f8ff;flex-shrink:0;`;
+      const img = document.createElement('img');
+      img.src = m.src;
+      img.style.cssText = `width:100%;height:100%;object-fit:cover;`;
+      img.alt = m.name;
+      wrap.appendChild(img);
+      return wrap;
+    };
+    window.getAnimalName = function(seed) {
+      const idx = sr(seed+7, MONSTER_IMAGES.length);
+      return MONSTER_IMAGES[idx].name;
+    };
+    window.animalSVGString = function(seed, size=80) {
+      const el = window.makeAnimalSVG(seed, size);
+      return el.outerHTML;
+    };
+  }
+})();
+
+// ── Fiktive navn ─────────────────────────────────────────────────────────────
+const FICTIVE_FIRST = [
+  'Bjørk','Blom','Bris','Bær','Dal','Dis','Drev','Eim',
+  'Elg','Eng','Ert','Falk','Fjell','Fjord','Furu','Gran',
+  'Gry','Grønn','Hagl','Hassel','Hei','Iris','Is','Jade',
+  'Kvist','Lyng','Mark','Mo','Mose','Måke','Nøtt','Osp',
+  'Pil','Regn','Rime','Røyr','Sel','Snø','Sol','Stær',
+  'Storm','Strå','Sølv','Tind','Tjern','Topp','Trost','Ulv',
+  'Urte','Vind','Vinter','Ørn','Åker','Ål','Åre','Ås',
+  'Bekk','Blå','Damp','Elv','Foss','Gull','Hauk','Høst'
+];
+const FICTIVE_LAST  = ['Skog','Dal','Fjell','Eng','Vik','Nes','Mo','Li','Haug','Berg',
+  'Stein','Sand','Elv','Holt','Lund','Myr','Røys','Åker','Bø','Grend','Havn','Ø',
+  'Bekk','Eid','Foss','Gard','Høy','Kil','Lei','Mol'];
+
+function generateFictiveName(seed) {
+  function r(s, max) { let x = Math.sin(s*9301+49297)*233280; return Math.floor((x-Math.floor(x))*max); }
+  const ts = seed || (Date.now() % 99999);
+  return {
+    firstname: FICTIVE_FIRST[r(ts, FICTIVE_FIRST.length)],
+    lastname:  FICTIVE_LAST [r(ts+1, FICTIVE_LAST.length)],
+    seed: ts
+  };
 }
 
-function resetCSV() {
-  csvParsed = [];
-  document.getElementById('csv-preview-area').style.display = 'none';
-  document.getElementById('csv-preview-body').innerHTML = '';
-  document.getElementById('csv-import-alert').innerHTML = '';
-  document.getElementById('csv-file-input').value = '';
+function randomFictiveName() {
+  const s = Math.floor(Math.random() * 99999);
+  const n = generateFictiveName(s);
+  document.getElementById('new-firstname').value = n.firstname;
+  document.getElementById('new-lastname').value  = n.lastname;
+  const display = document.getElementById('new-fictive-name-display');
+  if (display) {
+    display.textContent = n.firstname + ' ' + n.lastname;
+    display.style.color = 'var(--teal-dark)';
+    display.style.borderStyle = 'solid';
+    display.style.background = 'var(--teal-light)';
+  }
+  window._pendingAvatarSeed = s;
+  renderPortalAvatarPreview(s);
+}
+
+function renderPortalAvatarPreview(seed) {
+  const wrap = document.getElementById('avatar-preview-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const svg = window.makeAnimalSVG(seed, 64);
+  wrap.appendChild(svg);
+  const label = document.getElementById('avatar-preview-label');
+  if (label) label.textContent = window.getAnimalName(seed);
+  const seedInp = document.getElementById('avatar-seed-input');
+  if (seedInp) seedInp.value = seed;
+}
+
+function rerollAvatar() {
+  const s = Math.floor(Math.random() * 99999);
+  window._pendingAvatarSeed = s;
+  renderPortalAvatarPreview(s);
+}
+
+// ── Bytt monsteravatar for én eksisterende elev (kun avatarSeed endres) ─────
+async function rerollStudentMonster(fbKey) {
+  if (!ready()) { alert('Firebase ikke klar – prøv igjen om et øyeblikk.'); return; }
+  const newSeed = Math.floor(Math.random() * 99999);
+  try {
+    await window._update(fbRef('students57/' + fbKey), { avatarSeed: newSeed });
+  } catch (e) {
+    alert('Kunne ikke bytte monster: ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// OPPRETT HEL KLASSE (bulk-flow, kopiert fra 1–4)
+// ════════════════════════════════════════════════════════════
+var _bulkClassData = []; // {firstname, lastname, avatarSeed, pin, class, balance}
+
+function generateWholeClass() {
+  const cls   = document.getElementById('bulk-class-select').value;
+  const count = Math.min(70, Math.max(1, parseInt(document.getElementById('bulk-count').value) || 25));
+  const bal   = parseInt(document.getElementById('bulk-balance').value) || 100;
+  const alertEl = document.getElementById('bulk-class-alert');
+
+  const usedSeeds = new Set();
+  const usedNames = new Set();
+  _bulkClassData = [];
+
+  let attempts = 0;
+  while (_bulkClassData.length < count && attempts < 9999) {
+    attempts++;
+    const seed = Math.floor(Math.random() * 99999);
+    if (usedSeeds.has(seed)) continue;
+    const n = generateFictiveName(seed);
+    const nameKey = n.firstname + ' ' + n.lastname;
+    if (usedNames.has(nameKey)) continue;
+    usedSeeds.add(seed);
+    usedNames.add(nameKey);
+    _bulkClassData.push({
+      firstname: n.firstname, lastname: n.lastname,
+      avatarSeed: seed, pin: generatePIN(),
+      class: cls, balance: bal
+    });
+  }
+
+  renderBulkPreview();
+  alertEl.innerHTML = '<div class="alert alert-success">✅ ' + _bulkClassData.length + ' elever generert – sjekk listen og klikk «Opprett alle»</div>';
+  setTimeout(() => alertEl.innerHTML = '', 4000);
+}
+
+function renderBulkPreview() {
+  const list = document.getElementById('bulk-preview-list');
+  const actions = document.getElementById('bulk-actions');
+  if (!list) return;
+
+  if (!_bulkClassData.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Ingen elever generert ennå.</p>';
+    if (actions) actions.style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = _bulkClassData.map((s, i) => {
+    const animalName = window.getAnimalName(s.avatarSeed);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">' +
+      '<div id="bpav-' + i + '" style="width:34px;height:34px;flex-shrink:0;"></div>' +
+      '<div style="flex:1;">' +
+        '<div style="font-weight:800;font-size:.88rem;">' + s.firstname + ' ' + s.lastname + '</div>' +
+        '<div style="font-size:.72rem;color:var(--muted);">' + animalName + ' · PIN: ' + s.pin + ' · ' + s.class + '</div>' +
+      '</div>' +
+      '<button onclick="rerollBulkStudent(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:1rem;" title="Generer nytt navn/avatar">🔄</button>' +
+      '<button onclick="removeBulkStudent(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:1rem;" title="Fjern">✕</button>' +
+    '</div>';
+  }).join('');
+
+  if (actions) actions.style.display = 'flex';
+
+  setTimeout(() => {
+    _bulkClassData.forEach((s, i) => {
+      const el = document.getElementById('bpav-' + i);
+      if (el && window.makeAnimalSVG) {
+        el.innerHTML = '';
+        el.appendChild(window.makeAnimalSVG(s.avatarSeed, 34));
+      }
+    });
+  }, 0);
+}
+
+function rerollBulkStudent(i) {
+  var seed = Math.floor(Math.random() * 99999);
+  var n = generateFictiveName(seed);
+  _bulkClassData[i].firstname   = n.firstname;
+  _bulkClassData[i].lastname    = n.lastname;
+  _bulkClassData[i].avatarSeed  = seed;
+  renderBulkPreview();
+}
+
+function removeBulkStudent(i) {
+  _bulkClassData.splice(i, 1);
+  renderBulkPreview();
+}
+
+function clearBulkPreview() {
+  _bulkClassData = [];
+  renderBulkPreview();
+  const card = document.getElementById('bulk-codelist-card');
+  if (card) card.style.display = 'none';
+}
+
+async function createWholeClass() {
+  if (!ready() || !_bulkClassData.length) return;
+  const btn = document.getElementById('bulk-create-btn');
+  btn.textContent = '⏳ Oppretter…';
+  btn.disabled = true;
+
+  const createdStudents = [];
+  await Promise.all(_bulkClassData.map(async function(s) {
+    await window._set(window._push(fbRef('students57')), {
+      firstname: s.firstname, lastname: s.lastname,
+      class: s.class, pin: s.pin,
+      balance: s.balance,
+      loan: 0, savings: 0, fund_low: 0, fund_high: 0,
+      avatarSeed: s.avatarSeed,
+      created: Date.now()
+    });
+    createdStudents.push(s);
+  }));
+
+  btn.textContent = '✅ Opprett alle';
+  btn.disabled = false;
+
+  showBulkCodeList(createdStudents);
+
+  document.getElementById('bulk-class-alert').innerHTML =
+    '<div class="alert alert-success">✅ ' + createdStudents.length + ' elever opprettet! Skriv ut kodelisten nedenfor.</div>';
+}
+
+function showBulkCodeList(students) {
+  const card = document.getElementById('bulk-codelist-card');
+  const tbody = document.getElementById('bulk-codelist-body');
+  if (!card || !tbody) return;
+  card.style.display = 'block';
+
+  tbody.innerHTML = students.map(function(s, i) {
+    return '<tr style="border-bottom:1px solid var(--border);">' +
+      '<td style="padding:6px 12px;" id="cl57-av-' + i + '" data-seed="' + s.avatarSeed + '"></td>' +
+      '<td style="padding:6px 12px;font-weight:800;">' + s.firstname + ' ' + s.lastname + '</td>' +
+      '<td style="padding:6px 12px;"><code style="background:var(--bg);padding:2px 8px;border-radius:6px;">' + s.pin + '</code></td>' +
+      '<td style="padding:6px 12px;">' + s.class + '</td>' +
+      '<td style="padding:6px 12px;"><input type="text" placeholder="Skriv inn ekte navn…" style="width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:Nunito,sans-serif;font-size:.85rem;"></td>' +
+    '</tr>';
+  }).join('');
+
+  setTimeout(function() {
+    students.forEach(function(s, i) {
+      var el = document.getElementById('cl57-av-' + i);
+      if (el && window.makeAnimalSVG) {
+        el.innerHTML = '';
+        el.appendChild(window.makeAnimalSVG(s.avatarSeed, 32));
+      }
+    });
+  }, 50);
+
+  card.scrollIntoView({ behavior: 'smooth' });
+}
+
+function populatePrintClassSelect() {
+  const sel = document.getElementById('print-class-select');
+  if (!sel) return;
+  const classes = [...new Set((window._students||[]).map(s => s.class))].filter(Boolean).sort();
+  sel.innerHTML = '<option value="">Alle klasser</option>' +
+    classes.map(c => '<option value="' + c + '">' + c + '</option>').join('');
 }
 
 // ════════════════════════════════════════════════════════════

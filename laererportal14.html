@@ -232,65 +232,67 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="showElevTab('manuell',this)">✏️ Opprett manuelt</button>
-    <button class="tab" onclick="showElevTab('klasse',this)">🏫 Opprett klasse</button>
+    <button class="tab active" onclick="showElevTab('klasse',this)">🏫 Opprett klasse</button>
+    <button class="tab" onclick="showElevTab('manuell',this)">✏️ Opprett manuelt</button>
+    <button class="tab" onclick="showElevTab('bankkort',this)">💳 Skriv ut bankkort</button>
     <button class="tab" onclick="showElevTab('klasser',this)">🏷️ Klasser</button>
   </div>
 
-  <div id="elev-tab-manuell">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">➕ Opprett én elev</div>
-        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;background:var(--green-light);border-radius:12px;padding:.75rem;">
-          <div id="avatar-preview-wrap" style="flex-shrink:0;"></div>
-          <div style="flex:1;">
-            <div id="avatar-preview-label" style="font-size:.75rem;font-weight:800;color:var(--green-dark);margin-bottom:4px;">Ingen avatar ennå</div>
-            <input type="hidden" id="avatar-seed-input" value="">
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-              <button type="button" class="btn btn-primary btn-sm" onclick="randomFictiveName()">🎲 Generer navn + avatar</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="rerollAvatar()">🔄 Ny avatar</button>
-            </div>
+  <div id="elev-tab-manuell" style="display:none;">
+    <div class="card">
+      <div class="card-title">➕ Opprett én elev</div>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;background:var(--green-light);border-radius:12px;padding:.75rem;">
+        <div id="avatar-preview-wrap" style="flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div id="avatar-preview-label" style="font-size:.75rem;font-weight:800;color:var(--green-dark);margin-bottom:4px;">Ingen avatar ennå</div>
+          <input type="hidden" id="avatar-seed-input" value="">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="randomFictiveName()">🎲 Generer navn + avatar</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="rerollAvatar()">🔄 Ny avatar</button>
           </div>
         </div>
-        <div class="form-row">
-          <label>Fiktivt navn</label>
-          <div id="new-fictive-name-display" style="background:var(--bg);border:2px dashed var(--border);border-radius:10px;padding:.75rem;font-weight:700;color:var(--muted);text-align:center;">Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn</div>
-          <input type="hidden" id="new-firstname" value="">
-          <input type="hidden" id="new-lastname" value="">
-        </div>
-        <div class="form-row"><label>Klasse</label>
-          <select id="new-class">
-            <option value="1. klasse">1. klasse</option>
-            <option value="2. klasse">2. klasse</option>
-            <option value="3. klasse">3. klasse</option>
-            <option value="4. klasse">4. klasse</option>
-          </select>
-        </div>
-        <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="50" min="0"></div>
-        <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
-        <div id="create-alert" style="margin-top:1rem;"></div>
       </div>
-      <div class="card">
-        <div class="card-title">💳 Skriv ut bankkort</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Bankkortene har alltid QR-kode for innlogging. Velg om elevene skal scanne kortet og bekrefte med PIN, eller bare taste PIN.</p>
-
-        <!-- Innloggingsmodus (lagres i settings/loginMode14) -->
-        <div class="form-row">
-          <label>Innloggingsmodus i elevappen</label>
-          <div id="login-mode-toggle" style="display:flex;gap:.5rem;flex-wrap:wrap;">
-            <button type="button" class="btn btn-ghost btn-sm" id="login-mode-pin" onclick="setLoginMode14('pin')" style="flex:1;min-width:140px;">🔢 Bare PIN</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="login-mode-qrpin" onclick="setLoginMode14('qrpin')" style="flex:1;min-width:140px;">📷 QR + PIN</button>
-          </div>
-          <div id="login-mode-hint" style="margin-top:.5rem;font-size:.78rem;color:var(--muted);font-weight:600;"></div>
-        </div>
-
-        <button class="btn btn-amber" onclick="openCardSelect()">💳 Velg elever og skriv ut</button>
-        <div style="margin-top:1.25rem;background:var(--green-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--green-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
+      <div class="form-row">
+        <label>Fiktivt navn</label>
+        <div id="new-fictive-name-display" style="background:var(--bg);border:2px dashed var(--border);border-radius:10px;padding:.75rem;font-weight:700;color:var(--muted);text-align:center;">Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn</div>
+        <input type="hidden" id="new-firstname" value="">
+        <input type="hidden" id="new-lastname" value="">
       </div>
+      <div class="form-row"><label>Klasse</label>
+        <select id="new-class">
+          <option value="1. klasse">1. klasse</option>
+          <option value="2. klasse">2. klasse</option>
+          <option value="3. klasse">3. klasse</option>
+          <option value="4. klasse">4. klasse</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="50" min="0"></div>
+      <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
+      <div id="create-alert" style="margin-top:1rem;"></div>
     </div>
   </div>
 
-  <div id="elev-tab-klasse" style="display:none;">
+  <div id="elev-tab-bankkort" style="display:none;">
+    <div class="card">
+      <div class="card-title">💳 Skriv ut bankkort</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Bankkortene har alltid QR-kode for innlogging. Velg om elevene skal scanne kortet og bekrefte med PIN, eller bare taste PIN.</p>
+
+      <!-- Innloggingsmodus (lagres i settings/loginMode14) -->
+      <div class="form-row">
+        <label>Innloggingsmodus i elevappen</label>
+        <div id="login-mode-toggle" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost btn-sm" id="login-mode-pin" onclick="setLoginMode14('pin')" style="flex:1;min-width:140px;">🔢 Bare PIN</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="login-mode-qrpin" onclick="setLoginMode14('qrpin')" style="flex:1;min-width:140px;">📷 QR + PIN</button>
+        </div>
+        <div id="login-mode-hint" style="margin-top:.5rem;font-size:.78rem;color:var(--muted);font-weight:600;"></div>
+      </div>
+
+      <button class="btn btn-amber" onclick="openCardSelect()">💳 Velg elever og skriv ut</button>
+      <div style="margin-top:1.25rem;background:var(--green-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--green-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
+    </div>
+  </div>
+
+  <div id="elev-tab-klasse">
     <div class="grid-2">
       <div class="card">
         <div class="card-title">🏫 Opprett hel klasse</div>

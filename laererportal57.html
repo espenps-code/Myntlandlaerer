@@ -647,70 +647,118 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="showElevTab('manuell',this)">✏️ Manuelt</button>
-    <button class="tab"        onclick="showElevTab('csv',this)">📥 Importer CSV</button>
-    <button class="tab"        onclick="showElevTab('klasser',this)">🏷️ Klasser</button>
+    <button class="tab active" onclick="showElevTab('klasse',this)">🏫 Opprett klasse</button>
+    <button class="tab" onclick="showElevTab('manuell',this)">✏️ Opprett manuelt</button>
+    <button class="tab" onclick="showElevTab('bankkort',this)">💳 Skriv ut bankkort</button>
+    <button class="tab" onclick="showElevTab('klasser',this)">🏷️ Klasser</button>
   </div>
 
   <!-- Manuell -->
-  <div id="elev-tab-manuell">
+  <div id="elev-tab-manuell" style="display:none;">
+    <div class="card">
+      <div class="card-title">➕ Opprett én elev</div>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;background:var(--teal-light);border-radius:12px;padding:.75rem;">
+        <div id="avatar-preview-wrap" style="flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div id="avatar-preview-label" style="font-size:.75rem;font-weight:800;color:var(--teal-dark);margin-bottom:4px;">Ingen avatar ennå</div>
+          <input type="hidden" id="avatar-seed-input" value="">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="randomFictiveName()">🎲 Generer navn + avatar</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="rerollAvatar()">🔄 Ny avatar</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Fiktivt navn</label>
+        <div id="new-fictive-name-display" style="background:var(--bg);border:2px dashed var(--border);border-radius:10px;padding:.75rem;font-weight:700;color:var(--muted);text-align:center;">Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn</div>
+        <input type="hidden" id="new-firstname" value="">
+        <input type="hidden" id="new-lastname" value="">
+      </div>
+      <div class="form-row"><label>Klasse</label>
+        <select id="new-class">
+          <option value="5. klasse">5. klasse</option>
+          <option value="6. klasse">6. klasse</option>
+          <option value="7. klasse">7. klasse</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="100" min="0"></div>
+      <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
+      <div id="create-alert" style="margin-top:1rem;"></div>
+    </div>
+  </div>
+
+  <!-- Opprett hel klasse -->
+  <div id="elev-tab-klasse">
     <div class="grid-2">
       <div class="card">
-        <div class="card-title">➕ Opprett ny elev</div>
-        <div class="form-row"><label>Fornavn</label><input type="text" id="new-firstname" placeholder="f.eks. Jonas"></div>
-        <div class="form-row"><label>Etternavn</label><input type="text" id="new-lastname" placeholder="f.eks. Larsen"></div>
-        <div class="form-row"><label>Klasse</label>
-          <select id="new-class">
+        <div class="card-title">🏫 Opprett hel klasse</div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
+          Generer en hel klasse med fiktive navn og monsteravatarer automatisk.
+          Du får en liste med ekte navn ↔ fiktivt navn etterpå.
+        </p>
+        <div class="form-row">
+          <label>Klasse</label>
+          <select id="bulk-class-select">
             <option value="5. klasse">5. klasse</option>
             <option value="6. klasse">6. klasse</option>
             <option value="7. klasse">7. klasse</option>
           </select>
         </div>
-        <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="100" min="0"></div>
-        <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
-        <div id="create-alert" style="margin-top:1rem;"></div>
+        <div class="form-row">
+          <label>Antall elever</label>
+          <input type="number" id="bulk-count" value="25" min="1" max="70">
+        </div>
+        <div class="form-row">
+          <label>Startsaldo (mynter)</label>
+          <input type="number" id="bulk-balance" value="100" min="0">
+        </div>
+        <button class="btn btn-primary" onclick="generateWholeClass()">🎲 Generer klasse</button>
+        <div id="bulk-class-alert" style="margin-top:.75rem;"></div>
       </div>
+
       <div class="card">
-        <div class="card-title">💳 Skriv ut bankkort</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og QR-kode – 8 per A4-side. Du velger hvilke elever du vil skrive ut for.</p>
-        <button class="btn btn-amber" onclick="openCardSelect()">💳 Velg elever og skriv ut</button>
-        <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Dataene lagres i Firebase og synkroniseres på alle enheter.</div>
+        <div class="card-title">👁 Forhåndsvisning</div>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
+          Klikk «Generer klasse» for å se og redigere listen før du oppretter elevene.
+        </p>
+        <div id="bulk-preview-list" style="max-height:320px;overflow-y:auto;"></div>
+        <div id="bulk-actions" style="display:none;margin-top:1rem;gap:.5rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="bulk-create-btn" onclick="createWholeClass()">✅ Opprett alle</button>
+          <button class="btn btn-ghost" onclick="clearBulkPreview()">✕ Avbryt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kodeliste etter opprettelse -->
+    <div class="card" id="bulk-codelist-card" style="display:none;">
+      <div class="card-title">📋 Kodeliste – ekte navn ↔ fiktivt navn</div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
+        Fyll inn ekte elevnavn i høyre kolonne. Oppbevar denne listen på din egen PC – ikke i Firebase.
+      </p>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;font-size:.85rem;">
+          <thead>
+            <tr style="background:var(--teal-light);">
+              <th style="padding:8px 12px;text-align:left;">Avatar</th>
+              <th style="padding:8px 12px;text-align:left;">Fiktivt navn</th>
+              <th style="padding:8px 12px;text-align:left;">PIN</th>
+              <th style="padding:8px 12px;text-align:left;">Klasse</th>
+              <th style="padding:8px 12px;text-align:left;">Ekte navn (fyll inn)</th>
+            </tr>
+          </thead>
+          <tbody id="bulk-codelist-body"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <!-- CSV -->
-  <div id="elev-tab-csv" style="display:none;">
+  <!-- Skriv ut bankkort -->
+  <div id="elev-tab-bankkort" style="display:none;">
     <div class="card">
-      <div class="card-title">📥 Importer elever fra CSV</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
-        Kolonner: <strong>fornavn, etternavn, klasse</strong> (med eller uten overskriftsrad).<br>
-        Eksempel: <code style="background:var(--bg);padding:2px 8px;border-radius:6px;font-size:.82rem;">Jonas,Larsen,6A</code>
-      </p>
-      <div class="drop-zone" id="csv-drop-zone" onclick="document.getElementById('csv-file-input').click()">
-        <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none;" onchange="handleCSVFile(this.files[0])">
-        <div style="font-size:2rem;margin-bottom:.5rem;">📂</div>
-        <div style="font-weight:700;margin-bottom:4px;">Dra og slipp CSV-fil her</div>
-        <div style="font-size:.82rem;">eller klikk for å velge fil</div>
-      </div>
-      <div id="csv-preview-area" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;margin-bottom:.75rem;">
-          <strong id="csv-preview-title" style="color:var(--teal-dark);"></strong>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <label style="display:inline;margin:0;font-size:.85rem;color:var(--muted);">Startsaldo:</label>
-            <input type="number" id="csv-default-balance" value="100" min="0" style="width:80px;">
-          </div>
-        </div>
-        <div class="csv-preview">
-          <table><thead><tr><th>Fornavn</th><th>Etternavn</th><th>Klasse</th><th>Status</th></tr></thead>
-          <tbody id="csv-preview-body"></tbody></table>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:1rem;">
-          <button class="btn btn-primary" onclick="importCSV()">✅ Importer alle</button>
-          <button class="btn btn-ghost"   onclick="resetCSV()">✕ Avbryt</button>
-        </div>
-        <div id="csv-import-alert" style="margin-top:1rem;"></div>
-      </div>
+      <div class="card-title">💳 Skriv ut bankkort</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og QR-kode – 8 per A4-side. Du velger hvilke elever du vil skrive ut for.</p>
+      <button class="btn btn-amber" onclick="openCardSelect()">💳 Velg elever og skriv ut</button>
+      <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
     </div>
   </div>
 
