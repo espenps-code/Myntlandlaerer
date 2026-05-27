@@ -1577,6 +1577,15 @@ function wpStudentsInClass(cls){
   return (window._students||[]).filter(s=>s.class===cls)
     .sort((a,b)=>(a.firstname||'').localeCompare(b.firstname||'','no'));
 }
+// Returnerer elevene som faktisk er TILDELT denne planen.
+// Tom/manglende assignedTo = hele klassen (bakoverkompatibelt med planer fra før tildelingsfunksjonen).
+function wpAssignedStudents(p){
+  const all=wpStudentsInClass(p && p.class);
+  const a=p && p.assignedTo;
+  if(!a || !Array.isArray(a) || !a.length) return all;
+  const set=new Set(a);
+  return all.filter(s=>set.has(s.fbKey));
+}
 function wpGetProgress(studentKey, planKey){
   return (window._wpProgress?.[studentKey]?.[planKey]) || { current:0, steps:{} };
 }
@@ -1897,11 +1906,16 @@ function renderWorkPlans(){
   el.innerHTML=html;
 }
 function wpPlanCardHTML(p){
-  const students=wpStudentsInClass(p.class);
+  const allInClass=wpStudentsInClass(p.class);
+  const students=wpAssignedStudents(p);
   const nSteps=(p.steps||[]).length;
   let done=0;
   students.forEach(s=>{ if((wpGetProgress(s.fbKey,p.fbKey).current||0)>=nSteps && nSteps>0) done++; });
   const active=p.active!==false;
+  const isSubset = Array.isArray(p.assignedTo) && p.assignedTo.length>0 && p.assignedTo.length<allInClass.length;
+  const assignText = isSubset
+    ? '👥 '+students.length+' av '+allInClass.length+' elever'
+    : '👥 Hele klassen';
   return `<div class="wp-plan-card${active?'':' inactive'}">
     <div class="wp-plan-head">
       <div class="wp-plan-emoji">${p.emoji||'📘'}</div>
@@ -1909,6 +1923,9 @@ function wpPlanCardHTML(p){
         <div style="font-weight:800;font-size:1.05rem;color:var(--teal-dark);">${wpEscAttr(p.subject)}</div>
         <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:2px;">
           <span class="class-badge">${p.class}</span> · ${nSteps} trinn · ${students.length} elever · ${done} fullført
+        </div>
+        <div style="font-size:.78rem;color:${isSubset?'var(--coral-dark, #b34a3a)':'var(--muted)'};font-weight:800;margin-top:4px;cursor:pointer;" onclick="openPlanAssignModal('${p.fbKey}')" title="Klikk for å endre hvilke elever som ser planen">
+          ${assignText}
         </div>
       </div>
       <label class="wp-toggle" title="${active?'Aktiv – synlig for elevene':'Skjult for elevene'}">
@@ -1918,10 +1935,106 @@ function wpPlanCardHTML(p){
     </div>
     <div class="wp-plan-actions">
       <button class="btn btn-primary btn-sm" onclick="openApprove('${p.fbKey}')">👀 Elevoversikt &amp; godkjenning</button>
+      <button class="btn btn-ghost btn-sm" onclick="openPlanAssignModal('${p.fbKey}')">👥 Tildel</button>
       <button class="btn btn-ghost btn-sm" onclick="openPlanEditor('${p.fbKey}')">✏️ Rediger</button>
       <button class="btn btn-coral btn-sm" onclick="deletePlan('${p.fbKey}')">🗑️ Slett</button>
     </div>
   </div>`;
+}
+
+// ── TILDELING (hvilke elever ser planen) ────────────────────
+// assignedTo lagres som array av elev-fbKey på planen.
+// Tom/manglende = hele klassen (bakoverkompatibelt).
+// Hvis ALLE elever i klassen er huket av når læreren lagrer, fjernes feltet helt — det er det
+// samme som «hele klassen», og holder dataen ren etter hvert som klasselista endrer seg.
+let _wpAssignKey = null;
+function openPlanAssignModal(planKey){
+  const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
+  _wpAssignKey=planKey;
+  const students=wpStudentsInClass(p.class);
+  if(!students.length){
+    alert('Det er ingen elever i klassen ennå. Legg til elever før du tildeler planen.');
+    return;
+  }
+  const assigned = (Array.isArray(p.assignedTo) && p.assignedTo.length)
+    ? new Set(p.assignedTo) : null; // null = alle huket av (hele klassen)
+  const rows = students.map(s=>{
+    const checked = (assigned===null) || assigned.has(s.fbKey);
+    return `<label class="al-row" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--bg);cursor:pointer;">
+      <input type="checkbox" class="al-cb" data-fbkey="${wpEscAttr(s.fbKey)}" ${checked?'checked':''} onchange="wpAssignUpdateCount()" style="width:18px;height:18px;cursor:pointer;flex:0 0 auto;">
+      <span style="flex:1;font-weight:700;">${wpEscAttr(s.firstname)} ${wpEscAttr(s.lastname||'')}</span>
+    </label>`;
+  }).join('');
+  const checkedCount = (assigned===null) ? students.length
+    : students.filter(s=>assigned.has(s.fbKey)).length;
+  closePlanAssignModal();
+  const wrap=document.createElement('div');
+  wrap.id='modal-wp-assign';
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;';
+  wrap.addEventListener('click', function(e){ if(e.target===wrap) closePlanAssignModal(); });
+  wrap.innerHTML=`
+    <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="padding:1rem 1.2rem;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:.6rem;">
+        <div style="font-size:1.4rem;">👥</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;color:var(--teal-dark);">Tildel «${wpEscAttr(p.subject||'')}»</div>
+          <div style="font-size:.82rem;color:var(--muted);font-weight:700;">Klasse ${wpEscAttr(p.class||'')} · velg hvem som skal se planen</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closePlanAssignModal()" title="Lukk">✕</button>
+      </div>
+      <div style="padding:1rem 1.2rem;overflow-y:auto;flex:1;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="wpAssignSelectAll(true)">✓ Merk alle</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="wpAssignSelectAll(false)">✕ Fjern alle</button>
+          <div id="al-count" style="flex:1;text-align:right;font-weight:800;color:var(--teal-dark);align-self:center;">${checkedCount} av ${students.length} valgt</div>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:10px;overflow:hidden;">${rows}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.7rem;line-height:1.45;">
+          💡 Tips: Hvis alle er huket av, ser hele klassen planen som vanlig. Fjern haken på de elevene som ikke skal ha denne planen — for eksempel hvis de skal følge en egen tilpasset versjon i samme fag.
+        </div>
+      </div>
+      <div style="padding:.9rem 1.2rem;border-top:1.5px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="closePlanAssignModal()">Avbryt</button>
+        <button class="btn btn-primary btn-sm" onclick="savePlanAssignment()">💾 Lagre tildeling</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+function closePlanAssignModal(){
+  const m=document.getElementById('modal-wp-assign');
+  if(m && m.parentNode) m.parentNode.removeChild(m);
+  _wpAssignKey=null;
+}
+function wpAssignSelectAll(check){
+  document.querySelectorAll('#modal-wp-assign .al-cb').forEach(cb=>{ cb.checked=!!check; });
+  wpAssignUpdateCount();
+}
+function wpAssignUpdateCount(){
+  const all=document.querySelectorAll('#modal-wp-assign .al-cb');
+  const n=Array.from(all).filter(cb=>cb.checked).length;
+  const el=document.getElementById('al-count');
+  if(el) el.textContent=n+' av '+all.length+' valgt';
+}
+async function savePlanAssignment(){
+  if(!_wpAssignKey) return;
+  if(!ready()){ alert('Firebase ikke klar – prøv igjen om et øyeblikk.'); return; }
+  const planKey=_wpAssignKey;
+  const all=document.querySelectorAll('#modal-wp-assign .al-cb');
+  const allKeys=Array.from(all).map(cb=>cb.dataset.fbkey);
+  const checkedKeys=Array.from(all).filter(cb=>cb.checked).map(cb=>cb.dataset.fbkey);
+  if(!checkedKeys.length){
+    if(!confirm('Ingen elever er huket av. Da vil ingen i klassen se planen. Vil du fortsette?')) return;
+  }
+  // Hvis ALLE elever i klassen er huket av, lagre som null (= hele klassen, bakoverkompatibelt).
+  const assignedTo = (checkedKeys.length===allKeys.length) ? null : checkedKeys;
+  try {
+    await window._update(fbRef('workPlans/'+planKey), { assignedTo: assignedTo });
+  } catch(e) {
+    alert('Kunne ikke lagre tildelingen: '+e.message);
+    return;
+  }
+  closePlanAssignModal();
+  if(typeof renderWorkPlans==='function') renderWorkPlans();
 }
 
 // ── GODKJENNING ─────────────────────────────────────────────
@@ -1938,10 +2051,10 @@ function refreshApproveModal(){
   document.getElementById('modal-wp-approve-title').textContent=(p.emoji||'📘')+' '+p.subject;
   document.getElementById('modal-wp-approve-sub').textContent=
     p.class+' · '+(p.steps||[]).length+' trinn. Godkjenn trinnet eleven jobber med nå.';
-  const students=wpStudentsInClass(p.class);
+  const students=wpAssignedStudents(p);
   const nSteps=(p.steps||[]).length;
   const body=document.getElementById('modal-wp-approve-body');
-  if(!students.length){ body.innerHTML='<p style="color:var(--muted);">Ingen elever i denne klassen.</p>'; return; }
+  if(!students.length){ body.innerHTML='<p style="color:var(--muted);">Ingen elever har denne planen tildelt ennå. Bruk «Tildel»-knappen på plankortet for å gi den til en eller flere elever.</p>'; return; }
   body.innerHTML=students.map(s=>{
     const pr=wpGetProgress(s.fbKey,_wpApproveKey);
     const cur=pr.current||0;
