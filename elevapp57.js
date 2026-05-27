@@ -173,6 +173,13 @@ function apActivePlans(){
   const s=window._currentStudent; if(!s) return [];
   return (window._workPlans||[])
     .filter(p=>p.active!==false && p.class===s.class)
+    .filter(p=>{
+      // Tildelt undergruppe? Bare elever i listen ser planen.
+      // Tom/manglende assignedTo = hele klassen (bakoverkompatibelt).
+      const assigned=p.assignedTo;
+      if(!assigned || !Array.isArray(assigned) || !assigned.length) return true;
+      return assigned.indexOf(s.fbKey)>=0;
+    })
     .sort((a,b)=>(a.created||0)-(b.created||0));
 }
 function apProgress(planKey){
