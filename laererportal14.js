@@ -1213,7 +1213,7 @@ function generateGroceryPDF() {
     'Annet':            { klasse:'cat-skog',   navn:'ANNET' }
   };
 
-  const qrSvgFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price }, 25, 'L');
+  const qrSvgFor = (g) => window.qrToSVG({ type:'grocery', fbKey:g.fbKey, name:g.name, price:g.price, emoji:g.emoji }, 25, 'L');
 
   function vareHTML(v) {
     const cat = CATS[v.category] || CATS['Annet'];

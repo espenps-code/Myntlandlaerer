@@ -344,29 +344,24 @@
     <div class="cashier-top-title">🏪 Myntland Kasse</div>
   </div>
   <div class="cashier-content">
-    <div class="register-display">
+    <div class="register-display" id="register-display">
       <div class="register-label">SUM Å BETALE</div>
       <div class="register-total" id="register-total">0 🪙</div>
     </div>
     <div id="cart-list"></div>
 
     <div class="cashier-actions">
-    <div style="background:var(--green-light);border-radius:14px;padding:1rem;margin-bottom:1rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:.78rem;font-weight:800;color:var(--green-dark);">🛒 LEGG TIL VARE</div>
-        <button onclick="startCashierScan()" style="background:var(--green);color:white;border:none;border-radius:10px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;">📷 Scan vare</button>
-      </div>
-      <div style="position:relative;margin-bottom:8px;">
+      <div class="add-item-box">
+        <button class="action-btn action-btn-green" onclick="startCashierScan()">📷 Scan vare</button>
+        <div class="add-item-or">… eller søk</div>
         <input id="grocery-search" type="text" placeholder="🔍 Søk etter vare…"
                oninput="filterGrocerySearch(this.value)"
-               style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--green);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;box-sizing:border-box;outline:none;background:white;">
+               class="grocery-search-input">
+        <div id="grocery-search-results" class="grocery-search-results"></div>
       </div>
-      <div id="grocery-search-results" style="display:none;background:white;border-radius:10px;border:2px solid var(--green);max-height:220px;overflow-y:auto;margin-bottom:4px;">
-      </div>
-    </div>
 
-    <button class="action-btn action-btn-amber" onclick="startCustomerCardScan()" id="pay-btn" disabled style="opacity:.4;">📷 Scan elevens kort for betaling</button>
-    <button class="action-btn action-btn-ghost" onclick="clearCart()">🗑️ Tøm kassen</button>
+      <button class="action-btn action-btn-amber" onclick="startCustomerCardScan()" id="pay-btn" disabled style="opacity:.4;">📷 Scan elevens kort for betaling</button>
+      <button class="action-btn action-btn-ghost action-btn-small" onclick="clearCart()">🗑️ Tøm kassen</button>
     </div>
   </div>
 </div>

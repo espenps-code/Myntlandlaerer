@@ -155,6 +155,20 @@
   .action-btn:active{transform:scale(.97);}
   .action-btn-amber{background:var(--amber);color:var(--green-dark);}
   .action-btn-ghost{background:white;color:var(--green-dark);border:2px solid var(--border);}
+  .action-btn-green{background:var(--green);color:white;box-shadow:0 4px 0 var(--green-dark);}
+  .action-btn-small{padding:12px 14px;font-size:1rem;margin-bottom:0;}
+  .action-btn .pay-amount{font-family:'Fredoka One',cursive;opacity:.9;margin-left:6px;font-size:.95em;}
+
+  /* Add-item box: full-width Scan-knapp pluss søk som sekundært */
+  .add-item-box{background:var(--green-light);border-radius:14px;padding:1rem;margin-bottom:1rem;}
+  .add-item-box .action-btn-green{margin-bottom:0;}
+  .add-item-or{font-size:.78rem;font-weight:800;color:var(--green-dark);text-align:center;margin:10px 0 8px;letter-spacing:.5px;text-transform:uppercase;}
+  .grocery-search-input{width:100%;padding:12px 14px;border-radius:10px;border:2px solid var(--green);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;box-sizing:border-box;outline:none;background:white;}
+  .grocery-search-results{display:none;background:white;border-radius:10px;border:2px solid var(--green);max-height:220px;overflow-y:auto;margin-top:6px;}
+
+  /* Kompakt SUM-display naar kurven er tom — gir scan-knappen mer plass */
+  .register-display.is-empty{padding:.8rem 1.5rem;margin-bottom:1rem;}
+  .register-display.is-empty .register-total{font-size:1.6rem;}
 
   /* GROCERY GRID */
   .grocery-scan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
@@ -388,4 +402,5 @@
     }
     /* Nullstill margin-bottom på knapper inni wrapperen – flex-gap håndterer mellomrom */
     #screen-cashier .cashier-actions > .action-btn{margin-bottom:0;}
+    #screen-cashier .cashier-actions > .action-btn-small{align-self:center;max-width:240px;}
   }

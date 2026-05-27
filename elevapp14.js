@@ -1187,7 +1187,13 @@ function handleScanResult(text) {
     if (scanMode === 'cashier') {
       if (data.type === 'grocery') {
         playScanBeep();
-        addToCart(data.name || '?', data.name || '?', data.price || 0, data.emoji || '🛒');
+        // Slå opp varen i klassens vareliste vha fbKey for å hente riktig emoji.
+        // Eldre QR-koder ble skrevet ut uten emoji-felt — derfor fallback-kjeden under.
+        var matchG = (window._groceries || []).find(function(x){ return x.fbKey === data.fbKey; });
+        var groceryEmoji = (matchG && matchG.emoji) || data.emoji || '🛒';
+        var groceryName  = (matchG && matchG.name)  || data.name  || '?';
+        var groceryPrice = (matchG && typeof matchG.price === 'number') ? matchG.price : (data.price || 0);
+        addToCart(groceryName, groceryName, groceryPrice, groceryEmoji);
         // Lukk scanneren – eleven må trykke "Scan vare" igjen for neste vare
         stopScan();
         return;
@@ -2012,9 +2018,19 @@ function clearCart()   { cart=[]; cartTotal=0; renderCart(); }
 function renderCart() {
   const el  = document.getElementById('cart-list');
   const btn = document.getElementById('pay-btn');
+  const reg = document.getElementById('register-display');
   if (!el) return;
   document.getElementById('register-total').textContent = cartTotal + ' 🪙';
-  if (btn) { btn.disabled=!cart.length; btn.style.opacity=cart.length?'1':'0.4'; }
+  // Kompakt SUM-display naar kurven er tom — gir scan-knappen mer plass over folden
+  if (reg) reg.classList.toggle('is-empty', !cart.length);
+  if (btn) {
+    btn.disabled = !cart.length;
+    btn.style.opacity = cart.length ? '1' : '0.4';
+    // Vis beloep paa knappen naar kurven har varer — motivasjon for eleven
+    btn.innerHTML = cart.length
+      ? '💳 Betal <span class="pay-amount">(' + cartTotal + ' 🪙)</span>'
+      : '📷 Scan elevens kort for betaling';
+  }
   if (!cart.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🛒</div><div style="font-weight:700;">Ingen varer ennå</div></div>'; return; }
   el.innerHTML = cart.map((item,i) => `
     <div class="cart-item">
