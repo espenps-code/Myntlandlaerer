@@ -2028,7 +2028,7 @@ function renderCart() {
     btn.style.opacity = cart.length ? '1' : '0.4';
     // Vis beloep paa knappen naar kurven har varer — motivasjon for eleven
     btn.innerHTML = cart.length
-      ? '💳 Betal <span class="pay-amount">(' + cartTotal + ' 🪙)</span>'
+      ? '💳 Betal <span class="pay-amount">' + cartTotal + ' 🪙</span>'
       : '📷 Scan elevens kort for betaling';
   }
   if (!cart.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🛒</div><div style="font-weight:700;">Ingen varer ennå</div></div>'; return; }

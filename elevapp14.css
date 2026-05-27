@@ -391,11 +391,17 @@
       gap:20px;
       align-items:start;
     }
-    #screen-cashier .cashier-content > .register-display{grid-column:1;grid-row:1;}
-    #screen-cashier .cashier-content > #cart-list{grid-column:1;grid-row:2;}
+    /* Venstre kolonne: SUM + handlekurv stables som flex slik at varene bygger seg
+       rett under SUM-displayet — uten tomrom skapt av at hoeyre kolonne er hoeyere. */
+    #screen-cashier .cashier-left{
+      grid-column:1;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    #screen-cashier .cashier-left > .register-display{margin-bottom:0;}
     #screen-cashier .cashier-actions{
       grid-column:2;
-      grid-row:1 / span 2;
       display:flex;
       flex-direction:column;
       gap:10px;
