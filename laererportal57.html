@@ -1328,6 +1328,7 @@
       <div class="card-title">➕ Opprett ny lærerprofil</div>
       <div class="form-row"><label>Navn</label><input type="text" id="new-teacher-name" placeholder="f.eks. Kari Nordmann"></div>
       <div class="form-row"><label>PIN-kode (4 siffer)</label><input type="text" id="new-teacher-pin" placeholder="1234" maxlength="4" pattern="\d{4}"></div>
+      <div class="form-row"><label>E-post (valgfritt — for fremtidig epost-innlogging)</label><input type="email" id="new-teacher-email" placeholder="anne@skole.no"></div>
       <div class="form-row"><label>Klasse (valgfritt – tomt = ser alle)</label>
           <select id="new-teacher-class">
             <option value="">Alle klasser</option>
@@ -1358,6 +1359,29 @@
     <div class="card">
       <div class="card-title">👩‍🏫 Eksisterende profiler</div>
       <div id="teacher-list"><p style="font-size:.85rem;color:var(--muted);">Laster…</p></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1rem;">
+    <div class="card-title">🌐 Workspaces (multi-tenant)</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:.7rem;line-height:1.5;">
+      Hver vanlige lærer har sitt eget workspace med egne jobber, butikk, belønninger,
+      hendelser og periodeplaner. Admin ser alt på tvers. Eksisterende data (din klasse)
+      ligger på workspace «main» og berøres ikke.
+    </p>
+    <div id="workspace-list" style="margin-bottom:1rem;">
+      <p style="font-size:.82rem;color:var(--muted);">Laster workspaces…</p>
+    </div>
+    <div style="border-top:1.5px solid var(--border);padding-top:.9rem;">
+      <div style="font-weight:800;color:var(--coral-dark, #b34a3a);margin-bottom:.4rem;">⚠️ Nødbryter</div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem;line-height:1.5;">
+        Slår av all workspace-filtrering umiddelbart. Alle lærere ser alle data igjen
+        — slik systemet fungerte før multi-tenant. Bruk hvis noe oppfører seg rart.
+      </p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span id="ws-killswitch-status" style="font-weight:800;color:var(--teal-dark);">Filtrering: PÅ</span>
+        <button class="btn btn-coral btn-sm" onclick="toggleWorkspaceFiltering()">Bytt</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1598,5 +1622,91 @@
 </div>
 
 <script src="laererportal57.js"></script>
+
+<!-- Workspace-admin (kill switch + workspace-liste) — lagt til ${dato} -->
+<script>
+(function() {
+  // Vent på at Firebase er klar før vi rendrer.
+  function whenReady(cb, tries) {
+    tries = tries || 0;
+    if (typeof window._fbReady !== 'undefined' && window._fbReady && window._ref && window._update) {
+      cb();
+    } else if (tries < 50) {
+      setTimeout(function(){ whenReady(cb, tries+1); }, 200);
+    }
+  }
+  whenReady(function() {
+    // Last workspaces én gang ved start
+    var wsRef = window._ref(window._db, 'workspaces');
+    if (typeof window._onValue === 'function') {
+      window._onValue(wsRef, function(snap) {
+        var v = snap.val() || {};
+        window._workspaces = Object.keys(v).map(function(k) { return Object.assign({fbKey:k}, v[k]); });
+        if (typeof renderWorkspaceList === 'function') renderWorkspaceList();
+      });
+    }
+    // Last kill switch-status
+    var settingsRef = window._ref(window._db, 'settings');
+    if (typeof window._onValue === 'function') {
+      window._onValue(settingsRef, function(snap) {
+        window._settings = snap.val() || window._settings || {};
+        if (typeof updateKillSwitchUI === 'function') updateKillSwitchUI();
+      });
+    }
+  });
+})();
+
+function renderWorkspaceList() {
+  var el = document.getElementById('workspace-list');
+  if (!el) return;
+  var ws = window._workspaces || [];
+  if (!ws.length) {
+    el.innerHTML = '<p style="font-size:.82rem;color:var(--muted);">Ingen workspaces ennå. De opprettes automatisk når du legger til en vanlig lærer.</p>';
+    return;
+  }
+  el.innerHTML = ws.map(function(w) {
+    var owner = (window._teachers || []).find(function(t) { return t.fbKey === w.ownerTeacherKey; });
+    var ownerName = owner ? owner.name : '(ukjent eier)';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:6px;">' +
+      '<span style="font-size:1.2rem;">🌐</span>' +
+      '<div style="flex:1;">' +
+        '<div style="font-weight:800;color:var(--teal-dark);">' + (w.name || 'Uten navn') + '</div>' +
+        '<div style="font-size:.78rem;color:var(--muted);font-weight:700;">Eier: ' + ownerName + ' · ID: <code style="background:var(--bg);padding:1px 6px;border-radius:4px;font-size:.7rem;">' + w.fbKey + '</code></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function updateKillSwitchUI() {
+  var el = document.getElementById('ws-killswitch-status');
+  if (!el) return;
+  var off = !!(window._settings && window._settings.workspaceFilteringDisabled);
+  if (off) {
+    el.textContent = 'Filtrering: AV (alle ser alt)';
+    el.style.color = '#b34a3a';
+  } else {
+    el.textContent = 'Filtrering: PÅ';
+    el.style.color = 'var(--teal-dark)';
+  }
+}
+
+async function toggleWorkspaceFiltering() {
+  if (typeof window._update !== 'function' || !window._ref || !window._db) {
+    alert('Firebase ikke klar.'); return;
+  }
+  var newState = !(window._settings && window._settings.workspaceFilteringDisabled);
+  var label = newState ? 'SLÅ AV workspace-filtrering (alle ser alt)' : 'SLÅ PÅ workspace-filtrering';
+  if (!confirm('Er du sikker på at du vil ' + label + '?')) return;
+  try {
+    await window._update(window._ref(window._db, 'settings'), { workspaceFilteringDisabled: newState });
+    if (!window._settings) window._settings = {};
+    window._settings.workspaceFilteringDisabled = newState;
+    updateKillSwitchUI();
+    alert('Workspace-filtrering er nå ' + (newState ? 'AV — alle ser alt.' : 'PÅ — lærere ser kun sitt workspace.'));
+  } catch (e) {
+    alert('Kunne ikke endre: ' + e.message);
+  }
+}
+</script>
 </body>
 </html>

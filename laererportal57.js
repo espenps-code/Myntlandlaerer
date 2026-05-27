@@ -17,6 +17,59 @@ function fbRef(p) { return window._ref(window._db, p); }
 function ready()  { return !!(window._fbReady && window._db && window._ref); }
 
 // ════════════════════════════════════════════════════════════
+// WORKSPACES (multi-tenant — fase 1)
+// ════════════════════════════════════════════════════════════
+// Hver lærer som ikke er admin er knyttet til ett workspace via teacher.workspaceId.
+// All ny data (jobs, shop, belønninger, hendelser, periodeplaner, elever) får
+// workspaceId satt på opprettelse. Lister filtreres på workspace når læreren ikke
+// er admin og kill switch ikke er aktivert.
+//
+// Manglende workspaceId på data = "main" (bakoverkompatibelt — eksisterende data
+// uberørt). Admin ser alt på tvers. Kill switch (settings.workspaceFilteringDisabled)
+// slår av filtreringen umiddelbart hvis noe ryker.
+
+function isAdmin() {
+  return !!(window._currentTeacher && window._currentTeacher.role === 'admin');
+}
+
+function workspaceFilteringEnabled() {
+  if (!window._settings) return true;
+  return !window._settings.workspaceFilteringDisabled;
+}
+
+function currentWorkspaceId() {
+  const t = window._currentTeacher;
+  if (!t) return null;
+  if (t.role === 'admin') return null;
+  return t.workspaceId || 'main';
+}
+
+function filterByWorkspace(items) {
+  if (!Array.isArray(items)) return items;
+  if (!workspaceFilteringEnabled() || isAdmin()) return items;
+  const ws = currentWorkspaceId() || 'main';
+  return items.filter(it => ((it && it.workspaceId) || 'main') === ws);
+}
+
+function getJobs()      { return filterByWorkspace(window._jobs || []); }
+function getShop()      { return filterByWorkspace(window._shop57 || []); }
+function getRewards()   { return filterByWorkspace(window._customRewards57 || []); }
+function getHendelser() { return filterByWorkspace(window._hendelser || []); }
+function getStudents()  { return filterByWorkspace(window._students || []); }
+
+async function createWorkspaceForTeacher(teacherKey, teacherName, className) {
+  if (!ready()) throw new Error('Firebase ikke klar');
+  const ref = window._push(fbRef('workspaces'));
+  const wsId = ref.key;
+  await window._set(ref, {
+    name: (teacherName ? teacherName + (className ? ' · ' + className : '') : 'Nytt workspace'),
+    ownerTeacherKey: teacherKey || null,
+    created: Date.now()
+  });
+  return wsId;
+}
+
+// ════════════════════════════════════════════════════════════
 // LOGIN / LÆRERPROFILER  (identisk med 1–4-portalen)
 // ════════════════════════════════════════════════════════════
 let loginPin = '', loginTarget = null;
@@ -133,16 +186,33 @@ async function createTeacher() {
   const pin   = document.getElementById('new-teacher-pin').value.trim();
   const cls   = document.getElementById('new-teacher-class').value.trim();
   const role  = document.getElementById('new-teacher-role').value;
+  const emailEl = document.getElementById('new-teacher-email');
+  const email = emailEl ? emailEl.value.trim() : '';
   const alertEl = document.getElementById('teacher-create-alert');
   if (!name || !pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Fyll inn navn og en 4-sifret PIN.</div>'; return;
   }
-  await window._set(window._push(fbRef('teachers57')), { name, pin, role, class: cls, color: selectedTeacherColor });
+  const teacherRef = window._push(fbRef('teachers57'));
+  const teacherKey = teacherRef.key;
+  const teacherObj = { name, pin, role, class: cls, color: selectedTeacherColor };
+  if (email) teacherObj.email = email;
+  await window._set(teacherRef, teacherObj);
+  let workspaceMsg = '';
+  if (role !== 'admin') {
+    try {
+      const wsId = await createWorkspaceForTeacher(teacherKey, name, cls);
+      await window._update(fbRef('teachers57/' + teacherKey), { workspaceId: wsId });
+      workspaceMsg = ' Eget workspace opprettet.';
+    } catch (e) {
+      workspaceMsg = ' ⚠️ Workspace ble ikke opprettet (' + e.message + ').';
+    }
+  }
   document.getElementById('new-teacher-name').value = '';
   document.getElementById('new-teacher-pin').value  = '';
   document.getElementById('new-teacher-class').value = '';
-  alertEl.innerHTML = `<div class="alert alert-success">✅ ${name} er opprettet!</div>`;
-  setTimeout(() => alertEl.innerHTML = '', 3000);
+  if (emailEl) emailEl.value = '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ ${name} er opprettet! Send PIN <strong>${pin}</strong> og lenken til lærerportalen.${workspaceMsg}</div>`;
+  setTimeout(() => alertEl.innerHTML = '', 8000);
 }
 
 function renderTeacherList() {
@@ -268,10 +338,11 @@ async function createStudent() {
   if (!fn || !ln) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Klikk «🎲 Generer navn + avatar» for å lage et fiktivt navn først.</div>'; return; }
   const pin = generatePIN();
   const avatarSeed = window._pendingAvatarSeed || Math.floor(Math.random()*99999);
+  const workspaceId = currentWorkspaceId() || 'main';
   await window._set(window._push(fbRef('students57')), {
     firstname: fn, lastname: ln, class: cls, pin, balance: bal,
     loan: 0, savings: 0, fund_low: 0, fund_high: 0,
-    avatarSeed, created: Date.now()
+    avatarSeed, workspaceId, created: Date.now()
   });
   document.getElementById('new-firstname').value = '';
   document.getElementById('new-lastname').value  = '';
@@ -312,7 +383,7 @@ function renderStudentTable() {
     rf.innerHTML = '<option value="">– Velg klasse –</option>' + classes.map(c => `<option value="${c}"${c===cur2?' selected':''}>${c}</option>`).join('');
   }
 
-  const filtered = window._students.filter(s => {
+  const filtered = getStudents().filter(s => {
     const name = (s.firstname + ' ' + s.lastname).toLowerCase();
     return name.includes(searchFilter.toLowerCase()) && (!classFilter || s.class === classFilter);
   });
@@ -623,6 +694,7 @@ async function createWholeClass() {
   btn.disabled = true;
 
   const createdStudents = [];
+  const wsForBulk = currentWorkspaceId() || 'main';
   await Promise.all(_bulkClassData.map(async function(s) {
     await window._set(window._push(fbRef('students57')), {
       firstname: s.firstname, lastname: s.lastname,
@@ -630,6 +702,7 @@ async function createWholeClass() {
       balance: s.balance,
       loan: 0, savings: 0, fund_low: 0, fund_high: 0,
       avatarSeed: s.avatarSeed,
+      workspaceId: wsForBulk,
       created: Date.now()
     });
     createdStudents.push(s);
@@ -974,7 +1047,7 @@ function setJobType(type) {
 }
 
 async function deleteJob(fbKey) {
-  const j = (window._jobs||[]).find(x => x.fbKey === fbKey);
+  const j = (getJobs()||[]).find(x => x.fbKey === fbKey);
   const label = j?.type === 'salary' ? 'fast jobb' : 'oppdrag';
   if (!confirm('Slett ' + label + '?')) return;
   await window._remove(fbRef('jobs/' + fbKey));
@@ -1002,14 +1075,14 @@ async function rejectApplicant(jobKey, studentKey) {
 }
 // Lærer kan åpne/stenge søknader på en fast jobb
 async function toggleApplicationsOpen(jobKey) {
-  const j = (window._jobs||[]).find(x => x.fbKey === jobKey);
+  const j = (getJobs()||[]).find(x => x.fbKey === jobKey);
   if (!j) return;
   const cur = (j.applicationsOpen !== false); // default åpen
   await window._update(fbRef('jobs/' + jobKey), { applicationsOpen: !cur });
 }
 
 function showJobQR(fbKey) {
-  const j = window._jobs.find(x => x.fbKey === fbKey); if (!j) return;
+  const j = getJobs().find(x => x.fbKey === fbKey); if (!j) return;
   const payload = JSON.stringify({ type:'job', jobKey: fbKey, title: j.title, pay: j.pay });
 
   // Sett tekst og åpne modalen FØR QR genereres – da er elementet synlig
@@ -1068,7 +1141,7 @@ async function approveJob() {
   const jk = document.getElementById('job-approve-job').value;
   const alertEl = document.getElementById('job-approve-alert');
   if (!sk || !jk) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Velg elev og oppdrag.</div>'; return; }
-  const j = window._jobs.find(x => x.fbKey === jk);
+  const j = getJobs().find(x => x.fbKey === jk);
   const s = window._students.find(x => x.fbKey === sk);
   if (!j || !s) return;
   const net = Math.floor(j.pay * 0.8);
@@ -1085,7 +1158,7 @@ async function approveJob() {
 function renderJobsList() {
   const taskEl = document.getElementById('jobs-list');
   const salaryEl = document.getElementById('salary-jobs-list');
-  const allJobs = window._jobs || [];
+  const allJobs = getJobs() || [];
   const taskJobs = allJobs.filter(j => (j.type || 'task') !== 'salary');
   const salaryJobs = allJobs.filter(j => j.type === 'salary');
 
@@ -1216,7 +1289,7 @@ function refreshJobSelects() {
   const js = document.getElementById('job-approve-job');
   if (!ss || !js) return;
   ss.innerHTML = '<option value="">– Velg elev –</option>' + window._students.map(s => `<option value="${s.fbKey}">${s.firstname} ${s.lastname} (${s.class})</option>`).join('');
-  const taskJobs = (window._jobs||[]).filter(j => (j.type || 'task') !== 'salary');
+  const taskJobs = (getJobs()||[]).filter(j => (j.type || 'task') !== 'salary');
   js.innerHTML = '<option value="">– Velg oppdrag –</option>' + taskJobs.map(j => `<option value="${j.fbKey}">${j.emoji||'💼'} ${j.title} (${j.pay}🪙)</option>`).join('');
 }
 
@@ -1233,7 +1306,7 @@ async function addShop57Item() {
   const cat     = document.getElementById('s57-category').value;
   const alertEl = document.getElementById('s57-alert');
   if (!name) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn varenavn.</div>'; return; }
-  await window._set(window._push(fbRef('shop57')), { emoji, name, price, category: cat, created: Date.now() });
+  await window._set(window._push(fbRef('shop57')), { emoji, name, price, category: cat, workspaceId: currentWorkspaceId() || 'main', created: Date.now() });
   ['s57-emoji','s57-name','s57-price'].forEach(id => document.getElementById(id).value = '');
   alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» lagt til!</div>`;
   setTimeout(() => alertEl.innerHTML = '', 3000);
@@ -1244,8 +1317,8 @@ function filterShop57(v) { shop57Filter = v.toLowerCase(); renderShop57List(); }
 function renderShop57List() {
   const tbody = document.getElementById('shop57-table-body'); if (!tbody) return;
   const countEl = document.getElementById('s57-count');
-  if (countEl) countEl.textContent = window._shop57.length;
-  const items = window._shop57.filter(x => !shop57Filter || x.name.toLowerCase().includes(shop57Filter) || (x.category||'').toLowerCase().includes(shop57Filter));
+  if (countEl) countEl.textContent = getShop().length;
+  const items = getShop().filter(x => !shop57Filter || x.name.toLowerCase().includes(shop57Filter) || (x.category||'').toLowerCase().includes(shop57Filter));
   if (!items.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">Ingen varer ennå.</td></tr>'; return; }
   tbody.innerHTML = items.map(x => `<tr>
     <td><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.8rem;">${x.emoji}</span><strong>${x.name}</strong></div></td>
@@ -1259,7 +1332,7 @@ function renderShop57List() {
 async function removeShop57(fbKey) { await window._remove(fbRef('shop57/' + fbKey)); }
 
 function showShopItemQR(fbKey) {
-  const item = window._shop57.find(x => x.fbKey === fbKey); if (!item) return;
+  const item = getShop().find(x => x.fbKey === fbKey); if (!item) return;
   const payload = JSON.stringify({ type: 'purchase', fbKey: item.fbKey, name: item.name, emoji: item.emoji, price: item.price });
 
   // Bruker QR Server API – returnerer ferdig PNG, ingen canvas/synlighetsproblemer
@@ -1315,6 +1388,7 @@ async function addCustomReward57() {
   }
   if (!ready()) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Firebase ikke klar.</div>'; return; }
   await window._set(window._push(fbRef('customRewards57')), {
+    workspaceId: currentWorkspaceId() || 'main',
     amount, desc: desc || `+${amount} mynter`, created: Date.now()
   });
   document.getElementById('custom-qr-amount').value = '75';
@@ -1325,11 +1399,11 @@ async function addCustomReward57() {
 
 function renderCustomRewards57() {
   const el = document.getElementById('custom-rewards-list'); if (!el) return;
-  if (!window._customRewards57.length) {
+  if (!getRewards().length) {
     el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Ingen egendefinerte belønninger ennå.</p>';
     return;
   }
-  el.innerHTML = window._customRewards57.map(r => `
+  el.innerHTML = getRewards().map(r => `
     <div style="display:flex;align-items:center;gap:12px;padding:.9rem 1rem;background:var(--bg);border-radius:12px;margin-bottom:8px;">
       <div style="width:36px;height:36px;background:var(--teal-light);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;color:var(--teal-dark);font-size:.8rem;flex-shrink:0;">🪙${r.amount}</div>
       <div style="flex:1;">
@@ -1343,7 +1417,7 @@ function renderCustomRewards57() {
       </div>
     </div>`).join('');
   // Render mini QRs – bruk popup-teknikken for inline via canvas-data
-  window._customRewards57.forEach(r => {
+  getRewards().forEach(r => {
     const el = document.getElementById('mini-qr57-' + r.fbKey);
     if (el && !el.children.length) {
       try {
@@ -1362,13 +1436,13 @@ async function deleteCustomReward57(fbKey) {
 }
 
 function printCustomReward57(fbKey) {
-  const r = window._customRewards57.find(x => x.fbKey === fbKey); if (!r) return;
+  const r = getRewards().find(x => x.fbKey === fbKey); if (!r) return;
   _printRewardCards57([r]);
 }
 
 function printAllCustomRewards57() {
-  if (!window._customRewards57.length) { alert('Ingen belønninger å skrive ut.'); return; }
-  _printRewardCards57(window._customRewards57);
+  if (!getRewards().length) { alert('Ingen belønninger å skrive ut.'); return; }
+  _printRewardCards57(getRewards());
 }
 
 function printSingleQR(elId, label) {
@@ -2051,7 +2125,8 @@ async function savePlan(publish){
       { emoji, subject, class:cls, approval, steps, active:willActive });
   } else {
     await window._set(window._push(fbRef('workPlans')),
-      { emoji, subject, class:cls, approval, steps, active:willActive, created:Date.now() });
+      { emoji, subject, class:cls, approval, steps, active:willActive,
+        workspaceId: currentWorkspaceId() || 'main', created:Date.now() });
   }
   closePlanEditor();
 }
@@ -2633,6 +2708,7 @@ async function submitJob() {
       alertEl.innerHTML = '<div class="alert alert-success">✅ Fast jobb oppdatert!</div>';
       cancelJobEdit();
     } else {
+      data.workspaceId = currentWorkspaceId() || 'main';
       await window._set(window._push(fbRef('jobs')), data);
       alertEl.innerHTML = `<div class="alert alert-success">✅ Fast jobb «${title}» opprettet!</div>`;
       ['job-title','job-emoji','job-desc'].forEach(id => document.getElementById(id).value = '');
@@ -2645,6 +2721,7 @@ async function submitJob() {
       alertEl.innerHTML = '<div class="alert alert-success">✅ Oppdatert!</div>';
       cancelJobEdit();
     } else {
+      data.workspaceId = currentWorkspaceId() || 'main';
       await window._set(window._push(fbRef('jobs')), data);
       alertEl.innerHTML = `<div class="alert alert-success">✅ «${title}» opprettet!</div>`;
       ['job-title','job-emoji','job-desc','job-deadline'].forEach(id => document.getElementById(id).value = '');
@@ -2659,8 +2736,8 @@ async function submitJob() {
 // BUTIKK PDF – 2 varer per A4, liggende
 // ════════════════════════════════════════════════════════════
 function printShopPDF() {
-  if (!window._shop57?.length) { alert('Ingen varer i butikken.'); return; }
-  const items = window._shop57;
+  if (!getShop().length) { alert('Ingen varer i butikken.'); return; }
+  const items = getShop();
   // Bygg sider: 2 varer per side, liggende A4
   // QR genereres via api.qrserver.com – ingen canvas/synlighetsproblemer
   let pagesHTML = '';
@@ -2773,7 +2850,7 @@ function renderHendelser() {
   const list = document.getElementById('hendelser-list');
   if (!list) return;
 
-  const all = window._hendelser;
+  const all = getHendelser();
   const income  = all.filter(h => h.type === 'income');
   const expense = all.filter(h => h.type === 'expense');
 
@@ -2829,7 +2906,7 @@ async function addHendelse() {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Beløp må være mellom 1 og 9999.</div>'; return;
   }
 
-  await window._set(window._push(fbRef('hendelser')), { emoji, desc, type, amount, created: Date.now() });
+  await window._set(window._push(fbRef('hendelser')), { emoji, desc, type, amount, workspaceId: currentWorkspaceId() || 'main', created: Date.now() });
   document.getElementById('hend-emoji').value  = '';
   document.getElementById('hend-desc').value   = '';
   document.getElementById('hend-amount').value = '';
@@ -2849,8 +2926,8 @@ async function clearAllHendelser() {
 
 async function seedDefaultHendelser() {
   if (!ready()) return;
-  if (window._hendelser.length > 0) {
-    if (!confirm('Du har allerede ' + window._hendelser.length + ' hendelser. Legg til 30 standard i tillegg?')) return;
+  if (getHendelser().length > 0) {
+    if (!confirm('Du har allerede ' + getHendelser().length + ' hendelser. Legg til 30 standard i tillegg?')) return;
   }
 
   const alertEl = document.getElementById('hend-alert');
@@ -2859,7 +2936,7 @@ async function seedDefaultHendelser() {
   try {
     // Skriv alle 30 parallelt via Promise.all – langt raskere enn sekvensiell loop
     await Promise.all(DEFAULT_HENDELSER.map(function(h) {
-      return window._set(window._push(fbRef('hendelser')), Object.assign({}, h, { created: Date.now() }));
+      return window._set(window._push(fbRef('hendelser')), Object.assign({}, h, { workspaceId: currentWorkspaceId() || 'main', created: Date.now() }));
     }));
     if (alertEl) {
       alertEl.innerHTML = '<div class="alert alert-success">✅ 30 standard hendelser lagt til!</div>';
@@ -2876,7 +2953,7 @@ async function seedDefaultHendelser() {
 // ── QR-MODAL FOR HENDELSE ─────────────────────────────────────────────────────
 // Reuse the job QR modal – check if it exists, otherwise use a dedicated approach
 function showHendelseQR(fbKey) {
-  const h = window._hendelser.find(x => x.fbKey === fbKey);
+  const h = getHendelser().find(x => x.fbKey === fbKey);
   if (!h) return;
 
   // Kompakt payload (kortere felt = får plass i QR selv med lange beskrivelser/æøå)
@@ -2947,7 +3024,7 @@ function printHendelseQRCard() {
 
 // ── UTSKRIFT: 4 hendelser per A4, med kuttlinjer ──────────────────────────────
 function printHendelser() {
-  const all = window._hendelser;
+  const all = getHendelser();
   if (!all.length) { alert('Ingen hendelser å skrive ut.'); return; }
   // Generate QR data URLs via api.qrserver.com (no canvas issues in print)
   // Bruk kompakt payload (kortere felt) + ecc=L så lange tekster med æøå får plass.
@@ -3114,7 +3191,7 @@ function renderBudgetPage() {
 
   // Status
   const cnt = document.getElementById('bud-status-hend-count');
-  if (cnt) cnt.textContent = (window._hendelser || []).length;
+  if (cnt) cnt.textContent = (getHendelser() || []).length;
 
   // Last paid – les fra Firebase
   if (window._get && window._db) {
@@ -3131,7 +3208,7 @@ function renderBudgetPage() {
   // Faste jobber-liste
   const list = document.getElementById('bud-salary-jobs-list');
   if (list) {
-    const salaryJobs = (window._jobs || []).filter(j => j.type === 'salary' && j.active !== false);
+    const salaryJobs = (getJobs() || []).filter(j => j.type === 'salary' && j.active !== false);
     if (!salaryJobs.length) {
       list.innerHTML = '<div style="color:var(--muted);font-size:.9rem;padding:1rem;">Ingen faste jobber. Opprett dem på Jobber-siden.</div>';
     } else {
@@ -3301,7 +3378,7 @@ async function runBudgetExpensesNow() {
 }
 
 async function runWednesdayEventsNow() {
-  if (!(window._hendelser || []).length) {
+  if (!(getHendelser() || []).length) {
     alert('Ingen hendelser i biblioteket. Legg til hendelser først (Hendelser-siden).');
     return;
   }
