@@ -114,12 +114,31 @@ function tryTeacherLogin() {
     if (loginTarget.class && loginTarget.role !== 'admin') {
       classFilter = loginTarget.class;
     }
+    applyTeacherClassLock();
     window._startListeners();
     showPage('elever');
   } else {
     document.getElementById('login-error').textContent = '❌ Feil PIN – prøv igjen';
     loginPin = ''; updateLoginDots();
   }
+}
+
+// Klasse-lås: vanlig lærer skal kun se sin egen klasse i opprett-dropdowns.
+function applyTeacherClassLock() {
+  const t = window._currentTeacher;
+  if (!t || t.role === 'admin' || !t.class) return;
+  const cls = t.class;
+  ['new-class', 'bulk-class-select'].forEach(function(id) {
+    const sel = document.getElementById(id);
+    if (sel) {
+      sel.innerHTML = '<option value="' + cls + '">' + cls + '</option>';
+      sel.value = cls;
+      sel.disabled = true;
+      sel.style.background = 'var(--bg)';
+      sel.style.color = 'var(--muted)';
+      sel.title = 'Du kan kun opprette elever i din egen klasse (' + cls + ')';
+    }
+  });
 }
 
 function doLogout() {
@@ -262,6 +281,7 @@ function showElevTab(tab, btn) {
   btn.classList.add('active');
   if (tab === 'klasser') renderClassManager();
   if (tab === 'klasse') populatePrintClassSelect();
+  if (typeof applyTeacherClassLock === 'function') applyTeacherClassLock();
 }
 
 function getClassNames() {
