@@ -57,6 +57,44 @@ function getRewards()   { return filterByWorkspace(window._customRewards57 || []
 function getHendelser() { return filterByWorkspace(window._hendelser || []); }
 function getStudents()  { return filterByWorkspace(window._students || []); }
 
+// ── Per-workspace settings (fase 3) ─────────────────────────────────────────
+// Main/admin leser fra root-paths (uendret). Andre workspaces leser fra
+// workspaceSettings/{wsId}/... — fallback til main, så hardkodet default.
+const DEFAULT_BUDGET_57 = { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50, wedEventsEnabled:true };
+const DEFAULT_MYNTJAKT_57 = { enabled:false, dailyMax:0, activeLevels:[true,true,true,true,true] };
+
+function _wsSettingsFor(wsId) {
+  return (window._workspaceSettingsByWs || {})[wsId] || {};
+}
+function getEffectiveBudgetSettings() {
+  const ws = currentWorkspaceId();
+  if (!ws || ws === 'main') return window._budgetSettings || DEFAULT_BUDGET_57;
+  return _wsSettingsFor(ws).budgetSettings || window._budgetSettings || DEFAULT_BUDGET_57;
+}
+function getEffectiveMyntjakten() {
+  const ws = currentWorkspaceId();
+  if (!ws || ws === 'main') return (window._settings && window._settings.myntjakten57) || DEFAULT_MYNTJAKT_57;
+  return _wsSettingsFor(ws).myntjakten57 || (window._settings && window._settings.myntjakten57) || DEFAULT_MYNTJAKT_57;
+}
+function getEffectiveBadgeParams() {
+  const ws = currentWorkspaceId();
+  if (!ws || ws === 'main') return (window._settings && window._settings.badgeParams) || (typeof DEFAULT_BADGE_PARAMS !== 'undefined' ? DEFAULT_BADGE_PARAMS : {});
+  return _wsSettingsFor(ws).badgeParams || (window._settings && window._settings.badgeParams) || (typeof DEFAULT_BADGE_PARAMS !== 'undefined' ? DEFAULT_BADGE_PARAMS : {});
+}
+// Hvor skal vi SKRIVE settings? Returnerer Firebase-path-streng.
+function _saveBudgetPath() {
+  const ws = currentWorkspaceId();
+  if (!ws || ws === 'main') return 'budgetSettings';
+  return 'workspaceSettings/' + ws + '/budgetSettings';
+}
+function _saveSettingsKeyPath(key) {
+  const ws = currentWorkspaceId();
+  if (!ws || ws === 'main') return { path: 'settings', payload: function(v){ return { [key]: v }; } };
+  return { path: 'workspaceSettings/' + ws, payload: function(v){ return { [key]: v }; } };
+}
+function getClassGoals() { return filterByWorkspace(window._classGoals || []); }
+
+
 async function createWorkspaceForTeacher(teacherKey, teacherName, className) {
   if (!ready()) throw new Error('Firebase ikke klar');
   const ref = window._push(fbRef('workspaces'));
@@ -1818,8 +1856,10 @@ function generateCardPDF() {
 window._classGoals = [];
 
 async function distributeToGoalsPortal(amount) {
-  if (!amount || !window._classGoals?.length) return;
-  const active = window._classGoals.filter(g => !g.completed);
+  if (!amount) return;
+  const goals = getClassGoals();
+  if (!goals.length) return;
+  const active = goals.filter(g => !g.completed);
   if (!active.length) return;
   const perGoal = Math.floor(amount / active.length);
   const upd = {};
@@ -1833,7 +1873,7 @@ async function distributeToGoalsPortal(amount) {
 
 async function createClassGoal() {
   if (!ready()) return;
-  const active = window._classGoals.filter(g => !g.completed);
+  const active = getClassGoals().filter(g => !g.completed);
   if (active.length >= 3) {
     document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Maks 3 aktive sparemål.</div>'; return;
   }
@@ -1842,7 +1882,7 @@ async function createClassGoal() {
   const target = parseInt(document.getElementById('goal-target').value) || 1000;
   const desc   = document.getElementById('goal-desc').value.trim();
   if (!name) { document.getElementById('goal-alert').innerHTML = '<div class="alert alert-error">⚠️ Skriv inn navn.</div>'; return; }
-  await window._set(window._push(fbRef('classGoals')), { emoji, name, target, desc, saved: 0, completed: false, created: Date.now() });
+  await window._set(window._push(fbRef('classGoals')), { emoji, name, target, desc, saved: 0, completed: false, workspaceId: currentWorkspaceId() || 'main', created: Date.now() });
   ['goal-emoji','goal-name','goal-desc'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('goal-target').value = '1000';
   document.getElementById('goal-alert').innerHTML = `<div class="alert alert-success">✅ «${name}» opprettet!</div>`;
@@ -1856,11 +1896,12 @@ async function deleteClassGoal(fbKey) {
 
 function renderClassGoalsPage() {
   const el = document.getElementById('class-goals-container'); if (!el) return;
-  const active  = window._classGoals.filter(g => !g.completed);
-  const done    = window._classGoals.filter(g =>  g.completed);
+  const goals = getClassGoals();
+  const active  = goals.filter(g => !g.completed);
+  const done    = goals.filter(g =>  g.completed);
   const newCard = document.getElementById('new-goal-card');
   if (newCard) newCard.style.display = active.length >= 3 ? 'none' : 'block';
-  if (!window._classGoals.length) { el.innerHTML = ''; return; }
+  if (!goals.length) { el.innerHTML = ''; return; }
   el.innerHTML = [...active, ...done].map(g => {
     const pct = Math.min(100, Math.round((g.saved||0) / g.target * 100));
     return `<div class="card">
@@ -3177,7 +3218,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('cli
 window._budgetSettings = window._budgetSettings || { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50, wedEventsEnabled:true };
 
 function renderBudgetPage() {
-  const bs = window._budgetSettings || {};
+  const bs = getEffectiveBudgetSettings() || {};
   const elDesk = document.getElementById('bud-rent-desk');
   const elPMin = document.getElementById('bud-power-min');
   const elPMax = document.getElementById('bud-power-max');
@@ -3228,7 +3269,7 @@ function renderBudgetPage() {
 
 // Myntjakten-innstillinger (egen funksjon — flyttet til Belønninger-siden)
 function renderMyntjaktenSettings57() {
-  const mj = (window._settings && window._settings.myntjakten57) || {};
+  const mj = getEffectiveMyntjakten() || {};
   const mjEnabled = document.getElementById('myntjakten57-enabled');
   const mjMax     = document.getElementById('myntjakten57-daily-max');
   // Default: aktivert, ingen grense
@@ -3311,11 +3352,18 @@ async function saveMyntjakten57Settings() {
   }
 
   try {
-    await window._update(window._ref(window._db, 'settings'), {
-      myntjakten57: { enabled, dailyMax, activeLevels, updated: Date.now() }
-    });
-    if (!window._settings) window._settings = {};
-    window._settings.myntjakten57 = { enabled, dailyMax, activeLevels };
+    const mjVal = { enabled, dailyMax, activeLevels, updated: Date.now() };
+    const wsMj = currentWorkspaceId();
+    if (!wsMj || wsMj === 'main') {
+      await window._update(window._ref(window._db, 'settings'), { myntjakten57: mjVal });
+      if (!window._settings) window._settings = {};
+      window._settings.myntjakten57 = { enabled, dailyMax, activeLevels };
+    } else {
+      await window._update(window._ref(window._db, 'workspaceSettings/' + wsMj), { myntjakten57: mjVal });
+      if (!window._workspaceSettingsByWs) window._workspaceSettingsByWs = {};
+      if (!window._workspaceSettingsByWs[wsMj]) window._workspaceSettingsByWs[wsMj] = {};
+      window._workspaceSettingsByWs[wsMj].myntjakten57 = { enabled, dailyMax, activeLevels };
+    }
 
     const levelNote = levelCount < 6 ? ` ${levelCount} av 6 nivå er aktive.` : '';
     const status = (enabled
@@ -3348,7 +3396,7 @@ async function saveBudgetSettings() {
   }
 
   try {
-    await window._set(fbRef('budgetSettings'), {
+    await window._set(fbRef(_saveBudgetPath()), {
       rentDesk, powerMin, powerMax, rentIpad, wedEventsEnabled: wedOn,
       updated: Date.now()
     });
@@ -3408,7 +3456,7 @@ const DEFAULT_BADGE_PARAMS = {
 };
 
 function loadBadgeParamsToForm() {
-  const bp = window._settings?.badgeParams || DEFAULT_BADGE_PARAMS;
+  const bp = getEffectiveBadgeParams() || DEFAULT_BADGE_PARAMS;
   const fields = ['quizBronse','quizSolv','quizGull','spareBronse','spareSolv','spareGull','skattBronse','skattSolv','skattGull','bonusBronse','bonusSolv','bonusGull'];
   fields.forEach(f => {
     const el = document.getElementById('bp-' + f);
@@ -3426,9 +3474,17 @@ async function saveBadgeParams() {
     bp[f] = v;
   }
   try {
-    await window._update(fbRef('settings'), { badgeParams: bp });
-    if (!window._settings) window._settings = {};
-    window._settings.badgeParams = bp;
+    const wsBp = currentWorkspaceId();
+    if (!wsBp || wsBp === 'main') {
+      await window._update(fbRef('settings'), { badgeParams: bp });
+      if (!window._settings) window._settings = {};
+      window._settings.badgeParams = bp;
+    } else {
+      await window._update(fbRef('workspaceSettings/' + wsBp), { badgeParams: bp });
+      if (!window._workspaceSettingsByWs) window._workspaceSettingsByWs = {};
+      if (!window._workspaceSettingsByWs[wsBp]) window._workspaceSettingsByWs[wsBp] = {};
+      window._workspaceSettingsByWs[wsBp].badgeParams = bp;
+    }
     alertEl.textContent = '✅ Lagret!';
     alertEl.style.color = 'var(--teal-dark)';
     setTimeout(() => alertEl.textContent = '', 2500);
@@ -3474,7 +3530,7 @@ function renderMerkerPage() {
   loadBadgeParamsToForm();
   const tbody = document.getElementById('merker-table-body'); if (!tbody) return;
   const cls = document.getElementById('merker-class-filter')?.value || '';
-  const bp = window._settings?.badgeParams || DEFAULT_BADGE_PARAMS;
+  const bp = getEffectiveBadgeParams() || DEFAULT_BADGE_PARAMS;
   const students = window._students.filter(s => !cls || s.class === cls);
 
   if (!students.length) {

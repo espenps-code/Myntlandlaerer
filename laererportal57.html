@@ -1707,6 +1707,28 @@ async function toggleWorkspaceFiltering() {
     alert('Kunne ikke endre: ' + e.message);
   }
 }
+
+// ── workspaceSettings snapshot (fase 3) ─────────────────────────────────────
+(function() {
+  function whenReady2(cb, tries) {
+    tries = tries || 0;
+    if (typeof window._fbReady !== 'undefined' && window._fbReady && window._ref && window._onValue) {
+      cb();
+    } else if (tries < 50) {
+      setTimeout(function(){ whenReady2(cb, tries+1); }, 200);
+    }
+  }
+  whenReady2(function() {
+    var wsSetRef = window._ref(window._db, 'workspaceSettings');
+    window._onValue(wsSetRef, function(snap) {
+      window._workspaceSettingsByWs = snap.val() || {};
+      // Re-render budget/myntjakt/badge-UI hvis de er åpne
+      if (typeof renderBudgetSettings === 'function') { try { renderBudgetSettings(); } catch(e){} }
+      if (typeof renderMyntjaktenSettings === 'function') { try { renderMyntjaktenSettings(); } catch(e){} }
+      if (typeof renderBadgeSettings === 'function') { try { renderBadgeSettings(); } catch(e){} }
+    });
+  });
+})();
 </script>
 </body>
 </html>
