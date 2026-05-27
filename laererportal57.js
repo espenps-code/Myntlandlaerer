@@ -516,10 +516,22 @@ async function renameClass() {
   if (from === to) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Nytt navn er det samme som det gamle.</div>'; return; }
   alertEl.innerHTML = '<div class="alert alert-success">⏳ Oppdaterer…</div>';
   const updates = {};
-  window._students.filter(s => s.class === from).forEach(s => { updates['students57/' + s.fbKey + '/class'] = to; });
+  const studentsToUpdate = window._students.filter(s => s.class === from);
+  studentsToUpdate.forEach(s => { updates['students57/' + s.fbKey + '/class'] = to; });
+  // Oppdater også eventuelle lærere som har den gamle klassen som sin egen.
+  const teachersToUpdate = (window._teachers || []).filter(t => t.class === from);
+  teachersToUpdate.forEach(t => { updates['teachers57/' + t.fbKey + '/class'] = to; });
+  if (window._currentTeacher && window._currentTeacher.class === from) {
+    window._currentTeacher.class = to;
+    classFilter = to;
+    if (typeof applyTeacherClassLock === 'function') applyTeacherClassLock();
+  }
   if (Object.keys(updates).length) await window._update(fbRef('/'), updates);
   document.getElementById('rename-class-to').value = '';
-  alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}»</div>`;
+  const teacherNote = teachersToUpdate.length
+    ? ` Også ${teachersToUpdate.length} lærer${teachersToUpdate.length!==1?'e':''} fikk oppdatert sin klassetilhørighet.`
+    : '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}» for ${studentsToUpdate.length} elev${studentsToUpdate.length!==1?'er':''}.${teacherNote}</div>`;
   setTimeout(() => renderClassManager(), 600);
 }
 

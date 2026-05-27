@@ -329,9 +329,22 @@ async function renameClass() {
   alertEl.innerHTML = '<div class="alert alert-success">⏳ Oppdaterer…</div>';
   const updates = {};
   toUpdate.forEach(s => { updates['students14/' + s.fbKey + '/class'] = to; });
+  // Oppdater også eventuelle lærere som har den gamle klassen som sin egen,
+  // ellers ville de mistet tilgang til elevene sine i visningen.
+  const teachersToUpdate = (window._teachers || []).filter(t => t.class === from);
+  teachersToUpdate.forEach(t => { updates['teachers/' + t.fbKey + '/class'] = to; });
+  // Hvis det er den innloggede læreren selv, oppdater også lokal state og lås.
+  if (window._currentTeacher && window._currentTeacher.class === from) {
+    window._currentTeacher.class = to;
+    classFilter = to;
+    if (typeof applyTeacherClassLock === 'function') applyTeacherClassLock();
+  }
   await window._update(fbRef('/'), updates);
   document.getElementById('rename-class-to').value = '';
-  alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}» for ${toUpdate.length} elev${toUpdate.length!==1?'er':''}.</div>`;
+  const teacherNote = teachersToUpdate.length
+    ? ` Også ${teachersToUpdate.length} lærer${teachersToUpdate.length!==1?'e':''} fikk oppdatert sin klassetilhørighet.`
+    : '';
+  alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}» for ${toUpdate.length} elev${toUpdate.length!==1?'er':''}.${teacherNote}</div>`;
   setTimeout(() => renderClassManager(), 600);
 }
 

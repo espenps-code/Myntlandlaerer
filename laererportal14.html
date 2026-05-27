@@ -65,10 +65,10 @@
 
     onValue(ref(db, 'students14'), snap => {
       const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
-      // Filtrer på lærerens klasse hvis ikke admin
-      const VALID14 = ['1. klasse','2. klasse','3. klasse','4. klasse'];
+      // Admin ser alle elever i students14 (ingen hvitliste — klassenavn er fritt).
+      // Vanlige lærere ser kun elever der klassen matcher deres egen klasse.
       window._students = (window._currentTeacher?.role === 'admin')
-        ? all.filter(s => VALID14.includes(s.class))
+        ? all
         : all.filter(s => s.class === window._currentTeacher?.class);
       renderStudentTable(); renderSaldoTable(); updateStats(); renderTableAvatars();
       if (document.getElementById('page-belonninger')?.classList.contains('active')) {

@@ -63,11 +63,12 @@
 
     onValue(ref(db, 'students57'), snap => {
       const all = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})) : [];
+      // Admin ser alle elever i students57 (ingen hvitliste — klassenavn er fritt,
+      // f.eks. 5A, 6B eller egendefinerte navn).
+      // Vanlige lærere ser kun elever der klassen matcher deres egen klasse.
       if (window._currentTeacher?.role === 'admin') {
-        // Admin ser alle 5-7-elever
-        window._students = all.filter(s => VALID57.includes(s.class));
+        window._students = all;
       } else {
-        // Lærer ser kun sin klasse
         window._students = all.filter(s => s.class === window._currentTeacher?.class);
       }
       renderStudentTable(); renderSaldoTable(); updateStats();
