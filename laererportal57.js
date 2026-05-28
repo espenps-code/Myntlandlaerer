@@ -503,7 +503,13 @@ function renderClassManager() {
   if (!classes.length) { el.innerHTML = '<p style="font-size:.85rem;color:var(--muted);">Ingen klasser ennå – opprett elever først.</p>'; return; }
   el.innerHTML = classes.map(c => {
     const count = window._students.filter(s => s.class === c).length;
-    return `<div class="class-row"><span class="class-badge">${c}</span><span style="font-size:.8rem;color:var(--muted);margin-left:auto;">${count} elev${count!==1?'er':''}</span></div>`;
+    // Escape klassenavn til onclick — bruker JSON.stringify for å takle navn med ' eller "
+    const safeC = JSON.stringify(c).replace(/"/g, '&quot;');
+    return `<div class="class-row">
+      <span class="class-badge">${c}</span>
+      <span style="font-size:.8rem;color:var(--muted);margin-left:auto;">${count} elev${count!==1?'er':''}</span>
+      <button onclick="openDeleteClassModal(${safeC})" title="Slett hele klassen" style="background:none;border:1px solid var(--coral);color:var(--coral);border-radius:8px;padding:4px 10px;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">🗑️ Slett</button>
+    </div>`;
   }).join('');
 }
 
@@ -534,6 +540,112 @@ async function renameClass() {
   alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}» for ${studentsToUpdate.length} elev${studentsToUpdate.length!==1?'er':''}.${teacherNote}</div>`;
   setTimeout(() => renderClassManager(), 600);
 }
+
+// ════════════════════════════════════════════════════════════
+// SLETT HEL KLASSE
+// Fjerner alle elever i en klasse + alle deres transaksjoner,
+// og frigjør klasselåsen for evt. lærere som var låst til klassen.
+// Krever at læreren skriver inn klassenavnet for å aktivere knappen.
+// ════════════════════════════════════════════════════════════
+let currentDeleteClassName = null;
+
+function openDeleteClassModal(cls) {
+  if (!cls) return;
+  currentDeleteClassName = cls;
+  const studentsInClass = (window._students || []).filter(s => s.class === cls);
+  const teachersInClass = (window._teachers || []).filter(t => t.class === cls);
+
+  const titleEl = document.getElementById('modal-delete-class-title');
+  const infoEl  = document.getElementById('modal-delete-class-info');
+  const matchEl = document.getElementById('modal-delete-class-match');
+  const input   = document.getElementById('modal-delete-class-input');
+  const btn     = document.getElementById('modal-delete-class-btn');
+  if (!titleEl || !input || !btn) {
+    alert('Modalen for klasse-sletting mangler i HTML-en.');
+    return;
+  }
+
+  titleEl.textContent = '⚠️ Slett klasse «' + cls + '»?';
+  const teacherNote = teachersInClass.length
+    ? ` ${teachersInClass.length} lærer${teachersInClass.length!==1?'e er':' er'} låst til klassen og får klasselåsen fjernet (lærerprofilen beholdes).`
+    : '';
+  infoEl.innerHTML =
+    `Du er i ferd med å <strong>slette ${studentsInClass.length} elev${studentsInClass.length!==1?'er':''}</strong> i klassen «${cls}», ` +
+    `samt alle deres transaksjonslogger.${teacherNote}<br><br>` +
+    `<strong>Dette kan ikke angres.</strong>`;
+  matchEl.innerHTML = `Skriv inn klassenavnet <code style="background:var(--bg);padding:2px 6px;border-radius:4px;">${cls}</code> for å bekrefte:`;
+
+  input.value = '';
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  btn.style.cursor = 'not-allowed';
+  // Sett opp live-sjekk når læreren skriver
+  input.oninput = validateDeleteClassInput;
+
+  document.getElementById('modal-delete-class').classList.add('open');
+  setTimeout(() => input.focus(), 50);
+}
+
+function validateDeleteClassInput() {
+  const input = document.getElementById('modal-delete-class-input');
+  const btn   = document.getElementById('modal-delete-class-btn');
+  if (!input || !btn || !currentDeleteClassName) return;
+  const ok = input.value.trim() === currentDeleteClassName;
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '0.5';
+  btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+}
+
+async function confirmDeleteClass() {
+  if (!currentDeleteClassName) return;
+  const cls = currentDeleteClassName;
+  const input = document.getElementById('modal-delete-class-input');
+  if (!input || input.value.trim() !== cls) return; // ekstra vakt
+
+  // Lås knappene mens jobben kjører
+  const btn    = document.getElementById('modal-delete-class-btn');
+  const cancel = document.querySelector('#modal-delete-class .btn-ghost');
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sletter…'; btn.style.cursor = 'wait'; }
+  if (cancel) cancel.disabled = true;
+
+  try {
+    const studentsInClass = (window._students || []).filter(s => s.class === cls);
+    const teachersInClass = (window._teachers || []).filter(t => t.class === cls);
+
+    // Bygg ett Firebase-batch som sletter alt i én operasjon
+    const updates = {};
+    studentsInClass.forEach(s => {
+      updates['students57/' + s.fbKey] = null;
+      updates['transactions57/' + s.fbKey] = null;
+    });
+    // Frigjør klasselåsen for lærere som var koblet til denne klassen
+    teachersInClass.forEach(t => { updates['teachers57/' + t.fbKey + '/class'] = null; });
+
+    if (Object.keys(updates).length) {
+      await window._update(fbRef('/'), updates);
+    }
+
+    // Hvis det er innlogget lærer som var låst til denne klassen, rydd lokal state
+    if (window._currentTeacher && window._currentTeacher.class === cls) {
+      window._currentTeacher.class = null;
+      if (typeof classFilter !== 'undefined') classFilter = '';
+      if (typeof applyTeacherClassLock === 'function') applyTeacherClassLock();
+    }
+
+    currentDeleteClassName = null;
+    closeModal('modal-delete-class');
+    // Re-render klasse-listen umiddelbart (Firebase-lytteren oppdaterer også, men dette føles raskere)
+    if (typeof renderClassManager === 'function') renderClassManager();
+  } catch (e) {
+    console.error('[Slett klasse feilet]', e);
+    alert('Noe gikk galt under sletting: ' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText || 'Slett klasse'; btn.style.cursor = ''; }
+    if (cancel) cancel.disabled = false;
+  }
+}
+
 
 // ════════════════════════════════════════════════════════════
 // MONSTERAVATAR ENGINE (kopiert fra 1–4 — uendret motor)

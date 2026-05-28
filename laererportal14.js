@@ -306,10 +306,13 @@ function renderClassManager() {
   }
   el.innerHTML = classes.map(c => {
     const count = window._students.filter(s => s.class === c).length;
+    // Escape klassenavn til onclick — JSON.stringify takler navn med ' eller "
+    const safeC = JSON.stringify(c).replace(/"/g, '&quot;');
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;">
       <span style="font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);">${c}</span>
       <span style="font-size:.8rem;color:var(--muted);">${count} elev${count!==1?'er':''}</span>
       <button onclick="printExistingClassList('${c}')" style="margin-left:auto;background:var(--green-light);color:var(--green-dark);border:none;border-radius:8px;padding:5px 12px;font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;">🖨️ Skriv ut</button>
+      <button onclick="openDeleteClassModal(${safeC})" title="Slett hele klassen" style="background:none;border:1px solid var(--coral);color:var(--coral);border-radius:8px;padding:5px 10px;font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;">🗑️ Slett</button>
     </div>`;
   }).join('') +
   `<div style="margin-top:12px;">
@@ -347,6 +350,108 @@ async function renameClass() {
   alertEl.innerHTML = `<div class="alert alert-success">✅ «${from}» → «${to}» for ${toUpdate.length} elev${toUpdate.length!==1?'er':''}.${teacherNote}</div>`;
   setTimeout(() => renderClassManager(), 600);
 }
+
+// ════════════════════════════════════════════════════════════
+// SLETT HEL KLASSE
+// Fjerner alle elever i en klasse + deres transaksjoner + sparekonto,
+// og frigjør klasselåsen for evt. lærere låst til klassen.
+// Krever at læreren skriver inn klassenavnet for å aktivere knappen.
+// ════════════════════════════════════════════════════════════
+let currentDeleteClassName = null;
+
+function openDeleteClassModal(cls) {
+  if (!cls) return;
+  currentDeleteClassName = cls;
+  const studentsInClass = (window._students || []).filter(s => s.class === cls);
+  const teachersInClass = (window._teachers || []).filter(t => t.class === cls);
+
+  const titleEl = document.getElementById('modal-delete-class-title');
+  const infoEl  = document.getElementById('modal-delete-class-info');
+  const matchEl = document.getElementById('modal-delete-class-match');
+  const input   = document.getElementById('modal-delete-class-input');
+  const btn     = document.getElementById('modal-delete-class-btn');
+  if (!titleEl || !input || !btn) {
+    alert('Modalen for klasse-sletting mangler i HTML-en.');
+    return;
+  }
+
+  titleEl.textContent = '⚠️ Slett klasse «' + cls + '»?';
+  const teacherNote = teachersInClass.length
+    ? ` ${teachersInClass.length} lærer${teachersInClass.length!==1?'e er':' er'} låst til klassen og får klasselåsen fjernet (lærerprofilen beholdes).`
+    : '';
+  infoEl.innerHTML =
+    `Du er i ferd med å <strong>slette ${studentsInClass.length} elev${studentsInClass.length!==1?'er':''}</strong> i klassen «${cls}», ` +
+    `samt alle deres transaksjonslogger og sparekonti.${teacherNote}<br><br>` +
+    `<strong>Dette kan ikke angres.</strong>`;
+  matchEl.innerHTML = `Skriv inn klassenavnet <code style="background:var(--bg);padding:2px 6px;border-radius:4px;">${cls}</code> for å bekrefte:`;
+
+  input.value = '';
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  btn.style.cursor = 'not-allowed';
+  input.oninput = validateDeleteClassInput;
+
+  document.getElementById('modal-delete-class').classList.add('open');
+  setTimeout(() => input.focus(), 50);
+}
+
+function validateDeleteClassInput() {
+  const input = document.getElementById('modal-delete-class-input');
+  const btn   = document.getElementById('modal-delete-class-btn');
+  if (!input || !btn || !currentDeleteClassName) return;
+  const ok = input.value.trim() === currentDeleteClassName;
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '0.5';
+  btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+}
+
+async function confirmDeleteClass() {
+  if (!currentDeleteClassName) return;
+  const cls = currentDeleteClassName;
+  const input = document.getElementById('modal-delete-class-input');
+  if (!input || input.value.trim() !== cls) return; // ekstra vakt
+
+  const btn    = document.getElementById('modal-delete-class-btn');
+  const cancel = document.querySelector('#modal-delete-class .btn-ghost');
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sletter…'; btn.style.cursor = 'wait'; }
+  if (cancel) cancel.disabled = true;
+
+  try {
+    const studentsInClass = (window._students || []).filter(s => s.class === cls);
+    const teachersInClass = (window._teachers || []).filter(t => t.class === cls);
+
+    const updates = {};
+    studentsInClass.forEach(s => {
+      updates['students14/' + s.fbKey] = null;
+      updates['transactions14/' + s.fbKey] = null;
+      updates['savings14/' + s.fbKey] = null;
+    });
+    // NB: i 14-portalen ligger lærere på path 'teachers/' (ikke 'teachers14/')
+    teachersInClass.forEach(t => { updates['teachers/' + t.fbKey + '/class'] = null; });
+
+    if (Object.keys(updates).length) {
+      await window._update(fbRef('/'), updates);
+    }
+
+    if (window._currentTeacher && window._currentTeacher.class === cls) {
+      window._currentTeacher.class = null;
+      if (typeof classFilter !== 'undefined') classFilter = '';
+      if (typeof applyTeacherClassLock === 'function') applyTeacherClassLock();
+    }
+
+    currentDeleteClassName = null;
+    closeModal('modal-delete-class');
+    if (typeof renderClassManager === 'function') renderClassManager();
+  } catch (e) {
+    console.error('[Slett klasse feilet]', e);
+    alert('Noe gikk galt under sletting: ' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText || 'Slett klasse'; btn.style.cursor = ''; }
+    if (cancel) cancel.disabled = false;
+  }
+}
+
 
 // ══════════════════════════════════════════════════════════
 // STUDENTS
