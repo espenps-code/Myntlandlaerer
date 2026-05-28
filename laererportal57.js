@@ -508,6 +508,7 @@ function renderClassManager() {
     return `<div class="class-row">
       <span class="class-badge">${c}</span>
       <span style="font-size:.8rem;color:var(--muted);margin-left:auto;">${count} elev${count!==1?'er':''}</span>
+      <button onclick="printExistingClassList(${safeC})" title="Skriv ut hele klassens kodeliste" style="background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:8px;padding:5px 12px;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">🖨️ Skriv ut</button>
       <button onclick="openDeleteClassModal(${safeC})" title="Slett hele klassen" style="background:none;border:1px solid var(--coral);color:var(--coral);border-radius:8px;padding:4px 10px;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">🗑️ Slett</button>
     </div>`;
   }).join('');
