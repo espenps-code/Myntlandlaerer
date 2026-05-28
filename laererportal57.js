@@ -825,6 +825,139 @@ function populatePrintClassSelect() {
     classes.map(c => '<option value="' + c + '">' + c + '</option>').join('');
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// UTSKRIFT: Klasseliste for en EKSISTERENDE klasse
+// Genererer en pen, utskriftsvennlig liste med fiktivt navn + PIN +
+// avatar + tom kolonne for å fylle inn elevenes ekte navn for hånd.
+// Brukes fra "Skriv ut klasseliste"-kortet i Elever-fanen.
+// ──────────────────────────────────────────────────────────────────────
+function printExistingClassList(cls) {
+  if (cls === undefined) cls = document.getElementById('print-class-select').value;
+  const students = cls
+    ? window._students.filter(s => s.class === cls)
+    : window._students;
+
+  if (!students.length) {
+    alert(cls ? 'Ingen elever i ' + cls + '.' : 'Ingen elever funnet.'); return;
+  }
+
+  // Sortert på fornavn (norsk collation slik at æøå sorterer riktig)
+  const sorted = [...students].sort((a,b) => a.firstname.localeCompare(b.firstname, 'no'));
+  const className = cls || 'Alle klasser';
+
+  const rowsHTML = sorted.map(function(s, i) {
+    const svgEl = window.makeAnimalSVG(s.avatarSeed || 0, 32);
+    const svgStr = svgEl ? svgEl.outerHTML : '';
+    const animal = window.getAnimalName(s.avatarSeed || 0);
+    return '<tr>' +
+      '<td class="num">' + (i+1) + '</td>' +
+      '<td class="av">' + svgStr + '</td>' +
+      '<td class="fiktivt">' + s.firstname + ' ' + s.lastname + '<br><span class="animal">' + animal + '</span></td>' +
+      '<td class="pin"><code>' + s.pin + '</code></td>' +
+      '<td class="ekte"></td>' +
+    '</tr>';
+  }).join('');
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">' +
+    '<style>' +
+    '@media print{@page{size:A4 portrait;margin:10mm} .no-print{display:none}}' +
+    'body{font-family:Nunito,sans-serif;padding:10mm;color:#1e0f52;}' +
+    '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #1a5fa5;padding-bottom:5mm;margin-bottom:6mm;}' +
+    '.title{font-family:"Fredoka One",cursive;font-size:18px;color:#1e0f52;}' +
+    '.subtitle{font-size:11px;color:#5a6a85;margin-top:2px;}' +
+    '.badge{background:#dbeafe;color:#1e0f52;font-weight:800;padding:3px 10px;border-radius:20px;font-size:11px;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'thead tr{background:#dbeafe;}' +
+    'th{padding:6px 8px;text-align:left;font-size:10px;color:#1e0f52;font-weight:800;text-transform:uppercase;letter-spacing:.3px;}' +
+    'td{padding:5px 8px;border-bottom:1px solid #e6ecf5;vertical-align:middle;}' +
+    'td.num{color:#aaa;font-size:10px;width:22px;}' +
+    'td.av{width:38px;}' +
+    'td.fiktivt{font-weight:700;font-size:11px;}' +
+    '.animal{font-size:9px;color:#5a6a85;font-weight:600;}' +
+    'td.pin{font-size:11px;width:60px;}' +
+    'td.pin code{background:#f0f5fc;padding:2px 6px;border-radius:4px;font-family:monospace;color:#1e0f52;}' +
+    'td.ekte{border-bottom:1.5px solid #1a5fa5;min-width:160px;font-size:11px;}' +
+    'tr:nth-child(even){background:#f8fafc;}' +
+    '.footer{margin-top:8mm;font-size:9px;color:#aaa;border-top:1px solid #e6ecf5;padding-top:3mm;display:flex;justify-content:space-between;}' +
+    '</style>' +
+    '</head><body>' +
+    '<div class="header">' +
+      '<div>' +
+        '<div class="title">🪙 Myntland – Klasseliste</div>' +
+        '<div class="subtitle">Fyll inn elevenes virkelige navn i høyre kolonne. Oppbevar lokalt – ikke last opp til Firebase.</div>' +
+      '</div>' +
+      '<div class="badge">' + className + ' · ' + sorted.length + ' elever</div>' +
+    '</div>' +
+    '<table>' +
+    '<thead><tr>' +
+      '<th>#</th><th>Avatar</th><th>Fiktivt navn</th><th>PIN</th><th>Virkelig navn (fyll inn)</th>' +
+    '</tr></thead>' +
+    '<tbody>' + rowsHTML + '</tbody>' +
+    '</table>' +
+    '<div class="footer">' +
+      '<span>🪙 Myntland – Pedagogisk økonomi</span>' +
+      '<span>Dato: _______________</span>' +
+    '</div>' +
+    '<script>setTimeout(function(){window.print();},500);<\/script>' +
+    '</body></html>');
+  win.document.close();
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// UTSKRIFT: Kodeliste rett etter at en klasse er opprettet
+// Tar tabellen i #bulk-codelist-body, henter ut avatar-seed/fiktivt navn/
+// PIN/klasse/(evt. inntastet ekte navn) og lager et utskriftsvindu.
+// ──────────────────────────────────────────────────────────────────────
+function printCodeList() {
+  const rows = document.querySelectorAll('#bulk-codelist-body tr');
+  if (!rows.length) return;
+
+  const tableHTML = Array.from(rows).map(function(row) {
+    const cells = row.querySelectorAll('td');
+    // 57-portalen bruker prefiks "cl57-av-" på avatar-cellene
+    const avEl = row.querySelector('[id^="cl57-av-"]');
+    const avatarSeed = avEl ? (parseInt(avEl.dataset.seed) || 0) : 0;
+    const fictional = cells[1]?.textContent || '';
+    const pin       = cells[2]?.textContent || '';
+    const cls       = cells[3]?.textContent || '';
+    const real      = cells[4]?.querySelector('input')?.value || '';
+    const svgEl = window.makeAnimalSVG(avatarSeed || Math.floor(Math.random()*99999), 30);
+    const svgStr = svgEl ? svgEl.outerHTML : '';
+    return '<tr>' +
+      '<td style="padding:5px 8px;">' + svgStr + '</td>' +
+      '<td style="padding:5px 8px;font-weight:700;">' + fictional + '</td>' +
+      '<td style="padding:5px 8px;font-family:monospace;">' + pin + '</td>' +
+      '<td style="padding:5px 8px;">' + cls + '</td>' +
+      '<td style="padding:5px 8px;border-bottom:1px solid #ccc;min-width:120px;">' + (real || '') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">' +
+    '<style>' +
+    '@media print{@page{size:A4 portrait;margin:12mm}}' +
+    'body{font-family:Nunito,sans-serif;padding:12mm;}' +
+    'h2{font-family:"Fredoka One",cursive;color:#1e0f52;margin-bottom:8mm;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{background:#dbeafe;color:#1e0f52;padding:6px 8px;text-align:left;font-size:11px;}' +
+    'td{padding:5px 8px;border-bottom:1px solid #e6ecf5;font-size:11px;vertical-align:middle;}' +
+    '.real-col{border-bottom:1px solid #999;min-width:120px;}' +
+    '</style>' +
+    '</head><body>' +
+    '<h2>🪙 Myntland – Kodeliste</h2>' +
+    '<p style="font-size:11px;color:#666;margin-bottom:6mm;">Fyll inn ekte elevnavn i høyre kolonne. Oppbevar denne listen lokalt.</p>' +
+    '<table><thead><tr>' +
+    '<th>Avatar</th><th>Fiktivt navn</th><th>PIN</th><th>Klasse</th><th>Ekte navn</th>' +
+    '</tr></thead><tbody>' + tableHTML + '</tbody></table>' +
+    '<script>setTimeout(function(){window.print();},400);<\/script>' +
+    '</body></html>');
+  win.document.close();
+}
+
+
 // ════════════════════════════════════════════════════════════
 // SALDO
 // ════════════════════════════════════════════════════════════

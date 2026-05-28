@@ -732,7 +732,10 @@
 
     <!-- Kodeliste etter opprettelse -->
     <div class="card" id="bulk-codelist-card" style="display:none;">
-      <div class="card-title">📋 Kodeliste – ekte navn ↔ fiktivt navn</div>
+      <div class="card-title" style="justify-content:space-between;">
+        <span>📋 Kodeliste – ekte navn ↔ fiktivt navn</span>
+        <button class="btn btn-amber btn-sm" onclick="printCodeList()">🖨️ Skriv ut kodeliste</button>
+      </div>
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">
         Fyll inn ekte elevnavn i høyre kolonne. Oppbevar denne listen på din egen PC – ikke i Firebase.
       </p>
@@ -750,6 +753,21 @@
           <tbody id="bulk-codelist-body"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Frittstående klasseliste-utskrift -->
+    <div class="card">
+      <div class="card-title">📋 Skriv ut klasseliste</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
+        Skriv ut en liste for en eksisterende klasse med plass til å fylle inn elevenes virkelige navn.
+      </p>
+      <div class="form-row">
+        <label>Velg klasse</label>
+        <select id="print-class-select">
+          <option value="">Alle klasser</option>
+        </select>
+      </div>
+      <button class="btn btn-amber" onclick="printExistingClassList()">🖨️ Skriv ut klasseliste</button>
     </div>
   </div>
 
