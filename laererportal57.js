@@ -3593,7 +3593,7 @@ function renderMyntjaktenStats57() {
     .sort((a, b) => b.earned - a.earned);
 
   if (active.length === 0) {
-    summaryEl.textContent = 'Ingen elever har tjent mynter via Myntjakten i dag ennå.';
+    summaryEl.textContent = 'Ingen elever har tjent mynter via spillene i dag ennå.';
     topEl.textContent = '';
     return;
   }
@@ -3647,9 +3647,9 @@ async function saveMyntjakten57Settings() {
     const levelNote = levelCount < 6 ? ` ${levelCount} av 6 nivå er aktive.` : '';
     const status = (enabled
       ? (dailyMax > 0
-          ? `✅ Lagret. Elevene kan tjene opp til 🪙 ${dailyMax} per dag via Myntjakten.`
+          ? `✅ Lagret. Elevene kan tjene opp til 🪙 ${dailyMax} per dag via spillene.`
           : '✅ Lagret. Ingen dagstak — elevene kan tjene fritt.')
-      : '✅ Lagret. Opptjening via Myntjakten er slått av.') + levelNote;
+      : '✅ Lagret. Opptjening via spillene er slått av.') + levelNote;
     alertEl.innerHTML = '<div class="alert alert-success">' + status + '</div>';
     setTimeout(() => alertEl.innerHTML = '', 3500);
   } catch(e) {

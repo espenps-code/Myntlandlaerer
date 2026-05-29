@@ -608,14 +608,14 @@
 <!-- ═══════ BELØNNINGER (samlet: sparemål, QR, hendelser, merker, Myntjakten) ═══════ -->
 <div class="page" id="page-belonninger">
   <div class="page-title">🎁 Belønninger</div>
-  <div class="page-subtitle">Sparemål, QR-koder, hendelser, merker og Myntjakten på ett sted.</div>
+  <div class="page-subtitle">Sparemål, QR-koder, hendelser, merker og Myntspill på ett sted.</div>
 
   <div class="tabs" style="margin-bottom:1rem;">
     <button class="tab active" onclick="showBelonningTab('sparemaal', this)">🏦 Sparemål</button>
     <button class="tab"        onclick="showBelonningTab('qrkoder',   this)">⬛ Belønnings-QR</button>
     <button class="tab"        onclick="showBelonningTab('hendelser', this)">🎲 Hendelser</button>
     <button class="tab"        onclick="showBelonningTab('merker',    this)">🏅 Merker</button>
-    <button class="tab"        onclick="showBelonningTab('myntjakten',this)">🪙 Myntjakten</button>
+    <button class="tab"        onclick="showBelonningTab('myntjakten',this)">🪙 Myntspill</button>
   </div>
 
   <!-- Tab: Sparemål -->
@@ -843,20 +843,20 @@
   <div id="bel-tab-myntjakten" style="display:none;">
     <!-- Myntjakten-innstillinger -->
   <div class="card" style="margin-top:1.5rem;">
-    <div class="card-title">🪙 Myntjakten</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Myntjakten er hoderegningsspillet på <code style="font-size:.8rem;background:var(--green-light);padding:1px 6px;border-radius:4px;">myntland.no/myntjakten</code>. Elevene kan tjene mynter til kontoen sin ved å skanne kortet etter en runde. Slå av hvis du ikke ønsker at de skal opptjene mynter — eller sett et dagstak.</p>
+    <div class="card-title">🪙 Myntspill</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Disse innstillingene gjelder begge myntspillene: <strong>Myntjakten</strong> (hoderegning på <code style="font-size:.8rem;background:var(--green-light);padding:1px 6px;border-radius:4px;">myntland.no/myntjakten</code>) og <strong>Myntstigen</strong> (stigespillet). I begge tjener elevene mynter til kontoen ved å skanne kortet. Slå av hvis du ikke ønsker at de skal opptjene mynter — eller sett et felles dagstak.</p>
 
     <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;">
       <label class="switch-label" style="display:flex;align-items:center;gap:.6rem;font-weight:700;color:var(--green-dark);cursor:pointer;">
         <input type="checkbox" id="myntjakten14-enabled" style="width:18px;height:18px;cursor:pointer;">
-        <span>Tillat opptjening av mynter via Myntjakten</span>
+        <span>Tillat opptjening av mynter i spillene (Myntjakten og Myntstigen)</span>
       </label>
     </div>
 
     <div class="form-row">
       <label>🎯 Dagstak per elev (🪙 — sett 0 for ingen grense)</label>
       <input type="number" id="myntjakten14-daily-max" min="0" max="9999" placeholder="0" style="max-width:200px;">
-      <p style="font-size:.78rem;color:var(--muted);margin-top:.4rem;">Når en elev har tjent dette antallet mynter via Myntjakten i dag, kan de fortsatt spille — men får ikke flere mynter på kontoen før i morgen.</p>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:.4rem;">Når en elev har tjent dette antallet mynter via spillene i dag, kan de fortsatt spille — men får ikke flere mynter på kontoen før i morgen.</p>
     </div>
 
     <!-- Aktive nivå -->
@@ -893,13 +893,13 @@
 
     <!-- Dagens aktivitet -->
     <div id="myntjakten14-stats" style="background:var(--green-light);border-radius:10px;padding:.85rem 1rem;margin-bottom:.85rem;font-size:.85rem;color:var(--green-dark);font-weight:700;">
-      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.4rem;">Myntjakten i dag</div>
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.4rem;">Myntspill i dag</div>
       <div id="myntjakten14-stats-summary" style="margin-bottom:.3rem;">Laster…</div>
       <div id="myntjakten14-stats-top" style="font-size:.78rem;font-weight:600;color:var(--green-dark);"></div>
     </div>
 
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
-      <button class="btn btn-primary" onclick="saveMyntjakten14Settings()">💾 Lagre Myntjakten-innstillinger</button>
+      <button class="btn btn-primary" onclick="saveMyntjakten14Settings()">💾 Lagre spill-innstillinger</button>
     </div>
     <div id="myntjakten14-alert" style="margin-top:.75rem;"></div>
   </div>
