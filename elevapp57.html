@@ -132,7 +132,16 @@
   <div class="splash-logo">Myntland</div>
   <button class="big-splash-btn" onclick="selectRole()">🏦 Min nettbank</button>
   <button class="big-splash-btn" onclick="showShopScreen()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🛒 Butikken</button>
-  <button class="big-splash-btn" onclick="goToMyntjakten()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🪙 Myntjakten</button>
+  <button class="big-splash-btn" onclick="openMyntspillMeny()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🪙 Myntspill</button>
+  <div id="myntspill-meny" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,12,45,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeMyntspillMeny()">
+    <div style="background:#fff;border-radius:24px;max-width:420px;width:100%;padding:1.6rem 1.4rem;text-align:center;box-shadow:0 14px 40px rgba(30,15,82,.35);font-family:'Nunito',sans-serif;">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#1e0f52;">Velg spill 🎮</div>
+      <p style="color:#5a7a5a;font-weight:700;margin:.2rem 0 1.2rem;">Hvilket myntspill vil du spille?</p>
+      <button onclick="goToMyntjakten()" style="display:block;width:100%;border:none;cursor:pointer;background:#1D9E75;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:.8rem;">🧮 Myntjakten<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Regn fort i hodet og samle mynter</span></button>
+      <button onclick="goToMyntstigen()" style="display:block;width:100%;border:none;cursor:pointer;background:#1a5fa5;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:1rem;">🎲 Myntstigen<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Stigespill med terning, 2–4 spillere</span></button>
+      <button onclick="closeMyntspillMeny()" style="border:2px solid #c8dfc8;background:#fff;color:#1a5fa5;border-radius:999px;padding:.6rem 1.4rem;font-weight:800;font-family:inherit;cursor:pointer;">Lukk</button>
+    </div>
+  </div>
   <button class="big-splash-btn" id="splash-arbeidsplan-btn" onclick="goToArbeidsplan()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">📋 Arbeidsplan</button>
 </div>
 
@@ -598,5 +607,24 @@
 </div>
 
 <script src="elevapp57.js"></script>
+<script>
+// ── workspaceSettings snapshot for elevappen (fase 3) ───────────────────────
+(function() {
+  function whenReadyE(cb, tries) {
+    tries = tries || 0;
+    if (typeof window._fbReady !== 'undefined' && window._fbReady && window._ref && window._onValue) {
+      cb();
+    } else if (tries < 50) {
+      setTimeout(function(){ whenReadyE(cb, tries+1); }, 200);
+    }
+  }
+  whenReadyE(function() {
+    var wsSetRef = window._ref(window._db, 'workspaceSettings');
+    window._onValue(wsSetRef, function(snap) {
+      window._workspaceSettingsByWs = snap.val() || {};
+    });
+  });
+})();
+</script>
 </body>
 </html>

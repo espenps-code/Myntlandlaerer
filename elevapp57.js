@@ -2,6 +2,48 @@
 // ── STATE ──────────────────────────────────────────────────────────────────
 window._allStudents=[]; window._classGoals=[]; window._jobs=[]; window._fundHistory={};
 window._currentStudent=null; window._settings={taxRate:20,savingsInterest:5,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
+
+// ── Workspace-filtrering (multi-tenant, fase 4) ─────────────────────────────
+// Elever ser kun ting fra sitt workspace. Eksisterende elever uten workspaceId
+// behandles som 'main' (bakoverkompatibelt). Admin-bryteren disableWorkspaceFiltering
+// i settings slår av filteret umiddelbart hvis noe ryker.
+function studentWorkspaceId() {
+  const s = window._currentStudent;
+  if (!s) return null;
+  return s.workspaceId || 'main';
+}
+function elevWorkspaceFilteringEnabled() {
+  if (!window._settings) return true;
+  return !window._settings.workspaceFilteringDisabled;
+}
+function filterByStudentWorkspace(items) {
+  if (!Array.isArray(items)) return items;
+  if (!elevWorkspaceFilteringEnabled()) return items;
+  const ws = studentWorkspaceId() || 'main';
+  return items.filter(it => ((it && it.workspaceId) || 'main') === ws);
+}
+function getJobs()      { return filterByStudentWorkspace(window._jobs || []); }
+function getShop()      { return filterByStudentWorkspace(window._shop57 || []); }
+function getWorkPlans() { return filterByStudentWorkspace(window._workPlans || []); }
+
+// ── Per-workspace settings i elevappen (fase 3) ─────────────────────────────
+function _elevWsSettingsFor(wsId) {
+  return (window._workspaceSettingsByWs || {})[wsId] || {};
+}
+function getEffectiveBudgetSettingsElev() {
+  const ws = studentWorkspaceId();
+  if (!ws || ws === 'main') return window._budgetSettings || {rentDesk:300,powerMin:50,powerMax:150,rentIpad:50,wedEventsEnabled:true};
+  return _elevWsSettingsFor(ws).budgetSettings || window._budgetSettings || {rentDesk:300,powerMin:50,powerMax:150,rentIpad:50,wedEventsEnabled:true};
+}
+function getEffectiveBadgeParamsElev() {
+  const ws = studentWorkspaceId();
+  const fromMain = (window._settings && window._settings.badgeParams);
+  if (!ws || ws === 'main') return fromMain || {};
+  return _elevWsSettingsFor(ws).badgeParams || fromMain || {};
+}
+function getClassGoals() { return filterByStudentWorkspace(window._classGoals || []); }
+
+
 let currentPin='',confirmPin='',transactions=[];
 let scanMode=null,pendingPayAmount=0,scanActive=false,_scanCanvas=null,_scanCtx=null;
 let quizQs=[],quizIdx=0,quizOk=0,quizAnswered=false;
@@ -159,7 +201,7 @@ function updateArbeidsplanSplashBtn(){
   // Foreløpig: Arbeidsplan-knappen vises alltid på splash-skjermen.
   // Når Myntland blir multitenant, bytt tilbake til linjene under – da
   // vises knappen kun når skolen faktisk har en aktiv arbeidsplan:
-  //   const any=(window._workPlans||[]).some(p=>p.active!==false);
+  //   const any=(getWorkPlans()||[]).some(p=>p.active!==false);
   //   btn.style.display=any?'flex':'none';
   btn.style.display='flex';
 }
@@ -171,7 +213,7 @@ function goToArbeidsplan(){
 }
 function apActivePlans(){
   const s=window._currentStudent; if(!s) return [];
-  return (window._workPlans||[])
+  return getWorkPlans()
     .filter(p=>p.active!==false && p.class===s.class)
     .filter(p=>{
       // Tildelt undergruppe? Bare elever i listen ser planen.
@@ -266,7 +308,7 @@ function apSelectSubject(planKey){
   apRefresh(true);
 }
 function apRenderTrapp(){
-  const plan=(window._workPlans||[]).find(p=>p.fbKey===_apPlanKey);
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===_apPlanKey);
   const host=document.getElementById('ap-steps');
   if(!plan){ host.innerHTML=''; return; }
   const steps=plan.steps||[];
@@ -333,7 +375,7 @@ function apOpenStep(idx){
   apShowPane();
 }
 function apRenderStepDetail(){
-  const plan=(window._workPlans||[]).find(p=>p.fbKey===_apPlanKey);
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===_apPlanKey);
   const host=document.getElementById('ap-detail');
   if(!plan){ host.innerHTML=''; return; }
   const i=_apStepIdx;
@@ -437,7 +479,7 @@ async function apMarkGoalsRead(){
 }
 // Felles fullføringslogikk (samme som lærerportal/foresattside).
 async function apCheckCompletion(planKey){
-  const plan=(window._workPlans||[]).find(p=>p.fbKey===planKey); if(!plan) return false;
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===planKey); if(!plan) return false;
   const steps=plan.steps||[];
   const sk=window._currentStudent?.fbKey; if(!sk) return false;
   const snap=await window._get(fbRef('workPlanProgress/'+sk+'/'+planKey));
@@ -469,7 +511,7 @@ async function doWpApproveScan(){
   const stu=window._currentStudent;
   const sk=stu?.fbKey;
   const planKey=_apPlanKey;
-  const plan=(window._workPlans||[]).find(p=>p.fbKey===planKey);
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===planKey);
   if(!sk||!plan||plan.active===false||plan.class!==stu?.class){
     showSuccess('📋','Åpne trinnet ditt først','','Gå inn på faget i Arbeidsplan og trykk «Scan godkjenning» fra trinnet ditt.'); return;
   }
@@ -506,6 +548,9 @@ async function doWpApproveScan(){
 // Naviger til Myntjakten med kontekst-flagg så tilbakeknappen
 // der peker hit i stedet for til markedsføringssiden.
 function goToMyntjakten(){window.location.href='myntjakten.html?from=elevapp57';}
+function goToMyntstigen(){window.location.href='stigespill.html?from=elevapp57';}
+function openMyntspillMeny(){var m=document.getElementById('myntspill-meny');if(m)m.style.display='flex';}
+function closeMyntspillMeny(){var m=document.getElementById('myntspill-meny');if(m)m.style.display='none';}
 
 // ── LOGIN ──────────────────────────────────────────────────────────────────
 // Kort-scan er påkrevd. PIN-en må matche nøyaktig den eleven kortet tilhører.
@@ -656,7 +701,7 @@ function renderClassGoalsHome(){
   const card=document.getElementById('class-goals-card');
   const body=document.getElementById('class-goals-body');
   if(!card||!body)return;
-  const goals=window._classGoals||[];
+  const goals=getClassGoals();
   if(!goals.length){card.style.display='none';return;}
   card.style.display='block';
 
@@ -710,7 +755,7 @@ function renderClassGoalsHome(){
 }
 
 function openChooseGoalModal(){
-  const goals=(window._classGoals||[]).filter(g=>!g.completed);
+  const goals=getClassGoals().filter(g=>!g.completed);
   const list=document.getElementById('choose-goal-list');
   if(!goals.length){
     list.innerHTML='<div style="text-align:center;color:var(--muted);padding:1rem;">Ingen aktive sparemål akkurat nå.</div>';
@@ -762,7 +807,7 @@ function switchSpareSeg(seg,btn){
   if(btn)btn.classList.add('active');
 }
 async function distributeToGoals(amount){
-  if(!amount||!window._classGoals?.length)return;
+  if(!amount||!getClassGoals().length)return;
   const pref=window._currentStudent?.preferredGoal;
   const active=window._classGoals.filter(g=>!g.completed);if(!active.length)return;
   const targets=pref?active.filter(g=>g.fbKey===pref):active;
@@ -844,7 +889,7 @@ function nextFridayLabel() {
 async function renderBudgetTab() {
   const s = window._currentStudent;
   if (!s) return;
-  const bs = window._budgetSettings || {};
+  const bs = getEffectiveBudgetSettingsElev() || {};
   const tax = (window._settings?.taxRate || 20) / 100;
 
   // ── Faste utgifter ──────────────────────────────────────────────────
@@ -879,7 +924,7 @@ async function renderBudgetTab() {
 
   // ── Inntekter (faste jobber + estimat) ──────────────────────────────
   const me = window._currentStudent;
-  const myJobs = (window._jobs || []).filter(j => j.type === 'salary' && j.assigned && j.assigned[me.fbKey]);
+  const myJobs = (getJobs() || []).filter(j => j.type === 'salary' && j.assigned && j.assigned[me.fbKey]);
   const salaryEl = document.getElementById('bud-salary-list');
   let totalSalaryNet = 0;
   if (salaryEl) {
@@ -1573,7 +1618,7 @@ function jobMatchesSearch(j) {
 async function applyForJob(jobKey) {
   const s = window._currentStudent;
   if (!s || !jobKey) return;
-  const j = (window._jobs||[]).find(x => x.fbKey === jobKey);
+  const j = (getJobs()||[]).find(x => x.fbKey === jobKey);
   if (!j) return;
   // Sikkerhetssjekker (UI burde allerede ha hindret dette, men dobbeltsjekk)
   if (j.applicationsOpen === false) {
@@ -1606,7 +1651,7 @@ async function withdrawApplication(jobKey) {
 function renderJobs() {
   const taskEl = document.getElementById('jobs-list-el');
   const salaryEl = document.getElementById('salary-jobs-list-el');
-  const all = window._jobs || [];
+  const all = getJobs() || [];
   const tax = getTax();
   const me = window._currentStudent;
   const now = Date.now();
@@ -1932,7 +1977,7 @@ function filterShopLogged(v) { _shopFilter = v.toLowerCase(); renderShopLogged()
 
 function renderShopLogged() {
   const el = document.getElementById('shop-logged-list'); if (!el) return;
-  const items = (window._shop57||[]).filter(x =>
+  const items = (getShop()||[]).filter(x =>
     !_shopFilter || x.name.toLowerCase().includes(_shopFilter) || x.category?.toLowerCase().includes(_shopFilter)
   );
   if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:2rem">🛒</div><div style="font-weight:700">Ingen varer ennå</div></div>'; return; }
@@ -2128,11 +2173,11 @@ function showShopScreen(){
 
 function renderShopPublic(){
   const el = document.getElementById('shop-public-list'); if(!el) return;
-  const items = (window._shop57||[]).filter(x =>
+  const items = (getShop()||[]).filter(x =>
     !shop57PublicFilter || x.name.toLowerCase().includes(shop57PublicFilter) || x.category?.toLowerCase().includes(shop57PublicFilter)
   );
   if(!items.length){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:2rem;margin-bottom:.5rem">🛒</div><div style="font-weight:700">'+(window._shop57?.length?'Ingen treff':'Ingen varer ennå')+'</div></div>';
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:2rem;margin-bottom:.5rem">🛒</div><div style="font-weight:700">'+(getShop().length?'Ingen treff':'Ingen varer ennå')+'</div></div>';
     return;
   }
   const cats = {};
@@ -2153,7 +2198,7 @@ function renderShopPublic(){
 function renderShop57(){
   const el = document.getElementById('shop57-el-list');
   if(!el) return;
-  const items = (window._shop57||[]).filter(x =>
+  const items = (getShop()||[]).filter(x =>
     !shop57ElFilter || x.name.toLowerCase().includes(shop57ElFilter) || x.category?.toLowerCase().includes(shop57ElFilter)
   );
   if(!items.length){
@@ -2231,7 +2276,7 @@ async function confirmPurchase() {
 // ── MERKER (BADGES) ────────────────────────────────────────────────────────
 // Badge parameters loaded from settings/badgeParams (teacher-editable)
 function getBadgeParams() {
-  return window._settings?.badgeParams || {
+  return getEffectiveBadgeParamsElev() || {
     quizBronse: 25, quizSolv: 50, quizGull: 75,
     spareBronse: 100, spareSolv: 1000, spareGull: 10000,
     skattBronse: 1000, skattSolv: 5000, skattGull: 10000,

@@ -164,6 +164,9 @@ function selectRole(role) {
 // Naviger til Myntjakten med kontekst-flagg så tilbakeknappen
 // der peker hit i stedet for til markedsføringssiden.
 function goToMyntjakten(){window.location.href='myntjakten.html?from=elevapp14';}
+function goToMyntstigen(){window.location.href='stigespill.html?from=elevapp14';}
+function openMyntspillMeny(){var m=document.getElementById('myntspill-meny');if(m)m.style.display='flex';}
+function closeMyntspillMeny(){var m=document.getElementById('myntspill-meny');if(m)m.style.display='none';}
 
 // ── Login mode (settings/loginMode14) ─────────────────────────────────────
 // 'pin'   = elev taster bare PIN-kode (PIN søkes opp blant alle elever).
