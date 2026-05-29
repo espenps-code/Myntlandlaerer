@@ -734,14 +734,22 @@ function openQuestion(i) {
   document.getElementById('q-feedback').textContent = '';
   const cont = document.getElementById('q-continue');
   cont.style.display = 'none';
-  q.options.forEach((opt, idx) => {
+  // Stokk alternativene saa riktig svar ikke alltid er foerst (banken har correct:0).
+  const order = q.options.map((opt, idx) => ({ opt, idx }));
+  for (let k = order.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1));
+    const tmp = order[k]; order[k] = order[j]; order[j] = tmp;
+  }
+  let correctBtn = null;
+  order.forEach(item => {
     const b = document.createElement('button');
     b.className = 'q-opt';
-    b.innerHTML = coin(escapeHtml(opt));
+    b.innerHTML = coin(escapeHtml(item.opt));
+    if (item.idx === q.correct) correctBtn = b;
     b.onclick = () => {
       Array.from(optsEl.children).forEach(c => { c.disabled = true; });
       const fb = document.getElementById('q-feedback');
-      if (idx === q.correct) {
+      if (item.idx === q.correct) {
         b.classList.add('correct');
         p.coins += reward; renderStatus(); SFX.correct();
         fb.innerHTML = coin(escapeHtml('✅ Riktig! +' + reward + ' 🪙'));
@@ -749,7 +757,7 @@ function openQuestion(i) {
       } else {
         SFX.wrong();
         b.classList.add('wrong');
-        optsEl.children[q.correct].classList.add('correct');
+        if (correctBtn) correctBtn.classList.add('correct');
         fb.innerHTML = coin(escapeHtml('Riktig svar: ' + q.options[q.correct]));
         fb.className = 'q-feedback no';
       }
