@@ -1423,6 +1423,7 @@ body {
   font-style: italic;
 }
 </style>
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
 </head>
 <body>
 
@@ -1441,7 +1442,7 @@ body {
     <span class="hero-brand-dot"></span>
     Myntland · Hoderegning
   </div>
-  <h1>🪙 <span class="accent">Myntjakten</span></h1>
+  <h1><img class="myntico" src="mynt.webp" alt="mynt"> <span class="accent">Myntjakten</span></h1>
   <p>Regn fort i hodet og samle mest mulig mynter!</p>
 </div>
 
@@ -1582,7 +1583,7 @@ body {
         <span class="hud-value" id="hud-progress">1/20</span>
       </div>
       <div class="hud-card hud-coins">
-        <span class="hud-label">🪙 Mynter</span>
+        <span class="hud-label"><img class="myntico" src="mynt.webp" alt="mynt"> Mynter</span>
         <span class="hud-value" id="hud-coins">0</span>
       </div>
       <div class="hud-card hud-streak">
@@ -1661,7 +1662,7 @@ body {
           <div class="stat-value" id="stat-correct">0</div>
         </div>
         <div class="stat-box stat-coins">
-          <div class="stat-label">🪙 Mynter</div>
+          <div class="stat-label"><img class="myntico" src="mynt.webp" alt="mynt"> Mynter</div>
           <div class="stat-value" id="stat-coins">0</div>
         </div>
         <div class="stat-box stat-streak">
@@ -1683,7 +1684,7 @@ body {
       <div class="bank-card" id="bank-card">
         <div class="bank-title">🏦 Sett inn på Myntland-konto</div>
         <div class="bank-sub">Skann ditt Myntland-kort og bekreft med PIN.</div>
-        <div class="bank-coins-display">+<span id="bank-coins-amount">0</span> 🪙</div>
+        <div class="bank-coins-display">+<span id="bank-coins-amount">0</span> <img class="myntico" src="mynt.webp" alt="mynt"></div>
         <button class="btn-deposit" id="btn-deposit">📷 Skann kortet ditt</button>
         <div class="bank-status" id="bank-status" style="display:none;"></div>
       </div>
@@ -1798,10 +1799,10 @@ body {
       <div class="deposit-success">
         <div class="deposit-success-icon">🎉</div>
         <div class="modal-title" id="success-title">Pengene er på konto!</div>
-        <div class="deposit-success-amount">+<span id="success-amount">0</span> 🪙</div>
+        <div class="deposit-success-amount">+<span id="success-amount">0</span> <img class="myntico" src="mynt.webp" alt="mynt"></div>
         <div class="deposit-success-balance">
           <div class="deposit-success-balance-label">Ny saldo</div>
-          <div class="deposit-success-balance-value"><span id="success-balance">0</span> 🪙</div>
+          <div class="deposit-success-balance-value"><span id="success-balance">0</span> <img class="myntico" src="mynt.webp" alt="mynt"></div>
         </div>
         <button class="btn-primary" id="btn-success-close" style="margin-top:16px;">Ferdig</button>
       </div>
@@ -1810,7 +1811,7 @@ body {
     <!-- STEG: POLICY BLOKKERT (læreren har slått av eller tak er nådd) -->
     <div class="modal-step" id="step-policy-blocked">
       <div style="text-align:center; padding:12px 0;">
-        <div style="font-size:3rem; margin-bottom:8px;">🪙</div>
+        <div style="font-size:3rem; margin-bottom:8px;"><img class="myntico" src="mynt.webp" alt="mynt"></div>
         <div class="modal-title" id="policy-blocked-title">Ingen mynter denne gangen</div>
         <div class="modal-sub" id="policy-blocked-text" style="margin-top:8px; line-height:1.4;"></div>
         <button class="btn-primary" id="btn-policy-blocked-close" style="margin-top:18px;">Greit, fortsett å spille</button>
@@ -1824,7 +1825,7 @@ body {
         <div class="modal-title">Nesten ved dagstaket</div>
         <div class="modal-sub" id="policy-partial-text" style="margin-top:8px; line-height:1.4;"></div>
         <div style="font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--amber-dark); margin: 14px 0 4px;">
-          Du får +<span id="policy-partial-amount">0</span> 🪙
+          Du får +<span id="policy-partial-amount">0</span> <img class="myntico" src="mynt.webp" alt="mynt">
         </div>
         <button class="btn-primary" id="btn-policy-partial-continue" style="margin-top:14px;">Fortsett til innlogging</button>
         <button class="btn-ghost" id="btn-policy-partial-cancel" style="margin-top:6px;">Avbryt</button>
@@ -2725,9 +2726,15 @@ function nextQuestion() {
 // ═══════════════════════════════════════════════════════
 // FEEDBACK / EFFEKTER
 // ═══════════════════════════════════════════════════════
+// Felles mynt-ikon: eget bilde i stedet for 🪙-emojien (tegnes ulikt paa plattformer)
+const COIN_IMG = 'mynt.webp';
+const COIN_TAG = '<img class="myntico" src="' + COIN_IMG + '" alt="mynt">';
+function coinHtml(s) { return String(s).replace(/🪙/g, COIN_TAG); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
 function showFeedback(text, type) {
   const fb = document.getElementById('feedback');
-  fb.textContent = text;
+  fb.innerHTML = coinHtml(esc(text));
   fb.classList.remove('show', 'wrong');
   if (type === 'wrong') fb.classList.add('wrong');
   // Tving reflow så animasjonen restartes
@@ -2745,7 +2752,7 @@ function spawnCoinBurst(count) {
   for (let i = 0; i < Math.min(count, 6); i++) {
     const coin = document.createElement('div');
     coin.className = 'coin-burst';
-    coin.textContent = '🪙';
+    coin.innerHTML = COIN_TAG;
     coin.style.left = cx + 'px';
     coin.style.top = cy + 'px';
     const angle = (Math.PI * 2 * i) / Math.min(count, 6) + Math.random() * 0.5;
@@ -3509,7 +3516,7 @@ async function handleStudentLookup(idText) {
 
     if (!policy.allowed) {
       // Helt blokkert — vis melding og la eleven gå tilbake til spillet.
-      document.getElementById('policy-blocked-text').textContent = policy.reason;
+      document.getElementById('policy-blocked-text').innerHTML = coinHtml(esc(policy.reason));
       goToStep('policy-blocked');
       return;
     }
@@ -3518,7 +3525,7 @@ async function handleStudentLookup(idText) {
       // Tak nesten nådd — eleven får bare det som er igjen. Vis det
       // ærlig før de taster PIN.
       depositState.pendingAmount = policy.amount;
-      document.getElementById('policy-partial-text').textContent = policy.reason;
+      document.getElementById('policy-partial-text').innerHTML = coinHtml(esc(policy.reason));
       document.getElementById('policy-partial-amount').textContent = policy.amount;
       goToStep('policy-partial');
       return;
@@ -3677,7 +3684,7 @@ function showDepositSuccess(newBalance) {
 
   // Oppdater bank-kortet på resultat-skjermen
   const status = document.getElementById('bank-status');
-  status.textContent = `✅ ${depositState.pendingAmount} 🪙 satt inn på kontoen din!`;
+  status.innerHTML = coinHtml(esc(`✅ ${depositState.pendingAmount} 🪙 satt inn på kontoen din!`));
   status.classList.add('success');
   status.style.display = '';
   document.getElementById('btn-deposit').disabled = true;
