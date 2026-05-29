@@ -302,6 +302,13 @@ function tileGrid(n) {
   const col = (rowFromBottom % 2 === 0) ? posInRow : (COLS - 1 - posInRow);
   return { col, cssRow: ROWS - rowFromBottom, rowFromBottom };
 }
+// Retningspil mot neste rute: → høyre, ← venstre, ↑ opp (i svingene).
+function dirArrow(n) {
+  if (n >= TILE_COUNT) return '';
+  const a = tileGrid(n), b = tileGrid(n + 1);
+  if (b.rowFromBottom > a.rowFromBottom) return '↑';
+  return (b.col > a.col) ? '→' : '←';
+}
 function tileCenterPct(n) {
   const g = tileGrid(n);
   const x = (g.col + 0.5) / COLS * 100;
@@ -331,7 +338,9 @@ function renderBoard() {
     div.style.gridColumn = g.col + 1;
     div.style.gridRow = g.cssRow;
     div.dataset.n = n;
-    div.innerHTML = '<span class="tnum">' + n + '</span>' + tileInner(n, t);
+    const arrow = dirArrow(n);
+    const arrowHtml = arrow ? '<span class="tdir">' + arrow + '</span>' : '';
+    div.innerHTML = '<span class="tnum">' + n + '</span>' + arrowHtml + tileInner(n, t);
     board.appendChild(div);
   }
   drawConnectors();
