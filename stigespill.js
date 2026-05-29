@@ -302,13 +302,15 @@ function tileGrid(n) {
   const col = (rowFromBottom % 2 === 0) ? posInRow : (COLS - 1 - posInRow);
   return { col, cssRow: ROWS - rowFromBottom, rowFromBottom };
 }
-// Retningspil mot neste rute: → høyre, ← venstre, ↑ opp (i svingene).
+// Retning mot neste rute: 'r' høyre, 'l' venstre, 'up' opp (i svingene).
 function dirArrow(n) {
   if (n >= TILE_COUNT) return '';
   const a = tileGrid(n), b = tileGrid(n + 1);
-  if (b.rowFromBottom > a.rowFromBottom) return '↑';
-  return (b.col > a.col) ? '→' : '←';
+  if (b.rowFromBottom > a.rowFromBottom) return 'up';
+  return (b.col > a.col) ? 'r' : 'l';
 }
+// Tykk chevron-pil (SVG) – peker høyre som standard, roteres med CSS.
+const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 5 16 12 8 19"/></svg>';
 function tileCenterPct(n) {
   const g = tileGrid(n);
   const x = (g.col + 0.5) / COLS * 100;
@@ -338,8 +340,8 @@ function renderBoard() {
     div.style.gridColumn = g.col + 1;
     div.style.gridRow = g.cssRow;
     div.dataset.n = n;
-    const arrow = dirArrow(n);
-    const arrowHtml = arrow ? '<span class="tdir">' + arrow + '</span>' : '';
+    const dir = dirArrow(n);
+    const arrowHtml = dir ? '<span class="tdir tdir-' + dir + '">' + CHEVRON_SVG + '</span>' : '';
     div.innerHTML = '<span class="tnum">' + n + '</span>' + arrowHtml + tileInner(n, t);
     board.appendChild(div);
   }
