@@ -157,10 +157,11 @@ img { -webkit-user-drag: none; user-drag: none; }
 .board-scroll {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   max-height: calc(100vh - 150px);
   border-radius: 16px;
 }
-.board-wrap { position: relative; width: max-content; margin: 0 auto; }
+.board-wrap { position: relative; width: max-content; margin: 56px auto; }
 .board {
   display: grid;
   --tile: clamp(46px, 11vw, 92px);

@@ -349,10 +349,10 @@ function renderBoard() {
 }
 function connectorLine(a, b, color, dashed) {
   return '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y +
-    '" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" opacity="0.5"' +
+    '" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" opacity="0.3"' +
     (dashed ? ' stroke-dasharray="3 2"' : '') + '/>' +
-    '<circle cx="' + a.x + '" cy="' + a.y + '" r="1.7" fill="' + color + '"/>' +
-    '<circle cx="' + b.x + '" cy="' + b.y + '" r="1.7" fill="' + color + '"/>';
+    '<circle cx="' + a.x + '" cy="' + a.y + '" r="1.4" fill="' + color + '" opacity="0.38"/>' +
+    '<circle cx="' + b.x + '" cy="' + b.y + '" r="1.4" fill="' + color + '" opacity="0.38"/>';
 }
 function drawConnectors() {
   const svg = document.getElementById('connectors');
@@ -380,8 +380,10 @@ function scrollActiveIntoView() {
   const p = game.players[game.current];
   if (!p) return;
   const c = tileCenterPct(p.pos);
-  const targetY = (c.y / 100) * board.offsetHeight;
-  const top = targetY - sc.clientHeight / 2;
+  const scRect = sc.getBoundingClientRect();
+  const bRect = board.getBoundingClientRect();
+  const pawnY = sc.scrollTop + (bRect.top - scRect.top) + (c.y / 100) * bRect.height;
+  const top = pawnY - sc.clientHeight / 2;
   sc.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
 }
 
