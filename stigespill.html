@@ -124,7 +124,10 @@
 <section id="screen-game" class="screen">
   <div class="topbar">
     <div class="logo-sm">Mynt<img class="coin-dot-img" src="mynt.webp" alt="">stigen</div>
-    <button class="btn-quit" id="btn-quit">Avslutt</button>
+    <div style="display:flex; gap:.5rem; align-items:center;">
+      <button class="btn-sound" id="btn-sound" aria-label="Lyd av eller på">🔊</button>
+      <button class="btn-quit" id="btn-quit">Avslutt</button>
+    </div>
   </div>
 
   <div class="game-layout">
@@ -150,6 +153,8 @@
           <span class="pip p7"></span><span class="pip p8"></span><span class="pip p9"></span>
         </div>
         <button class="btn btn-amber btn-lg" id="btn-roll">Kast terningen</button>
+        <div class="count-chip" id="count-chip" style="display:none;">0 / 0</div>
+        <button class="btn btn-green btn-lg" id="btn-move" style="display:none;" disabled>Flytt hit 🦶</button>
         <div class="mini-log" id="mini-log"></div>
       </div>
 

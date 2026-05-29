@@ -16,6 +16,64 @@ function coin(s) { return String(s).replace(/🪙/g, COIN_TAG); }
 function setText(el, str) { if (el) el.innerHTML = coin(escapeHtml(str)); }
 
 /* ───────────────────────────────────────────────────────────
+   LYD — korte toner laget med Web Audio (ingen eksterne filer)
+   ─────────────────────────────────────────────────────────── */
+const SFX = {
+  ctx: null,
+  enabled: true,
+  unlock() {
+    try {
+      if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (e) { /* lyd ikke stoettet */ }
+  },
+  tone(freq, when, dur, type, vol) {
+    if (!this.enabled || !this.ctx) return;
+    const t0 = this.ctx.currentTime + (when || 0);
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol || 0.18, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(this.ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  },
+  glide(f1, f2, when, dur, type, vol) {
+    if (!this.enabled || !this.ctx) return;
+    const t0 = this.ctx.currentTime + (when || 0);
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(f1, t0);
+    osc.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+    g.gain.setValueAtTime(vol || 0.16, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(this.ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  },
+  dice() { for (let i = 0; i < 5; i++) this.tone(220 + Math.random() * 200, i * 0.05, 0.05, 'square', 0.06); },
+  count(n) { this.tone(523.25 * Math.pow(2, Math.min(n, 7) / 12), 0, 0.12, 'triangle', 0.16); },
+  move() { this.glide(330, 560, 0, 0.18, 'sine', 0.14); },
+  coin() { this.tone(987.77, 0, 0.09, 'square', 0.15); this.tone(1318.51, 0.08, 0.2, 'square', 0.15); },
+  correct() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, i * 0.09, 0.18, 'triangle', 0.16)); },
+  wrong() { this.tone(196, 0, 0.18, 'sawtooth', 0.13); this.tone(155.56, 0.12, 0.24, 'sawtooth', 0.12); },
+  ladder() { this.glide(330, 880, 0, 0.4, 'triangle', 0.16); },
+  slide() { this.glide(740, 233, 0, 0.45, 'sine', 0.16); },
+  pay() { this.tone(659.25, 0, 0.07, 'square', 0.12); this.tone(440, 0.07, 0.13, 'square', 0.12); },
+  skip() { this.glide(330, 175, 0, 0.4, 'sawtooth', 0.12); },
+  win() { [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5].forEach((f, i) => this.tone(f, i * 0.12, 0.26, 'triangle', 0.18)); },
+  toggle() {
+    this.enabled = !this.enabled;
+    try { localStorage.setItem('myntstigen-lyd', this.enabled ? '1' : '0'); } catch (e) {}
+    if (this.enabled) this.unlock();
+    return this.enabled;
+  }
+};
+try { if (localStorage.getItem('myntstigen-lyd') === '0') SFX.enabled = false; } catch (e) {}
+
+/* ───────────────────────────────────────────────────────────
    FIREBASE-HJELPERE (samme mønster som Myntjakten)
    ─────────────────────────────────────────────────────────── */
 const STUDENT_NODES = ['students14', 'students57'];
@@ -331,7 +389,7 @@ function nextFreePiece() {
 /* ───────────────────────────────────────────────────────────
    SPILLTILSTAND
    ─────────────────────────────────────────────────────────── */
-const game = { level: '14', players: [], current: 0, started: false, over: false, busy: false, pendingMove: null };
+const game = { level: '14', players: [], current: 0, started: false, over: false, busy: false, pendingMove: null, count: null };
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -422,7 +480,8 @@ function startGame() {
   if (game.players.length < 2) return;
   game.players.forEach(p => { p.pos = 1; p.coins = 0; p.skip = 0; p.deposited = false; });
   game.current = 0; game.over = false; game.busy = false; game.started = true;
-  game.pendingMove = null;
+  game.pendingMove = null; game.count = null;
+  resetTurnControls();
   genAmounts();
   renderBoard();
   renderPawns();
@@ -437,6 +496,17 @@ function updateTurnUI() {
   const p = game.players[game.current];
   document.getElementById('turn-name').textContent = p ? p.name : '—';
   document.getElementById('btn-roll').disabled = game.over || game.busy;
+}
+
+// Sett kontrollene tilbake til «klar til aa kaste» for neste spiller.
+function resetTurnControls() {
+  const roll = document.getElementById('btn-roll');
+  const mv = document.getElementById('btn-move');
+  const chip = document.getElementById('count-chip');
+  if (roll) { roll.style.display = ''; roll.disabled = game.over || game.busy; }
+  if (mv) mv.style.display = 'none';
+  if (chip) chip.style.display = 'none';
+  clearCountMarks();
 }
 
 function renderStatus() {
@@ -480,6 +550,7 @@ async function doRoll() {
   document.getElementById('btn-roll').disabled = true;
   const dice = document.getElementById('dice');
   dice.classList.add('rolling');
+  SFX.dice();
   const face = 1 + Math.floor(Math.random() * 6);
   let ticks = 0;
   const iv = setInterval(() => {
@@ -488,37 +559,92 @@ async function doRoll() {
   }, 70);
   await sleep(580);
   dice.classList.remove('rolling');
-  beginMovePick(game.current, face);
+  beginCount(game.current, face);
 }
 
-// Etter kast teller spilleren selv og trykker paa ruten de lander paa.
-function beginMovePick(i, roll) {
+// Etter kast teller spilleren seg fram ved aa trykke paa rutene en etter en.
+function beginCount(i, roll) {
   const p = game.players[i];
   const target = Math.min(p.pos + roll, TILE_COUNT);
-  game.pendingMove = { i: i, roll: roll, target: target };
-  miniLog('🎲 ' + roll + ' — tell ' + roll + ' ruter fram og trykk på ruten!');
+  const steps = target - p.pos;
+  game.count = { i: i, roll: roll, target: target, steps: steps, counted: 0, nextExpected: p.pos + 1 };
+  clearCountMarks();
   const board = document.getElementById('board');
   if (board) board.classList.add('picking');
+  document.getElementById('btn-roll').style.display = 'none';
+  const mv = document.getElementById('btn-move');
+  if (mv) { mv.style.display = ''; mv.disabled = true; }
+  updateCountUI();
+  miniLog('🎲 ' + roll + ' — tell deg fram! Trykk paa rutene en etter en.');
 }
 
-// Trykk paa en rute: riktig => flytt monsteret dit; feil => tell paa nytt.
-async function handleTileTap(n) {
-  const pm = game.pendingMove;
-  if (!pm || game.over) return;
-  if (n !== pm.target) {
-    flashWrongTile(n);
-    toast('Ikke helt riktig – tell rutene på nytt!');
-    return;
+// Marker en rute som talt og sett et lite tall-merke paa den.
+function markCountTile(n, stepNo) {
+  const el = document.querySelector('.tile[data-n="' + n + '"]');
+  if (!el) return;
+  el.classList.add('counted');
+  const badge = document.createElement('span');
+  badge.className = 'count-badge';
+  badge.textContent = stepNo;
+  el.appendChild(badge);
+}
+
+function clearCountMarks() {
+  document.querySelectorAll('.tile.counted').forEach(el => el.classList.remove('counted'));
+  document.querySelectorAll('.count-badge').forEach(b => b.remove());
+}
+
+function updateCountUI() {
+  const chip = document.getElementById('count-chip');
+  if (!chip) return;
+  if (game.count) {
+    chip.style.display = '';
+    chip.textContent = game.count.counted + ' / ' + game.count.steps;
+  } else {
+    chip.style.display = 'none';
   }
-  game.pendingMove = null;
+}
+
+// Trykk paa en rute mens man teller. Riktig naborute => marker og tell opp.
+function handleTileTap(n) {
+  const c = game.count;
+  if (!c || game.over) return;
+  if (c.counted >= c.steps) return; // ferdig talt – vent paa Flytt-knappen
+  if (n === c.nextExpected) {
+    markCountTile(n, c.counted + 1);
+    SFX.count(c.counted);
+    c.counted++;
+    c.nextExpected++;
+    updateCountUI();
+    if (c.counted >= c.steps) {
+      const mv = document.getElementById('btn-move');
+      if (mv) mv.disabled = false;
+      miniLog('Bra telt! Trykk «Flytt hit» for aa hoppe.');
+    }
+  } else {
+    SFX.wrong();
+    flashWrongTile(n);
+    toast('Tell en rute om gangen – ta neste rute videre.');
+  }
+}
+
+// Flytt-knappen: hopp monsteret fram til ruten eleven har telt seg til.
+async function doMove() {
+  const c = game.count;
+  if (!c || c.counted < c.steps) return;
+  game.count = null;
+  SFX.move();
   const board = document.getElementById('board');
   if (board) board.classList.remove('picking');
-  const p = game.players[pm.i];
-  // Flytt rute for rute fram til maalet (raskt – de har alt telt selv)
-  while (p.pos < pm.target) { p.pos++; renderPawns(); scrollActiveIntoView(); await sleep(170); }
+  const mv = document.getElementById('btn-move');
+  if (mv) mv.style.display = 'none';
+  updateCountUI();
+  clearCountMarks();
+  const p = game.players[c.i];
+  while (p.pos < c.target) { p.pos++; renderPawns(); scrollActiveIntoView(); await sleep(170); }
   miniLog('');
   await sleep(220);
-  await resolveTile(pm.i);
+  await resolveTile(c.i);
 }
 
 function flashWrongTile(n) {
@@ -535,6 +661,7 @@ async function resolveTile(i) {
 
   if (type === 'ladder') {
     const to = LADDERS[p.pos];
+    SFX.ladder();
     await showEvent('🪜', 'Stige opp!', p.name + ' klatrer fra rute ' + p.pos + ' opp til ' + to + '!');
     p.pos = to; renderPawns(); scrollActiveIntoView(); await sleep(320);
     if (p.pos >= TILE_COUNT) return handleWin(i);
@@ -542,13 +669,14 @@ async function resolveTile(i) {
   }
   if (type === 'slide') {
     const to = SLIDES[p.pos];
+    SFX.slide();
     await showEvent('🛝', 'Oi, en sklie!', p.name + ' sklir fra rute ' + p.pos + ' ned til ' + to + '.');
     p.pos = to; renderPawns(); scrollActiveIntoView(); await sleep(320);
     return endTurn();
   }
   if (type === 'coin') {
     const amt = tileAmount[p.pos];
-    p.coins += amt; renderStatus();
+    p.coins += amt; renderStatus(); SFX.coin();
     await showEvent('🪙', '+' + amt + ' mynter!', p.name + ' fant ' + amt + ' 🪙 og samler dem opp. Nå: ' + p.coins + ' 🪙.');
     return endTurn();
   }
@@ -556,9 +684,11 @@ async function resolveTile(i) {
     const amt = tileAmount[p.pos];
     if (p.coins >= amt) {
       p.coins -= amt; renderStatus();
+      SFX.pay();
       await showEvent('💸', 'Utgift: ' + amt + ' 🪙', p.name + ' betaler ' + amt + ' 🪙. Igjen: ' + p.coins + ' 🪙.');
     } else {
       p.skip += 1; renderStatus();
+      SFX.skip();
       await showEvent('😬', 'Ikke nok mynter!', p.name + ' har bare ' + p.coins + ' 🪙 og kan ikke betale ' + amt + ' 🪙 — står over neste runde.');
     }
     return endTurn();
@@ -600,10 +730,11 @@ function openQuestion(i) {
       const fb = document.getElementById('q-feedback');
       if (idx === q.correct) {
         b.classList.add('correct');
-        p.coins += reward; renderStatus();
+        p.coins += reward; renderStatus(); SFX.correct();
         fb.innerHTML = coin(escapeHtml('✅ Riktig! +' + reward + ' 🪙'));
         fb.className = 'q-feedback ok';
       } else {
+        SFX.wrong();
         b.classList.add('wrong');
         optsEl.children[q.correct].classList.add('correct');
         fb.innerHTML = coin(escapeHtml('Riktig svar: ' + q.options[q.correct]));
@@ -632,11 +763,12 @@ function endTurn() {
     break;
   }
   game.current = next;
+  game.count = null;
   updateTurnUI();
   renderPawns();
   renderStatus();
   scrollActiveIntoView();
-  document.getElementById('btn-roll').disabled = false;
+  resetTurnControls();
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -645,6 +777,7 @@ function endTurn() {
 function handleWin(i) {
   game.over = true;
   game.busy = false;
+  SFX.win();
   const winner = game.players[i];
   document.getElementById('btn-roll').disabled = true;
   renderPawns();
@@ -721,6 +854,7 @@ function startDeposit(player) {
       const amount = policy.amount;
       await depositCoins(player.student, amount);
       player.deposited = true;
+      SFX.coin();
       hideOverlay('overlay-pin');
       renderDepositList();
       if (policy.partial) toast(player.name + ': ' + policy.reason);
@@ -733,7 +867,8 @@ function startDeposit(player) {
 
 function resetForReplay() {
   game.players.forEach(p => { p.pos = 1; p.coins = 0; p.skip = 0; p.deposited = false; });
-  game.current = 0; game.over = false; game.busy = false; game.pendingMove = null;
+  game.current = 0; game.over = false; game.busy = false; game.pendingMove = null; game.count = null;
+  resetTurnControls();
   genAmounts(); renderBoard(); renderPawns(); renderStatus(); updateTurnUI(); miniLog('');
   setTimeout(() => { drawConnectors(); scrollActiveIntoView(); }, 60);
 }
@@ -849,6 +984,19 @@ function init() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { drawConnectors(); renderPawns(); }, 150);
   });
+  const unlockAudio = () => { SFX.unlock(); window.removeEventListener('pointerdown', unlockAudio); window.removeEventListener('keydown', unlockAudio); };
+  window.addEventListener('pointerdown', unlockAudio);
+  window.addEventListener('keydown', unlockAudio);
+  const soundBtn = document.getElementById('btn-sound');
+  if (soundBtn) {
+    soundBtn.textContent = SFX.enabled ? '🔊' : '🔇';
+    soundBtn.classList.toggle('muted', !SFX.enabled);
+    soundBtn.onclick = () => {
+      const on = SFX.toggle();
+      soundBtn.textContent = on ? '🔊' : '🔇';
+      soundBtn.classList.toggle('muted', !on);
+    };
+  }
   document.getElementById('lvl-14').onclick = () => selectLevel('14');
   document.getElementById('lvl-57').onclick = () => selectLevel('57');
   document.getElementById('btn-add-card').onclick = addCardPlayer;
@@ -861,10 +1009,13 @@ function init() {
     if (!tile || !tile.dataset.n) return;
     handleTileTap(parseInt(tile.dataset.n, 10));
   });
+  const moveBtn = document.getElementById('btn-move');
+  if (moveBtn) moveBtn.onclick = doMove;
   document.getElementById('btn-quit').onclick = () => {
     if (confirm('Avslutte spillet og gå tilbake til oppsett?')) {
-      game.started = false; game.over = false; game.busy = false; game.pendingMove = null;
+      game.started = false; game.over = false; game.busy = false; game.pendingMove = null; game.count = null;
       const b = document.getElementById('board'); if (b) b.classList.remove('picking');
+      resetTurnControls();
       showScreen('screen-setup');
     }
   };

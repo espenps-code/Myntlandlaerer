@@ -182,6 +182,27 @@ img { -webkit-user-drag: none; user-drag: none; }
 
 /* Tellemodus: spilleren trykker selv paa ruten de lander paa */
 .board.picking .tile { cursor: pointer; }
+.count-chip {
+  display: inline-block;
+  margin: .1rem 0 .7rem;
+  padding: .35rem 1.1rem;
+  border-radius: 999px;
+  background: var(--blue-light);
+  color: var(--blue-dark);
+  font-weight: 900;
+  font-size: 1.35rem;
+  letter-spacing: .03em;
+}
+#btn-move { width: 100%; margin-bottom: .3rem; }
+.tile.counted { box-shadow: inset 0 0 0 3px var(--green), var(--shadow-sm); filter: saturate(1.12) brightness(1.02); }
+.count-badge {
+  position: absolute; top: 3px; right: 4px;
+  min-width: 17px; height: 17px; padding: 0 3px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--green); color: #fff;
+  border-radius: 999px; font-size: .68rem; font-weight: 900;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35);
+}
 .board.picking .tile:not(.t-start):not(.t-finish):hover { filter: brightness(1.06); transform: scale(1.03); }
 .tile.wrong-pick { animation: wrongpick .45s ease; box-shadow: inset 0 0 0 3px var(--coral), var(--shadow-sm); }
 @keyframes wrongpick {
@@ -258,6 +279,8 @@ img { -webkit-user-drag: none; user-drag: none; }
 .topbar .logo-sm { font-family:'Fredoka One',cursive; font-size:1.3rem; color: var(--blue-dark); }
 .topbar .logo-sm .coin-dot { color: var(--coin); }
 .btn-quit { background: var(--white); color: var(--coral); border:2px solid var(--border); border-radius:999px; padding:.4rem 1rem; font-weight:800; font-size:.9rem; }
+.btn-sound { background: var(--white); border:2px solid var(--border); border-radius:999px; padding:.4rem .7rem; font-size:1.1rem; line-height:1; }
+.btn-sound.muted { opacity:.5; }
 
 /* ════════════════════════════════════════════════════════
    MODALER (spørsmål, hendelse, seier, skanner)
