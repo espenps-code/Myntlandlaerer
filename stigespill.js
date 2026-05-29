@@ -8,6 +8,13 @@
    ============================================================ */
 'use strict';
 
+// Felles mynt-ikon: eget bilde i stedet for 🪙-emojien (den tegnes
+// ulikt paa iOS/Android/Windows - av og til som en soelvmynt med oern).
+const COIN_IMG = 'mynt.webp';
+const COIN_TAG = '<img class="myntico" src="' + COIN_IMG + '" alt="mynt">';
+function coin(s) { return String(s).replace(/🪙/g, COIN_TAG); }
+function setText(el, str) { if (el) el.innerHTML = coin(escapeHtml(str)); }
+
 /* ───────────────────────────────────────────────────────────
    FIREBASE-HJELPERE (samme mønster som Myntjakten)
    ─────────────────────────────────────────────────────────── */
@@ -253,7 +260,7 @@ function tileInner(n, t) {
   let lbl = pair[1];
   if (t === 'coin') lbl = '+' + tileAmount[n] + ' 🪙';
   if (t === 'expense') lbl = '−' + tileAmount[n] + ' 🪙';
-  return '<span class="ticon">' + pair[0] + '</span><span class="tlabel">' + lbl + '</span>';
+  return '<span class="ticon">' + coin(pair[0]) + '</span><span class="tlabel">' + coin(lbl) + '</span>';
 }
 function renderBoard() {
   const board = document.getElementById('board');
@@ -265,6 +272,7 @@ function renderBoard() {
     div.className = 'tile t-' + t;
     div.style.gridColumn = g.col + 1;
     div.style.gridRow = g.cssRow;
+    div.dataset.n = n;
     div.innerHTML = '<span class="tnum">' + n + '</span>' + tileInner(n, t);
     board.appendChild(div);
   }
@@ -323,7 +331,7 @@ function nextFreePiece() {
 /* ───────────────────────────────────────────────────────────
    SPILLTILSTAND
    ─────────────────────────────────────────────────────────── */
-const game = { level: '14', players: [], current: 0, started: false, over: false, busy: false };
+const game = { level: '14', players: [], current: 0, started: false, over: false, busy: false, pendingMove: null };
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -338,7 +346,7 @@ function hideOverlay(id) { document.getElementById(id).classList.remove('show');
 let toastTimer = null;
 function toast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
+  el.innerHTML = coin(escapeHtml(msg));
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
@@ -414,6 +422,7 @@ function startGame() {
   if (game.players.length < 2) return;
   game.players.forEach(p => { p.pos = 1; p.coins = 0; p.skip = 0; p.deposited = false; });
   game.current = 0; game.over = false; game.busy = false; game.started = true;
+  game.pendingMove = null;
   genAmounts();
   renderBoard();
   renderPawns();
@@ -440,7 +449,7 @@ function renderStatus() {
     div.innerHTML =
       '<img class="ps-piece" src="' + monsterImg(p.pieceId) + '" alt="">' +
       '<div style="flex:1;"><div class="ps-name">' + escapeHtml(p.name) + '</div>' + skip + '</div>' +
-      '<div class="ps-coins">' + p.coins + ' 🪙</div>';
+      '<div class="ps-coins">' + p.coins + ' ' + COIN_TAG + '</div>';
     wrap.appendChild(div);
   });
 }
@@ -479,15 +488,44 @@ async function doRoll() {
   }, 70);
   await sleep(580);
   dice.classList.remove('rolling');
-  await movePlayer(game.current, face);
+  beginMovePick(game.current, face);
 }
 
-async function movePlayer(i, steps) {
+// Etter kast teller spilleren selv og trykker paa ruten de lander paa.
+function beginMovePick(i, roll) {
   const p = game.players[i];
-  miniLog(p.name + ' kastet ' + steps + ' 🎲');
-  const target = Math.min(p.pos + steps, TILE_COUNT);
-  while (p.pos < target) { p.pos++; renderPawns(); scrollActiveIntoView(); await sleep(230); }
-  await resolveTile(i);
+  const target = Math.min(p.pos + roll, TILE_COUNT);
+  game.pendingMove = { i: i, roll: roll, target: target };
+  miniLog('🎲 ' + roll + ' — tell ' + roll + ' ruter fram og trykk på ruten!');
+  const board = document.getElementById('board');
+  if (board) board.classList.add('picking');
+}
+
+// Trykk paa en rute: riktig => flytt monsteret dit; feil => tell paa nytt.
+async function handleTileTap(n) {
+  const pm = game.pendingMove;
+  if (!pm || game.over) return;
+  if (n !== pm.target) {
+    flashWrongTile(n);
+    toast('Ikke helt riktig – tell rutene på nytt!');
+    return;
+  }
+  game.pendingMove = null;
+  const board = document.getElementById('board');
+  if (board) board.classList.remove('picking');
+  const p = game.players[pm.i];
+  // Flytt rute for rute fram til maalet (raskt – de har alt telt selv)
+  while (p.pos < pm.target) { p.pos++; renderPawns(); scrollActiveIntoView(); await sleep(170); }
+  miniLog('');
+  await sleep(220);
+  await resolveTile(pm.i);
+}
+
+function flashWrongTile(n) {
+  const el = document.querySelector('.tile[data-n="' + n + '"]');
+  if (!el) return;
+  el.classList.add('wrong-pick');
+  setTimeout(() => el.classList.remove('wrong-pick'), 500);
 }
 
 async function resolveTile(i) {
@@ -531,9 +569,9 @@ async function resolveTile(i) {
 
 function showEvent(emoji, title, sub) {
   return new Promise(resolve => {
-    document.getElementById('ev-emoji').textContent = emoji;
-    document.getElementById('ev-title').textContent = title;
-    document.getElementById('ev-sub').textContent = sub;
+    setText(document.getElementById('ev-emoji'), emoji);
+    setText(document.getElementById('ev-title'), title);
+    setText(document.getElementById('ev-sub'), sub);
     showOverlay('overlay-event');
     const btn = document.getElementById('ev-continue');
     btn.onclick = () => { hideOverlay('overlay-event'); resolve(); };
@@ -546,8 +584,8 @@ function openQuestion(i) {
   const q = bank[Math.floor(Math.random() * bank.length)];
   const reward = game.level === '14' ? 10 : 15;
   document.getElementById('q-who').textContent = p.name;
-  document.getElementById('q-text').textContent = q.q;
-  document.getElementById('q-reward').textContent = 'Riktig svar: +' + reward + ' 🪙';
+  setText(document.getElementById('q-text'), q.q);
+  setText(document.getElementById('q-reward'), 'Riktig svar: +' + reward + ' 🪙');
   const optsEl = document.getElementById('q-options');
   optsEl.innerHTML = '';
   document.getElementById('q-feedback').textContent = '';
@@ -556,19 +594,19 @@ function openQuestion(i) {
   q.options.forEach((opt, idx) => {
     const b = document.createElement('button');
     b.className = 'q-opt';
-    b.textContent = opt;
+    b.innerHTML = coin(escapeHtml(opt));
     b.onclick = () => {
       Array.from(optsEl.children).forEach(c => { c.disabled = true; });
       const fb = document.getElementById('q-feedback');
       if (idx === q.correct) {
         b.classList.add('correct');
         p.coins += reward; renderStatus();
-        fb.textContent = '✅ Riktig! +' + reward + ' 🪙';
+        fb.innerHTML = coin(escapeHtml('✅ Riktig! +' + reward + ' 🪙'));
         fb.className = 'q-feedback ok';
       } else {
         b.classList.add('wrong');
         optsEl.children[q.correct].classList.add('correct');
-        fb.textContent = 'Riktig svar: ' + q.options[q.correct];
+        fb.innerHTML = coin(escapeHtml('Riktig svar: ' + q.options[q.correct]));
         fb.className = 'q-feedback no';
       }
       cont.style.display = '';
@@ -628,7 +666,7 @@ function handleWin(i) {
       '<span class="fr-rank">' + (idx + 1) + '.</span>' +
       '<img src="' + monsterImg(p.pieceId) + '" alt="">' +
       '<span class="fr-name">' + escapeHtml(p.name) + '</span>' +
-      '<span class="fr-coins">' + p.coins + ' 🪙</span>';
+      '<span class="fr-coins">' + p.coins + ' ' + COIN_TAG + '</span>';
     fl.appendChild(row);
   });
 
@@ -650,12 +688,12 @@ function renderDepositList() {
     } else if (p.coins <= 0) {
       right = '<span class="dr-state guest">Ingen mynter</span>';
     } else {
-      right = '<button class="btn btn-green" data-i="' + i + '">Sett inn ' + p.coins + ' 🪙</button>';
+      right = '<button class="btn btn-green" data-i="' + i + '">Sett inn ' + p.coins + ' ' + COIN_TAG + '</button>';
     }
     row.innerHTML =
       '<img src="' + monsterImg(p.pieceId) + '" alt="">' +
       '<span class="dr-name">' + escapeHtml(p.name) + '</span>' +
-      '<span class="dr-coins">' + p.coins + ' 🪙</span>' + right;
+      '<span class="dr-coins">' + p.coins + ' ' + COIN_TAG + '</span>' + right;
     dl.appendChild(row);
   });
   dl.querySelectorAll('button[data-i]').forEach(b => {
@@ -695,7 +733,7 @@ function startDeposit(player) {
 
 function resetForReplay() {
   game.players.forEach(p => { p.pos = 1; p.coins = 0; p.skip = 0; p.deposited = false; });
-  game.current = 0; game.over = false; game.busy = false;
+  game.current = 0; game.over = false; game.busy = false; game.pendingMove = null;
   genAmounts(); renderBoard(); renderPawns(); renderStatus(); updateTurnUI(); miniLog('');
   setTimeout(() => { drawConnectors(); scrollActiveIntoView(); }, 60);
 }
@@ -817,9 +855,16 @@ function init() {
   document.getElementById('btn-add-guest').onclick = openGuest;
   document.getElementById('btn-start-game').onclick = startGame;
   document.getElementById('btn-roll').onclick = doRoll;
+  const boardEl = document.getElementById('board');
+  if (boardEl) boardEl.addEventListener('click', (e) => {
+    const tile = e.target.closest('.tile');
+    if (!tile || !tile.dataset.n) return;
+    handleTileTap(parseInt(tile.dataset.n, 10));
+  });
   document.getElementById('btn-quit').onclick = () => {
     if (confirm('Avslutte spillet og gå tilbake til oppsett?')) {
-      game.started = false; game.over = false;
+      game.started = false; game.over = false; game.busy = false; game.pendingMove = null;
+      const b = document.getElementById('board'); if (b) b.classList.remove('picking');
       showScreen('screen-setup');
     }
   };
