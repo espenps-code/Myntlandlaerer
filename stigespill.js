@@ -310,7 +310,7 @@ function dirArrow(n) {
   return (b.col > a.col) ? 'r' : 'l';
 }
 // Tykk chevron-pil (SVG) – peker høyre som standard, roteres med CSS.
-const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 5 16 12 8 19"/></svg>';
+const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 5 16 12 8 19"/></svg>';
 function tileCenterPct(n) {
   const g = tileGrid(n);
   const x = (g.col + 0.5) / COLS * 100;
