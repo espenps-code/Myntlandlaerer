@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Myntstigen – Myntland</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="worksheet/favicon.png">
+
+<!-- Hjemskjerm-ikon -->
+<link rel="apple-touch-icon" sizes="180x180" href="worksheet/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Myntstigen">
+<meta name="theme-color" content="#1e0f52">
+
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- jsQR for QR-koder. Lokal kopi anbefales senere; CDN funker for testing -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+<!-- Firebase: samme konfig som lærerportalene. Eksponerer window._db osv. -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getDatabase, ref, get, set, update, push, runTransaction }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain: "myntland.firebaseapp.com",
+    databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "myntland",
+    storageBucket: "myntland.firebasestorage.app",
+    messagingSenderId: "711264415533",
+    appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+    measurementId: "G-95QZNLQ6V9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+
+  // App Check: stopper at API-nøkkelen brukes fra andre domener enn våre
+  const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled: true
+  });
+
+  // Vent på første App Check-token før databasen røres.
+  await Promise.race([
+    getToken(appCheck).catch(err => console.warn('[App Check] token-fetch feilet:', err)),
+    new Promise(r => setTimeout(r, 3000))
+  ]);
+
+  const db = getDatabase(app);
+  window._db = db;
+  window._ref = ref;
+  window._get = get;
+  window._set = set;
+  window._update = update;
+  window._push = push;
+  window._runTransaction = runTransaction;
+  window._fbReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<!-- Delt Myntland-styling (palett + fonter) -->
+<link rel="stylesheet" href="myntland.css">
+<link rel="stylesheet" href="stigespill.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     SKJERM 1 — OPPSETT
+     ════════════════════════════════════════════════════ -->
+<section id="screen-setup" class="screen active">
+  <div class="setup-wrap">
+    <div class="logo">Mynt<span class="coin-dot">🪙</span>stigen</div>
+    <div class="tagline">Stigespillet for 2–4 spillere</div>
+
+    <!-- Nivå -->
+    <div class="card">
+      <h2>1. Velg nivå</h2>
+      <div class="hint">Styrer hvor vanskelige spørsmålene er.</div>
+      <div class="level-row">
+        <div class="level-opt selected" data-level="14" id="lvl-14">
+          <div class="lv-emoji">🧮</div>
+          <div class="lv-title">1.–4. trinn</div>
+          <div class="lv-sub">Mynter, telling, sparing</div>
+        </div>
+        <div class="level-opt" data-level="57" id="lvl-57">
+          <div class="lv-emoji">💼</div>
+          <div class="lv-title">5.–7. trinn</div>
+          <div class="lv-sub">Lønn, lån, fond, budsjett</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spillere -->
+    <div class="card">
+      <h2>2. Bli med</h2>
+      <div class="hint">Skann Myntland-kortet for å spille om ekte mynter, eller bli med som gjest uten kort.</div>
+      <div class="players-list" id="players-list">
+        <!-- fylles dynamisk -->
+      </div>
+      <div class="add-row">
+        <button class="btn btn-green" id="btn-add-card">📷 Skann kort</button>
+        <button class="btn btn-ghost" id="btn-add-guest">🙂 Gjest uten kort</button>
+      </div>
+    </div>
+
+    <div class="card start-game-row">
+      <button class="btn btn-primary btn-lg" id="btn-start-game" disabled>Start spillet 🎲</button>
+      <div class="hint center mt" style="margin-bottom:0;">Trenger minst 2 spillere.</div>
+    </div>
+
+    <p class="muted" style="font-size:.85rem;">Myntene samles i spillet. Når spillet er ferdig skanner hver spiller kortet sitt for å sette dem inn på Myntland-kontoen.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     SKJERM 2 — SPILL
+     ════════════════════════════════════════════════════ -->
+<section id="screen-game" class="screen">
+  <div class="topbar">
+    <div class="logo-sm">Mynt<span class="coin-dot">🪙</span>stigen</div>
+    <button class="btn-quit" id="btn-quit">Avslutt</button>
+  </div>
+
+  <div class="game-layout">
+    <!-- Brett -->
+    <div class="board-card">
+      <div class="board-scroll" id="board-scroll">
+        <div class="board-wrap" id="board-wrap">
+          <div class="board" id="board"></div>
+          <svg class="connectors" id="connectors" preserveAspectRatio="none"></svg>
+          <div class="pieces-layer" id="pieces-layer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side-panel -->
+    <div class="side-panel">
+      <div class="panel-card turn-box">
+        <div class="turn-name" id="turn-name">—</div>
+        <div class="turn-sub" id="turn-sub">sin tur</div>
+        <div class="dice" id="dice" data-face="1">
+          <span class="pip p1"></span><span class="pip p2"></span><span class="pip p3"></span>
+          <span class="pip p4"></span><span class="pip p5"></span><span class="pip p6"></span>
+          <span class="pip p7"></span><span class="pip p8"></span><span class="pip p9"></span>
+        </div>
+        <button class="btn btn-amber btn-lg" id="btn-roll">Kast terningen</button>
+        <div class="mini-log" id="mini-log"></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Spillere</h3>
+        <div id="player-status"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — SPØRSMÅL
+     ════════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay-question">
+  <div class="modal">
+    <div class="m-emoji">❓</div>
+    <div class="m-title">Spørsmålsrute</div>
+    <div class="m-sub"><span class="m-who" id="q-who">—</span> svarer</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="q-reward" id="q-reward"></div>
+    <div class="q-options" id="q-options"></div>
+    <div class="q-feedback" id="q-feedback"></div>
+    <button class="btn btn-primary mt" id="q-continue" style="display:none;">Videre</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — HENDELSE (mynt / utgift / stige / sklie)
+     ════════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay-event">
+  <div class="modal">
+    <div class="m-emoji" id="ev-emoji">🪙</div>
+    <div class="m-title" id="ev-title"></div>
+    <div class="m-sub" id="ev-sub"></div>
+    <button class="btn btn-primary" id="ev-continue">Videre</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — SEIER + INNSKUDD
+     ════════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay-win">
+  <div class="modal">
+    <img class="win-mascot" id="win-mascot" src="" alt="">
+    <div class="m-title" id="win-title">🎉 i mål!</div>
+    <div class="m-sub">Slik gikk det:</div>
+    <div class="final-list" id="final-list"></div>
+
+    <div id="deposit-section">
+      <h3 style="color:var(--blue-dark);margin-bottom:.3rem;">Sett inn myntene</h3>
+      <p class="muted" style="font-size:.92rem;margin-bottom:.6rem;">Hver spiller skanner kortet sitt og taster PIN for å banke det de samlet.</p>
+      <div class="deposit-list" id="deposit-list"></div>
+    </div>
+
+    <div class="add-row" style="margin-top:.4rem;">
+      <button class="btn btn-ghost" id="btn-play-again">Spill igjen</button>
+      <button class="btn btn-primary" id="btn-finish">Ferdig</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — SKANNER (kort)
+     ════════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay-scan">
+  <div class="modal">
+    <div class="m-title" id="scan-title">📷 Skann kortet</div>
+    <div class="m-sub" id="scan-sub">Hold Myntland-kortet foran kameraet</div>
+    <div class="scanner-frame">
+      <video id="scanner-video" playsinline muted></video>
+    </div>
+    <div class="scan-status" id="scan-status">Starter kamera…</div>
+    <button class="btn btn-ghost mt" id="scan-cancel">Avbryt</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — PIN
+     ════════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay-pin">
+  <div class="modal">
+    <div class="m-title" id="pin-title">Tast PIN</div>
+    <div class="m-sub" id="pin-name">—</div>
+    <div class="pin-dots">
+      <span class="pin-dot" id="pd0"></span><span class="pin-dot" id="pd1"></span>
+      <span class="pin-dot" id="pd2"></span><span class="pin-dot" id="pd3"></span>
+    </div>
+    <div class="pin-pad" id="pin-pad">
+      <button class="pin-key" data-k="1">1</button>
+      <button class="pin-key" data-k="2">2</button>
+      <button class="pin-key" data-k="3">3</button>
+      <button class="pin-key" data-k="4">4</button>
+      <button class="pin-key" data-k="5">5</button>
+      <button class="pin-key" data-k="6">6</button>
+      <button class="pin-key" data-k="7">7</button>
+      <button class="pin-key" data-k="8">8</button>
+      <button class="pin-key" data-k="9">9</button>
+      <button class="pin-key" data-k="del">⌫</button>
+      <button class="pin-key" data-k="0">0</button>
+      <button class="pin-key" data-k="cancel">✕</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — VELG MONSTER (gjest)
+     ════════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay-guest">
+  <div class="modal">
+    <div class="m-title">Bli med som gjest</div>
+    <div class="m-sub">Skriv et navn (mynter settes ikke inn på konto)</div>
+    <input id="guest-name" maxlength="14" placeholder="F.eks. Drage"
+      style="width:100%;padding:.9rem;font-size:1.2rem;font-weight:800;border:3px solid var(--border);border-radius:14px;text-align:center;font-family:inherit;">
+    <div class="add-row" style="margin-top:1rem;">
+      <button class="btn btn-ghost" id="guest-cancel">Avbryt</button>
+      <button class="btn btn-green" id="guest-ok">Bli med</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="stigespill.js"></script>
+</body>
+</html>
