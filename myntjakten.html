@@ -1423,17 +1423,20 @@ body {
   font-style: italic;
 }
 </style>
-<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}.btn-sound-mj{background:var(--white);border:1px solid var(--border);border-radius:999px;padding:.3rem .6rem;font-size:1.05rem;line-height:1;cursor:pointer}.btn-sound-mj.muted{opacity:.5}</style>
 </head>
 <body>
 
 <nav class="topnav">
   <div class="topnav-inner">
     <a id="topnav-logo-link" href="index.html" class="topnav-logo">Myntland</a>
-    <a id="topnav-back-link" href="index.html" class="topnav-back">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      <span id="topnav-back-text">Tilbake til forsiden</span>
-    </a>
+    <div style="display:flex; align-items:center; gap:.8rem;">
+      <button class="btn-sound-mj" id="btn-sound" aria-label="Lyd av eller på">🔊</button>
+      <a id="topnav-back-link" href="index.html" class="topnav-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span id="topnav-back-text">Tilbake til forsiden</span>
+      </a>
+    </div>
   </div>
 </nav>
 
@@ -2466,6 +2469,17 @@ function bindStartScreen() {
   // Start-knapp
   document.getElementById('btn-start').addEventListener('click', startGame);
 
+  // Lyd: laas opp ved foerste trykk + lyd av/paa-knapp
+  const unlockAudio = () => { SFX.unlock(); window.removeEventListener('pointerdown', unlockAudio); window.removeEventListener('keydown', unlockAudio); };
+  window.addEventListener('pointerdown', unlockAudio);
+  window.addEventListener('keydown', unlockAudio);
+  const soundBtn = document.getElementById('btn-sound');
+  if (soundBtn) {
+    soundBtn.textContent = SFX.enabled ? '🔊' : '🔇';
+    soundBtn.classList.toggle('muted', !SFX.enabled);
+    soundBtn.onclick = () => { const on = SFX.toggle(); soundBtn.textContent = on ? '🔊' : '🔇'; soundBtn.classList.toggle('muted', !on); };
+  }
+
   // Sett tilfeldig start-maskot
   document.getElementById('start-mascot-img').src = randomMonster();
 }
@@ -2662,6 +2676,7 @@ function timeOut() {
   state.streak = 0;
   state.answers.push({ correct: false, timeMs: settings.timePerQuestion * 1000 });
 
+  SFX.wrong();
   showFeedback(`⏰ Tiden ute! Riktig svar var ${q.answer}`, 'wrong');
   setTimeout(nextQuestion, 1300);
 }
@@ -2700,6 +2715,7 @@ function submitAnswer() {
     state.answers.push({ correct: true, timeMs: elapsed });
 
     display.classList.add('correct');
+    SFX.correct();
     showFeedback(`✨ Riktig! +${coinsEarned} 🪙`, 'correct');
     spawnCoinBurst(coinsEarned);
     revealOneTile();
@@ -2708,6 +2724,7 @@ function submitAnswer() {
     state.streak = 0;
     state.answers.push({ correct: false, timeMs: elapsed });
     display.classList.add('wrong');
+    SFX.wrong();
     showFeedback(`Riktig svar var ${q.answer}`, 'wrong');
   }
 
@@ -2731,6 +2748,57 @@ const COIN_IMG = 'mynt.webp';
 const COIN_TAG = '<img class="myntico" src="' + COIN_IMG + '" alt="mynt">';
 function coinHtml(s) { return String(s).replace(/🪙/g, COIN_TAG); }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+/* ───────────────────────────────────────────────────────────
+   LYD — korte toner laget med Web Audio (ingen eksterne filer)
+   ─────────────────────────────────────────────────────────── */
+const SFX = {
+  ctx: null,
+  enabled: true,
+  unlock() {
+    try {
+      if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (e) { /* lyd ikke stoettet */ }
+  },
+  tone(freq, when, dur, type, vol) {
+    if (!this.enabled || !this.ctx) return;
+    const t0 = this.ctx.currentTime + (when || 0);
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol || 0.18, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(this.ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  },
+  glide(f1, f2, when, dur, type, vol) {
+    if (!this.enabled || !this.ctx) return;
+    const t0 = this.ctx.currentTime + (when || 0);
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(f1, t0);
+    osc.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+    g.gain.setValueAtTime(vol || 0.16, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(this.ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  },
+  correct() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, i * 0.09, 0.18, 'triangle', 0.16)); },
+  coin() { this.tone(987.77, 0, 0.09, 'square', 0.15); this.tone(1318.51, 0.08, 0.2, 'square', 0.15); },
+  wrong() { this.tone(196, 0, 0.18, 'sawtooth', 0.13); this.tone(155.56, 0.12, 0.24, 'sawtooth', 0.12); },
+  win() { [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5].forEach((f, i) => this.tone(f, i * 0.12, 0.26, 'triangle', 0.18)); },
+  toggle() {
+    this.enabled = !this.enabled;
+    try { localStorage.setItem('myntjakten-lyd', this.enabled ? '1' : '0'); } catch (e) {}
+    if (this.enabled) this.unlock();
+    return this.enabled;
+  }
+};
+try { if (localStorage.getItem('myntjakten-lyd') === '0') SFX.enabled = false; } catch (e) {}
 
 function showFeedback(text, type) {
   const fb = document.getElementById('feedback');
@@ -2769,6 +2837,7 @@ function spawnCoinBurst(count) {
 // ═══════════════════════════════════════════════════════
 async function endGame() {
   stopTimer();
+  SFX.win();
 
   // Statistikk
   const total = state.questions.length;
@@ -3685,6 +3754,7 @@ function showDepositSuccess(newBalance) {
   // Oppdater bank-kortet på resultat-skjermen
   const status = document.getElementById('bank-status');
   status.innerHTML = coinHtml(esc(`✅ ${depositState.pendingAmount} 🪙 satt inn på kontoen din!`));
+  SFX.coin();
   status.classList.add('success');
   status.style.display = '';
   document.getElementById('btn-deposit').disabled = true;
