@@ -1000,7 +1000,30 @@ function openGuest() {
    INIT
    ─────────────────────────────────────────────────────────── */
 let resizeTimer = null;
+// ═══════════════════════════════════════════════════════
+// TILBAKE-NAVIGASJON
+// Myntstigen kan åpnes fra tre steder:
+//   - elevapp14.html (kall: stigespill.html?from=elevapp14)
+//   - elevapp57.html (kall: stigespill.html?from=elevapp57)
+//   - direkte fra index.html (uten parameter)
+// Når vi kom fra en elevapp skal logo og tilbakeknappen føre dit,
+// ikke til markedsføringssiden.
+// ═══════════════════════════════════════════════════════
+function applyNavContext() {
+  const from = new URLSearchParams(window.location.search).get("from");
+  let backUrl = "index.html", backText = "Tilbake til forsiden";
+  if (from === "elevapp14") { backUrl = "elevapp14.html"; backText = "Tilbake til appen min"; }
+  else if (from === "elevapp57") { backUrl = "elevapp57.html"; backText = "Tilbake til appen min"; }
+  const logo = document.querySelector(".topnav-logo");
+  const back = document.querySelector(".topnav-back");
+  const backSpan = document.querySelector(".topnav-back span");
+  if (logo) logo.setAttribute("href", backUrl);
+  if (back) back.setAttribute("href", backUrl);
+  if (backSpan) backSpan.textContent = backText;
+}
+
 function init() {
+  applyNavContext();
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { drawConnectors(); renderPawns(); }, 150);
