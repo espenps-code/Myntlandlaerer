@@ -71,10 +71,11 @@
   window._get     = get;
   window._fbReady = true;
 
-  const VALID14 = ['1. klasse','2. klasse','3. klasse','4. klasse'];
+  // Godtar alle klassenavn læreren velger. Elevene hentes uansett bare fra
+  // students14-noden (1.–4. trinn), så trinn-skillet er allerede ivaretatt.
   onValue(ref(db, 'students14'), snap => {
     window._allStudents = snap.val()
-      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k})).filter(s => VALID14.includes(s.class))
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k})).filter(s => s.class && String(s.class).trim() !== "")
       : [];
     if (window._currentStudent) {
       const updated = window._allStudents.find(s => s.fbKey === window._currentStudent.fbKey);

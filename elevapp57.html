@@ -62,10 +62,11 @@
   window._db=db; window._ref=ref; window._onValue=onValue;
   window._update=update; window._push=push; window._set=set; window._get=get;
 
-  const VALID57=['5. klasse','6. klasse','7. klasse'];
+  // Godtar alle klassenavn læreren velger. Elevene hentes uansett bare fra
+  // students57-noden (5.–7. trinn), så trinn-skillet er allerede ivaretatt.
 
   onValue(ref(db,'students57'),snap=>{
-    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>VALID57.includes(s.class)):[];
+    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>s.class&&String(s.class).trim()!==""):[];
     if(window._currentStudent){
       const up=window._allStudents.find(s=>s.fbKey===window._currentStudent.fbKey);
       // MERGE into the existing object so local mutations are not lost.
