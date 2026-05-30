@@ -588,7 +588,7 @@ function beginCount(i, roll) {
   const mv = document.getElementById('btn-move');
   if (mv) { mv.style.display = ''; mv.disabled = true; }
   updateCountUI();
-  miniLog('🎲 ' + roll + ' — tell deg fram! Trykk paa rutene en etter en.');
+  miniLog('🎲 ' + roll + ' — tell deg fram! Trykk på rutene en etter en.');
 }
 
 // Marker en rute som talt og sett et lite tall-merke paa den.
@@ -618,7 +618,7 @@ function updateCountUI() {
   }
 }
 
-// Trykk paa en rute mens man teller. Riktig naborute => marker og tell opp.
+// Trykk på en rute mens man teller. Riktig naborute => marker og tell opp.
 function handleTileTap(n) {
   const c = game.count;
   if (!c || game.over) return;
