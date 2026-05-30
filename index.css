@@ -331,11 +331,12 @@
   }
 
   .cards-grid.tools-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   @media (max-width: 720px) {
     .cards-grid { grid-template-columns: 1fr; }
+    .cards-grid.tools-grid { grid-template-columns: 1fr; }
   }
 
   .portal-card {
@@ -456,117 +457,67 @@
   .card-student-57 .portal-card-arrow { color: var(--purple); }
   .card-student-57 .portal-card-monster { background: var(--purple-light); }
 
+  /* Elev-spill: beholder kraftig farge (leken sone for barna) */
   .card-myntjakten {
-    background: linear-gradient(135deg, #4a3d9e, var(--purple) 55%, #7b6fd9);
+    background: linear-gradient(135deg, #443a8f, var(--purple) 50%, #5d52bd);
     border-color: var(--purple);
     color: white;
   }
   .card-myntjakten:hover { border-color: var(--amber); }
   .card-myntjakten .portal-card-title { color: white; }
-  .card-myntjakten .portal-card-desc { color: rgba(255, 255, 255, 0.92); }
+  .card-myntjakten .portal-card-desc { color: rgba(255, 255, 255, 0.95); }
   .card-myntjakten .portal-card-tag { background: var(--amber); color: var(--teal-dark); }
   .card-myntjakten .portal-card-arrow { color: var(--amber); }
-  .card-myntjakten .portal-card-monster {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  .card-homework {
-    background: linear-gradient(135deg, var(--teal-dark), #2e1f72);
-    border-color: var(--teal-dark);
-    color: white;
-  }
-  .card-homework:hover { border-color: var(--amber); }
-  .card-homework .portal-card-title { color: white; }
-  .card-homework .portal-card-desc { color: rgba(255, 255, 255, 0.85); }
-  .card-homework .portal-card-tag { background: white; color: var(--teal-dark); }
-  .card-homework .portal-card-arrow { color: white; }
-  .card-homework .portal-card-monster {
-    background: rgba(255, 255, 255, 0.12);
-  }
-
-  .card-print {
-    background: linear-gradient(135deg, var(--coral), #b3431f);
-    border-color: var(--coral);
-    color: white;
-  }
-  .card-print:hover { border-color: var(--amber); }
-  .card-print .portal-card-title { color: white; }
-  .card-print .portal-card-desc { color: rgba(255, 255, 255, 0.9); }
-  .card-print .portal-card-tag { background: white; color: var(--coral); }
-  .card-print .portal-card-arrow { color: white; }
-  .card-print .portal-card-monster {
-    background: rgba(255, 255, 255, 0.18);
-  }
-
-  .card-lekse {
-    background: linear-gradient(135deg, var(--green), var(--green-dark));
-    border-color: var(--green);
-    color: white;
-  }
-  .card-lekse:hover { border-color: var(--amber); }
-  .card-lekse .portal-card-title { color: white; }
-  .card-lekse .portal-card-desc { color: rgba(255, 255, 255, 0.9); }
-  .card-lekse .portal-card-tag { background: white; color: var(--green-dark); }
-  .card-lekse .portal-card-arrow { color: white; }
-  .card-lekse .portal-card-monster {
-    background: rgba(255, 255, 255, 0.18);
-  }
-
-  .card-calculator {
-    background: linear-gradient(135deg, var(--teal), #0e3d6b);
-    border-color: var(--teal);
-    color: white;
-  }
-  .card-calculator:hover { border-color: var(--amber); }
-  .card-calculator .portal-card-title { color: white; }
-  .card-calculator .portal-card-desc { color: rgba(255, 255, 255, 0.9); }
-  .card-calculator .portal-card-tag { background: white; color: var(--teal); }
-  .card-calculator .portal-card-arrow { color: white; }
-  .card-calculator .portal-card-monster {
-    background: rgba(255, 255, 255, 0.18);
-  }
-
-  .card-stories {
-    background: linear-gradient(135deg, #b8377f, #7d2360);
-    border-color: #b8377f;
-    color: white;
-  }
-  .card-stories:hover { border-color: var(--amber); }
-  .card-stories .portal-card-title { color: white; }
-  .card-stories .portal-card-desc { color: rgba(255, 255, 255, 0.9); }
-  .card-stories .portal-card-tag { background: white; color: #b8377f; }
-  .card-stories .portal-card-arrow { color: white; }
-  .card-stories .portal-card-monster {
-    background: rgba(255, 255, 255, 0.18);
-  }
-
-  .card-ordverksted {
-    background: linear-gradient(135deg, #b07818, #6e4710);
-    border-color: #b07818;
-    color: white;
-  }
-  .card-ordverksted:hover { border-color: var(--amber); }
-  .card-ordverksted .portal-card-title { color: white; }
-  .card-ordverksted .portal-card-desc { color: rgba(255, 255, 255, 0.9); }
-  .card-ordverksted .portal-card-tag { background: white; color: #6e4710; }
-  .card-ordverksted .portal-card-arrow { color: white; }
-  .card-ordverksted .portal-card-monster {
-    background: rgba(255, 255, 255, 0.18);
-  }
+  .card-myntjakten .portal-card-monster { background: rgba(255, 255, 255, 0.2); }
 
   .card-myntstige {
-    background: linear-gradient(135deg, #1aa86a, #0c6e46);
-    border-color: #1aa86a;
+    background: linear-gradient(135deg, #0e7a4e, #0a5340);
+    border-color: #0e7a4e;
     color: white;
   }
   .card-myntstige:hover { border-color: var(--amber); }
   .card-myntstige .portal-card-title { color: white; }
-  .card-myntstige .portal-card-desc { color: rgba(255, 255, 255, 0.92); }
-  .card-myntstige .portal-card-tag { background: white; color: #0c6e46; }
-  .card-myntstige .portal-card-arrow { color: white; }
-  .card-myntstige .portal-card-monster {
-    background: rgba(255, 255, 255, 0.18);
-  }
+  .card-myntstige .portal-card-desc { color: rgba(255, 255, 255, 0.95); }
+  .card-myntstige .portal-card-tag { background: white; color: #0a5340; }
+  .card-myntstige .portal-card-arrow { color: #d6f5e6; }
+  .card-myntstige .portal-card-monster { background: rgba(255, 255, 255, 0.2); }
+
+  /* Laererverktoy: rolige hvite kort med farget aksent (samme stil som portalene) */
+  .card-calculator { border-color: var(--teal-light); }
+  .card-calculator:hover { border-color: var(--teal); }
+  .card-calculator .portal-card-tag { background: var(--teal-light); color: var(--teal-dark); }
+  .card-calculator .portal-card-arrow { color: var(--teal); }
+  .card-calculator .portal-card-monster { background: var(--teal-light); }
+
+  .card-print { border-color: var(--coral-light); }
+  .card-print:hover { border-color: var(--coral); }
+  .card-print .portal-card-tag { background: var(--coral-light); color: #b3431f; }
+  .card-print .portal-card-arrow { color: var(--coral); }
+  .card-print .portal-card-monster { background: var(--coral-light); }
+
+  .card-stories { border-color: #f6d5e8; }
+  .card-stories:hover { border-color: #b8377f; }
+  .card-stories .portal-card-tag { background: #fbe6f2; color: #9e2a68; }
+  .card-stories .portal-card-arrow { color: #b8377f; }
+  .card-stories .portal-card-monster { background: #fbe6f2; }
+
+  .card-homework { border-color: var(--purple-light); }
+  .card-homework:hover { border-color: var(--purple); }
+  .card-homework .portal-card-tag { background: var(--purple-light); color: var(--purple); }
+  .card-homework .portal-card-arrow { color: var(--purple); }
+  .card-homework .portal-card-monster { background: var(--purple-light); }
+
+  .card-lekse { border-color: var(--green-light); }
+  .card-lekse:hover { border-color: var(--green); }
+  .card-lekse .portal-card-tag { background: var(--green-light); color: var(--green-dark); }
+  .card-lekse .portal-card-arrow { color: var(--green-dark); }
+  .card-lekse .portal-card-monster { background: var(--green-light); }
+
+  .card-ordverksted { border-color: var(--amber-light); }
+  .card-ordverksted:hover { border-color: var(--amber); }
+  .card-ordverksted .portal-card-tag { background: var(--amber-light); color: #8a5a14; }
+  .card-ordverksted .portal-card-arrow { color: #b07818; }
+  .card-ordverksted .portal-card-monster { background: var(--amber-light); }
 
   /* Live preview – ett enkelt telefon-vindu med tabs for trinn 1–4 / 5–7 */
   .preview-card {
