@@ -291,10 +291,13 @@
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
   .cloze { white-space:pre-wrap; line-height:2.7; font-size:1.05rem; }
+  .cloze.sz-liten   { font-size:0.92rem; line-height:2.35; }
+  .cloze.sz-middels { font-size:1.05rem; line-height:2.7;  }
+  .cloze.sz-stor    { font-size:1.22rem; line-height:3.05; }
   .blank {
-    display:inline-block; min-width:3ch;
+    display:inline-block; min-width:4ch;
     border-bottom:2.5px solid var(--teal-dark);
-    height:1.15em; margin:0 3px; vertical-align:bottom;
+    height:1.5em; margin:0 4px; vertical-align:-0.35em;
   }
   .fillans { color:var(--coral); font-weight:800; }
   .cloze-note { margin-top:14px; font-size:0.85rem; color:var(--muted); font-weight:700; }
@@ -458,6 +461,14 @@
         <input type="checkbox" id="showBank" checked>
         <span>Vis ordbank på arket <em>– en stokket liste elevene kan velge ord fra</em></span>
       </label>
+      <div style="margin-top:16px; max-width:340px;">
+        <label class="fld">Skriftstørrelse på arket</label>
+        <select id="fillSize">
+          <option value="liten">Liten – får plass til mye tekst</option>
+          <option value="middels" selected>Middels</option>
+          <option value="stor">Stor – lettere å lese og skrive</option>
+        </select>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -894,7 +905,7 @@ function makeCloze(){
   const body = tokens.map(t => {
     if (t.isWord && pickedSet.has(t.clean)){
       blanks++;
-      return `<span class="blank" style="width:${t.clean.length+2}ch"></span>`;
+      return `<span class="blank" style="width:${t.clean.length+4}ch"></span>`;
     }
     return escapeHtml(t.text);
   }).join('');
@@ -918,7 +929,8 @@ function renderCloze(title,meta,answer){
     inner += `<div class="wordbank"><h4>🪙 Ordbank</h4><div class="bankwords">${
       bank.map(w=>`<span class="bankword">${w}</span>`).join('')}</div></div>`;
   }
-  inner += `<div class="cloze">${answer?cz.fasit:cz.body}</div>`;
+  const sz = ($('fillSize') && $('fillSize').value) || 'middels';
+  inner += `<div class="cloze sz-${sz}">${answer?cz.fasit:cz.body}</div>`;
   if (!answer && cz.blanks > picked.length)
     inner += '<p class="cloze-note">💡 Noen ord skal brukes flere ganger.</p>';
   return sheet(title,meta,inner);
