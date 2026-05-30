@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ordverkstedet – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Myntland – Ordverkstedet" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<!-- Delt Myntland-styling (palett + fonter). Inline-stilene under bygger videre på denne. -->
+<link rel="stylesheet" href="myntland.css">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: var(--green-dark); }
+
+  /* ---------- topnav ---------- */
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem; color: var(--teal-dark);
+    text-decoration: none; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-back {
+    font-size: 0.9rem; font-weight: 800; color: var(--green-dark);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  /* ---------- hero ---------- */
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    color: #fff; padding: 3rem 1.5rem; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(239,159,39,0.15) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(216,90,48,0.18) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 760px; margin: 0 auto; text-align: center;
+    position: relative; z-index: 2;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    line-height: 1.05; margin-bottom: 1rem;
+  }
+  .hero h1 .accent { color: var(--amber); }
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.1rem);
+    color: rgba(255,255,255,0.9);
+    max-width: 620px; margin: 0 auto; font-weight: 600;
+  }
+
+  /* ---------- layout ---------- */
+  main { max-width: 1040px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  /* ---------- stepper ---------- */
+  .stepper { display:flex; justify-content:center; gap:8px; margin: 0 0 2rem; flex-wrap:wrap; }
+  .stepper .st {
+    display:flex; align-items:center; gap:8px;
+    font-size: 0.9rem; font-weight:800; color:var(--muted);
+    padding: 8px 18px; border-radius: 22px;
+    background: var(--white); border: 2px solid var(--border);
+  }
+  .stepper .st.active { color:#fff; background: var(--coral); border-color: var(--coral); }
+  .stepper .st.done { color:#fff; background: var(--green); border-color: var(--green); }
+  .stepper .st .dot {
+    width:22px; height:22px; border-radius:50%;
+    background: var(--bg); display:flex; align-items:center;
+    justify-content:center; font-size:0.8rem; font-weight:900;
+  }
+  .stepper .st.active .dot, .stepper .st.done .dot { background: rgba(255,255,255,0.35); }
+
+  /* ---------- panels ---------- */
+  .panel {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.75rem 1.85rem;
+    margin-bottom: 1.5rem;
+  }
+  .panel h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem; color: var(--teal-dark);
+    margin-bottom: 0.3rem; line-height: 1.15;
+    display:flex; align-items:center; gap:10px;
+  }
+  .panel h2 .badge {
+    background: var(--amber); color:#fff; width:34px; height:34px;
+    border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    font-size:1rem; font-family:'Fredoka One',cursive; flex-shrink:0;
+  }
+  .panel .sub { color:var(--muted); font-size:0.9rem; font-weight:600; margin-bottom:1.25rem; }
+
+  /* ---------- segmented ---------- */
+  .seg {
+    display:inline-flex; flex-wrap:wrap; background: var(--bg);
+    border:2px solid var(--border); border-radius:14px; padding:4px; gap:4px;
+  }
+  .seg button {
+    border:none; background:transparent; color:var(--muted);
+    font-family:'Nunito',sans-serif; font-size:0.95rem; font-weight:800;
+    padding:9px 20px; border-radius:10px; cursor:pointer; transition: all .15s;
+  }
+  .seg button.active { background:var(--white); color:var(--coral); box-shadow:0 2px 6px rgba(0,0,0,0.12); }
+  .seg button.disabled { opacity:.38; cursor:not-allowed; }
+
+  label.fld { display:block; font-weight:800; margin-bottom:6px; font-size:0.9rem; color:var(--teal-dark); }
+
+  textarea, input[type=text], select {
+    width:100%; font-family:'Nunito',sans-serif; font-size:1rem; font-weight:600;
+    color:var(--teal-dark);
+    border:2px solid var(--border); border-radius:12px; background:var(--bg);
+    padding:0.7rem 0.85rem;
+  }
+  textarea { min-height:170px; resize:vertical; line-height:1.6; }
+  textarea:focus, input:focus, select:focus {
+    outline:none; border-color:var(--green); background:var(--white);
+    box-shadow:0 0 0 3px rgba(29,158,117,0.18);
+  }
+
+  .row { display:flex; gap:16px; flex-wrap:wrap; }
+  .row > div { flex:1; min-width:160px; }
+
+  .btn {
+    font-family:'Fredoka One',cursive; font-size:1rem;
+    padding:0.8rem 1.5rem; border-radius:12px; cursor:pointer; border:none;
+    transition: transform .08s;
+  }
+  .btn:active { transform: translateY(2px); }
+  .btn-primary { background:var(--green); color:#fff; box-shadow:0 4px 0 var(--green-dark); }
+  .btn-gold { background:var(--amber); color:#fff; box-shadow:0 4px 0 var(--amber-dark); }
+  .btn-ghost { background:var(--white); color:var(--teal-dark); border:2px solid var(--border); box-shadow:0 4px 0 var(--border); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; transform:none; }
+
+  .toolbar { display:flex; gap:12px; flex-wrap:wrap; margin-top:1.25rem; }
+
+  /* ---------- klikkbar tekst ---------- */
+  .pickbox {
+    margin-top:1rem; padding:1.25rem 1.4rem; border-radius:14px;
+    background:var(--bg); border:2px dashed var(--border);
+    font-size:1.05rem; line-height:2.1; max-height:340px; overflow-y:auto;
+  }
+  .tok {
+    cursor:pointer; padding:2px 4px; border-radius:7px;
+    transition: background .1s, color .1s; user-select:none;
+  }
+  .tok.word:hover { background:var(--amber-light); }
+  .tok.picked { background:var(--amber); color:#fff; font-weight:800; }
+  .tok.picked:hover { background:var(--amber-dark); }
+  .tok.dead { color:#9aae9a; cursor:default; }
+
+  .pickbar {
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:10px; margin-top:1rem;
+  }
+  .count {
+    font-size:0.95rem; font-weight:800;
+    background:var(--bg); border:2px solid var(--border);
+    padding:7px 16px; border-radius:20px;
+  }
+  .count b { color:var(--coral); }
+
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:0.75rem; }
+  .chip {
+    background:var(--amber); color:#fff; font-weight:800; font-size:0.85rem;
+    padding:5px 12px 5px 14px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .chip .x { cursor:pointer; font-size:1rem; opacity:.85; line-height:1; }
+  .chip .x:hover { opacity:1; }
+
+  .clue-row { display:flex; gap:10px; align-items:center; margin-bottom:8px; }
+  .clue-row .w {
+    min-width:130px; font-weight:800; background:var(--bg);
+    border:2px solid var(--border); color:var(--teal-dark);
+    padding:6px 12px; border-radius:9px; font-size:0.85rem;
+  }
+  .clue-row input { flex:1; }
+
+  .msg { padding:0.75rem 1rem; border-radius:12px; font-size:0.9rem; margin-top:1rem; font-weight:700; border:2px solid; }
+  .msg.err { background:var(--coral-light); color:#a33f1c; border-color:#f0c3ad; }
+  .msg.ok  { background:var(--green-light); color:var(--green-dark); border-color:#bfdec6; }
+  .msg.info{ background:var(--teal-light); color:var(--teal); border-color:#c2d4e6; }
+
+  /* ---------- printed sheet ---------- */
+  .sheet {
+    background:var(--white); border:2px solid var(--border); border-radius:14px;
+    padding:34px 40px; margin-bottom:22px; box-shadow:0 8px 28px rgba(0,0,0,0.12);
+  }
+  .sheet-head {
+    display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(135deg, var(--green-dark), var(--green));
+    border-radius:10px; padding:14px 20px; margin-bottom:20px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .sheet-head .left { display:flex; align-items:center; gap:12px; }
+  .sheet-head .scoin {
+    width:44px; height:44px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f6c563, var(--amber) 65%, var(--amber-dark));
+    display:flex; align-items:center; justify-content:center; font-size:21px;
+    box-shadow:0 3px 0 var(--amber-dark);
+  }
+  .sheet-head h3 { font-family:'Fredoka One',cursive; font-size:1.5rem; color:var(--amber); line-height:1.1; }
+  .sheet-head .wm { font-size:0.7rem; color:rgba(255,255,255,0.8); font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+  .sheet-head .meta { font-size:0.8rem; color:rgba(255,255,255,0.85); text-align:right; font-weight:700; }
+  .name-line { display:flex; gap:22px; margin-bottom:20px; font-size:0.85rem; font-weight:700; color:var(--muted); }
+  .name-line span { flex:1; border-bottom:2px dotted var(--border); padding-bottom:3px; }
+
+  table.grid { border-collapse:collapse; margin:6px auto; }
+  table.grid td {
+    width:30px; height:30px; text-align:center; vertical-align:middle;
+    font-family:'Nunito',sans-serif; font-size:1rem; font-weight:800;
+    text-transform:uppercase; border:1.5px solid var(--border); color:var(--teal-dark);
+  }
+  table.grid.ws td { background:var(--white); }
+  table.grid.cw td.block { background:transparent; border:none; }
+  table.grid.cw td.cell { background:#fff; position:relative; border:1.5px solid var(--green-dark); }
+  table.grid.cw td .cnum { position:absolute; top:1px; left:3px; font-size:9px; color:var(--green-dark); font-weight:900; }
+  table.grid td.solved { color:var(--coral); background:var(--coral-light) !important; }
+
+  .find { margin-top:18px; }
+  .find h4 { font-family:'Fredoka One',cursive; font-size:1.05rem; margin-bottom:8px; color:var(--green-dark); }
+  .find ul { columns:3; list-style:none; font-size:0.95rem; font-weight:700; }
+  .find li { padding:3px 0; }
+  .find li::before { content:"🪙 "; font-size:13px; }
+
+  .clues { margin-top:18px; display:flex; gap:36px; flex-wrap:wrap; }
+  .clues .col { flex:1; min-width:230px; }
+  .clues h4 { font-family:'Fredoka One',cursive; font-size:1rem; margin-bottom:6px; color:var(--green-dark); border-bottom:2px solid var(--border); padding-bottom:3px; }
+  .clues ol { padding-left:26px; font-size:0.9rem; }
+  .clues li { margin-bottom:4px; }
+
+  .ans-tag {
+    display:inline-block; background:var(--coral); color:#fff;
+    font-size:0.7rem; font-weight:800; padding:4px 14px; border-radius:20px;
+    letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px;
+  }
+
+  /* ---------- fyll inn ---------- */
+  .check-row {
+    display:flex; align-items:center; gap:10px;
+    font-weight:800; cursor:pointer; font-size:0.95rem; color:var(--teal-dark);
+  }
+  .check-row input { width:20px; height:20px; accent-color:var(--green); cursor:pointer; flex-shrink:0; }
+  .check-row em { font-weight:600; font-style:normal; color:var(--muted); }
+
+  .wordbank {
+    background:var(--amber-light); border:2px solid var(--amber);
+    border-radius:12px; padding:12px 16px; margin-bottom:20px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .wordbank h4 { font-family:'Fredoka One',cursive; font-size:1rem; color:var(--amber-dark); margin-bottom:8px; }
+  .bankwords { display:flex; flex-wrap:wrap; gap:8px; }
+  .bankword {
+    background:var(--white); border:2px solid var(--amber); color:var(--teal-dark);
+    font-weight:800; font-size:0.9rem; padding:4px 12px; border-radius:8px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .cloze { white-space:pre-wrap; line-height:2.7; font-size:1.05rem; }
+  .blank {
+    display:inline-block; min-width:3ch;
+    border-bottom:2.5px solid var(--teal-dark);
+    height:1.15em; margin:0 3px; vertical-align:bottom;
+  }
+  .fillans { color:var(--coral); font-weight:800; }
+  .cloze-note { margin-top:14px; font-size:0.85rem; color:var(--muted); font-weight:700; }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  footer a { color: var(--muted); margin: 0 0.5rem; }
+  footer a:hover { color: var(--green-dark); }
+
+  @media (max-width: 520px) {
+    main { padding: 1.75rem 1rem 3rem; }
+    .panel { padding: 1.4rem 1.2rem; }
+    .sheet { padding: 22px 18px; }
+  }
+
+  @media print {
+    body { background:#fff; }
+    .no-print, .topnav, .hero, footer { display:none !important; }
+    main { padding:0; max-width:none; }
+    .sheet { box-shadow:none; border:none; border-radius:0; padding:8mm 4mm; page-break-after:always; }
+    .sheet:last-child { page-break-after:auto; }
+    .sheet-head { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    @page { size:A4; margin:10mm 12mm; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav no-print">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
+
+<section class="hero no-print">
+  <div class="hero-inner">
+    <div class="hero-tag">For lærere · 1.–7. trinn</div>
+    <h1>Ord<span class="accent">verkstedet</span></h1>
+    <p class="hero-sub">Lim inn en tekst, trykk på ordene du vil ha med – få ferdig ordsøk, kryssord eller fyll inn-oppgave til klassen.</p>
+  </div>
+</section>
+
+<main>
+
+  <div class="stepper no-print" id="stepper">
+    <div class="st active" data-s="1"><span class="dot">1</span> Tekst</div>
+    <div class="st" data-s="2"><span class="dot">2</span> Velg ord</div>
+    <div class="st" data-s="3"><span class="dot">3</span> Lag oppgave</div>
+  </div>
+
+  <!-- STEG 1 -->
+  <div class="panel no-print" id="panel1">
+    <h2><span class="badge">1</span> Legg inn tekst eller ordliste</h2>
+    <p class="sub">Lim inn et avsnitt fra læreboka, en Myntland-historie, eller bare en liste med ord.</p>
+
+    <div style="margin-bottom:14px;">
+      <div class="seg" id="inputMode">
+        <button data-mode="text" class="active">📄 Fritekst</button>
+        <button data-mode="list">📝 Ordliste</button>
+      </div>
+    </div>
+
+    <textarea id="rawInput" placeholder="Lim inn teksten her. For eksempel et avsnitt om sparing, budsjett eller renter – så får du trykke på akkurat de ordene du vil bruke i neste steg."></textarea>
+
+    <div class="toolbar">
+      <button class="btn btn-primary" id="toStep2">Gå videre – velg ord →</button>
+      <button class="btn btn-ghost" id="clearAll">Tøm</button>
+    </div>
+    <div id="msg1"></div>
+  </div>
+
+  <!-- STEG 2 -->
+  <div class="panel no-print" id="panel2" style="display:none;">
+    <h2><span class="badge">2</span> Trykk på ordene du vil ha med</h2>
+    <p class="sub" id="sub2">Klikk på et ord for å markere det. Trykk igjen for å fjerne det. Velg gjerne 8–12 ord.</p>
+
+    <div class="pickbox" id="pickbox"></div>
+
+    <div class="pickbar">
+      <div class="count">Valgte ord: <b id="pickCount">0</b></div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-ghost" id="pickClear" style="padding:9px 16px; font-size:14px; box-shadow:0 3px 0 var(--border);">Nullstill valg</button>
+        <button class="btn btn-ghost" id="autoPick" style="padding:9px 16px; font-size:14px; box-shadow:0 3px 0 var(--border);">✨ Foreslå ord</button>
+      </div>
+    </div>
+    <div class="chips" id="pickChips"></div>
+
+    <div class="toolbar">
+      <button class="btn btn-ghost" id="backTo1">← Tilbake</button>
+      <button class="btn btn-primary" id="toStep3">Gå videre →</button>
+    </div>
+    <div id="msg2"></div>
+  </div>
+
+  <!-- STEG 3 -->
+  <div class="panel no-print" id="panel3" style="display:none;">
+    <h2><span class="badge">3</span> Velg type og lag oppgaven</h2>
+    <p class="sub">Velg hva slags oppgave klassen skal få.</p>
+
+    <div style="margin-bottom:18px;">
+      <div class="seg" id="puzzleType">
+        <button data-type="search" class="active">🔍 Ordsøk</button>
+        <button data-type="crossword">✏️ Kryssord</button>
+        <button data-type="fill">✍️ Fyll inn</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-bottom:14px;">
+      <div>
+        <label class="fld">Tittel på arket</label>
+        <input type="text" id="title" value="Ukens ord">
+      </div>
+      <div>
+        <label class="fld">Klasse / dato (valgfritt)</label>
+        <input type="text" id="meta" placeholder="7B – uke 12">
+      </div>
+    </div>
+
+    <div id="searchOpts">
+      <div class="row">
+        <div style="flex:0 0 190px;">
+          <label class="fld">Rutenett</label>
+          <select id="gridSize">
+            <option value="auto" selected>Automatisk</option>
+            <option value="12">12 × 12</option>
+            <option value="15">15 × 15</option>
+            <option value="18">18 × 18</option>
+          </select>
+        </div>
+        <div style="flex:0 0 250px;">
+          <label class="fld">Vanskegrad</label>
+          <select id="difficulty">
+            <option value="easy">🟢 Lett – vannrett og loddrett</option>
+            <option value="medium" selected>🟡 Middels – også diagonalt</option>
+            <option value="hard">🔴 Vanskelig – også baklengs</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="crossOpts" style="display:none;">
+      <p class="sub" style="margin-top:4px;">Skriv et hint til hvert ord. Står feltet tomt, vises bare ordlengden.</p>
+      <div id="clueEditor"></div>
+    </div>
+
+    <div id="fillOpts" style="display:none;">
+      <p class="sub" style="margin-top:4px;">Teksten fra steg 1 vises med luker der de valgte ordene stod. Elevene fyller dem inn igjen.</p>
+      <label class="check-row">
+        <input type="checkbox" id="showBank" checked>
+        <span>Vis ordbank på arket <em>– en stokket liste elevene kan velge ord fra</em></span>
+      </label>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn-ghost" id="backTo2">← Tilbake</button>
+      <button class="btn btn-gold" id="generateBtn">🪙 Lag oppgaven</button>
+    </div>
+    <div id="msg3"></div>
+  </div>
+
+  <!-- PRINT BAR -->
+  <div class="toolbar no-print" id="printBar" style="display:none; justify-content:center; margin-bottom:22px;">
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Skriv ut / lagre PDF</button>
+    <button class="btn btn-ghost" id="regenBtn">↻ Lag ny variant</button>
+  </div>
+
+  <div id="output"></div>
+
+</main>
+
+<footer class="no-print">
+  <span>🪙 Myntland © 2026 · Ordverkstedet lagrer ingen data</span><br>
+  <a href="index.html">Forsiden</a> ·
+  <a href="for-skoler.html">For skoler</a> ·
+  <a href="laererveiledning.html">Lærerveiledning</a> ·
+  <a href="mailto:kontakt@myntland.no">Kontakt</a>
+</footer>
+
+<script>
+/* ============ STATE ============ */
+let inputMode = 'text';
+let puzzleType = 'search';
+let tokens = [];          // {text, isWord, clean, idx} – rekonstruert tekst
+let picked = [];          // {word, clue}
+let pickedSet = new Set();
+
+const NORDIC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ';
+const STOP = new Set(('og i jeg det at en et den til er som på de med han av ikke der så var meg seg men ' +
+'ett har om vi min mitt ha hadde hun nå over da ved fra du ut sin dem oss opp man kan hans hvor eller ' +
+'hva skal selv sjøl her alle vil bli ble blitt kunne inn når være kom noen noe ville dere deres ' +
+'kun ja etter ned skulle denne for deg si sine sitt mot meget hvorfor dette disse uten hvordan ingen ' +
+'din ditt blir samme hvilken hvilke sånn inni mellom vår hver hvem hvis både bare enn fordi før mange ' +
+'også slik vært båe begge siden henne hennes seg hverandre').split(' '));
+
+const $ = id => document.getElementById(id);
+
+/* ============ STEPPER ============ */
+function setStep(n) {
+  $('panel1').style.display = n===1 ? 'block':'none';
+  $('panel2').style.display = n===2 ? 'block':'none';
+  $('panel3').style.display = n===3 ? 'block':'none';
+  document.querySelectorAll('#stepper .st').forEach(st => {
+    const s = +st.dataset.s;
+    st.classList.toggle('active', s===n);
+    st.classList.toggle('done', s<n);
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ============ INPUT MODE ============ */
+$('inputMode').addEventListener('click', e => {
+  if (e.target.tagName!=='BUTTON') return;
+  inputMode = e.target.dataset.mode;
+  document.querySelectorAll('#inputMode button').forEach(b=>b.classList.toggle('active',b===e.target));
+  $('rawInput').placeholder = inputMode==='text'
+    ? 'Lim inn teksten her. For eksempel et avsnitt om sparing, budsjett eller renter – så får du trykke på akkurat de ordene du vil bruke i neste steg.'
+    : 'Skriv ett ord per linje:\nsparing\nbudsjett\nrente\nmynt\nlommepenger';
+  refreshFillBtn();
+});
+
+/* ============ STEG 1 → 2 ============ */
+function cleanWord(w){ return w.toUpperCase().replace(/[^A-ZÆØÅ]/g,''); }
+
+$('toStep2').addEventListener('click', () => {
+  const raw = $('rawInput').value.trim();
+  const msg = $('msg1'); msg.innerHTML='';
+  if (!raw) { msg.innerHTML='<div class="msg err">Lim inn litt tekst eller noen ord først.</div>'; return; }
+
+  if (inputMode==='list') {
+    // hver linje/komma blir ett valgbart "ord"
+    const items = raw.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+    tokens = [];
+    items.forEach((it,i) => {
+      const cl = cleanWord(it);
+      tokens.push({text: it, isWord: cl.length>=3 && cl.length<=14, clean: cl, idx: i});
+    });
+    const valid = tokens.filter(t=>t.isWord).length;
+    if (valid < 3) { msg.innerHTML='<div class="msg err">Trenger minst 3 brukbare ord (3–14 bokstaver).</div>'; return; }
+  } else {
+    // del opp teksten i ord + skilletegn, behold alt for visning
+    const parts = raw.match(/[A-Za-zÆØÅæøå]+|[^A-Za-zÆØÅæøå]+/g) || [];
+    tokens = parts.map((p,i) => {
+      const isLetters = /[A-Za-zÆØÅæøå]/.test(p);
+      const cl = cleanWord(p);
+      return { text:p, isWord: isLetters && cl.length>=3 && cl.length<=14, clean:cl, idx:i };
+    });
+    if (tokens.filter(t=>t.isWord).length < 3) {
+      msg.innerHTML='<div class="msg err">Fant for få ord i teksten. Lim inn en lengre tekst.</div>'; return;
+    }
+  }
+
+  picked = []; pickedSet = new Set();
+  renderPickbox();
+  updatePicks();
+  refreshFillBtn();
+  setStep(2);
+});
+
+/* ============ KLIKKBAR TEKST ============ */
+function renderPickbox() {
+  const box = $('pickbox');
+  box.innerHTML = tokens.map((t,i) => {
+    if (!t.isWord) {
+      // skilletegn / mellomrom / korte ord vises som dødtekst
+      const cls = /\S/.test(t.text) ? 'tok dead' : 'tok';
+      return `<span class="${cls}">${escapeHtml(t.text)}</span>`;
+    }
+    const on = pickedSet.has(t.clean);
+    return `<span class="tok word${on?' picked':''}" data-i="${i}">${escapeHtml(t.text)}</span>`;
+  }).join(inputMode==='list' ? '<br>' : '');
+
+  box.querySelectorAll('.tok.word').forEach(el => {
+    el.addEventListener('click', () => toggleWord(+el.dataset.i, el));
+  });
+}
+
+function escapeHtml(s){ return s.replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function toggleWord(i, el) {
+  const cl = tokens[i].clean;
+  if (pickedSet.has(cl)) {
+    pickedSet.delete(cl);
+    picked = picked.filter(p=>p.word!==cl);
+  } else {
+    if (picked.length >= 16) {
+      flash2('Maks 16 ord – fjern et før du legger til flere.','err');
+      return;
+    }
+    pickedSet.add(cl);
+    picked.push({word:cl, clue:''});
+  }
+  // oppdater ALLE forekomster av ordet (samme ord kan stå flere steder)
+  $('pickbox').querySelectorAll('.tok.word').forEach(t => {
+    if (tokens[+t.dataset.i].clean===cl) t.classList.toggle('picked', pickedSet.has(cl));
+  });
+  updatePicks();
+}
+
+function updatePicks() {
+  $('pickCount').textContent = picked.length;
+  $('pickChips').innerHTML = picked.map(p =>
+    `<span class="chip">${p.word}<span class="x" data-w="${p.word}">×</span></span>`).join('');
+  $('pickChips').querySelectorAll('.x').forEach(x => {
+    x.addEventListener('click', () => {
+      const w = x.dataset.w;
+      pickedSet.delete(w);
+      picked = picked.filter(p=>p.word!==w);
+      $('pickbox').querySelectorAll('.tok.word').forEach(t => {
+        if (tokens[+t.dataset.i].clean===w) t.classList.remove('picked');
+      });
+      updatePicks();
+    });
+  });
+}
+
+$('pickClear').addEventListener('click', () => {
+  picked=[]; pickedSet=new Set();
+  $('pickbox').querySelectorAll('.tok.word').forEach(t=>t.classList.remove('picked'));
+  updatePicks();
+});
+
+$('autoPick').addEventListener('click', () => {
+  // foreslå inntil 10 ord: lengste/hyppigste innholdsord
+  const freq = {};
+  tokens.forEach(t => {
+    if (!t.isWord) return;
+    const low = t.clean.toLowerCase();
+    if (STOP.has(low)) return;
+    freq[t.clean] = (freq[t.clean]||0)+1;
+  });
+  const ranked = Object.keys(freq)
+    .sort((a,b)=> freq[b]-freq[a] || b.length-a.length)
+    .slice(0,10);
+  picked=[]; pickedSet=new Set();
+  ranked.forEach(w => { pickedSet.add(w); picked.push({word:w,clue:''}); });
+  $('pickbox').querySelectorAll('.tok.word').forEach(t => {
+    t.classList.toggle('picked', pickedSet.has(tokens[+t.dataset.i].clean));
+  });
+  updatePicks();
+  flash2('Forslag lagt inn – juster gjerne ved å trykke på ord.','info');
+});
+
+function flash2(text,type){ $('msg2').innerHTML=`<div class="msg ${type}">${text}</div>`;
+  setTimeout(()=>{ if($('msg2').textContent===text) $('msg2').innerHTML=''; }, 4000); }
+
+function flash3(text,type){ $('msg3').innerHTML=`<div class="msg ${type}">${text}</div>`;
+  setTimeout(()=>{ if($('msg3').textContent===text) $('msg3').innerHTML=''; }, 4000); }
+
+/* Fyll inn krever sammenhengende tekst – sperres i ordliste-modus */
+function refreshFillBtn(){
+  const fb = document.querySelector('#puzzleType button[data-type="fill"]');
+  if (!fb) return;
+  const blocked = inputMode==='list';
+  fb.classList.toggle('disabled', blocked);
+  fb.title = blocked ? 'Krever fritekst – ikke tilgjengelig for ordliste' : '';
+  if (blocked && puzzleType==='fill'){
+    puzzleType = 'search';
+    document.querySelectorAll('#puzzleType button').forEach(b=>b.classList.toggle('active', b.dataset.type==='search'));
+    $('searchOpts').style.display='block';
+    $('crossOpts').style.display='none';
+    $('fillOpts').style.display='none';
+  }
+}
+
+/* ============ STEG 2 → 3 ============ */
+$('backTo1').addEventListener('click', ()=>setStep(1));
+$('toStep3').addEventListener('click', () => {
+  if (picked.length < 3) { flash2('Velg minst 3 ord før du går videre.','err'); return; }
+  if (puzzleType==='crossword') buildClueEditor();
+  setStep(3);
+});
+
+/* ============ STEG 3 ============ */
+$('backTo2').addEventListener('click', ()=>setStep(2));
+
+$('puzzleType').addEventListener('click', e => {
+  if (e.target.tagName!=='BUTTON') return;
+  if (e.target.classList.contains('disabled')){
+    flash3('«Fyll inn» trenger en sammenhengende tekst. Gå til steg 1 og velg «Fritekst».','err');
+    return;
+  }
+  puzzleType = e.target.dataset.type;
+  document.querySelectorAll('#puzzleType button').forEach(b=>b.classList.toggle('active',b===e.target));
+  $('searchOpts').style.display = puzzleType==='search' ? 'block':'none';
+  $('crossOpts').style.display  = puzzleType==='crossword' ? 'block':'none';
+  $('fillOpts').style.display   = puzzleType==='fill' ? 'block':'none';
+  if (puzzleType==='crossword') buildClueEditor();
+});
+
+function buildClueEditor() {
+  $('clueEditor').innerHTML = picked.map((p,i)=>`
+    <div class="clue-row">
+      <span class="w">${p.word}</span>
+      <input type="text" data-i="${i}" value="${p.clue.replace(/"/g,'&quot;')}" placeholder="hint til «${p.word.toLowerCase()}»">
+    </div>`).join('');
+  $('clueEditor').querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => { picked[+e.target.dataset.i].clue = e.target.value; });
+  });
+}
+
+/* ============ ORDSØK ============ */
+function makeWordSearch(list, sizeOpt, difficulty) {
+  const longest = Math.max(...list.map(w=>w.length));
+  let size = sizeOpt==='auto'
+    ? Math.max(longest+2, Math.ceil(Math.sqrt(list.join('').length)*1.6))
+    : parseInt(sizeOpt);
+  size = Math.min(Math.max(size, longest+1), 22);
+
+  let dirs = [[0,1],[1,0]];
+  if (difficulty==='medium') dirs.push([1,1],[1,-1]);
+  if (difficulty==='hard')   dirs = [[0,1],[1,0],[1,1],[1,-1],[0,-1],[-1,0],[-1,-1],[-1,1]];
+
+  const grid = Array.from({length:size},()=>Array(size).fill(''));
+  const placed = [];
+  const byLen = [...list].sort((a,b)=>b.length-a.length);
+
+  const fits = (w,r,c,dr,dc) => {
+    for (let k=0;k<w.length;k++){
+      const rr=r+dr*k, cc=c+dc*k;
+      if (rr<0||cc<0||rr>=size||cc>=size) return false;
+      if (grid[rr][cc] && grid[rr][cc]!==w[k]) return false;
+    }
+    return true;
+  };
+  const place = w => {
+    for (let a=0;a<260;a++){
+      const [dr,dc]=dirs[Math.floor(Math.random()*dirs.length)];
+      const r=Math.floor(Math.random()*size), c=Math.floor(Math.random()*size);
+      if (fits(w,r,c,dr,dc)){
+        for (let k=0;k<w.length;k++) grid[r+dr*k][c+dc*k]=w[k];
+        placed.push({word:w,r,c,dr,dc}); return true;
+      }
+    }
+    return false;
+  };
+  const failed=[];
+  byLen.forEach(w=>{ if(!place(w)) failed.push(w); });
+  for (let r=0;r<size;r++) for (let c=0;c<size;c++)
+    if (!grid[r][c]) grid[r][c]=NORDIC[Math.floor(Math.random()*NORDIC.length)];
+  return {grid,size,placed,failed};
+}
+
+/* ============ KRYSSORD ============ */
+function makeCrossword(list) {
+  const byLen=[...list].sort((a,b)=>b.word.length-a.word.length);
+  const N=44;
+  let grid=Array.from({length:N},()=>Array(N).fill(null));
+  const placed=[];
+
+  function canPlace(word,r,c,dir){
+    const dr=dir==='down'?1:0, dc=dir==='across'?1:0;
+    let crosses=0;
+    for (let k=0;k<word.length;k++){
+      const rr=r+dr*k, cc=c+dc*k;
+      if (rr<0||cc<0||rr>=N||cc>=N) return -1;
+      const cell=grid[rr][cc];
+      if (cell!==null){ if(cell!==word[k]) return -1; crosses++; }
+      else {
+        if (dir==='across'){ if((rr>0&&grid[rr-1][cc]!==null)||(rr<N-1&&grid[rr+1][cc]!==null)) return -1; }
+        else { if((cc>0&&grid[rr][cc-1]!==null)||(cc<N-1&&grid[rr][cc+1]!==null)) return -1; }
+      }
+    }
+    const bR=r-dr,bC=c-dc,aR=r+dr*word.length,aC=c+dc*word.length;
+    if (bR>=0&&bC>=0&&grid[bR][bC]!==null) return -1;
+    if (aR<N&&aC<N&&grid[aR][aC]!==null) return -1;
+    return crosses;
+  }
+  function put(word,r,c,dir,obj){
+    const dr=dir==='down'?1:0, dc=dir==='across'?1:0;
+    for (let k=0;k<word.length;k++) grid[r+dr*k][c+dc*k]=word[k];
+    placed.push({...obj,r,c,dir});
+  }
+  const first=byLen[0];
+  put(first.word,22,22-Math.floor(first.word.length/2),'across',first);
+
+  for (let i=1;i<byLen.length;i++){
+    const o=byLen[i]; let best=null;
+    for (let k=0;k<o.word.length;k++){
+      const ch=o.word[k];
+      for (const p of placed){
+        for (let m=0;m<p.word.length;m++){
+          if (p.word[m]!==ch) continue;
+          const dir=p.dir==='across'?'down':'across';
+          let r,c;
+          if (dir==='down'){ r=p.r-k; c=p.c+m; } else { r=p.r+m; c=p.c-k; }
+          const score=canPlace(o.word,r,c,dir);
+          if (score>=1 && (!best||score>best.score)) best={r,c,dir,score};
+        }
+      }
+    }
+    if (best) put(o.word,best.r,best.c,best.dir,o);
+  }
+
+  let minR=N,maxR=0,minC=N,maxC=0;
+  placed.forEach(p=>{
+    const dr=p.dir==='down'?1:0, dc=p.dir==='across'?1:0;
+    minR=Math.min(minR,p.r); minC=Math.min(minC,p.c);
+    maxR=Math.max(maxR,p.r+dr*(p.word.length-1));
+    maxC=Math.max(maxC,p.c+dc*(p.word.length-1));
+  });
+  const rows=maxR-minR+1, cols=maxC-minC+1;
+  const out=Array.from({length:rows},()=>Array(cols).fill(null));
+  placed.forEach(p=>{
+    const dr=p.dir==='down'?1:0, dc=p.dir==='across'?1:0;
+    for (let k=0;k<p.word.length;k++) out[p.r-minR+dr*k][p.c-minC+dc*k]=p.word[k];
+    p.r-=minR; p.c-=minC;
+  });
+  const numAt={}; let num=0; const across=[],down=[];
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++){
+    if (out[r][c]===null) continue;
+    const sA=(c===0||out[r][c-1]===null)&&(c+1<cols&&out[r][c+1]!==null);
+    const sD=(r===0||out[r-1][c]===null)&&(r+1<rows&&out[r+1][c]!==null);
+    if (sA||sD){ num++; numAt[r+'_'+c]=num; }
+  }
+  placed.forEach(p=>{
+    const n=numAt[p.r+'_'+p.c];
+    const e={num:n,word:p.word,clue:p.clue,len:p.word.length};
+    if (p.dir==='across') across.push(e); else down.push(e);
+  });
+  across.sort((a,b)=>a.num-b.num); down.sort((a,b)=>a.num-b.num);
+  const failed=list.filter(o=>!placed.find(p=>p.word===o.word)).map(o=>o.word);
+  return {grid:out,rows,cols,numAt,across,down,failed};
+}
+
+/* ============ RENDER ============ */
+function sheet(title,meta,body){
+  return `<div class="sheet">
+    <div class="sheet-head">
+      <div class="left">
+        <div class="scoin">🪙</div>
+        <div><h3>${escapeHtml(title)||'Oppgaveark'}</h3><div class="wm">MYNTLAND · ORDVERKSTEDET</div></div>
+      </div>
+      <div class="meta">${escapeHtml(meta)||''}</div>
+    </div>
+    <div class="name-line"><span>Navn:</span><span>Klasse:</span><span>Dato:</span></div>
+    ${body}
+  </div>`;
+}
+
+function renderWordSearch(ws,title,meta,answer){
+  let html='<table class="grid ws"><tbody>';
+  for (let r=0;r<ws.size;r++){
+    html+='<tr>';
+    for (let c=0;c<ws.size;c++){
+      let solved=false;
+      if (answer){
+        solved=ws.placed.some(p=>{
+          for (let k=0;k<p.word.length;k++)
+            if (p.r+p.dr*k===r&&p.c+p.dc*k===c) return true;
+          return false;
+        });
+      }
+      html+=`<td${solved?' class="solved"':''}>${ws.grid[r][c]}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  const list=`<div class="find"><h4>Finn disse ordene:</h4><ul>${
+    ws.placed.map(p=>`<li>${p.word}</li>`).join('')}</ul></div>`;
+  return sheet(title,meta,(answer?'<span class="ans-tag">🪙 Fasit</span>':'')+html+(answer?'':list));
+}
+
+function renderCrossword(cw,title,meta,answer){
+  let html='<table class="grid cw"><tbody>';
+  for (let r=0;r<cw.rows;r++){
+    html+='<tr>';
+    for (let c=0;c<cw.cols;c++){
+      const ch=cw.grid[r][c];
+      if (ch===null){ html+='<td class="block"></td>'; continue; }
+      const n=cw.numAt[r+'_'+c];
+      html+=`<td class="cell">${n?`<span class="cnum">${n}</span>`:''}${answer?ch:''}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  const col=(arr,label)=>`<div class="col"><h4>${label}</h4><ol>${
+    arr.map(e=>`<li value="${e.num}">${e.clue?escapeHtml(e.clue):'('+e.len+' bokstaver)'}</li>`).join('')}</ol></div>`;
+  const clues=`<div class="clues">${col(cw.across,'Vannrett →')}${col(cw.down,'Loddrett ↓')}</div>`;
+  return sheet(title,meta,(answer?'<span class="ans-tag">🪙 Fasit</span>':'')+html+clues);
+}
+
+/* ============ FYLL INN (CLOZE) ============ */
+function makeCloze(){
+  let blanks = 0;
+  const body = tokens.map(t => {
+    if (t.isWord && pickedSet.has(t.clean)){
+      blanks++;
+      return `<span class="blank" style="width:${t.clean.length+2}ch"></span>`;
+    }
+    return escapeHtml(t.text);
+  }).join('');
+  const fasit = tokens.map(t => {
+    if (t.isWord && pickedSet.has(t.clean))
+      return `<span class="fillans">${escapeHtml(t.text)}</span>`;
+    return escapeHtml(t.text);
+  }).join('');
+  return {body, fasit, blanks};
+}
+
+function renderCloze(title,meta,answer){
+  const cz = makeCloze();
+  let inner = answer ? '<span class="ans-tag">🪙 Fasit</span>' : '';
+  if (!answer && $('showBank').checked){
+    const bank = picked.map(p=>p.word);
+    for (let i=bank.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [bank[i],bank[j]]=[bank[j],bank[i]];
+    }
+    inner += `<div class="wordbank"><h4>🪙 Ordbank</h4><div class="bankwords">${
+      bank.map(w=>`<span class="bankword">${w}</span>`).join('')}</div></div>`;
+  }
+  inner += `<div class="cloze">${answer?cz.fasit:cz.body}</div>`;
+  if (!answer && cz.blanks > picked.length)
+    inner += '<p class="cloze-note">💡 Noen ord skal brukes flere ganger.</p>';
+  return sheet(title,meta,inner);
+}
+
+/* ============ GENERATE ============ */
+function generate(){
+  const title=$('title').value.trim();
+  const meta=$('meta').value.trim();
+  const out=$('output'), msg=$('msg3');
+  msg.innerHTML='';
+  if (picked.length<3){ msg.innerHTML='<div class="msg err">Velg minst 3 ord.</div>'; return; }
+
+  if (puzzleType==='search'){
+    const ws=makeWordSearch(picked.map(p=>p.word),$('gridSize').value,$('difficulty').value);
+    out.innerHTML=renderWordSearch(ws,title,meta,false)
+                 +renderWordSearch(ws,title+' – fasit',meta,true);
+    msg.innerHTML = ws.failed.length
+      ? `<div class="msg err">Fikk ikke plass til: ${ws.failed.join(', ')}. Prøv større rutenett eller færre ord.</div>`
+      : `<div class="msg ok">🪙 Ordsøk laget med alle ${ws.placed.length} ordene!</div>`;
+  } else if (puzzleType==='fill'){
+    if (inputMode==='list'){
+      msg.innerHTML='<div class="msg err">Fyll inn-oppgaven trenger en sammenhengende tekst. Gå tilbake til steg 1 og velg «Fritekst».</div>';
+      return;
+    }
+    const cz=makeCloze();
+    if (!cz.blanks){
+      msg.innerHTML='<div class="msg err">Fant ingen av de valgte ordene i teksten.</div>';
+      return;
+    }
+    out.innerHTML=renderCloze(title,meta,false)
+                 +renderCloze(title+' – fasit',meta,true);
+    msg.innerHTML=`<div class="msg ok">🪙 Fyll inn-oppgave laget med ${cz.blanks} luker!</div>`;
+  } else {
+    const cw=makeCrossword(picked.map(p=>({word:p.word,clue:p.clue})));
+    out.innerHTML=renderCrossword(cw,title,meta,false)
+                 +renderCrossword(cw,title+' – fasit',meta,true);
+    msg.innerHTML = cw.failed.length
+      ? `<div class="msg err">Disse ordene fant ingen felles bokstav og ble utelatt: ${cw.failed.join(', ')}. Prøv «Lag ny variant», eller velg ord som deler bokstaver.</div>`
+      : `<div class="msg ok">🪙 Kryssord laget med alle ordene!</div>`;
+  }
+  $('printBar').style.display='flex';
+  out.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+$('generateBtn').addEventListener('click', generate);
+$('regenBtn').addEventListener('click', generate);
+
+/* ============ CLEAR ============ */
+$('clearAll').addEventListener('click', () => {
+  $('rawInput').value=''; $('msg1').innerHTML='';
+  tokens=[]; picked=[]; pickedSet=new Set();
+  $('output').innerHTML=''; $('printBar').style.display='none';
+  setStep(1);
+});
+
+refreshFillBtn();
+</script>
+<!-- Mynt-ikon: bytter 🪙-emojien til eget bilde overalt (også dynamisk innhold) -->
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
+<script>
+(function(){
+  var COIN='\uD83E\uDE99'; // 🪙
+  function convert(node){
+    if(!node) return;
+    if(node.nodeType===3){
+      var v=node.nodeValue;
+      if(!v || v.indexOf(COIN)===-1) return;
+      var p=node.parentNode; if(!p) return;
+      var tag=p.nodeName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA') return;
+      var parts=v.split(COIN), frag=document.createDocumentFragment();
+      for(var i=0;i<parts.length;i++){
+        if(parts[i]) frag.appendChild(document.createTextNode(parts[i]));
+        if(i<parts.length-1){
+          var img=document.createElement('img');
+          img.className='myntico'; img.src='mynt.webp'; img.alt='mynt';
+          frag.appendChild(img);
+        }
+      }
+      p.replaceChild(frag,node);
+    } else if(node.nodeType===1){
+      var t=node.nodeName;
+      if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='INPUT') return;
+      var kids=Array.prototype.slice.call(node.childNodes);
+      for(var i=0;i<kids.length;i++) convert(kids[i]);
+    }
+  }
+  function run(){ try{ convert(document.body); }catch(e){} }
+  try{
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var m=muts[i];
+        if(m.type==='childList'){ for(var j=0;j<m.addedNodes.length;j++) convert(m.addedNodes[j]); }
+        else if(m.type==='characterData'){ convert(m.target); }
+      }
+    });
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
+})();
+</script>
+</body>
+</html>

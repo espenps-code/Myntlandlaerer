@@ -912,5 +912,50 @@
 })();
 </script>
 
+<!-- Mynt-ikon: bytter 🪙-emojien til eget bilde overalt (også dynamisk innhold) -->
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
+<script>
+(function(){
+  var COIN='\uD83E\uDE99'; // 🪙
+  function convert(node){
+    if(!node) return;
+    if(node.nodeType===3){
+      var v=node.nodeValue;
+      if(!v || v.indexOf(COIN)===-1) return;
+      var p=node.parentNode; if(!p) return;
+      var tag=p.nodeName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA') return;
+      var parts=v.split(COIN), frag=document.createDocumentFragment();
+      for(var i=0;i<parts.length;i++){
+        if(parts[i]) frag.appendChild(document.createTextNode(parts[i]));
+        if(i<parts.length-1){
+          var img=document.createElement('img');
+          img.className='myntico'; img.src='mynt.webp'; img.alt='mynt';
+          frag.appendChild(img);
+        }
+      }
+      p.replaceChild(frag,node);
+    } else if(node.nodeType===1){
+      var t=node.nodeName;
+      if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='INPUT') return;
+      var kids=Array.prototype.slice.call(node.childNodes);
+      for(var i=0;i<kids.length;i++) convert(kids[i]);
+    }
+  }
+  function run(){ try{ convert(document.body); }catch(e){} }
+  try{
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var m=muts[i];
+        if(m.type==='childList'){ for(var j=0;j<m.addedNodes.length;j++) convert(m.addedNodes[j]); }
+        else if(m.type==='characterData'){ convert(m.target); }
+      }
+    });
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
+})();
+</script>
 </body>
 </html>
