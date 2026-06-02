@@ -628,6 +628,23 @@ h1.sticker{
 .fund-rate{ font-size:26px; }
 .fund-chg{ font-size:16px; }
 
+/* ===================== KRYMP SPAREMÅL + FOND (v2) ===================== */
+.savegoal{ padding-top:14px; padding-bottom:14px; }
+.fundbox{ padding-top:12px; padding-bottom:12px; }
+.savegoal .panel-head, .fundbox .panel-head{ margin-bottom:9px; }
+.savegoal .panel-head h2, .fundbox .panel-head h2{ font-size:23px; }
+.goal-item{ padding:9px 13px; }
+.goal-emoji{ font-size:22px; }
+.goal-name{ font-size:19px; }
+.goal-amt{ font-size:15px; }
+.goal-bar{ height:15px; }
+.goal-pct{ font-size:13px; margin-top:2px; }
+.goal-dots{ margin-top:7px; }
+.fundcard{ padding:6px 6px 8px; }
+.fund-label{ font-size:12px; }
+.fund-rate{ font-size:22px; }
+.fund-chg{ font-size:15px; }
+
 </style>
 </head>
 <body>
@@ -1112,14 +1129,21 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   renderWeather();
 
   /* ---------- timeplan ---------- */
-  function planToMin(t){ const m = String(t||'').match(/(\d{1,2})[:.](\d{2})/); return m ? (+m[1])*60 + (+m[2]) : null; }
+  function planToMin(t){
+    var s = String(t == null ? '' : t);
+    var m = s.match(/(\d{1,2})\s*[:.]\s*(\d{2})/);
+    if (m) return (+m[1]) * 60 + (+m[2]);
+    var d = s.match(/(\d{3,4})/);
+    if (d){ var n = d[1]; var hh = +n.slice(0, n.length - 2); var mm = +n.slice(-2); if (hh < 24 && mm < 60) return hh * 60 + mm; }
+    return null;
+  }
   function planSpans(){
     const p = data.plan || [];
     const starts = p.map(it => planToMin(it.time));
     const ends = p.map((it, i) => {
       if (it.type === 'break'){
-        const mm = String(it.time||'').match(/(\d{1,2})[:.](\d{2})/g);
-        if (mm && mm.length >= 2){ const e = mm[1].match(/(\d{1,2})[:.](\d{2})/); return (+e[1])*60 + (+e[2]); }
+        const parts = String(it.time||'').split(/[\u2013\u2014-]| til /);
+        if (parts.length >= 2){ const e = planToMin(parts[1]); if (e != null) return e; }
       }
       for (let j = i+1; j < p.length; j++){ if (starts[j] != null) return starts[j]; }
       return starts[i] != null ? starts[i] + 45 : null;
