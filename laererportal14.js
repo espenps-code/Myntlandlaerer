@@ -16,6 +16,16 @@ let selectedTeacherColor = '#1D9E75';
 
 function fbRef(path) { return window._ref(window._db, path); }
 function ready()     { return !!(window._fbReady && window._db && window._ref); }
+function openKlasseportal() {
+  try {
+    var t = window._currentTeacher;
+    if (t) localStorage.setItem('myntland-portal-link-v1', JSON.stringify({
+      workspaceId: t.workspaceId || 'main', trinn: '14',
+      className: t.class || '', teacherName: t.name || '', role: t.role || 'teacher'
+    }));
+  } catch (e) {}
+  window.open('klasseportal.html', '_blank');
+}
 
 // ══════════════════════════════════════════════════════════
 // LOGIN / TEACHER PROFILES

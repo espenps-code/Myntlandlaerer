@@ -90,14 +90,10 @@ body{
   border-bottom:52px solid #4a8f31; }
 
 /* floating coins */
-.coin{ position:absolute; width:46px; height:46px; border-radius:50%;
-  background:radial-gradient(circle at 38% 32%, #ffe07a, #f0b51e 70%);
-  border:3px solid var(--gold-deep);
-  box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);
-  display:grid; place-items:center;
-  font-weight:700; font-size:15px; color:var(--gold-deep);
+.coin{ position:absolute; width:48px; height:48px;
+  background:url('mynt.webp') center/contain no-repeat;
+  filter:drop-shadow(0 3px 4px rgba(42,31,61,.22));
   animation:floatcoin linear infinite; opacity:.0; }
-.coin::after{ content:"kr"; }
 @keyframes floatcoin{
   0%{ transform:translateY(40px) rotate(0deg); opacity:0; }
   12%,82%{ opacity:.85; }
@@ -140,7 +136,7 @@ body{
 @media (prefers-reduced-motion:reduce){ .coin,.corner-mascot,.sun,.star,.bd-mascot,.kicker .spark{ animation:none !important; } }
 
 /* ===================== HEADER ===================== */
-.topbar{ display:grid; grid-template-columns:300px 1fr 300px; align-items:center; gap:22px; height:150px; }
+.topbar{ display:grid; grid-template-columns:360px 1fr auto; align-items:center; gap:22px; height:150px; }
 
 .datecard{ height:130px; padding:14px 22px; display:flex; flex-direction:column; justify-content:center; }
 .weekday{ font-size:40px; font-weight:700; line-height:1; color:var(--red); letter-spacing:.5px; }
@@ -228,12 +224,12 @@ h1.sticker{
   display:grid; place-items:center; font-size:10px; font-weight:700; color:var(--gold-deep); }
 
 /* ---- BESKJEDER ---- */
-.notes{ flex:1; }
+.notes{ flex:1; min-height:0; }
 .addbtn{ margin-left:auto; width:40px; height:40px; border-radius:50%; border:3px solid var(--ink);
   background:var(--gold); color:var(--ink); font-size:26px; font-weight:700; cursor:pointer; line-height:1;
   box-shadow:0 4px 0 rgba(42,31,61,.2); transition:transform .12s; font-family:inherit; }
 .addbtn:active{ transform:translateY(3px); box-shadow:none; }
-.noteboard{ display:flex; flex-direction:column; gap:14px; flex:1; }
+.noteboard{ display:flex; flex-direction:column; gap:14px; flex:1; overflow-y:auto; padding-right:4px; }
 .note{ position:relative; background:#fff5c7; border:3px solid var(--ink); border-radius:14px;
   padding:16px 40px 16px 18px; font-size:23px; font-weight:500; color:var(--ink); line-height:1.25;
   box-shadow:0 5px 0 rgba(42,31,61,.16); }
@@ -413,6 +409,214 @@ h1.sticker{
 .btn-big:active{transform:translateY(3px);box-shadow:none}
 @media(max-width:560px){ .portal-toolbar button{width:42px;height:42px;font-size:19px} .ovl-head h3{font-size:24px} }
 
+/* ===================== NYE PANELER (sparemål, fond, koble til) ===================== */
+/* kompakt midtkolonne (beskjeder + ordenselever sammen) */
+.notes .note{ font-size:20px; padding:13px 36px 13px 16px; }
+.notes .panel-head h2, .duty .panel-head h2{ font-size:26px; }
+.duty .helper .ava{ width:48px; height:48px; }
+.duty .helper .ava img{ width:60px; }
+.duty .helper .nm{ font-size:22px; }
+.duty .helper .who{ font-size:13px; }
+.duty .check{ font-size:19px; gap:11px; padding:3px 4px; }
+.duty .check .box{ width:30px; height:30px; }
+
+/* Klassens sparemål */
+.savegoal .goal-list{ display:flex; flex-direction:column; gap:11px; }
+.goal-item{ background:var(--paper); border:3px solid var(--ink); border-radius:16px;
+  padding:10px 14px; box-shadow:0 4px 0 rgba(42,31,61,.14); }
+.goal-top{ display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+.goal-emoji{ font-size:25px; line-height:1; flex-shrink:0; }
+.goal-name{ font-size:21px; font-weight:700; color:var(--ink); flex:1; line-height:1.05; }
+.goal-amt{ font-size:16px; font-weight:700; color:var(--gold-deep); white-space:nowrap;
+  font-variant-numeric:tabular-nums; }
+.goal-bar{ height:18px; background:#ece0c2; border:2px solid var(--ink); border-radius:30px; overflow:hidden; }
+.goal-fill{ height:100%; width:0; background:linear-gradient(90deg,#ffe07a,var(--gold));
+  border-radius:30px; transition:width .7s cubic-bezier(.34,1.4,.64,1); }
+.goal-done .goal-fill{ background:var(--green); }
+.goal-pct{ font-size:14px; font-weight:600; color:var(--ink-soft); margin-top:3px; text-align:right; }
+.goal-empty{ font-size:18px; color:var(--ink-soft); font-weight:500; line-height:1.35; padding:6px 2px; }
+
+/* Fond i dag (5.–7.) */
+.badge.teal{ background:var(--teal); color:#fff; }
+.fundbox .fundcards{ display:flex; gap:14px; }
+.fundcard{ flex:1; background:var(--paper); border:3px solid var(--ink); border-radius:16px;
+  padding:9px 8px 11px; box-shadow:0 4px 0 rgba(42,31,61,.14); text-align:center; }
+.fund-label{ font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--ink-soft); }
+.fund-rate{ font-size:32px; font-weight:700; color:var(--ink); line-height:1.1; font-variant-numeric:tabular-nums; }
+.fund-chg{ font-size:19px; font-weight:700; display:inline-flex; align-items:center; gap:4px; }
+.fund-up{ color:var(--green-deep); }
+.fund-down{ color:var(--red); }
+.fund-flat{ color:var(--ink-soft); }
+
+/* Koble til klasse-overlay */
+.portal-toolbar #tbConnect{ background:var(--teal); }
+.c-loading,.c-status{ font-size:19px; color:var(--ink); font-weight:500; line-height:1.4; }
+.c-hint{ font-size:17px; color:var(--ink-soft); font-weight:500; line-height:1.35; }
+.c-profiles{ display:flex; flex-direction:column; gap:10px; max-height:46vh; overflow:auto; }
+.c-profile{ display:flex; align-items:center; gap:12px; background:var(--paper); border:3px solid var(--ink);
+  border-radius:16px; padding:9px 14px; cursor:pointer; font-family:inherit; text-align:left;
+  box-shadow:0 3px 0 rgba(42,31,61,.14); }
+.c-profile:active{ transform:translateY(2px); box-shadow:none; }
+.c-ava{ width:46px; height:46px; border-radius:50%; border:3px solid var(--ink); display:grid;
+  place-items:center; font-size:22px; font-weight:700; flex-shrink:0; }
+.c-meta{ display:flex; flex-direction:column; }
+.c-name{ font-size:21px; font-weight:700; color:var(--ink); line-height:1.1; }
+.c-role{ font-size:15px; color:var(--ink-soft); font-weight:500; }
+.c-pin{ font-size:34px; text-align:center; letter-spacing:14px; padding:10px; border:3px solid var(--ink);
+  border-radius:16px; background:var(--paper); font-family:inherit; width:100%; }
+.c-err{ font-size:17px; color:var(--red); font-weight:700; min-height:22px; text-align:center; }
+.c-row{ display:flex; gap:12px; }
+.c-row .btn-big{ flex:1; }
+
+/* ===================== HEADER: dato + klokke (analog/digital/ord) + vær ===================== */
+.datecard{ height:auto; min-height:130px; padding:16px 26px; }
+.datecard .weekday{ font-size:46px; }
+.datecard .dateline{ font-size:32px; }
+.datesub{ display:flex; align-items:baseline; gap:16px; margin-top:8px; }
+.datesub .weeknum{ margin-top:0; }
+.yearnum{ font-size:22px; font-weight:700; color:var(--gold-deep); letter-spacing:1px;
+  text-transform:uppercase; font-variant-numeric:tabular-nums; }
+
+.clockzone{ display:flex; gap:16px; align-items:stretch; }
+.clockcard{ height:130px; flex-direction:column; gap:7px; padding:10px 20px; min-width:300px; }
+.clock-faces{ display:flex; align-items:center; gap:18px; }
+.analog-svg{ width:88px; height:88px; flex-shrink:0; }
+.aface{ fill:var(--paper); stroke:var(--ink); }
+.atick{ stroke:var(--ink); stroke-width:2.5; stroke-linecap:round; }
+.ahand{ stroke:var(--ink); stroke-linecap:round; }
+.ahour{ stroke-width:4.5; }
+.amin{ stroke-width:3; }
+.acenter{ fill:var(--red); stroke:var(--ink); stroke-width:1.4; }
+.clock-digital{ font-size:46px; font-weight:700; color:var(--ink); line-height:1; letter-spacing:1px;
+  font-variant-numeric:tabular-nums; }
+.clock-words{ font-size:22px; font-weight:400; color:var(--gold-deep); font-style:italic;
+  font-family:var(--serif); text-align:center; line-height:1.05; }
+
+.weathercard{ height:130px; width:152px; flex-direction:column; justify-content:center; gap:5px;
+  padding:10px; border:4px solid var(--ink); border-radius:var(--radius); background:var(--cream);
+  box-shadow:var(--shadow); }
+.weathercard:active{ transform:translateY(3px); box-shadow:none; }
+.weathercard .wicon{ width:50px; height:50px; }
+.weathercard .wtemp{ font-size:30px; }
+.weathercard .wlabel{ font-size:20px; }
+
+/* ===================== TEGNEVERKTØY ===================== */
+.draw-layer{ position:fixed; inset:0; z-index:90; display:none; }
+.draw-layer.open{ display:block; }
+.draw-bg{ position:absolute; inset:0; }
+.draw-bg.bg-blank{ background:#fffdf5; }
+.draw-bg.bg-lines{ background:#fffdf5;
+  background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 39px, #b9d2e6 39px, #b9d2e6 41px); }
+.draw-bg.bg-grid{ background:#fffdf5;
+  background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 39px, #cfe0ec 39px, #cfe0ec 40px),
+                   repeating-linear-gradient(to right, transparent 0, transparent 39px, #cfe0ec 39px, #cfe0ec 40px); }
+#drawCanvas{ position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:crosshair; }
+.draw-toolbar{ position:absolute; left:50%; transform:translateX(-50%); bottom:22px; z-index:2;
+  display:flex; align-items:center; gap:10px; padding:10px 14px; flex-wrap:wrap; justify-content:center;
+  max-width:94vw; background:var(--cream); border:4px solid var(--ink); border-radius:24px;
+  box-shadow:var(--shadow); }
+.dt-group{ display:flex; align-items:center; gap:8px; }
+.dt-sep{ width:3px; height:34px; background:rgba(42,31,61,.18); border-radius:2px; }
+.dt-swatch{ width:34px; height:34px; border-radius:50%; border:3px solid var(--ink); cursor:pointer;
+  padding:0; box-shadow:0 3px 0 rgba(42,31,61,.18); }
+.dt-swatch.active{ outline:4px solid var(--gold); outline-offset:2px; transform:translateY(-2px); }
+.dt-size{ width:42px; height:42px; border-radius:14px; border:3px solid var(--ink); background:var(--paper);
+  cursor:pointer; display:grid; place-items:center; box-shadow:0 3px 0 rgba(42,31,61,.18); }
+.dt-size.active{ background:var(--gold); }
+.dt-size .dot{ display:block; background:var(--ink); border-radius:50%; }
+.dt-btn{ font-family:inherit; font-size:16px; font-weight:700; color:var(--ink); cursor:pointer;
+  border:3px solid var(--ink); background:var(--paper); border-radius:14px; padding:9px 15px;
+  box-shadow:0 3px 0 rgba(42,31,61,.18); }
+.dt-btn:active{ transform:translateY(3px); box-shadow:none; }
+.dt-btn.active{ background:var(--gold); }
+.dt-btn.dt-danger{ background:#ffd9d2; }
+.dt-btn.dt-close{ background:var(--red); color:#fff; }
+
+/* ===================== INNSTILLINGER + SKJUL MONSTRE ===================== */
+/* monstre skjult midlertidig — settes inn igjen når layouten er klar */
+.corner-mascot,
+.bd-mascot,
+.helper .ava{ display:none !important; }
+
+.set-row{ display:flex; align-items:center; gap:18px; justify-content:space-between; }
+.set-label{ font-size:22px; font-weight:700; color:var(--ink); display:flex; flex-direction:column; gap:3px; }
+.set-sub{ font-size:15px; font-weight:500; color:var(--ink-soft); }
+.set-status{ font-size:16px; font-weight:600; color:var(--gold-deep); min-height:20px; margin-top:-6px; }
+.set-switch{ position:relative; width:64px; height:36px; flex-shrink:0; cursor:pointer; }
+.set-switch input{ position:absolute; opacity:0; width:0; height:0; }
+.set-slider{ position:absolute; inset:0; background:var(--paper); border:3px solid var(--ink);
+  border-radius:30px; transition:.18s; }
+.set-slider::before{ content:""; position:absolute; left:4px; top:3px; width:24px; height:24px;
+  border-radius:50%; background:var(--ink); transition:.18s; }
+.set-switch input:checked + .set-slider{ background:var(--green); }
+.set-switch input:checked + .set-slider::before{ transform:translateX(28px); background:#fff; }
+
+/* ===================== KLOKKE: større analog m/tall, ord under digital ===================== */
+.clockcard{ flex-direction:row; align-items:center; gap:18px; }
+.analog-svg{ width:118px; height:118px; }
+.anum{ font-family:var(--font); font-size:9px; font-weight:700; fill:var(--ink);
+  text-anchor:middle; dominant-baseline:central; }
+.clock-stack{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.clock-words{ color:var(--teal); }
+
+/* ===================== TIMEPLAN: scroll + aktiv-fremheving + slider ===================== */
+.lessons{ overflow-y:auto; position:relative; padding-right:4px; scroll-behavior:smooth; }
+.lessons::-webkit-scrollbar{ width:10px; }
+.lessons::-webkit-scrollbar-thumb{ background:rgba(42,31,61,.25); border-radius:8px; }
+.lesson{ overflow:hidden; }
+.break{ position:relative; overflow:hidden; }
+.break.is-now{ box-shadow:0 0 0 3px var(--gold); background:linear-gradient(90deg,#eafad0,#d7efb6); }
+.now-meta{ margin-left:8px; align-self:center; white-space:nowrap; background:var(--ink); color:#fff;
+  font-weight:700; font-size:16px; padding:3px 11px; border-radius:30px; }
+.lesson-bar{ position:absolute; left:0; right:0; bottom:0; height:7px; background:rgba(42,31,61,.12); }
+.lesson-bar i{ display:block; height:100%; background:var(--teal); border-radius:0 5px 5px 0; transition:width .9s linear; }
+
+/* ===================== INNSTILLINGER: ordenselever-felt ===================== */
+#settingsOverlay .ovl-body{ max-height:80vh; overflow:auto; }
+.set-divider{ height:3px; background:rgba(42,31,61,.15); border-radius:2px; margin:2px 0; }
+.set-heading{ font-size:21px; font-weight:700; color:var(--ink); }
+.set-heading2{ font-size:17px; font-weight:700; color:var(--ink-soft); margin-top:2px; }
+.set-names{ display:flex; gap:12px; }
+.set-field{ flex:1; display:flex; flex-direction:column; gap:4px; font-size:15px; font-weight:600; color:var(--ink-soft); }
+.set-field input, .set-task input{ font-family:inherit; font-size:18px; font-weight:600; color:var(--ink);
+  border:3px solid var(--ink); border-radius:12px; padding:8px 12px; background:var(--paper); width:100%; }
+.set-tasks{ display:flex; flex-direction:column; gap:8px; }
+.set-task{ display:flex; gap:8px; align-items:center; }
+.set-task-del{ flex-shrink:0; width:40px; height:40px; border:3px solid var(--ink); border-radius:12px;
+  background:#ffd9d2; color:var(--ink); font-size:22px; font-weight:700; cursor:pointer; line-height:1; font-family:inherit; }
+.set-task-del:active{ transform:translateY(2px); }
+.set-addtask{ font-family:inherit; font-size:16px; font-weight:700; color:var(--ink); border:3px dashed var(--ink);
+  background:transparent; border-radius:12px; padding:10px; cursor:pointer; }
+.set-addtask:active{ transform:translateY(2px); }
+
+/* ===================== ORDENSELEV-LØNN ===================== */
+#salScanOvl, #salListOvl{ z-index:95; }
+.sal-link{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.sal-link-label{ font-size:15px; font-weight:700; color:var(--ink-soft); min-width:74px; }
+.sal-link-name{ flex:1; font-size:18px; font-weight:700; color:var(--ink); min-width:110px; }
+.sal-btn{ font-family:inherit; font-size:14px; font-weight:700; color:var(--ink); border:3px solid var(--ink);
+  background:var(--paper); border-radius:12px; padding:6px 11px; cursor:pointer; }
+.sal-btn:active{ transform:translateY(2px); }
+.sal-btn.sal-x{ background:#ffd9d2; padding:6px 12px; }
+.sal-scan-wrap{ position:relative; width:100%; max-width:360px; margin:0 auto; aspect-ratio:1;
+  border:4px solid var(--ink); border-radius:18px; overflow:hidden; background:#000; }
+.sal-scan-wrap video{ width:100%; height:100%; object-fit:cover; }
+.sal-list{ display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow:auto; }
+.sal-pick{ font-family:inherit; text-align:left; font-size:19px; font-weight:700; color:var(--ink);
+  border:3px solid var(--ink); background:var(--paper); border-radius:14px; padding:10px 14px; cursor:pointer; }
+.sal-pick:active{ transform:translateY(2px); }
+
+/* ===================== ORD-KLOKKE: mer luft, svart skrift, lesbar font ===================== */
+.clock-stack{ gap:11px; }
+.clock-words{ color:var(--ink); font-family:var(--font); font-style:normal; font-weight:600; font-size:23px; }
+
+/* ===================== INNSTILLINGER: ordbank-rader ===================== */
+.set-word{ display:flex; gap:8px; align-items:center; }
+.set-word .ww{ flex:0 0 32%; }
+.set-word .wd{ flex:1; }
+.set-word input{ font-family:inherit; font-size:16px; font-weight:600; color:var(--ink);
+  border:3px solid var(--ink); border-radius:12px; padding:7px 10px; background:var(--paper); width:100%; }
+
 </style>
 </head>
 <body>
@@ -445,7 +649,10 @@ h1.sticker{
       <div class="datecard card">
         <div class="weekday" id="weekday">Torsdag</div>
         <div class="dateline"><span id="daynum">12.</span> <span id="monthname">juni</span></div>
-        <div class="weeknum">Uke <span id="weeknum">24</span></div>
+        <div class="datesub">
+          <span class="weeknum">Uke <span id="weeknum">24</span></span>
+          <span class="yearnum" id="yearnum">2026</span>
+        </div>
       </div>
 
       <div class="titleblock">
@@ -454,9 +661,33 @@ h1.sticker{
         <div class="classpill" id="classpill" data-edit="" data-key="klasse">3B</div>
       </div>
 
-      <div class="clockcard card">
-        <div class="clock" id="clock">08:42</div>
-        <button class="weather" id="weather" title="Trykk for å endre vær">
+      <div class="clockzone">
+        <div class="clockcard card">
+          <svg viewBox="0 0 80 80" class="analog-svg" aria-hidden="true">
+            <circle cx="40" cy="40" r="37" class="aface" stroke-width="3"/>
+            <text class="anum" x="40" y="10">12</text>
+            <text class="anum" x="55" y="14">1</text>
+            <text class="anum" x="66" y="25">2</text>
+            <text class="anum" x="70" y="40">3</text>
+            <text class="anum" x="66" y="55">4</text>
+            <text class="anum" x="55" y="66">5</text>
+            <text class="anum" x="40" y="70">6</text>
+            <text class="anum" x="25" y="66">7</text>
+            <text class="anum" x="14" y="55">8</text>
+            <text class="anum" x="10" y="40">9</text>
+            <text class="anum" x="14" y="25">10</text>
+            <text class="anum" x="25" y="14">11</text>
+            <line id="hourHand" class="ahand ahour" x1="40" y1="40" x2="40" y2="26"/>
+            <line id="minHand"  class="ahand amin"  x1="40" y1="40" x2="40" y2="17"/>
+            <circle cx="40" cy="40" r="3.2" class="acenter"/>
+          </svg>
+          <div class="clock-stack">
+            <div class="clock-digital" id="clock">08:42</div>
+            <div class="clock-words" id="clockWords">fem på halv ni</div>
+          </div>
+        </div>
+
+        <button class="weather weathercard" id="weather" title="Trykk for å endre vær">
           <span class="wicon" id="wicon"></span>
           <span class="wtemp" data-edit="" data-key="temp" id="wtemp">18°</span>
           <span class="wlabel" id="wlabel">Sol</span>
@@ -472,12 +703,11 @@ h1.sticker{
         <div class="panel-head">
           <span class="badge">I dag</span>
           <h2>På timeplanen</h2>
-          <span class="hint">Trykk på en time for å sette <b>NÅ</b></span>
         </div>
         <ol class="lessons" id="lessons"></ol>
       </section>
 
-      <!-- COLUMN 2: BESKJEDER + UKAS ORD -->
+      <!-- COLUMN 2: BESKJEDER + ORDENSELEVER -->
       <div class="col">
         <section class="panel notes pop" style="--d:2">
           <div class="panel-head">
@@ -488,17 +718,7 @@ h1.sticker{
           <div class="noteboard" id="noteboard"></div>
         </section>
 
-        <section class="panel word pop" style="--d:3">
-          <div class="wordmark">Ukas ord</div>
-          <div class="bigword" data-edit="" data-key="word">raushet</div>
-          <div class="worddef" data-edit="" data-key="worddef">å være snill og dele med andre, uten å vente noe tilbake</div>
-          <div class="quoteline"><span class="q">“</span><span data-edit="" data-key="quote">Sammen er vi sterke!</span><span class="q">”</span></div>
-        </section>
-      </div>
-
-      <!-- COLUMN 3: ORDENSELEVER + BURSDAG -->
-      <div class="col">
-        <section class="panel duty pop" style="--d:4">
+        <section class="panel duty pop" style="--d:3">
           <div class="panel-head">
             <span class="badge green">Ordenselever</span>
             <h2>Ukas hjelpere</h2>
@@ -506,8 +726,35 @@ h1.sticker{
           <div class="helpers" id="helpers"></div>
           <ul class="checklist" id="checklist"></ul>
         </section>
+      </div>
 
-        <section class="panel birthday pop" style="--d:5" id="birthday">
+      <!-- COLUMN 3: SPAREMÅL + FOND + UKAS ORD + BURSDAG -->
+      <div class="col">
+        <section class="panel savegoal pop" style="--d:4">
+          <div class="panel-head">
+            <span class="badge">Sparemål</span>
+            <h2>Klassens sparemål</h2>
+          </div>
+          <div class="goal-list" id="goalList"></div>
+        </section>
+
+        <section class="panel fundbox pop" style="--d:5;display:none" id="fundPanel">
+          <div class="panel-head">
+            <span class="badge teal">Fond</span>
+            <h2>Fond i dag</h2>
+            <span class="hint" id="fundDate"></span>
+          </div>
+          <div class="fundcards" id="fundCards"></div>
+        </section>
+
+        <section class="panel word pop" style="--d:6">
+          <div class="wordmark">Ukas ord</div>
+          <div class="bigword" id="bigWord">raushet</div>
+          <div class="worddef" id="wordDef">å være snill og dele med andre, uten å vente noe tilbake</div>
+          <div class="quoteline"><span class="q">“</span><span data-edit="" data-key="quote">Sammen er vi sterke!</span><span class="q">”</span></div>
+        </section>
+
+        <section class="panel birthday pop" style="--d:7" id="birthday">
           <div class="confetti" id="confetti" aria-hidden="true"></div>
           <img src="" id="bdMascot" class="bd-mascot" alt="" aria-hidden="true">
           <div class="bd-banner">Bursdag!</div>
@@ -529,9 +776,98 @@ h1.sticker{
 
 <!-- ====== FLYTENDE VERKTØYLINJE (rører ikke canvas-designet) ====== -->
 <div class="portal-toolbar">
+  <button id="tbConnect" title="Koble til klasse">&#127974;</button>
+  <button id="tbDraw" title="Tegn på tavla">&#9999;&#65039;</button>
   <button id="tbMusic" title="Musikk">&#127925;</button>
   <button id="tbPlan" title="Planlegg uke">&#128197;</button>
   <button id="tbFs" title="Fullskjerm">&#9974;</button>
+  <button id="tbSettings" title="Innstillinger">&#9881;&#65039;</button>
+</div>
+
+<!-- ====== INNSTILLINGER-OVERLAY ====== -->
+<div class="ovl" id="settingsOverlay">
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#9881;&#65039; Innstillinger</h3><button class="ovl-x" id="settingsClose">&times;</button></div>
+    <div class="ovl-body">
+      <div class="set-row">
+        <div class="set-label">Vær automatisk etter sted
+          <span class="set-sub">Henter posisjon og oppdaterer været hver halvtime.</span></div>
+        <label class="set-switch"><input type="checkbox" id="setWeatherAuto"><span class="set-slider"></span></label>
+      </div>
+      <div class="set-status" id="setWeatherStatus"></div>
+      <div class="set-row">
+        <div class="set-label">Aktiv time: vis prosent
+          <span class="set-sub">Av = minutter igjen. På = prosent av timen gjort.</span></div>
+        <label class="set-switch"><input type="checkbox" id="setProgressPercent"><span class="set-slider"></span></label>
+      </div>
+      <div class="set-divider"></div>
+      <div class="set-heading">Ordenselever</div>
+      <div class="set-names">
+        <label class="set-field"><span>Hjelper 1</span><input type="text" id="setHelperA" autocomplete="off"></label>
+        <label class="set-field"><span>Hjelper 2</span><input type="text" id="setHelperB" autocomplete="off"></label>
+      </div>
+      <div class="set-heading2">Oppgaver</div>
+      <div class="set-tasks" id="setTasks"></div>
+      <button class="set-addtask" id="setAddTask">+ Legg til oppgave</button>
+      <div class="set-divider"></div>
+      <div class="set-heading">Ukas ord</div>
+      <div class="set-row">
+        <div class="set-label">Bytt ord automatisk hver uke<span class="set-sub">Ordbanken roterer ett ord per uke. Slå av for å velge selv.</span></div>
+        <label class="set-switch"><input type="checkbox" id="setWordAuto"><span class="set-slider"></span></label>
+      </div>
+      <div id="setWordManual" class="set-names" style="flex-direction:column">
+        <label class="set-field"><span>Ordet</span><input type="text" id="setWord" autocomplete="off"></label>
+        <label class="set-field"><span>Forklaring</span><input type="text" id="setWordDef" autocomplete="off"></label>
+      </div>
+      <div class="set-heading2">Ordbank (<span id="wordBankCount">20</span>)</div>
+      <div class="set-tasks" id="setWordBank"></div>
+      <button class="set-addtask" id="setAddWord">+ Legg til ord</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LØNN: SKANN-OVERLAY ====== -->
+<div class="ovl" id="salScanOvl">
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#128179; Skann bankkort</h3><button class="ovl-x" id="salScanClose">&times;</button></div>
+    <div class="ovl-body">
+      <div class="sal-scan-wrap"><video id="salScanVideo" playsinline></video><canvas id="salScanCanvas" style="display:none"></canvas></div>
+      <p class="set-sub">Hold QR-koden på bankkortet innenfor bildet.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LØNN: VELG ELEV-OVERLAY ====== -->
+<div class="ovl" id="salListOvl">
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#128100; Velg ordenselev</h3><button class="ovl-x" id="salListClose">&times;</button></div>
+    <div class="ovl-body"><div class="sal-list" id="salListBox"></div></div>
+  </div>
+</div>
+
+<!-- ====== TEGNEVERKTØY ====== -->
+<div class="draw-layer" id="drawLayer" aria-hidden="true">
+  <canvas id="drawCanvas"></canvas>
+  <div class="draw-toolbar" id="drawToolbar">
+    <div class="dt-group dt-colors" id="dtColors"></div>
+    <div class="dt-sep"></div>
+    <div class="dt-group dt-sizes" id="dtSizes"></div>
+    <div class="dt-sep"></div>
+    <button class="dt-btn" id="dtEraser">Visk</button>
+    <button class="dt-btn" id="dtUndo">Angre</button>
+    <div class="dt-group dt-papers" id="dtPapers"><button class="dt-btn dt-paper" data-paper="blank">Blankt</button><button class="dt-btn dt-paper" data-paper="lines">Linjer</button><button class="dt-btn dt-paper" data-paper="grid">Ruter</button></div>
+    <button class="dt-btn dt-danger" id="dtClear">Tøm</button>
+    <div class="dt-sep"></div>
+    <button class="dt-btn dt-close" id="dtClose">Lukk</button>
+  </div>
+</div>
+
+<!-- ====== KOBLE TIL KLASSE-OVERLAY ====== -->
+<div class="ovl" id="connectOverlay">
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#127974; Koble til klasse</h3><button class="ovl-x" id="connectClose">&times;</button></div>
+    <div class="ovl-body" id="connectBody"></div>
+  </div>
 </div>
 
 <!-- ====== MUSIKK-DOKK (vises når noe spilles) ====== -->
@@ -639,6 +975,29 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     word: 'raushet',
     worddef: 'å være snill og dele med andre, uten å vente noe tilbake',
     quote: 'Sammen er vi sterke!',
+    wordAuto: true,
+    wordBank: [
+      { w:'raushet', d:'å dele med andre uten å vente noe tilbake' },
+      { w:'sparing', d:'å legge til side litt om gangen til noe du ønsker deg' },
+      { w:'tålmodighet', d:'å klare å vente uten å gi opp' },
+      { w:'ærlighet', d:'å si sannheten, også når det er vanskelig' },
+      { w:'samarbeid', d:'å jobbe sammen mot et felles mål' },
+      { w:'respekt', d:'å behandle andre slik du selv vil bli behandlet' },
+      { w:'nysgjerrighet', d:'å ha lyst til å lære og finne ut nye ting' },
+      { w:'mot', d:'å tørre, selv når du er litt redd' },
+      { w:'omtanke', d:'å bry seg om hvordan andre har det' },
+      { w:'ansvar', d:'å gjøre det du har lovet og rydde opp etter deg' },
+      { w:'takknemlighet', d:'å sette pris på det du har' },
+      { w:'budsjett', d:'en plan for hvor mye du kan bruke og spare' },
+      { w:'rettferdighet', d:'at alle blir behandlet likt og riktig' },
+      { w:'utholdenhet', d:'å fortsette selv når noe er vanskelig' },
+      { w:'vennlighet', d:'å være snill i ord og handling' },
+      { w:'fellesskap', d:'å høre til i en gruppe der alle hjelper hverandre' },
+      { w:'selvstendighet', d:'å klare ting på egen hånd' },
+      { w:'behov', d:'noe du faktisk trenger, ikke bare har lyst på' },
+      { w:'ønske', d:'noe du har lyst på, men ikke må ha' },
+      { w:'klokskap', d:'å tenke seg om før man bestemmer seg' },
+    ],
     helperA: 'Nora', helperB: 'Jonas',
     checklist: [
       { t: 'Vanne blomstene', d: false },
@@ -648,6 +1007,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     ],
     bdname: 'Emma', bdage: '9',
     weather: 0,
+    weatherAuto: false, progressPercent: false,
   };
 
   const KEY = 'myntland-portal-v1';
@@ -681,15 +1041,46 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const ys = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
     return Math.ceil((((t - ys) / 86400000) + 1) / 7);
   }
+  function nameOfHour(h){
+    const N = ['tolv','ett','to','tre','fire','fem','seks','sju','åtte','ni','ti','elleve','tolv'];
+    let hh = ((h % 12) + 12) % 12; if (hh === 0) hh = 12;
+    return N[hh];
+  }
+  function timeWords(h, m){
+    let rm = Math.round(m / 5) * 5, rh = h;
+    if (rm === 60){ rm = 0; rh = h + 1; }
+    switch (rm){
+      case 0:  return nameOfHour(rh);
+      case 5:  return 'fem over ' + nameOfHour(rh);
+      case 10: return 'ti over ' + nameOfHour(rh);
+      case 15: return 'kvart over ' + nameOfHour(rh);
+      case 20: return 'ti på halv ' + nameOfHour(rh + 1);
+      case 25: return 'fem på halv ' + nameOfHour(rh + 1);
+      case 30: return 'halv ' + nameOfHour(rh + 1);
+      case 35: return 'fem over halv ' + nameOfHour(rh + 1);
+      case 40: return 'ti over halv ' + nameOfHour(rh + 1);
+      case 45: return 'kvart på ' + nameOfHour(rh + 1);
+      case 50: return 'ti på ' + nameOfHour(rh + 1);
+      case 55: return 'fem på ' + nameOfHour(rh + 1);
+    }
+    return '';
+  }
   function tick() {
     const n = new Date();
     document.getElementById('weekday').textContent = DAYS[n.getDay()];
     document.getElementById('daynum').textContent = n.getDate() + '.';
     document.getElementById('monthname').textContent = MONTHS[n.getMonth()];
     document.getElementById('weeknum').textContent = weekNo(n);
-    const hh = String(n.getHours()).padStart(2, '0');
-    const mm = String(n.getMinutes()).padStart(2, '0');
-    document.getElementById('clock').textContent = hh + ':' + mm;
+    const yEl = document.getElementById('yearnum'); if (yEl) yEl.textContent = n.getFullYear();
+    const h = n.getHours(), m = n.getMinutes();
+    document.getElementById('clock').textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    const hHand = document.getElementById('hourHand');
+    const mHand = document.getElementById('minHand');
+    if (hHand) hHand.setAttribute('transform', 'rotate(' + ((h % 12) * 30 + m * 0.5) + ' 40 40)');
+    if (mHand) mHand.setAttribute('transform', 'rotate(' + (m * 6) + ' 40 40)');
+    const wEl = document.getElementById('clockWords'); if (wEl) wEl.textContent = timeWords(h, m);
+    renderLessons();
+    renderWord();
   }
   tick(); setInterval(tick, 1000 * 20);
 
@@ -704,11 +1095,29 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   document.getElementById('weather').addEventListener('click', (e) => {
     if (e.target.closest('[data-edit]')) return;
+    if (data.weatherAuto) return;
     data.weather = (data.weather + 1) % W.length; renderWeather(); save();
   });
   renderWeather();
 
   /* ---------- timeplan ---------- */
+  function planToMin(t){ const m = String(t||'').match(/(\d{1,2})[:.](\d{2})/); return m ? (+m[1])*60 + (+m[2]) : null; }
+  function planSpans(){
+    const p = data.plan || [];
+    const starts = p.map(it => planToMin(it.time));
+    const ends = p.map((it, i) => {
+      if (it.type === 'break'){
+        const mm = String(it.time||'').match(/(\d{1,2})[:.](\d{2})/g);
+        if (mm && mm.length >= 2){ const e = mm[1].match(/(\d{1,2})[:.](\d{2})/); return (+e[1])*60 + (+e[2]); }
+      }
+      for (let j = i+1; j < p.length; j++){ if (starts[j] != null) return starts[j]; }
+      return starts[i] != null ? starts[i] + 45 : null;
+    });
+    return { starts: starts, ends: ends };
+  }
+  function lessonMeta(pct, minsLeft){
+    return data.progressPercent ? (Math.round(pct) + ' %') : (Math.max(0, Math.ceil(minsLeft)) + ' min');
+  }
   function renderLessons() {
     const ol = document.getElementById('lessons'); ol.innerHTML = '';
     if (!data.plan || !data.plan.length) {
@@ -718,26 +1127,44 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       li.innerHTML = '<span class="blabel">Ingen timer i dag &#127880; Fri!</span>';
       ol.appendChild(li); return;
     }
+    const now = new Date();
+    const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+    const sp = planSpans();
+    let ai = -1;
+    for (let i = 0; i < sp.starts.length; i++){
+      if (sp.starts[i] != null && sp.ends[i] != null && nowMin >= sp.starts[i] && nowMin < sp.ends[i]){ ai = i; break; }
+    }
+    let activeEl = null;
     data.plan.forEach((it, idx) => {
       const li = document.createElement('li');
+      const isNow = idx === ai;
+      let prog = '', meta = '';
+      if (isNow && sp.starts[idx] != null && sp.ends[idx] != null && sp.ends[idx] > sp.starts[idx]){
+        const pct = Math.min(100, Math.max(0, (nowMin - sp.starts[idx]) / (sp.ends[idx] - sp.starts[idx]) * 100));
+        const minsLeft = sp.ends[idx] - nowMin;
+        prog = `<div class="lesson-bar"><i style="width:${pct.toFixed(1)}%"></i></div>`;
+        meta = `<span class="now-meta">${lessonMeta(pct, minsLeft)}</span>`;
+      }
       if (it.type === 'break') {
-        li.className = 'break';
+        li.className = 'break' + (isNow ? ' is-now' : '');
         li.innerHTML = `<span class="minicoin">kr</span>
           <span class="blabel">${it.big ? 'Storefri' : 'Friminutt'}</span>
           <span class="btime">${it.time}</span>
-          <span class="bnote">${it.note}</span>`;
+          <span class="bnote">${it.note}</span>${meta}${prog}`;
       } else {
-        li.className = 'lesson' + (idx === data.nowIdx ? ' is-now' : '');
+        li.className = 'lesson' + (isNow ? ' is-now' : '');
         li.innerHTML = `<span class="time">${it.time}</span>
           <span class="icon" style="background:${it.color}">${I[it.icon] || ''}</span>
           <span class="name">${it.name}</span>
-          <span class="now-tag">NÅ</span>`;
-        li.addEventListener('click', () => {
-          data.nowIdx = (data.nowIdx === idx ? -1 : idx); renderLessons(); save();
-        });
+          <span class="now-tag">NÅ</span>${meta}${prog}`;
       }
+      if (isNow) activeEl = li;
       ol.appendChild(li);
     });
+    if (activeEl){
+      const target = activeEl.offsetTop - (ol.clientHeight - activeEl.clientHeight) / 2;
+      ol.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+    }
   }
   renderLessons();
 
@@ -770,25 +1197,23 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     h.innerHTML = `
       <div class="helper a">
         <span class="ava"><img src="${res('mascotGreen', 'assets/mascot-green.png')}" alt=""></span>
-        <span><span class="who">Ordenselev</span><br><span class="nm" data-edit data-key="helperA"></span></span>
+        <span><span class="who">Ordenselev</span><br><span class="nm" id="nmA"></span></span>
       </div>
       <div class="helper b">
         <span class="ava"><img src="${res('mascotBlue', 'assets/mascot-blue.png')}" alt=""></span>
-        <span><span class="who">Ordenselev</span><br><span class="nm" data-edit data-key="helperB"></span></span>
+        <span><span class="who">Ordenselev</span><br><span class="nm" id="nmB"></span></span>
       </div>`;
-    h.querySelector('[data-key="helperA"]').textContent = data.helperA;
-    h.querySelector('[data-key="helperB"]').textContent = data.helperB;
-    bindEdit(h);
+    h.querySelector('#nmA').textContent = data.helperA;
+    h.querySelector('#nmB').textContent = data.helperB;
   }
   function renderChecklist() {
     const ul = document.getElementById('checklist'); ul.innerHTML = '';
     data.checklist.forEach((c, i) => {
       const li = document.createElement('li');
       li.className = 'check' + (c.d ? ' done' : '');
-      li.innerHTML = `<span class="box">${I.check}</span><span class="lbl" contenteditable="true" spellcheck="false"></span>`;
+      li.innerHTML = `<span class="box">${I.check}</span><span class="lbl"></span>`;
       li.querySelector('.lbl').textContent = c.t;
       li.querySelector('.box').addEventListener('click', () => { c.d = !c.d; renderChecklist(); save(); });
-      li.querySelector('.lbl').addEventListener('input', (e) => { c.t = e.target.textContent; save(); });
       ul.appendChild(li);
     });
   }
@@ -806,7 +1231,21 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
     });
   }
+  function wordBankArr(){ return (data.wordBank && data.wordBank.length) ? data.wordBank : DEFAULTS.wordBank; }
+  function currentWord(){
+    if (!data.wordAuto){ return { w: data.word || '', d: data.worddef || '' }; }
+    const bank = wordBankArr(); if (!bank.length) return { w: data.word || '', d: data.worddef || '' };
+    const wk = weekNo(new Date());
+    const it = bank[((wk % bank.length) + bank.length) % bank.length];
+    return { w: it.w || '', d: it.d || '' };
+  }
+  function renderWord(){
+    const cw = currentWord();
+    const bw = document.getElementById('bigWord'); if (bw) bw.textContent = cw.w;
+    const wd = document.getElementById('wordDef'); if (wd) wd.textContent = cw.d;
+  }
   bindEdit(document);
+  renderWord();
 
   /* ---------- decorations ---------- */
   function build() {
@@ -1105,10 +1544,693 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   document.getElementById('addPlanRow').onclick=function(){ harvestPlan(); portal.data.week[editDay].push({ type:'lesson', time:'', name:'', icon:'book', color:COLORS[0] }); buildPlanRows(); };
   document.getElementById('planSave').onclick=function(){ harvestPlan(); if(portal.save) portal.save(); if(portal.applyWeek) portal.applyWeek(); closePlanner(); };
 
+  /* ---------- vær: automatisk etter sted (Open-Meteo, gratis, uten nøkkel) ---------- */
+  function wmoToIdx(code){
+    if (code === 0 || code === 1) return 0;                                   // klart → Sol
+    if (code === 2 || code === 3 || code === 45 || code === 48) return 1;     // skyet/tåke
+    if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 3;   // snø
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95) return 2; // regn/torden
+    return 1;
+  }
+  let weatherTimer = null;
+  function setWeatherStatus(t){ const el = document.getElementById('setWeatherStatus'); if (el) el.textContent = t || ''; }
+  function fetchAutoWeather(){
+    if (!data.weatherAuto) return;
+    if (!navigator.geolocation){ setWeatherStatus('Posisjon støttes ikke i denne nettleseren.'); return; }
+    setWeatherStatus('Henter posisjon …');
+    navigator.geolocation.getCurrentPosition(function(pos){
+      const la = pos.coords.latitude.toFixed(3), lo = pos.coords.longitude.toFixed(3);
+      setWeatherStatus('Henter vær …');
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo + '&current=temperature_2m,weather_code')
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          const cur = j && j.current; if (!cur) throw new Error('tomt svar');
+          data.weather = wmoToIdx(cur.weather_code);
+          data.temp = Math.round(cur.temperature_2m) + '°';
+          renderWeather();
+          const wt = document.getElementById('wtemp'); if (wt) wt.textContent = data.temp;
+          save();
+          setWeatherStatus('Oppdatert: ' + W[data.weather].l + ', ' + data.temp);
+        })
+        .catch(function(){ setWeatherStatus('Kunne ikke hente vær akkurat nå.'); });
+    }, function(){ setWeatherStatus('Fikk ikke tilgang til posisjon.'); }, { maximumAge: 600000, timeout: 10000 });
+  }
+  function startAutoWeather(){
+    if (weatherTimer){ clearInterval(weatherTimer); weatherTimer = null; }
+    if (data.weatherAuto){ fetchAutoWeather(); weatherTimer = setInterval(fetchAutoWeather, 30 * 60 * 1000); }
+  }
+
+  /* ---------- innstillinger-overlay ---------- */
+  function renderTaskEditor(){
+    const box = document.getElementById('setTasks'); if (!box) return;
+    box.innerHTML = '';
+    (data.checklist || []).forEach(function(c, i){
+      const row = document.createElement('div'); row.className = 'set-task';
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = c.t || '';
+      inp.addEventListener('input', function(){ c.t = inp.value; save(); renderChecklist(); });
+      const del = document.createElement('button'); del.className = 'set-task-del'; del.textContent = '×'; del.title = 'Slett';
+      del.onclick = function(){ data.checklist.splice(i, 1); save(); renderChecklist(); renderTaskEditor(); };
+      row.appendChild(inp); row.appendChild(del); box.appendChild(row);
+    });
+  }
+  function renderWordBankEditor(){
+    const box = document.getElementById('setWordBank'); if (!box) return;
+    data.wordBank = (data.wordBank && data.wordBank.length) ? data.wordBank : JSON.parse(JSON.stringify(DEFAULTS.wordBank));
+    const bank = data.wordBank;
+    const cnt = document.getElementById('wordBankCount'); if (cnt) cnt.textContent = bank.length;
+    box.innerHTML = '';
+    bank.forEach(function(it, i){
+      const row = document.createElement('div'); row.className = 'set-word';
+      const w = document.createElement('input'); w.type = 'text'; w.className = 'ww'; w.value = it.w || ''; w.placeholder = 'ord';
+      const d = document.createElement('input'); d.type = 'text'; d.className = 'wd'; d.value = it.d || ''; d.placeholder = 'forklaring';
+      w.addEventListener('input', function(){ it.w = w.value; save(); renderWord(); });
+      d.addEventListener('input', function(){ it.d = d.value; save(); renderWord(); });
+      const del = document.createElement('button'); del.className = 'set-task-del'; del.textContent = '×'; del.title = 'Slett';
+      del.onclick = function(){ bank.splice(i, 1); save(); renderWord(); renderWordBankEditor(); };
+      row.appendChild(w); row.appendChild(d); row.appendChild(del); box.appendChild(row);
+    });
+  }
+  function syncSettings(){
+    const a = document.getElementById('setWeatherAuto'); if (a) a.checked = !!data.weatherAuto;
+    const pp = document.getElementById('setProgressPercent'); if (pp) pp.checked = !!data.progressPercent;
+    const ha = document.getElementById('setHelperA'); if (ha) ha.value = data.helperA || '';
+    const hb = document.getElementById('setHelperB'); if (hb) hb.value = data.helperB || '';
+    renderTaskEditor();
+    const wAuto = document.getElementById('setWordAuto'); if (wAuto) wAuto.checked = !!data.wordAuto;
+    const wMan = document.getElementById('setWordManual'); if (wMan) wMan.style.display = data.wordAuto ? 'none' : 'flex';
+    const sw = document.getElementById('setWord'); if (sw) sw.value = data.word || '';
+    const swd = document.getElementById('setWordDef'); if (swd) swd.value = data.worddef || '';
+    renderWordBankEditor();
+  }
+  (function initSettings(){
+    const ovl = document.getElementById('settingsOverlay');
+    const btn = document.getElementById('tbSettings');
+    if (btn) btn.onclick = function(){ syncSettings(); if (ovl) ovl.classList.add('open'); };
+    const x = document.getElementById('settingsClose'); if (x) x.onclick = function(){ ovl.classList.remove('open'); };
+    if (ovl) ovl.addEventListener('click', function(e){ if (e.target === ovl) ovl.classList.remove('open'); });
+    const a = document.getElementById('setWeatherAuto');
+    if (a) a.onchange = function(){
+      data.weatherAuto = a.checked; save();
+      if (data.weatherAuto){ startAutoWeather(); }
+      else { setWeatherStatus(''); if (weatherTimer){ clearInterval(weatherTimer); weatherTimer = null; } }
+    };
+    const pp = document.getElementById('setProgressPercent');
+    if (pp) pp.onchange = function(){ data.progressPercent = pp.checked; save(); renderLessons(); };
+    const ha = document.getElementById('setHelperA');
+    if (ha) ha.addEventListener('input', function(){ data.helperA = ha.value; save(); renderHelpers(); });
+    const hb = document.getElementById('setHelperB');
+    if (hb) hb.addEventListener('input', function(){ data.helperB = hb.value; save(); renderHelpers(); });
+    const at = document.getElementById('setAddTask');
+    if (at) at.onclick = function(){ data.checklist = data.checklist || []; data.checklist.push({ t: 'Ny oppgave', d: false }); save(); renderChecklist(); renderTaskEditor(); };
+    const wAuto = document.getElementById('setWordAuto');
+    if (wAuto) wAuto.onchange = function(){ data.wordAuto = wAuto.checked; save(); const wm = document.getElementById('setWordManual'); if (wm) wm.style.display = data.wordAuto ? 'none' : 'flex'; renderWord(); };
+    const sw = document.getElementById('setWord');
+    if (sw) sw.addEventListener('input', function(){ data.word = sw.value; save(); renderWord(); });
+    const swd = document.getElementById('setWordDef');
+    if (swd) swd.addEventListener('input', function(){ data.worddef = swd.value; save(); renderWord(); });
+    const aw = document.getElementById('setAddWord');
+    if (aw) aw.onclick = function(){ data.wordBank = (data.wordBank && data.wordBank.length) ? data.wordBank : JSON.parse(JSON.stringify(DEFAULTS.wordBank)); data.wordBank.push({ w: 'nytt ord', d: 'forklaring' }); save(); renderWord(); renderWordBankEditor(); };
+  })();
+  startAutoWeather();
+
   /* init */
   applyVideoVis();
 })();
 
 </script>
+
+<!-- ====== TEGNEVERKTØY-LOGIKK ====== -->
+<script>
+(function(){
+  const layer  = document.getElementById('drawLayer');
+  const canvas = document.getElementById('drawCanvas');
+  if (!layer || !canvas) return;
+  const ctx = canvas.getContext('2d');
+  const KEY = 'myntland-portal-draw-v1';
+
+  const PALETTE = ['#2a1f3d','#ffffff','#e64b3b','#e3a82a','#7bb026','#27b3c6','#378add','#d4537e'];
+  const SIZES = [4, 9, 18];
+  let color = '#2a1f3d', size = 9, erasing = false, bgMode = 'blank';
+  let drawing = false, dpr = 1;
+  const undoStack = [];
+
+  const bg = document.createElement('div');
+  bg.className = 'draw-bg bg-transparent';
+  layer.insertBefore(bg, canvas);
+  function applyBg(){ bg.className = 'draw-bg bg-' + bgMode; }
+
+  const colorsWrap = document.getElementById('dtColors');
+  PALETTE.forEach(function(c){
+    const b = document.createElement('button');
+    b.className = 'dt-swatch'; b.style.background = c; b.dataset.color = c;
+    if (c === '#ffffff') b.style.borderColor = '#2a1f3d';
+    b.onclick = function(){ color = c; erasing = false; syncUI(); };
+    colorsWrap.appendChild(b);
+  });
+
+  const sizesWrap = document.getElementById('dtSizes');
+  SIZES.forEach(function(s, i){
+    const b = document.createElement('button');
+    b.className = 'dt-size'; b.dataset.size = s;
+    const d = document.createElement('span'); d.className = 'dot';
+    const px = 7 + i * 6; d.style.width = px + 'px'; d.style.height = px + 'px';
+    b.appendChild(d);
+    b.onclick = function(){ size = s; syncUI(); };
+    sizesWrap.appendChild(b);
+  });
+
+  function syncUI(){
+    document.querySelectorAll('.dt-swatch').forEach(function(b){ b.classList.toggle('active', !erasing && b.dataset.color === color); });
+    document.querySelectorAll('.dt-size').forEach(function(b){ b.classList.toggle('active', (+b.dataset.size) === size); });
+    document.getElementById('dtEraser').classList.toggle('active', erasing);
+    document.querySelectorAll('.dt-paper').forEach(function(b){ b.classList.toggle('active', b.dataset.paper === bgMode); });
+  }
+
+  function setupCanvas(){
+    dpr = window.devicePixelRatio || 1;
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  }
+  function clearCanvas(){
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.restore();
+  }
+  function posOf(e){ const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+  function pushUndo(){ try { undoStack.push(canvas.toDataURL()); if (undoStack.length > 12) undoStack.shift(); } catch(_){} }
+
+  function strokeStep(){
+    ctx.lineWidth = size;
+    if (erasing){ ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; }
+    else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = color; }
+    ctx.stroke();
+  }
+  function start(e){
+    e.preventDefault(); drawing = true; pushUndo();
+    const p = posOf(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 0.01, p.y); strokeStep();
+    try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+  }
+  function move(e){ if (!drawing) return; const p = posOf(e); ctx.lineTo(p.x, p.y); strokeStep(); }
+  function end(){ if (!drawing) return; drawing = false; ctx.globalCompositeOperation = 'source-over'; save(); }
+
+  canvas.addEventListener('pointerdown', start);
+  canvas.addEventListener('pointermove', move);
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+
+  document.getElementById('dtEraser').onclick = function(){ erasing = !erasing; syncUI(); };
+  document.getElementById('dtUndo').onclick = function(){
+    if (!undoStack.length) return;
+    const data = undoStack.pop();
+    const img = new Image();
+    img.onload = function(){ clearCanvas(); ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight); save(); };
+    img.src = data;
+  };
+  document.querySelectorAll('.dt-paper').forEach(function(b){
+    b.onclick = function(){ bgMode = b.dataset.paper; applyBg(); syncUI(); save(); };
+  });
+  document.getElementById('dtClear').onclick = function(){ pushUndo(); clearCanvas(); save(); };
+  document.getElementById('dtClose').onclick = function(){ save(); closeLayer(); };
+
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify({ img: canvas.toDataURL(), bg: bgMode })); } catch(_){} }
+  function restore(){
+    let d = null; try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(_){}
+    if (d && ['blank','lines','grid'].indexOf(d.bg) >= 0) bgMode = d.bg;
+    applyBg();
+    if (d && d.img){ const img = new Image(); img.onload = function(){ ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight); }; img.src = d.img; }
+  }
+
+  function openLayer(){
+    layer.classList.add('open'); layer.setAttribute('aria-hidden', 'false');
+    setupCanvas(); restore(); syncUI();
+  }
+  function closeLayer(){ layer.classList.remove('open'); layer.setAttribute('aria-hidden', 'true'); }
+
+  const btn = document.getElementById('tbDraw'); if (btn) btn.onclick = openLayer;
+
+  let rT;
+  window.addEventListener('resize', function(){
+    if (!layer.classList.contains('open')) return;
+    clearTimeout(rT);
+    rT = setTimeout(function(){
+      let data = null; try { data = canvas.toDataURL(); } catch(_){}
+      setupCanvas(); applyBg();
+      if (data){ const img = new Image(); img.onload = function(){ ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight); }; img.src = data; }
+    }, 150);
+  });
+
+  syncUI();
+})();
+</script>
+
+<!-- ====== LIVE-DATA FRA MYNTLAND (sparemål + fond) ====== -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getDatabase, ref, onValue, get, set, push, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain: "myntland.firebaseapp.com",
+    databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "myntland",
+    storageBucket: "myntland.firebasestorage.app",
+    messagingSenderId: "711264415533",
+    appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+    measurementId: "G-95QZNLQ6V9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  try {
+    const appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+      isTokenAutoRefreshEnabled: true
+    });
+    await Promise.race([
+      getToken(appCheck).catch(err => console.warn('[App Check] token-fetch feilet:', err)),
+      new Promise(r => setTimeout(r, 3000))
+    ]);
+  } catch (e) { console.warn('[App Check] init feilet:', e); }
+
+  const db = getDatabase(app);
+
+  /* ---------- kobling (huskes lokalt) ---------- */
+  const LINK_KEY = 'myntland-portal-link-v1';
+  function loadLink(){ try { return JSON.parse(localStorage.getItem(LINK_KEY) || 'null'); } catch(e){ return null; } }
+  function saveLink(v){ localStorage.setItem(LINK_KEY, JSON.stringify(v)); }
+  function clearLink(){ localStorage.removeItem(LINK_KEY); }
+
+  let link = loadLink();           // { workspaceId, trinn, className, teacherName, role }
+  let settings = {};
+  let goalsUnsub = null, fundUnsub = null;
+
+  const goalList  = document.getElementById('goalList');
+  const fundPanel = document.getElementById('fundPanel');
+  const fundCards = document.getElementById('fundCards');
+  const fundDate  = document.getElementById('fundDate');
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function fmt(n){ return Math.round(n || 0).toLocaleString('nb-NO'); }
+  function wsFilterEnabled(){ return !settings.workspaceFilteringDisabled; }
+
+  onValue(ref(db, 'settings'), s => { settings = s.val() || {}; });
+
+  /* ---------- klassens sparemål ---------- */
+  function renderGoals(goalsObj){
+    if (!link){
+      goalList.innerHTML = '<div class="goal-empty">Trykk på &#127974;-knappen nede til høyre for å koble tavla til klassen din.</div>';
+      return;
+    }
+    const all = goalsObj ? Object.entries(goalsObj).map(([k,v]) => ({...v, fbKey:k})) : [];
+    const ws  = link.workspaceId || 'main';
+    let goals = all;
+    if (link.role !== 'admin' && wsFilterEnabled()){
+      goals = all.filter(g => ((g && g.workspaceId) || 'main') === ws);
+    }
+    const active = goals.filter(g => !g.completed);
+    const done   = goals.filter(g =>  g.completed);
+    const show   = [...active, ...done].slice(0, 3);
+    if (!show.length){ goalList.innerHTML = '<div class="goal-empty">Ingen aktive sparemål ennå.</div>'; return; }
+    goalList.innerHTML = show.map(g => {
+      const target = g.target || 1;
+      const saved  = g.saved  || 0;
+      const pct    = Math.min(100, Math.round(saved / target * 100));
+      const isDone = g.completed || saved >= target;
+      return `<div class="goal-item${isDone ? ' goal-done' : ''}">
+        <div class="goal-top">
+          <span class="goal-emoji">${esc(g.emoji || '🏦')}</span>
+          <span class="goal-name">${esc(g.name || 'Sparemål')}</span>
+          <span class="goal-amt">🪙 ${fmt(saved)} / ${fmt(target)}</span>
+        </div>
+        <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+        <div class="goal-pct">${isDone ? '🎉 Målet er nådd!' : pct + '%'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ---------- fond i dag (kun 5.–7.) ---------- */
+  function fundCard(label, rate, prev){
+    let chg = '', cls = 'fund-flat', arrow = '●';
+    if (prev != null && prev > 0){
+      const pct = (rate - prev) / prev * 100;
+      if (pct > 0.05){ cls = 'fund-up';   arrow = '▲'; }
+      else if (pct < -0.05){ cls = 'fund-down'; arrow = '▼'; }
+      chg = (pct >= 0 ? '+' : '') + pct.toFixed(1).replace('.', ',') + '%';
+    }
+    return `<div class="fundcard">
+      <div class="fund-label">${label}</div>
+      <div class="fund-rate">${Math.round(rate)}</div>
+      <div class="fund-chg ${cls}">${arrow} ${chg || '–'}</div>
+    </div>`;
+  }
+  function renderFund(histObj){
+    if (!link || link.trinn !== '57'){ fundPanel.style.display = 'none'; return; }
+    fundPanel.style.display = '';
+    const hist = histObj || {};
+    const days = Object.keys(hist).sort();
+    if (!days.length){ fundCards.innerHTML = '<div class="goal-empty">Ingen fondkurs ennå.</div>'; fundDate.textContent = ''; return; }
+    const today = hist[days[days.length - 1]] || { low:100, high:100 };
+    const prev  = days.length > 1 ? hist[days[days.length - 2]] : null;
+    fundDate.textContent = days[days.length - 1];
+    fundCards.innerHTML = fundCard('Lav risiko',  today.low  || 100, prev ? prev.low  : null)
+                        + fundCard('Høy risiko',  today.high || 100, prev ? prev.high : null);
+  }
+
+  /* ---------- live-lyttere ---------- */
+  function startData(){
+    if (goalsUnsub){ goalsUnsub(); goalsUnsub = null; }
+    if (fundUnsub){ fundUnsub();  fundUnsub  = null; }
+    goalsUnsub = onValue(ref(db, 'classGoals'), s => renderGoals(s.val()));
+    if (link && link.trinn === '57'){
+      fundUnsub = onValue(ref(db, 'fundHistory'), s => renderFund(s.val()));
+    } else {
+      fundPanel.style.display = 'none';
+    }
+    if (studentsUnsub){ studentsUnsub(); studentsUnsub = null; }
+    if (link){ studentsUnsub = onValue(ref(db, 'students' + link.trinn), s => {
+      const v = s.val(); studentsAll = v ? Object.keys(v).map(function(k){ return Object.assign({}, v[k], { fbKey: k }); }) : [];
+      renderSalaryUI();
+    }); }
+  }
+  function stopData(){
+    if (goalsUnsub){ goalsUnsub(); goalsUnsub = null; }
+    if (fundUnsub){ fundUnsub();  fundUnsub  = null; }
+    if (studentsUnsub){ studentsUnsub(); studentsUnsub = null; }
+  }
+
+  /* ---------- koble til-flyt ---------- */
+  const cOvl   = document.getElementById('connectOverlay');
+  const cBody  = document.getElementById('connectBody');
+  let cTeachers = [];
+
+  document.getElementById('tbConnect').onclick = openConnect;
+  document.getElementById('connectClose').onclick = () => cOvl.classList.remove('open');
+  cOvl.addEventListener('click', e => { if (e.target === cOvl) cOvl.classList.remove('open'); });
+
+  function openConnect(){
+    cOvl.classList.add('open');
+    if (link){
+      cBody.innerHTML = `<div class="c-status">Tavla viser nå: <b>${esc(link.className || link.teacherName)}</b>
+        (${link.trinn === '14' ? '1.–4.' : '5.–7.'} trinn)</div>
+        <div class="c-row">
+          <button class="btn-big ghost" id="cDisc">Koble fra</button>
+          <button class="btn-big save"  id="cSwitch">Bytt klasse</button>
+        </div>`;
+      document.getElementById('cDisc').onclick = () => {
+        clearLink(); link = null; stopData(); fundPanel.style.display = 'none';
+        renderGoals(); updateConnectLabel(); cOvl.classList.remove('open');
+      };
+      document.getElementById('cSwitch').onclick = loadAndShowProfiles;
+      return;
+    }
+    loadAndShowProfiles();
+  }
+
+  async function loadAndShowProfiles(){
+    cBody.innerHTML = '<div class="c-loading">Henter lærerprofiler …</div>';
+    try {
+      const [t14, t57] = await Promise.all([ get(ref(db, 'teachers')), get(ref(db, 'teachers57')) ]);
+      const list = [];
+      const add = (snap, trinn) => { const v = snap.val() || {}; Object.entries(v).forEach(([k,p]) => list.push({...p, fbKey:k, trinn})); };
+      add(t14, '14'); add(t57, '57');
+      cTeachers = list;
+      renderProfiles();
+    } catch(e){
+      cBody.innerHTML = '<div class="c-loading">Kunne ikke hente profiler. Sjekk nettet og prøv igjen.</div>';
+    }
+  }
+
+  function renderProfiles(){
+    if (!cTeachers.length){ cBody.innerHTML = '<div class="c-loading">Ingen lærerprofiler funnet.</div>'; return; }
+    cBody.innerHTML = `<p class="c-hint">Velg profilen din, så husker tavla klassen. Du trenger bare gjøre dette én gang per enhet.</p>
+      <div class="c-profiles">` + cTeachers.map((t,i) => `
+        <button class="c-profile" data-i="${i}">
+          <span class="c-ava" style="background:${(t.color || '#888')}22;color:${t.color || '#444'}">${esc((t.name || '?')[0].toUpperCase())}</span>
+          <span class="c-meta">
+            <span class="c-name">${esc(t.name || 'Lærer')}</span>
+            <span class="c-role">${t.role === 'admin' ? 'Administrator' : 'Lærer'}${t.class ? ' · ' + esc(t.class) : ''} · ${t.trinn === '14' ? '1.–4.' : '5.–7.'} trinn</span>
+          </span>
+        </button>`).join('') + `</div>`;
+    cBody.querySelectorAll('.c-profile').forEach(b => b.onclick = () => selectProfile(+b.dataset.i));
+  }
+
+  function selectProfile(i){
+    const t = cTeachers[i];
+    cBody.innerHTML = `<p class="c-hint">Tast PIN for <b>${esc(t.name)}</b></p>
+      <input id="cPin" class="c-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••">
+      <div class="c-err" id="cErr"></div>
+      <div class="c-row">
+        <button class="btn-big ghost" id="cBack">Tilbake</button>
+        <button class="btn-big save"  id="cOk">Koble til</button>
+      </div>`;
+    const pin = document.getElementById('cPin'); pin.focus();
+    document.getElementById('cBack').onclick = renderProfiles;
+    const tryIt = () => {
+      if (String(pin.value) === String(t.pin)){
+        link = {
+          workspaceId: t.workspaceId || 'main',
+          trinn: t.trinn,
+          className: t.class || '',
+          teacherName: t.name || '',
+          role: t.role || 'teacher'
+        };
+        saveLink(link);
+        cOvl.classList.remove('open');
+        updateConnectLabel();
+        startData();
+        renderGoals();
+      } else {
+        document.getElementById('cErr').textContent = '❌ Feil PIN – prøv igjen';
+        pin.value = ''; pin.focus();
+      }
+    };
+    document.getElementById('cOk').onclick = tryIt;
+    pin.addEventListener('keydown', e => { if (e.key === 'Enter') tryIt(); });
+    pin.addEventListener('input', () => { if (pin.value.length === 4) tryIt(); });
+  }
+
+  function updateConnectLabel(){
+    const btn = document.getElementById('tbConnect');
+    if (!btn) return;
+    btn.title = link
+      ? ('Koblet til ' + (link.className || link.teacherName) + ' – trykk for å bytte')
+      : 'Koble til klasse';
+  }
+
+  /* ---------- init ---------- */
+  updateConnectLabel();
+  renderGoals();
+  /* ====== ORDENSELEV-LØNN (Myntland) ====== */
+  const SAL_KEY = 'myntland-portal-ordens-v1';
+  const SAL_DEF = { amount: 100, autoFriday: true, aKey: '', aName: '', bKey: '', bName: '' };
+  function loadSal(){ try { return Object.assign({}, SAL_DEF, JSON.parse(localStorage.getItem(SAL_KEY) || '{}')); } catch(e){ return Object.assign({}, SAL_DEF); } }
+  function saveSal(){ try { localStorage.setItem(SAL_KEY, JSON.stringify(sal)); } catch(e){} }
+  let sal = loadSal();
+  let studentsAll = [];
+  let studentsUnsub = null;
+  let salStatusEl = null;
+
+  function classStudents(){
+    if (!link) return [];
+    if (link.role === 'admin' || !link.className) return studentsAll;
+    return studentsAll.filter(function(s){ return s.class === link.className; });
+  }
+  function fullName(s){ return ((s.firstname || '') + ' ' + (s.lastname || '')).trim() || (s.name || 'Elev'); }
+  function setSalStatus(t){ if (salStatusEl) salStatusEl.textContent = t || ''; }
+
+  function buildSalaryUI(){
+    const body = document.querySelector('#settingsOverlay .ovl-body');
+    if (!body || document.getElementById('salSection')) return;
+    const wrap = document.createElement('div'); wrap.id = 'salSection';
+    wrap.innerHTML =
+      '<div class="set-divider"></div>' +
+      '<div class="set-heading">Ordenselev-lønn (Myntland)</div>' +
+      '<div class="set-sub" style="margin-top:-2px">Betales automatisk på fredager. 20 % skatt går til klassens sparemål.</div>' +
+      '<div class="set-row">' +
+        '<div class="set-label">Lønn per uke (mynter)<span class="set-sub">Samme beløp for begge ordenselever.</span></div>' +
+        '<input type="number" id="salAmount" min="0" step="10" style="width:120px;font-family:inherit;font-size:20px;font-weight:700;color:var(--ink);border:3px solid var(--ink);border-radius:12px;padding:8px 10px;background:var(--paper);text-align:center">' +
+      '</div>' +
+      '<div class="set-row">' +
+        '<div class="set-label">Automatisk på fredag<span class="set-sub">Betaler begge koblede ordenselever én gang hver fredag.</span></div>' +
+        '<label class="set-switch"><input type="checkbox" id="salAuto"><span class="set-slider"></span></label>' +
+      '</div>' +
+      '<div class="sal-link" id="salLinkA"></div>' +
+      '<div class="sal-link" id="salLinkB"></div>' +
+      '<button class="set-addtask" id="salPayNow" style="border-style:solid;background:var(--green);color:#fff">Betal lønn nå</button>' +
+      '<div class="set-status" id="salStatus"></div>';
+    body.appendChild(wrap);
+    salStatusEl = document.getElementById('salStatus');
+    document.getElementById('salAmount').value = sal.amount;
+    document.getElementById('salAuto').checked = !!sal.autoFriday;
+    document.getElementById('salAmount').addEventListener('input', function(e){ sal.amount = Math.max(0, parseInt(e.target.value) || 0); saveSal(); });
+    document.getElementById('salAuto').addEventListener('change', function(e){ sal.autoFriday = e.target.checked; saveSal(); });
+    document.getElementById('salPayNow').onclick = function(){ paySalary(true); };
+  }
+
+  function renderSalaryUI(){
+    if (!document.getElementById('salLinkA')) return;
+    [['A', sal.aKey, sal.aName], ['B', sal.bKey, sal.bName]].forEach(function(row){
+      const slot = row[0], key = row[1], name = row[2];
+      const el = document.getElementById('salLink' + slot);
+      const linked = key ? ('🔗 ' + esc(name || 'koblet elev')) : '<span style="color:var(--ink-soft)">ikke koblet</span>';
+      el.innerHTML = '<span class="sal-link-label">Hjelper ' + (slot === 'A' ? '1' : '2') + '</span>' +
+        '<span class="sal-link-name">' + linked + '</span>' +
+        '<button class="sal-btn" data-slot="' + slot + '" data-act="scan">Skann kort</button>' +
+        '<button class="sal-btn" data-slot="' + slot + '" data-act="list">Velg fra liste</button>' +
+        (key ? '<button class="sal-btn sal-x" data-slot="' + slot + '" data-act="clear">×</button>' : '');
+      el.querySelectorAll('.sal-btn').forEach(function(b){ b.onclick = function(){ salAction(b.dataset.slot, b.dataset.act); }; });
+    });
+  }
+
+  function linkHelper(slot, student){
+    if (slot === 'A'){ sal.aKey = student.fbKey; sal.aName = fullName(student); }
+    else { sal.bKey = student.fbKey; sal.bName = fullName(student); }
+    saveSal(); renderSalaryUI();
+  }
+  function salAction(slot, act){
+    if (act === 'clear'){ if (slot === 'A'){ sal.aKey = ''; sal.aName = ''; } else { sal.bKey = ''; sal.bName = ''; } saveSal(); renderSalaryUI(); return; }
+    if (act === 'list') openStudentList(slot);
+    if (act === 'scan') openScan(slot);
+  }
+
+  /* --- velg fra liste --- */
+  function openStudentList(slot){
+    const ovl = document.getElementById('salListOvl');
+    const box = document.getElementById('salListBox');
+    if (!ovl || !box) return;
+    const studs = classStudents().slice().sort(function(a, b){ return fullName(a).localeCompare(fullName(b), 'nb'); });
+    box.innerHTML = studs.length
+      ? studs.map(function(s, i){ return '<button class="sal-pick" data-i="' + i + '">' + esc(fullName(s)) + ' <span style="color:var(--ink-soft)">' + esc(s.class || '') + '</span></button>'; }).join('')
+      : '<div class="set-sub">Ingen elever funnet. Er tavla koblet til riktig klasse?</div>';
+    box.querySelectorAll('.sal-pick').forEach(function(b){ b.onclick = function(){ linkHelper(slot, studs[+b.dataset.i]); setSalStatus('Koblet: ' + fullName(studs[+b.dataset.i])); ovl.classList.remove('open'); }; });
+    ovl.classList.add('open');
+  }
+
+  /* --- skann bankkort (kamera + jsQR) --- */
+  let _scanStream = null, _scanRAF = null, _scanSlot = null;
+  function loadJsQR(cb){
+    if (window.jsQR) return cb();
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    sc.onload = cb; sc.onerror = function(){ setSalStatus('Kunne ikke laste skanneren.'); };
+    document.head.appendChild(sc);
+  }
+  function openScan(slot){ _scanSlot = slot; const ovl = document.getElementById('salScanOvl'); if (ovl) ovl.classList.add('open'); loadJsQR(startScanCam); }
+  function closeScan(){
+    const ovl = document.getElementById('salScanOvl'); if (ovl) ovl.classList.remove('open');
+    if (_scanRAF){ cancelAnimationFrame(_scanRAF); _scanRAF = null; }
+    if (_scanStream){ _scanStream.getTracks().forEach(function(t){ t.stop(); }); _scanStream = null; }
+  }
+  function tryLinkScan(dataStr){
+    let d = null; try { d = JSON.parse(dataStr); } catch(e){}
+    if (d && d.type === 'login' && d.fbKey){
+      const s = studentsAll.find(function(x){ return x.fbKey === d.fbKey; }) || { fbKey: d.fbKey, firstname: 'Elev', lastname: '' };
+      linkHelper(_scanSlot, s); setSalStatus('Koblet: ' + fullName(s)); closeScan(); return true;
+    }
+    return false;
+  }
+  function startScanCam(){
+    const video = document.getElementById('salScanVideo');
+    const canvas = document.getElementById('salScanCanvas');
+    if (!video || !canvas || !navigator.mediaDevices){ setSalStatus('Kamera støttes ikke her.'); return; }
+    const ctx = canvas.getContext('2d');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream){
+      _scanStream = stream; video.srcObject = stream; video.setAttribute('playsinline', 'true'); video.play();
+      function loop(){
+        if (!_scanStream) return;
+        if (video.readyState === video.HAVE_ENOUGH_DATA && window.jsQR){
+          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          try {
+            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+            if (code && tryLinkScan(code.data)) return;
+          } catch(e){}
+        }
+        _scanRAF = requestAnimationFrame(loop);
+      }
+      _scanRAF = requestAnimationFrame(loop);
+    }).catch(function(){ setSalStatus('Fikk ikke tilgang til kamera.'); });
+  }
+
+  /* --- utbetaling --- */
+  function studNode(){ return 'students' + (link ? link.trinn : '57'); }
+  function txNode(){ return 'transactions' + (link ? link.trinn : '57'); }
+  async function distributeTax(taxAmt){
+    if (!taxAmt) return;
+    const snap = await get(ref(db, 'classGoals'));
+    const obj = snap.val() || {};
+    let goals = Object.keys(obj).map(function(k){ return Object.assign({}, obj[k], { fbKey: k }); });
+    const ws = link.workspaceId || 'main';
+    if (link.role !== 'admin' && wsFilterEnabled()) goals = goals.filter(function(g){ return ((g && g.workspaceId) || 'main') === ws; });
+    const active = goals.filter(function(g){ return !g.completed; });
+    if (!active.length) return;
+    const per = Math.floor(taxAmt / active.length);
+    if (per <= 0) return;
+    const upd = {};
+    active.forEach(function(g){ const ns = (g.saved || 0) + per; upd['classGoals/' + g.fbKey + '/saved'] = ns; if (ns >= g.target) upd['classGoals/' + g.fbKey + '/completed'] = true; });
+    await update(ref(db, '/'), upd);
+  }
+  async function payOne(fbKey){
+    if (!fbKey || !link) return null;
+    const amount = sal.amount || 0; if (amount <= 0) return null;
+    const snap = await get(ref(db, studNode() + '/' + fbKey));
+    const s = snap.val(); if (!s) return null;
+    const taxAmt = Math.floor(amount * 0.20);
+    const net = amount - taxAmt;
+    const upd = {};
+    upd[studNode() + '/' + fbKey + '/balance'] = (s.balance || 0) + net;
+    upd[studNode() + '/' + fbKey + '/badgeTaxContributed'] = (s.badgeTaxContributed || 0) + taxAmt;
+    await update(ref(db, '/'), upd);
+    await set(push(ref(db, txNode() + '/' + fbKey)), { type: 'income', icon: '💼', desc: 'Ordenselev-lønn (netto etter 20% skatt)', amount: net, ts: Date.now() });
+    await distributeTax(taxAmt);
+    return { net: net, name: fullName(s) };
+  }
+  async function paySalary(manual){
+    if (!link){ setSalStatus('Koble tavla til en klasse først (🏦).'); return; }
+    const keys = [sal.aKey, sal.bKey].filter(Boolean);
+    if (!keys.length){ setSalStatus('Ingen ordenselever er koblet ennå.'); return; }
+    if (!(sal.amount > 0)){ setSalStatus('Sett et lønnsbeløp først.'); return; }
+    setSalStatus('Betaler lønn …');
+    const paid = [];
+    for (let i = 0; i < keys.length; i++){
+      try { const r = await payOne(keys[i]); if (r) paid.push(r.name + ' (' + r.net + ' 🪙)'); } catch(e){}
+    }
+    setSalStatus(paid.length ? ('✅ Lønn utbetalt: ' + paid.join(', ')) : 'Klarte ikke å betale lønn.');
+  }
+
+  /* --- automatisk fredag (delt markør i Firebase mot dobbel utbetaling) --- */
+  function dateStr(){ const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); }
+  async function checkFridayPay(){
+    if (!link || !sal.autoFriday) return;
+    if (new Date().getDay() !== 5) return;
+    const keys = [sal.aKey, sal.bKey].filter(Boolean);
+    if (!keys.length || !(sal.amount > 0)) return;
+    const ws = link.workspaceId || 'main';
+    const markRef = ref(db, 'ordensSalary/' + ws);
+    try {
+      const snap = await get(markRef);
+      if (snap.val() && snap.val().date === dateStr()) return;
+      await set(markRef, { date: dateStr(), ts: Date.now() });
+      await paySalary(false);
+    } catch(e){}
+  }
+
+  (function wireSalOverlays(){
+    const sc = document.getElementById('salScanClose'); if (sc) sc.onclick = closeScan;
+    const so = document.getElementById('salScanOvl'); if (so) so.addEventListener('click', function(e){ if (e.target === so) closeScan(); });
+    const lc = document.getElementById('salListClose'); const lo = document.getElementById('salListOvl');
+    if (lc && lo) lc.onclick = function(){ lo.classList.remove('open'); };
+    if (lo) lo.addEventListener('click', function(e){ if (e.target === lo) lo.classList.remove('open'); });
+  })();
+
+  if (link){ startData(); } else { fundPanel.style.display = 'none'; }
+  buildSalaryUI(); renderSalaryUI();
+  setTimeout(checkFridayPay, 4000);
+  setInterval(checkFridayPay, 60 * 60 * 1000);
+</script>
+
 </body>
 </html>

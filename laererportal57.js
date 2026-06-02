@@ -15,6 +15,16 @@ const TAX_RATE = 0.20;
 
 function fbRef(p) { return window._ref(window._db, p); }
 function ready()  { return !!(window._fbReady && window._db && window._ref); }
+function openKlasseportal() {
+  try {
+    var t = window._currentTeacher;
+    if (t) localStorage.setItem('myntland-portal-link-v1', JSON.stringify({
+      workspaceId: t.workspaceId || 'main', trinn: '57',
+      className: t.class || '', teacherName: t.name || '', role: t.role || 'teacher'
+    }));
+  } catch (e) {}
+  window.open('klasseportal.html', '_blank');
+}
 
 // ── Klasse-lås: vanlig lærer skal kun se sin egen klasse i opprett-dropdowns
 function applyTeacherClassLock() {
