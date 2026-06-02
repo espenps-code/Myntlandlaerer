@@ -617,6 +617,17 @@ h1.sticker{
 .set-word input{ font-family:inherit; font-size:16px; font-weight:600; color:var(--ink);
   border:3px solid var(--ink); border-radius:12px; padding:7px 10px; background:var(--paper); width:100%; }
 
+/* ===================== SPAREMÅL ETT OM GANGEN + KOMPAKT FOND ===================== */
+.goal-dots{ display:flex; justify-content:center; gap:7px; margin-top:9px; }
+.goal-dot{ width:9px; height:9px; border-radius:50%; background:rgba(42,31,61,.22); }
+.goal-dot.on{ background:var(--gold); box-shadow:0 0 0 2px rgba(42,31,61,.18); }
+.fundbox{ padding-top:14px; padding-bottom:14px; }
+.fundbox .fundcards{ gap:10px; }
+.fundcard{ padding:7px 8px 9px; }
+.fund-label{ font-size:13px; }
+.fund-rate{ font-size:26px; }
+.fund-chg{ font-size:16px; }
+
 </style>
 </head>
 <body>
@@ -1321,6 +1332,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     get data(){ return data; },
     save: save,
     renderLessons: renderLessons,
+    renderHelpers: renderHelpers,
+    renderChecklist: renderChecklist,
+    renderWord: renderWord,
+    weekNo: weekNo,
+    DEFAULTS: DEFAULTS,
     applyWeek: applyWeek,
     todayWd: todayWd,
     ICONS: I
@@ -1333,6 +1349,9 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 (function () {
   'use strict';
   var portal = window.portal || {};
+  var data = portal.data, save = portal.save, renderLessons = portal.renderLessons,
+      renderHelpers = portal.renderHelpers, renderChecklist = portal.renderChecklist,
+      renderWord = portal.renderWord, DEFAULTS = portal.DEFAULTS;
   function el(tag, cls, html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
@@ -1838,8 +1857,32 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   onValue(ref(db, 'settings'), s => { settings = s.val() || {}; });
 
   /* ---------- klassens sparemål ---------- */
+  let goalsCache = [], goalIdx = 0, goalTimer = null;
+  function paintGoal(){
+    if (!goalsCache.length){ goalList.innerHTML = '<div class="goal-empty">Ingen aktive sparemål ennå.</div>'; return; }
+    if (goalIdx >= goalsCache.length) goalIdx = 0;
+    const g = goalsCache[goalIdx];
+    const target = g.target || 1;
+    const saved  = g.saved  || 0;
+    const pct    = Math.min(100, Math.round(saved / target * 100));
+    const isDone = g.completed || saved >= target;
+    const dots = goalsCache.length > 1
+      ? '<div class="goal-dots">' + goalsCache.map(function(_, i){ return '<span class="goal-dot' + (i === goalIdx ? ' on' : '') + '"></span>'; }).join('') + '</div>'
+      : '';
+    goalList.innerHTML =
+      '<div class="goal-item' + (isDone ? ' goal-done' : '') + '">' +
+        '<div class="goal-top">' +
+          '<span class="goal-emoji">' + esc(g.emoji || '🏦') + '</span>' +
+          '<span class="goal-name">' + esc(g.name || 'Sparemål') + '</span>' +
+          '<span class="goal-amt">🪙 ' + fmt(saved) + ' / ' + fmt(target) + '</span>' +
+        '</div>' +
+        '<div class="goal-bar"><div class="goal-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="goal-pct">' + (isDone ? '🎉 Målet er nådd!' : pct + '%') + '</div>' +
+      '</div>' + dots;
+  }
   function renderGoals(goalsObj){
     if (!link){
+      goalsCache = [];
       goalList.innerHTML = '<div class="goal-empty">Trykk på &#127974;-knappen nede til høyre for å koble tavla til klassen din.</div>';
       return;
     }
@@ -1851,23 +1894,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     }
     const active = goals.filter(g => !g.completed);
     const done   = goals.filter(g =>  g.completed);
-    const show   = [...active, ...done].slice(0, 3);
-    if (!show.length){ goalList.innerHTML = '<div class="goal-empty">Ingen aktive sparemål ennå.</div>'; return; }
-    goalList.innerHTML = show.map(g => {
-      const target = g.target || 1;
-      const saved  = g.saved  || 0;
-      const pct    = Math.min(100, Math.round(saved / target * 100));
-      const isDone = g.completed || saved >= target;
-      return `<div class="goal-item${isDone ? ' goal-done' : ''}">
-        <div class="goal-top">
-          <span class="goal-emoji">${esc(g.emoji || '🏦')}</span>
-          <span class="goal-name">${esc(g.name || 'Sparemål')}</span>
-          <span class="goal-amt">🪙 ${fmt(saved)} / ${fmt(target)}</span>
-        </div>
-        <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
-        <div class="goal-pct">${isDone ? '🎉 Målet er nådd!' : pct + '%'}</div>
-      </div>`;
-    }).join('');
+    goalsCache = [...active, ...done];
+    if (goalIdx >= goalsCache.length) goalIdx = 0;
+    paintGoal();
+    if (goalTimer){ clearInterval(goalTimer); goalTimer = null; }
+    if (goalsCache.length > 1){ goalTimer = setInterval(function(){ goalIdx = (goalIdx + 1) % goalsCache.length; paintGoal(); }, 7000); }
   }
 
   /* ---------- fond i dag (kun 5.–7.) ---------- */
