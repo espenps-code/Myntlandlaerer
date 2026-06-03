@@ -655,6 +655,22 @@ h1.sticker{
 .fund-chg{ font-size:15px; }
 .fundcard{ padding:6px 8px 7px; }
 
+/* ===================== DATOKORT: kalenderblad ===================== */
+.datecard{ display:flex; align-items:center; gap:14px; }
+.cal-leaf{ flex:0 0 auto; width:78px; text-align:center; border:4px solid var(--ink); border-radius:16px;
+  overflow:hidden; background:var(--paper); box-shadow:0 4px 0 rgba(42,31,61,.16); }
+.cal-month{ background:var(--red); color:#fff; font-weight:700; font-size:15px; letter-spacing:1.5px;
+  text-transform:uppercase; padding:4px 0; }
+.cal-day{ font-size:46px; font-weight:700; color:var(--ink); line-height:1.2; font-variant-numeric:tabular-nums; }
+.cal-right{ display:flex; flex-direction:column; gap:9px; min-width:0; }
+.cal-right .weekday{ font-size:36px; }
+.cal-right .datesub{ display:flex; gap:7px; align-items:center; margin-top:0; }
+.cal-right .weeknum{ background:var(--ink); color:var(--cream); font-size:14px; font-weight:700;
+  padding:3px 11px; border-radius:20px; text-transform:uppercase; letter-spacing:.5px; margin-top:0; }
+.cal-right .weeknum span{ color:var(--cream); }
+.cal-right .yearnum{ background:var(--gold); color:var(--ink); font-size:14px; font-weight:700;
+  padding:3px 11px; border-radius:20px; letter-spacing:.5px; }
+
 </style>
 </head>
 <body>
@@ -685,11 +701,16 @@ h1.sticker{
     <!-- ====== HEADER ====== -->
     <header class="topbar pop" style="--d:0">
       <div class="datecard card">
-        <div class="weekday" id="weekday">Torsdag</div>
-        <div class="dateline"><span id="daynum">12.</span> <span id="monthname">juni</span></div>
-        <div class="datesub">
-          <span class="weeknum">Uke <span id="weeknum">24</span></span>
-          <span class="yearnum" id="yearnum">2026</span>
+        <div class="cal-leaf">
+          <div class="cal-month" id="monthname">juni</div>
+          <div class="cal-day" id="daynum">12</div>
+        </div>
+        <div class="cal-right">
+          <div class="weekday" id="weekday">Torsdag</div>
+          <div class="datesub">
+            <span class="weeknum">Uke <span id="weeknum">24</span></span>
+            <span class="yearnum" id="yearnum">2026</span>
+          </div>
         </div>
       </div>
 
@@ -1106,7 +1127,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function tick() {
     const n = new Date();
     document.getElementById('weekday').textContent = DAYS[n.getDay()];
-    document.getElementById('daynum').textContent = n.getDate() + '.';
+    document.getElementById('daynum').textContent = n.getDate();
     document.getElementById('monthname').textContent = MONTHS[n.getMonth()];
     document.getElementById('weeknum').textContent = weekNo(n);
     const yEl = document.getElementById('yearnum'); if (yEl) yEl.textContent = n.getFullYear();
