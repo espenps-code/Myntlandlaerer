@@ -645,6 +645,16 @@ h1.sticker{
 .fund-rate{ font-size:22px; }
 .fund-chg{ font-size:15px; }
 
+/* ===================== KOMPAKT v3: prosent i baren + fond på én linje ===================== */
+.goal-bar{ position:relative; height:24px; }
+.goal-pct-in{ position:absolute; right:10px; top:0; bottom:0; display:flex; align-items:center;
+  font-size:13px; font-weight:700; color:var(--ink); }
+.goal-done .goal-pct-in{ color:#1b3a00; }
+.fund-line{ display:flex; align-items:baseline; justify-content:center; gap:8px; }
+.fund-rate{ font-size:24px; }
+.fund-chg{ font-size:15px; }
+.fundcard{ padding:6px 8px 7px; }
+
 </style>
 </head>
 <body>
@@ -1900,8 +1910,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
           '<span class="goal-name">' + esc(g.name || 'Sparemål') + '</span>' +
           '<span class="goal-amt">🪙 ' + fmt(saved) + ' / ' + fmt(target) + '</span>' +
         '</div>' +
-        '<div class="goal-bar"><div class="goal-fill" style="width:' + pct + '%"></div></div>' +
-        '<div class="goal-pct">' + (isDone ? '🎉 Målet er nådd!' : pct + '%') + '</div>' +
+        '<div class="goal-bar"><div class="goal-fill" style="width:' + pct + '%"></div><span class="goal-pct-in">' + (isDone ? 'Nådd! 🎉' : pct + '%') + '</span></div>' +
       '</div>' + dots;
   }
   function renderGoals(goalsObj){
@@ -1936,8 +1945,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     }
     return `<div class="fundcard">
       <div class="fund-label">${label}</div>
-      <div class="fund-rate">${Math.round(rate)}</div>
-      <div class="fund-chg ${cls}">${arrow} ${chg || '–'}</div>
+      <div class="fund-line"><span class="fund-rate">${Math.round(rate)}</span><span class="fund-chg ${cls}">${arrow} ${chg || '–'}</span></div>
     </div>`;
   }
   function renderFund(histObj){
