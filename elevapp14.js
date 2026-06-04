@@ -493,6 +493,13 @@ async function setLastInterestPaid(studentFbKey, ts) {
 // - Ventende innskudd (gjort midt i uka) får dagsrente: amount * 5 % * (dager/7), rundet ned.
 // - Hver mandag som har passert siden lastInterestPaid utløser én utbetaling.
 async function checkAndPayInterest(studentFbKey) {
+  // ⚠️ AVSLÅTT: Sparerenten i 1.–4. håndteres nå UTELUKKENDE av nattjobben
+  // (cron.mjs → payWeeklySavingsInterest14), som også skriver posten i
+  // sparehistorikken. Tidligere betalte appen rente i tillegg, noe som ga
+  // dobbel utbetaling. Vi returnerer derfor med en gang. Innskudd og uttak
+  // føres fortsatt som normalt – det er bare renteutbetalingen som er slått av.
+  return;
+  // --- gammel logikk under (kjøres aldri) -----------------------------------
   if (savingsState.balance <= 0) return;
   const now = Date.now();
   const lastMon = lastMondayTs(now);
@@ -789,13 +796,13 @@ function drawSavingsChart() {
   canvas.style.display = 'block';
   if (empty) empty.style.display = 'none';
 
-  // ── 2-ukers vindu (i dag og 13 dager bakover) ─────────────────────────
+  // ── 2-måneders vindu (i dag og ~2 kalendermåneder bakover) ────────────
   const DAY = 24 * 3600 * 1000;
-  const DAYS = 14;
   const today = new Date(); today.setHours(23,59,59,999);
   const endTs = today.getTime();
-  const start = new Date(today); start.setDate(today.getDate() - (DAYS - 1)); start.setHours(0,0,0,0);
+  const start = new Date(today); start.setMonth(today.getMonth() - 2); start.setHours(0,0,0,0);
   const startTs = start.getTime();
+  const DAYS = Math.round((endTs - startTs) / DAY) + 1;
 
   // Rekonstruer daglig sluttsaldo: ta saldo ved siste hendelse hver dag, ellers før-dagens saldo
   const sortedAll = [...savingsState.history].sort((a,b) => (a.ts||0) - (b.ts||0));
@@ -899,35 +906,43 @@ function drawSavingsChart() {
     }
   });
 
-  // X-akse: vis hver mandag i vinduet (eller dag 1, dag 8) + dagens dato
-  ctx.fillStyle = '#5a7a5a';
+  // X-akse: oransje markør på hver mandag. Over et 2-måneders vindu blir det
+  // mange mandager, så vi tynner ut dato-etikettene (maks ~6) for å unngå at
+  // de overlapper. «I dag» vises alltid til slutt.
+  const mondayIdx = [];
+  dayPoints.forEach((p, i) => { if (new Date(p.ts).getDay() === 1) mondayIdx.push(i); });
+  const labelStep = Math.max(1, Math.ceil(mondayIdx.length / 6));
+  ctx.lineWidth = 1;
   ctx.font = '10px Nunito, sans-serif';
-  dayPoints.forEach((p, i) => {
-    const d = new Date(p.ts);
-    const isMonday = d.getDay() === 1;
-    const isLast   = (i === DAYS - 1);
-    if (isMonday || isLast) {
-      const x = padL + (i / (DAYS - 1)) * w;
-      // Liten vertikal markør
-      ctx.strokeStyle = isMonday ? '#EF9F27' : '#5a7a5a';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, padT + h);
-      ctx.lineTo(x, padT + h + 4);
-      ctx.stroke();
-      // Tekst
+  mondayIdx.forEach((i, k) => {
+    const x = padL + (i / (DAYS - 1)) * w;
+    // Liten vertikal markør på hver mandag
+    ctx.strokeStyle = '#EF9F27';
+    ctx.beginPath();
+    ctx.moveTo(x, padT + h);
+    ctx.lineTo(x, padT + h + 4);
+    ctx.stroke();
+    // Dato-etikett kun på hver labelStep-te mandag, og ikke helt inntil «I dag»
+    if (k % labelStep === 0 && i < DAYS - 4) {
       ctx.textAlign = 'center';
-      ctx.fillStyle = isMonday ? '#EF9F27' : '#5a7a5a';
-      const lbl = isLast && !isMonday ? 'I dag' : shortDate(p.ts);
-      ctx.fillText(lbl, x, padT + h + 16);
-      if (isMonday) {
-        ctx.fillStyle = '#EF9F27';
-        ctx.font = 'bold 9px Nunito, sans-serif';
-        ctx.fillText('man', x, padT + h + 28);
-        ctx.font = '10px Nunito, sans-serif';
-      }
+      ctx.fillStyle = '#EF9F27';
+      ctx.fillText(shortDate(dayPoints[i].ts), x, padT + h + 16);
     }
   });
+  // «I dag» alltid til slutt
+  {
+    const x = padL + w;
+    ctx.strokeStyle = '#5a7a5a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, padT + h);
+    ctx.lineTo(x, padT + h + 4);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#5a7a5a';
+    ctx.font = '10px Nunito, sans-serif';
+    ctx.fillText('I dag', x, padT + h + 16);
+  }
 }
 
 function shortDate(ts) {

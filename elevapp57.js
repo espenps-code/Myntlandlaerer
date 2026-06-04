@@ -87,6 +87,14 @@ function getLocked57(s) {
 
 async function checkAndPaySavingsInterest57(s) {
   if (!s || !s.fbKey) return;
+  // ⚠️ AVSLÅTT: Sparerenten i 5.–7. håndteres nå UTELUKKENDE av nattjobben
+  // (cron.mjs → payWeeklySavingsInterest57), som bruker nøyaktig samme
+  // dag-vektede modell og fører transaksjonen «Sparerente (X%)». Appen
+  // betalte tidligere rente i tillegg, noe som ga skjult dobbel utbetaling i
+  // saldoen. Innskudd/uttak vedlikeholder fortsatt savingsLocked/savingsPending
+  // selv, så modellen forblir korrekt – vi returnerer bare her.
+  return;
+  // --- gammel logikk under (kjøres aldri) -----------------------------------
   const totalSavings = s.savings || 0;
   const now = Date.now();
   const lastMon = lastMondayTs57(now);
