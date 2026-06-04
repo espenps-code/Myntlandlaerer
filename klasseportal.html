@@ -1959,10 +1959,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function makeReward(amount){
     amount=Math.max(1, parseInt(amount,10)||0); if(!amount) return;
     var rid=genRid();
-    var payload=JSON.stringify({ type:'reward', amount:amount, rid:rid, desc:'Belønning fra læreren' });
+    var payload=JSON.stringify({ type:'reward', amount:amount, rid:rid });
     qrBox.innerHTML='';
     if(typeof QRCode==='undefined'){ info.textContent='QR-bibliotek lastet ikke. Sjekk nett.'; return; }
-    try{ new QRCode(qrBox, { text:payload, width:260, height:260, correctLevel: QRCode.CorrectLevel.M }); }catch(e){ info.textContent='Klarte ikke å lage QR.'; return; }
+    try{ new QRCode(qrBox, { text:payload, width:260, height:260, correctLevel: QRCode.CorrectLevel.L }); }catch(e){ info.textContent='Klarte ikke å lage QR.'; return; }
     info.innerHTML='<b>'+amount+' 🪙</b> &middot; Hver elev kan skanne én gang';
   }
   btn.onclick=function(){ ovl.classList.add('open'); };
