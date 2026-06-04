@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dagen i dag &middot; Klasseportal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -678,6 +679,19 @@ h1.sticker{
 /* ===================== BILDE-IKONER I TIMEPLANEN ===================== */
 .lesson .icon img{ width:40px; height:40px; object-fit:contain; display:block; }
 
+/* ===================== TEGNEVERKTØY: tekst ===================== */
+.dt-textin{ position:absolute; z-index:5; background:transparent; border:2px dashed rgba(42,31,61,.55); border-radius:6px; padding:0 3px; margin:0; outline:none; min-width:40px; line-height:1.15; white-space:pre; caret-color:var(--ink); }
+
+/* ===================== BELØNNING-OVERLAY ===================== */
+.rw-amounts{ display:flex; gap:12px; }
+.rw-amt{ flex:1; font-family:inherit; font-size:24px; font-weight:700; color:var(--ink); background:var(--gold); border:4px solid var(--ink); border-radius:18px; padding:16px 8px; cursor:pointer; box-shadow:0 5px 0 rgba(42,31,61,.2); }
+.rw-amt:active{ transform:translateY(3px); box-shadow:none; }
+.rw-custom{ display:flex; gap:10px; align-items:center; }
+.rw-custom input{ flex:1; font-family:inherit; font-size:20px; font-weight:700; color:var(--ink); border:3px solid var(--ink); border-radius:14px; padding:10px 14px; background:var(--paper); }
+.rw-qr{ display:flex; justify-content:center; min-height:6px; }
+.rw-qr img, .rw-qr canvas{ border:6px solid #fff; border-radius:12px; box-shadow:0 6px 0 rgba(42,31,61,.18); }
+.rw-info{ text-align:center; font-size:19px; font-weight:600; color:var(--ink-soft); }
+
 </style>
 </head>
 <body>
@@ -844,6 +858,7 @@ h1.sticker{
 <div class="portal-toolbar">
   <button id="tbConnect" title="Koble til klasse">&#127974;</button>
   <button id="tbDraw" title="Tegn på tavla">&#9999;&#65039;</button>
+  <button id="tbReward" title="Belønning">&#127873;</button>
   <button id="tbMusic" title="Musikk">&#127925;</button>
   <button id="tbPlan" title="Planlegg uke">&#128197;</button>
   <button id="tbFs" title="Fullskjerm">&#9974;</button>
@@ -911,6 +926,26 @@ h1.sticker{
   </div>
 </div>
 
+<!-- ====== BELØNNING-OVERLAY ====== -->
+<div class="ovl" id="rewardOverlay">
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#127873; Belønning</h3><button class="ovl-x" id="rewardClose">&times;</button></div>
+    <div class="ovl-body">
+      <div class="rw-amounts">
+        <button class="rw-amt" data-a="10">10 🪙</button>
+        <button class="rw-amt" data-a="50">50 🪙</button>
+        <button class="rw-amt" data-a="100">100 🪙</button>
+      </div>
+      <div class="rw-custom">
+        <input type="number" id="rwCustom" min="1" step="5" placeholder="Eget beløp">
+        <button class="dt-btn" id="rwCustomBtn">Lag QR</button>
+      </div>
+      <div class="rw-qr" id="rwQr"></div>
+      <div class="rw-info" id="rwInfo">Velg beløp – elevene skanner QR-en i appen.</div>
+    </div>
+  </div>
+</div>
+
 <!-- ====== TEGNEVERKTØY ====== -->
 <div class="draw-layer" id="drawLayer" aria-hidden="true">
   <canvas id="drawCanvas"></canvas>
@@ -919,6 +954,7 @@ h1.sticker{
     <div class="dt-sep"></div>
     <div class="dt-group dt-sizes" id="dtSizes"></div>
     <div class="dt-sep"></div>
+    <button class="dt-btn" id="dtText">Tekst</button>
     <button class="dt-btn" id="dtEraser">Visk</button>
     <button class="dt-btn" id="dtUndo">Angre</button>
     <div class="dt-group dt-papers" id="dtPapers"><button class="dt-btn dt-paper" data-paper="blank">Blankt</button><button class="dt-btn dt-paper" data-paper="lines">Linjer</button><button class="dt-btn dt-paper" data-paper="grid">Ruter</button></div>
@@ -1763,7 +1799,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   const PALETTE = ['#2a1f3d','#ffffff','#e64b3b','#e3a82a','#7bb026','#27b3c6','#378add','#d4537e'];
   const SIZES = [4, 9, 18];
-  let color = '#2a1f3d', size = 9, erasing = false, bgMode = 'blank';
+  let color = '#2a1f3d', size = 9, erasing = false, texting = false, bgMode = 'blank';
   let drawing = false, dpr = 1;
   const undoStack = [];
 
@@ -1777,7 +1813,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const b = document.createElement('button');
     b.className = 'dt-swatch'; b.style.background = c; b.dataset.color = c;
     if (c === '#ffffff') b.style.borderColor = '#2a1f3d';
-    b.onclick = function(){ color = c; erasing = false; syncUI(); };
+    b.onclick = function(){ color = c; erasing = false; texting = false; commitText(); syncUI(); };
     colorsWrap.appendChild(b);
   });
 
@@ -1796,6 +1832,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     document.querySelectorAll('.dt-swatch').forEach(function(b){ b.classList.toggle('active', !erasing && b.dataset.color === color); });
     document.querySelectorAll('.dt-size').forEach(function(b){ b.classList.toggle('active', (+b.dataset.size) === size); });
     document.getElementById('dtEraser').classList.toggle('active', erasing);
+    var _tb=document.getElementById('dtText'); if(_tb) _tb.classList.toggle('active', texting);
     document.querySelectorAll('.dt-paper').forEach(function(b){ b.classList.toggle('active', b.dataset.paper === bgMode); });
   }
 
@@ -1821,6 +1858,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     ctx.stroke();
   }
   function start(e){
+    if (texting){ e.preventDefault(); placeText(posOf(e)); return; }
     e.preventDefault(); drawing = true; pushUndo();
     const p = posOf(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 0.01, p.y); strokeStep();
     try { canvas.setPointerCapture(e.pointerId); } catch(_){}
@@ -1833,7 +1871,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
 
-  document.getElementById('dtEraser').onclick = function(){ erasing = !erasing; syncUI(); };
+  document.getElementById('dtEraser').onclick = function(){ erasing = !erasing; texting = false; commitText(); syncUI(); };
   document.getElementById('dtUndo').onclick = function(){
     if (!undoStack.length) return;
     const data = undoStack.pop();
@@ -1847,6 +1885,39 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   document.getElementById('dtClear').onclick = function(){ pushUndo(); clearCanvas(); save(); };
   document.getElementById('dtClose').onclick = function(){ save(); closeLayer(); };
 
+  var _txt = null;
+  function textPx(){ return Math.round(size * 3.5 + 18); }
+  function commitText(){
+    if (!_txt) return;
+    var inp = _txt.el, x = _txt.x, y = _txt.y, val = inp.value;
+    if (val && val.trim()){
+      pushUndo();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = color; ctx.textBaseline = 'top';
+      ctx.font = '600 ' + textPx() + "px 'Fredoka', system-ui, sans-serif";
+      ctx.fillText(val, x + 3, y + 2);
+      save();
+    }
+    if (inp.parentNode) inp.parentNode.removeChild(inp);
+    _txt = null;
+  }
+  function placeText(p){
+    commitText();
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.className = 'dt-textin';
+    inp.style.left = p.x + 'px'; inp.style.top = p.y + 'px';
+    inp.style.color = color;
+    inp.style.font = "600 " + textPx() + "px 'Fredoka', system-ui, sans-serif";
+    layer.appendChild(inp);
+    _txt = { el: inp, x: p.x, y: p.y };
+    setTimeout(function(){ inp.focus(); }, 0);
+    inp.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); commitText(); }
+      else if (e.key === 'Escape'){ var n = _txt; _txt = null; if (n && n.el && n.el.parentNode) n.el.parentNode.removeChild(n.el); }
+    });
+    inp.addEventListener('blur', function(){ commitText(); });
+  }
+  document.getElementById('dtText').onclick = function(){ texting = !texting; if (texting) erasing = false; else commitText(); syncUI(); };
   function save(){ try { localStorage.setItem(KEY, JSON.stringify({ img: canvas.toDataURL(), bg: bgMode })); } catch(_){} }
   function restore(){
     let d = null; try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(_){}
@@ -1875,6 +1946,31 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   });
 
   syncUI();
+})();
+</script>
+
+<!-- ====== BELØNNING-LOGIKK ====== -->
+<script>
+(function(){
+  var ovl=document.getElementById('rewardOverlay'); var btn=document.getElementById('tbReward');
+  if(!ovl||!btn) return;
+  var qrBox=document.getElementById('rwQr'); var info=document.getElementById('rwInfo');
+  function genRid(){ return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function makeReward(amount){
+    amount=Math.max(1, parseInt(amount,10)||0); if(!amount) return;
+    var rid=genRid();
+    var payload=JSON.stringify({ type:'reward', amount:amount, rid:rid, desc:'Belønning fra læreren' });
+    qrBox.innerHTML='';
+    if(typeof QRCode==='undefined'){ info.textContent='QR-bibliotek lastet ikke. Sjekk nett.'; return; }
+    try{ new QRCode(qrBox, { text:payload, width:260, height:260, correctLevel: QRCode.CorrectLevel.M }); }catch(e){ info.textContent='Klarte ikke å lage QR.'; return; }
+    info.innerHTML='<b>'+amount+' 🪙</b> &middot; Hver elev kan skanne én gang';
+  }
+  btn.onclick=function(){ ovl.classList.add('open'); };
+  document.getElementById('rewardClose').onclick=function(){ ovl.classList.remove('open'); };
+  ovl.addEventListener('click', function(e){ if(e.target===ovl) ovl.classList.remove('open'); });
+  ovl.querySelectorAll('.rw-amt').forEach(function(b){ b.onclick=function(){ makeReward(b.getAttribute('data-a')); }; });
+  document.getElementById('rwCustomBtn').onclick=function(){ makeReward(document.getElementById('rwCustom').value); };
+  document.getElementById('rwCustom').addEventListener('keydown', function(e){ if(e.key==='Enter') makeReward(e.target.value); });
 })();
 </script>
 
