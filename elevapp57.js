@@ -1852,7 +1852,7 @@ async function doPayment(amount){
 }
 async function doReward(amount,desc,rid){
   const s=window._currentStudent;if(!s)return;
-  if(rid){ try{ const cs=await window._get(fbRef('rewardClaims/'+rid+'/'+s.fbKey)); if(cs&&cs.exists&&cs.exists()){ showSuccess('🔁','Allerede skannet','','Du har allerede fått denne belønningen'); return; } }catch(e){} }
+  if(rid){ if(s.rewardsClaimed && s.rewardsClaimed[rid]){ showSuccess('🔁','Allerede skannet','','Du har allerede fått denne belønningen'); return; } s.rewardsClaimed=s.rewardsClaimed||{}; s.rewardsClaimed[rid]=Date.now(); }
   const tax=getTax();const taxAmt=Math.floor(amount*tax);const net=amount-taxAmt;
   const newBal=(s.balance||0)+net;
   const newTaxTotal=(s.badgeTaxContributed||0)+taxAmt;
@@ -1864,7 +1864,7 @@ async function doReward(amount,desc,rid){
   transactions.unshift(tx);refreshAllDisplays();renderTransactions();
   showSuccess('🎉','Belønning!',`+${net} 🪙`,`${taxAmt}🪙 til klassens sparemål`);
   await checkAndAwardBadges(window._currentStudent);
-  if(rid){ try{ await window._set(fbRef('rewardClaims/'+rid+'/'+s.fbKey), Date.now()); }catch(e){} }
+  if(rid){ try{ const u={}; u['rewardsClaimed/'+rid]=Date.now(); await window._update(fbRef('students57/'+s.fbKey), u); patchStudent(s.fbKey,{rewardsClaimed:s.rewardsClaimed}); }catch(e){} }
 }
 async function doJobReward(grossPay,title){
   const s=window._currentStudent;if(!s)return;

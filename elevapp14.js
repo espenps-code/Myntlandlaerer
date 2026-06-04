@@ -1489,7 +1489,7 @@ async function declinePaymentRequest() {
 async function doReward(amount, desc, rid) {
   const s = window._currentStudent;
   if (!s) return;
-  if (rid) { try { const cs = await window._get(window._ref(window._db,'rewardClaims/'+rid+'/'+s.fbKey)); if (cs && cs.exists && cs.exists()) { showSuccess('🔁','Allerede skannet','','Du har allerede fått denne belønningen'); return; } } catch(e){} }
+  if (rid) { if (s.rewardsClaimed && s.rewardsClaimed[rid]) { showSuccess('🔁','Allerede skannet','','Du har allerede fått denne belønningen'); return; } s.rewardsClaimed = s.rewardsClaimed || {}; s.rewardsClaimed[rid] = Date.now(); }
 
   // 20 % skatt trekkes fra brutto. Hvis eleven har valgt et aktivt sparemål
   // (i sin egen klasse), går skatten dit. Ellers fordeles den jevnt på alle
@@ -1515,7 +1515,7 @@ async function doReward(amount, desc, rid) {
   }
   playSuccessChime();
   showSuccess('🎉','Belønning!','+' + net + ' 🪙','Ny saldo: ' + newBal + ' mynter (20 % skatt: ' + taxAmt + ')');
-  if (rid) { try { await window._set(window._ref(window._db,'rewardClaims/'+rid+'/'+s.fbKey), Date.now()); } catch(e){} }
+  if (rid) { try { const u={}; u['rewardsClaimed/'+rid]=Date.now(); await window._update(window._ref(window._db,'students14/'+s.fbKey), u); const ix=window._allStudents.findIndex(x=>x.fbKey===s.fbKey); if(ix!==-1) window._allStudents[ix].rewardsClaimed=s.rewardsClaimed; } catch(e){} }
 }
 
 // Sender skatt til elevens valgte sparemål hvis det er gyldig, ellers
