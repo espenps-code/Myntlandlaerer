@@ -80,7 +80,7 @@
       }
     }
   });
-  onValue(ref(db,'dayboard'),snap=>{ window._dayboard=snap.val()||{}; var sd=document.getElementById('screen-dag'); if(sd&&sd.classList.contains('active')&&typeof dagRefresh==='function') dagRefresh(); });
+  onValue(ref(db,'dayboard'),snap=>{ window._dayboard=snap.val()||{}; if(typeof dagUpdateSplashBtn==='function') dagUpdateSplashBtn(); var sd=document.getElementById('screen-dag'); if(sd&&sd.classList.contains('active')&&typeof dagRefresh==='function') dagRefresh(); });
   onValue(ref(db,'classGoals'),snap=>{
     // Behold også fullførte mål her, slik at sparemål-velgeren på forsiden kan vise dem som "Fullført!"
     window._classGoals=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];

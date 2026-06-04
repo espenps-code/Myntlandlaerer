@@ -2391,3 +2391,10 @@ function goSplashFromDag(){ if(_dagTimer){clearInterval(_dagTimer);_dagTimer=nul
 
 /* Dagen i dag: les klasse fra delt lenke (?ws= har forrang, ?klasse= som reserve) */
 (function(){ try{ var p=new URLSearchParams(location.search); var ws=p.get('ws'), kl=p.get('klasse')||p.get('class'); if((ws||kl)&&typeof dagSaveCtx==='function'){ dagSaveCtx({ ws: ws||'', klasse: kl||'' }); } }catch(e){} })();
+
+function dagUpdateSplashBtn(){
+  var b=document.getElementById('splash-dag-btn'); if(!b) return;
+  var c=(typeof dagCtx==='function')?dagCtx():null;
+  if(c){ var board=dagBoard(); b.style.display=(board && board.enabled!==false) ? '' : 'none'; }
+  else { var all=window._dayboard||{}; var any=false; for(var k in all){ if(all[k]&&all[k].enabled!==false&&all[k].week) any=true; } b.style.display=any?'':'none'; }
+}

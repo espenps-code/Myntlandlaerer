@@ -692,6 +692,13 @@ h1.sticker{
 .rw-qr img, .rw-qr canvas{ border:6px solid #fff; border-radius:12px; box-shadow:0 6px 0 rgba(42,31,61,.18); }
 .rw-info{ text-align:center; font-size:19px; font-weight:600; color:var(--ink-soft); }
 
+/* ===================== INNSTILLINGER: faner ===================== */
+.set-tabs{ display:flex; gap:6px; margin-bottom:14px; border-bottom:3px solid rgba(42,31,61,.15); flex-wrap:wrap; }
+.set-tab-btn{ font-family:inherit; font-size:17px; font-weight:700; color:var(--ink-soft); background:transparent; border:none; border-bottom:4px solid transparent; padding:8px 14px; cursor:pointer; margin-bottom:-3px; }
+.set-tab-btn.active{ color:var(--ink); border-bottom-color:var(--gold); }
+.set-panel{ display:none; flex-direction:column; gap:16px; }
+.set-panel.active{ display:flex; }
+
 </style>
 </head>
 <body>
@@ -870,39 +877,55 @@ h1.sticker{
   <div class="ovl-card">
     <div class="ovl-head"><h3>&#9881;&#65039; Innstillinger</h3><button class="ovl-x" id="settingsClose">&times;</button></div>
     <div class="ovl-body">
-      <div class="set-row">
-        <div class="set-label">Vær automatisk etter sted
-          <span class="set-sub">Henter posisjon og oppdaterer været hver halvtime.</span></div>
-        <label class="set-switch"><input type="checkbox" id="setWeatherAuto"><span class="set-slider"></span></label>
+      <div class="set-tabs">
+        <button class="set-tab-btn active" data-tab="tavla">Tavla</button>
+        <button class="set-tab-btn" data-tab="orden">Ordenselever</button>
+        <button class="set-tab-btn" data-tab="app">Elevapp</button>
       </div>
-      <div class="set-status" id="setWeatherStatus"></div>
-      <div class="set-row">
-        <div class="set-label">Aktiv time: vis prosent
-          <span class="set-sub">Av = minutter igjen. På = prosent av timen gjort.</span></div>
-        <label class="set-switch"><input type="checkbox" id="setProgressPercent"><span class="set-slider"></span></label>
+      <div class="set-panel active" id="set-panel-tavla">
+        <div class="set-heading">Vær</div>
+        <div class="set-row">
+          <div class="set-label">Automatisk etter sted<span class="set-sub">Henter posisjon og oppdaterer været hver halvtime.</span></div>
+          <label class="set-switch"><input type="checkbox" id="setWeatherAuto"><span class="set-slider"></span></label>
+        </div>
+        <div class="set-status" id="setWeatherStatus"></div>
+        <div class="set-divider"></div>
+        <div class="set-heading">Timeplan</div>
+        <div class="set-row">
+          <div class="set-label">Aktiv time: vis prosent<span class="set-sub">Av = minutter igjen. På = prosent av timen gjort.</span></div>
+          <label class="set-switch"><input type="checkbox" id="setProgressPercent"><span class="set-slider"></span></label>
+        </div>
+        <div class="set-divider"></div>
+        <div class="set-heading">Ukas ord</div>
+        <div class="set-row">
+          <div class="set-label">Bytt ord automatisk hver uke<span class="set-sub">Ordbanken roterer ett ord per uke. Slå av for å velge selv.</span></div>
+          <label class="set-switch"><input type="checkbox" id="setWordAuto"><span class="set-slider"></span></label>
+        </div>
+        <div id="setWordManual" class="set-names" style="flex-direction:column">
+          <label class="set-field"><span>Ordet</span><input type="text" id="setWord" autocomplete="off"></label>
+          <label class="set-field"><span>Forklaring</span><input type="text" id="setWordDef" autocomplete="off"></label>
+        </div>
+        <div class="set-heading2">Ordbank (<span id="wordBankCount">20</span>)</div>
+        <div class="set-tasks" id="setWordBank"></div>
+        <button class="set-addtask" id="setAddWord">+ Legg til ord</button>
       </div>
-      <div class="set-divider"></div>
-      <div class="set-heading">Ordenselever</div>
-      <div class="set-names">
-        <label class="set-field"><span>Hjelper 1</span><input type="text" id="setHelperA" autocomplete="off"></label>
-        <label class="set-field"><span>Hjelper 2</span><input type="text" id="setHelperB" autocomplete="off"></label>
+      <div class="set-panel" id="set-panel-orden">
+        <div class="set-heading">Ukas hjelpere</div>
+        <div class="set-names">
+          <label class="set-field"><span>Hjelper 1</span><input type="text" id="setHelperA" autocomplete="off"></label>
+          <label class="set-field"><span>Hjelper 2</span><input type="text" id="setHelperB" autocomplete="off"></label>
+        </div>
+        <div class="set-heading2">Oppgaver</div>
+        <div class="set-tasks" id="setTasks"></div>
+        <button class="set-addtask" id="setAddTask">+ Legg til oppgave</button>
       </div>
-      <div class="set-heading2">Oppgaver</div>
-      <div class="set-tasks" id="setTasks"></div>
-      <button class="set-addtask" id="setAddTask">+ Legg til oppgave</button>
-      <div class="set-divider"></div>
-      <div class="set-heading">Ukas ord</div>
-      <div class="set-row">
-        <div class="set-label">Bytt ord automatisk hver uke<span class="set-sub">Ordbanken roterer ett ord per uke. Slå av for å velge selv.</span></div>
-        <label class="set-switch"><input type="checkbox" id="setWordAuto"><span class="set-slider"></span></label>
+      <div class="set-panel" id="set-panel-app">
+        <div class="set-heading">Dagen i dag (elevappen)</div>
+        <div class="set-row">
+          <div class="set-label">Vis «Dagen i dag» i elevappen<span class="set-sub">Slå av hvis du ikke bruker tavla – da skjules knappen i elevappen.</span></div>
+          <label class="set-switch"><input type="checkbox" id="setDayEnabled"><span class="set-slider"></span></label>
+        </div>
       </div>
-      <div id="setWordManual" class="set-names" style="flex-direction:column">
-        <label class="set-field"><span>Ordet</span><input type="text" id="setWord" autocomplete="off"></label>
-        <label class="set-field"><span>Forklaring</span><input type="text" id="setWordDef" autocomplete="off"></label>
-      </div>
-      <div class="set-heading2">Ordbank (<span id="wordBankCount">20</span>)</div>
-      <div class="set-tasks" id="setWordBank"></div>
-      <button class="set-addtask" id="setAddWord">+ Legg til ord</button>
     </div>
   </div>
 </div>
@@ -1119,7 +1142,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     ],
     bdname: 'Emma', bdage: '9',
     weather: 0,
-    weatherAuto: false, progressPercent: false,
+    weatherAuto: false, progressPercent: false, dayEnabled: true,
   };
 
   const KEY = 'myntland-portal-v1';
@@ -1750,6 +1773,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const sw = document.getElementById('setWord'); if (sw) sw.value = data.word || '';
     const swd = document.getElementById('setWordDef'); if (swd) swd.value = data.worddef || '';
     renderWordBankEditor();
+    var _de = document.getElementById('setDayEnabled'); if (_de) _de.checked = data.dayEnabled !== false;
   }
   (function initSettings(){
     const ovl = document.getElementById('settingsOverlay');
@@ -1779,6 +1803,9 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (swd) swd.addEventListener('input', function(){ data.worddef = swd.value; save(); renderWord(); });
     const aw = document.getElementById('setAddWord');
     if (aw) aw.onclick = function(){ data.wordBank = (data.wordBank && data.wordBank.length) ? data.wordBank : JSON.parse(JSON.stringify(DEFAULTS.wordBank)); data.wordBank.push({ w: 'nytt ord', d: 'forklaring' }); save(); renderWord(); renderWordBankEditor(); };
+    document.querySelectorAll('.set-tab-btn').forEach(function(b){ b.onclick = function(){ document.querySelectorAll('.set-tab-btn').forEach(function(x){x.classList.remove('active');}); document.querySelectorAll('.set-panel').forEach(function(x){x.classList.remove('active');}); b.classList.add('active'); var p = document.getElementById('set-panel-' + b.dataset.tab); if (p) p.classList.add('active'); }; });
+    var _de = document.getElementById('setDayEnabled');
+    if (_de) _de.onchange = function(){ data.dayEnabled = _de.checked; save(); };
   })();
   startAutoWeather();
 
@@ -2240,7 +2267,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function setSalStatus(t){ if (salStatusEl) salStatusEl.textContent = t || ''; }
 
   function buildSalaryUI(){
-    const body = document.querySelector('#settingsOverlay .ovl-body');
+    const body = document.getElementById('set-panel-orden') || document.querySelector('#settingsOverlay .ovl-body');
     if (!body || document.getElementById('salSection')) return;
     const wrap = document.createElement('div'); wrap.id = 'salSection';
     wrap.innerHTML =
@@ -2433,8 +2460,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (!link) return;
     var d = (window.portal && window.portal.data) ? window.portal.data : null;
     if (!d) return;
-    var payload = { week: d.week || {}, notes: d.notes || [], klasse: d.klasse || '', ts: Date.now() };
-    var sig = JSON.stringify({ w: payload.week, n: payload.notes, k: payload.klasse });
+    var payload = { week: d.week || {}, notes: d.notes || [], klasse: d.klasse || '', enabled: (d.dayEnabled !== false), ts: Date.now() };
+    var sig = JSON.stringify({ w: payload.week, n: payload.notes, k: payload.klasse, e: payload.enabled });
     if (sig === _daySig) return;
     _daySig = sig;
     try { set(ref(db, 'dayboard/' + (link.workspaceId || 'main')), payload); } catch(e){}
