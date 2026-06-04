@@ -1106,7 +1106,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (e) { return Object.assign({}, DEFAULTS); }
   }
-  function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+  function save() { localStorage.setItem(KEY, JSON.stringify(data)); if (window._onPortalSave) { try { window._onPortalSave(); } catch(e){} } }
 
   /* ---------- date + clock ---------- */
   const DAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
@@ -2331,6 +2331,20 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   if (link){ startData(); } else { fundPanel.style.display = 'none'; }
   buildSalaryUI(); renderSalaryUI();
+  /* ---------- publiser dagens plan + beskjeder til skyen (dayboard) ---------- */
+  var _daySig = '', _dayT = null;
+  function pushDayboard(){
+    if (!link) return;
+    var d = (window.portal && window.portal.data) ? window.portal.data : null;
+    if (!d) return;
+    var payload = { week: d.week || {}, notes: d.notes || [], klasse: d.klasse || '', ts: Date.now() };
+    var sig = JSON.stringify({ w: payload.week, n: payload.notes, k: payload.klasse });
+    if (sig === _daySig) return;
+    _daySig = sig;
+    try { set(ref(db, 'dayboard/' + (link.workspaceId || 'main')), payload); } catch(e){}
+  }
+  window._onPortalSave = function(){ clearTimeout(_dayT); _dayT = setTimeout(pushDayboard, 1500); };
+  setTimeout(pushDayboard, 3000);
   setTimeout(checkFridayPay, 4000);
   setInterval(checkFridayPay, 60 * 60 * 1000);
 </script>

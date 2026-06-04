@@ -342,8 +342,8 @@ function tryLogin() {
     // Tilbakestill innloggingsskjermen for neste gang
     const preEl = document.getElementById('login-preselect');
     if (preEl) preEl.style.display = 'none';
-    switchCustomerTab('bank', document.querySelector('.nav-item'));
-    showScreen('screen-customer');
+    if (window._loginIntent === 'dag') { window._loginIntent = null; enterDag(); }
+    else { switchCustomerTab('bank', document.querySelector('.nav-item')); showScreen('screen-customer'); }
   } else {
     document.getElementById('login-error').textContent = '❌ Feil PIN-kode!';
   }
@@ -2289,3 +2289,76 @@ function showSuccess(emoji, title, amount, text) {
 }
 
 renderCart();
+
+
+/* ====================== DAGEN I DAG ====================== */
+var DAG_DAYS=['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+var DAG_MONTHS=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+var _dagTimer=null;
+function dagEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function dagNameOfHour(hh){var N=['tolv','ett','to','tre','fire','fem','seks','sju','åtte','ni','ti','elleve','tolv'];var x=((hh%12)+12)%12;if(x===0)x=12;return N[x];}
+function dagTimeWords(h,m){var rm=Math.round(m/5)*5,rh=h;if(rm===60){rm=0;rh=h+1;}var map={0:dagNameOfHour(rh),5:'fem over '+dagNameOfHour(rh),10:'ti over '+dagNameOfHour(rh),15:'kvart over '+dagNameOfHour(rh),20:'ti på halv '+dagNameOfHour(rh+1),25:'fem på halv '+dagNameOfHour(rh+1),30:'halv '+dagNameOfHour(rh+1),35:'fem over halv '+dagNameOfHour(rh+1),40:'ti over halv '+dagNameOfHour(rh+1),45:'kvart på '+dagNameOfHour(rh+1),50:'ti på '+dagNameOfHour(rh+1),55:'fem på '+dagNameOfHour(rh+1)};return map[rm]||'';}
+function dagWeekNo(d){var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));var day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);var ys=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil((((t-ys)/86400000)+1)/7);}
+function dagSet(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function dagTick(){
+  var n=new Date();
+  dagSet('dag-weekday',DAG_DAYS[n.getDay()]); dagSet('dag-day',n.getDate()); dagSet('dag-month',DAG_MONTHS[n.getMonth()]);
+  dagSet('dag-week','Uke '+dagWeekNo(n)); dagSet('dag-year',n.getFullYear());
+  var h=n.getHours(),m=n.getMinutes();
+  dagSet('dag-digital',String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'));
+  dagSet('dag-words',dagTimeWords(h,m));
+  var hh=document.getElementById('dag-hour'),mm=document.getElementById('dag-min');
+  if(hh)hh.setAttribute('transform','rotate('+((h%12)*30+m*0.5)+' 40 40)');
+  if(mm)mm.setAttribute('transform','rotate('+(m*6)+' 40 40)');
+}
+function dagBoard(){
+  var all=window._dayboard||{}; var s=window._currentStudent;
+  var ws=(s&&s.workspaceId)||'main';
+  if(all[ws]) return all[ws];
+  var cls=s&&s.class;
+  for(var k in all){ if(all[k]&&all[k].klasse===cls) return all[k]; }
+  return null;
+}
+function dagToday(){ var b=dagBoard(); var wd=new Date().getDay(); wd=wd===0?7:wd; return {plan:(b&&b.week&&b.week[wd])||[], notes:(b&&b.notes)||[], has:!!b}; }
+function renderDag(){
+  var t=dagToday();
+  var cl=document.getElementById('dag-class');
+  if(cl)cl.textContent=(window._currentStudent&&window._currentStudent.class)?('Klasse '+window._currentStudent.class):'';
+  var ol=document.getElementById('dag-lessons');
+  if(ol){
+    ol.innerHTML='';
+    if(!t.has){ ol.innerHTML='<li class="dag-empty">Læreren har ikke delt en plan ennå.</li>'; }
+    else if(!t.plan.length){ ol.innerHTML='<li class="dag-empty">Ingen timer i dag 🎉</li>'; }
+    else {
+      t.plan.forEach(function(it){
+        var li=document.createElement('li');
+        if(it.type==='break'){
+          li.className='dag-break';
+          li.innerHTML='<span class="dag-btime">'+dagEsc(it.time||'')+'</span><span class="dag-bname">'+(it.big?'Storefri':'Friminutt')+(it.note?' · '+dagEsc(it.note):'')+'</span>';
+        } else {
+          li.className='dag-lesson';
+          li.innerHTML='<span class="dag-time">'+dagEsc(it.time||'')+'</span><span class="dag-ic"><img src="fagikoner/ikon-'+dagEsc(it.icon||'annet')+'.webp" alt="" onerror="this.parentNode.style.display=\'none\'"></span><span class="dag-name">'+dagEsc(it.name||'')+'</span>';
+        }
+        ol.appendChild(li);
+      });
+    }
+  }
+  var nb=document.getElementById('dag-notes');
+  if(nb){
+    nb.innerHTML='';
+    if(!t.notes.length){ nb.innerHTML='<div class="dag-empty">Ingen beskjeder i dag.</div>'; }
+    else t.notes.forEach(function(tx){ var d=document.createElement('div'); d.className='dag-note'; d.textContent=tx; nb.appendChild(d); });
+  }
+}
+function enterDag(){
+  showScreen('screen-dag'); dagTick(); renderDag();
+  if(_dagTimer)clearInterval(_dagTimer);
+  _dagTimer=setInterval(function(){ dagTick(); renderDag(); },20000);
+}
+function goToDag(){
+  window._loginIntent='dag';
+  var sub=document.getElementById('login-subtitle'); if(sub)sub.textContent='Scan kortet ditt for å se dagen i dag';
+  if(typeof applyLoginMode==='function') applyLoginMode();
+  showScreen('screen-login');
+}
+function goSplashFromDag(){ if(_dagTimer){clearInterval(_dagTimer);_dagTimer=null;} window._loginIntent=null; goToSplash(); }
