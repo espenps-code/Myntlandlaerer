@@ -1799,12 +1799,12 @@ function handleScan(text){
     if(scanMode==='loginCard'&&d.type==='login'&&d.fbKey){handleLoginCardScan(d.fbKey,true);}
     else if(scanMode==='loginShop'&&d.type==='login'&&d.fbKey){handleShopLoginCardScan(d.fbKey);}
     else if(scanMode==='payment'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
-    else if(scanMode==='reward'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc);
+    else if(scanMode==='reward'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc,d.rid);
     else if(scanMode==='reward'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
     else if((scanMode==='payment'||scanMode==='reward')&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
     else if(scanMode==='reward'&&d.type==='event')doEventHendelse(d.subtype,d.amount,d.desc);
     else if(scanMode==='any'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
-    else if(scanMode==='any'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc);
+    else if(scanMode==='any'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc,d.rid);
     else if(scanMode==='any'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
     else if(scanMode==='any'&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
     else if(scanMode==='any'&&d.type==='event')doEventHendelse(d.subtype,d.amount,d.desc);
@@ -1850,8 +1850,9 @@ async function doPayment(amount){
   transactions.unshift(tx);refreshAllDisplays();renderTransactions();
   showSuccess('✅','Betalt!',`-${amount} 🪙`,`Saldo: ${newBal}🪙`);
 }
-async function doReward(amount,desc){
+async function doReward(amount,desc,rid){
   const s=window._currentStudent;if(!s)return;
+  if(rid){ try{ const cs=await window._get(fbRef('rewardClaims/'+rid+'/'+s.fbKey)); if(cs&&cs.exists&&cs.exists()){ showSuccess('🔁','Allerede skannet','','Du har allerede fått denne belønningen'); return; } }catch(e){} }
   const tax=getTax();const taxAmt=Math.floor(amount*tax);const net=amount-taxAmt;
   const newBal=(s.balance||0)+net;
   const newTaxTotal=(s.badgeTaxContributed||0)+taxAmt;
@@ -1863,6 +1864,7 @@ async function doReward(amount,desc){
   transactions.unshift(tx);refreshAllDisplays();renderTransactions();
   showSuccess('🎉','Belønning!',`+${net} 🪙`,`${taxAmt}🪙 til klassens sparemål`);
   await checkAndAwardBadges(window._currentStudent);
+  if(rid){ try{ await window._set(fbRef('rewardClaims/'+rid+'/'+s.fbKey), Date.now()); }catch(e){} }
 }
 async function doJobReward(grossPay,title){
   const s=window._currentStudent;if(!s)return;
@@ -2683,3 +2685,6 @@ function enterDag(){
 }
 function goToDag(){ enterDag(); }
 function goSplashFromDag(){ if(_dagTimer){clearInterval(_dagTimer);_dagTimer=null;} goToSplash(); }
+
+/* Dagen i dag: les klasse fra delt lenke (?ws= har forrang, ?klasse= som reserve) */
+(function(){ try{ var p=new URLSearchParams(location.search); var ws=p.get('ws'), kl=p.get('klasse')||p.get('class'); if((ws||kl)&&typeof dagSaveCtx==='function'){ dagSaveCtx({ ws: ws||'', klasse: kl||'' }); } }catch(e){} })();

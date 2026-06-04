@@ -1207,14 +1207,14 @@ function handleScanResult(text) {
         openPinConfirm(data.amount);
       }
     } else if (scanMode === 'reward') {
-      if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
+      if (data.type === 'reward' && data.amount > 0) doReward(data.amount, data.desc, data.rid);
       else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
     } else if (scanMode === 'any') {
       if (data.type === 'payment' && data.amount > 0) {
         pendingPayAmount = data.amount;
         openPinConfirm(data.amount);
       }
-      else if (data.type === 'reward' && data.amount > 0) doReward(data.amount);
+      else if (data.type === 'reward' && data.amount > 0) doReward(data.amount, data.desc, data.rid);
       else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
     } else if (scanMode === 'loginCard') {
       if (data.type === 'login' && data.fbKey) {
@@ -1486,9 +1486,10 @@ async function declinePaymentRequest() {
   hidePaymentRequest();
 }
 
-async function doReward(amount) {
+async function doReward(amount, desc, rid) {
   const s = window._currentStudent;
   if (!s) return;
+  if (rid) { try { const cs = await window._get(window._ref(window._db,'rewardClaims/'+rid+'/'+s.fbKey)); if (cs && cs.exists && cs.exists()) { showSuccess('🔁','Allerede skannet','','Du har allerede fått denne belønningen'); return; } } catch(e){} }
 
   // 20 % skatt trekkes fra brutto. Hvis eleven har valgt et aktivt sparemål
   // (i sin egen klasse), går skatten dit. Ellers fordeles den jevnt på alle
@@ -1498,7 +1499,7 @@ async function doReward(amount) {
   const newBal = s.balance + net;
   const tx = {
     type: 'income', icon: '⭐',
-    desc: 'Belønning (netto etter 20 % skatt)',
+    desc: desc || 'Belønning (netto etter 20 % skatt)',
     amount: +net, ts: Date.now()
   };
   await window._update(window._ref(window._db,'students14/'+s.fbKey), { balance: newBal });
@@ -1514,6 +1515,7 @@ async function doReward(amount) {
   }
   playSuccessChime();
   showSuccess('🎉','Belønning!','+' + net + ' 🪙','Ny saldo: ' + newBal + ' mynter (20 % skatt: ' + taxAmt + ')');
+  if (rid) { try { await window._set(window._ref(window._db,'rewardClaims/'+rid+'/'+s.fbKey), Date.now()); } catch(e){} }
 }
 
 // Sender skatt til elevens valgte sparemål hvis det er gyldig, ellers
@@ -2386,3 +2388,6 @@ function enterDag(){
 }
 function goToDag(){ enterDag(); }
 function goSplashFromDag(){ if(_dagTimer){clearInterval(_dagTimer);_dagTimer=null;} goToSplash(); }
+
+/* Dagen i dag: les klasse fra delt lenke (?ws= har forrang, ?klasse= som reserve) */
+(function(){ try{ var p=new URLSearchParams(location.search); var ws=p.get('ws'), kl=p.get('klasse')||p.get('class'); if((ws||kl)&&typeof dagSaveCtx==='function'){ dagSaveCtx({ ws: ws||'', klasse: kl||'' }); } }catch(e){} })();
