@@ -80,7 +80,7 @@
       }
     }
   });
-  onValue(ref(db,'dayboard'),snap=>{ window._dayboard=snap.val()||{}; var sd=document.getElementById('screen-dag'); if(sd&&sd.classList.contains('active')&&typeof renderDag==='function') renderDag(); });
+  onValue(ref(db,'dayboard'),snap=>{ window._dayboard=snap.val()||{}; var sd=document.getElementById('screen-dag'); if(sd&&sd.classList.contains('active')&&typeof dagRefresh==='function') dagRefresh(); });
   onValue(ref(db,'classGoals'),snap=>{
     // Behold også fullførte mål her, slik at sparemål-velgeren på forsiden kan vise dem som "Fullført!"
     window._classGoals=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];
@@ -681,6 +681,11 @@
       <div class="dag-card"><div class="dag-h">På timeplanen</div><ol class="dag-lessons" id="dag-lessons"></ol></div>
       <div class="dag-card"><div class="dag-h">Beskjeder fra læreren</div><div class="dag-notes" id="dag-notes"></div></div>
     </div>
+  </div>
+  <div id="dag-picker" style="display:none;max-width:540px;margin:0 auto;padding:26px 16px;">
+    <div style="font-family:'Fredoka One',cursive;font-size:24px;color:#1e0f52;text-align:center;margin-bottom:4px;">Hvilken klasse?</div>
+    <div style="text-align:center;color:#4a3c63;font-weight:600;margin-bottom:16px;">Velg klassen din én gang – så husker nettbrettet det.</div>
+    <div id="dag-picker-list" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
 </div>
 
