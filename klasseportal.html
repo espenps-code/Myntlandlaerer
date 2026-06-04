@@ -635,6 +635,10 @@ h1.sticker{
 .seg-btn.active{ background:var(--gold); }
 .seg-btn:active{ transform:translateY(1px); }
 .sal-links{ display:flex; flex-direction:column; gap:8px; }
+#setWeatherPlace{ flex:1; min-width:140px; font-family:inherit; font-size:18px; font-weight:600; color:var(--ink);
+  border:3px solid var(--ink); border-radius:12px; padding:8px 12px; background:var(--paper); }
+#setWeatherResults{ gap:8px; margin-top:4px; }
+#setWeatherResults:empty{ display:none; }
 
 /* ===================== ORDENSELEV-LØNN ===================== */
 #salScanOvl, #salListOvl{ z-index:95; }
@@ -930,9 +934,17 @@ h1.sticker{
       <div class="set-panel active" id="set-panel-tavla">
         <div class="set-heading">Vær</div>
         <div class="set-row">
-          <div class="set-label">Automatisk etter sted<span class="set-sub">Henter posisjon og oppdaterer været hver halvtime.</span></div>
+          <div class="set-label">Automatisk vær<span class="set-sub">Henter og oppdaterer været hver halvtime.</span></div>
           <label class="set-switch"><input type="checkbox" id="setWeatherAuto"><span class="set-slider"></span></label>
         </div>
+        <div class="set-row">
+          <div class="set-label">Sted<span class="set-sub">Skriv en by eller tettsted og trykk Søk. La feltet stå tomt for å bruke posisjonen i nettleseren.</span></div>
+        </div>
+        <div class="set-names" id="weatherPlaceWrap" style="gap:8px">
+          <input type="text" id="setWeatherPlace" autocomplete="off" placeholder="F.eks. Bergen">
+          <button class="sal-btn" id="setWeatherSearch" type="button">Søk</button>
+        </div>
+        <div class="sal-list" id="setWeatherResults" style="max-height:none"></div>
         <div class="set-status" id="setWeatherStatus"></div>
         <div class="set-divider"></div>
         <div class="set-heading">Timeplan</div>
@@ -1214,7 +1226,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     ],
     bdname: 'Emma', bdage: '9',
     weather: 0,
-    weatherAuto: false, progressPercent: false, dayEnabled: true,
+    weatherAuto: false, weatherPlace: '', weatherLat: null, weatherLon: null, progressPercent: false, dayEnabled: true,
   };
 
   const KEY = 'myntland-portal-v1';
@@ -1793,26 +1805,63 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   let weatherTimer = null;
   function setWeatherStatus(t){ const el = document.getElementById('setWeatherStatus'); if (el) el.textContent = t || ''; }
+  function applyWeatherAt(la, lo, label){
+    setWeatherStatus('Henter vær …');
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo + '&current=temperature_2m,weather_code')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        const cur = j && j.current; if (!cur) throw new Error('tomt svar');
+        data.weather = wmoToIdx(cur.weather_code);
+        data.temp = Math.round(cur.temperature_2m) + '°';
+        renderWeather();
+        const wt = document.getElementById('wtemp'); if (wt) wt.textContent = data.temp;
+        save();
+        setWeatherStatus('Oppdatert: ' + W[data.weather].l + ', ' + data.temp + (label ? ' (' + label + ')' : ''));
+      })
+      .catch(function(){ setWeatherStatus('Kunne ikke hente vær akkurat nå.'); });
+  }
   function fetchAutoWeather(){
     if (!data.weatherAuto) return;
-    if (!navigator.geolocation){ setWeatherStatus('Posisjon støttes ikke i denne nettleseren.'); return; }
+    if (data.weatherLat != null && data.weatherLon != null){
+      applyWeatherAt(data.weatherLat, data.weatherLon, data.weatherPlace);
+      return;
+    }
+    if (!navigator.geolocation){ setWeatherStatus('Posisjon støttes ikke her. Velg et sted i stedet.'); return; }
     setWeatherStatus('Henter posisjon …');
     navigator.geolocation.getCurrentPosition(function(pos){
-      const la = pos.coords.latitude.toFixed(3), lo = pos.coords.longitude.toFixed(3);
-      setWeatherStatus('Henter vær …');
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo + '&current=temperature_2m,weather_code')
-        .then(function(r){ return r.json(); })
-        .then(function(j){
-          const cur = j && j.current; if (!cur) throw new Error('tomt svar');
-          data.weather = wmoToIdx(cur.weather_code);
-          data.temp = Math.round(cur.temperature_2m) + '°';
-          renderWeather();
-          const wt = document.getElementById('wtemp'); if (wt) wt.textContent = data.temp;
-          save();
-          setWeatherStatus('Oppdatert: ' + W[data.weather].l + ', ' + data.temp);
-        })
-        .catch(function(){ setWeatherStatus('Kunne ikke hente vær akkurat nå.'); });
-    }, function(){ setWeatherStatus('Fikk ikke tilgang til posisjon.'); }, { maximumAge: 600000, timeout: 10000 });
+      applyWeatherAt(pos.coords.latitude.toFixed(3), pos.coords.longitude.toFixed(3), '');
+    }, function(){ setWeatherStatus('Fikk ikke tilgang til posisjon. Velg et sted i stedet.'); }, { maximumAge: 600000, timeout: 10000 });
+  }
+  function searchWeatherPlace(q){
+    const box = document.getElementById('setWeatherResults'); if (!box) return;
+    if (!q || !q.trim()){ box.innerHTML = ''; return; }
+    setWeatherStatus('Søker …');
+    fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q.trim()) + '&count=6&language=nb&format=json')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        const list = (j && j.results) || [];
+        box.innerHTML = '';
+        if (!list.length){ setWeatherStatus('Fant ingen steder. Prøv et annet navn.'); return; }
+        list.forEach(function(p){
+          const b = document.createElement('button'); b.className = 'sal-pick'; b.type = 'button';
+          b.textContent = p.name;
+          const reg = [p.admin1, p.country].filter(Boolean).join(', ');
+          if (reg){ const sp = document.createElement('span'); sp.style.color = 'var(--ink-soft)'; sp.style.marginLeft = '8px'; sp.textContent = reg; b.appendChild(sp); }
+          b.onclick = function(){
+            data.weatherPlace = p.name;
+            data.weatherLat = Math.round(p.latitude * 10000) / 10000;
+            data.weatherLon = Math.round(p.longitude * 10000) / 10000;
+            if (!data.weatherAuto){ data.weatherAuto = true; const t = document.getElementById('setWeatherAuto'); if (t) t.checked = true; }
+            save();
+            const inp = document.getElementById('setWeatherPlace'); if (inp) inp.value = p.name;
+            box.innerHTML = '';
+            startAutoWeather();
+          };
+          box.appendChild(b);
+        });
+        setWeatherStatus('');
+      })
+      .catch(function(){ setWeatherStatus('Kunne ikke søke akkurat nå.'); });
   }
   function startAutoWeather(){
     if (weatherTimer){ clearInterval(weatherTimer); weatherTimer = null; }
@@ -1868,6 +1917,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   function syncSettings(){
     const a = document.getElementById('setWeatherAuto'); if (a) a.checked = !!data.weatherAuto;
+    const wp = document.getElementById('setWeatherPlace'); if (wp) wp.value = data.weatherPlace || '';
+    const wr = document.getElementById('setWeatherResults'); if (wr) wr.innerHTML = '';
     const pp = document.getElementById('setProgressPercent'); if (pp) pp.checked = !!data.progressPercent;
     syncHelperSeg(); renderHelperFields();
     renderTaskEditor();
@@ -1890,6 +1941,17 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       if (data.weatherAuto){ startAutoWeather(); }
       else { setWeatherStatus(''); if (weatherTimer){ clearInterval(weatherTimer); weatherTimer = null; } }
     };
+    const wsb = document.getElementById('setWeatherSearch');
+    if (wsb) wsb.onclick = function(){ const i = document.getElementById('setWeatherPlace'); searchWeatherPlace(i ? i.value : ''); };
+    const wpi = document.getElementById('setWeatherPlace');
+    if (wpi) wpi.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); searchWeatherPlace(wpi.value); } });
+    if (wpi) wpi.addEventListener('input', function(){
+      if (!wpi.value.trim()){
+        data.weatherPlace = ''; data.weatherLat = null; data.weatherLon = null; save();
+        const r = document.getElementById('setWeatherResults'); if (r) r.innerHTML = '';
+        setWeatherStatus('Bruker nettleserens posisjon.');
+      }
+    });
     const pp = document.getElementById('setProgressPercent');
     if (pp) pp.onchange = function(){ data.progressPercent = pp.checked; save(); renderLessons(); };
     document.querySelectorAll('#helperCountSeg .seg-btn').forEach(function(b){
