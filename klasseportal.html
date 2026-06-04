@@ -257,7 +257,7 @@ h1.sticker{
 
 /* ---- ORDENSELEVER ---- */
 .duty{ flex:1; }
-.helpers{ display:flex; gap:16px; margin-bottom:16px; }
+.helpers{ display:flex; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
 .helper{ flex:1; display:flex; align-items:center; gap:12px; background:var(--paper);
   border:3px solid var(--ink); border-radius:18px; padding:8px 12px; box-shadow:0 4px 0 rgba(42,31,61,.14); }
 .helper .ava{ width:58px; height:58px; border-radius:50%; flex-shrink:0; overflow:hidden;
@@ -386,6 +386,11 @@ h1.sticker{
 .dock-media{background:#000}
 .dock-media iframe,.dock-media #ytMount{width:100%;aspect-ratio:16/9;display:block;border:0}
 .dock-media.hidden-video{height:0 !important;overflow:hidden}
+/* fullskjerm-video: fyll hele skjermen (ellers blir iframen liten i svart) */
+.dock-media:-webkit-full-screen{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:#000}
+.dock-media:fullscreen{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:#000}
+.dock-media:-webkit-full-screen iframe,.dock-media:-webkit-full-screen #ytMount{width:100%!important;height:100%!important;aspect-ratio:auto!important;max-width:100vw;max-height:100vh}
+.dock-media:fullscreen iframe,.dock-media:fullscreen #ytMount{width:100%!important;height:100%!important;aspect-ratio:auto!important;max-width:100vw;max-height:100vh}
 .dock-media audio{width:100%;display:block}
 .dock-bar{display:flex;align-items:center;gap:8px;padding:10px 12px}
 .dock-label{flex:1;font-weight:700;font-size:18px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -534,6 +539,39 @@ h1.sticker{
 .dt-btn.dt-danger{ background:#ffd9d2; }
 .dt-btn.dt-close{ background:var(--red); color:#fff; }
 
+/* ---- tavle: gruppert verktøylinje ---- */
+.draw-toolbar{ align-items:flex-end; gap:14px; }
+.dt-group{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.dt-grow{ display:flex; align-items:center; gap:8px; }
+.dt-colors{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; max-width:330px; justify-content:center; }
+.dt-glabel{ font-family:inherit; font-size:12px; font-weight:800; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--ink-soft); }
+.draw-toolbar .dt-sep{ align-self:center; }
+
+/* ---- tavle: flyttbare tekst-objekter ---- */
+.dt-textobj{ position:absolute; z-index:5; max-width:80vw; padding:2px 7px; margin:0;
+  font-family:'Fredoka', system-ui, sans-serif; line-height:1.18; white-space:pre-wrap;
+  cursor:move; border:2px solid transparent; border-radius:9px; touch-action:none;
+  -webkit-user-select:none; user-select:none; }
+.dt-textobj.sel{ border-color:rgba(42,31,61,.55); border-style:dashed; background:rgba(255,255,255,.28); }
+.dt-textobj.editing{ cursor:text; border-style:solid; border-color:var(--gold);
+  background:rgba(255,255,255,.55); -webkit-user-select:text; user-select:text; outline:none; }
+.dt-textobj:empty::before{ content:'Skriv\2026'; opacity:.45; }
+
+/* ---- tavle: format-popover ---- */
+.dt-fmt{ position:absolute; z-index:8; display:flex; align-items:center; gap:6px; padding:6px 8px;
+  background:var(--cream); border:3px solid var(--ink); border-radius:16px; box-shadow:var(--shadow); }
+.dt-fbtn{ font-family:inherit; font-size:17px; font-weight:700; color:var(--ink); cursor:pointer;
+  border:2px solid var(--ink); background:var(--paper); border-radius:10px; min-width:40px; height:40px;
+  padding:0 9px; display:grid; place-items:center; box-shadow:0 2px 0 rgba(42,31,61,.18); }
+.dt-fbtn.on{ background:var(--gold); }
+.dt-fbtn:active{ transform:translateY(2px); box-shadow:none; }
+.dt-fdel{ background:#ffd9d2; }
+.dt-fcolors{ display:flex; gap:5px; align-items:center; }
+.dt-fdot{ width:26px; height:26px; border-radius:50%; border:2px solid var(--ink); cursor:pointer; padding:0; }
+.dt-fdot.on{ outline:3px solid var(--gold); outline-offset:1px; transform:translateY(-1px); }
+
+
 /* ===================== INNSTILLINGER + SKJUL MONSTRE ===================== */
 /* monstre skjult midlertidig — settes inn igjen når layouten er klar */
 .corner-mascot,
@@ -590,6 +628,13 @@ h1.sticker{
 .set-addtask{ font-family:inherit; font-size:16px; font-weight:700; color:var(--ink); border:3px dashed var(--ink);
   background:transparent; border-radius:12px; padding:10px; cursor:pointer; }
 .set-addtask:active{ transform:translateY(2px); }
+.seg{ display:flex; border:3px solid var(--ink); border-radius:12px; overflow:hidden; flex-shrink:0; }
+.seg-btn{ font-family:inherit; font-size:18px; font-weight:700; color:var(--ink); background:var(--paper);
+  border:0; border-left:3px solid var(--ink); width:46px; height:42px; cursor:pointer; }
+.seg-btn:first-child{ border-left:0; }
+.seg-btn.active{ background:var(--gold); }
+.seg-btn:active{ transform:translateY(1px); }
+.sal-links{ display:flex; flex-direction:column; gap:8px; }
 
 /* ===================== ORDENSELEV-LØNN ===================== */
 #salScanOvl, #salListOvl{ z-index:95; }
@@ -911,10 +956,16 @@ h1.sticker{
       </div>
       <div class="set-panel" id="set-panel-orden">
         <div class="set-heading">Ukas hjelpere</div>
-        <div class="set-names">
-          <label class="set-field"><span>Hjelper 1</span><input type="text" id="setHelperA" autocomplete="off"></label>
-          <label class="set-field"><span>Hjelper 2</span><input type="text" id="setHelperB" autocomplete="off"></label>
+        <div class="set-row">
+          <div class="set-label">Antall ordenselever<span class="set-sub">Velg hvor mange som vises på tavla (1–4).</span></div>
+          <div class="seg" id="helperCountSeg">
+            <button type="button" class="seg-btn" data-n="1">1</button>
+            <button type="button" class="seg-btn" data-n="2">2</button>
+            <button type="button" class="seg-btn" data-n="3">3</button>
+            <button type="button" class="seg-btn" data-n="4">4</button>
+          </div>
         </div>
+        <div class="set-names" id="helperFields" style="flex-direction:column"></div>
         <div class="set-heading2">Oppgaver</div>
         <div class="set-tasks" id="setTasks"></div>
         <button class="set-addtask" id="setAddTask">+ Legg til oppgave</button>
@@ -973,17 +1024,38 @@ h1.sticker{
 <div class="draw-layer" id="drawLayer" aria-hidden="true">
   <canvas id="drawCanvas"></canvas>
   <div class="draw-toolbar" id="drawToolbar">
-    <div class="dt-group dt-colors" id="dtColors"></div>
+    <div class="dt-group">
+      <span class="dt-glabel">Farge</span>
+      <div class="dt-grow"><div class="dt-colors" id="dtColors"></div></div>
+    </div>
     <div class="dt-sep"></div>
-    <div class="dt-group dt-sizes" id="dtSizes"></div>
+    <div class="dt-group">
+      <span class="dt-glabel">Tykkelse</span>
+      <div class="dt-grow" id="dtSizes"></div>
+    </div>
     <div class="dt-sep"></div>
-    <button class="dt-btn" id="dtText">Tekst</button>
-    <button class="dt-btn" id="dtEraser">Visk</button>
-    <button class="dt-btn" id="dtUndo">Angre</button>
-    <div class="dt-group dt-papers" id="dtPapers"><button class="dt-btn dt-paper" data-paper="blank">Blankt</button><button class="dt-btn dt-paper" data-paper="lines">Linjer</button><button class="dt-btn dt-paper" data-paper="grid">Ruter</button></div>
-    <button class="dt-btn dt-danger" id="dtClear">Tøm</button>
+    <div class="dt-group">
+      <span class="dt-glabel">Verktøy</span>
+      <div class="dt-grow">
+        <button class="dt-btn" id="dtPen">&#9999;&#65039; Penn</button>
+        <button class="dt-btn" id="dtText">&#127345; Tekst</button>
+        <button class="dt-btn" id="dtEraser">Visk</button>
+      </div>
+    </div>
     <div class="dt-sep"></div>
-    <button class="dt-btn dt-close" id="dtClose">Lukk</button>
+    <div class="dt-group">
+      <span class="dt-glabel">Ark</span>
+      <div class="dt-grow dt-papers" id="dtPapers"><button class="dt-btn dt-paper" data-paper="blank">Blankt</button><button class="dt-btn dt-paper" data-paper="lines">Linjer</button><button class="dt-btn dt-paper" data-paper="grid">Ruter</button></div>
+    </div>
+    <div class="dt-sep"></div>
+    <div class="dt-group">
+      <span class="dt-glabel">Tavle</span>
+      <div class="dt-grow">
+        <button class="dt-btn" id="dtUndo">&#8630; Angre</button>
+        <button class="dt-btn dt-danger" id="dtClear">Tøm</button>
+        <button class="dt-btn dt-close" id="dtClose">Lukk</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1133,7 +1205,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       { w:'ønske', d:'noe du har lyst på, men ikke må ha' },
       { w:'klokskap', d:'å tenke seg om før man bestemmer seg' },
     ],
-    helperA: 'Nora', helperB: 'Jonas',
+    helperCount: 2, helpers: ['Nora', 'Jonas', '', ''],
     checklist: [
       { t: 'Vanne blomstene', d: false },
       { t: 'Tørke av tavla', d: true },
@@ -1162,8 +1234,16 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   applyWeek();
   function load() {
-    try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY) || '{}')); }
-    catch (e) { return Object.assign({}, DEFAULTS); }
+    let raw = {};
+    try { raw = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { raw = {}; }
+    let d = Object.assign({}, DEFAULTS, raw);
+    if (Array.isArray(raw.helpers)) { d.helpers = raw.helpers.slice(); }
+    else if (raw.helperA != null || raw.helperB != null) { d.helpers = [raw.helperA || '', raw.helperB || '']; }
+    else { d.helpers = (DEFAULTS.helpers || []).slice(); }
+    while (d.helpers.length < 4) d.helpers.push('');
+    d.helpers = d.helpers.slice(0, 4);
+    let hc = parseInt(raw.helperCount, 10); if (!(hc >= 1 && hc <= 4)) hc = 2; d.helperCount = hc;
+    return d;
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(data)); if (window._onPortalSave) { try { window._onPortalSave(); } catch(e){} } }
 
@@ -1336,17 +1416,24 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   /* ---------- helpers + checklist ---------- */
   function renderHelpers() {
     const h = document.getElementById('helpers');
-    h.innerHTML = `
-      <div class="helper a">
-        <span class="ava"><img src="${res('mascotGreen', 'assets/mascot-green.png')}" alt=""></span>
-        <span><span class="who">Ordenselev</span><br><span class="nm" id="nmA"></span></span>
-      </div>
-      <div class="helper b">
-        <span class="ava"><img src="${res('mascotBlue', 'assets/mascot-blue.png')}" alt=""></span>
-        <span><span class="who">Ordenselev</span><br><span class="nm" id="nmB"></span></span>
-      </div>`;
-    h.querySelector('#nmA').textContent = data.helperA;
-    h.querySelector('#nmB').textContent = data.helperB;
+    const n = Math.max(1, Math.min(4, data.helperCount || 2));
+    const imgs = [
+      res('mascotGreen', 'assets/mascot-green.png'),
+      res('mascotBlue', 'assets/mascot-blue.png'),
+      res('mascotGreen', 'assets/mascot-green.png'),
+      res('mascotBlue', 'assets/mascot-blue.png')
+    ];
+    const cls = ['a', 'b', 'a', 'b'];
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      html += '<div class="helper ' + cls[i] + '">'
+        + '<span class="ava"><img src="' + imgs[i] + '" alt=""></span>'
+        + '<span><span class="who">Ordenselev</span><br><span class="nm"></span></span>'
+        + '</div>';
+    }
+    h.innerHTML = html;
+    const nms = h.querySelectorAll('.nm');
+    for (let i = 0; i < n; i++) { nms[i].textContent = (data.helpers && data.helpers[i]) || ''; }
   }
   function renderChecklist() {
     const ul = document.getElementById('checklist'); ul.innerHTML = '';
@@ -1762,11 +1849,27 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       row.appendChild(w); row.appendChild(d); row.appendChild(del); box.appendChild(row);
     });
   }
+  function syncHelperSeg(){
+    document.querySelectorAll('#helperCountSeg .seg-btn').forEach(function(b){ b.classList.toggle('active', (+b.dataset.n) === (data.helperCount || 2)); });
+  }
+  function renderHelperFields(){
+    var box = document.getElementById('helperFields'); if (!box) return;
+    if (!Array.isArray(data.helpers)) data.helpers = ['', '', '', ''];
+    var n = Math.max(1, Math.min(4, data.helperCount || 2));
+    box.innerHTML = '';
+    for (let i = 0; i < n; i++){
+      var lab = document.createElement('label'); lab.className = 'set-field';
+      var sp = document.createElement('span'); sp.textContent = 'Ordenselev ' + (i + 1);
+      var inp = document.createElement('input'); inp.type = 'text'; inp.autocomplete = 'off';
+      inp.value = data.helpers[i] || '';
+      inp.addEventListener('input', (function(idx, el){ return function(){ data.helpers[idx] = el.value; save(); renderHelpers(); if (window._renderSalaryUI) window._renderSalaryUI(); }; })(i, inp));
+      lab.appendChild(sp); lab.appendChild(inp); box.appendChild(lab);
+    }
+  }
   function syncSettings(){
     const a = document.getElementById('setWeatherAuto'); if (a) a.checked = !!data.weatherAuto;
     const pp = document.getElementById('setProgressPercent'); if (pp) pp.checked = !!data.progressPercent;
-    const ha = document.getElementById('setHelperA'); if (ha) ha.value = data.helperA || '';
-    const hb = document.getElementById('setHelperB'); if (hb) hb.value = data.helperB || '';
+    syncHelperSeg(); renderHelperFields();
     renderTaskEditor();
     const wAuto = document.getElementById('setWordAuto'); if (wAuto) wAuto.checked = !!data.wordAuto;
     const wMan = document.getElementById('setWordManual'); if (wMan) wMan.style.display = data.wordAuto ? 'none' : 'flex';
@@ -1789,10 +1892,15 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     };
     const pp = document.getElementById('setProgressPercent');
     if (pp) pp.onchange = function(){ data.progressPercent = pp.checked; save(); renderLessons(); };
-    const ha = document.getElementById('setHelperA');
-    if (ha) ha.addEventListener('input', function(){ data.helperA = ha.value; save(); renderHelpers(); });
-    const hb = document.getElementById('setHelperB');
-    if (hb) hb.addEventListener('input', function(){ data.helperB = hb.value; save(); renderHelpers(); });
+    document.querySelectorAll('#helperCountSeg .seg-btn').forEach(function(b){
+      b.onclick = function(){
+        data.helperCount = Math.max(1, Math.min(4, (+b.dataset.n) || 2));
+        if (!Array.isArray(data.helpers)) data.helpers = ['', '', '', ''];
+        while (data.helpers.length < 4) data.helpers.push('');
+        save(); syncHelperSeg(); renderHelperFields(); renderHelpers();
+        if (window._renderSalaryUI) window._renderSalaryUI();
+      };
+    });
     const at = document.getElementById('setAddTask');
     if (at) at.onclick = function(){ data.checklist = data.checklist || []; data.checklist.push({ t: 'Ny oppgave', d: false }); save(); renderChecklist(); renderTaskEditor(); };
     const wAuto = document.getElementById('setWordAuto');
@@ -1826,24 +1934,35 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   const PALETTE = ['#2a1f3d','#ffffff','#e64b3b','#e3a82a','#7bb026','#27b3c6','#378add','#d4537e'];
   const SIZES = [4, 9, 18];
-  let color = '#2a1f3d', size = 9, erasing = false, texting = false, bgMode = 'blank';
+  let color = '#2a1f3d', size = 9, tool = 'pen', bgMode = 'blank';
   let drawing = false, dpr = 1;
   const undoStack = [];
+
+  let texts = [];     // {id,x,y,text,size,bold,italic,color}
+  let selId = null;
+  let nextId = 1;
 
   const bg = document.createElement('div');
   bg.className = 'draw-bg bg-transparent';
   layer.insertBefore(bg, canvas);
   function applyBg(){ bg.className = 'draw-bg bg-' + bgMode; }
 
+  // ---- color swatches (also recolor selected text) ----
   const colorsWrap = document.getElementById('dtColors');
-  PALETTE.forEach(function(c){
+  PALETTE.forEach(function(c2){
     const b = document.createElement('button');
-    b.className = 'dt-swatch'; b.style.background = c; b.dataset.color = c;
-    if (c === '#ffffff') b.style.borderColor = '#2a1f3d';
-    b.onclick = function(){ color = c; erasing = false; texting = false; commitText(); syncUI(); };
+    b.className = 'dt-swatch'; b.style.background = c2; b.dataset.color = c2;
+    if (c2 === '#ffffff') b.style.borderColor = '#2a1f3d';
+    b.onclick = function(){
+      color = c2;
+      var o = byId(selId);
+      if (o){ pushUndo(); o.color = c2; renderTexts(); selectText(o.id); save(); }
+      syncUI();
+    };
     colorsWrap.appendChild(b);
   });
 
+  // ---- pen thickness ----
   const sizesWrap = document.getElementById('dtSizes');
   SIZES.forEach(function(s, i){
     const b = document.createElement('button');
@@ -1856,11 +1975,13 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   });
 
   function syncUI(){
-    document.querySelectorAll('.dt-swatch').forEach(function(b){ b.classList.toggle('active', !erasing && b.dataset.color === color); });
+    document.querySelectorAll('.dt-swatch').forEach(function(b){ b.classList.toggle('active', b.dataset.color === color); });
     document.querySelectorAll('.dt-size').forEach(function(b){ b.classList.toggle('active', (+b.dataset.size) === size); });
-    document.getElementById('dtEraser').classList.toggle('active', erasing);
-    var _tb=document.getElementById('dtText'); if(_tb) _tb.classList.toggle('active', texting);
+    var pe=document.getElementById('dtPen');    if(pe) pe.classList.toggle('active', tool==='pen');
+    var er=document.getElementById('dtEraser'); if(er) er.classList.toggle('active', tool==='eraser');
+    var te=document.getElementById('dtText');   if(te) te.classList.toggle('active', tool==='text');
     document.querySelectorAll('.dt-paper').forEach(function(b){ b.classList.toggle('active', b.dataset.paper === bgMode); });
+    canvas.style.cursor = (tool==='text') ? 'text' : 'crosshair';
   }
 
   function setupCanvas(){
@@ -1876,80 +1997,207 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.restore();
   }
   function posOf(e){ const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-  function pushUndo(){ try { undoStack.push(canvas.toDataURL()); if (undoStack.length > 12) undoStack.shift(); } catch(_){} }
 
+  function pushUndo(){
+    try { undoStack.push({ img: canvas.toDataURL(), texts: JSON.stringify(texts) }); if (undoStack.length > 14) undoStack.shift(); } catch(_){}
+  }
+
+  // ---- drawing on canvas ----
   function strokeStep(){
     ctx.lineWidth = size;
-    if (erasing){ ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; }
+    if (tool==='eraser'){ ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; }
     else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = color; }
     ctx.stroke();
   }
   function start(e){
-    if (texting){ e.preventDefault(); placeText(posOf(e)); return; }
-    e.preventDefault(); drawing = true; pushUndo();
+    if (tool==='text'){ e.preventDefault(); addText(posOf(e)); return; }
+    e.preventDefault(); selectText(null);
+    drawing = true; pushUndo();
     const p = posOf(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 0.01, p.y); strokeStep();
     try { canvas.setPointerCapture(e.pointerId); } catch(_){}
   }
   function move(e){ if (!drawing) return; const p = posOf(e); ctx.lineTo(p.x, p.y); strokeStep(); }
   function end(){ if (!drawing) return; drawing = false; ctx.globalCompositeOperation = 'source-over'; save(); }
-
   canvas.addEventListener('pointerdown', start);
   canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
 
-  document.getElementById('dtEraser').onclick = function(){ erasing = !erasing; texting = false; commitText(); syncUI(); };
+  // ---- text objects ----
+  function byId(id){ if(id==null) return null; for (var i=0;i<texts.length;i++){ if(texts[i].id===id) return texts[i]; } return null; }
+
+  function addText(p){
+    pushUndo();
+    var o = { id: nextId++, x: Math.round(p.x), y: Math.round(p.y), text:'', size:34, bold:true, italic:false, color: color };
+    texts.push(o);
+    renderTexts();
+    selectText(o.id);
+    editText(o.id);
+  }
+
+  function applyStyle(el, o){
+    el.style.left = o.x + 'px';
+    el.style.top  = o.y + 'px';
+    el.style.color = o.color;
+    el.style.fontSize = o.size + 'px';
+    el.style.fontWeight = o.bold ? '700' : '400';
+    el.style.fontStyle = o.italic ? 'italic' : 'normal';
+  }
+
+  function renderTexts(){
+    layer.querySelectorAll('.dt-textobj').forEach(function(n){ n.remove(); });
+    texts.forEach(function(o){
+      var el = document.createElement('div');
+      el.className = 'dt-textobj' + (o.id===selId ? ' sel' : '');
+      el.dataset.id = o.id;
+      applyStyle(el, o);
+      el.textContent = o.text || '';
+      attachTextHandlers(el, o);
+      layer.appendChild(el);
+    });
+    positionFmt();
+  }
+
+  function attachTextHandlers(el, o){
+    var dragging=false, moved=false, sx=0, sy=0, ox=0, oy=0, didUndo=false;
+    el.addEventListener('pointerdown', function(e){
+      if (el.isContentEditable) return;          // editing: let caret work
+      e.preventDefault(); e.stopPropagation();
+      selectText(o.id);
+      dragging=true; moved=false; didUndo=false;
+      sx=e.clientX; sy=e.clientY; ox=o.x; oy=o.y;
+      try{ el.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    el.addEventListener('pointermove', function(e){
+      if(!dragging) return;
+      var dx=e.clientX-sx, dy=e.clientY-sy;
+      if(!moved && (Math.abs(dx)+Math.abs(dy) > 3)){ moved=true; if(!didUndo){ pushUndo(); didUndo=true; } }
+      if(moved){ o.x=Math.round(ox+dx); o.y=Math.round(oy+dy); el.style.left=o.x+'px'; el.style.top=o.y+'px'; positionFmt(); }
+    });
+    function stop(e){ if(!dragging) return; dragging=false; try{ el.releasePointerCapture(e.pointerId); }catch(_){} if(moved) save(); }
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+    el.addEventListener('dblclick', function(e){ e.preventDefault(); e.stopPropagation(); editText(o.id); });
+  }
+
+  function editText(id){
+    var o = byId(id); if(!o) return;
+    var el = layer.querySelector('.dt-textobj[data-id="'+id+'"]'); if(!el) return;
+    el.contentEditable = 'true';
+    el.classList.add('editing');
+    el.focus();
+    try{ var r=document.createRange(); r.selectNodeContents(el); r.collapse(false);
+         var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); }catch(_){}
+    function finish(){
+      el.removeEventListener('blur', finish);
+      el.contentEditable='false';
+      el.classList.remove('editing');
+      o.text = (el.textContent||'').replace(/\s+/g,' ').trim();
+      if(!o.text){ texts = texts.filter(function(t){return t.id!==o.id;}); if(selId===o.id) selId=null; }
+      renderTexts(); updateFmt(); save();
+    }
+    el.addEventListener('blur', finish);
+    el.addEventListener('keydown', function(e){
+      if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); el.blur(); }
+      else if(e.key==='Escape'){ e.preventDefault(); el.blur(); }
+    });
+  }
+
+  function selectText(id){
+    selId = id;
+    layer.querySelectorAll('.dt-textobj').forEach(function(n){ n.classList.toggle('sel', (+n.dataset.id)===id); });
+    updateFmt();
+  }
+
+  // ---- format popover ----
+  var fmt = document.createElement('div');
+  fmt.className = 'dt-fmt'; fmt.style.display = 'none';
+  fmt.innerHTML =
+    '<button class="dt-fbtn" data-f="dec" title="Mindre">A&#8722;</button>' +
+    '<button class="dt-fbtn" data-f="inc" title="Større">A+</button>' +
+    '<button class="dt-fbtn" data-f="bold" title="Fet"><b>F</b></button>' +
+    '<button class="dt-fbtn" data-f="italic" title="Kursiv"><i>K</i></button>' +
+    '<span class="dt-fcolors"></span>' +
+    '<button class="dt-fbtn dt-fdel" data-f="del" title="Slett">&#128465;</button>';
+  layer.appendChild(fmt);
+  fmt.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+
+  var fcol = fmt.querySelector('.dt-fcolors');
+  PALETTE.forEach(function(c2){
+    var d=document.createElement('button'); d.className='dt-fdot'; d.style.background=c2; d.dataset.color=c2;
+    if(c2==='#ffffff') d.style.borderColor='#2a1f3d';
+    d.onclick=function(){ var o=byId(selId); if(!o)return; pushUndo(); o.color=c2; color=c2; renderTexts(); selectText(o.id); syncUI(); save(); };
+    fcol.appendChild(d);
+  });
+
+  fmt.querySelectorAll('.dt-fbtn').forEach(function(b){
+    b.onclick=function(){
+      var o=byId(selId); if(!o) return;
+      var f=b.dataset.f;
+      if(f==='del'){ pushUndo(); texts=texts.filter(function(t){return t.id!==o.id;}); selId=null; renderTexts(); updateFmt(); save(); return; }
+      pushUndo();
+      if(f==='inc') o.size=Math.min(160, o.size+6);
+      else if(f==='dec') o.size=Math.max(12, o.size-6);
+      else if(f==='bold') o.bold=!o.bold;
+      else if(f==='italic') o.italic=!o.italic;
+      renderTexts(); selectText(o.id); save();
+    };
+  });
+
+  function updateFmt(){
+    var o = byId(selId);
+    if(!o){ fmt.style.display='none'; return; }
+    fmt.style.display='flex';
+    fmt.querySelector('[data-f="bold"]').classList.toggle('on', !!o.bold);
+    fmt.querySelector('[data-f="italic"]').classList.toggle('on', !!o.italic);
+    fmt.querySelectorAll('.dt-fdot').forEach(function(d){ d.classList.toggle('on', d.dataset.color===o.color); });
+    positionFmt();
+  }
+  function positionFmt(){
+    var o = byId(selId); if(!o){ return; }
+    var el = layer.querySelector('.dt-textobj[data-id="'+o.id+'"]'); if(!el){ return; }
+    var top = o.y - 54;
+    if(top < 8) top = o.y + el.offsetHeight + 8;
+    var fw = fmt.offsetWidth || 320;
+    var left = Math.max(8, Math.min(o.x, window.innerWidth - fw - 12));
+    fmt.style.left = left + 'px';
+    fmt.style.top  = top + 'px';
+  }
+
+  // ---- tool buttons ----
+  var penBtn=document.getElementById('dtPen');
+  if(penBtn) penBtn.onclick=function(){ tool='pen'; selectText(null); syncUI(); };
+  document.getElementById('dtEraser').onclick=function(){ tool='eraser'; selectText(null); syncUI(); };
+  document.getElementById('dtText').onclick=function(){ tool='text'; selectText(null); syncUI(); };
+
   document.getElementById('dtUndo').onclick = function(){
     if (!undoStack.length) return;
-    const data = undoStack.pop();
-    const img = new Image();
-    img.onload = function(){ clearCanvas(); ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight); save(); };
-    img.src = data;
+    var snap = undoStack.pop();
+    try { texts = JSON.parse(snap.texts) || []; } catch(_){ texts=[]; }
+    nextId = texts.reduce(function(m,t){return Math.max(m, t.id);}, 0) + 1;
+    selId = null;
+    var img = new Image();
+    img.onload = function(){ clearCanvas(); ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight); renderTexts(); updateFmt(); save(); };
+    img.src = snap.img;
   };
+
   document.querySelectorAll('.dt-paper').forEach(function(b){
     b.onclick = function(){ bgMode = b.dataset.paper; applyBg(); syncUI(); save(); };
   });
-  document.getElementById('dtClear').onclick = function(){ pushUndo(); clearCanvas(); save(); };
+  document.getElementById('dtClear').onclick = function(){
+    pushUndo(); clearCanvas(); texts=[]; selId=null; renderTexts(); updateFmt(); save();
+  };
   document.getElementById('dtClose').onclick = function(){ save(); closeLayer(); };
 
-  var _txt = null;
-  function textPx(){ return Math.round(size * 3.5 + 18); }
-  function commitText(){
-    if (!_txt) return;
-    var inp = _txt.el, x = _txt.x, y = _txt.y, val = inp.value;
-    if (val && val.trim()){
-      pushUndo();
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = color; ctx.textBaseline = 'top';
-      ctx.font = '600 ' + textPx() + "px 'Fredoka', system-ui, sans-serif";
-      ctx.fillText(val, x + 3, y + 2);
-      save();
-    }
-    if (inp.parentNode) inp.parentNode.removeChild(inp);
-    _txt = null;
-  }
-  function placeText(p){
-    commitText();
-    var inp = document.createElement('input');
-    inp.type = 'text'; inp.className = 'dt-textin';
-    inp.style.left = p.x + 'px'; inp.style.top = p.y + 'px';
-    inp.style.color = color;
-    inp.style.font = "600 " + textPx() + "px 'Fredoka', system-ui, sans-serif";
-    layer.appendChild(inp);
-    _txt = { el: inp, x: p.x, y: p.y };
-    setTimeout(function(){ inp.focus(); }, 0);
-    inp.addEventListener('keydown', function(e){
-      if (e.key === 'Enter'){ e.preventDefault(); commitText(); }
-      else if (e.key === 'Escape'){ var n = _txt; _txt = null; if (n && n.el && n.el.parentNode) n.el.parentNode.removeChild(n.el); }
-    });
-    inp.addEventListener('blur', function(){ commitText(); });
-  }
-  document.getElementById('dtText').onclick = function(){ texting = !texting; if (texting) erasing = false; else commitText(); syncUI(); };
-  function save(){ try { localStorage.setItem(KEY, JSON.stringify({ img: canvas.toDataURL(), bg: bgMode })); } catch(_){} }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify({ img: canvas.toDataURL(), bg: bgMode, texts: texts })); } catch(_){} }
   function restore(){
     let d = null; try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(_){}
     if (d && ['blank','lines','grid'].indexOf(d.bg) >= 0) bgMode = d.bg;
     applyBg();
+    if (d && Array.isArray(d.texts)){ texts = d.texts; nextId = texts.reduce(function(m,t){return Math.max(m, t.id);}, 0) + 1; }
+    else { texts = []; nextId = 1; }
+    selId = null;
+    renderTexts();
     if (d && d.img){ const img = new Image(); img.onload = function(){ ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight); }; img.src = d.img; }
   }
 
@@ -1969,6 +2217,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       let data = null; try { data = canvas.toDataURL(); } catch(_){}
       setupCanvas(); applyBg();
       if (data){ const img = new Image(); img.onload = function(){ ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight); }; img.src = data; }
+      positionFmt();
     }, 150);
   });
 
@@ -2250,10 +2499,22 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   renderGoals();
   /* ====== ORDENSELEV-LØNN (Myntland) ====== */
   const SAL_KEY = 'myntland-portal-ordens-v1';
-  const SAL_DEF = { amount: 100, autoFriday: true, aKey: '', aName: '', bKey: '', bName: '' };
-  function loadSal(){ try { return Object.assign({}, SAL_DEF, JSON.parse(localStorage.getItem(SAL_KEY) || '{}')); } catch(e){ return Object.assign({}, SAL_DEF); } }
+  const SAL_DEF = { amount: 100, autoFriday: true, links: [] };
+  function loadSal(){
+    let raw = {};
+    try { raw = JSON.parse(localStorage.getItem(SAL_KEY) || '{}') || {}; } catch(e){ raw = {}; }
+    let s = Object.assign({}, SAL_DEF, raw);
+    if (Array.isArray(raw.links)) { s.links = raw.links.slice(); }
+    else { s.links = [{ key: raw.aKey || '', name: raw.aName || '' }, { key: raw.bKey || '', name: raw.bName || '' }]; }
+    while (s.links.length < 4) s.links.push({ key: '', name: '' });
+    s.links = s.links.slice(0, 4).map(function(l){ return { key: (l && l.key) || '', name: (l && l.name) || '' }; });
+    return s;
+  }
   function saveSal(){ try { localStorage.setItem(SAL_KEY, JSON.stringify(sal)); } catch(e){} }
   let sal = loadSal();
+  function helperCount(){ try { var n = (window.portal && window.portal.data && window.portal.data.helperCount) || 2; return Math.max(1, Math.min(4, n)); } catch(e){ return 2; } }
+  function helperLabel(i){ try { var nm = window.portal.data.helpers[i]; if (nm) return nm; } catch(e){} return 'Ordenselev ' + (i + 1); }
+  function activeKeys(){ var n = helperCount(); var ks = []; for (var i = 0; i < n; i++){ if (sal.links[i] && sal.links[i].key) ks.push(sal.links[i].key); } return ks; }
   let studentsAll = [];
   let studentsUnsub = null;
   let salStatusEl = null;
@@ -2275,15 +2536,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       '<div class="set-heading">Ordenselev-lønn (Myntland)</div>' +
       '<div class="set-sub" style="margin-top:-2px">Betales automatisk på fredager. 20 % skatt går til klassens sparemål.</div>' +
       '<div class="set-row">' +
-        '<div class="set-label">Lønn per uke (mynter)<span class="set-sub">Samme beløp for begge ordenselever.</span></div>' +
+        '<div class="set-label">Lønn per uke (mynter)<span class="set-sub">Samme beløp for alle ordenselever.</span></div>' +
         '<input type="number" id="salAmount" min="0" step="10" style="width:120px;font-family:inherit;font-size:20px;font-weight:700;color:var(--ink);border:3px solid var(--ink);border-radius:12px;padding:8px 10px;background:var(--paper);text-align:center">' +
       '</div>' +
       '<div class="set-row">' +
-        '<div class="set-label">Automatisk på fredag<span class="set-sub">Betaler begge koblede ordenselever én gang hver fredag.</span></div>' +
+        '<div class="set-label">Automatisk på fredag<span class="set-sub">Betaler alle koblede ordenselever én gang hver fredag.</span></div>' +
         '<label class="set-switch"><input type="checkbox" id="salAuto"><span class="set-slider"></span></label>' +
       '</div>' +
-      '<div class="sal-link" id="salLinkA"></div>' +
-      '<div class="sal-link" id="salLinkB"></div>' +
+      '<div class="sal-links" id="salLinks"></div>' +
       '<button class="set-addtask" id="salPayNow" style="border-style:solid;background:var(--green);color:#fff">Betal lønn nå</button>' +
       '<div class="set-status" id="salStatus"></div>';
     body.appendChild(wrap);
@@ -2296,27 +2556,32 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
 
   function renderSalaryUI(){
-    if (!document.getElementById('salLinkA')) return;
-    [['A', sal.aKey, sal.aName], ['B', sal.bKey, sal.bName]].forEach(function(row){
-      const slot = row[0], key = row[1], name = row[2];
-      const el = document.getElementById('salLink' + slot);
-      const linked = key ? ('🔗 ' + esc(name || 'koblet elev')) : '<span style="color:var(--ink-soft)">ikke koblet</span>';
-      el.innerHTML = '<span class="sal-link-label">Hjelper ' + (slot === 'A' ? '1' : '2') + '</span>' +
+    const box = document.getElementById('salLinks');
+    if (!box) return;
+    const n = helperCount();
+    box.innerHTML = '';
+    for (let i = 0; i < n; i++){
+      const l = sal.links[i] || { key: '', name: '' };
+      const row = document.createElement('div'); row.className = 'sal-link';
+      const linked = l.key ? ('🔗 ' + esc(l.name || 'koblet elev')) : '<span style="color:var(--ink-soft)">ikke koblet</span>';
+      row.innerHTML = '<span class="sal-link-label">' + esc(helperLabel(i)) + '</span>' +
         '<span class="sal-link-name">' + linked + '</span>' +
-        '<button class="sal-btn" data-slot="' + slot + '" data-act="scan">Skann kort</button>' +
-        '<button class="sal-btn" data-slot="' + slot + '" data-act="list">Velg fra liste</button>' +
-        (key ? '<button class="sal-btn sal-x" data-slot="' + slot + '" data-act="clear">×</button>' : '');
-      el.querySelectorAll('.sal-btn').forEach(function(b){ b.onclick = function(){ salAction(b.dataset.slot, b.dataset.act); }; });
-    });
+        '<button class="sal-btn" data-slot="' + i + '" data-act="scan">Skann kort</button>' +
+        '<button class="sal-btn" data-slot="' + i + '" data-act="list">Velg fra liste</button>' +
+        (l.key ? '<button class="sal-btn sal-x" data-slot="' + i + '" data-act="clear">×</button>' : '');
+      row.querySelectorAll('.sal-btn').forEach(function(b){ b.onclick = function(){ salAction(+b.dataset.slot, b.dataset.act); }; });
+      box.appendChild(row);
+    }
   }
 
   function linkHelper(slot, student){
-    if (slot === 'A'){ sal.aKey = student.fbKey; sal.aName = fullName(student); }
-    else { sal.bKey = student.fbKey; sal.bName = fullName(student); }
+    slot = +slot;
+    sal.links[slot] = { key: student.fbKey, name: fullName(student) };
     saveSal(); renderSalaryUI();
   }
   function salAction(slot, act){
-    if (act === 'clear'){ if (slot === 'A'){ sal.aKey = ''; sal.aName = ''; } else { sal.bKey = ''; sal.bName = ''; } saveSal(); renderSalaryUI(); return; }
+    slot = +slot;
+    if (act === 'clear'){ sal.links[slot] = { key: '', name: '' }; saveSal(); renderSalaryUI(); return; }
     if (act === 'list') openStudentList(slot);
     if (act === 'scan') openScan(slot);
   }
@@ -2416,7 +2681,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   async function paySalary(manual){
     if (!link){ setSalStatus('Koble tavla til en klasse først (🏦).'); return; }
-    const keys = [sal.aKey, sal.bKey].filter(Boolean);
+    const keys = activeKeys();
     if (!keys.length){ setSalStatus('Ingen ordenselever er koblet ennå.'); return; }
     if (!(sal.amount > 0)){ setSalStatus('Sett et lønnsbeløp først.'); return; }
     setSalStatus('Betaler lønn …');
@@ -2432,7 +2697,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   async function checkFridayPay(){
     if (!link || !sal.autoFriday) return;
     if (new Date().getDay() !== 5) return;
-    const keys = [sal.aKey, sal.bKey].filter(Boolean);
+    const keys = activeKeys();
     if (!keys.length || !(sal.amount > 0)) return;
     const ws = link.workspaceId || 'main';
     const markRef = ref(db, 'ordensSalary/' + ws);
@@ -2453,7 +2718,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   })();
 
   if (link){ startData(); } else { fundPanel.style.display = 'none'; }
-  buildSalaryUI(); renderSalaryUI();
+  buildSalaryUI(); renderSalaryUI(); window._renderSalaryUI = renderSalaryUI;
   /* ---------- publiser dagens plan + beskjeder til skyen (dayboard) ---------- */
   var _daySig = '', _dayT = null;
   function pushDayboard(){
