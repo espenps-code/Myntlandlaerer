@@ -63,7 +63,7 @@
 
   function show404(){
     render(
-      '<img class="coin" src="mynt.webp" alt="Myntland-mynt">'+
+      '<img class="coin" src="/mynt.webp" alt="Myntland-mynt">'+
       '<h1>Side ikke funnet</h1>'+
       '<p class="muted">Denne adressen finnes ikke i Myntland.</p>'+
       '<p class="muted"><a class="home" href="/">Gå til forsiden</a></p>'
@@ -71,7 +71,7 @@
   }
   function showNoClass(){
     render(
-      '<img class="coin" src="mynt.webp" alt="Myntland-mynt">'+
+      '<img class="coin" src="/mynt.webp" alt="Myntland-mynt">'+
       '<h1>Fant ingen klasse</h1>'+
       '<p class="muted">Lenken peker ikke til en klasse som finnes. Sjekk at du har riktig adresse fra læreren.</p>'+
       '<p class="muted"><a class="home" href="/">Gå til forsiden</a></p>'
@@ -86,7 +86,7 @@
     let btn;
     if(known && info.classId){
       const app = info.trinn==='57' ? 'elevapp57-ny.html' : 'elevapp14-ny.html';
-      const href = app + '?class=' + encodeURIComponent(info.classId);
+      const href = '/' + app + '?class=' + encodeURIComponent(info.classId);
       btn = '<a class="btn btn-primary" href="'+href+'">Åpne elevappen</a>';
     } else {
       btn = '<span class="btn btn-disabled">Åpne elevappen (kommer snart)</span>';
@@ -125,7 +125,7 @@
     }
   }catch(e){
     console.error(e);
-    render('<img class="coin" src="mynt.webp" alt="mynt"><h1>Oisann</h1><p class="muted">Noe gikk galt da vi slo opp klassen. Prøv å laste siden på nytt.</p>');
+    render('<img class="coin" src="/mynt.webp" alt="mynt"><h1>Oisann</h1><p class="muted">Noe gikk galt da vi slo opp klassen. Prøv å laste siden på nytt.</p>');
   }
 </script>
 </body>
