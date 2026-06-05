@@ -78,6 +78,9 @@
   .seg .opt{border:2px solid var(--border);border-radius:11px;padding:12px;text-align:center;font-weight:800;
     color:var(--muted);transition:all .12s;}
   .seg input:checked + .opt{border-color:var(--green);background:var(--green-light);color:var(--green-dark);}
+  .btn-del{border:none;background:transparent;color:var(--muted);font-size:1.05rem;cursor:pointer;
+    padding:8px 10px;border-radius:9px;margin:0;line-height:1;flex:0 0 auto;}
+  .btn-del:hover{background:#fde8e2;color:#a3341a;}
 </style>
 </head>
 <body>
@@ -327,6 +330,18 @@
     }catch(e){ alertBox('create-alert','error',friendlyErr(e)); }
   };
 
+  window.deleteClass=async function(classId,slug,btn){
+    const name=(btn && btn.closest('.class-card')?.querySelector('.cname')?.textContent?.trim())||'denne klassen';
+    if(!confirm('Slette «'+name+'» for godt?\n\nKlassen og alle data i den fjernes. Dette kan ikke angres.')) return;
+    try{
+      const uid=auth.currentUser.uid;
+      await set(ref(db,'classes/'+classId), null);
+      if(slug) await set(ref(db,'slugs/'+slug), null);
+      await update(ref(db,'users/'+uid), { ['memberships/'+classId]: null });
+      renderClasses();
+    }catch(e){ alert('Kunne ikke slette: '+friendlyErr(e)); }
+  };
+
   window.copyLink=function(slug,btn){
     const url='myntland.no/k/'+slug;
     navigator.clipboard?.writeText(url).then(()=>{ btn.textContent='Kopiert!'; setTimeout(()=>btn.textContent='Kopier',1500); });
@@ -359,6 +374,7 @@
           +'</div>'
           +'<button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;" '
             +'onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">Åpne</button>'
+          +(c.role==='owner' ? '<button class="btn-del" title="Slett klasse" onclick="deleteClass(\''+c.classId+'\',\''+c.slug+'\',this)">🗑</button>' : '')
         +'</div>';
       }).join('');
     }catch(e){
