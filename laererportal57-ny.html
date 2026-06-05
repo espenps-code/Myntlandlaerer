@@ -55,7 +55,6 @@
   const db   = getDatabase(app);
   const auth = getAuth(app);
 
-  // Skjul gammel PIN-innlogging umiddelbart – inngang skjer via konto.
   { const _ls = document.getElementById('login-screen'); if(_ls) _ls.style.display='none'; }
 
   // ── Multi-tenant: scope alle klasse-stier til classes/{id}/data/ ──────────
@@ -586,11 +585,16 @@
       return;
     }
     // Den innloggede kontoen = lærer med full visning i SIN klasse.
-    window._currentTeacher = { name: (user.displayName || user.email || 'Lærer'), role:'admin', class:'', uid:user.uid };
+    window._currentTeacher = { name:(user.displayName||user.email||'Lærer'), role:'admin', class:'', color:'#1D9E75', uid:user.uid };
     const ls = document.getElementById('login-screen'); if(ls) ls.style.display='none';
-    const el = document.getElementById('fb-status'); if(el){ el.textContent='🟢 Firebase klar'; el.style.color='#9FE1CB'; }
-    const navL = document.getElementById('nav-laerere'); if(navL) navL.style.display='none'; // skjul gammel lærer-admin
+    const ap = document.getElementById('app'); if(ap) ap.style.display='block';
+    const hn = document.getElementById('header-name'); if(hn) hn.textContent = window._currentTeacher.name;
+    const av = document.getElementById('header-avatar'); if(av){ av.textContent=(window._currentTeacher.name[0]||'L').toUpperCase(); av.style.background='#1D9E7533'; av.style.color='#1D9E75'; }
+    const navL = document.getElementById('nav-laerere'); if(navL) navL.style.display='none';
+    const sub = document.getElementById('elever-subtitle'); if(sub) sub.textContent='Alle elever i klassen';
+    const fb = document.getElementById('fb-status'); if(fb){ fb.textContent='🟢 Firebase klar'; fb.style.color='#9FE1CB'; }
     if (typeof window._startListeners === 'function') window._startListeners();
+    if (typeof showPage === 'function') showPage('elever');
   });
 </script>
 <!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
