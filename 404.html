@@ -25,6 +25,7 @@
   .btn{display:inline-block;border:none;border-radius:13px;padding:14px 26px;font-family:'Nunito';
     font-weight:800;font-size:1.05rem;cursor:pointer;text-decoration:none;}
   .btn-primary{background:var(--green);color:#fff;}
+  .btn-primary:hover{background:var(--green-dark);}
   .btn-disabled{background:var(--bg);color:var(--muted);border:2px dashed var(--border);cursor:default;}
   .muted{color:var(--muted);font-weight:600;font-size:.9rem;margin-top:16px;line-height:1.55;}
   .spin{width:30px;height:30px;border:3.5px solid var(--border);border-top-color:var(--green);
@@ -77,21 +78,29 @@
     );
   }
   function showClass(info){
-    const trinn = info.trinn==='57' ? '5.–7. trinn' : '1.–4. trinn';
+    const known = (info.trinn==='57' || info.trinn==='14');
+    const trinn = info.trinn==='57' ? '5.–7. trinn' : (info.trinn==='14' ? '1.–4. trinn' : '');
     const emoji = info.trinn==='57' ? '🎒' : '🧸';
     const badge = info.trinn==='57' ? 'badge-57' : 'badge-14';
     const name = info.name ? esc(info.name) : 'Klassen din';
+    let btn;
+    if(known && info.classId){
+      const app = info.trinn==='57' ? 'elevapp57-ny.html' : 'elevapp14-ny.html';
+      const href = app + '?class=' + encodeURIComponent(info.classId);
+      btn = '<a class="btn btn-primary" href="'+href+'">Åpne elevappen</a>';
+    } else {
+      btn = '<span class="btn btn-disabled">Åpne elevappen (kommer snart)</span>';
+    }
     render(
       '<div class="badge '+badge+'">'+emoji+'</div>'+
       '<div class="cname">'+name+'</div>'+
-      '<div class="trinn">'+trinn+'</div>'+
-      '<span class="btn btn-disabled">Åpne elevappen (kommer snart)</span>'+
-      '<p class="muted">Klassen er koblet riktig ✓<br>Selve elevappen kobles på i neste byggetrinn.</p>'
+      (trinn?'<div class="trinn">'+trinn+'</div>':'<div class="trinn"></div>')+
+      btn+
+      '<p class="muted">Klassen er koblet riktig ✓</p>'
     );
   }
 
   try{
-    // Hvilken slug? Tål /k/<kode> både på myntland.no og github.io-stien.
     const m = location.pathname.match(/\/k\/([a-z0-9]+)\/?$/i);
     if(!m){ show404(); }
     else{
