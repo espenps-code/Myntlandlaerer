@@ -1316,14 +1316,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     { i: I.sun, l: 'Sol' }, { i: I.cloud, l: 'Skyet' },
     { i: I.rain, l: 'Regn' }, { i: I.snow, l: 'Snø' },
   ];
-  let weatherLiveOk = false;
+  window.weatherLiveOk = false;
   function renderWeather() {
     document.getElementById('wicon').innerHTML = W[data.weather].i;
     document.getElementById('wlabel').textContent = W[data.weather].l;
   }
   document.getElementById('weather').addEventListener('click', (e) => {
     if (e.target.closest('[data-edit]')) return;
-    if (data.weatherAuto && weatherLiveOk) return;
+    if (data.weatherAuto && window.weatherLiveOk) return;
     data.weather = (data.weather + 1) % W.length; renderWeather(); save();
   });
   renderWeather();
@@ -1566,6 +1566,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     renderHelpers: renderHelpers,
     renderChecklist: renderChecklist,
     renderWord: renderWord,
+    renderWeather: renderWeather,
+    W: W,
     weekNo: weekNo,
     DEFAULTS: DEFAULTS,
     applyWeek: applyWeek,
@@ -1582,7 +1584,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   var portal = window.portal || {};
   var data = portal.data, save = portal.save, renderLessons = portal.renderLessons,
       renderHelpers = portal.renderHelpers, renderChecklist = portal.renderChecklist,
-      renderWord = portal.renderWord, DEFAULTS = portal.DEFAULTS;
+      renderWord = portal.renderWord, DEFAULTS = portal.DEFAULTS,
+      renderWeather = portal.renderWeather, W = portal.W;
   function el(tag, cls, html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
@@ -1842,7 +1845,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       });
   }
   function setWeatherResult(res, label){
-    weatherLiveOk = true;
+    window.weatherLiveOk = true;
     data.weather = res.idx;
     data.temp = res.temp;
     renderWeather();
@@ -1858,7 +1861,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
         fetchMET(la, lo)
           .then(function(res){ setWeatherResult(res, label); })
           .catch(function(){
-            weatherLiveOk = false;
+            window.weatherLiveOk = false;
             var why = (err1 && (err1.message || err1.name)) ? (' [' + (err1.message || err1.name) + ']') : '';
             setWeatherStatus('Fikk ikke vær fra ' + (label || 'stedet') + why + '. Trykk på været på tavla for å sette det selv.');
           });
