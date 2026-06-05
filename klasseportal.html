@@ -257,7 +257,7 @@ h1.sticker{
 
 /* ---- ORDENSELEVER ---- */
 .duty{ flex:1; }
-.helpers{ display:flex; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
+.helpers{ display:grid; gap:16px; margin-bottom:16px; }
 .helper{ flex:1; display:flex; align-items:center; gap:12px; background:var(--paper);
   border:3px solid var(--ink); border-radius:18px; padding:8px 12px; box-shadow:0 4px 0 rgba(42,31,61,.14); }
 .helper .ava{ width:58px; height:58px; border-radius:50%; flex-shrink:0; overflow:hidden;
@@ -267,6 +267,7 @@ h1.sticker{
 .helper .who{ font-size:15px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.5px; }
 .helper .nm{ font-size:27px; font-weight:700; color:var(--ink); line-height:1; }
 .checklist{ list-style:none; display:flex; flex-direction:column; gap:9px; }
+.checklist.cols2{ display:grid; grid-template-columns:1fr 1fr; gap:9px 18px; align-content:start; }
 .check{ display:flex; align-items:center; gap:13px; cursor:pointer; font-size:22px; font-weight:500;
   color:var(--ink); padding:5px 4px; }
 .check .box{ width:34px; height:34px; border-radius:10px; border:3px solid var(--ink); background:#fff;
@@ -1427,6 +1428,15 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   renderNotes();
 
   /* ---------- helpers + checklist ---------- */
+  function adjustChecklist(){
+    var checklist = document.getElementById('checklist');
+    if (!checklist) return;
+    var duty = checklist.closest('.duty');
+    if (!duty) return;
+    checklist.classList.remove('cols2');
+    // hvis innholdet flyter utenfor panelet (rammen), bruk to kolonner
+    if (duty.clientHeight > 40 && duty.scrollHeight > duty.clientHeight + 2) { checklist.classList.add('cols2'); }
+  }
   function renderHelpers() {
     const h = document.getElementById('helpers');
     const n = Math.max(1, Math.min(4, data.helperCount || 2));
@@ -1445,8 +1455,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
         + '</div>';
     }
     h.innerHTML = html;
+    h.style.gridTemplateColumns = 'repeat(' + (n === 4 ? 2 : n) + ', minmax(0, 1fr))';
     const nms = h.querySelectorAll('.nm');
     for (let i = 0; i < n; i++) { nms[i].textContent = (data.helpers && data.helpers[i]) || ''; }
+    adjustChecklist();
   }
   function renderChecklist() {
     const ul = document.getElementById('checklist'); ul.innerHTML = '';
@@ -1458,8 +1470,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       li.querySelector('.box').addEventListener('click', () => { c.d = !c.d; renderChecklist(); save(); });
       ul.appendChild(li);
     });
+    adjustChecklist();
   }
   renderHelpers(); renderChecklist();
+  window.addEventListener('resize', adjustChecklist);
+  setTimeout(adjustChecklist, 400);
 
   /* ---------- generic editable fields ---------- */
   function bindEdit(root) {
