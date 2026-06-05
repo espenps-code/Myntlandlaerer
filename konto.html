@@ -333,7 +333,8 @@
   };
 
   window.openClass=function(classId,trinn){
-    alert('Åpner klasse (kommer i Fase 3):\nclassId = '+classId+'\ntrinn = '+trinn);
+    if(trinn==='57'){ location.href='laererportal57-ny.html?class='+encodeURIComponent(classId); }
+    else { alert('1.–4.-portalen kobles på i neste byggetrinn. Denne klassen er på 1.–4. trinn.'); }
   };
 
   async function renderClasses(){
