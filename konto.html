@@ -333,8 +333,8 @@
   };
 
   window.openClass=function(classId,trinn){
-    if(trinn==='57'){ location.href='laererportal57-ny.html?class='+encodeURIComponent(classId); }
-    else { alert('1.–4.-portalen kobles på i neste byggetrinn. Denne klassen er på 1.–4. trinn.'); }
+    const file = (trinn==='57') ? 'laererportal57-ny.html' : 'laererportal14-ny.html';
+    location.href = file+'?class='+encodeURIComponent(classId);
   };
 
   async function renderClasses(){

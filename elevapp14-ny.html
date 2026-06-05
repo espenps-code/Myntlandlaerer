@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIk15bnRsYW5kIEVsZXZhcHAgMVx1MjAxMzQiLCAic2hvcnRfbmFtZSI6ICJNeW50bGFuZCAxLTQiLCAic3RhcnRfdXJsIjogIi4iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgImJhY2tncm91bmRfY29sb3IiOiAiIzA4NTA0MSIsICJ0aGVtZV9jb2xvciI6ICIjMDg1MDQxIiwgImljb25zIjogW3sic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTNZVFZoSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekE0TlRBME1TSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNRGcxTURReElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdPRFV3TkRFaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QTROVEEwTVNJK01lS0FrelFnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIn0sIHsic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTNZVFZoSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekE0TlRBME1TSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNRGcxTURReElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdPRFV3TkRFaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QTROVEEwTVNJK01lS0FrelFnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn1dfQ==">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWE3YTVhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA4NTA0MSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29pbiIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNGREQ4N0EiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRUY5RjI3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMTAiIHI9IjEzMCIgZmlsbD0idXJsKCNjb2luKSIvPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjIxMCIgcj0iMTA1IiBmaWxsPSIjMDg1MDQxIiBmaWxsLW9wYWNpdHk9Ii4xOCIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iMjQ4IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMTAiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwODUwNDEiPk08L3RleHQ+CiAgPHJlY3QgeD0iMTIwIiB5PSIzODAiIHdpZHRoPSIyNzIiIGhlaWdodD0iNjIiIHJ4PSIzMSIgZmlsbD0idXJsKCNjb2luKSIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iNDI2IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzOCIgZm9udC13ZWlnaHQ9IjkwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzA4NTA0MSI+MeKAkzQgRWxldjwvdGV4dD4KPC9zdmc+" type="image/svg+xml">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWE3YTVhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA4NTA0MSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29pbiIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNGREQ4N0EiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRUY5RjI3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMTAiIHI9IjEzMCIgZmlsbD0idXJsKCNjb2luKSIvPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjIxMCIgcj0iMTA1IiBmaWxsPSIjMDg1MDQxIiBmaWxsLW9wYWNpdHk9Ii4xOCIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iMjQ4IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMTAiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwODUwNDEiPk08L3RleHQ+CiAgPHJlY3QgeD0iMTIwIiB5PSIzODAiIHdpZHRoPSIyNzIiIGhlaWdodD0iNjIiIHJ4PSIzMSIgZmlsbD0idXJsKCNjb2luKSIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iNDI2IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzOCIgZm9udC13ZWlnaHQ9IjkwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzA4NTA0MSI+MeKAkzQgRWxldjwvdGV4dD4KPC9zdmc+">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Myntland 1-4">
+<meta name="theme-color" content="#085041">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIk15bnRsYW5kIEVsZXZhcHAgMVx1MjAxMzQiLCAic2hvcnRfbmFtZSI6ICJNeW50bGFuZCAxLTQiLCAic3RhcnRfdXJsIjogIi4iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgImJhY2tncm91bmRfY29sb3IiOiAiIzA4NTA0MSIsICJ0aGVtZV9jb2xvciI6ICIjMDg1MDQxIiwgImljb25zIjogW3sic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTNZVFZoSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekE0TlRBME1TSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNRGcxTURReElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdPRFV3TkRFaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QTROVEEwTVNJK01lS0FrelFnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIn0sIHsic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTNZVFZoSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekE0TlRBME1TSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNRGcxTURReElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdPRFV3TkRFaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QTROVEEwTVNJK01lS0FrelFnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn1dfQ==">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Myntland 1-4">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWE3YTVhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA4NTA0MSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29pbiIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNGREQ4N0EiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRUY5RjI3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMTAiIHI9IjEzMCIgZmlsbD0idXJsKCNjb2luKSIvPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjIxMCIgcj0iMTA1IiBmaWxsPSIjMDg1MDQxIiBmaWxsLW9wYWNpdHk9Ii4xOCIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iMjQ4IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMTAiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwODUwNDEiPk08L3RleHQ+CiAgPHJlY3QgeD0iMTIwIiB5PSIzODAiIHdpZHRoPSIyNzIiIGhlaWdodD0iNjIiIHJ4PSIzMSIgZmlsbD0idXJsKCNjb2luKSIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iNDI2IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzOCIgZm9udC13ZWlnaHQ9IjkwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzA4NTA0MSI+MeKAkzQgRWxldjwvdGV4dD4KPC9zdmc+">
+<meta name="theme-color" content="#085041">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Myntland – Elevapp 1–4</title>
+<!-- Preconnect: starter DNS/TLS-handshake mot Firebase og fonter tidlig -->
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- defer: blokkerer ikke rendering, kjøres etter HTML er parset -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<!-- jsQR for camera QR scanning -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getDatabase, ref as _ref0, onValue, update as _update0, push, set, get }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  // ── LIM INN SAMME FIREBASE-KONFIG SOM I LÆRERPORTALEN ───────────────────
+   const firebaseConfig = {
+  apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+  authDomain: "myntland.firebaseapp.com",
+  databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "myntland",
+  storageBucket: "myntland.firebasestorage.app",
+  messagingSenderId: "711264415533",
+  appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+  measurementId: "G-95QZNLQ6V9"
+};
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const app = initializeApp(firebaseConfig);
+
+  // App Check: stopper at API-nøkkelen brukes fra andre domener enn våre
+  const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled: true
+  });
+
+  // Vent på første App Check-token før databasen røres – ellers går den aller
+  // første forespørselen ved sideinnlasting uten token (race condition).
+  // Maks 3 sek, så vi ikke henger om reCAPTCHA er blokkert.
+  await Promise.race([
+    getToken(appCheck).catch(err => console.warn('[App Check] token-fetch feilet:', err)),
+    new Promise(r => setTimeout(r, 3000))
+  ]);
+
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  const CLASS_ROOTS = new Set(['students14','transactions14','classGoals14','customRewards14','groceries','hendelser14','savings14','settings','paymentRequests14','dayboard']);
+  function classScope(pth){
+    if(!window._CLASS_ID) return pth;
+    const clean = String(pth).replace(/^\/+/,'');
+    if(clean==='') return pth;
+    if(CLASS_ROOTS.has(clean.split('/')[0])) return 'classes/'+window._CLASS_ID+'/data/'+clean;
+    return pth;
+  }
+  const ref = (dbi,pth)=> _ref0(dbi, classScope(pth));
+  const update = (r,obj)=>{
+    if(obj && typeof obj==='object' && !Array.isArray(obj)){
+      const sc={}; let ch=false;
+      for(const k in obj){ const nk=classScope(k); sc[nk]=obj[k]; if(nk!==k) ch=true; }
+      return _update0(r, ch?sc:obj);
+    }
+    return _update0(r,obj);
+  };
+
+  window._db=db; window._ref=ref; window._onValue=onValue; window._update=update;
+  window._push=push; window._set=set; window._get=get; window._fbReady=true;
+
+  // Elever logger inn ANONYMT (kreves av de nye reglene for å lese klassedata).
+  try { await signInAnonymously(auth); } catch(e){ console.error('Anonym innlogging feilet:', e); }
+
+  // Hvilken klasse? ?class=<id> eller ?k=<slug>
+  const _params = new URLSearchParams(location.search);
+  let _cid = _params.get('class') || null;
+  const _slug = _params.get('k');
+  if(!_cid && _slug){
+    try{ const ss=await get(ref(db,'slugs/'+_slug.toLowerCase())); const v=ss.val();
+      _cid=(typeof v==='string')?v:(v&&v.classId)||null; }catch(e){ console.warn('slug-oppslag feilet:', e); }
+  }
+  window._CLASS_ID = _cid;
+  if(!_cid){ console.error('Ingen klasse i lenka. Åpne elevappen via klasselenka fra læreren.'); }
+
+  // Godtar alle klassenavn læreren velger. Elevene hentes uansett bare fra
+  // students14-noden (1.–4. trinn), så trinn-skillet er allerede ivaretatt.
+  onValue(ref(db, 'students14'), snap => {
+    window._allStudents = snap.val()
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k})).filter(s => s.class && String(s.class).trim() !== "")
+      : [];
+    if (window._currentStudent) {
+      const updated = window._allStudents.find(s => s.fbKey === window._currentStudent.fbKey);
+      if (updated) {
+        // MERGE inn i eksisterende objekt – bevarer lokale felter (quizWeek etc.)
+        // frem til Firebase bekrefter skrivingen
+        Object.assign(window._currentStudent, updated);
+        const el = document.getElementById('customer-balance');
+        if (el) el.textContent = window._currentStudent.balance;
+      }
+    }
+  });
+
+  onValue(ref(db, 'groceries'), snap => {
+    window._groceries = snap.val()
+      ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
+      : [];
+    if (window._groceriesReady) renderGroceryButtons();
+    window._groceriesReady = true;
+  });
+
+  // ── Innstillinger (inkl. merkeparametere) ───────────────────────────
+  onValue(ref(db, 'dayboard'), snap => { window._dayboard = snap.val()||{}; if(typeof dagUpdateSplashBtn==='function') dagUpdateSplashBtn(); var sd=document.getElementById('screen-dag'); if(sd&&sd.classList.contains('active')&&typeof dagRefresh==='function') dagRefresh(); });
+  onValue(ref(db, 'settings'), snap => {
+    window._settings = snap.val() || {};
+    // Re-render merker hvis fanen er åpen
+    if (document.getElementById('tab-merker')?.classList.contains('active')) {
+      if (typeof renderMerker === 'function') renderMerker();
+    }
+    // Re-anvend innloggingsmodus dersom eleven står på login-skjermen
+    // (lærer kan ha byttet modus mens appen er åpen) – men ikke hvis eleven
+    // allerede har scannet/forhåndsvalgt et kort eller har begynt å taste PIN.
+    const loginScreen = document.getElementById('screen-login');
+    if (loginScreen && loginScreen.classList.contains('active')
+        && !window._preselectedStudent
+        && (typeof currentPin === 'undefined' || currentPin === '')) {
+      if (typeof applyLoginMode === 'function') applyLoginMode();
+    }
+  });
+</script>
+<!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
+<link rel="stylesheet" href="myntland.css">
+
+<link rel="stylesheet" href="elevapp14.css">
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-stage">
+    <img class="splash-coin-bg" src="mynt.webp" alt="Myntland-mynt">
+    <img class="splash-monster" src="data:image/webp;base64,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" alt="Myntland-monster">
+  </div>
+  <div class="splash-logo">Myntland</div>
+  <div class="splash-tagline">Min intro til økonomi 💰</div>
+  <button class="role-btn role-btn-customer" onclick="selectRole('customer')">👛 Min nettbank</button>
+  <button class="role-btn role-btn-cashier" onclick="selectRole('cashier')">🏪 Jeg er kasse</button>
+  <button class="role-btn role-btn-myntjakten" onclick="openMyntspillMeny()">🪙 Myntspill</button>
+  <button class="role-btn role-btn-myntjakten" onclick="goToDag()">📅 Dagen i dag</button>
+  <div id="myntspill-meny" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,12,45,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeMyntspillMeny()">
+    <div style="background:#fff;border-radius:24px;max-width:420px;width:100%;padding:1.6rem 1.4rem;text-align:center;box-shadow:0 14px 40px rgba(30,15,82,.35);font-family:'Nunito',sans-serif;">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#1e0f52;">Velg spill 🎮</div>
+      <p style="color:#5a7a5a;font-weight:700;margin:.2rem 0 1.2rem;">Hvilket myntspill vil du spille?</p>
+      <button onclick="goToMyntjakten()" style="display:block;width:100%;border:none;cursor:pointer;background:#1D9E75;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:.8rem;">🧮 Myntjakten<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Regn fort i hodet og samle mynter</span></button>
+      <button onclick="goToMyntstigen()" style="display:block;width:100%;border:none;cursor:pointer;background:#1a5fa5;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:1rem;">🎲 Myntstigen<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Stigespill med terning, 2–4 spillere</span></button>
+      <button onclick="closeMyntspillMeny()" style="border:2px solid #c8dfc8;background:#fff;color:#1a5fa5;border-radius:999px;padding:.6rem 1.4rem;font-weight:800;font-family:inherit;cursor:pointer;">Lukk</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div style="text-align:center;margin:3rem 0 1.5rem;font-size:3rem;">👛</div>
+  <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--green-dark);margin-bottom:4px;">Logg inn</div>
+  <div id="login-subtitle" style="text-align:center;color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;font-weight:700;">Tast inn din 4-sifrede PIN-kode</div>
+  <div style="width:100%;padding:0 1.5rem;flex:1;">
+
+    <!-- Forhåndsvalgt elev (vises etter at kortet er scannet) -->
+    <div id="login-preselect" style="display:none;background:var(--green-light);border:2px solid var(--green);border-radius:14px;padding:10px 14px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:.75rem;color:var(--green-dark);font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px;">Logger inn som</div>
+      <div id="login-preselect-name" style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--green-dark);line-height:1.1;"></div>
+      <button onclick="clearPreselected()" style="margin-top:4px;background:transparent;border:none;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;text-decoration:underline;">Ikke meg? Bytt kort</button>
+    </div>
+
+    <!-- Scan-knapp (vises bare i QR+PIN-modus) -->
+    <button onclick="startScan('loginCard')" id="login-scan-btn" style="display:none;width:100%;background:var(--amber);border:none;color:white;padding:14px;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 rgba(0,0,0,.08);">📷 Scan kortet mitt</button>
+
+    <div class="login-card" id="login-card">
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="login-error" style="color:var(--coral);font-size:.85rem;font-weight:700;min-height:20px;text-align:center;margin-bottom:8px;"></div>
+      <div class="numpad">
+        <button class="num-btn" onclick="numpadPress('1')">1</button>
+        <button class="num-btn" onclick="numpadPress('2')">2</button>
+        <button class="num-btn" onclick="numpadPress('3')">3</button>
+        <button class="num-btn" onclick="numpadPress('4')">4</button>
+        <button class="num-btn" onclick="numpadPress('5')">5</button>
+        <button class="num-btn" onclick="numpadPress('6')">6</button>
+        <button class="num-btn" onclick="numpadPress('7')">7</button>
+        <button class="num-btn" onclick="numpadPress('8')">8</button>
+        <button class="num-btn" onclick="numpadPress('9')">9</button>
+        <div class="num-btn empty"></div>
+        <button class="num-btn" onclick="numpadPress('0')">0</button>
+        <button class="num-btn delete" onclick="numpadPress('DEL')">⌫</button>
+      </div>
+    </div>
+    <button onclick="goToSplash()" style="width:100%;margin-top:1rem;background:transparent;border:2px solid var(--border);color:var(--muted);padding:12px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;">← Tilbake</button>
+  </div>
+</div>
+
+<!-- CUSTOMER -->
+<div class="screen" id="screen-customer">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goToSplash()">← Logg ut</button>
+    <div class="top-bar-title">👛 Myntland</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div id="topbar-avatar" style="border-radius:50%;overflow:hidden;"></div>
+      <div id="customer-greeting" style="font-size:.85rem;font-weight:700;color:rgba(255,255,255,.85);"></div>
+    </div>
+  </div>
+
+  <!-- BANK TAB -->
+  <div class="customer-tab-content active content" id="tab-bank">
+    <div class="balance-card">
+      <div class="balance-label">Din saldo</div>
+      <div class="balance-amount" id="customer-balance">0</div>
+      <div class="balance-currency">Mynter 🪙</div>
+      <div class="live-indicator"><div class="live-dot"></div> Oppdateres i sanntid</div>
+    </div>
+
+    <!-- SPAREKONTO SNARVEI -->
+    <div class="home-savings-card" onclick="goToSavingsTab()">
+      <div class="home-savings-left">
+        <div class="home-savings-icon">🏦</div>
+        <div>
+          <div class="home-savings-label">Sparekonto</div>
+          <div class="home-savings-sub">5 % rente hver mandag</div>
+        </div>
+      </div>
+      <div class="home-savings-right">
+        <div class="home-savings-amount"><span id="home-savings-balance">0</span> 🪙</div>
+        <div class="home-savings-arrow">›</div>
+      </div>
+    </div>
+
+    <!-- KLASSENS SPAREMÅL -->
+    <div class="class-goals-card" id="class-goals-card" style="display:none;">
+      <div class="class-goals-header">
+        <div class="class-goals-title">🎯 Klassens sparemål</div>
+        <div class="class-goals-sub">Skatt fra hele klassen går hit</div>
+      </div>
+      <div id="class-goals-body"></div>
+    </div>
+
+    <!-- QUIZ CARD -->
+    <div class="quiz-card" id="quiz-card">
+      <div class="quiz-header">
+        <div class="quiz-title">🧠 Ukas økonomiquiz</div>
+        <div class="quiz-badge" id="quiz-badge">5 spørsmål · 20🪙 per svar</div>
+      </div>
+      <div id="quiz-card-body">
+        <div style="font-size:.85rem;opacity:.85;margin-bottom:.75rem;">Test hva du vet om penger og økonomi!</div>
+        <button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>
+      </div>
+    </div>
+
+    <div class="section-title">📜 Siste transaksjoner</div>
+    <div id="transaction-list">
+      <div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700;">Ingen transaksjoner ennå</div></div>
+    </div>
+  </div>
+
+  <!-- CARD TAB -->
+  <div class="customer-tab-content content" id="tab-card">
+    <div class="bank-card" style="min-height:140px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="card-chip"></div>
+          <div class="card-number" id="card-number">•••• ••••</div>
+        </div>
+        <div id="card-avatar-wrap" style="margin-top:-6px;"></div>
+      </div>
+      <div class="card-bottom">
+        <div class="card-holder" id="card-holder">Elev</div>
+        <div class="card-logo">Myntland</div>
+      </div>
+    </div>
+    <!-- PIN-visning -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;border:1.5px solid var(--border);">
+      <div>
+        <div style="font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">PIN-kode</div>
+        <div id="pin-display-14" style="font-family:'Fredoka One',cursive;font-size:1.4rem;letter-spacing:.4rem;color:var(--green-dark);">••••</div>
+      </div>
+      <button id="pin-toggle-btn-14" onclick="togglePinDisplay14()"
+        style="background:var(--green-light);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--green-dark);cursor:pointer;">
+        👁 Vis PIN
+      </button>
+    </div>
+    <div class="pay-instruction">
+      <div class="pay-instruction-title">💳 Slik bruker du kortet</div>
+      <div style="font-size:.88rem;color:var(--green-dark);font-weight:700;">
+        Skann QR-koder for å betale eller motta belønninger 📷
+      </div>
+    </div>
+    <button class="action-btn action-btn-amber" onclick="startScan('any')">📷 Skann betaling eller belønning</button>
+  </div>
+
+  <!-- SPAREKONTO TAB -->
+  <div class="customer-tab-content content" id="tab-savings">
+    <div class="savings-card">
+      <div class="savings-label">🏦 Sparekonto</div>
+      <div class="savings-amount" id="savings-balance">0</div>
+      <div class="savings-currency">Mynter 🪙</div>
+      <div class="savings-rate">📈 5 % rente hver uke (utbetales mandag)</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+      <button class="action-btn action-btn-amber" style="margin-bottom:0;font-size:1rem;padding:14px;" onclick="openDepositModal()">💰 Sett inn</button>
+      <button class="action-btn action-btn-ghost" style="margin-bottom:0;font-size:1rem;padding:14px;" onclick="openWithdrawModal()">↩️ Ta ut</button>
+    </div>
+
+    <div class="savings-chart-card">
+      <div class="savings-chart-title">📊 Utvikling siste 2 mnd</div>
+      <canvas id="savings-chart" width="600" height="220" style="width:100%;height:220px;display:block;"></canvas>
+      <div id="savings-chart-empty" style="text-align:center;color:var(--muted);font-size:.85rem;padding:1.5rem 0;display:none;">Sett inn dine første mynter for å se kurven vokse!</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:.5rem;font-size:.74rem;color:var(--muted);font-weight:700;flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#1D9E75;display:inline-block;"></span>Innskudd / uttak</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#EF9F27;display:inline-block;"></span>Renter (mandag)</span>
+      </div>
+    </div>
+
+    <div class="merke-info-box" style="margin-top:1rem;">
+      💡 <strong>Visste du?</strong> Banken sjekker sparekontoen din <strong>hver dag</strong> og gir deg litt renter for hver dag pengene har ligget der. Hver mandag legger Myntland sammen alle dagene og betaler ut rentene. 📅
+      <div style="margin-top:.5rem;">
+        🚀 Innskudd <strong>mandag</strong> → pengene rekker 7 dager → mest renter!<br>
+        🐢 Innskudd <strong>søndag</strong> → pengene rekker bare 1 dag → veldig lite renter.
+      </div>
+      <div style="margin-top:.6rem;padding-top:.6rem;border-top:1.5px dashed var(--border);">
+        🏦 <strong>I ekte banker</strong> fungerer det på samme måte: renter regnes hver dag, men legges på kontoen din én gang i året.
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:1.5rem;">📜 Sparehistorikk</div>
+    <div id="savings-history">
+      <div class="empty-state"><div class="empty-icon">🏦</div><div style="font-weight:700;">Ingen innskudd ennå</div></div>
+    </div>
+  </div>
+
+  <!-- MERKER TAB -->
+  <div class="customer-tab-content content" id="tab-merker">
+    <div class="section-title">🏅 Mine merker</div>
+    <div class="merke-info-box">🎯 Samle merker ved å spare og ta quiz! Hvert merke gir mynter som bonus. 💰</div>
+    <div id="merker-list"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="switchCustomerTab('bank',this)">
+      <div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div>
+    </button>
+    <button class="nav-item" onclick="switchCustomerTab('savings',this)">
+      <div class="nav-icon">💰</div><div class="nav-label">Sparing</div>
+    </button>
+    <button class="nav-item" onclick="switchCustomerTab('merker',this);renderMerker()">
+      <div class="nav-icon">🏅</div><div class="nav-label">Merker</div>
+    </button>
+    <button class="nav-item" onclick="switchCustomerTab('card',this)">
+      <div class="nav-icon">💳</div><div class="nav-label">Kort</div>
+    </button>
+  </div>
+</div>
+
+<!-- CASHIER -->
+<div class="screen" id="screen-cashier">
+  <div class="cashier-top">
+    <button class="back-btn" onclick="goToSplash()" style="display:block;margin-bottom:8px;">← Avslutt</button>
+    <div class="cashier-top-title">🏪 Myntland Kasse</div>
+  </div>
+  <div class="cashier-content">
+    <div class="cashier-left">
+      <div class="register-display" id="register-display">
+        <div class="register-label">SUM Å BETALE</div>
+        <div class="register-total" id="register-total">0 🪙</div>
+      </div>
+      <div id="cart-list"></div>
+    </div>
+
+    <div class="cashier-actions">
+      <div class="add-item-box">
+        <button class="action-btn action-btn-green" onclick="startCashierScan()">📷 Scan vare</button>
+        <div class="add-item-or">… eller søk</div>
+        <input id="grocery-search" type="text" placeholder="🔍 Søk etter vare…"
+               oninput="filterGrocerySearch(this.value)"
+               class="grocery-search-input">
+        <div id="grocery-search-results" class="grocery-search-results"></div>
+      </div>
+
+      <button class="action-btn action-btn-amber" onclick="startCustomerCardScan()" id="pay-btn" disabled style="opacity:.4;">📷 Scan elevens kort for betaling</button>
+      <button class="action-btn action-btn-ghost action-btn-small" onclick="clearCart()">🗑️ Tøm kassen</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA SCANNER -->
+<div class="scanner-overlay" id="scanner-overlay">
+  <div class="scanner-header">
+    <div class="scanner-title" id="scanner-title">Scan QR-kode</div>
+    <button class="scanner-close" onclick="stopScan()">✕ Lukk</button>
+  </div>
+  <div class="scanner-video-wrap">
+    <video id="scanner-video" playsinline muted autoplay></video>
+    <div class="scanner-frame"></div>
+    <div class="scanner-hint" id="scanner-hint">Hold QR-koden innenfor rammen</div>
+  </div>
+</div>
+
+<!-- PIN CONFIRMATION OVERLAY (before payment) -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-overlay-title">🔐 Bekreft med PIN</div>
+  <div class="pin-overlay-amount" id="pin-overlay-amount"></div>
+  <div class="pin-overlay-card">
+    <div class="pin-overlay-dots" id="pin-overlay-dots">
+      <div class="pin-overlay-dot" id="pdot-0"></div><div class="pin-overlay-dot" id="pdot-1"></div>
+      <div class="pin-overlay-dot" id="pdot-2"></div><div class="pin-overlay-dot" id="pdot-3"></div>
+    </div>
+    <div class="pin-overlay-error" id="pin-overlay-error"></div>
+    <div class="pin-overlay-numpad">
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('1')">1</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('2')">2</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('3')">3</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('4')">4</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('5')">5</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('6')">6</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('7')">7</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('8')">8</button>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('9')">9</button>
+      <div class="pin-overlay-btn empty"></div>
+      <button class="pin-overlay-btn" onclick="pinConfirmPress('0')">0</button>
+      <button class="pin-overlay-btn del" onclick="pinConfirmPress('DEL')">⌫</button>
+    </div>
+  </div>
+  <button class="pin-overlay-cancel" onclick="cancelPinConfirm()">Avbryt</button>
+</div>
+
+<!-- CASHIER WAITING OVERLAY (after scanning student card – waiting for PIN) -->
+<div class="payment-overlay" id="payment-overlay">
+  <div class="payment-qr-title" id="payment-overlay-title">⏳ Venter på eleven…</div>
+  <div class="payment-amount-display" id="payment-display-amount">0 🪙</div>
+  <div id="payment-overlay-student" style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:white;margin:.5rem 0 1rem;text-align:center;"></div>
+  <div id="payment-overlay-status" style="background:rgba(255,255,255,.1);border-radius:14px;padding:1.25rem 1.5rem;text-align:center;color:white;font-family:'Nunito',sans-serif;font-weight:700;font-size:.95rem;max-width:320px;margin-bottom:1rem;line-height:1.5;">
+    📱 Eleven taster PIN-koden på sin egen tablet for å bekrefte.
+  </div>
+  <div id="payment-overlay-spinner" style="font-size:2.5rem;animation:spin 1.5s linear infinite;">⏳</div>
+  <button class="close-payment-btn" id="payment-overlay-cancel" onclick="cancelCashierPayment()">Avbryt</button>
+</div>
+
+<!-- CASHIER PIN OVERLAY (NEW: student types PIN directly on the cashier iPad) -->
+<div class="pin-overlay" id="cashpay-overlay" style="z-index:500;">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:380px;width:100%;">
+    <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--green-dark);margin-bottom:.25rem;">🛒 Bekreft kjøp</div>
+    <div style="text-align:center;font-size:.85rem;color:var(--muted);margin-bottom:.5rem;font-weight:700;">Kunde: <span id="cashpay-student" style="color:var(--green-dark);"></span></div>
+    <div id="cashpay-cart-list" style="background:var(--green-light,#E0F4F1);border-radius:12px;padding:.75rem;margin-bottom:.75rem;max-height:200px;overflow-y:auto;font-family:'Nunito',sans-serif;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--amber,#F4A261);color:white;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;">
+      <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;">SUM</span>
+      <span id="cashpay-total" style="font-family:'Fredoka One',cursive;font-size:1.5rem;">0 🪙</span>
+    </div>
+    <div id="cashpay-mode-banner" style="display:none;background:#FFF6DD;border:2px dashed var(--amber,#F4A261);border-radius:10px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:#854F0B;font-weight:800;text-align:center;">🎮 Lekemodus – ingen mynter trekkes</div>
+    <div style="text-align:center;font-family:'Nunito',sans-serif;font-weight:800;color:var(--green-dark);margin-bottom:.5rem;font-size:.95rem;">🔐 Eleven taster sin PIN</div>
+    <div class="pin-overlay-dots" id="cashpay-dots" style="margin:0 0 .5rem;">
+      <div class="pin-overlay-dot" id="cashpay-dot-0" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="cashpay-dot-1" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="cashpay-dot-2" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="cashpay-dot-3" style="border-color:rgba(0,0,0,.25);"></div>
+    </div>
+    <div id="cashpay-error" style="color:#C0392B;font-size:.85rem;font-weight:700;text-align:center;min-height:20px;margin-bottom:8px;"></div>
+    <div class="pin-overlay-numpad">
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('1')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">1</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('2')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">2</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('3')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">3</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('4')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">4</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('5')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">5</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('6')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">6</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('7')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">7</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('8')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">8</button>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('9')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">9</button>
+      <div class="pin-overlay-btn empty"></div>
+      <button class="pin-overlay-btn" onclick="cashpayPinPress('0')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">0</button>
+      <button class="pin-overlay-btn del" onclick="cashpayPinPress('DEL')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">⌫</button>
+    </div>
+    <button class="pin-overlay-cancel" onclick="cancelCashpayPin()" style="color:var(--muted);border-color:rgba(0,0,0,.15);margin-top:.75rem;width:100%;">Avbryt</button>
+  </div>
+</div>
+<style>
+  @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+</style>
+
+<!-- CUSTOMER PAYMENT REQUEST OVERLAY (incoming from cashier) -->
+<div class="pin-overlay" id="customer-payreq-overlay" style="z-index:500;">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:380px;width:100%;">
+    <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--green-dark);margin-bottom:.25rem;">🛒 Bekreft kjøp</div>
+    <div style="text-align:center;font-size:.85rem;color:var(--muted);margin-bottom:.75rem;font-weight:700;">Kassen sendte deg dette kjøpet</div>
+    <div id="payreq-cart-list" style="background:var(--green-light,#E0F4F1);border-radius:12px;padding:.75rem;margin-bottom:.75rem;max-height:200px;overflow-y:auto;font-family:'Nunito',sans-serif;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--amber,#F4A261);color:white;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;">
+      <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;">SUM</span>
+      <span id="payreq-total" style="font-family:'Fredoka One',cursive;font-size:1.5rem;">0 🪙</span>
+    </div>
+    <div id="payreq-mode-banner" style="display:none;background:#FFF6DD;border:2px dashed var(--amber,#F4A261);border-radius:10px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:#854F0B;font-weight:800;text-align:center;">🎮 Lekemodus – ingen mynter trekkes</div>
+    <div style="text-align:center;font-family:'Nunito',sans-serif;font-weight:800;color:var(--green-dark);margin-bottom:.5rem;font-size:.95rem;">🔐 Tast PIN for å bekrefte</div>
+    <div class="pin-overlay-dots" id="payreq-dots" style="margin:0 0 .5rem;">
+      <div class="pin-overlay-dot" id="payreq-dot-0" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="payreq-dot-1" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="payreq-dot-2" style="border-color:rgba(0,0,0,.25);"></div>
+      <div class="pin-overlay-dot" id="payreq-dot-3" style="border-color:rgba(0,0,0,.25);"></div>
+    </div>
+    <div id="payreq-error" style="color:#C0392B;font-size:.85rem;font-weight:700;text-align:center;min-height:20px;margin-bottom:8px;"></div>
+    <div class="pin-overlay-numpad">
+      <button class="pin-overlay-btn" onclick="payreqPinPress('1')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">1</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('2')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">2</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('3')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">3</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('4')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">4</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('5')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">5</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('6')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">6</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('7')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">7</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('8')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">8</button>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('9')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">9</button>
+      <div class="pin-overlay-btn empty"></div>
+      <button class="pin-overlay-btn" onclick="payreqPinPress('0')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">0</button>
+      <button class="pin-overlay-btn del" onclick="payreqPinPress('DEL')" style="background:var(--bg,#F4F1EB);color:var(--green-dark);border:2px solid rgba(0,0,0,.08);">⌫</button>
+    </div>
+    <button class="pin-overlay-cancel" onclick="declinePaymentRequest()" style="color:var(--muted);border-color:rgba(0,0,0,.15);margin-top:.75rem;width:100%;">Avbryt</button>
+  </div>
+</div>
+
+<!-- QUIZ QUESTION OVERLAY -->
+<div class="quiz-overlay" id="quiz-overlay">
+  <div class="quiz-q-header">
+    <div class="quiz-q-title">🧠 Ukas økonomiquiz</div>
+    <button class="quiz-q-close" onclick="closeQuiz()">✕ Avslutt</button>
+  </div>
+  <div class="quiz-progress"><div class="quiz-progress-bar" id="quiz-progress-bar" style="width:0%"></div></div>
+  <div class="quiz-body">
+    <div class="quiz-q-num" id="quiz-q-num">Spørsmål 1 av 5</div>
+    <div class="quiz-q-text" id="quiz-q-text"></div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-feedback" id="quiz-feedback"></div>
+    <button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuestion()">Neste spørsmål →</button>
+  </div>
+</div>
+
+<!-- QUIZ RESULT OVERLAY -->
+<div class="quiz-result-overlay" id="quiz-result-overlay">
+  <div class="quiz-result-emoji" id="quiz-result-emoji">🏆</div>
+  <div class="quiz-result-title" id="quiz-result-title">Bra jobbet!</div>
+  <div class="quiz-result-score" id="quiz-result-score"></div>
+  <div class="quiz-result-earned" id="quiz-result-earned"></div>
+  <div style="font-size:.85rem;color:rgba(255,255,255,.75);margin-bottom:.5rem;">Mynter lagt til kontoen din!</div>
+  <button class="quiz-result-close" onclick="closeQuizResult()">Tilbake til nettbank</button>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-emoji" id="success-emoji">✅</div>
+  <div class="success-title" id="success-title">Betalt!</div>
+  <div class="success-amount" id="success-amount"></div>
+  <div class="success-text" id="success-text"></div>
+  <button class="success-close" onclick="document.getElementById('success-overlay').classList.remove('open');">Fortsett</button>
+</div>
+
+<!-- INNSKUDD/UTTAK MODAL -->
+<div class="pin-overlay" id="savings-modal">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:340px;">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);text-align:center;margin-bottom:.25rem;" id="savings-modal-title">💰 Sett inn på sparekonto</div>
+    <div style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1rem;font-weight:700;" id="savings-modal-info">Hovedkonto: 0 🪙</div>
+    <div style="margin-bottom:1rem;">
+      <label style="display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Beløp (mynter)</label>
+      <input type="number" id="savings-modal-amount" min="1" placeholder="50"
+        style="width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);text-align:center;">
+    </div>
+    <div id="savings-modal-error" style="color:var(--coral);font-size:.85rem;font-weight:700;margin-bottom:.5rem;text-align:center;min-height:1.2rem;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeSavingsModal()" style="flex:1;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Avbryt</button>
+      <button id="savings-modal-confirm" onclick="confirmSavingsAction()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--green);color:white;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Bekreft</button>
+    </div>
+  </div>
+</div>
+
+<!-- HENDELSE-BEKREFTELSE MODAL -->
+<div class="pin-overlay" id="event-modal">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:340px;text-align:center;">
+    <div style="font-size:3.5rem;margin-bottom:.25rem;" id="event-modal-emoji">🎲</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--green-dark);margin-bottom:.5rem;" id="event-modal-desc">Hendelse</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:2.2rem;line-height:1;margin-bottom:1rem;" id="event-modal-amount">+0 🪙</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="cancelEvent()" style="flex:1;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Avbryt</button>
+      <button onclick="acceptEvent()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--amber);color:var(--green-dark);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- VELG SPAREMÅL MODAL -->
+<div class="pin-overlay" id="choose-goal-modal">
+  <div class="pin-overlay-card" style="background:rgba(255,255,255,.97);max-width:400px;">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--green-dark);text-align:center;margin-bottom:.5rem;">⭐ Velg sparemål</div>
+    <div style="text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:1rem;font-weight:700;">Skatten din går til dette målet</div>
+    <div id="choose-goal-list" style="max-height:60vh;overflow-y:auto;margin-bottom:1rem;"></div>
+    <button onclick="closeChooseGoalModal()" style="width:100%;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Lukk</button>
+  </div>
+</div>
+
+<!-- DAGEN I DAG -->
+<div class="screen" id="screen-dag">
+  <style>
+    #screen-dag{ background:#fbf2d6; color:#2a1f3d; overflow-y:auto; }
+    #screen-dag .top-bar{ background:#1e0f52; }
+    #dag-wrap{ max-width:1000px; margin:0 auto; padding:14px 14px 30px; }
+    .dag-top{ display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:14px; }
+    .dag-card{ background:#fffaf0; border:4px solid #2a1f3d; border-radius:22px; padding:14px 16px; box-shadow:0 6px 0 rgba(42,31,61,.16); }
+    .dag-datecard{ display:flex; align-items:center; gap:14px; }
+    .dag-leaf{ flex:0 0 auto; width:82px; text-align:center; border:4px solid #2a1f3d; border-radius:16px; overflow:hidden; background:#fff; }
+    .dag-month{ background:#e64b3b; color:#fff; font-weight:800; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; padding:4px 0; }
+    .dag-day{ font-size:46px; font-weight:800; color:#2a1f3d; line-height:1.2; }
+    .dag-weekday{ font-size:32px; font-weight:800; color:#e64b3b; line-height:1; }
+    .dag-sub{ margin-top:6px; font-weight:800; font-size:15px; color:#4a3c63; }
+    .dag-clock{ display:flex; align-items:center; gap:16px; justify-content:center; }
+    .dag-analog{ width:100px; height:100px; flex:0 0 auto; }
+    .dag-aface{ fill:#fffaf0; stroke:#2a1f3d; }
+    .dag-anum{ font-family:inherit; font-size:9px; font-weight:800; fill:#2a1f3d; text-anchor:middle; dominant-baseline:central; }
+    .dag-hand{ stroke:#2a1f3d; stroke-linecap:round; }
+    .dag-acenter{ fill:#e64b3b; stroke:#2a1f3d; stroke-width:1.4; }
+    .dag-digital{ font-size:46px; font-weight:800; color:#2a1f3d; line-height:1; font-variant-numeric:tabular-nums; }
+    .dag-words{ font-size:21px; font-weight:700; color:#2a1f3d; }
+    .dag-cols{ display:grid; grid-template-columns:1fr; gap:14px; }
+    .dag-h{ font-family:'Fredoka One',cursive; font-size:23px; color:#1e0f52; margin-bottom:10px; }
+    .dag-lessons{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+    .dag-lesson{ display:flex; align-items:center; gap:12px; background:#fff; border:3px solid #2a1f3d; border-radius:16px; padding:10px 13px; box-shadow:0 4px 0 rgba(42,31,61,.12); }
+    .dag-time{ font-size:21px; font-weight:800; color:#2a1f3d; width:76px; flex-shrink:0; font-variant-numeric:tabular-nums; }
+    .dag-ic{ width:46px; height:46px; flex-shrink:0; border:3px solid #2a1f3d; border-radius:12px; background:#f1dda8; display:grid; place-items:center; overflow:hidden; }
+    .dag-ic img{ width:38px; height:38px; object-fit:contain; }
+    .dag-name{ font-size:23px; font-weight:700; color:#2a1f3d; }
+    .dag-break{ display:flex; align-items:center; gap:12px; align-self:center; width:96%; background:linear-gradient(90deg,#eafad0,#dff3c0); border:3px dashed #5d9417; border-radius:30px; padding:8px 16px; }
+    .dag-btime{ font-size:18px; font-weight:700; color:#4a3c63; font-variant-numeric:tabular-nums; }
+    .dag-bname{ font-size:18px; font-weight:700; color:#5d9417; }
+    .dag-notes{ display:flex; flex-direction:column; gap:11px; }
+    .dag-note{ background:#fff5c7; border:3px solid #2a1f3d; border-radius:14px; padding:14px 16px; font-size:21px; font-weight:600; color:#2a1f3d; line-height:1.3; box-shadow:0 4px 0 rgba(42,31,61,.12); }
+    .dag-note:nth-child(2n){ background:#ffe0cf; }
+    .dag-note:nth-child(3n){ background:#d8f0d0; }
+    .dag-empty{ font-size:19px; font-weight:600; color:#7a6f63; padding:6px 2px; }
+    @media(min-width:760px){ .dag-top{ grid-template-columns:1fr 1fr; } .dag-cols{ grid-template-columns:1fr 1fr; align-items:start; } }
+  </style>
+  <div class="top-bar">
+    <button class="back-btn" onclick="goSplashFromDag()">← Ut</button>
+    <div style="text-align:center">
+      <div class="top-bar-title">📅 Dagen i dag</div>
+      <div class="top-bar-sub" id="dag-class"></div>
+    </div>
+    <div style="width:54px"></div>
+  </div>
+  <div id="dag-wrap">
+    <div class="dag-top">
+      <div class="dag-card dag-datecard">
+        <div class="dag-leaf"><div class="dag-month" id="dag-month">juni</div><div class="dag-day" id="dag-day">4</div></div>
+        <div><div class="dag-weekday" id="dag-weekday">Torsdag</div><div class="dag-sub"><span id="dag-week">Uke 23</span> · <span id="dag-year">2026</span></div></div>
+      </div>
+      <div class="dag-card dag-clock">
+        <svg viewBox="0 0 80 80" class="dag-analog" aria-hidden="true">
+          <circle cx="40" cy="40" r="37" class="dag-aface" stroke-width="3"/>
+          <text class="dag-anum" x="40" y="10">12</text><text class="dag-anum" x="55" y="14">1</text><text class="dag-anum" x="66" y="25">2</text><text class="dag-anum" x="70" y="40">3</text><text class="dag-anum" x="66" y="55">4</text><text class="dag-anum" x="55" y="66">5</text><text class="dag-anum" x="40" y="70">6</text><text class="dag-anum" x="25" y="66">7</text><text class="dag-anum" x="14" y="55">8</text><text class="dag-anum" x="10" y="40">9</text><text class="dag-anum" x="14" y="25">10</text><text class="dag-anum" x="25" y="14">11</text>
+          <line id="dag-hour" class="dag-hand" x1="40" y1="40" x2="40" y2="26" stroke-width="4.5"/>
+          <line id="dag-min" class="dag-hand" x1="40" y1="40" x2="40" y2="17" stroke-width="3"/>
+          <circle cx="40" cy="40" r="3.2" class="dag-acenter"/>
+        </svg>
+        <div><div class="dag-digital" id="dag-digital">08:42</div><div class="dag-words" id="dag-words">fem på halv ni</div></div>
+      </div>
+    </div>
+    <div class="dag-cols">
+      <div class="dag-card"><div class="dag-h">På timeplanen</div><ol class="dag-lessons" id="dag-lessons"></ol></div>
+      <div class="dag-card"><div class="dag-h">Beskjeder fra læreren</div><div class="dag-notes" id="dag-notes"></div></div>
+    </div>
+  </div>
+  <div id="dag-picker" style="display:none;max-width:540px;margin:0 auto;padding:26px 16px;">
+    <div style="font-family:'Fredoka One',cursive;font-size:24px;color:#1e0f52;text-align:center;margin-bottom:4px;">Hvilken klasse?</div>
+    <div style="text-align:center;color:#4a3c63;font-weight:600;margin-bottom:16px;">Velg klassen din én gang – så husker nettbrettet det.</div>
+    <div id="dag-picker-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
+<script src="elevapp14.js"></script>
+<!-- Mynt-ikon: bytter 🪙-emojien til eget bilde overalt (også dynamisk innhold) -->
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
+<script>
+(function(){
+  var COIN='\uD83E\uDE99'; // 🪙
+  function convert(node){
+    if(!node) return;
+    if(node.nodeType===3){
+      var v=node.nodeValue;
+      if(!v || v.indexOf(COIN)===-1) return;
+      var p=node.parentNode; if(!p) return;
+      var tag=p.nodeName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA') return;
+      var parts=v.split(COIN), frag=document.createDocumentFragment();
+      for(var i=0;i<parts.length;i++){
+        if(parts[i]) frag.appendChild(document.createTextNode(parts[i]));
+        if(i<parts.length-1){
+          var img=document.createElement('img');
+          img.className='myntico'; img.src='mynt.webp'; img.alt='mynt';
+          frag.appendChild(img);
+        }
+      }
+      p.replaceChild(frag,node);
+    } else if(node.nodeType===1){
+      var t=node.nodeName;
+      if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='INPUT') return;
+      var kids=Array.prototype.slice.call(node.childNodes);
+      for(var i=0;i<kids.length;i++) convert(kids[i]);
+    }
+  }
+  function run(){ try{ convert(document.body); }catch(e){} }
+  try{
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var m=muts[i];
+        if(m.type==='childList'){ for(var j=0;j<m.addedNodes.length;j++) convert(m.addedNodes[j]); }
+        else if(m.type==='characterData'){ convert(m.target); }
+      }
+    });
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
+})();
+</script>
+</body>
+</html>
