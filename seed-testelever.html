@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myntland – Frø testelever</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+  :root{--blue:#1a5fa5;--green:#1D9E75;--green-light:#E1F5EE;--green-dark:#085041;
+    --amber:#EF9F27;--bg:#F7F9F7;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#c8dfc8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+  h1{font-family:'Fredoka One',cursive;font-weight:400;color:var(--green-dark);font-size:1.5rem;margin:0 0 4px;}
+  .sub{color:var(--muted);font-weight:600;margin:0 0 20px;}
+  .card{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;
+    width:100%;max-width:520px;box-shadow:0 6px 20px rgba(8,80,65,.06);margin-bottom:18px;}
+  label{display:block;font-weight:700;font-size:.85rem;margin:0 0 5px;color:var(--green-dark);}
+  input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:11px;
+    font-family:'Nunito';font-size:1rem;font-weight:600;}
+  input:focus{outline:none;border-color:var(--green);}
+  .btn{width:100%;border:none;border-radius:12px;padding:13px;font-family:'Nunito';font-weight:800;
+    font-size:1rem;cursor:pointer;margin-top:16px;background:var(--amber);color:#3a2a06;}
+  .alert{padding:11px 14px;border-radius:11px;font-weight:700;font-size:.88rem;margin-top:14px;}
+  .alert-error{background:#fde8e2;color:#a3341a;} .alert-ok{background:var(--green-light);color:var(--green-dark);}
+  .alert-info{background:#dbeafe;color:#1e0f52;}
+  .stud{display:flex;gap:14px;align-items:center;border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:12px;background:var(--white);}
+  .stud img{width:120px;height:120px;flex:0 0 auto;border:1px solid var(--border);border-radius:10px;background:#fff;}
+  .stud .info b{color:var(--green-dark);font-size:1.05rem;}
+  .stud .pin{font-family:monospace;font-size:1.3rem;font-weight:800;letter-spacing:.2em;color:var(--blue);}
+  .muted{color:var(--muted);font-size:.82rem;line-height:1.5;margin-top:8px;}
+  code{background:var(--bg);padding:2px 6px;border-radius:5px;}
+</style>
+</head>
+<body>
+  <h1>🌱 Frø testelever</h1>
+  <p class="sub">Legger noen testelever i en klasse, så elevappen kan testes</p>
+
+  <div class="card">
+    <label for="slug">Klassens lenke-kode (slug) eller classId</label>
+    <input id="slug" type="text" placeholder="f.eks. fg8727">
+    <button class="btn" onclick="seed()">Legg til 2 testelever</button>
+    <div id="out"></div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getDatabase, ref, get, set, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:"AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU", authDomain:"myntland.firebaseapp.com",
+    databaseURL:"https://myntland-default-rtdb.europe-west1.firebasedatabase.app", projectId:"myntland",
+    storageBucket:"myntland.firebasestorage.app", messagingSenderId:"711264415533",
+    appId:"1:711264415533:web:644a77a1e8b234667b2da4"
+  };
+  const app=initializeApp(firebaseConfig);
+  const appCheck=initializeAppCheck(app,{provider:new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),isTokenAutoRefreshEnabled:true});
+  await Promise.race([getToken(appCheck).catch(e=>console.warn(e)), new Promise(r=>setTimeout(r,3000))]);
+  const auth=getAuth(app); const db=getDatabase(app);
+  try{ await signInAnonymously(auth); }catch(e){ console.error('anon:',e); }
+
+  function msg(t,c){ document.getElementById('out').innerHTML='<div class="alert alert-'+c+'">'+t+'</div>'; }
+
+  window.seed=async function(){
+    const raw=document.getElementById('slug').value.trim();
+    if(!raw) return msg('Skriv inn klassens slug eller classId.','error');
+    msg('Slår opp klassen …','info');
+    try{
+      // Er det en slug eller en classId? Prøv slug først.
+      let classId=raw, cname='Testklasse';
+      const ss=await get(ref(db,'slugs/'+raw.toLowerCase()));
+      if(ss.exists()){
+        const v=ss.val();
+        classId=(typeof v==='string')?v:(v&&v.classId);
+        cname=(typeof v==='object'&&v.name)?v.name:cname;
+      }
+      if(!classId) return msg('Fant ingen klasse med den koden.','error');
+
+      const elever=[
+        {firstname:'Test', lastname:'Testesen', pin:'1234', balance:500},
+        {firstname:'Prøve', lastname:'Prøvdal',  pin:'4321', balance:500}
+      ];
+      const laget=[];
+      for(const e of elever){
+        const r=push(ref(db,'classes/'+classId+'/data/students57'));
+        await set(r, { firstname:e.firstname, lastname:e.lastname, class:cname,
+          pin:e.pin, balance:e.balance, savings:0, created:Date.now() });
+        laget.push({...e, fbKey:r.key});
+      }
+      let html='<div class="alert alert-ok">La til '+laget.length+' testelever i «'+cname+'» (classId: <code>'+classId+'</code>).</div>';
+      html+='<p class="muted">Åpne elevappen: <code>myntland.no/elevapp57-ny.html?class='+classId+'</code><br>'
+          + 'Trykk «Min nettbank» → «Scan bankkortet», og scann QR-koden under (PIN står ved siden av).</p>';
+      for(const s of laget){
+        const payload=encodeURIComponent(JSON.stringify({type:'login', fbKey:s.fbKey}));
+        const qr='https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data='+payload;
+        html+='<div class="stud"><img src="'+qr+'" alt="QR"><div class="info">'
+            + '<b>'+s.firstname+' '+s.lastname+'</b><br>PIN: <span class="pin">'+s.pin+'</span></div></div>';
+      }
+      document.getElementById('out').innerHTML=html;
+    }catch(e){ msg('Feil: '+(e.message||e),'error'); }
+  };
+</script>
+</body>
+</html>

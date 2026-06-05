@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIk15bnRsYW5kIEVsZXZhcHAgNVx1MjAxMzciLCAic2hvcnRfbmFtZSI6ICJNeW50bGFuZCA1LTciLCAic3RhcnRfdXJsIjogIi4iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgImJhY2tncm91bmRfY29sb3IiOiAiIzBkM2Q2ZSIsICJ0aGVtZV9jb2xvciI6ICIjMGQzZDZlIiwgImljb25zIjogW3sic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTFabUUxSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekJrTTJRMlpTSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNR1F6WkRabElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdaRE5rTm1VaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QmtNMlEyWlNJK05lS0FremNnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIn0sIHsic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTFabUUxSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekJrTTJRMlpTSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNR1F6WkRabElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdaRE5rTm1VaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QmtNMlEyWlNJK05lS0FremNnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn1dfQ==">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWE1ZmE1Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzBkM2Q2ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29pbiIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNGREQ4N0EiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRUY5RjI3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMTAiIHI9IjEzMCIgZmlsbD0idXJsKCNjb2luKSIvPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjIxMCIgcj0iMTA1IiBmaWxsPSIjMGQzZDZlIiBmaWxsLW9wYWNpdHk9Ii4xOCIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iMjQ4IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMTAiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwZDNkNmUiPk08L3RleHQ+CiAgPHJlY3QgeD0iMTIwIiB5PSIzODAiIHdpZHRoPSIyNzIiIGhlaWdodD0iNjIiIHJ4PSIzMSIgZmlsbD0idXJsKCNjb2luKSIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iNDI2IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzOCIgZm9udC13ZWlnaHQ9IjkwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzBkM2Q2ZSI+NeKAkzcgRWxldjwvdGV4dD4KPC9zdmc+" type="image/svg+xml">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWE1ZmE1Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzBkM2Q2ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29pbiIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNGREQ4N0EiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRUY5RjI3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMTAiIHI9IjEzMCIgZmlsbD0idXJsKCNjb2luKSIvPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjIxMCIgcj0iMTA1IiBmaWxsPSIjMGQzZDZlIiBmaWxsLW9wYWNpdHk9Ii4xOCIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iMjQ4IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMTAiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwZDNkNmUiPk08L3RleHQ+CiAgPHJlY3QgeD0iMTIwIiB5PSIzODAiIHdpZHRoPSIyNzIiIGhlaWdodD0iNjIiIHJ4PSIzMSIgZmlsbD0idXJsKCNjb2luKSIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iNDI2IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzOCIgZm9udC13ZWlnaHQ9IjkwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzBkM2Q2ZSI+NeKAkzcgRWxldjwvdGV4dD4KPC9zdmc+">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Myntland 5-7">
+<meta name="theme-color" content="#0d3d6e">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIk15bnRsYW5kIEVsZXZhcHAgNVx1MjAxMzciLCAic2hvcnRfbmFtZSI6ICJNeW50bGFuZCA1LTciLCAic3RhcnRfdXJsIjogIi4iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgImJhY2tncm91bmRfY29sb3IiOiAiIzBkM2Q2ZSIsICJ0aGVtZV9jb2xvciI6ICIjMGQzZDZlIiwgImljb25zIjogW3sic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTFabUUxSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekJrTTJRMlpTSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNR1F6WkRabElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdaRE5rTm1VaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QmtNMlEyWlNJK05lS0FremNnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIn0sIHsic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajRLSUNBOFpHVm1jejRLSUNBZ0lEeHNhVzVsWVhKSGNtRmthV1Z1ZENCcFpEMGlZbWNpSUhneFBTSXdKU0lnZVRFOUlqQWxJaUI0TWowaU1UQXdKU0lnZVRJOUlqRXdNQ1VpUGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJak1XRTFabUUxSWk4K0NpQWdJQ0FnSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUnZjQzFqYjJ4dmNqMGlJekJrTTJRMlpTSXZQZ29nSUNBZ1BDOXNhVzVsWVhKSGNtRmthV1Z1ZEQ0S0lDQWdJRHhzYVc1bFlYSkhjbUZrYVdWdWRDQnBaRDBpWTI5cGJpSWdlREU5SWpBbElpQjVNVDBpTUNVaUlIZ3lQU0l4TURBbElpQjVNajBpTVRBd0pTSStDaUFnSUNBZ0lEeHpkRzl3SUc5bVpuTmxkRDBpTUNVaUlITjBiM0F0WTI5c2IzSTlJaU5HUkVRNE4wRWlMejRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJeE1EQWxJaUJ6ZEc5d0xXTnZiRzl5UFNJalJVWTVSakkzSWk4K0NpQWdJQ0E4TDJ4cGJtVmhja2R5WVdScFpXNTBQZ29nSUR3dlpHVm1jejRLSUNBOGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFeE5DSWdabWxzYkQwaWRYSnNLQ05pWnlraUx6NEtJQ0E4WTJseVkyeGxJR040UFNJeU5UWWlJR041UFNJeU1UQWlJSEk5SWpFek1DSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4amFYSmpiR1VnWTNnOUlqSTFOaUlnWTNrOUlqSXhNQ0lnY2owaU1UQTFJaUJtYVd4c1BTSWpNR1F6WkRabElpQm1hV3hzTFc5d1lXTnBkSGs5SWk0eE9DSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTWpRNElpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l4TVRBaUlHWnZiblF0ZDJWcFoyaDBQU0k1TURBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlJR1pwYkd3OUlpTXdaRE5rTm1VaVBrMDhMM1JsZUhRK0NpQWdQSEpsWTNRZ2VEMGlNVEl3SWlCNVBTSXpPREFpSUhkcFpIUm9QU0l5TnpJaUlHaGxhV2RvZEQwaU5qSWlJSEo0UFNJek1TSWdabWxzYkQwaWRYSnNLQ05qYjJsdUtTSXZQZ29nSUR4MFpYaDBJSGc5SWpJMU5pSWdlVDBpTkRJMklpQm1iMjUwTFdaaGJXbHNlVDBpUVhKcFlXd2dRbXhoWTJzc2MyRnVjeTF6WlhKcFppSWdabTl1ZEMxemFYcGxQU0l6T0NJZ1ptOXVkQzEzWldsbmFIUTlJamt3TUNJZ2RHVjRkQzFoYm1Ob2IzSTlJbTFwWkdSc1pTSWdabWxzYkQwaUl6QmtNMlEyWlNJK05lS0FremNnUld4bGRqd3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn1dfQ==">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Myntland 5-7">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWE1ZmE1Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzBkM2Q2ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29pbiIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNGREQ4N0EiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRUY5RjI3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNCIgZmlsbD0idXJsKCNiZykiLz4KICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMTAiIHI9IjEzMCIgZmlsbD0idXJsKCNjb2luKSIvPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjIxMCIgcj0iMTA1IiBmaWxsPSIjMGQzZDZlIiBmaWxsLW9wYWNpdHk9Ii4xOCIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iMjQ4IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMTAiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwZDNkNmUiPk08L3RleHQ+CiAgPHJlY3QgeD0iMTIwIiB5PSIzODAiIHdpZHRoPSIyNzIiIGhlaWdodD0iNjIiIHJ4PSIzMSIgZmlsbD0idXJsKCNjb2luKSIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iNDI2IiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzOCIgZm9udC13ZWlnaHQ9IjkwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzBkM2Q2ZSI+NeKAkzcgRWxldjwvdGV4dD4KPC9zdmc+">
+<meta name="theme-color" content="#0d3d6e">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Myntland – Min Nettbank</title>
+<!-- Preconnect: starter DNS/TLS-handshake mot Firebase, CDN og fonter tidlig -->
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- defer: blokkerer ikke rendering, kjøres etter HTML er parset -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getDatabase, ref, onValue, update, push, set, get }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:"AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain:"myntland.firebaseapp.com",
+    databaseURL:"https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"myntland",
+    storageBucket:"myntland.firebasestorage.app",
+    messagingSenderId:"711264415533",
+    appId:"1:711264415533:web:644a77a1e8b234667b2da4"
+  };
+  const app=initializeApp(firebaseConfig);
+
+  const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled: true
+  });
+  await Promise.race([
+    getToken(appCheck).catch(err => console.warn('[App Check] token-fetch feilet:', err)),
+    new Promise(r => setTimeout(r, 3000))
+  ]);
+
+  const db=getDatabase(app);
+  const auth=getAuth(app);
+  // Elever logger inn ANONYMT — kreves av de nye sikkerhetsreglene for å lese klassens data.
+  try { await signInAnonymously(auth); } catch(e){ console.error('Anonym innlogging feilet:', e); }
+
+  // ── Hvilken klasse? Fra ?class=<id> eller ?k=<slug> ───────────────────────
+  const _params = new URLSearchParams(location.search);
+  let CLASS_ID = _params.get('class') || null;
+  const _slug = _params.get('k');
+  if(!CLASS_ID && _slug){
+    try{
+      const ss = await get(ref(db,'slugs/'+_slug.toLowerCase()));
+      const v = ss.val();
+      CLASS_ID = (typeof v==='string') ? v : (v && v.classId) || null;
+    }catch(e){ console.warn('slug-oppslag feilet:', e); }
+  }
+  window._CLASS_ID = CLASS_ID;
+  if(!CLASS_ID){ console.error('Ingen klasse i lenka. Åpne elevappen via klasselenka fra læreren.'); }
+
+  // ── Klasse-scoping: legg classes/{id}/data/ foran kjente rot-stier ────────
+  const CLASS_ROOTS = new Set(['students57','transactions57','workPlanProgress','workPlans','jobs','shop57','classGoals','settings','fundHistory','budgetSettings','dayboard','workspaceSettings']);
+  function classScope(p){
+    if(!window._CLASS_ID) return p;
+    const clean = String(p).replace(/^\/+/,'');
+    if(CLASS_ROOTS.has(clean.split('/')[0])) return 'classes/'+window._CLASS_ID+'/data/'+clean;
+    return p;
+  }
+
+  window._db = db;
+  window._ref = (dbi,p)=> ref(dbi, classScope(p));
+  window._onValue = onValue;
+  window._update = (r,obj)=>{
+    if(obj && typeof obj==='object' && !Array.isArray(obj)){
+      const sc={}; let ch=false;
+      for(const k in obj){ const nk=classScope(k); sc[nk]=obj[k]; if(nk!==k) ch=true; }
+      return update(r, ch?sc:obj);
+    }
+    return update(r,obj);
+  };
+  window._push = push; window._set = set; window._get = get;
+
+  // Scoped ref for lytterne under
+  const SR = (p)=> ref(db, classScope(p));
+
+  onValue(SR('students57'),snap=>{
+    window._allStudents=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(s=>s.class&&String(s.class).trim()!==""):[];
+    if(window._currentStudent){
+      const up=window._allStudents.find(s=>s.fbKey===window._currentStudent.fbKey);
+      if(up){
+        Object.assign(window._currentStudent, up);
+        refreshAllDisplays();
+        checkQuizStatus();
+        if(document.getElementById('tab-budsjett')?.classList.contains('active')) renderBudgetTab();
+      }
+    }
+  });
+  onValue(SR('dayboard'),snap=>{ window._dayboard=snap.val()||{}; if(typeof dagUpdateSplashBtn==='function') dagUpdateSplashBtn(); var sd=document.getElementById('screen-dag'); if(sd&&sd.classList.contains('active')&&typeof dagRefresh==='function') dagRefresh(); });
+  onValue(SR('classGoals'),snap=>{
+    window._classGoals=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];
+    renderClassGoalsHome();
+  });
+  onValue(SR('jobs'),snap=>{
+    window._jobs=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})).filter(j=>j.active):[];
+    if(document.getElementById('tab-oppdrag')?.classList.contains('active')) renderJobs();
+  });
+  onValue(SR('shop57'),snap=>{
+    window._shop57=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];
+    if(document.getElementById('tab-butikk')?.classList.contains('active')) renderShop57();
+  });
+  onValue(SR('settings'),snap=>{
+    window._settings=snap.val()||{taxRate:20,savingsInterest:2,fundLowMax:5,fundHighMax:10,maxWithdrawals:2,loanInterest:10,loanFactor:2,fundTax:10};
+  });
+  onValue(SR('fundHistory'),snap=>{
+    window._fundHistory=snap.val()||{};
+    if(document.getElementById('tab-spare')?.classList.contains('active')
+       && document.getElementById('spare-seg-fond')?.classList.contains('active'))
+      renderFond();
+  });
+  onValue(SR('budgetSettings'),snap=>{
+    window._budgetSettings=snap.val()||{rentDesk:300,powerMin:50,powerMax:150,rentIpad:50,wedEventsEnabled:true};
+    if(document.getElementById('tab-budsjett')?.classList.contains('active')) renderBudgetTab();
+  });
+  onValue(SR('workPlans'),snap=>{
+    window._workPlans=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[];
+    if(typeof updateArbeidsplanSplashBtn==='function') updateArbeidsplanSplashBtn();
+    if(typeof apRefresh==='function'
+       && document.getElementById('screen-arbeidsplan')?.classList.contains('active')) apRefresh();
+  });
+  onValue(SR('workPlanProgress'),snap=>{
+    window._wpProgress=snap.val()||{};
+    if(typeof apRefresh==='function'
+       && document.getElementById('screen-arbeidsplan')?.classList.contains('active')) apRefresh();
+  });
+</script>
+<!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
+<link rel="stylesheet" href="myntland.css">
+
+<link rel="stylesheet" href="elevapp57.css">
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen active" id="screen-splash">
+  <img class="splash-coin" src="mynt.webp" alt="Myntland-mynt">
+  <div class="splash-logo">Myntland</div>
+  <button class="big-splash-btn" onclick="selectRole()">🏦 Min nettbank</button>
+  <button class="big-splash-btn" onclick="showShopScreen()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🛒 Butikken</button>
+  <button class="big-splash-btn" onclick="openMyntspillMeny()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🪙 Myntspill</button>
+  <div id="myntspill-meny" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,12,45,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeMyntspillMeny()">
+    <div style="background:#fff;border-radius:24px;max-width:420px;width:100%;padding:1.6rem 1.4rem;text-align:center;box-shadow:0 14px 40px rgba(30,15,82,.35);font-family:'Nunito',sans-serif;">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#1e0f52;">Velg spill 🎮</div>
+      <p style="color:#5a7a5a;font-weight:700;margin:.2rem 0 1.2rem;">Hvilket myntspill vil du spille?</p>
+      <button onclick="goToMyntjakten()" style="display:block;width:100%;border:none;cursor:pointer;background:#1D9E75;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:.8rem;">🧮 Myntjakten<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Regn fort i hodet og samle mynter</span></button>
+      <button onclick="goToMyntstigen()" style="display:block;width:100%;border:none;cursor:pointer;background:#1a5fa5;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:1rem;">🎲 Myntstigen<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Stigespill med terning, 2–4 spillere</span></button>
+      <button onclick="closeMyntspillMeny()" style="border:2px solid #c8dfc8;background:#fff;color:#1a5fa5;border-radius:999px;padding:.6rem 1.4rem;font-weight:800;font-family:inherit;cursor:pointer;">Lukk</button>
+    </div>
+  </div>
+  <button class="big-splash-btn" id="splash-arbeidsplan-btn" onclick="goToArbeidsplan()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">📋 Arbeidsplan</button>
+  <button class="big-splash-btn" id="splash-dag-btn" onclick="goToDag()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">📅 Dagen i dag</button>
+</div>
+
+<!-- BUTIKK – PIN LOGIN -->
+<div class="screen" id="screen-shop">
+  <div style="background:var(--teal-dark);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <button onclick="showScreen('screen-splash')" style="background:rgba(255,255,255,.13);border:none;color:white;border-radius:10px;padding:7px 12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">← Tilbake</button>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);flex:1">🛒 Butikken</div>
+    <div id="shop-student-badge" style="font-size:.8rem;color:rgba(255,255,255,.8);font-weight:700;display:none"></div>
+  </div>
+
+  <!-- Shop card login -->
+  <div id="shop-login-section" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem">
+    <div style="text-align:center;font-size:2rem;margin-bottom:.5rem">🛒</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);margin-bottom:.3rem">Logg inn i butikken</div>
+    <div id="shop-login-subtitle" style="color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Scan bankkortet ditt for å handle</div>
+    <div id="shop-login-preselect" style="display:none;width:100%;background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:10px 14px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:.72rem;color:var(--teal-dark);font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px">Logger inn som</div>
+      <div id="shop-login-preselect-name" style="font-family:'Fredoka One',cursive;font-size:1.25rem;color:var(--teal-dark);line-height:1.1"></div>
+      <button onclick="clearShopPreselected()" style="margin-top:4px;background:transparent;border:none;color:var(--muted);font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:underline">Ikke meg? Bytt kort</button>
+    </div>
+    <button onclick="startScan('loginShop')" id="shop-login-scan-btn" style="width:100%;background:var(--amber);border:none;color:white;padding:14px;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 rgba(0,0,0,.08)">📷 Scan kortet mitt</button>
+    <div class="login-card" id="shop-login-card" style="width:100%;display:none">
+      <div class="pin-dots">
+        <div class="pin-dot" id="shop-dot-0"></div><div class="pin-dot" id="shop-dot-1"></div>
+        <div class="pin-dot" id="shop-dot-2"></div><div class="pin-dot" id="shop-dot-3"></div>
+      </div>
+      <div id="shop-login-error" style="color:var(--coral);font-size:.85rem;font-weight:700;min-height:20px;text-align:center;margin-bottom:7px"></div>
+      <div class="numpad">
+        <button class="num-btn" onclick="shopNp('1')">1</button><button class="num-btn" onclick="shopNp('2')">2</button><button class="num-btn" onclick="shopNp('3')">3</button>
+        <button class="num-btn" onclick="shopNp('4')">4</button><button class="num-btn" onclick="shopNp('5')">5</button><button class="num-btn" onclick="shopNp('6')">6</button>
+        <button class="num-btn" onclick="shopNp('7')">7</button><button class="num-btn" onclick="shopNp('8')">8</button><button class="num-btn" onclick="shopNp('9')">9</button>
+        <div class="num-btn empty"></div><button class="num-btn" onclick="shopNp('0')">0</button><button class="num-btn delete" onclick="shopNp('DEL')">⌫</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop content (shown after login) -->
+  <div id="shop-content-section" style="flex:1;overflow-y:auto;padding:1.25rem;display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
+      <div id="shop-balance-display" style="background:var(--teal-light);border-radius:10px;padding:.5rem .85rem;font-size:.85rem;color:var(--teal-dark);font-weight:700"></div>
+      <button onclick="shopLogout()" style="background:var(--coral-light);border:none;color:var(--coral);border-radius:8px;padding:6px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer">Logg ut</button>
+    </div>
+
+    <!-- Cart summary -->
+    <div id="shop-cart-bar" style="display:none;background:var(--teal-dark);border-radius:12px;padding:.75rem 1rem;margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between">
+      <div style="color:white;font-size:.9rem;font-weight:700">🛒 Handlekurv: <span id="cart-total-display">0 🪙</span></div>
+      <button onclick="openShopCart()" style="background:var(--amber);border:none;color:var(--teal-dark);border-radius:8px;padding:6px 14px;font-family:'Fredoka One',cursive;font-size:.95rem;cursor:pointer">Se kurv</button>
+    </div>
+
+    <input type="text" placeholder="Søk etter vare…" oninput="filterShopLogged(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:.85rem">
+    <div id="shop-logged-list"></div>
+  </div>
+</div>
+
+<!-- HANDLEKURV OVERLAY -->
+<div class="pin-overlay" id="shop-cart-overlay" style="z-index:600">
+  <div style="background:white;border-radius:20px;padding:1.5rem;width:100%;max-width:380px;max-height:70vh;overflow-y:auto">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:1rem">🛒 Handlekurv</div>
+    <div id="cart-items-list"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:1rem;border-top:2px solid var(--border)">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--teal-dark)">Total: <span id="cart-total-big">0</span> 🪙</div>
+    </div>
+  </div>
+  <!-- PIN confirm for cart checkout -->
+  <div style="margin-top:1rem;width:100%;max-width:380px">
+    <div style="font-size:.85rem;color:rgba(255,255,255,.8);text-align:center;margin-bottom:.5rem;font-weight:700">Tast PIN for å betale</div>
+    <div class="pin-ov-dots"><div class="pin-ov-dot" id="cart-pdot-0"></div><div class="pin-ov-dot" id="cart-pdot-1"></div><div class="pin-ov-dot" id="cart-pdot-2"></div><div class="pin-ov-dot" id="cart-pdot-3"></div></div>
+    <div class="pin-ov-err" id="cart-pin-error"></div>
+    <div class="pin-ov-numpad">
+      <button class="pin-ov-btn" onclick="cartPinPress('1')">1</button><button class="pin-ov-btn" onclick="cartPinPress('2')">2</button><button class="pin-ov-btn" onclick="cartPinPress('3')">3</button>
+      <button class="pin-ov-btn" onclick="cartPinPress('4')">4</button><button class="pin-ov-btn" onclick="cartPinPress('5')">5</button><button class="pin-ov-btn" onclick="cartPinPress('6')">6</button>
+      <button class="pin-ov-btn" onclick="cartPinPress('7')">7</button><button class="pin-ov-btn" onclick="cartPinPress('8')">8</button><button class="pin-ov-btn" onclick="cartPinPress('9')">9</button>
+      <button class="pin-ov-btn empty"></button><button class="pin-ov-btn" onclick="cartPinPress('0')">0</button><button class="pin-ov-btn del" onclick="cartPinPress('DEL')">⌫</button>
+    </div>
+    <button onclick="closeShopCart()" class="pin-ov-cancel" style="margin-top:.75rem">Avbryt</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div style="text-align:center;margin:2.5rem 0 1rem;font-size:2.5rem">🏦</div>
+  <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--teal-dark);margin-bottom:3px">Logg inn</div>
+  <div id="login-subtitle" style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Scan bankkortet ditt for å logge inn</div>
+  <div style="width:100%;padding:0 1.25rem;flex:1">
+    <div id="login-preselect" style="display:none;background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:10px 14px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:.72rem;color:var(--teal-dark);font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px">Logger inn som</div>
+      <div id="login-preselect-name" style="font-family:'Fredoka One',cursive;font-size:1.25rem;color:var(--teal-dark);line-height:1.1"></div>
+      <button onclick="clearPreselected()" style="margin-top:4px;background:transparent;border:none;color:var(--muted);font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:underline">Ikke meg? Bytt kort</button>
+    </div>
+    <button onclick="startScan('loginCard')" id="login-scan-btn" style="width:100%;background:var(--amber);border:none;color:white;padding:14px;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 rgba(0,0,0,.08)">📷 Scan kortet mitt</button>
+    <div class="login-card" id="login-card" style="display:none">
+      <div class="pin-dots">
+        <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="login-error" style="color:var(--coral);font-size:.85rem;font-weight:700;min-height:20px;text-align:center;margin-bottom:7px"></div>
+      <div class="numpad">
+        <button class="num-btn" onclick="np('1')">1</button><button class="num-btn" onclick="np('2')">2</button><button class="num-btn" onclick="np('3')">3</button>
+        <button class="num-btn" onclick="np('4')">4</button><button class="num-btn" onclick="np('5')">5</button><button class="num-btn" onclick="np('6')">6</button>
+        <button class="num-btn" onclick="np('7')">7</button><button class="num-btn" onclick="np('8')">8</button><button class="num-btn" onclick="np('9')">9</button>
+        <div class="num-btn empty"></div><button class="num-btn" onclick="np('0')">0</button><button class="num-btn delete" onclick="np('DEL')">⌫</button>
+      </div>
+    </div>
+    <button onclick="goToSplash()" style="width:100%;margin-top:.85rem;background:transparent;border:2px solid var(--border);color:var(--muted);padding:11px;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer">← Tilbake</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="screen-app">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goToSplash()">← Ut</button>
+    <div style="text-align:center"><div class="top-bar-title">🪙 Myntland Nettbank</div><div class="top-bar-sub" id="greeting-sub"></div></div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--amber)" id="top-total">–</div>
+  </div>
+
+  <!-- BANK TAB -->
+  <div class="tab-content active content" id="tab-bank">
+    <div class="account-grid">
+      <div class="account-card bruk" style="grid-column:1/-1">
+        <div class="acc-label"><span class="live-dot"></span>Brukskonto (0% rente)</div>
+        <div class="acc-val" id="bal-bruk">0</div>
+        <div class="acc-sub">🪙 Mynter · koblet til bankkort</div>
+      </div>
+      <div class="account-card spare">
+        <div class="acc-label">💰 Sparekonto</div>
+        <div class="acc-val" id="bal-spare">0</div>
+        <div class="acc-sub" id="spare-sub">5% ukentlig rente</div>
+      </div>
+      <div class="account-card fond">
+        <div class="acc-label">📊 Fondskonto</div>
+        <div class="acc-val" id="bal-fond">0</div>
+        <div class="acc-sub" id="fond-sub">Lav + Høy risiko</div>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div class="quiz-banner" id="quiz-banner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#FAC775;position:relative;z-index:1">🧠 Ukas økonomiquiz</div>
+        <div style="background:rgba(255,255,255,.15);padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;position:relative;z-index:1" id="quiz-badge">5 sp. · 20🪙 per svar</div>
+      </div>
+      <div id="quiz-card-body" style="position:relative;z-index:1">
+        <div style="font-size:.8rem;opacity:.85;margin-bottom:.5rem">Test dine kunnskaper om økonomi!</div>
+        <button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>
+      </div>
+    </div>
+
+    <!-- KLASSENS SPAREMÅL (visuell velger) -->
+    <div class="class-goals-card" id="class-goals-card" style="display:none;">
+      <div class="class-goals-header">
+        <div class="class-goals-title">🎯 Klassens sparemål</div>
+        <div class="class-goals-sub">Skatt fra belønninger går til ditt valgte mål</div>
+      </div>
+      <div id="class-goals-body"></div>
+    </div>
+
+    <div class="section-title">📜 Siste transaksjoner</div>
+    <div id="transaction-list"><div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700">Ingen transaksjoner ennå</div></div></div>
+  </div>
+
+  <!-- SPARE TAB (sparekonto + fond samlet) -->
+  <div class="tab-content content" id="tab-spare">
+    <!-- Pill-bryter: Sparekonto / Fond -->
+    <div class="spare-segmented">
+      <button class="ss-pill active" id="ss-pill-konto" onclick="switchSpareSeg('konto',this)">💰 Sparekonto</button>
+      <button class="ss-pill" id="ss-pill-fond" onclick="switchSpareSeg('fond',this);renderFond()">📊 Fond</button>
+    </div>
+
+    <!-- Sparekonto-seksjon -->
+    <div id="spare-seg-konto" class="spare-seg-content active">
+      <div class="account-card spare" style="border-radius:14px;padding:1.1rem;margin-bottom:.85rem;color:white">
+        <div class="acc-label">💰 Sparekonto</div>
+        <div class="acc-val" id="spare-main-val">0</div>
+        <div class="acc-sub" id="spare-rate-sub">5% ukentlig rente · maks 2 uttak/uke</div>
+      </div>
+      <div class="info-box" id="spare-info-box">
+        💡 <strong>Visste du?</strong> Banken sjekker sparekontoen din <strong>hver dag</strong> og gir deg litt renter for hver dag pengene har ligget der. Hver mandag legger Myntland sammen alle dagene og betaler ut rentene. 📅
+        <div style="margin-top:.5rem;">
+          🚀 Innskudd <strong>mandag</strong> → pengene rekker 7 dager → mest renter!<br>
+          🐢 Innskudd <strong>søndag</strong> → pengene rekker bare 1 dag → veldig lite renter.
+        </div>
+        <div style="margin-top:.6rem;padding-top:.6rem;border-top:1.5px dashed #f0c060;">
+          🏦 <strong>I ekte banker</strong> fungerer det på samme måte: renter regnes hver dag, men legges på kontoen din én gang i året.
+        </div>
+        <div style="margin-top:.5rem;font-weight:800;">Maks 2 uttak per uke.</div>
+      </div>
+      <div id="spare-withdrawal-warn" style="display:none" class="warn-box">⚠️ Du har brukt alle uttakene dine denne uken!</div>
+      <div class="acc-action-grid">
+        <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">➕ Sett inn fra brukskonto</button>
+        <button class="acc-action-btn aab-ghost" id="spare-withdraw-btn" onclick="openTransfer('spare-til-bruk')">➖ Ta ut til brukskonto</button>
+      </div>
+      <div class="section-title" style="margin-top:.5rem">📜 Sparehistorikk</div>
+      <div id="spare-tx-list"><div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen sparehistorikk</div></div></div>
+    </div>
+
+    <!-- Fond-seksjon -->
+    <div id="spare-seg-fond" class="spare-seg-content">
+      <div id="fond-cards"></div>
+      <div class="chart-wrap">
+        <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);margin-bottom:.5rem">📈 Kursutvikling (siste 14 dager)</div>
+        <canvas id="fond-chart" height="140"></canvas>
+      </div>
+      <div class="info-box">💡 Fondene oppdateres automatisk i løpet av natten. Gevinst beskattes med <span id="fond-tax-pct">10</span>% ved uttak. Kan sette inn når som helst.</div>
+      <div class="acc-action-grid">
+        <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-low')">📈 Sett inn lav risiko</button>
+        <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-low-til-bruk')">📉 Ta ut lav risiko</button>
+        <button class="acc-action-btn aab-purple" onclick="openTransfer('bruk-til-fond-high')">📈 Sett inn høy risiko</button>
+        <button class="acc-action-btn aab-ghost" onclick="openTransfer('fond-high-til-bruk')">📉 Ta ut høy risiko</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LÅN TAB -->
+  <div class="tab-content content" id="tab-laan">
+    <div id="loan-section"></div>
+  </div>
+
+  <!-- JOBBER TAB -->
+  <div class="tab-content content" id="tab-oppdrag">
+    <div class="section-title">💼 Jobber</div>
+    <input type="text" id="jobs-search-input" placeholder="🔍 Søk i jobber…" oninput="filterJobs(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:.85rem;">
+
+    <!-- Faste jobber -->
+    <div id="salary-jobs-section">
+      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">💰 Faste jobber (ukelønn fredag)</div>
+      <div class="info-box">💡 Søk på en jobb du vil ha. Læreren godkjenner. Du får ukelønn hver fredag (med skatt).</div>
+      <div id="salary-jobs-list-el"></div>
+    </div>
+
+    <!-- Engangsoppdrag -->
+    <div id="task-jobs-section" style="margin-top:1.25rem;">
+      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">📌 Engangsoppdrag</div>
+      <div class="info-box">💡 Gjør oppdraget og be læreren godkjenne – eller scan QR-koden du får!</div>
+      <div id="jobs-list-el"><div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag nå</div></div></div>
+    </div>
+  </div>
+
+
+
+  <!-- KORT TAB -->
+  <div class="tab-content content" id="tab-kort">
+    <div style="background:linear-gradient(135deg,#1a1a18,#3a3a36);border-radius:20px;padding:1.4rem;color:white;position:relative;overflow:hidden;margin-bottom:1rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between">
+      <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;border-radius:50%;background:rgba(239,159,39,.12)"></div>
+      <div><div style="width:32px;height:24px;background:var(--amber);border-radius:5px;position:relative;z-index:1"></div><div style="font-family:'Fredoka One',cursive;font-size:1.2rem;letter-spacing:4px;opacity:.9;z-index:1;position:relative;margin-top:.5rem" id="card-number">•••• ••••</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1">
+        <div><div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.65;margin-bottom:2px">Kortinnehaver</div><div style="font-size:.82rem;font-weight:700;text-transform:uppercase" id="card-holder">–</div></div>
+        <div><div style="font-family:'Fredoka One',cursive;color:var(--amber);font-size:.95rem;text-align:right">Myntland</div><div style="font-size:.65rem;color:rgba(255,255,255,.5);text-align:right">Brukskonto</div></div>
+      </div>
+    </div>
+    <!-- PIN-visning -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;border:1.5px solid var(--border);">
+      <div>
+        <div style="font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">PIN-kode</div>
+        <div id="pin-display-57" style="font-family:'Fredoka One',cursive;font-size:1.4rem;letter-spacing:.4rem;color:var(--teal-dark);">••••</div>
+      </div>
+      <button id="pin-toggle-btn-57" onclick="togglePinDisplay57()"
+        style="background:var(--teal-light);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--teal-dark);cursor:pointer;">
+        👁 Vis PIN
+      </button>
+    </div>
+    <button class="big-btn bb-teal" onclick="startScan('any')" style="margin-top:.25rem">📷 Scan betaling og belønning</button>
+  </div>
+
+  <!-- BUDSJETT TAB -->
+  <div class="tab-content content" id="tab-budsjett">
+    <div class="section-title">📊 Budsjett</div>
+    <div class="info-box">💡 Her ser du de faste utgiftene som trekkes hver fredag, og inntektene dine. Planlegg uka di!</div>
+
+    <!-- Sammendrag -->
+    <div id="bud-summary" class="card-block" style="background:linear-gradient(135deg,var(--teal-light),#fff);">
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.65rem;">📈 Estimat for uka</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+        <div>
+          <div style="font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Inn</div>
+          <div id="bud-est-in" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:#15803d;">0 🪙</div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Ut</div>
+          <div id="bud-est-out" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:#dc2626;">0 🪙</div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Netto</div>
+          <div id="bud-est-net" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--teal-dark);">0 🪙</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Faste utgifter -->
+    <div class="card-block">
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">💸 Faste utgifter (fredag)</div>
+      <div id="bud-expenses-list"></div>
+      <div id="bud-next-friday" style="font-size:.74rem;color:var(--muted);font-weight:700;margin-top:.5rem;text-align:right;"></div>
+    </div>
+
+    <!-- Inntekter -->
+    <div class="card-block">
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">💰 Inntekter</div>
+      <div id="bud-salary-list"></div>
+
+      <div style="margin-top:.85rem;padding-top:.85rem;border-top:1.5px dashed var(--border);">
+        <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.4rem;">✏️ Estimert ekstra inntekt per uke</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" id="bud-est-input" min="0" max="9999" placeholder="0" style="flex:1;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);outline:none;">
+          <span style="font-weight:800;color:var(--teal-dark);">🪙</span>
+          <button id="bud-est-save-btn" onclick="saveEstimatedIncome()" style="background:var(--teal);border:none;color:white;border-radius:10px;padding:10px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;">Lagre</button>
+        </div>
+        <div id="bud-est-feedback" style="font-size:.75rem;font-weight:800;margin-top:6px;min-height:1em;"></div>
+        <div style="font-size:.72rem;color:var(--muted);font-weight:700;margin-top:2px;">Fra ekstra oppdrag, belønninger eller hendelser.</div>
+      </div>
+    </div>
+
+    <!-- Periode-velger -->
+    <div class="card-block">
+      <div style="display:flex;gap:6px;margin-bottom:.75rem;">
+        <button id="bud-period-1" class="bud-period-btn bud-period-active" onclick="switchBudgetPeriod(1)">📅 Siste uke</button>
+        <button id="bud-period-4" class="bud-period-btn" onclick="switchBudgetPeriod(4)">🗓️ Siste 4 uker</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-bottom:.85rem;">
+        <div style="background:var(--green-light);border-radius:10px;padding:.55rem;">
+          <div style="font-size:.65rem;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.5px;">Inntekter</div>
+          <div id="bud-period-in" style="font-family:'Fredoka One',cursive;font-size:1.15rem;color:#15803d;">0 🪙</div>
+        </div>
+        <div style="background:var(--coral-light);border-radius:10px;padding:.55rem;">
+          <div style="font-size:.65rem;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.5px;">Utgifter</div>
+          <div id="bud-period-out" style="font-family:'Fredoka One',cursive;font-size:1.15rem;color:#dc2626;">0 🪙</div>
+        </div>
+      </div>
+      <div style="background:var(--teal-light);border-radius:10px;padding:.55rem;text-align:center;margin-bottom:.85rem;">
+        <div style="font-size:.65rem;font-weight:800;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.5px;">Netto</div>
+        <div id="bud-period-net" style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);">0 🪙</div>
+      </div>
+
+      <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.5rem;">📜 Bevegelser</div>
+      <div id="bud-period-list"></div>
+    </div>
+  </div>
+
+  <!-- MERKER TAB -->
+  <div class="tab-content content" id="tab-merker">
+    <div class="section-title">🏅 Mine merker</div>
+    <div class="info-box" id="merker-info-box">🎯 Samle merker ved å fullføre mål i Myntland! Hvert merke gir mynter som bonus.</div>
+    <div id="merker-list"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
+    <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
+    <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
+    <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Jobber</div></button>
+    <button class="nav-item"        onclick="switchTab('budsjett',this);renderBudgetTab()"><div class="nav-icon">📊</div><div class="nav-label">Budsjett</div></button>
+    <button class="nav-item"        onclick="switchTab('merker',this);renderMerker()"><div class="nav-icon">🏅</div><div class="nav-label">Merker</div></button>
+    <button class="nav-item"        onclick="switchTab('kort',this);document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));this.classList.add('active')"><div class="nav-icon">💳</div><div class="nav-label">Kort</div></button>
+  </div>
+</div>
+
+<!-- ARBEIDSPLAN -->
+<div class="screen" id="screen-arbeidsplan">
+  <div class="top-bar">
+    <button class="back-btn" onclick="apBack()" id="ap-back-btn">← Ut</button>
+    <div style="text-align:center">
+      <div class="top-bar-title">📋 Arbeidsplan</div>
+      <div class="top-bar-sub" id="ap-sub"></div>
+    </div>
+    <div style="width:54px"></div>
+  </div>
+  <div class="ap-subjects" id="ap-subjects"></div>
+  <div class="ap-pane" id="ap-steps"></div>
+  <div class="ap-pane" id="ap-detail"></div>
+</div>
+
+<!-- OVERLAYS -->
+<div class="scanner-overlay" id="scanner-overlay">
+  <div class="scanner-header"><div class="scanner-title" id="scanner-title">Scan QR</div><button class="scanner-close" onclick="stopScan()">✕</button></div>
+  <div class="scanner-video-wrap"><video id="scanner-video" playsinline muted></video><div class="scanner-frame"></div><div class="scanner-hint" id="scanner-hint">Hold QR innenfor rammen</div></div>
+</div>
+
+
+<!-- PURCHASE PIN OVERLAY -->
+<div class="pin-overlay" id="purchase-pin-overlay">
+  <div class="pin-ov-title">Bekreft kjøp</div>
+  <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:rgba(255,255,255,.9);margin-bottom:.2rem;text-align:center" id="purchase-item-name"></div>
+  <div class="pin-ov-amount" id="purchase-item-price"></div>
+  <div class="pin-ov-card">
+    <div style="font-size:.78rem;color:rgba(255,255,255,.6);text-align:center;margin-bottom:.4rem">Tast inn PIN for å bekrefte</div>
+    <div class="pin-ov-dots"><div class="pin-ov-dot" id="bpdot-0"></div><div class="pin-ov-dot" id="bpdot-1"></div><div class="pin-ov-dot" id="bpdot-2"></div><div class="pin-ov-dot" id="bpdot-3"></div></div>
+    <div class="pin-ov-err" id="purchase-pin-error"></div>
+    <div class="pin-ov-numpad">
+      <button class="pin-ov-btn" onclick="bpp('1')">1</button><button class="pin-ov-btn" onclick="bpp('2')">2</button><button class="pin-ov-btn" onclick="bpp('3')">3</button>
+      <button class="pin-ov-btn" onclick="bpp('4')">4</button><button class="pin-ov-btn" onclick="bpp('5')">5</button><button class="pin-ov-btn" onclick="bpp('6')">6</button>
+      <button class="pin-ov-btn" onclick="bpp('7')">7</button><button class="pin-ov-btn" onclick="bpp('8')">8</button><button class="pin-ov-btn" onclick="bpp('9')">9</button>
+      <button class="pin-ov-btn empty"></button><button class="pin-ov-btn" onclick="bpp('0')">0</button><button class="pin-ov-btn del" onclick="bpp('DEL')">⌫</button>
+    </div>
+  </div>
+  <button class="pin-ov-cancel" onclick="cancelPurchase()">Avbryt</button>
+</div>
+
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-ov-title">Bekreft betaling</div>
+  <div class="pin-ov-amount" id="pin-overlay-amount"></div>
+  <div class="pin-ov-card">
+    <div class="pin-ov-dots"><div class="pin-ov-dot" id="pdot-0"></div><div class="pin-ov-dot" id="pdot-1"></div><div class="pin-ov-dot" id="pdot-2"></div><div class="pin-ov-dot" id="pdot-3"></div></div>
+    <div class="pin-ov-err" id="pin-overlay-error"></div>
+    <div class="pin-ov-numpad">
+      <button class="pin-ov-btn" onclick="pcp('1')">1</button><button class="pin-ov-btn" onclick="pcp('2')">2</button><button class="pin-ov-btn" onclick="pcp('3')">3</button>
+      <button class="pin-ov-btn" onclick="pcp('4')">4</button><button class="pin-ov-btn" onclick="pcp('5')">5</button><button class="pin-ov-btn" onclick="pcp('6')">6</button>
+      <button class="pin-ov-btn" onclick="pcp('7')">7</button><button class="pin-ov-btn" onclick="pcp('8')">8</button><button class="pin-ov-btn" onclick="pcp('9')">9</button>
+      <button class="pin-ov-btn empty"></button><button class="pin-ov-btn" onclick="pcp('0')">0</button><button class="pin-ov-btn del" onclick="pcp('DEL')">⌫</button>
+    </div>
+  </div>
+  <button class="pin-ov-cancel" onclick="cancelPinConfirm()">Avbryt</button>
+</div>
+
+<div class="input-overlay" id="input-overlay">
+  <div class="input-sheet">
+    <div class="input-sheet-title" id="input-sheet-title">Skriv inn beløp</div>
+    <div class="input-sheet-desc"  id="input-sheet-desc"></div>
+    <input type="number" id="input-sheet-val" placeholder="0" min="1">
+    <div class="input-sheet-actions">
+      <button class="isa-ghost" onclick="closeInputSheet()">Avbryt</button>
+      <button class="isa-primary" id="input-sheet-confirm">Bekreft</button>
+    </div>
+  </div>
+</div>
+
+<div class="success-overlay" id="success-overlay">
+  <div class="success-emoji" id="suc-emoji">✅</div>
+  <div class="success-title"  id="suc-title"></div>
+  <div class="success-amount" id="suc-amount"></div>
+  <div class="success-text"   id="suc-text"></div>
+  <button class="success-close" onclick="document.getElementById('success-overlay').classList.remove('open')">Fortsett</button>
+</div>
+
+<!-- VELG SPAREMÅL MODAL -->
+<div class="pin-overlay" id="choose-goal-modal">
+  <div style="background:rgba(255,255,255,.97);max-width:400px;width:100%;border-radius:16px;padding:1.25rem;">
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);text-align:center;margin-bottom:.5rem;">⭐ Velg sparemål</div>
+    <div style="text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:1rem;font-weight:700;">Skatten din går til dette målet</div>
+    <div id="choose-goal-list" style="max-height:60vh;overflow-y:auto;margin-bottom:1rem;"></div>
+    <button onclick="closeChooseGoalModal()" style="width:100%;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Lukk</button>
+  </div>
+</div>
+
+<div class="quiz-overlay" id="quiz-overlay">
+  <div class="quiz-hd"><div class="quiz-hd-title">🧠 Ukas økonomiquiz</div><button class="quiz-close-btn" onclick="closeQuiz()">✕</button></div>
+  <div class="quiz-prog"><div class="quiz-prog-bar" id="quiz-prog-bar" style="width:0%"></div></div>
+  <div class="quiz-body">
+    <div class="quiz-q-num" id="quiz-q-num">Spørsmål 1 av 5</div>
+    <div class="quiz-q-text" id="quiz-q-text"></div>
+    <div class="quiz-opts" id="quiz-opts"></div>
+    <div class="quiz-fb" id="quiz-fb"></div>
+    <button class="quiz-nxt" id="quiz-nxt" onclick="nextQ()">Neste →</button>
+  </div>
+</div>
+<div class="quiz-result" id="quiz-result">
+  <div class="qr-emoji" id="qr-emoji">🏆</div>
+  <div class="qr-title" id="qr-title">Bra!</div>
+  <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:white" id="qr-score"></div>
+  <div class="qr-earned" id="qr-earned"></div>
+  <div style="font-size:.8rem;color:rgba(255,255,255,.75);margin-bottom:.5rem">Mynter lagt til brukskontoen!</div>
+  <button class="qr-close" onclick="closeQuizResult()">Tilbake</button>
+</div>
+
+<!-- DAGEN I DAG -->
+<div class="screen" id="screen-dag">
+  <style>
+    #screen-dag{ background:#fbf2d6; color:#2a1f3d; overflow-y:auto; }
+    #screen-dag .top-bar{ background:#1e0f52; }
+    #dag-wrap{ max-width:1000px; margin:0 auto; padding:14px 14px 30px; }
+    .dag-top{ display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:14px; }
+    .dag-card{ background:#fffaf0; border:4px solid #2a1f3d; border-radius:22px; padding:14px 16px; box-shadow:0 6px 0 rgba(42,31,61,.16); }
+    .dag-datecard{ display:flex; align-items:center; gap:14px; }
+    .dag-leaf{ flex:0 0 auto; width:78px; text-align:center; border:4px solid #2a1f3d; border-radius:16px; overflow:hidden; background:#fff; }
+    .dag-month{ background:#e64b3b; color:#fff; font-weight:800; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:4px 0; }
+    .dag-day{ font-size:42px; font-weight:800; color:#2a1f3d; line-height:1.2; }
+    .dag-weekday{ font-size:30px; font-weight:800; color:#e64b3b; line-height:1; }
+    .dag-sub{ margin-top:6px; font-weight:800; font-size:14px; color:#4a3c63; }
+    .dag-clock{ display:flex; align-items:center; gap:16px; justify-content:center; }
+    .dag-analog{ width:96px; height:96px; flex:0 0 auto; }
+    .dag-aface{ fill:#fffaf0; stroke:#2a1f3d; }
+    .dag-anum{ font-family:inherit; font-size:9px; font-weight:800; fill:#2a1f3d; text-anchor:middle; dominant-baseline:central; }
+    .dag-hand{ stroke:#2a1f3d; stroke-linecap:round; }
+    .dag-acenter{ fill:#e64b3b; stroke:#2a1f3d; stroke-width:1.4; }
+    .dag-digital{ font-size:44px; font-weight:800; color:#2a1f3d; line-height:1; font-variant-numeric:tabular-nums; }
+    .dag-words{ font-size:20px; font-weight:700; color:#2a1f3d; }
+    .dag-cols{ display:grid; grid-template-columns:1fr; gap:14px; }
+    .dag-h{ font-family:'Fredoka One',cursive; font-size:22px; color:#1e0f52; margin-bottom:10px; }
+    .dag-lessons{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+    .dag-lesson{ display:flex; align-items:center; gap:12px; background:#fff; border:3px solid #2a1f3d; border-radius:16px; padding:9px 13px; box-shadow:0 4px 0 rgba(42,31,61,.12); }
+    .dag-time{ font-size:20px; font-weight:800; color:#2a1f3d; width:74px; flex-shrink:0; font-variant-numeric:tabular-nums; }
+    .dag-ic{ width:42px; height:42px; flex-shrink:0; border:3px solid #2a1f3d; border-radius:12px; background:#f1dda8; display:grid; place-items:center; overflow:hidden; }
+    .dag-ic img{ width:34px; height:34px; object-fit:contain; }
+    .dag-name{ font-size:21px; font-weight:700; color:#2a1f3d; }
+    .dag-break{ display:flex; align-items:center; gap:12px; align-self:center; width:96%; background:linear-gradient(90deg,#eafad0,#dff3c0); border:3px dashed #5d9417; border-radius:30px; padding:7px 16px; }
+    .dag-btime{ font-size:17px; font-weight:700; color:#4a3c63; font-variant-numeric:tabular-nums; }
+    .dag-bname{ font-size:17px; font-weight:700; color:#5d9417; }
+    .dag-notes{ display:flex; flex-direction:column; gap:11px; }
+    .dag-note{ background:#fff5c7; border:3px solid #2a1f3d; border-radius:14px; padding:13px 16px; font-size:20px; font-weight:600; color:#2a1f3d; line-height:1.3; box-shadow:0 4px 0 rgba(42,31,61,.12); }
+    .dag-note:nth-child(2n){ background:#ffe0cf; }
+    .dag-note:nth-child(3n){ background:#d8f0d0; }
+    .dag-empty{ font-size:18px; font-weight:600; color:#7a6f63; padding:6px 2px; }
+    @media(min-width:760px){
+      .dag-top{ grid-template-columns:1fr 1fr; }
+      .dag-cols{ grid-template-columns:1fr 1fr; align-items:start; }
+    }
+  </style>
+  <div class="top-bar">
+    <button class="back-btn" onclick="goSplashFromDag()">← Ut</button>
+    <div style="text-align:center">
+      <div class="top-bar-title">📅 Dagen i dag</div>
+      <div class="top-bar-sub" id="dag-class"></div>
+    </div>
+    <div style="width:54px"></div>
+  </div>
+  <div id="dag-wrap">
+    <div class="dag-top">
+      <div class="dag-card dag-datecard">
+        <div class="dag-leaf"><div class="dag-month" id="dag-month">juni</div><div class="dag-day" id="dag-day">4</div></div>
+        <div><div class="dag-weekday" id="dag-weekday">Torsdag</div><div class="dag-sub"><span id="dag-week">Uke 23</span> · <span id="dag-year">2026</span></div></div>
+      </div>
+      <div class="dag-card dag-clock">
+        <svg viewBox="0 0 80 80" class="dag-analog" aria-hidden="true">
+          <circle cx="40" cy="40" r="37" class="dag-aface" stroke-width="3"/>
+          <text class="dag-anum" x="40" y="10">12</text><text class="dag-anum" x="55" y="14">1</text><text class="dag-anum" x="66" y="25">2</text><text class="dag-anum" x="70" y="40">3</text><text class="dag-anum" x="66" y="55">4</text><text class="dag-anum" x="55" y="66">5</text><text class="dag-anum" x="40" y="70">6</text><text class="dag-anum" x="25" y="66">7</text><text class="dag-anum" x="14" y="55">8</text><text class="dag-anum" x="10" y="40">9</text><text class="dag-anum" x="14" y="25">10</text><text class="dag-anum" x="25" y="14">11</text>
+          <line id="dag-hour" class="dag-hand" x1="40" y1="40" x2="40" y2="26" stroke-width="4.5"/>
+          <line id="dag-min" class="dag-hand" x1="40" y1="40" x2="40" y2="17" stroke-width="3"/>
+          <circle cx="40" cy="40" r="3.2" class="dag-acenter"/>
+        </svg>
+        <div><div class="dag-digital" id="dag-digital">08:42</div><div class="dag-words" id="dag-words">fem på halv ni</div></div>
+      </div>
+    </div>
+    <div class="dag-cols">
+      <div class="dag-card"><div class="dag-h">På timeplanen</div><ol class="dag-lessons" id="dag-lessons"></ol></div>
+      <div class="dag-card"><div class="dag-h">Beskjeder fra læreren</div><div class="dag-notes" id="dag-notes"></div></div>
+    </div>
+  </div>
+  <div id="dag-picker" style="display:none;max-width:540px;margin:0 auto;padding:26px 16px;">
+    <div style="font-family:'Fredoka One',cursive;font-size:24px;color:#1e0f52;text-align:center;margin-bottom:4px;">Hvilken klasse?</div>
+    <div style="text-align:center;color:#4a3c63;font-weight:600;margin-bottom:16px;">Velg klassen din én gang – så husker nettbrettet det.</div>
+    <div id="dag-picker-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
+<script src="elevapp57.js"></script>
+<script>
+// ── workspaceSettings snapshot for elevappen (fase 3) ───────────────────────
+(function() {
+  function whenReadyE(cb, tries) {
+    tries = tries || 0;
+    if (typeof window._fbReady !== 'undefined' && window._fbReady && window._ref && window._onValue) {
+      cb();
+    } else if (tries < 50) {
+      setTimeout(function(){ whenReadyE(cb, tries+1); }, 200);
+    }
+  }
+  whenReadyE(function() {
+    var wsSetRef = window._ref(window._db, 'workspaceSettings');
+    window._onValue(wsSetRef, function(snap) {
+      window._workspaceSettingsByWs = snap.val() || {};
+    });
+  });
+})();
+</script>
+<!-- Mynt-ikon: bytter 🪙-emojien til eget bilde overalt (også dynamisk innhold) -->
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
+<script>
+(function(){
+  var COIN='\uD83E\uDE99'; // 🪙
+  function convert(node){
+    if(!node) return;
+    if(node.nodeType===3){
+      var v=node.nodeValue;
+      if(!v || v.indexOf(COIN)===-1) return;
+      var p=node.parentNode; if(!p) return;
+      var tag=p.nodeName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA') return;
+      var parts=v.split(COIN), frag=document.createDocumentFragment();
+      for(var i=0;i<parts.length;i++){
+        if(parts[i]) frag.appendChild(document.createTextNode(parts[i]));
+        if(i<parts.length-1){
+          var img=document.createElement('img');
+          img.className='myntico'; img.src='mynt.webp'; img.alt='mynt';
+          frag.appendChild(img);
+        }
+      }
+      p.replaceChild(frag,node);
+    } else if(node.nodeType===1){
+      var t=node.nodeName;
+      if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='INPUT') return;
+      var kids=Array.prototype.slice.call(node.childNodes);
+      for(var i=0;i<kids.length;i++) convert(kids[i]);
+    }
+  }
+  function run(){ try{ convert(document.body); }catch(e){} }
+  try{
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var m=muts[i];
+        if(m.type==='childList'){ for(var j=0;j<m.addedNodes.length;j++) convert(m.addedNodes[j]); }
+        else if(m.type==='characterData'){ convert(m.target); }
+      }
+    });
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
+})();
+</script>
+</body>
+</html>
