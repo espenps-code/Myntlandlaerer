@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myntland – Flytt klasse</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+  :root{--blue:#1a5fa5;--green:#1D9E75;--green-light:#E1F5EE;--green-dark:#085041;
+    --amber:#EF9F27;--amber-light:#FAEEDA;--coral:#D85A30;--bg:#F7F9F7;--white:#fff;--text:#1a2e1a;--muted:#5a7a5a;--border:#c8dfc8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+  h1{font-family:'Fredoka One',cursive;font-weight:400;color:var(--green-dark);font-size:1.5rem;margin:0 0 4px;}
+  .sub{color:var(--muted);font-weight:600;margin:0 0 20px;text-align:center;max-width:520px;}
+  .card{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;
+    width:100%;max-width:540px;box-shadow:0 6px 20px rgba(8,80,65,.06);margin-bottom:18px;}
+  label{display:block;font-weight:700;font-size:.85rem;margin:0 0 5px;color:var(--green-dark);}
+  input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:11px;font-family:'Nunito';font-size:1rem;font-weight:600;}
+  input:focus{outline:none;border-color:var(--green);}
+  .btn{width:100%;border:none;border-radius:12px;padding:13px;font-family:'Nunito';font-weight:800;font-size:1rem;cursor:pointer;margin-top:16px;}
+  .btn-primary{background:var(--green);color:#fff;} .btn-primary:hover{background:var(--green-dark);}
+  .btn-amber{background:var(--amber);color:#3a2a06;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .alert{padding:11px 14px;border-radius:11px;font-weight:700;font-size:.88rem;margin-top:14px;}
+  .alert-error{background:#fde8e2;color:#a3341a;} .alert-ok{background:var(--green-light);color:var(--green-dark);} .alert-info{background:#dbeafe;color:#1e0f52;}
+  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.9rem;}
+  .row b{color:var(--green-dark);}
+  .opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--border);border-radius:11px;margin-top:8px;cursor:pointer;font-weight:700;}
+  .opt input{width:auto;}
+  .opt.sel{border-color:var(--green);background:var(--green-light);}
+  .muted{color:var(--muted);font-size:.82rem;line-height:1.5;margin-top:10px;}
+  code{background:var(--bg);padding:2px 6px;border-radius:5px;}
+</style>
+</head>
+<body>
+  <h1>🚚 Flytt klasse til ny struktur</h1>
+  <p class="sub">Kopierer den gamle, kjørende 5.–7.-klassen inn i en ny klasse. Den gamle røres ikke.</p>
+
+  <div class="card">
+    <label for="slug">Den NYE klassens lenke-kode (slug)</label>
+    <input id="slug" type="text" placeholder="f.eks. a1b2c3 — fra myntland.no/k/…">
+    <p class="muted">Finner du den på Min side, på den nye, tomme klassen du nettopp lagde.</p>
+    <button class="btn btn-primary" onclick="scan()">1) Skann gammel 5–7-klasse</button>
+    <div id="scanout"></div>
+  </div>
+
+  <div class="card" id="migcard" style="display:none;">
+    <label>2) Hvilke elever skal flyttes?</label>
+    <div id="classpick"></div>
+    <button class="btn btn-amber" onclick="migrate()">Flytt inn i den nye klassen →</button>
+    <div id="migout"></div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getDatabase, ref, get, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:"AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU", authDomain:"myntland.firebaseapp.com",
+    databaseURL:"https://myntland-default-rtdb.europe-west1.firebasedatabase.app", projectId:"myntland",
+    storageBucket:"myntland.firebasestorage.app", messagingSenderId:"711264415533",
+    appId:"1:711264415533:web:644a77a1e8b234667b2da4"
+  };
+  const app=initializeApp(firebaseConfig);
+  const appCheck=initializeAppCheck(app,{provider:new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),isTokenAutoRefreshEnabled:true});
+  await Promise.race([getToken(appCheck).catch(e=>console.warn(e)), new Promise(r=>setTimeout(r,3000))]);
+  const auth=getAuth(app); const db=getDatabase(app);
+  try{ await signInAnonymously(auth); }catch(e){ console.error('anon:',e); }
+
+  // Hele noder som kopieres uavkortet (delt klassedata i gammel struktur)
+  const WHOLE = ['jobs','shop57','customRewards57','classGoals','hendelser','settings','budgetSettings','fundHistory','workPlans','guardianCodes','salaryLastPaid','fridaySalaryLastPaid','fridayBudgetLastPaid','interestLastPaid','wedEventsLastApplied'];
+  // Noder keyet på elev-nøkkel (filtreres hvis du velger én klasse)
+  const PERSTUDENT = ['transactions57','workPlanProgress'];
+
+  const LABELS = {jobs:'Jobber',shop57:'Butikkvarer',customRewards57:'Egne belønninger',classGoals:'Sparemål',hendelser:'Hendelser',settings:'Innstillinger',budgetSettings:'Budsjett',fundHistory:'Fondshistorikk',workPlans:'Arbeidsplaner',guardianCodes:'Foresatt-koder',transactions57:'Transaksjoner',workPlanProgress:'Arbeidsplan-fremdrift'};
+
+  function msg(id,t,c){ document.getElementById(id).innerHTML='<div class="alert alert-'+c+'">'+t+'</div>'; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  let SCAN=null;
+
+  window.scan=async function(){
+    const raw=document.getElementById('slug').value.trim().toLowerCase();
+    if(!raw) return msg('scanout','Skriv inn den nye klassens slug.','error');
+    msg('scanout','Skanner …','info');
+    try{
+      // mål-klasse
+      const ss=await get(ref(db,'slugs/'+raw));
+      if(!ss.exists()) return msg('scanout','Fant ingen klasse med den koden. Sjekk slug-en fra Min side.','error');
+      const v=ss.val(); const classId=(typeof v==='string')?v:(v&&v.classId); const cname=(typeof v==='object'&&v.name)?v.name:'(ny klasse)'; const trinn=(typeof v==='object'&&v.trinn)?v.trinn:'?';
+      if(trinn!=='57') return msg('scanout','Denne klassen er ikke på 5.–7. trinn (trinn='+esc(trinn)+'). Velg en 5–7-klasse.','error');
+
+      // gamle elever
+      const st=await get(ref(db,'students57'));
+      const students = st.exists()? Object.entries(st.val()).map(([k,vv])=>({...vv,fbKey:k})) : [];
+      const byClass={};
+      students.forEach(s=>{ const c=(s.class&&String(s.class).trim())||'(uten klassenavn)'; byClass[c]=(byClass[c]||0)+1; });
+
+      // tellinger for andre noder
+      const counts={};
+      for(const n of WHOLE.concat(PERSTUDENT)){
+        const snap=await get(ref(db,n));
+        counts[n]= snap.exists()? (typeof snap.val()==='object'?Object.keys(snap.val()).length:1) : 0;
+      }
+
+      SCAN={classId,cname,trinn,students,byClass,counts};
+
+      let html='<div class="alert alert-ok">Mål: <b>'+esc(cname)+'</b> (5.–7. trinn) · <code>'+esc(classId)+'</code></div>';
+      html+='<div style="margin-top:14px;"><b>Gammel 5–7-data funnet:</b></div>';
+      html+='<div class="row"><span>Elever totalt</span><b>'+students.length+'</b></div>';
+      for(const n of WHOLE.concat(PERSTUDENT)){ if(counts[n]) html+='<div class="row"><span>'+esc(LABELS[n]||n)+'</span><b>'+counts[n]+'</b></div>'; }
+      document.getElementById('scanout').innerHTML=html;
+
+      // klassevalg
+      let pick='<label class="opt sel"><input type="radio" name="cl" value="__ALL__" checked> Alle elever ('+students.length+')</label>';
+      Object.keys(byClass).sort().forEach(c=>{ pick+='<label class="opt"><input type="radio" name="cl" value="'+esc(c)+'"> '+esc(c)+' ('+byClass[c]+' elever)</label>'; });
+      document.getElementById('classpick').innerHTML=pick;
+      document.querySelectorAll('input[name=cl]').forEach(r=>r.addEventListener('change',()=>{
+        document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+        r.closest('.opt').classList.add('sel');
+      }));
+      document.getElementById('migcard').style.display='block';
+    }catch(e){ msg('scanout','Feil: '+(e.message||e),'error'); }
+  };
+
+  window.migrate=async function(){
+    if(!SCAN) return;
+    const sel=document.querySelector('input[name=cl]:checked').value;
+    const all = sel==='__ALL__';
+    const students = all ? SCAN.students : SCAN.students.filter(s=>((s.class&&String(s.class).trim())||'(uten klassenavn)')===sel);
+    const keys = new Set(students.map(s=>s.fbKey));
+    if(!students.length) return msg('migout','Ingen elever i valget.','error');
+    if(!confirm('Flytte '+students.length+' elever + jobber, butikk, sparemål, innstillinger osv. inn i «'+SCAN.cname+'»?\n\nDen gamle klassen røres IKKE. Du kan kjøre dette på nytt om du vil.')) return;
+    msg('migout','Flytter … ikke lukk vinduet.','info');
+    try{
+      const base='classes/'+SCAN.classId+'/data/';
+      // elever (behold nøkler!)
+      const studObj={}; students.forEach(s=>{ const o={...s}; delete o.fbKey; studObj[s.fbKey]=o; });
+      await set(ref(db,base+'students57'), studObj);
+      // hele noder
+      let moved=['Elever: '+students.length];
+      for(const n of WHOLE){
+        const snap=await get(ref(db,n));
+        if(snap.exists()){ await set(ref(db,base+n), snap.val()); moved.push((LABELS[n]||n)); }
+      }
+      // per-elev noder (filtrer hvis ikke alle)
+      for(const n of PERSTUDENT){
+        const snap=await get(ref(db,n));
+        if(!snap.exists()) continue;
+        let val=snap.val();
+        if(!all && val && typeof val==='object'){ const f={}; for(const k in val){ if(keys.has(k)) f[k]=val[k]; } val=f; }
+        await set(ref(db,base+n), val);
+        moved.push((LABELS[n]||n));
+      }
+      document.getElementById('migout').innerHTML='<div class="alert alert-ok"><b>Ferdig! ✓</b><br>Flyttet inn i «'+esc(SCAN.cname)+'»:<br>'+moved.map(esc).join(' · ')+'</div>'
+        + '<p class="muted">Åpne den nye klassen fra Min side og sjekk at elever, saldo, jobber og butikk stemmer. Den gamle klassen er urørt.</p>';
+    }catch(e){ msg('migout','Feil under flytting: '+(e.message||e),'error'); }
+  };
+</script>
+</body>
+</html>
