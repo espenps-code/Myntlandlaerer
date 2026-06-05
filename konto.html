@@ -238,7 +238,7 @@
       const classRef=push(ref(db,'classes'));
       const classId=classRef.key, now=Date.now();
       await set(classRef,{ name, slug, trinn, ownerUid:uid, created:now, members:{[uid]:'owner'} });
-      await set(ref(db,'slugs/'+slug), classId);
+      await set(ref(db,'slugs/'+slug), { classId, name, trinn });
       await update(ref(db,'users/'+uid), { ['memberships/'+classId]:'owner', lastActiveClass:classId });
       return { classId, slug };
     },
