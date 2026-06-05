@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myntland</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+  :root{
+    --blue:#1a5fa5; --green:#1D9E75; --green-light:#E1F5EE; --green-dark:#085041;
+    --amber:#EF9F27; --amber-light:#FAEEDA; --purple-light:#EEEDFE;
+    --bg:#F7F9F7; --white:#fff; --text:#1a2e1a; --muted:#5a7a5a; --border:#c8dfc8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+  h1,h2{font-family:'Fredoka One',cursive;font-weight:400;color:var(--green-dark);margin:0;}
+  .card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:34px 28px;
+    width:100%;max-width:440px;text-align:center;box-shadow:0 8px 26px rgba(8,80,65,.08);}
+  .coin{width:62px;height:62px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.18));margin-bottom:14px;}
+  .badge{font-size:2.4rem;width:78px;height:78px;border-radius:20px;display:grid;place-items:center;margin:6px auto 14px;}
+  .badge-14{background:var(--amber-light);} .badge-57{background:var(--purple-light);}
+  .cname{font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--green-dark);margin:6px 0 2px;}
+  .trinn{color:var(--muted);font-weight:700;margin-bottom:18px;}
+  .btn{display:inline-block;border:none;border-radius:13px;padding:14px 26px;font-family:'Nunito';
+    font-weight:800;font-size:1.05rem;cursor:pointer;text-decoration:none;}
+  .btn-primary{background:var(--green);color:#fff;}
+  .btn-disabled{background:var(--bg);color:var(--muted);border:2px dashed var(--border);cursor:default;}
+  .muted{color:var(--muted);font-weight:600;font-size:.9rem;margin-top:16px;line-height:1.55;}
+  .spin{width:30px;height:30px;border:3.5px solid var(--border);border-top-color:var(--green);
+    border-radius:50%;animation:s .8s linear infinite;margin:8px auto;}
+  @keyframes s{to{transform:rotate(360deg);}}
+  a.home{color:var(--blue);font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="spin"></div>
+    <p class="muted">Et øyeblikk …</p>
+  </div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getDatabase, ref, get }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain: "myntland.firebaseapp.com",
+    databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "myntland",
+    storageBucket: "myntland.firebasestorage.app",
+    messagingSenderId: "711264415533",
+    appId: "1:711264415533:web:644a77a1e8b234667b2da4"
+  };
+
+  const card = document.getElementById('card');
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function render(html){ card.innerHTML = html; }
+
+  function show404(){
+    render(
+      '<img class="coin" src="mynt.webp" alt="Myntland-mynt">'+
+      '<h1>Side ikke funnet</h1>'+
+      '<p class="muted">Denne adressen finnes ikke i Myntland.</p>'+
+      '<p class="muted"><a class="home" href="/">Gå til forsiden</a></p>'
+    );
+  }
+  function showNoClass(){
+    render(
+      '<img class="coin" src="mynt.webp" alt="Myntland-mynt">'+
+      '<h1>Fant ingen klasse</h1>'+
+      '<p class="muted">Lenken peker ikke til en klasse som finnes. Sjekk at du har riktig adresse fra læreren.</p>'+
+      '<p class="muted"><a class="home" href="/">Gå til forsiden</a></p>'
+    );
+  }
+  function showClass(info){
+    const trinn = info.trinn==='57' ? '5.–7. trinn' : '1.–4. trinn';
+    const emoji = info.trinn==='57' ? '🎒' : '🧸';
+    const badge = info.trinn==='57' ? 'badge-57' : 'badge-14';
+    const name = info.name ? esc(info.name) : 'Klassen din';
+    render(
+      '<div class="badge '+badge+'">'+emoji+'</div>'+
+      '<div class="cname">'+name+'</div>'+
+      '<div class="trinn">'+trinn+'</div>'+
+      '<span class="btn btn-disabled">Åpne elevappen (kommer snart)</span>'+
+      '<p class="muted">Klassen er koblet riktig ✓<br>Selve elevappen kobles på i neste byggetrinn.</p>'
+    );
+  }
+
+  try{
+    // Hvilken slug? Tål /k/<kode> både på myntland.no og github.io-stien.
+    const m = location.pathname.match(/\/k\/([a-z0-9]+)\/?$/i);
+    if(!m){ show404(); }
+    else{
+      const app = initializeApp(firebaseConfig);
+      const appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+        isTokenAutoRefreshEnabled: true
+      });
+      await Promise.race([
+        getToken(appCheck).catch(e=>console.warn('[App Check]',e)),
+        new Promise(r=>setTimeout(r,3000))
+      ]);
+      const db = getDatabase(app);
+      const slug = m[1].toLowerCase();
+      const snap = await get(ref(db,'slugs/'+slug));
+      if(!snap.exists()){ showNoClass(); }
+      else{
+        const v = snap.val();
+        const info = (typeof v==='string') ? { classId:v } : (v||{});
+        showClass(info);
+      }
+    }
+  }catch(e){
+    console.error(e);
+    render('<img class="coin" src="mynt.webp" alt="mynt"><h1>Oisann</h1><p class="muted">Noe gikk galt da vi slo opp klassen. Prøv å laste siden på nytt.</p>');
+  }
+</script>
+</body>
+</html>
