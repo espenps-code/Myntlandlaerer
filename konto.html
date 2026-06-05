@@ -18,8 +18,8 @@
     min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
   h1,h2,h3{font-family:'Fredoka One',cursive;font-weight:400;color:var(--green-dark);margin:0;}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
-  .brand .coin{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#EF9F27);
-    display:grid;place-items:center;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  .brand .coin{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));}
+  .topbar .brand .coin{width:34px;height:34px;}
   .brand h1{font-size:1.8rem;}
   .sub{color:var(--muted);margin:0 0 22px;font-weight:600;}
   .card{background:var(--white);border:1px solid var(--border);border-radius:18px;
@@ -46,6 +46,13 @@
   .alert-error{background:#fde8e2;color:#a3341a;}
   .alert-ok{background:var(--green-light);color:var(--green-dark);}
   .alert-info{background:var(--blue-light);color:var(--blue-dark);}
+  .divider-or{display:flex;align-items:center;gap:12px;margin:20px 0 6px;color:var(--muted);font-weight:700;font-size:.8rem;}
+  .divider-or::before,.divider-or::after{content:"";flex:1;height:1px;background:var(--border);}
+  .btn-google{width:100%;border:2px solid var(--border);background:var(--white);color:#3c4043;
+    border-radius:12px;padding:12px;font-family:'Nunito';font-weight:800;font-size:.98rem;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;}
+  .btn-google:hover{background:var(--bg);}
+  .btn-google svg{width:18px;height:18px;flex:0 0 auto;}
   .topbar{width:100%;max-width:760px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
   .topbar .who{font-weight:700;color:var(--muted);font-size:.9rem;}
   .hide{display:none!important;}
@@ -71,23 +78,12 @@
   .seg .opt{border:2px solid var(--border);border-radius:11px;padding:12px;text-align:center;font-weight:800;
     color:var(--muted);transition:all .12s;}
   .seg input:checked + .opt{border-color:var(--green);background:var(--green-light);color:var(--green-dark);}
-  .divider-or{display:flex;align-items:center;gap:12px;margin:20px 0 6px;color:var(--muted);font-weight:700;font-size:.8rem;}
-  .divider-or::before,.divider-or::after{content:"";flex:1;height:1px;background:var(--border);}
-  .btn-google{width:100%;border:2px solid var(--border);background:var(--white);color:#3c4043;
-    border-radius:12px;padding:12px;font-family:'Nunito';font-weight:800;font-size:.98rem;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;}
-  .btn-google:hover{background:var(--bg);}
-  .btn-google svg{width:18px;height:18px;flex:0 0 auto;}
-  .spinner{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.4);
-    border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
-  @keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 
-  <!-- ========== UTLOGGET: innlogging / registrering ========== -->
   <div id="view-auth">
-    <div class="brand"><span class="coin">🪙</span><h1>Myntland</h1></div>
+    <div class="brand"><img class="coin" src="mynt.webp" alt="Myntland-mynt"><h1>Myntland</h1></div>
     <p class="sub">Min side – for lærere</p>
 
     <div class="card">
@@ -96,7 +92,6 @@
         <button id="tab-signup" onclick="showTab('signup')">Ny konto</button>
       </div>
 
-      <!-- Logg inn -->
       <form id="form-login" onsubmit="return false;">
         <label for="li-email">E-post</label>
         <input id="li-email" type="email" autocomplete="email" placeholder="navn@skole.no">
@@ -107,7 +102,6 @@
         <div id="login-alert" class="alert"></div>
       </form>
 
-      <!-- Ny konto -->
       <form id="form-signup" class="hide" onsubmit="return false;">
         <label for="su-name">Navn</label>
         <input id="su-name" type="text" autocomplete="name" placeholder="Ditt navn">
@@ -132,10 +126,9 @@
     </p>
   </div>
 
-  <!-- ========== INNLOGGET: mine klasser ========== -->
   <div id="view-app" class="hide" style="width:100%;display:flex;flex-direction:column;align-items:center;">
     <div class="topbar">
-      <div class="brand" style="margin:0;"><span class="coin">🪙</span><h1 style="font-size:1.4rem;">Myntland</h1></div>
+      <div class="brand" style="margin:0;"><img class="coin" src="mynt.webp" alt="Myntland-mynt"><h1 style="font-size:1.4rem;">Myntland</h1></div>
       <div style="display:flex;align-items:center;gap:14px;">
         <span class="who" id="who"></span>
         <button class="link" style="margin:0;" onclick="doLogout()">Logg ut</button>
@@ -152,13 +145,13 @@
       <h2 style="font-size:1.15rem;margin-bottom:2px;">Opprett ny klasse</h2>
       <form onsubmit="return false;">
         <label for="nc-name">Klassenavn</label>
-        <input id="nc-name" type="text" placeholder="f.eks. Froskene" oninput="previewSlug()">
+        <input id="nc-name" type="text" placeholder="f.eks. Froskene">
         <label>Trinn</label>
         <div class="seg">
           <label><input type="radio" name="trinn" value="14" checked><div class="opt">1.–4. trinn</div></label>
           <label><input type="radio" name="trinn" value="57"><div class="opt">5.–7. trinn</div></label>
         </div>
-        <p class="muted-note" id="slug-preview" style="margin-bottom:0;"></p>
+        <p class="muted-note" id="slug-preview" style="margin-bottom:0;">Klassen får sin egen tilfeldige delingslenke (myntland.no/k/…) når du oppretter den.</p>
         <button class="btn btn-amber" onclick="doCreateClass()">Opprett klasse</button>
         <div id="create-alert" class="alert"></div>
       </form>
@@ -199,11 +192,11 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  // ── Hjelpere ─────────────────────────────────────────────────────────────
-  function slugify(s){
-    return (s||'').toLowerCase().trim()
-      .replace(/æ/g,'ae').replace(/ø/g,'oe').replace(/å/g,'aa')
-      .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+  function randomCode(len){
+    const alphabet='abcdefghjkmnpqrstuvwxyz23456789';
+    const arr=new Uint32Array(len); crypto.getRandomValues(arr);
+    let s=''; for(let i=0;i<len;i++) s+=alphabet[arr[i]%alphabet.length];
+    return s;
   }
   function alertBox(id,type,msg){
     const el=document.getElementById(id);
@@ -219,14 +212,13 @@
     if(c.includes('user-not-found')) return 'Fant ingen konto med denne e-posten.';
     if(c.includes('too-many-requests')) return 'For mange forsøk. Vent litt og prøv igjen.';
     if(c.includes('operation-not-allowed')) return 'Innlogging er ikke skrudd på i Firebase ennå (Email/Password mangler).';
-    if(c.includes('network')) return 'Nettverksfeil. Sjekk internett og prøv igjen.';
     if(c.includes('popup-closed')||c.includes('cancelled-popup')) return 'Google-vinduet ble lukket før du logget inn.';
     if(c.includes('popup-blocked')) return 'Nettleseren blokkerte Google-vinduet. Tillat pop-up og prøv igjen.';
     if(c.includes('account-exists-with-different-credential')) return 'Denne e-posten finnes alt med en annen innloggingsmetode. Logg inn slik du gjorde sist.';
+    if(c.includes('network')) return 'Nettverksfeil. Sjekk internett og prøv igjen.';
     return (e&&e.message)||'Noe gikk galt. Prøv igjen.';
   }
 
-  // ── DATALAG (gjenbrukes av senere faser) ─────────────────────────────────
   const MyntData = {
     async register(name,email,password){
       const cred=await createUserWithEmailAndPassword(auth,email,password);
@@ -236,12 +228,12 @@
     },
     async createClass({name,trinn}){
       const uid=auth.currentUser.uid;
-      let base=slugify(name)||'klasse', slug=base, n=1;
+      let slug, tries=0;
       while(true){
+        slug=randomCode(6);
         const snap=await get(ref(db,'slugs/'+slug));
         if(!snap.exists()) break;
-        n++; slug=base+'-'+n;
-        if(n>60) throw new Error('Fant ingen ledig adresse for dette navnet.');
+        if(++tries>10){ slug=randomCode(8); break; }
       }
       const classRef=push(ref(db,'classes'));
       const classId=classRef.key, now=Date.now();
@@ -264,7 +256,6 @@
     }
   };
 
-  // ── UI-handlinger (eksponert for onclick) ────────────────────────────────
   window.showTab=function(which){
     document.getElementById('tab-login').classList.toggle('active',which==='login');
     document.getElementById('tab-signup').classList.toggle('active',which==='signup');
@@ -302,15 +293,14 @@
     }catch(e){ alertBox('login-alert','error',friendlyErr(e)); }
   };
 
-  window.doLogout=function(){ signOut(auth); };
-
   window.doGoogle=async function(){
     clearAlert('google-alert');
     try{ await signInWithPopup(auth, new GoogleAuthProvider()); }
     catch(e){ alertBox('google-alert','error',friendlyErr(e)); }
   };
 
-  // Sørg for at profil-noden finnes (Google-innlogging går ikke via register())
+  window.doLogout=function(){ signOut(auth); };
+
   async function ensureProfile(user){
     try{
       const snap=await get(ref(db,'users/'+user.uid));
@@ -323,24 +313,15 @@
     }catch(e){ console.warn('ensureProfile:',e); }
   }
 
-  window.previewSlug=function(){
-    const name=document.getElementById('nc-name').value;
-    const s=slugify(name);
-    const el=document.getElementById('slug-preview');
-    el.textContent = s ? ('Delingslenke blir: myntland.no/k/'+s) : '';
-  };
-
   window.doCreateClass=async function(){
     clearAlert('create-alert');
     const name=document.getElementById('nc-name').value.trim();
     const trinn=document.querySelector('input[name="trinn"]:checked').value;
     if(!name) return alertBox('create-alert','error','Gi klassen et navn.');
-    const btnNote=document.getElementById('create-alert');
     try{
       alertBox('create-alert','info','Oppretter klasse …');
       const {slug}=await MyntData.createClass({name,trinn});
       document.getElementById('nc-name').value='';
-      document.getElementById('slug-preview').textContent='';
       alertBox('create-alert','ok','Klassen «'+name+'» er opprettet! Lenke: myntland.no/k/'+slug);
       renderClasses();
     }catch(e){ alertBox('create-alert','error',friendlyErr(e)); }
@@ -352,12 +333,9 @@
   };
 
   window.openClass=function(classId,trinn){
-    // Fase 3: dette skal åpne lærerportalen for valgt klasse.
-    // Foreløpig en vennlig melding så vi ser at koblingen virker.
     alert('Åpner klasse (kommer i Fase 3):\nclassId = '+classId+'\ntrinn = '+trinn);
   };
 
-  // ── Render mine klasser ──────────────────────────────────────────────────
   async function renderClasses(){
     const wrap=document.getElementById('class-list');
     try{
@@ -368,26 +346,25 @@
         const badgeCls=c.trinn==='57'?'badge-57':'badge-14';
         const trinnTxt=c.trinn==='57'?'5.–7. trinn':'1.–4. trinn';
         const roleTxt=c.role==='owner'?'Eier':'Lærer';
-        return `<div class="class-card">
-          <div class="badge ${badgeCls}">${emoji}</div>
-          <div class="meta">
-            <div class="cname">${c.name} <span class="role-pill">${roleTxt}</span></div>
-            <div class="cdetail">${trinnTxt}</div>
-            <div class="sharebox">
-              <code>myntland.no/k/${c.slug}</code>
-              <button onclick="copyLink('${c.slug}',this)">Kopier</button>
-            </div>
-          </div>
-          <button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;"
-            onclick="openClass('${c.classId}','${c.trinn}')">Åpne</button>
-        </div>`;
+        return '<div class="class-card">'
+          +'<div class="badge '+badgeCls+'">'+emoji+'</div>'
+          +'<div class="meta">'
+            +'<div class="cname">'+c.name+' <span class="role-pill">'+roleTxt+'</span></div>'
+            +'<div class="cdetail">'+trinnTxt+'</div>'
+            +'<div class="sharebox">'
+              +'<code>myntland.no/k/'+c.slug+'</code>'
+              +'<button onclick="copyLink(\''+c.slug+'\',this)">Kopier</button>'
+            +'</div>'
+          +'</div>'
+          +'<button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;" '
+            +'onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">Åpne</button>'
+        +'</div>';
       }).join('');
     }catch(e){
       wrap.innerHTML='<div class="empty">Kunne ikke laste klasser: '+friendlyErr(e)+'</div>';
     }
   }
 
-  // ── Auth-tilstand styrer hvilken visning som vises ───────────────────────
   onAuthStateChanged(auth, async user=>{
     if(user){
       document.getElementById('view-auth').classList.add('hide');
@@ -401,7 +378,6 @@
     }
   });
 
-  // Eksponer datalaget for senere faser / feilsøking
   window.MyntData=MyntData;
 </script>
 </body>
