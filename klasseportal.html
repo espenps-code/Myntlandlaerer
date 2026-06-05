@@ -938,7 +938,7 @@ h1.sticker{
           <label class="set-switch"><input type="checkbox" id="setWeatherAuto"><span class="set-slider"></span></label>
         </div>
         <div class="set-row">
-          <div class="set-label">Sted<span class="set-sub">Skriv en by eller tettsted og trykk Søk. La feltet stå tomt for å bruke posisjonen i nettleseren.</span></div>
+          <div class="set-label">Sted<span class="set-sub">Skriv hvilken by eller tettsted været skal vises fra (f.eks. Kopervik), og trykk Søk.</span></div>
         </div>
         <div class="set-names" id="weatherPlaceWrap" style="gap:8px">
           <input type="text" id="setWeatherPlace" autocomplete="off" placeholder="F.eks. Bergen">
@@ -1316,13 +1316,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     { i: I.sun, l: 'Sol' }, { i: I.cloud, l: 'Skyet' },
     { i: I.rain, l: 'Regn' }, { i: I.snow, l: 'Snø' },
   ];
+  let weatherLiveOk = false;
   function renderWeather() {
     document.getElementById('wicon').innerHTML = W[data.weather].i;
     document.getElementById('wlabel').textContent = W[data.weather].l;
   }
   document.getElementById('weather').addEventListener('click', (e) => {
     if (e.target.closest('[data-edit]')) return;
-    if (data.weatherAuto) return;
+    if (data.weatherAuto && weatherLiveOk) return;
     data.weather = (data.weather + 1) % W.length; renderWeather(); save();
   });
   renderWeather();
@@ -1841,6 +1842,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       });
   }
   function setWeatherResult(res, label){
+    weatherLiveOk = true;
     data.weather = res.idx;
     data.temp = res.temp;
     renderWeather();
@@ -1849,26 +1851,23 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     setWeatherStatus('Oppdatert: ' + W[data.weather].l + ', ' + data.temp + (label ? ' (' + label + ')' : ''));
   }
   function applyWeatherAt(la, lo, label){
-    setWeatherStatus('Henter vær …');
+    setWeatherStatus('Henter vær for ' + (label || 'stedet') + ' …');
     fetchOpenMeteo(la, lo)
       .then(function(res){ setWeatherResult(res, label); })
-      .catch(function(){
+      .catch(function(err1){
         fetchMET(la, lo)
           .then(function(res){ setWeatherResult(res, label); })
-          .catch(function(){ setWeatherStatus('Kunne ikke hente vær akkurat nå. Prøv igjen – eller sjekk om nettverket blokkerer værtjenesten.'); });
+          .catch(function(){
+            weatherLiveOk = false;
+            var why = (err1 && (err1.message || err1.name)) ? (' [' + (err1.message || err1.name) + ']') : '';
+            setWeatherStatus('Fikk ikke vær fra ' + (label || 'stedet') + why + '. Trykk på været på tavla for å sette det selv.');
+          });
       });
   }
   function fetchAutoWeather(){
     if (!data.weatherAuto) return;
-    if (data.weatherLat != null && data.weatherLon != null){
-      applyWeatherAt(data.weatherLat, data.weatherLon, data.weatherPlace);
-      return;
-    }
-    if (!navigator.geolocation){ setWeatherStatus('Posisjon støttes ikke her. Velg et sted i stedet.'); return; }
-    setWeatherStatus('Henter posisjon …');
-    navigator.geolocation.getCurrentPosition(function(pos){
-      applyWeatherAt(pos.coords.latitude.toFixed(3), pos.coords.longitude.toFixed(3), '');
-    }, function(){ setWeatherStatus('Fikk ikke tilgang til posisjon. Velg et sted i stedet.'); }, { maximumAge: 600000, timeout: 10000 });
+    if (data.weatherLat == null || data.weatherLon == null){ setWeatherStatus('Skriv inn et sted og trykk Søk for å vise været.'); return; }
+    applyWeatherAt(data.weatherLat, data.weatherLon, data.weatherPlace);
   }
   function searchWeatherPlace(q){
     const box = document.getElementById('setWeatherResults'); if (!box) return;
