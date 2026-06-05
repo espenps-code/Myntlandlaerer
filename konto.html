@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myntland – Min side</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+  :root{
+    --blue:#1a5fa5; --blue-light:#dbeafe; --blue-dark:#1e0f52;
+    --green:#1D9E75; --green-light:#E1F5EE; --green-dark:#085041;
+    --amber:#EF9F27; --amber-light:#FAEEDA;
+    --coral:#D85A30; --purple:#534AB7; --purple-light:#EEEDFE;
+    --bg:#F7F9F7; --white:#fff; --text:#1a2e1a; --muted:#5a7a5a; --border:#c8dfc8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+  h1,h2,h3{font-family:'Fredoka One',cursive;font-weight:400;color:var(--green-dark);margin:0;}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .brand .coin{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#EF9F27);
+    display:grid;place-items:center;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  .brand h1{font-size:1.8rem;}
+  .sub{color:var(--muted);margin:0 0 22px;font-weight:600;}
+  .card{background:var(--white);border:1px solid var(--border);border-radius:18px;
+    padding:24px;width:100%;max-width:480px;box-shadow:0 6px 20px rgba(8,80,65,.06);margin-bottom:18px;}
+  .tabs{display:flex;gap:6px;background:var(--bg);padding:5px;border-radius:12px;margin-bottom:20px;}
+  .tabs button{flex:1;border:none;background:transparent;padding:10px;border-radius:9px;
+    font-family:'Nunito';font-weight:800;color:var(--muted);cursor:pointer;font-size:.95rem;}
+  .tabs button.active{background:var(--white);color:var(--green-dark);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  label{display:block;font-weight:700;font-size:.85rem;margin:14px 0 5px;color:var(--green-dark);}
+  input,select{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:11px;
+    font-family:'Nunito';font-size:1rem;font-weight:600;background:var(--white);}
+  input:focus,select:focus{outline:none;border-color:var(--green);}
+  .btn{width:100%;border:none;border-radius:12px;padding:13px;font-family:'Nunito';font-weight:800;
+    font-size:1rem;cursor:pointer;margin-top:18px;transition:transform .05s;}
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--green);color:var(--white);}
+  .btn-primary:hover{background:var(--green-dark);}
+  .btn-ghost{background:var(--bg);color:var(--green-dark);}
+  .btn-amber{background:var(--amber);color:#3a2a06;}
+  .link{background:none;border:none;color:var(--blue);font-weight:700;cursor:pointer;
+    font-family:'Nunito';font-size:.85rem;text-decoration:underline;padding:0;margin-top:12px;}
+  .alert{padding:11px 14px;border-radius:11px;font-weight:700;font-size:.88rem;margin-top:14px;display:none;}
+  .alert.show{display:block;}
+  .alert-error{background:#fde8e2;color:#a3341a;}
+  .alert-ok{background:var(--green-light);color:var(--green-dark);}
+  .alert-info{background:var(--blue-light);color:var(--blue-dark);}
+  .topbar{width:100%;max-width:760px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .topbar .who{font-weight:700;color:var(--muted);font-size:.9rem;}
+  .hide{display:none!important;}
+  .class-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--border);
+    border-radius:14px;margin-bottom:12px;background:var(--white);}
+  .class-card .badge{font-size:1.6rem;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;}
+  .badge-14{background:var(--amber-light);} .badge-57{background:var(--purple-light);}
+  .class-card .meta{flex:1;min-width:0;}
+  .class-card .cname{font-weight:800;color:var(--green-dark);font-size:1.05rem;}
+  .class-card .cdetail{font-size:.8rem;color:var(--muted);font-weight:600;margin-top:2px;}
+  .role-pill{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+    padding:3px 8px;border-radius:20px;background:var(--green-light);color:var(--green-dark);}
+  .sharebox{display:flex;gap:8px;margin-top:8px;align-items:center;}
+  .sharebox code{flex:1;background:var(--bg);border:1px dashed var(--border);border-radius:9px;
+    padding:8px 10px;font-size:.82rem;color:var(--blue-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sharebox button{border:none;background:var(--blue);color:#fff;border-radius:9px;padding:8px 12px;
+    font-weight:800;cursor:pointer;font-family:'Nunito';font-size:.8rem;flex:0 0 auto;}
+  .muted-note{font-size:.78rem;color:var(--muted);margin-top:8px;line-height:1.5;}
+  .empty{text-align:center;color:var(--muted);padding:18px;font-weight:600;}
+  .seg{display:flex;gap:8px;}
+  .seg label{flex:1;margin:0;cursor:pointer;}
+  .seg input{display:none;}
+  .seg .opt{border:2px solid var(--border);border-radius:11px;padding:12px;text-align:center;font-weight:800;
+    color:var(--muted);transition:all .12s;}
+  .seg input:checked + .opt{border-color:var(--green);background:var(--green-light);color:var(--green-dark);}
+  .divider-or{display:flex;align-items:center;gap:12px;margin:20px 0 6px;color:var(--muted);font-weight:700;font-size:.8rem;}
+  .divider-or::before,.divider-or::after{content:"";flex:1;height:1px;background:var(--border);}
+  .btn-google{width:100%;border:2px solid var(--border);background:var(--white);color:#3c4043;
+    border-radius:12px;padding:12px;font-family:'Nunito';font-weight:800;font-size:.98rem;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;}
+  .btn-google:hover{background:var(--bg);}
+  .btn-google svg{width:18px;height:18px;flex:0 0 auto;}
+  .spinner{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.4);
+    border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+  <!-- ========== UTLOGGET: innlogging / registrering ========== -->
+  <div id="view-auth">
+    <div class="brand"><span class="coin">🪙</span><h1>Myntland</h1></div>
+    <p class="sub">Min side – for lærere</p>
+
+    <div class="card">
+      <div class="tabs">
+        <button id="tab-login" class="active" onclick="showTab('login')">Logg inn</button>
+        <button id="tab-signup" onclick="showTab('signup')">Ny konto</button>
+      </div>
+
+      <!-- Logg inn -->
+      <form id="form-login" onsubmit="return false;">
+        <label for="li-email">E-post</label>
+        <input id="li-email" type="email" autocomplete="email" placeholder="navn@skole.no">
+        <label for="li-pass">Passord</label>
+        <input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+        <button class="btn btn-primary" onclick="doLogin()">Logg inn</button>
+        <button type="button" class="link" onclick="doReset()">Glemt passord?</button>
+        <div id="login-alert" class="alert"></div>
+      </form>
+
+      <!-- Ny konto -->
+      <form id="form-signup" class="hide" onsubmit="return false;">
+        <label for="su-name">Navn</label>
+        <input id="su-name" type="text" autocomplete="name" placeholder="Ditt navn">
+        <label for="su-email">E-post</label>
+        <input id="su-email" type="email" autocomplete="email" placeholder="navn@skole.no">
+        <label for="su-pass">Passord (minst 6 tegn)</label>
+        <input id="su-pass" type="password" autocomplete="new-password" placeholder="••••••••">
+        <button class="btn btn-primary" onclick="doSignup()">Opprett konto</button>
+        <div id="signup-alert" class="alert"></div>
+      </form>
+
+      <div class="divider-or"><span>eller</span></div>
+      <button class="btn-google" onclick="doGoogle()">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Fortsett med Google
+      </button>
+      <div id="google-alert" class="alert"></div>
+    </div>
+    <p class="muted-note" style="max-width:480px;text-align:center;">
+      Dataene dine er dine egne. Hver klasse er adskilt, og bare du og lærere du
+      inviterer har tilgang.
+    </p>
+  </div>
+
+  <!-- ========== INNLOGGET: mine klasser ========== -->
+  <div id="view-app" class="hide" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+    <div class="topbar">
+      <div class="brand" style="margin:0;"><span class="coin">🪙</span><h1 style="font-size:1.4rem;">Myntland</h1></div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="who" id="who"></span>
+        <button class="link" style="margin:0;" onclick="doLogout()">Logg ut</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:1.25rem;margin-bottom:4px;">Mine klasser</h2>
+      <p class="muted-note" style="margin-top:0;">Velg en klasse for å åpne lærerportalen, eller opprett en ny.</p>
+      <div id="class-list"><div class="empty">Laster …</div></div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:1.15rem;margin-bottom:2px;">Opprett ny klasse</h2>
+      <form onsubmit="return false;">
+        <label for="nc-name">Klassenavn</label>
+        <input id="nc-name" type="text" placeholder="f.eks. Froskene" oninput="previewSlug()">
+        <label>Trinn</label>
+        <div class="seg">
+          <label><input type="radio" name="trinn" value="14" checked><div class="opt">1.–4. trinn</div></label>
+          <label><input type="radio" name="trinn" value="57"><div class="opt">5.–7. trinn</div></label>
+        </div>
+        <p class="muted-note" id="slug-preview" style="margin-bottom:0;"></p>
+        <button class="btn btn-amber" onclick="doCreateClass()">Opprett klasse</button>
+        <div id="create-alert" class="alert"></div>
+      </form>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider, getToken }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+           signInWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail,
+           GoogleAuthProvider, signInWithPopup }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getDatabase, ref, get, set, update, push }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain: "myntland.firebaseapp.com",
+    databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "myntland",
+    storageBucket: "myntland.firebasestorage.app",
+    messagingSenderId: "711264415533",
+    appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+    measurementId: "G-95QZNLQ6V9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+    isTokenAutoRefreshEnabled: true
+  });
+  await Promise.race([
+    getToken(appCheck).catch(e => console.warn('[App Check]', e)),
+    new Promise(r => setTimeout(r, 3000))
+  ]);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  // ── Hjelpere ─────────────────────────────────────────────────────────────
+  function slugify(s){
+    return (s||'').toLowerCase().trim()
+      .replace(/æ/g,'ae').replace(/ø/g,'oe').replace(/å/g,'aa')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+  }
+  function alertBox(id,type,msg){
+    const el=document.getElementById(id);
+    el.className='alert show alert-'+type; el.textContent=msg;
+  }
+  function clearAlert(id){ const el=document.getElementById(id); el.className='alert'; }
+  function friendlyErr(e){
+    const c=(e&&e.code)||'';
+    if(c.includes('email-already-in-use')) return 'Denne e-posten har allerede en konto. Prøv å logge inn.';
+    if(c.includes('invalid-email')) return 'E-postadressen ser ikke riktig ut.';
+    if(c.includes('weak-password')) return 'Passordet er for kort – bruk minst 6 tegn.';
+    if(c.includes('wrong-password')||c.includes('invalid-credential')) return 'Feil e-post eller passord.';
+    if(c.includes('user-not-found')) return 'Fant ingen konto med denne e-posten.';
+    if(c.includes('too-many-requests')) return 'For mange forsøk. Vent litt og prøv igjen.';
+    if(c.includes('operation-not-allowed')) return 'Innlogging er ikke skrudd på i Firebase ennå (Email/Password mangler).';
+    if(c.includes('network')) return 'Nettverksfeil. Sjekk internett og prøv igjen.';
+    if(c.includes('popup-closed')||c.includes('cancelled-popup')) return 'Google-vinduet ble lukket før du logget inn.';
+    if(c.includes('popup-blocked')) return 'Nettleseren blokkerte Google-vinduet. Tillat pop-up og prøv igjen.';
+    if(c.includes('account-exists-with-different-credential')) return 'Denne e-posten finnes alt med en annen innloggingsmetode. Logg inn slik du gjorde sist.';
+    return (e&&e.message)||'Noe gikk galt. Prøv igjen.';
+  }
+
+  // ── DATALAG (gjenbrukes av senere faser) ─────────────────────────────────
+  const MyntData = {
+    async register(name,email,password){
+      const cred=await createUserWithEmailAndPassword(auth,email,password);
+      await updateProfile(cred.user,{displayName:name});
+      await set(ref(db,'users/'+cred.user.uid),{name,email,created:Date.now()});
+      return cred.user;
+    },
+    async createClass({name,trinn}){
+      const uid=auth.currentUser.uid;
+      let base=slugify(name)||'klasse', slug=base, n=1;
+      while(true){
+        const snap=await get(ref(db,'slugs/'+slug));
+        if(!snap.exists()) break;
+        n++; slug=base+'-'+n;
+        if(n>60) throw new Error('Fant ingen ledig adresse for dette navnet.');
+      }
+      const classRef=push(ref(db,'classes'));
+      const classId=classRef.key, now=Date.now();
+      await set(classRef,{ name, slug, trinn, ownerUid:uid, created:now, members:{[uid]:'owner'} });
+      await set(ref(db,'slugs/'+slug), classId);
+      await update(ref(db,'users/'+uid), { ['memberships/'+classId]:'owner', lastActiveClass:classId });
+      return { classId, slug };
+    },
+    async myClasses(){
+      const uid=auth.currentUser.uid;
+      const msnap=await get(ref(db,'users/'+uid+'/memberships'));
+      const m=msnap.val()||{};
+      const out=[];
+      for(const [classId,role] of Object.entries(m)){
+        const csnap=await get(ref(db,'classes/'+classId));
+        if(csnap.exists()) out.push({classId, role, ...csnap.val()});
+      }
+      out.sort((a,b)=>(a.created||0)-(b.created||0));
+      return out;
+    }
+  };
+
+  // ── UI-handlinger (eksponert for onclick) ────────────────────────────────
+  window.showTab=function(which){
+    document.getElementById('tab-login').classList.toggle('active',which==='login');
+    document.getElementById('tab-signup').classList.toggle('active',which==='signup');
+    document.getElementById('form-login').classList.toggle('hide',which!=='login');
+    document.getElementById('form-signup').classList.toggle('hide',which!=='signup');
+    clearAlert('login-alert'); clearAlert('signup-alert');
+  };
+
+  window.doSignup=async function(){
+    clearAlert('signup-alert');
+    const name=document.getElementById('su-name').value.trim();
+    const email=document.getElementById('su-email').value.trim();
+    const pass=document.getElementById('su-pass').value;
+    if(!name) return alertBox('signup-alert','error','Skriv inn navnet ditt.');
+    if(!email) return alertBox('signup-alert','error','Skriv inn e-post.');
+    if(pass.length<6) return alertBox('signup-alert','error','Passordet må ha minst 6 tegn.');
+    try{ await MyntData.register(name,email,pass); }
+    catch(e){ alertBox('signup-alert','error',friendlyErr(e)); }
+  };
+
+  window.doLogin=async function(){
+    clearAlert('login-alert');
+    const email=document.getElementById('li-email').value.trim();
+    const pass=document.getElementById('li-pass').value;
+    if(!email||!pass) return alertBox('login-alert','error','Fyll inn e-post og passord.');
+    try{ await signInWithEmailAndPassword(auth,email,pass); }
+    catch(e){ alertBox('login-alert','error',friendlyErr(e)); }
+  };
+
+  window.doReset=async function(){
+    const email=document.getElementById('li-email').value.trim();
+    if(!email) return alertBox('login-alert','info','Skriv inn e-posten din først, så sender vi en lenke.');
+    try{ await sendPasswordResetEmail(auth,email);
+      alertBox('login-alert','ok','Sjekk e-posten – vi har sendt en lenke for å nullstille passordet.');
+    }catch(e){ alertBox('login-alert','error',friendlyErr(e)); }
+  };
+
+  window.doLogout=function(){ signOut(auth); };
+
+  window.doGoogle=async function(){
+    clearAlert('google-alert');
+    try{ await signInWithPopup(auth, new GoogleAuthProvider()); }
+    catch(e){ alertBox('google-alert','error',friendlyErr(e)); }
+  };
+
+  // Sørg for at profil-noden finnes (Google-innlogging går ikke via register())
+  async function ensureProfile(user){
+    try{
+      const snap=await get(ref(db,'users/'+user.uid));
+      if(!snap.exists()){
+        await set(ref(db,'users/'+user.uid),{
+          name:user.displayName||(user.email||'').split('@')[0],
+          email:user.email||'', created:Date.now()
+        });
+      }
+    }catch(e){ console.warn('ensureProfile:',e); }
+  }
+
+  window.previewSlug=function(){
+    const name=document.getElementById('nc-name').value;
+    const s=slugify(name);
+    const el=document.getElementById('slug-preview');
+    el.textContent = s ? ('Delingslenke blir: myntland.no/k/'+s) : '';
+  };
+
+  window.doCreateClass=async function(){
+    clearAlert('create-alert');
+    const name=document.getElementById('nc-name').value.trim();
+    const trinn=document.querySelector('input[name="trinn"]:checked').value;
+    if(!name) return alertBox('create-alert','error','Gi klassen et navn.');
+    const btnNote=document.getElementById('create-alert');
+    try{
+      alertBox('create-alert','info','Oppretter klasse …');
+      const {slug}=await MyntData.createClass({name,trinn});
+      document.getElementById('nc-name').value='';
+      document.getElementById('slug-preview').textContent='';
+      alertBox('create-alert','ok','Klassen «'+name+'» er opprettet! Lenke: myntland.no/k/'+slug);
+      renderClasses();
+    }catch(e){ alertBox('create-alert','error',friendlyErr(e)); }
+  };
+
+  window.copyLink=function(slug,btn){
+    const url='myntland.no/k/'+slug;
+    navigator.clipboard?.writeText(url).then(()=>{ btn.textContent='Kopiert!'; setTimeout(()=>btn.textContent='Kopier',1500); });
+  };
+
+  window.openClass=function(classId,trinn){
+    // Fase 3: dette skal åpne lærerportalen for valgt klasse.
+    // Foreløpig en vennlig melding så vi ser at koblingen virker.
+    alert('Åpner klasse (kommer i Fase 3):\nclassId = '+classId+'\ntrinn = '+trinn);
+  };
+
+  // ── Render mine klasser ──────────────────────────────────────────────────
+  async function renderClasses(){
+    const wrap=document.getElementById('class-list');
+    try{
+      const classes=await MyntData.myClasses();
+      if(!classes.length){ wrap.innerHTML='<div class="empty">Ingen klasser ennå. Opprett din første under! 👇</div>'; return; }
+      wrap.innerHTML=classes.map(c=>{
+        const emoji=c.trinn==='57'?'🎒':'🧸';
+        const badgeCls=c.trinn==='57'?'badge-57':'badge-14';
+        const trinnTxt=c.trinn==='57'?'5.–7. trinn':'1.–4. trinn';
+        const roleTxt=c.role==='owner'?'Eier':'Lærer';
+        return `<div class="class-card">
+          <div class="badge ${badgeCls}">${emoji}</div>
+          <div class="meta">
+            <div class="cname">${c.name} <span class="role-pill">${roleTxt}</span></div>
+            <div class="cdetail">${trinnTxt}</div>
+            <div class="sharebox">
+              <code>myntland.no/k/${c.slug}</code>
+              <button onclick="copyLink('${c.slug}',this)">Kopier</button>
+            </div>
+          </div>
+          <button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;"
+            onclick="openClass('${c.classId}','${c.trinn}')">Åpne</button>
+        </div>`;
+      }).join('');
+    }catch(e){
+      wrap.innerHTML='<div class="empty">Kunne ikke laste klasser: '+friendlyErr(e)+'</div>';
+    }
+  }
+
+  // ── Auth-tilstand styrer hvilken visning som vises ───────────────────────
+  onAuthStateChanged(auth, async user=>{
+    if(user){
+      document.getElementById('view-auth').classList.add('hide');
+      document.getElementById('view-app').classList.remove('hide');
+      document.getElementById('who').textContent=user.displayName||user.email;
+      await ensureProfile(user);
+      renderClasses();
+    }else{
+      document.getElementById('view-app').classList.add('hide');
+      document.getElementById('view-auth').classList.remove('hide');
+    }
+  });
+
+  // Eksponer datalaget for senere faser / feilsøking
+  window.MyntData=MyntData;
+</script>
+</body>
+</html>
