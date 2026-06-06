@@ -2348,8 +2348,9 @@ function renderDag(){
   var t=dagToday();
   var cl=document.getElementById('dag-class');
   if(cl){
-    if(window._currentStudent){ cl.textContent='Klasse '+(window._currentStudent.class||''); }
-    else { var c=dagCtx(); cl.innerHTML = c ? ('Klasse '+dagEsc(c.klasse||'')+' · <span style="text-decoration:underline;cursor:pointer" onclick="dagRepick()">bytt</span>') : ''; }
+    var _b=dagBoard(); var _navn=(_b&&_b.klasse)?_b.klasse:'';
+    if(window._currentStudent){ cl.textContent='Klasse '+(_navn||window._currentStudent.class||''); }
+    else { var c=dagCtx(); var _nm=_navn||(c&&c.klasse)||''; cl.innerHTML = (c||_b) ? ('Klasse '+dagEsc(_nm)+' · <span style="text-decoration:underline;cursor:pointer" onclick="dagRepick()">bytt</span>') : ''; }
   }
   var ol=document.getElementById('dag-lessons');
   if(ol){
