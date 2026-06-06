@@ -2403,7 +2403,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   // Multi-tenant: klasse-stier scopes til classes/{id}/data/ (IKKE dayboard - elevappen leser flat)
   window._CLASS_ID = window._CLASS_ID || (new URLSearchParams(location.search).get('class') || '');
-  const CLASS_ROOTS = new Set(['students57','students14','transactions57','transactions14','classGoals','classGoals14','fundHistory','settings','customRewards57','customRewards14','groceries','hendelser','hendelser14','savings14','ordensSalary','workspaceSettings']);
+  const CLASS_ROOTS = new Set(['students57','students14','transactions57','transactions14','classGoals','classGoals14','fundHistory','settings','customRewards57','customRewards14','groceries','hendelser','hendelser14','savings14','ordensSalary','workspaceSettings','teachers','teachers57']);
   function classScope(pth){
     if(!window._CLASS_ID) return pth;
     const clean = String(pth).replace(/^\/+/,'');
