@@ -639,7 +639,6 @@ function renderStudentTable() {
       <td data-label="Elev"><div style="display:flex;align-items:center;gap:8px;">
         <div id="av-${s.fbKey}" style="width:36px;height:36px;flex-shrink:0;" data-seed="${s.avatarSeed||0}"></div>
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
-      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
       <td data-label="PIN"><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
       <td data-label="Saldo"><span class="balance-badge">🪙 ${s.balance}</span></td>
       <td data-label=""><div class="balance-actions">
@@ -981,7 +980,6 @@ function renderSaldoTable() {
     return `
     <tr>
       <td data-label="Elev"><strong>${s.firstname} ${s.lastname}</strong></td>
-      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
       <td data-label="Lommebok"><span class="balance-badge">🪙 ${s.balance}</span></td>
       <td data-label="Sparekonto"><span class="balance-badge" style="background:#dcfce7;color:#15803d;">🏦 ${savBal}</span></td>
       <td data-label=""><div class="balance-actions">
@@ -3230,7 +3228,6 @@ function renderMerkerPage() {
 
     return `<tr>
       <td data-label="Elev"><div style="font-weight:800;font-size:.88rem;">${s.firstname||''} ${s.lastname||''}</div></td>
-      <td data-label="Klasse"><span class="class-badge">${s.class||''}</span></td>
       <td data-label="Renter"><div style="font-weight:800;">🪙 ${renter}</div>${miniBar(renterPct, '#16a34a')}</td>
       <td data-label="Nivå">${renterLevels}</td>
       <td data-label="Quiz"><div style="font-weight:800;">${quiz}</div>${miniBar(quizPct, '#7c3aed')}</td>

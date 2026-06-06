@@ -467,7 +467,6 @@ function renderStudentTable() {
       <td data-label="Elev"><div style="display:flex;align-items:center;gap:8px;">
         ${avatarHTML}
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
-      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
       <td data-label="PIN"><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
       <td data-label="Saldo"><span class="balance-badge">🪙 ${s.balance||0}</span></td>
       <td data-label=""><div class="balance-actions">
@@ -1121,7 +1120,6 @@ function renderSaldoTable() {
           </div>
         </div>
       </td>
-      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
       <td data-label="Brukskonto"><span class="balance-badge">🪙 ${bruk}</span></td>
       <td data-label="Sparekonto"><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
       <td data-label="Fond lav"><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_low_units||0).toFixed(2)} andeler × 🪙${rateLow}">🪙 ${fl}</span></td>
@@ -3897,7 +3895,6 @@ function renderMerkerPage() {
       <td data-label="Elev">
         <div style="font-weight:800;font-size:.88rem;">${s.firstname} ${s.lastname}</div>
       </td>
-      <td data-label="Klasse"><span class="class-badge">${s.class}</span></td>
       <td data-label="Quiz">
         <div style="font-weight:800;">${quiz}</div>
         ${miniBar(quizPct, '#7c3aed')}
