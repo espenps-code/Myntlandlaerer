@@ -414,12 +414,23 @@
 
   <!-- KORT TAB -->
   <div class="tab-content content" id="tab-kort">
-    <div style="background:linear-gradient(135deg,#1a1a18,#3a3a36);border-radius:20px;padding:1.4rem;color:white;position:relative;overflow:hidden;margin-bottom:1rem;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between">
-      <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;border-radius:50%;background:rgba(239,159,39,.12)"></div>
-      <div><div style="width:32px;height:24px;background:var(--amber);border-radius:5px;position:relative;z-index:1"></div><div style="font-family:'Fredoka One',cursive;font-size:1.2rem;letter-spacing:4px;opacity:.9;z-index:1;position:relative;margin-top:.5rem" id="card-number">•••• ••••</div></div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1">
-        <div><div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.65;margin-bottom:2px">Kortinnehaver</div><div style="font-size:.82rem;font-weight:700;text-transform:uppercase" id="card-holder">–</div></div>
-        <div><div style="font-family:'Fredoka One',cursive;color:var(--amber);font-size:.95rem;text-align:right">Myntland</div><div style="font-size:.65rem;color:rgba(255,255,255,.5);text-align:right">Brukskonto</div></div>
+    <div style="background:#FBF4DD;border-radius:18px;overflow:hidden;margin-bottom:1rem;aspect-ratio:1.6;display:grid;grid-template-rows:36px 1fr;color:#2A1F3D;box-shadow:0 6px 20px rgba(42,31,61,.15)">
+      <div style="background:#F5C849;display:flex;align-items:center;justify-content:space-between;padding:0 1.1rem">
+        <span style="font-family:'Fredoka One',cursive;font-size:.92rem;letter-spacing:.08em">MYNTLAND</span>
+        <span style="width:23px;height:23px;border-radius:50%;background:#F5C849;border:2px solid #2A1F3D;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-style:italic;font-weight:900;font-size:.9rem;line-height:1">M</span>
+      </div>
+      <div style="display:grid;grid-template-rows:auto 1fr auto;padding:1rem 1.1rem">
+        <div><span style="display:inline-block;width:40px;height:30px;background:#E9BE44;border:1.5px solid #B8901F;border-radius:5px"></span></div>
+        <div id="card-number" style="font-family:ui-monospace,'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:1.2rem;letter-spacing:.1em;align-self:center">•••• ••••</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end">
+          <div style="min-width:0">
+            <div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#6E6480;margin-bottom:2px">Kortholder</div>
+            <div id="card-holder" style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">–</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;padding-left:10px">
+            <div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#6E6480">Brukskonto</div>
+          </div>
+        </div>
       </div>
     </div>
     <!-- PIN-visning -->
