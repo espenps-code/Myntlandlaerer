@@ -2336,7 +2336,7 @@ function dagCtx(){
   return null;
 }
 function dagBoard(){
-  var all=window._dayboard||{}; var c=dagCtx(); if(!c) return null;
+  var all=window._dayboard||{}; var c=dagCtx(); if(window._CLASS_ID && all[window._CLASS_ID]) return all[window._CLASS_ID]; if(!c) return null;
   if(c.ws && all[c.ws]) return all[c.ws];
   if(c.klasse){ for(var k in all){ if(all[k]&&all[k].klasse===c.klasse) return all[k]; } }
   return null;
