@@ -649,6 +649,7 @@ function tryLogin(){
     loadTransactions(s.fbKey);
     checkAndResetQuiz(s);
     checkAndPaySavingsInterest57(s);
+    checkAndAwardBadges(s);   // del ut merker som alt er over terskel (fremgang fra cron: skatt fredag, renter mandag)
     checkQuizStatus();
     renderLoan();
     checkLoanExpiry();
