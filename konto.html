@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Myntland – Min side</title>
+<meta name="theme-color" content="#1e0f52" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
   :root{
@@ -15,7 +17,7 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+    min-height:100vh;}
   h1,h2,h3{font-family:'Fredoka One',cursive;font-weight:400;color:var(--green-dark);margin:0;}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
   .brand .coin{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));}
@@ -56,7 +58,7 @@
   .topbar{width:100%;max-width:760px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
   .topbar .who{font-weight:700;color:var(--muted);font-size:.9rem;}
   .hide{display:none!important;}
-  .class-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--border);
+  .class-card{display:flex;align-items:flex-start;gap:14px;padding:16px;border:1px solid var(--border);
     border-radius:14px;margin-bottom:12px;background:var(--white);}
   .class-card .badge{font-size:1.6rem;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;}
   .badge-14{background:var(--amber-light);} .badge-57{background:var(--purple-light);}
@@ -84,9 +86,40 @@
   .btn-inv{border:none;background:transparent;color:var(--muted);font-size:.95rem;cursor:pointer;
     padding:8px 9px;border-radius:9px;margin:0;line-height:1;flex:0 0 auto;}
   .btn-inv:hover{background:var(--green-light);color:var(--green-dark);}
+  /* Tynn sticky topnav (lik for-skoler) */
+  .topnav{background:var(--white);border-bottom:1px solid var(--border);padding:.7rem 1.2rem;position:sticky;top:0;z-index:100;}
+  .topnav-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+  .topnav-logo{font-family:'Fredoka One',cursive;font-size:1.25rem;color:var(--blue-dark);text-decoration:none;display:flex;align-items:center;gap:.45rem;}
+  .topnav-logo img{width:26px;height:26px;display:block;}
+  .topnav-back{font-size:.88rem;font-weight:800;color:var(--green-dark);text-decoration:none;display:inline-flex;align-items:center;gap:5px;}
+  .topnav-back:hover{color:var(--blue-dark);}
+  .page{display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+  /* Tydeligere klasse-handlinger */
+  .cact{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px;}
+  .ca{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:10px;padding:9px 14px;font-family:'Nunito';font-weight:800;font-size:.85rem;cursor:pointer;margin:0;transition:transform .05s,background .15s;}
+  .ca:active{transform:scale(.97);}
+  .ca svg{width:16px;height:16px;flex:0 0 auto;}
+  .ca-open{background:var(--green);color:#fff;}
+  .ca-open:hover{background:var(--green-dark);}
+  .ca-invite{background:var(--green-light);color:var(--green-dark);}
+  .ca-invite:hover{background:#cdeede;}
+  .ca-del{background:#fde8e2;color:#a3341a;}
+  .ca-del:hover{background:#f9cfc3;}
 </style>
 </head>
 <body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo"><img src="mynt.webp" alt="">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
+
+<div class="page">
 
   <div id="view-auth">
     <div class="brand"><img class="coin" src="mynt.webp" alt="Myntland-mynt"><h1>Myntland</h1></div>
@@ -133,8 +166,7 @@
   </div>
 
   <div id="view-app" class="hide" style="width:100%;display:flex;flex-direction:column;align-items:center;">
-    <div class="topbar">
-      <div class="brand" style="margin:0;"><img class="coin" src="mynt.webp" alt="Myntland-mynt"><h1 style="font-size:1.4rem;">Myntland</h1></div>
+    <div class="topbar" style="justify-content:flex-end;">
       <div style="display:flex;align-items:center;gap:14px;">
         <span class="who" id="who"></span>
         <button class="link" style="margin:0;" onclick="doLogout()">Logg ut</button>
@@ -151,7 +183,7 @@
       <h2 style="font-size:1.15rem;margin-bottom:2px;">Opprett ny klasse</h2>
       <form onsubmit="return false;">
         <label for="nc-name">Klassenavn</label>
-        <input id="nc-name" type="text" placeholder="f.eks. Froskene">
+        <input id="nc-name" type="text" placeholder="f.eks. 5A">
         <label>Trinn</label>
         <div class="seg">
           <label><input type="radio" name="trinn" value="14" checked><div class="opt">1.–4. trinn</div></label>
@@ -163,6 +195,8 @@
       </form>
     </div>
   </div>
+
+</div>
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -390,6 +424,10 @@
       const badgeCls=c.trinn==='57'?'badge-57':'badge-14';
       const trinnTxt=c.trinn==='57'?'5.–7. trinn':'1.–4. trinn';
       const roleTxt=c.role==='owner'?'Eier':'Lærer';
+      const owner=c.role==='owner';
+      const svgOpen='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=\'M5 12h14\'/><path d=\'m12 5 7 7-7 7\'/></svg>';
+      const svgInv='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d=\'M3.5 19a5.5 5.5 0 0 1 11 0\'/><path d=\'M19 8v6M16 11h6\'/></svg>';
+      const svgDel='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=\'M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13\'/></svg>';
       return '<div class="class-card">'
         +'<div class="badge '+badgeCls+'">'+emoji+'</div>'
         +'<div class="meta">'
@@ -399,11 +437,12 @@
             +'<code>myntland.no/k/'+c.slug+'</code>'
             +'<button onclick="copyLink(\''+c.slug+'\',this)">Kopier</button>'
           +'</div>'
+          +'<div class="cact">'
+            +'<button class="ca ca-open" onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">'+svgOpen+'Åpne</button>'
+            +(owner ? '<button class="ca ca-invite" title="Inviter en annen lærer" onclick="inviteTeacher(\''+c.classId+'\',this)">'+svgInv+'Inviter lærer</button>' : '')
+            +(owner ? '<button class="ca ca-del" title="Slett klassen for godt" onclick="deleteClass(\''+c.classId+'\',\''+c.slug+'\',this)">'+svgDel+'Slett</button>' : '')
+          +'</div>'
         +'</div>'
-        +'<button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;" '
-          +'onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">Åpne</button>'
-        +(c.role==='owner' ? '<button class="btn-inv" title="Inviter lærer" onclick="inviteTeacher(\''+c.classId+'\',this)">👤+</button>' : '')
-          +(c.role==='owner' ? '<button class="btn-del" title="Slett klasse" onclick="deleteClass(\''+c.classId+'\',\''+c.slug+'\',this)">🗑</button>' : '')
       +'</div>';
     }).join('');
   }
