@@ -1342,6 +1342,10 @@ function renderFond(){
       <div class="fond-change" style="color:${lowGain>=0?'#86efac':'#fca5a5'};margin-top:.4rem">
         ${lowGain>=0?'📈':'📉'} ${lowGain>=0?'+':''}${lowGain} 🪙 (${lowPct>=0?'+':''}${lowPct}%)
       </div>
+      <div class="fond-actions">
+        <button class="fond-btn fond-btn-buy" onclick="openTransfer('bruk-til-fond-low')">Kjøp</button>
+        <button class="fond-btn fond-btn-sell" onclick="openTransfer('fond-low-til-bruk')">Selg</button>
+      </div>
     </div>
     <div class="fond-card high">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
@@ -1363,6 +1367,10 @@ function renderFond(){
       <div style="font-size:.72rem;color:rgba(255,255,255,.5);position:relative;z-index:1;margin-top:2px">Investert: 🪙 ${highInvested}</div>
       <div class="fond-change" style="color:${highGain>=0?'#86efac':'#fca5a5'};margin-top:.4rem">
         ${highGain>=0?'📈':'📉'} ${highGain>=0?'+':''}${highGain} 🪙 (${highPct>=0?'+':''}${highPct}%)
+      </div>
+      <div class="fond-actions">
+        <button class="fond-btn fond-btn-buy" onclick="openTransfer('bruk-til-fond-high')">Kjøp</button>
+        <button class="fond-btn fond-btn-sell" onclick="openTransfer('fond-high-til-bruk')">Selg</button>
       </div>
     </div>`;
   const totalFond = lowValue + highValue;
