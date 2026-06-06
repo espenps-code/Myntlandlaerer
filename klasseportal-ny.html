@@ -939,6 +939,7 @@ h1.sticker{
   <button id="tbDraw" title="Tegn på tavla">&#9999;&#65039;</button>
   <button id="tbReward" title="Belønning">&#127873;</button>
   <button id="tbMusic" title="Musikk">&#127925;</button>
+  <button id="tbTimer" title="Timer">&#9201;&#65039;</button>
   <button id="tbPlan" title="Planlegg uke">&#128197;</button>
   <button id="tbFs" title="Fullskjerm">&#9974;</button>
   <button id="tbSettings" title="Innstillinger">&#9881;&#65039;</button>
@@ -1123,6 +1124,14 @@ h1.sticker{
 </div>
 
 <!-- ====== MUSIKK-OVERLAY (bank) ====== -->
+<!-- ====== TIMER-OVERLAY (klassetimer.html i ramme) ====== -->
+<div class="ovl" id="timerOverlay">
+  <div class="ovl-card" style="width:min(96vw,1100px);height:min(92vh,760px);padding:0;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="ovl-head"><h3>&#9201;&#65039; Timer</h3><button class="ovl-x" id="timerClose">&times;</button></div>
+    <iframe id="timerFrame" title="Klassetimer" style="border:0;flex:1;width:100%;background:#cdeede;"></iframe>
+  </div>
+</div>
+
 <div class="ovl" id="musicOverlay">
   <div class="ovl-card">
     <div class="ovl-head"><h3>&#127925; Musikk</h3><button class="ovl-x" id="musicClose">&times;</button></div>
@@ -2394,6 +2403,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   ovl.addEventListener('click', function(e){ if(e.target===ovl) ovl.classList.remove('open'); });
   ovl.querySelectorAll('.rw-amt').forEach(function(b){ b.onclick=function(){ makeReward(b.getAttribute('data-a')); }; });
   document.getElementById('rwCustomBtn').onclick=function(){ makeReward(document.getElementById('rwCustom').value); };
+  (function(){
+    var tOvl=document.getElementById('timerOverlay'), tBtn=document.getElementById('tbTimer'), tFrame=document.getElementById('timerFrame');
+    if(tOvl&&tBtn&&tFrame){
+      tBtn.onclick=function(){ tFrame.src='klassetimer.html'; tOvl.classList.add('open'); };
+      document.getElementById('timerClose').onclick=function(){ tOvl.classList.remove('open'); tFrame.src='about:blank'; };
+      tOvl.addEventListener('click', function(e){ if(e.target===tOvl){ tOvl.classList.remove('open'); tFrame.src='about:blank'; } });
+    }
+  })();
   document.getElementById('rwCustom').addEventListener('keydown', function(e){ if(e.key==='Enter') makeReward(e.target.value); });
 })();
 </script>
