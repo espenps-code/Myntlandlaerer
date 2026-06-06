@@ -555,11 +555,16 @@ h1.sticker{
   flex-direction:column; align-items:center; gap:14px; }
 .dt-dock-left .dt-grow{ flex-direction:column; align-items:stretch; gap:8px; }
 .dt-dock-left .dt-btn{ width:100%; }
+/* verktoy-knapper: emoji over etiketten for aa spare bredde */
+.dt-dock-left .dt-tool{ display:flex; flex-direction:column; align-items:center; gap:2px; line-height:1.05; padding:8px 10px; }
+.dt-dock-left .dt-tool .dt-ico{ font-size:22px; line-height:1; }
 
 /* høyre dokk: farge + tykkelse */
 .dt-dock-right{ right:18px; top:50%; transform:translateY(-50%);
   flex-direction:column; align-items:center; gap:14px; }
 .dt-dock-right .dt-colors{ max-width:96px; }
+/* tykkelse-prikkene stables vertikalt i hoyre dokk for aa spare bredde */
+.dt-dock-right #dtSizes{ flex-direction:column; }
 
 /* nede i midten: ark + handlinger (Angre/Tøm/Lukk) */
 .dt-dock-bottom{ left:50%; bottom:22px; transform:translateX(-50%);
@@ -1058,9 +1063,9 @@ h1.sticker{
     <div class="dt-group">
       <span class="dt-glabel">Verktøy</span>
       <div class="dt-grow">
-        <button class="dt-btn" id="dtPen">&#9999;&#65039; Penn</button>
-        <button class="dt-btn" id="dtText">&#127345; Tekst</button>
-        <button class="dt-btn" id="dtEraser">Visk</button>
+        <button class="dt-btn dt-tool" id="dtPen"><span class="dt-ico">&#9999;&#65039;</span><span class="dt-tlabel">Penn</span></button>
+        <button class="dt-btn dt-tool" id="dtText"><span class="dt-ico">&#128292;</span><span class="dt-tlabel">Tekst</span></button>
+        <button class="dt-btn dt-tool" id="dtEraser"><span class="dt-ico">&#129533;</span><span class="dt-tlabel">Visk</span></button>
       </div>
     </div>
   </div>
