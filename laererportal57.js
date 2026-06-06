@@ -2010,10 +2010,10 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   }
 
   var css = ''
-    + '@page{size:A4 portrait;margin:8mm}'
+    + '@page{size:A4 portrait;margin:0}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.page{width:194mm;height:273mm;max-height:273mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
+    + '.page{width:210mm;height:273mm;max-height:273mm;margin:0 auto;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
     + '.page:last-of-type{page-break-after:auto}'
     + '.card-grid{position:absolute;inset:4mm 0 4mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:0}'
@@ -3109,8 +3109,8 @@ function printShopPDF() {
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
     <style>
       body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;}
-      @media print{@page{size:A4 landscape;margin:8mm}}
-      .page{display:flex;width:281mm;height:188mm;max-height:188mm;overflow:hidden;page-break-after:always;box-sizing:border-box;}
+      @media print{@page{size:A4 landscape;margin:0}}
+      .page{display:flex;width:297mm;height:188mm;max-height:188mm;margin:0 auto;overflow:hidden;page-break-after:always;box-sizing:border-box;}
       .page:last-child{page-break-after:avoid;}
       .item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;
             border:0.5mm solid #534AB7;padding:8mm;box-sizing:border-box;background:white;}
@@ -3422,14 +3422,15 @@ function openHendelserPrintWindow(cards) {
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Nunito', sans-serif; background: white; }
-    @media print { @page { size: A4 portrait; margin: 8mm; } }
+    @media print { @page { size: A4 portrait; margin: 0; } }
 
     /* Printbart omr. ved 8mm marg = 194×281mm. Arket gjoeres litt lavere (275mm)
        saa iPad/Safari ikke runder over til en blank ekstra side. */
     .page {
-      width: 194mm;
+      width: 210mm;
       height: 275mm;
       max-height: 275mm;
+      margin: 0 auto;
       overflow: hidden;
       display: grid;
       grid-template-columns: 1fr 1fr;
