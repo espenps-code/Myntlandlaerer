@@ -1794,8 +1794,10 @@ function printSingleQR(elId, label) {
       .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#534AB7;}
       .desc{font-size:3.5mm;color:#5a5080;text-align:center;font-weight:700;}
       .qr-wrap{display:flex;justify-content:center;align-items:center;}
+      ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerCSS}
     </style>
   </head><body>
+    ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerHTML}
     <div class="grid">
       ${[0,1,2,3].map(()=>`<div class="card">
         <div class="logo">🪙 Myntland</div>
@@ -1804,7 +1806,6 @@ function printSingleQR(elId, label) {
         <div class="desc">Belønning</div>
       </div>`).join('')}
     </div>
-    <script>setTimeout(()=>{window.focus();window.print();},300);<\/script>
   </body></html>`);
   win.document.close();
 }
@@ -1832,8 +1833,10 @@ function _printRewardCards57(rewards) {
       .amount{font-family:'Fredoka One',cursive;font-size:12mm;color:#534AB7;}
       .desc{font-size:3.5mm;color:#5a5080;text-align:center;font-weight:700;}
       .qr-wrap{display:flex;justify-content:center;align-items:center;}
+      ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerCSS}
     </style>
   </head><body>
+    ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerHTML}
     <div class="grid">${cardsHTML}</div>
     <script>
       var payloads=${JSON.stringify(payloads)};
@@ -1847,7 +1850,7 @@ function _printRewardCards57(rewards) {
         }
         return done;
       }
-      var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>40){clearInterval(poll);setTimeout(function(){window.focus();window.print();},400);}},150);
+      var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>40){clearInterval(poll);}},150);
     <\/script>
   </body></html>`);
   win.document.close();
@@ -1858,6 +1861,40 @@ function _printRewardCards57(rewards) {
 // Bygger en komplett HTML-side med 8 forsider + 8 baksider per A4-side.
 // Brukes av begge lærerportaler (1–4 og 5–7) til utskrift av bankkort.
 // ════════════════════════════════════════════════════════════════════
+window.buildPdfDownloadBanner = function(title, opts) {
+  opts = opts || {};
+  var twoSided  = !!opts.twoSided;
+  var landscape = !!opts.landscape;
+  var heading = twoSided ? 'Slik skriver du ut – tosidig' : 'Slik skriver du ut';
+  var steps = ''
+    + '<li>Trykk <strong>«Skriv ut»</strong> nederst.</li>'
+    + '<li>Velg skriveren din — eller <strong>«Lagre som PDF»</strong> om du vil skrive ut senere.</li>'
+    + '<li>Sett skala til <strong>100 %</strong> (ikke «tilpass til side»), og slå på <strong>«skriv ut bakgrunnsgrafikk»</strong> så fargene blir med.</li>';
+  if (twoSided)  steps += '<li>Velg <strong>tosidig utskrift</strong> og <strong>«vend langs lang kant»</strong>, så baksiden havner rett bak forsiden.</li>';
+  if (landscape) steps += '<li>📐 Velg <strong>Liggende</strong> i dialogen — arket er laget liggende.</li>';
+  steps += twoSided
+    ? '<li>Klipp langs de stiplede linjene på forsidearket.</li>'
+    : '<li>Klipp langs de stiplede linjene.</li>';
+  var bannerHTML = ''
+    + '<div class="print-info-banner"><div class="pib-inner">'
+    +   '<div class="pib-title">🖨️ ' + heading + '</div>'
+    +   '<ol class="pib-list">' + steps + '</ol>'
+    +   '<button class="pib-print-btn" onclick="window.print()">🖨️ Skriv ut nå</button>'
+    + '</div></div>';
+  var bannerCSS = ''
+    + '@media screen{'
+    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
+    +   '.pib-inner{max-width:780px;margin:0 auto}'
+    +   '.pib-title{font-family:"Bowlby One","Fredoka One",sans-serif;font-size:13pt;margin-bottom:8px;letter-spacing:.02em}'
+    +   '.pib-list{margin:0 0 10px 20px;padding:0;font-size:10.5pt;line-height:1.55}'
+    +   '.pib-list li{margin-bottom:3px}'
+    +   '.pib-print-btn{background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One","Fredoka One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer}'
+    +   'body{padding-top:230px}'
+    + '}'
+    + '@media print{.print-info-banner{display:none!important}body{padding-top:0!important}}';
+  return { bannerHTML: bannerHTML, bannerCSS: bannerCSS };
+};
+
 window.buildMyntlandBankCardsHTML = function(students, opts) {
   opts = opts || {};
   var showPin   = !!opts.showPin;
@@ -1976,9 +2013,9 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '@page{size:A4 portrait;margin:8mm}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.page{width:194mm;height:281mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
+    + '.page{width:194mm;height:273mm;max-height:273mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
     + '.page:last-of-type{page-break-after:auto}'
-    + '.card-grid{position:absolute;inset:6mm 0 6mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
+    + '.card-grid{position:absolute;inset:4mm 0 4mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:0}'
     + '.card-slot-empty{visibility:hidden}'
     /* Klippelinjer — KUN på forsidearket, aldri på baksiden */
@@ -2025,29 +2062,10 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '.back .bn-lbl{display:block;font-family:"Nunito",sans-serif;font-weight:800;font-size:6.5pt;letter-spacing:.16em;color:#6E6480}'
     + '.back .bn-line{display:block;border-bottom:.4mm solid #B0A8C0;height:5mm;margin-top:.6mm}';
 
-  // Info-banner i forhåndsvisningen — skjules ved utskrift.
-  var infoBanner = ''
-    + '<div class="print-info-banner"><div class="pib-inner">'
-    +   '<div class="pib-title">Slik skriver du ut bankkortene</div>'
-    +   '<ol class="pib-list">'
-    +     '<li>Velg <strong>tosidig utskrift</strong> og <strong>«vend langs lang kant»</strong>.</li>'
-    +     '<li>Sett <strong>skala til 100 %</strong> — ikke «tilpass til side».</li>'
-    +     '<li>Skru på <strong>«skriv ut bakgrunnsgrafikk»</strong> så fargene blir med.</li>'
-    +     '<li>Klipp langs de stiplede linjene på forsidearket. Skriv elevens navn på baksiden før du laminerer.</li>'
-    +   '</ol>'
-    +   '<button class="pib-print-btn" onclick="window.print()">Skriv ut nå</button>'
-    + '</div></div>';
-  var bannerCSS = ''
-    + '@media screen{'
-    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
-    +   '.pib-inner{max-width:760px;margin:0 auto}'
-    +   '.pib-title{font-family:"Bowlby One",sans-serif;font-size:13pt;margin-bottom:8px;letter-spacing:.02em}'
-    +   '.pib-list{margin:0 0 10px 20px;padding:0;font-size:10.5pt;line-height:1.55}'
-    +   '.pib-list li{margin-bottom:3px}'
-    +   '.pib-print-btn{background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer}'
-    +   'body{padding-top:215px}'
-    + '}'
-    + '@media print{.print-info-banner{display:none!important}body{padding-top:0!important}}';
+  // Felles utskriftsforklaring (tosidig) — samme tekst i begge portaler.
+  var _bb = window.buildPdfDownloadBanner('', { twoSided: true });
+  var infoBanner = _bb.bannerHTML;
+  var bannerCSS  = _bb.bannerCSS;
 
   return '<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>' + escapeHTML(title) + '</title>'
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
@@ -3091,8 +3109,9 @@ function printShopPDF() {
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
     <style>
       body{margin:0;padding:0;font-family:'Nunito',sans-serif;background:white;}
-      @media print{@page{size:A4 landscape;margin:0}}
-      .page{display:flex;width:297mm;height:210mm;page-break-after:always;box-sizing:border-box;}
+      @media print{@page{size:A4 landscape;margin:8mm}}
+      .page{display:flex;width:281mm;height:188mm;max-height:188mm;overflow:hidden;page-break-after:always;box-sizing:border-box;}
+      .page:last-child{page-break-after:avoid;}
       .item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;
             border:0.5mm solid #534AB7;padding:8mm;box-sizing:border-box;background:white;}
       .item-cat  {font-size:4.5mm;font-weight:900;color:#534AB7;text-transform:uppercase;letter-spacing:.3mm;}
@@ -3100,8 +3119,9 @@ function printShopPDF() {
       .item-name {font-family:'Fredoka One',cursive;font-size:12mm;color:#1e0f52;text-align:center;}
       .item-price{background:#EEEDFE;color:#534AB7;font-weight:900;padding:2mm 8mm;border-radius:4mm;font-size:10mm;}
       .item-qr   {display:flex;justify-content:center;align-items:center;}
+      ${window.buildPdfDownloadBanner('', { landscape:true }).bannerCSS}
     </style>
-  </head><body>${pagesHTML}<script>setTimeout(function(){window.focus();window.print();},800);<\/script></body></html>`);
+  </head><body>${window.buildPdfDownloadBanner('', { landscape:true }).bannerHTML}${pagesHTML}</body></html>`);
   win.document.close();
 }
 
@@ -3402,17 +3422,21 @@ function openHendelserPrintWindow(cards) {
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Nunito', sans-serif; background: white; }
-    @media print { @page { size: A4 portrait; margin: 0; } }
+    @media print { @page { size: A4 portrait; margin: 8mm; } }
 
-    /* A4 = 210 × 297mm. 4 kort: 2×2 rutenett, kuttlinjer mellom */
+    /* Printbart omr. ved 8mm marg = 194×281mm. Arket gjoeres litt lavere (275mm)
+       saa iPad/Safari ikke runder over til en blank ekstra side. */
     .page {
-      width: 210mm;
-      height: 297mm;
+      width: 194mm;
+      height: 275mm;
+      max-height: 275mm;
+      overflow: hidden;
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
       page-break-after: always;
     }
+    .page:last-child { page-break-after: avoid; }
 
     /* Kuttlinjer: grønn stiplet linje mellom kortene */
     .page::after {
@@ -3475,10 +3499,11 @@ function openHendelserPrintWindow(cards) {
     .amount   { font-family: 'Fredoka One', cursive; font-size: 11mm; line-height: 1; }
     .qr-wrap  { display: flex; justify-content: center; }
     .scan-hint{ font-size: 3mm; color: #6b7280; font-weight: 700; }
+  ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerCSS}
   </style>
 </head><body>
+  ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerHTML}
   ${pagesHTML}
-  <script>setTimeout(function(){ window.focus(); window.print(); }, 800);<\/script>
 </body></html>`);
   win.document.close();
 }

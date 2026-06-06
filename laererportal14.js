@@ -1261,10 +1261,12 @@ const MYNTLAND_BUTIKK_CSS = `
   :root{--gull:#C99517;--gull-lys:#FFF7DD;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--pergament:#FBF2D6;}
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:white;font-family:'Nunito',sans-serif;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  @page{size:A4 landscape;margin:0}
-  /* Hvit side */
-  .page{width:297mm;height:208mm;max-height:208mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}
-  .page.landscape{width:297mm;height:208mm;max-height:208mm}
+  @page{size:A4 landscape;margin:8mm}
+  /* Hvit side — printbart omr. ved 8mm marg = 281×194mm. Arket gjoeres litt
+     smalere/lavere (281×188) saa iPad/Safari ikke flyter over til ekstra side. */
+  .page{width:281mm;height:188mm;max-height:188mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}
+  .page:last-child{page-break-after:avoid}
+  .page.landscape{width:281mm;height:188mm;max-height:188mm}
   /* 2 lister side-om-side på en A4 landskap */
   .liste-page{position:absolute;inset:10mm 10mm;display:grid;grid-template-columns:1fr 1fr;gap:8mm}
   /* Liste: ren hvit, gull venstrekant signaliserer Myntland */
@@ -1393,10 +1395,12 @@ function generateGroceryPDF() {
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    @page{size:A4 portrait;margin:0}
+    @page{size:A4 portrait;margin:8mm}
 
-    /* 2x2 grid: 4 stående A6 (105×148mm) per A4 */
-    .page{width:210mm;height:295mm;max-height:295mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
+    /* 2x2 grid: 4 kort per A4. Printbart omr. 194×281mm; arket gjoeres litt
+       lavere (275mm) saa iPad/Safari ikke runder over til blank ekstra side. */
+    .page{width:194mm;height:275mm;max-height:275mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
+    .page:last-child{page-break-after:avoid}
 
     .vare{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}
     .vare.empty{visibility:hidden}
@@ -1452,7 +1456,7 @@ function generateGroceryPDF() {
     .back-sub{font-family:'Fraunces',serif;font-style:italic;font-weight:900;font-size:11pt;color:var(--blekk-myk);margin-top:2mm;letter-spacing:.08em}
   `;
 
-  const _bv = window.buildPdfDownloadBanner('Slik laster du ned varekort', { twoSided: true });
+  const _bv = window.buildPdfDownloadBanner('', { twoSided: true });
   const win = window.open('', '_blank', 'width=900,height=700');
   win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1540,7 +1544,7 @@ function buildShoppingListPageHTML(arr1, arr2, sn) {
       <div class="foot-line"><span>Regn ut total og gå til kassa</span><span class="stamp">MYNTLAND · MARKED</span></div>
     </div>`;
   }
-  return `<div class="page landscape" style="width:297mm;height:208mm;overflow:hidden;">
+  return `<div class="page landscape" style="width:281mm;height:188mm;overflow:hidden;">
     <div class="page-corner tl">Myntland · Handleliste</div>
     <div class="page-corner br">klipp i to · gi til to elever</div>
     <div class="liste-page">${listHTML(arr1, sn)}${listHTML(arr2, sn)}</div>
@@ -1707,7 +1711,7 @@ function printShoppingList() {
     allPages += buildShoppingListPageHTML(a, b, sn);
   }
 
-  const _bh = window.buildPdfDownloadBanner('Slik laster du ned handlelister');
+  const _bh = window.buildPdfDownloadBanner('', { landscape: true });
   const win = window.open('', '_blank', 'width=1100,height=700');
   win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1800,7 +1804,7 @@ function printSingleQR(elId, label) {
   const dataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
   if (!dataUrl) { alert('QR ikke klar – vent litt og prøv igjen.'); return; }
   const amount = parseInt(label);
-  const _br1 = window.buildPdfDownloadBanner('Slik laster du ned belønningskort');
+  const _br1 = window.buildPdfDownloadBanner('');
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,900;1,900&family=Bowlby+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
@@ -1848,7 +1852,7 @@ function _printRewardCards(rewards) {
       </div>
     </div>`
   ).join('');
-  const _br2 = window.buildPdfDownloadBanner('Slik laster du ned belønningskort');
+  const _br2 = window.buildPdfDownloadBanner('');
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,900;1,900&family=Bowlby+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
@@ -1903,25 +1907,25 @@ function _printRewardCards(rewards) {
 // før innholdet og inne i <style>-blokken.
 // ════════════════════════════════════════════════════════════════════
 window.buildPdfDownloadBanner = function(title, opts) {
-  title = title || 'Slik laster du ned og skriver ut';
   opts = opts || {};
-  var twoSidedTip = opts.twoSided
-    ? '<li>I skriver-dialogen: velg <strong>tosidig utskrift, «vend langs lang kant»</strong> og <strong>skala 100 %</strong>.</li>'
-    : '<li>I skriver-dialogen: pass på at <strong>skala er 100 %</strong> og <strong>«skriv ut bakgrunnsgrafikk»</strong> er på.</li>';
+  var twoSided  = !!opts.twoSided;
+  var landscape = !!opts.landscape;
+  var heading = twoSided ? 'Slik skriver du ut – tosidig' : 'Slik skriver du ut';
+  var steps = ''
+    + '<li>Trykk <strong>«Skriv ut»</strong> nederst.</li>'
+    + '<li>Velg skriveren din — eller <strong>«Lagre som PDF»</strong> om du vil skrive ut senere.</li>'
+    + '<li>Sett skala til <strong>100 %</strong> (ikke «tilpass til side»), og slå på <strong>«skriv ut bakgrunnsgrafikk»</strong> så fargene blir med.</li>';
+  if (twoSided)  steps += '<li>Velg <strong>tosidig utskrift</strong> og <strong>«vend langs lang kant»</strong>, så baksiden havner rett bak forsiden.</li>';
+  if (landscape) steps += '<li>📐 Velg <strong>Liggende</strong> i dialogen — arket er laget liggende.</li>';
+  steps += twoSided
+    ? '<li>Klipp langs de stiplede linjene på forsidearket.</li>'
+    : '<li>Klipp langs de stiplede linjene.</li>';
   var bannerHTML = ''
-    + '<div class="print-info-banner">'
-    +   '<div class="pib-inner">'
-    +     '<div class="pib-title">📋 ' + title + '</div>'
-    +     '<ol class="pib-list">'
-    +       '<li>Trykk <strong>«Last ned PDF»</strong> under.</li>'
-    +       '<li>I dialogen som åpnes: velg <strong>«Lagre som PDF»</strong> som mål (ikke en skriver).</li>'
-    +       '<li>Lagre filen, åpne den, og send <strong>den ferdige PDF-en til skoleskriveren</strong>.</li>'
-    +       twoSidedTip
-    +     '</ol>'
-    +     '<div class="pib-tip">💡 <em>Tips:</em> Skoleskrivere takler en ferdig PDF mye bedre enn utskrift sendt direkte fra nettleseren — derfor dette mellom-steget.</div>'
-    +     '<button class="pib-print-btn" onclick="window.print()">📄 Last ned PDF</button>'
-    +   '</div>'
-    + '</div>';
+    + '<div class="print-info-banner"><div class="pib-inner">'
+    +   '<div class="pib-title">🖨️ ' + heading + '</div>'
+    +   '<ol class="pib-list">' + steps + '</ol>'
+    +   '<button class="pib-print-btn" onclick="window.print()">🖨️ Skriv ut nå</button>'
+    + '</div></div>';
 
   var bannerCSS = ''
     + '@media screen{'
@@ -2213,9 +2217,9 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '@page{size:A4 portrait;margin:8mm}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.page{width:194mm;height:281mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
+    + '.page{width:194mm;height:273mm;max-height:273mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
     + '.page:last-of-type{page-break-after:auto}'
-    + '.card-grid{position:absolute;inset:6mm 0 6mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
+    + '.card-grid{position:absolute;inset:4mm 0 4mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:0}'
     + '.card-slot-empty{visibility:hidden}'
     /* Klippelinjer — KUN på forsidearket, aldri på baksiden */
@@ -2262,29 +2266,10 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
     + '.back .bn-lbl{display:block;font-family:"Nunito",sans-serif;font-weight:800;font-size:6.5pt;letter-spacing:.16em;color:#6E6480}'
     + '.back .bn-line{display:block;border-bottom:.4mm solid #B0A8C0;height:5mm;margin-top:.6mm}';
 
-  // Info-banner i forhåndsvisningen — skjules ved utskrift.
-  var infoBanner = ''
-    + '<div class="print-info-banner"><div class="pib-inner">'
-    +   '<div class="pib-title">Slik skriver du ut bankkortene</div>'
-    +   '<ol class="pib-list">'
-    +     '<li>Velg <strong>tosidig utskrift</strong> og <strong>«vend langs lang kant»</strong>.</li>'
-    +     '<li>Sett <strong>skala til 100 %</strong> — ikke «tilpass til side».</li>'
-    +     '<li>Skru på <strong>«skriv ut bakgrunnsgrafikk»</strong> så fargene blir med.</li>'
-    +     '<li>Klipp langs de stiplede linjene på forsidearket. Skriv elevens navn på baksiden før du laminerer.</li>'
-    +   '</ol>'
-    +   '<button class="pib-print-btn" onclick="window.print()">Skriv ut nå</button>'
-    + '</div></div>';
-  var bannerCSS = ''
-    + '@media screen{'
-    +   '.print-info-banner{position:fixed;top:0;left:0;right:0;background:#FFE89A;border-bottom:3px solid #2A1F3D;z-index:9999;padding:14px 20px;font-family:"Nunito",sans-serif;color:#2A1F3D;box-shadow:0 4px 12px rgba(0,0,0,.15)}'
-    +   '.pib-inner{max-width:760px;margin:0 auto}'
-    +   '.pib-title{font-family:"Bowlby One",sans-serif;font-size:13pt;margin-bottom:8px;letter-spacing:.02em}'
-    +   '.pib-list{margin:0 0 10px 20px;padding:0;font-size:10.5pt;line-height:1.55}'
-    +   '.pib-list li{margin-bottom:3px}'
-    +   '.pib-print-btn{background:#2A1F3D;color:#F5C849;border:none;padding:10px 24px;border-radius:8px;font-family:"Bowlby One",sans-serif;font-size:11pt;letter-spacing:.04em;cursor:pointer}'
-    +   'body{padding-top:215px}'
-    + '}'
-    + '@media print{.print-info-banner{display:none!important}body{padding-top:0!important}}';
+  // Felles utskriftsforklaring (tosidig) — samme tekst i begge portaler.
+  var _bb = window.buildPdfDownloadBanner('', { twoSided: true });
+  var infoBanner = _bb.bannerHTML;
+  var bannerCSS  = _bb.bannerCSS;
 
   return '<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>' + escapeHTML(title) + '</title>'
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
@@ -3054,7 +3039,7 @@ function printHendelserCards14(cards) {
       ${backsForFronts(group)}
     </div>`;
   }
-  const _bhend = window.buildPdfDownloadBanner('Slik laster du ned hendelseskort', { twoSided: true });
+  const _bhend = window.buildPdfDownloadBanner('', { twoSided: true });
   win.document.write(`<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3067,10 +3052,12 @@ function printHendelserCards14(cards) {
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    @page{size:A4 portrait;margin:0}
+    @page{size:A4 portrait;margin:8mm}
 
-    /* 2x2 grid: 4 stående A6 (105×148mm) per A4 */
-    .page-print{width:210mm;height:295mm;max-height:295mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
+    /* 2x2 grid: 4 kort per A4. Printbart omr. 194×281mm; arket gjoeres litt
+       lavere (275mm) saa iPad/Safari ikke runder over til blank ekstra side. */
+    .page-print{width:194mm;height:275mm;max-height:275mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
+    .page-print:last-child{page-break-after:avoid}
 
     /* Kortet: fyller hele sin firkant. Tonet bakgrunn per type. */
     .hcard{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}
