@@ -126,6 +126,22 @@
   .colorpick{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
   .swatch{width:30px;height:30px;border-radius:9px;border:2px solid rgba(0,0,0,.10);cursor:pointer;}
   .swatch.sel{box-shadow:0 0 0 3px var(--blue-dark);}
+  /* Bekreft-sletting popup */
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,15,40,.45);display:none;
+    align-items:center;justify-content:center;z-index:200;padding:18px;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:var(--white);border-radius:18px;padding:24px;width:100%;max-width:420px;
+    box-shadow:0 14px 40px rgba(8,80,65,.22);}
+  .modal-box h2{font-size:1.25rem;color:var(--coral);margin-bottom:10px;}
+  .modal-box .mtext{font-size:.92rem;color:var(--muted);line-height:1.5;margin-bottom:14px;}
+  .modal-box .mtext strong{color:var(--text);}
+  .modal-box .mmatch{font-size:.88rem;color:var(--green-dark);font-weight:700;margin-bottom:6px;}
+  .modal-box .mmatch code{background:var(--bg);border:1px dashed var(--border);border-radius:6px;padding:2px 7px;color:var(--coral);}
+  .modal-box input{border-color:var(--coral);margin-bottom:4px;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-actions .btn{margin-top:0;}
+  .btn-coral{background:var(--coral);color:#fff;}
+  .btn-coral:disabled{background:#e7bdae;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -228,6 +244,20 @@
     </div>
     </div>
   </div>
+
+<!-- Bekreft-sletting popup: krever at laereren skriver klassenavnet -->
+<div class="modal-overlay" id="modal-del-class">
+  <div class="modal-box">
+    <h2 id="mdc-title">⚠️ Slett klasse?</h2>
+    <p class="mtext" id="mdc-info"></p>
+    <p class="mmatch" id="mdc-match"></p>
+    <input type="text" id="mdc-input" placeholder="Skriv klassenavnet her" autocomplete="off">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Avbryt</button>
+      <button class="btn btn-coral" id="mdc-confirm" onclick="confirmDeleteClass()" disabled>Slett klasse</button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -401,16 +431,56 @@
     }catch(e){ alertBox('create-alert','error',friendlyErr(e)); }
   };
 
-  window.deleteClass=async function(classId,slug,btn){
-    const name=(btn && btn.closest('.class-card')?.querySelector('.cname')?.textContent?.trim())||'denne klassen';
-    if(!confirm('Slette «'+name+'» for godt?\n\nKlassen og alle data i den fjernes. Dette kan ikke angres.')) return;
+  // Sletting skjer i to steg: deleteClass() apner bekreft-boksen,
+  // confirmDeleteClass() kjorer den faktiske slettingen forst nar
+  // laereren har skrevet klassenavnet riktig. Hindrer uhell.
+  let pendingDelete=null;
+
+  window.deleteClass=function(classId,slug,btn){
+    let name='denne klassen';
+    try{
+      const raw=btn && btn.closest('.class-card')?.querySelector('.cname')?.textContent?.trim();
+      if(raw) name=raw.replace(/\s*(Eier|Lærer)\s*$/,'').trim()||raw;
+    }catch(e){}
+    pendingDelete={classId,slug,name};
+
+    document.getElementById('mdc-title').textContent='⚠️ Slett klasse «'+name+'»?';
+    document.getElementById('mdc-info').innerHTML=
+      'Du er i ferd med å slette klassen og <strong>alle data i den</strong> '+
+      '(elever, saldoer og historikk). <strong>Dette kan ikke angres.</strong>';
+    document.getElementById('mdc-match').innerHTML=
+      'Skriv inn klassenavnet <code>'+name+'</code> for å bekrefte:';
+
+    const input=document.getElementById('mdc-input');
+    const btnC=document.getElementById('mdc-confirm');
+    input.value=''; btnC.disabled=true;
+    input.oninput=function(){ btnC.disabled = input.value.trim()!==pendingDelete.name; };
+
+    document.getElementById('modal-del-class').classList.add('open');
+    setTimeout(()=>input.focus(),50);
+  };
+
+  window.closeDeleteModal=function(){
+    document.getElementById('modal-del-class').classList.remove('open');
+    pendingDelete=null;
+  };
+
+  window.confirmDeleteClass=async function(){
+    if(!pendingDelete) return;
+    const {classId,slug,name}=pendingDelete;
+    const input=document.getElementById('mdc-input');
+    if(input.value.trim()!==name) return; // ekstra vakt
+    const btnC=document.getElementById('mdc-confirm');
+    btnC.disabled=true; btnC.textContent='Sletter …';
     try{
       const uid=auth.currentUser.uid;
       await set(ref(db,'classes/'+classId), null);
       if(slug) await set(ref(db,'slugs/'+slug), null);
       await update(ref(db,'users/'+uid), { ['memberships/'+classId]: null });
+      window.closeDeleteModal();
       renderClasses();
     }catch(e){ alert('Kunne ikke slette: '+friendlyErr(e)); }
+    finally{ btnC.textContent='Slett klasse'; }
   };
 
   window.inviteTeacher=async function(classId, btn){
