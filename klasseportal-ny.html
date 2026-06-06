@@ -2878,8 +2878,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (!link) return;
     var d = (window.portal && window.portal.data) ? window.portal.data : null;
     if (!d) return;
-    var payload = { week: d.week || {}, notes: d.notes || [], klasse: d.klasse || '', enabled: (d.dayEnabled !== false), ts: Date.now() };
-    var sig = JSON.stringify({ w: payload.week, n: payload.notes, k: payload.klasse, e: payload.enabled });
+    var payload = { week: d.week || {}, notes: d.notes || [], klasse: d.klasse || '', navn: (link && link.className) || d.klasse || '', enabled: (d.dayEnabled !== false), ts: Date.now() };
+    var sig = JSON.stringify({ w: payload.week, n: payload.notes, k: payload.klasse, nv: payload.navn, e: payload.enabled });
     if (sig === _daySig) return;
     _daySig = sig;
     try { set(ref(db, 'dayboard/' + (link.workspaceId || 'main')), payload); } catch(e){}
@@ -2890,7 +2890,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   if (link && window._CLASS_ID && window.portal) {
     onValue(_ref0(db, 'dayboard/' + window._CLASS_ID), function(snap){
       const b = snap.val(); if (!b) return;
-      const sig = JSON.stringify({ w: b.week||{}, n: b.notes||[], k: b.klasse||'', e: (b.enabled!==false) });
+      const sig = JSON.stringify({ w: b.week||{}, n: b.notes||[], k: b.klasse||'', nv: b.navn||'', e: (b.enabled!==false) });
       if (sig === _daySig) return;
       _daySig = sig;
       const d = window.portal.data; if (!d) return;
