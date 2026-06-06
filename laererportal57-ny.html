@@ -21,7 +21,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
-  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getDatabase, ref as _ref0, set, push, onValue, remove, update as _update0, get }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
@@ -54,6 +54,8 @@
 
   const db   = getDatabase(app);
   const auth = getAuth(app);
+  // Logg ut: faktisk Firebase-utlogging + tilbake til Min side (ikke gammel profilvelger)
+  window.doLogout = function(){ try{ signOut(auth); }catch(e){} location.replace('konto.html'); };
 
   { const _ls = document.getElementById('login-screen'); if(_ls) _ls.style.display='none'; }
 
@@ -597,6 +599,38 @@
     if (typeof showPage === 'function') showPage('elever');
     // Aapne den nye klasseportalen for valgt klasse (ikke den gamle).
     window.openKlasseportal = function(){ window.open('klasseportal-ny.html?class=' + encodeURIComponent(window._CLASS_ID || ''), '_blank'); };
+    // Klassebytte-meny + auto-fyll klassenavn i skjulte felt
+    (async function(){
+      try{
+        const _cs = await get(_ref0(db,'classes/'+window._CLASS_ID));
+        const _cv = _cs.exists()? _cs.val() : null;
+        const _cname = (_cv && _cv.name) ? _cv.name : '';
+        if(_cname){
+          window._currentTeacher.class = _cname;
+          ['new-class','bulk-class-select','wp-class'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=_cname; });
+        }
+        window._switchClass = function(id){
+          if(!id || id===window._CLASS_ID) return;
+          var t = (window._SWITCH_TRINN||{})[id];
+          var file = (t==='57') ? 'laererportal57-ny.html' : (t==='14' ? 'laererportal14-ny.html' : location.pathname.split('/').pop());
+          location.href = file + '?class=' + encodeURIComponent(id);
+        };
+        var _ms = await get(_ref0(db,'users/'+user.uid+'/memberships'));
+        var _m = _ms.exists()? _ms.val() : {};
+        var _ids = Object.keys(_m||{});
+        var _trinnMap = {}, _items = [];
+        for(var i=0;i<_ids.length;i++){
+          try{ var _c = await get(_ref0(db,'classes/'+_ids[i])); if(_c.exists()){ var _v=_c.val(); _trinnMap[_ids[i]]=_v.trinn; _items.push({id:_ids[i], name:_v.name||'Klasse'}); } }catch(e){}
+        }
+        window._SWITCH_TRINN = _trinnMap;
+        var _sw = document.getElementById('class-switcher');
+        if(_sw && _items.length>1){
+          _items.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','no'); });
+          _sw.innerHTML = _items.map(function(it){ return '<option value="'+it.id+'"'+(it.id===window._CLASS_ID?' selected':'')+'>'+(it.name||'Klasse')+'</option>'; }).join('');
+          _sw.style.display='';
+        }
+      }catch(e){ console.warn('Klassebytte/auto-fyll feilet:', e); }
+    })();
   });
 </script>
 <!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
@@ -661,6 +695,8 @@
           <div class="teacher-badge-avatar" id="header-avatar"></div>
           <div class="teacher-badge-name"   id="header-name"></div>
         </div>
+        <select id="class-switcher" onchange="window._switchClass && window._switchClass(this.value)" title="Bytt klasse" style="display:none;font:inherit;font-weight:700;color:#085041;background:#fff;border:2px solid #cfe8df;border-radius:10px;padding:6px 10px;cursor:pointer;max-width:200px;margin-right:8px;"></select>
+        <a href="konto.html" class="logout-btn" title="Til Min side" style="text-decoration:none;margin-right:8px;"><i class="ti ti-home" aria-hidden="true"></i><span>Min side</span></a>
         <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span>Logg ut</span></button>
       </div>
     </div>
@@ -700,7 +736,6 @@
     <button class="tab active" onclick="showElevTab('klasse',this)">🏫 Opprett klasse</button>
     <button class="tab" onclick="showElevTab('manuell',this)">✏️ Opprett manuelt</button>
     <button class="tab" onclick="showElevTab('bankkort',this)">💳 Skriv ut bankkort</button>
-    <button class="tab" onclick="showElevTab('klasser',this)">🏷️ Klasser</button>
   </div>
 
   <!-- Manuell -->
@@ -724,13 +759,7 @@
         <input type="hidden" id="new-firstname" value="">
         <input type="hidden" id="new-lastname" value="">
       </div>
-      <div class="form-row"><label>Klasse</label>
-        <select id="new-class">
-          <option value="5. klasse">5. klasse</option>
-          <option value="6. klasse">6. klasse</option>
-          <option value="7. klasse">7. klasse</option>
-        </select>
-      </div>
+      <input type="hidden" id="new-class" value="">
       <div class="form-row"><label>Startsaldo (mynter)</label><input type="number" id="new-balance" value="100" min="0"></div>
       <button class="btn btn-primary" onclick="createStudent()">Opprett elev</button>
       <div id="create-alert" style="margin-top:1rem;"></div>
@@ -746,14 +775,7 @@
           Generer en hel klasse med fiktive navn og monsteravatarer automatisk.
           Du får en liste med ekte navn ↔ fiktivt navn etterpå.
         </p>
-        <div class="form-row">
-          <label>Klasse</label>
-          <select id="bulk-class-select">
-            <option value="5. klasse">5. klasse</option>
-            <option value="6. klasse">6. klasse</option>
-            <option value="7. klasse">7. klasse</option>
-          </select>
-        </div>
+        <input type="hidden" id="bulk-class-select" value="">
         <div class="form-row">
           <label>Antall elever</label>
           <input type="number" id="bulk-count" value="25" min="1" max="70">
@@ -810,12 +832,7 @@
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">
         Skriv ut en liste for en eksisterende klasse med plass til å fylle inn elevenes virkelige navn.
       </p>
-      <div class="form-row">
-        <label>Velg klasse</label>
-        <select id="print-class-select">
-          <option value="">Alle klasser</option>
-        </select>
-      </div>
+      <input type="hidden" id="print-class-select" value="">
       <button class="btn btn-amber" onclick="printExistingClassList()">🖨️ Skriv ut klasseliste</button>
     </div>
   </div>
@@ -854,7 +871,6 @@
       <span>📋 Elevliste</span>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1;min-width:0;justify-content:flex-end;">
         <input type="text" placeholder="Søk elev…" style="width:180px;min-width:120px;flex:1;" oninput="filterStudents(this.value)" id="search-input">
-        <select onchange="filterClass(this.value)" style="width:130px;min-width:100px;flex:1;" id="filter-class-select"><option value="">Alle klasser</option></select>
       </div>
     </div>
     <table><thead><tr><th>Elev</th><th>Klasse</th><th>PIN</th><th>Saldo</th><th>Handlinger</th></tr></thead>
@@ -1193,15 +1209,7 @@
   <div class="card" style="margin-bottom:1.5rem;border:2px solid var(--coral);background:var(--coral-light);">
     <div class="card-title" style="color:var(--coral);">🔄 Reset merker ved skolestart</div>
     <p style="font-size:.85rem;color:#7f1d1d;margin-bottom:1rem;">Sletter alle oppnådde merker og nullstiller fremgangstellere (quizriktige, spareinntekter, skattebidraget) for alle elever. Utfør kun ved nytt skoleår!</p>
-    <div class="form-row" style="margin-bottom:.75rem;">
-      <label>Velg klasse (tomt = alle)</label>
-      <select id="badge-reset-class">
-        <option value="">Alle klasser</option>
-        <option value="5. klasse">5. klasse</option>
-        <option value="6. klasse">6. klasse</option>
-        <option value="7. klasse">7. klasse</option>
-      </select>
-    </div>
+    <input type="hidden" id="badge-reset-class" value="">
     <button class="btn btn-coral" onclick="confirmBadgeReset()">🔄 Reset alle merker</button>
     <div id="badge-reset-alert" style="margin-top:.75rem;"></div>
   </div>
@@ -1488,13 +1496,7 @@
       <div class="form-row"><label>Fag</label><input type="text" id="wp-subject" placeholder="f.eks. Norsk"></div>
     </div>
     <div class="form-grid">
-      <div class="form-row" id="wp-class-row"><label>Klasse</label>
-        <select id="wp-class">
-          <option value="5. klasse">5. klasse</option>
-          <option value="6. klasse">6. klasse</option>
-          <option value="7. klasse">7. klasse</option>
-        </select>
-      </div>
+      <div class="form-row" id="wp-class-row" style="display:none"><input type="hidden" id="wp-class" value=""></div>
       <div class="form-row"><label>Hvem må godkjenne hvert trinn?</label>
         <select id="wp-approval">
           <option value="teacher">Bare lærer</option>
@@ -1657,7 +1659,7 @@
 <div class="modal-overlay" id="modal-bulk">
   <div class="modal">
     <div class="modal-title" id="modal-bulk-title">Masseoppdater saldo</div>
-    <div class="form-row"><label>Velg klasse (tomt = alle)</label><select id="bulk-class"><option value="">Alle klasser</option></select></div>
+    <input type="hidden" id="bulk-class" value="">
     <div class="form-row" id="bulk-amount-row"><label>Beløp (mynter)</label><input type="number" id="bulk-amount" value="50" min="0"></div>
     <div id="bulk-tax-info" style="display:none;font-size:.88rem;color:var(--muted);margin-bottom:1rem;"></div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-bulk')">Avbryt</button><button class="btn btn-primary" onclick="confirmBulkAction()">Bekreft</button></div>
