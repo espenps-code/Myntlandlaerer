@@ -595,6 +595,8 @@
     const fb = document.getElementById('fb-status'); if(fb){ fb.textContent='🟢 Firebase klar'; fb.style.color='#9FE1CB'; }
     if (typeof window._startListeners === 'function') window._startListeners();
     if (typeof showPage === 'function') showPage('elever');
+    // Aapne den nye klasseportalen for valgt klasse (ikke den gamle).
+    window.openKlasseportal = function(){ window.open('klasseportal-ny.html?class=' + encodeURIComponent(window._CLASS_ID || ''), '_blank'); };
   });
 </script>
 <!-- Delt Myntland-styling (fase 1: palett + fonter). Inline-stilene under overstyrer fortsatt det meste – trygg fallback. -->
