@@ -333,6 +333,7 @@ function tryLogin() {
       await loadSavings(s.fbKey);
       await checkAndPayInterest(s.fbKey);
       renderSavings();
+      await checkAndAwardBadges(s);   // del ut merker som alt er over terskel (rentefremgang kommer fra cron)
     })();
     startClassGoalsListener();
     startPaymentRequestListener(s.fbKey);
