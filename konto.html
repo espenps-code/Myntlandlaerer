@@ -169,7 +169,7 @@
            signInWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail,
            GoogleAuthProvider, signInWithPopup }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getDatabase, ref, get, set, update, push }
+  import { getDatabase, ref, get, set, update, push, onValue }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
@@ -352,34 +352,51 @@
     location.href = file+'?class='+encodeURIComponent(classId);
   };
 
-  async function renderClasses(){
+  function renderClassList(classes){
     const wrap=document.getElementById('class-list');
-    try{
-      const classes=await MyntData.myClasses();
-      if(!classes.length){ wrap.innerHTML='<div class="empty">Ingen klasser ennå. Opprett din første under! 👇</div>'; return; }
-      wrap.innerHTML=classes.map(c=>{
-        const emoji=c.trinn==='57'?'🎒':'🧸';
-        const badgeCls=c.trinn==='57'?'badge-57':'badge-14';
-        const trinnTxt=c.trinn==='57'?'5.–7. trinn':'1.–4. trinn';
-        const roleTxt=c.role==='owner'?'Eier':'Lærer';
-        return '<div class="class-card">'
-          +'<div class="badge '+badgeCls+'">'+emoji+'</div>'
-          +'<div class="meta">'
-            +'<div class="cname">'+c.name+' <span class="role-pill">'+roleTxt+'</span></div>'
-            +'<div class="cdetail">'+trinnTxt+'</div>'
-            +'<div class="sharebox">'
-              +'<code>myntland.no/k/'+c.slug+'</code>'
-              +'<button onclick="copyLink(\''+c.slug+'\',this)">Kopier</button>'
-            +'</div>'
+    if(!classes.length){ wrap.innerHTML='<div class="empty">Ingen klasser ennå. Opprett din første under! 👇</div>'; return; }
+    wrap.innerHTML=classes.map(c=>{
+      const emoji=c.trinn==='57'?'🎒':'🧸';
+      const badgeCls=c.trinn==='57'?'badge-57':'badge-14';
+      const trinnTxt=c.trinn==='57'?'5.–7. trinn':'1.–4. trinn';
+      const roleTxt=c.role==='owner'?'Eier':'Lærer';
+      return '<div class="class-card">'
+        +'<div class="badge '+badgeCls+'">'+emoji+'</div>'
+        +'<div class="meta">'
+          +'<div class="cname">'+c.name+' <span class="role-pill">'+roleTxt+'</span></div>'
+          +'<div class="cdetail">'+trinnTxt+'</div>'
+          +'<div class="sharebox">'
+            +'<code>myntland.no/k/'+c.slug+'</code>'
+            +'<button onclick="copyLink(\''+c.slug+'\',this)">Kopier</button>'
           +'</div>'
-          +'<button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;" '
-            +'onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">Åpne</button>'
-          +(c.role==='owner' ? '<button class="btn-del" title="Slett klasse" onclick="deleteClass(\''+c.classId+'\',\''+c.slug+'\',this)">🗑</button>' : '')
-        +'</div>';
-      }).join('');
-    }catch(e){
-      wrap.innerHTML='<div class="empty">Kunne ikke laste klasser: '+friendlyErr(e)+'</div>';
-    }
+        +'</div>'
+        +'<button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;" '
+          +'onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">Åpne</button>'
+        +(c.role==='owner' ? '<button class="btn-del" title="Slett klasse" onclick="deleteClass(\''+c.classId+'\',\''+c.slug+'\',this)">🗑</button>' : '')
+      +'</div>';
+    }).join('');
+  }
+
+  // Levende lytter: fyller lista når medlemskap-dataene kommer, uansett timing,
+  // og oppdaterer seg selv når klasser lages/slettes.
+  function watchClasses(uid){
+    onValue(ref(db,'users/'+uid+'/memberships'), async (msnap)=>{
+      const m=msnap.val()||{};
+      const ids=Object.keys(m);
+      if(!ids.length){ renderClassList([]); return; }
+      const out=[];
+      for(const classId of ids){
+        try{ const csnap=await get(ref(db,'classes/'+classId)); if(csnap.exists()) out.push({classId, role:m[classId], ...csnap.val()}); }catch(e){ console.warn(e); }
+      }
+      out.sort((a,b)=>(a.created||0)-(b.created||0));
+      renderClassList(out);
+    }, (err)=>{ console.warn('medlemskap-lytter:', err); });
+  }
+
+  // Idempotent: kobler på lytteren én gang per bruker. Trygt å kalle flere ganger.
+  function renderClasses(){
+    const u=auth.currentUser; if(!u) return;
+    if(window.__watchUid!==u.uid){ window.__watchUid=u.uid; watchClasses(u.uid); }
   }
 
   onAuthStateChanged(auth, async user=>{
