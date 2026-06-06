@@ -520,9 +520,9 @@ h1.sticker{
   background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 39px, #cfe0ec 39px, #cfe0ec 40px),
                    repeating-linear-gradient(to right, transparent 0, transparent 39px, #cfe0ec 39px, #cfe0ec 40px); }
 #drawCanvas{ position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:crosshair; }
-.draw-toolbar{ position:absolute; left:50%; transform:translateX(-50%); bottom:22px; z-index:2;
-  display:flex; align-items:center; gap:10px; padding:10px 14px; flex-wrap:wrap; justify-content:center;
-  max-width:94vw; background:var(--cream); border:4px solid var(--ink); border-radius:24px;
+.draw-toolbar{ position:absolute; z-index:2;
+  display:flex; gap:10px; padding:10px 14px;
+  background:var(--cream); border:4px solid var(--ink); border-radius:24px;
   box-shadow:var(--shadow); }
 .dt-group{ display:flex; align-items:center; gap:8px; }
 .dt-sep{ width:3px; height:34px; background:rgba(42,31,61,.18); border-radius:2px; }
@@ -541,14 +541,29 @@ h1.sticker{
 .dt-btn.dt-danger{ background:#ffd9d2; }
 .dt-btn.dt-close{ background:var(--red); color:#fff; }
 
-/* ---- tavle: gruppert verktøylinje ---- */
-.draw-toolbar{ align-items:flex-end; gap:14px; }
+/* ---- tavle: tre dokker (venstre / høyre / nede) ---- */
 .dt-group{ display:flex; flex-direction:column; align-items:center; gap:6px; }
 .dt-grow{ display:flex; align-items:center; gap:8px; }
-.dt-colors{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; max-width:330px; justify-content:center; }
+.dt-colors{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
 .dt-glabel{ font-family:inherit; font-size:12px; font-weight:800; letter-spacing:.05em;
   text-transform:uppercase; color:var(--ink-soft); }
 .draw-toolbar .dt-sep{ align-self:center; }
+
+/* venstre dokk: verktøy (Penn/Tekst/Visk), stablet vertikalt */
+.dt-dock-left{ left:18px; top:50%; transform:translateY(-50%);
+  flex-direction:column; align-items:center; gap:14px; }
+.dt-dock-left .dt-grow{ flex-direction:column; align-items:stretch; gap:8px; }
+.dt-dock-left .dt-btn{ width:100%; }
+
+/* høyre dokk: farge + tykkelse */
+.dt-dock-right{ right:18px; top:50%; transform:translateY(-50%);
+  flex-direction:column; align-items:center; gap:14px; }
+.dt-dock-right .dt-colors{ max-width:96px; }
+
+/* nede i midten: ark + handlinger (Angre/Tøm/Lukk) */
+.dt-dock-bottom{ left:50%; bottom:22px; transform:translateX(-50%);
+  flex-direction:row; align-items:flex-end; gap:14px; flex-wrap:wrap;
+  justify-content:center; max-width:94vw; }
 
 /* ---- tavle: flyttbare tekst-objekter ---- */
 .dt-textobj{ position:absolute; z-index:5; max-width:80vw; padding:2px 7px; margin:0;
@@ -1037,17 +1052,8 @@ h1.sticker{
 <!-- ====== TEGNEVERKTØY ====== -->
 <div class="draw-layer" id="drawLayer" aria-hidden="true">
   <canvas id="drawCanvas"></canvas>
-  <div class="draw-toolbar" id="drawToolbar">
-    <div class="dt-group">
-      <span class="dt-glabel">Farge</span>
-      <div class="dt-grow"><div class="dt-colors" id="dtColors"></div></div>
-    </div>
-    <div class="dt-sep"></div>
-    <div class="dt-group">
-      <span class="dt-glabel">Tykkelse</span>
-      <div class="dt-grow" id="dtSizes"></div>
-    </div>
-    <div class="dt-sep"></div>
+  <!-- venstre dokk: verktøy -->
+  <div class="draw-toolbar dt-dock-left" id="drawToolbar">
     <div class="dt-group">
       <span class="dt-glabel">Verktøy</span>
       <div class="dt-grow">
@@ -1056,7 +1062,22 @@ h1.sticker{
         <button class="dt-btn" id="dtEraser">Visk</button>
       </div>
     </div>
-    <div class="dt-sep"></div>
+  </div>
+
+  <!-- høyre dokk: farge + tykkelse -->
+  <div class="draw-toolbar dt-dock-right" id="drawToolbarRight">
+    <div class="dt-group">
+      <span class="dt-glabel">Farge</span>
+      <div class="dt-grow"><div class="dt-colors" id="dtColors"></div></div>
+    </div>
+    <div class="dt-group">
+      <span class="dt-glabel">Tykkelse</span>
+      <div class="dt-grow" id="dtSizes"></div>
+    </div>
+  </div>
+
+  <!-- nede i midten: ark + handlinger -->
+  <div class="draw-toolbar dt-dock-bottom" id="drawToolbarBottom">
     <div class="dt-group">
       <span class="dt-glabel">Ark</span>
       <div class="dt-grow dt-papers" id="dtPapers"><button class="dt-btn dt-paper" data-paper="blank">Blankt</button><button class="dt-btn dt-paper" data-paper="lines">Linjer</button><button class="dt-btn dt-paper" data-paper="grid">Ruter</button></div>
