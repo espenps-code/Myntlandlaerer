@@ -86,6 +86,59 @@
     font-weight: 700;
   }
 
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.6rem;
+    background: var(--green);
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1.08rem;
+    text-decoration: none;
+    padding: 0.9rem 1.9rem;
+    border-radius: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 22px rgba(8, 80, 65, 0.45);
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.18s ease, background 0.18s ease;
+  }
+
+  .hero-cta:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 14px 30px rgba(8, 80, 65, 0.55);
+    background: #23b486;
+  }
+
+  .hero-cta:active {
+    transform: translateY(-1px) scale(1.0);
+  }
+
+  .hero-cta:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+  }
+
+  .hero-cta-coin {
+    width: 28px;
+    height: 28px;
+    display: block;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .hero-cta:hover .hero-cta-coin {
+    transform: rotate(18deg) scale(1.08);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-cta,
+    .hero-cta-coin { transition: none; }
+    .hero-cta:hover { transform: none; }
+    .hero-cta:hover .hero-cta-coin { transform: none; }
+  }
+
   .monster-stage {
     max-width: 1100px;
     margin: 2.5rem auto 0;
@@ -323,6 +376,20 @@
     letter-spacing: 0.05em;
     text-transform: uppercase;
   }
+
+  .section-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+  .section-icon svg { width: 24px; height: 24px; display: block; }
+  .si-teacher  { background: var(--green-light); }
+  .si-tools    { background: var(--amber-light); }
+  .si-students { background: #EEEDFE; }
 
   .cards-grid {
     display: grid;
