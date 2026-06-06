@@ -198,8 +198,9 @@ h1.sticker{
   padding:11px 16px; transition:transform .14s, box-shadow .14s; position:relative;
   box-shadow:0 4px 0 rgba(42,31,61,.14); }
 .lesson:hover{ transform:translateX(4px); }
-.lesson .time{ font-size:24px; font-weight:700; color:var(--ink); width:78px; flex-shrink:0;
+.lesson .time{ font-size:24px; font-weight:700; color:var(--ink); width:78px; flex-shrink:0; line-height:1.05;
   font-variant-numeric:tabular-nums; }
+.lesson .time .tend{ display:block; font-size:15px; font-weight:600; color:var(--ink-soft); }
 .lesson .icon{ width:46px; height:46px; border-radius:13px; flex-shrink:0;
   display:grid; place-items:center; border:3px solid var(--ink); }
 .lesson .icon svg{ width:26px; height:26px; }
@@ -1137,7 +1138,7 @@ h1.sticker{
       <div class="daytabs" id="dayTabs"></div>
       <div class="plan-rows" id="planRows"></div>
       <button class="add-slot" id="addPlanRow">+ Legg til time eller friminutt</button>
-      <p class="ovl-hint">Hver ukedag har sin egen timeplan, og tavla viser automatisk dagens plan. Skriv klokkeslett som <b>08:30</b> for timer og <b>09:15&ndash;09:30</b> for friminutt.</p>
+      <p class="ovl-hint">Hver ukedag har sin egen timeplan, og tavla viser automatisk dagens plan. Skriv ett klokkeslett som <b>08:30</b>, eller fra&ndash;til som <b>08:30&ndash;09:15</b> for timer og <b>09:15&ndash;09:30</b> for friminutt. Skriver du sluttid, blir nedtellingen p&aring; storskjermen helt riktig &ndash; uansett om timene er 45 eller 60 minutter.</p>
     </div>
     <div class="plan-foot">
       <button class="btn-big ghost" id="planCancel">Lukk</button>
@@ -1364,10 +1365,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const p = data.plan || [];
     const starts = p.map(it => planToMin(it.time));
     const ends = p.map((it, i) => {
-      if (it.type === 'break'){
-        const parts = String(it.time||'').split(/[\u2013\u2014-]| til /);
-        if (parts.length >= 2){ const e = planToMin(parts[1]); if (e != null) return e; }
-      }
+      var rparts = String(it.time||'').split(/[\u2013\u2014-]| til /);
+      if (rparts.length >= 2){ const e = planToMin(rparts[1]); if (e != null) return e; }
       for (let j = i+1; j < p.length; j++){ if (starts[j] != null) return starts[j]; }
       return starts[i] != null ? starts[i] + 45 : null;
     });
@@ -1375,6 +1374,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   function lessonMeta(pct, minsLeft){
     return data.progressPercent ? (Math.round(pct) + ' %') : (Math.max(0, Math.ceil(minsLeft)) + ' min');
+  }
+  function fmtTime(t){
+    var parts=String(t==null?'':t).split(/[\u2013\u2014-]| til /).map(function(x){return x.trim();}).filter(Boolean);
+    if(parts.length>=2){ return parts[0]+'<span class="tend">'+parts[1]+'</span>'; }
+    return parts[0]||'';
   }
   function renderLessons() {
     const ol = document.getElementById('lessons'); ol.innerHTML = '';
@@ -1411,7 +1415,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
           <span class="bnote">${it.note}</span>${meta}${prog}`;
       } else {
         li.className = 'lesson' + (isNow ? ' is-now' : '');
-        li.innerHTML = `<span class="time">${it.time}</span>
+        li.innerHTML = `<span class="time">${fmtTime(it.time)}</span>
           <span class="icon" style="background:${it.color}">${I[it.icon] || ''}</span>
           <span class="name">${it.name}</span>
           <span class="now-tag">NÅ</span>${meta}${prog}`;
@@ -1792,7 +1796,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var row=el('div','plan-row');
     var isBreak=it.type==='break';
     var html='<select class="ptype"><option value="lesson"'+(!isBreak?' selected':'')+'>Time</option><option value="break"'+(isBreak?' selected':'')+'>Friminutt</option></select>'+
-      '<input class="ptime" value="'+esc(it.time)+'" placeholder="'+(isBreak?'09:15–09:30':'08:30')+'">';
+      '<input class="ptime" value="'+esc(it.time)+'" placeholder="'+(isBreak?'09:15–09:30':'08:30–09:15')+'">';
     if(isBreak){
       html+='<input class="pname" value="'+esc(it.note)+'" placeholder="uteleik">'+
         '<label style="font-weight:600;font-size:15px;display:flex;align-items:center;gap:6px"><input type="checkbox" class="pbig"'+(it.big?' checked':'')+'> Storefri</label>';
