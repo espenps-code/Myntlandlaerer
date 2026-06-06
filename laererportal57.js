@@ -3407,13 +3407,33 @@ function openHendelserPrintWindow(cards) {
     </div>`;
   };
 
-  // Group into pages of 4
+  // Nøytral bakside — bevisst uten farge/INNTEKT-UTGIFT, så korttypen ikke
+  // røpes og fargekant ikke synes ved små forskyvninger i tosidig utskrift.
+  const backHTML = () => `<div class="card cardback">
+    <div class="back-coin">🪙</div>
+    <div class="back-logo">MYNTLAND</div>
+    <div class="back-sub">Hendelser</div>
+  </div>`;
+  // Long-edge flip: speilvend hver rad så baksiden lander rett bak forsiden.
+  const backsForFronts = (group) => {
+    const out = new Array(group.length);
+    for (let i = 0; i < group.length; i += 2) {
+      const a = group[i], b = group[i+1];
+      out[i]   = b != null ? backHTML() : '<div class="card empty"></div>';
+      out[i+1] = a != null ? backHTML() : '<div class="card empty"></div>';
+    }
+    return out.join('');
+  };
+  // Grupper i sider à 4 — forside + bakside annenhver side
   let pagesHTML = '';
   for (let i = 0; i < cards.length; i += 4) {
     const group = cards.slice(i, i+4);
     while (group.length < 4) group.push(null);
     pagesHTML += `<div class="page">
       ${group.map(c => c ? cardHTML(c) : '<div class="card empty"></div>').join('')}
+    </div>`;
+    pagesHTML += `<div class="page back-page">
+      ${backsForFronts(group)}
     </div>`;
   }
 
@@ -3450,7 +3470,7 @@ function openHendelserPrintWindow(cards) {
     .page {
       position: relative;
     }
-    .page::before {
+    .page:not(.back-page)::before {
       content: '';
       position: absolute;
       left: 50%;
@@ -3461,7 +3481,7 @@ function openHendelserPrintWindow(cards) {
       z-index: 10;
       pointer-events: none;
     }
-    .page::after {
+    .page:not(.back-page)::after {
       content: '';
       position: absolute;
       top: 50%;
@@ -3500,10 +3520,14 @@ function openHendelserPrintWindow(cards) {
     .amount   { font-family: 'Fredoka One', cursive; font-size: 11mm; line-height: 1; }
     .qr-wrap  { display: flex; justify-content: center; }
     .scan-hint{ font-size: 3mm; color: #6b7280; font-weight: 700; }
-  ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerCSS}
+    .cardback { background:#FBF2D6; outline:none; justify-content:center; gap:1.5mm; }
+    .cardback .back-coin { font-size:22mm; line-height:1; }
+    .cardback .back-logo { font-family:'Fredoka One',cursive; font-size:9mm; color:#1a1040; letter-spacing:.3mm; }
+    .cardback .back-sub { font-family:'Nunito',sans-serif; font-style:italic; font-weight:900; font-size:4mm; color:#6b7280; letter-spacing:.3mm; }
+  ${window.buildPdfDownloadBanner('', { twoSided:true }).bannerCSS}
   </style>
 </head><body>
-  ${window.buildPdfDownloadBanner('', { twoSided:false }).bannerHTML}
+  ${window.buildPdfDownloadBanner('', { twoSided:true }).bannerHTML}
   ${pagesHTML}
 </body></html>`);
   win.document.close();
