@@ -81,6 +81,9 @@
   .btn-del{border:none;background:transparent;color:var(--muted);font-size:1.05rem;cursor:pointer;
     padding:8px 10px;border-radius:9px;margin:0;line-height:1;flex:0 0 auto;}
   .btn-del:hover{background:#fde8e2;color:#a3341a;}
+  .btn-inv{border:none;background:transparent;color:var(--muted);font-size:.95rem;cursor:pointer;
+    padding:8px 9px;border-radius:9px;margin:0;line-height:1;flex:0 0 auto;}
+  .btn-inv:hover{background:var(--green-light);color:var(--green-dark);}
 </style>
 </head>
 <body>
@@ -171,6 +174,7 @@
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getDatabase, ref, get, set, update, push, onValue }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
@@ -194,6 +198,7 @@
   ]);
   const auth = getAuth(app);
   const db = getDatabase(app);
+  const functions = getFunctions(app, 'europe-west1');
 
   function randomCode(len){
     const alphabet='abcdefghjkmnpqrstuvwxyz23456789';
@@ -342,6 +347,31 @@
     }catch(e){ alert('Kunne ikke slette: '+friendlyErr(e)); }
   };
 
+  window.inviteTeacher=async function(classId, btn){
+    let name='klassen';
+    try{ const t=btn.closest('.class-card').querySelector('.cname').textContent.trim(); name=t.replace(/\s*(Eier|Lærer)\s*$/,'').trim()||'klassen'; }catch(e){}
+    try{
+      const token=randomCode(14);
+      const uid=auth.currentUser.uid;
+      await set(ref(db,'invites/'+token), { classId, className:name, role:'teacher', createdBy:uid, createdAt:Date.now(), expiresAt:Date.now()+7*24*60*60*1000, used:false });
+      const link='https://myntland.no/konto.html?invite='+token;
+      try{ await navigator.clipboard.writeText(link); }catch(e){}
+      alert('Invitasjonslenke laget og kopiert! ✓\n\n'+link+'\n\nDel den med læreren du vil ha inn i «'+name+'». Lenken varer i 7 dager.');
+    }catch(e){ alert('Kunne ikke lage invitasjon: '+friendlyErr(e)); }
+  };
+
+  async function processInvite(token){
+    try{
+      const accept=httpsCallable(functions,'acceptInvite');
+      const res=await accept({ token });
+      const cn=(res && res.data && res.data.className) || 'klassen';
+      alert('Du er nå lærer i «'+cn+'»! 🎉 Klassen ligger nå i lista di.');
+    }catch(e){
+      alert('Kunne ikke godta invitasjonen: '+((e && e.message) || e));
+    }
+    try{ const u=new URL(location.href); u.searchParams.delete('invite'); history.replaceState({},'',u.toString()); }catch(e){}
+  }
+
   window.copyLink=function(slug,btn){
     const url='myntland.no/k/'+slug;
     navigator.clipboard?.writeText(url).then(()=>{ btn.textContent='Kopiert!'; setTimeout(()=>btn.textContent='Kopier',1500); });
@@ -372,7 +402,8 @@
         +'</div>'
         +'<button class="btn btn-ghost" style="width:auto;margin:0;padding:10px 16px;" '
           +'onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">Åpne</button>'
-        +(c.role==='owner' ? '<button class="btn-del" title="Slett klasse" onclick="deleteClass(\''+c.classId+'\',\''+c.slug+'\',this)">🗑</button>' : '')
+        +(c.role==='owner' ? '<button class="btn-inv" title="Inviter lærer" onclick="inviteTeacher(\''+c.classId+'\',this)">👤+</button>' : '')
+          +(c.role==='owner' ? '<button class="btn-del" title="Slett klasse" onclick="deleteClass(\''+c.classId+'\',\''+c.slug+'\',this)">🗑</button>' : '')
       +'</div>';
     }).join('');
   }
@@ -400,15 +431,18 @@
   }
 
   onAuthStateChanged(auth, async user=>{
+    const inviteToken = new URLSearchParams(location.search).get('invite');
     if(user){
       document.getElementById('view-auth').classList.add('hide');
       document.getElementById('view-app').classList.remove('hide');
       document.getElementById('who').textContent=user.displayName||user.email;
       await ensureProfile(user);
       renderClasses();
+      if(inviteToken) await processInvite(inviteToken);
     }else{
       document.getElementById('view-app').classList.add('hide');
       document.getElementById('view-auth').classList.remove('hide');
+      if(inviteToken) alertBox('login-alert','info','Du er invitert til en klasse — logg inn eller lag konto for å bli med.');
     }
   });
 
