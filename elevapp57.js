@@ -2463,7 +2463,7 @@ const QUIZ_POOL=[
   {q:'Hva er en ulempe med høy risiko-investering?',opts:['Du tjener alltid mer','Mulighet for større tap','Pengene er alltid trygge','Du slipper skatt'],a:1},
   {q:'Hva er meningen med klassens sparemål?',opts:['Å gi læreren penger','Å spare som klasse til noe alle kan glede seg over','Å betale skatt','Å kjøpe aksjer'],a:1},
   {q:'Hva er renten på brukskontoen din?',opts:['10%','5%','2%','0%'],a:3},
-  {q:'Hvem bestemmer fondets kursendring?',opts:['Eleven selv','Banken','Læreren','Myntet'],a:2},
+  {q:'Hvem eller hva bestemmer fondets kursendring?',opts:['Eleven selv','Læreren','Det endrer seg automatisk hver dag','Banken'],a:2},
   {q:'Du har 400🪙 og vil ta opp maks lån (2× saldo). Hva er maks lån?',opts:['400🪙','200🪙','800🪙','600🪙'],a:2},
   {q:'Hva skjer med sparekontoen din på mandag?',opts:['Den nullstilles','Renter legges til','Den låses','Ingenting'],a:1},
 ];
