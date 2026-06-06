@@ -1261,12 +1261,12 @@ const MYNTLAND_BUTIKK_CSS = `
   :root{--gull:#C99517;--gull-lys:#FFF7DD;--blekk:#2A1F3D;--blekk-myk:#4A3D5C;--pergament:#FBF2D6;}
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:white;font-family:'Nunito',sans-serif;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  @page{size:A4 landscape;margin:8mm}
+  @page{size:A4 landscape;margin:0}
   /* Hvit side — printbart omr. ved 8mm marg = 281×194mm. Arket gjoeres litt
      smalere/lavere (281×188) saa iPad/Safari ikke flyter over til ekstra side. */
-  .page{width:281mm;height:188mm;max-height:188mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}
+  .page{width:297mm;height:188mm;max-height:188mm;margin:0 auto;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}
   .page:last-child{page-break-after:avoid}
-  .page.landscape{width:281mm;height:188mm;max-height:188mm}
+  .page.landscape{width:297mm;height:188mm;max-height:188mm}
   /* 2 lister side-om-side på en A4 landskap */
   .liste-page{position:absolute;inset:10mm 10mm;display:grid;grid-template-columns:1fr 1fr;gap:8mm}
   /* Liste: ren hvit, gull venstrekant signaliserer Myntland */
@@ -1395,11 +1395,11 @@ function generateGroceryPDF() {
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    @page{size:A4 portrait;margin:8mm}
+    @page{size:A4 portrait;margin:0}
 
     /* 2x2 grid: 4 kort per A4. Printbart omr. 194×281mm; arket gjoeres litt
        lavere (275mm) saa iPad/Safari ikke runder over til blank ekstra side. */
-    .page{width:194mm;height:275mm;max-height:275mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
+    .page{width:210mm;height:275mm;max-height:275mm;margin:0 auto;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
     .page:last-child{page-break-after:avoid}
 
     .vare{padding:7mm 8mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;position:relative;page-break-inside:avoid;height:100%}
@@ -1544,7 +1544,7 @@ function buildShoppingListPageHTML(arr1, arr2, sn) {
       <div class="foot-line"><span>Regn ut total og gå til kassa</span><span class="stamp">MYNTLAND · MARKED</span></div>
     </div>`;
   }
-  return `<div class="page landscape" style="width:281mm;height:188mm;overflow:hidden;">
+  return `<div class="page landscape" style="width:297mm;height:188mm;overflow:hidden;">
     <div class="page-corner tl">Myntland · Handleliste</div>
     <div class="page-corner br">klipp i to · gi til to elever</div>
     <div class="liste-page">${listHTML(arr1, sn)}${listHTML(arr2, sn)}</div>
@@ -2214,10 +2214,10 @@ window.buildMyntlandBankCardsHTML = function(students, opts) {
   }
 
   var css = ''
-    + '@page{size:A4 portrait;margin:8mm}'
+    + '@page{size:A4 portrait;margin:0}'
     + '*{box-sizing:border-box}'
     + 'html,body{margin:0;padding:0;background:white;font-family:"Nunito",sans-serif;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.page{width:194mm;height:273mm;max-height:273mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
+    + '.page{width:210mm;height:273mm;max-height:273mm;margin:0 auto;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:white}'
     + '.page:last-of-type{page-break-after:auto}'
     + '.card-grid{position:absolute;inset:4mm 0 4mm 0;display:grid;grid-template-columns:repeat(2,96mm);grid-template-rows:repeat(4,66mm);gap:0;justify-content:center}'
     + '.card-slot{position:relative;padding:0}'
@@ -3052,11 +3052,11 @@ function printHendelserCards14(cards) {
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{font-family:'Nunito',sans-serif;background:white;color:var(--blekk);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    @page{size:A4 portrait;margin:8mm}
+    @page{size:A4 portrait;margin:0}
 
     /* 2x2 grid: 4 kort per A4. Printbart omr. 194×281mm; arket gjoeres litt
        lavere (275mm) saa iPad/Safari ikke runder over til blank ekstra side. */
-    .page-print{width:194mm;height:275mm;max-height:275mm;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
+    .page-print{width:210mm;height:275mm;max-height:275mm;margin:0 auto;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;break-after:page;position:relative}
     .page-print:last-child{page-break-after:avoid}
 
     /* Kortet: fyller hele sin firkant. Tonet bakgrunn per type. */
