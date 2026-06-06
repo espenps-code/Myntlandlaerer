@@ -266,14 +266,18 @@
         <div class="portal-brand-pill"><span class="portal-brand-dot"></span>Lærerportal</div>
         <h1 class="portal-title"><span class="accent">1–4</span></h1>
       </div>
-      <div class="portal-header-right">
-        <div class="teacher-badge">
-          <div class="teacher-badge-avatar" id="header-avatar"></div>
-          <div class="teacher-badge-name" id="header-name"></div>
+      <div class="portal-header-right" style="flex-direction:column;align-items:flex-end;gap:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="teacher-badge">
+            <div class="teacher-badge-avatar" id="header-avatar"></div>
+            <div class="teacher-badge-name" id="header-name"></div>
+          </div>
+          <select id="class-switcher" onchange="window._switchClass && window._switchClass(this.value)" title="Bytt klasse" style="display:none;font:inherit;font-weight:700;color:#085041;background:#fff;border:2px solid #cfe8df;border-radius:10px;padding:5px 9px;cursor:pointer;max-width:180px;"></select>
         </div>
-        <select id="class-switcher" onchange="window._switchClass && window._switchClass(this.value)" title="Bytt klasse" style="display:none;font:inherit;font-weight:700;color:#085041;background:#fff;border:2px solid #cfe8df;border-radius:10px;padding:6px 10px;cursor:pointer;max-width:200px;margin-right:8px;"></select>
-        <a href="konto.html" class="logout-btn" title="Til Min side" style="text-decoration:none;margin-right:8px;"><i class="ti ti-home" aria-hidden="true"></i><span>Min side</span></a>
-        <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span>Logg ut</span></button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <a href="konto.html" class="logout-btn" title="Til Min side" style="text-decoration:none;"><i class="ti ti-home" aria-hidden="true"></i><span>Min side</span></a>
+          <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span>Logg ut</span></button>
+        </div>
       </div>
     </div>
   </div>
