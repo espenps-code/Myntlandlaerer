@@ -3159,7 +3159,7 @@ const DEFAULT_HENDELSER = [
   { emoji:'🎁', type:'income',  amount:250, desc:'Du fikk en uventet gave fra familie' },
   { emoji:'🔧', type:'income',  amount:90,  desc:'Du reparerte sykkelen til en venn' },
   { emoji:'🐕', type:'income',  amount:175, desc:'Du passet hunden til naboene i en uke' },
-  { emoji:'♻️', type:'income',  amount:60,  desc:'Du pante tomflasker fra en fest' },
+  { emoji:'♻️', type:'income',  amount:60,  desc:'Du pante tomflasker du hadde samlet' },
   { emoji:'📚', type:'income',  amount:130, desc:'Du solgte bøker du ikke trenger lenger' },
   // 20 utgifter (expense) ─────────────────────────────────────
   { emoji:'🍕', type:'expense', amount:120, desc:'Pizzakveld med vennene – du betalte' },
@@ -3180,7 +3180,7 @@ const DEFAULT_HENDELSER = [
   { emoji:'⚡', type:'expense', amount:130, desc:'Strømregningen var høyere enn forventet' },
   { emoji:'🎿', type:'expense', amount:280, desc:'Skileie for en dag i skiheisen' },
   { emoji:'📸', type:'expense', amount:110, desc:'Du ødelagde en venns ting og måtte erstatte det' },
-  { emoji:'🚗', type:'expense', amount:175, desc:'Drosje hjem etter sen kveld' },
+  { emoji:'🎒', type:'expense', amount:175, desc:'Du måtte kjøpe ny skolesekk' },
   { emoji:'🌊', type:'expense', amount:240, desc:'Vannparken – billett og mat' },
 ];
 
