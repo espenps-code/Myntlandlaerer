@@ -105,6 +105,27 @@
   .ca-invite:hover{background:#cdeede;}
   .ca-del{background:#fde8e2;color:#a3341a;}
   .ca-del:hover{background:#f9cfc3;}
+  /* Gradient-hero */
+  .khero{background:linear-gradient(160deg,var(--blue-dark),#1a6648,var(--green));color:#fff;padding:30px 22px 34px;text-align:center;}
+  .khero .hpill{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);padding:4px 13px;border-radius:20px;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;color:#fff;}
+  .khero h1{font-family:'Fredoka One',cursive;font-weight:400;font-size:2rem;margin:0 0 8px;color:#fff;}
+  .khero p{max-width:540px;margin:0 auto;font-weight:600;font-size:.95rem;line-height:1.55;color:rgba(255,255,255,.92);}
+  .khero p strong{color:#fff;}
+  .kwrap{display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+  /* Klassefarger + tydelig elevlenke */
+  .class-card .badge{background:rgba(255,255,255,.6);}
+  .class-card .role-pill{background:rgba(255,255,255,.7);}
+  .sharelabel{display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:800;color:var(--blue);margin:11px 0 4px;text-transform:uppercase;letter-spacing:.03em;}
+  .sharelabel svg{width:13px;height:13px;flex:0 0 auto;}
+  .class-card .sharebox code{background:rgba(255,255,255,.78);border-color:#9bb0c8;}
+  .class-card .sharebox button{display:inline-flex;align-items:center;gap:5px;}
+  .class-card .sharebox button svg{width:13px;height:13px;flex:0 0 auto;}
+  .ca-invite{background:rgba(255,255,255,.78);color:var(--green-dark);}
+  .ca-invite:hover{background:#fff;}
+  /* Fargevelger i opprett-skjema */
+  .colorpick{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .swatch{width:30px;height:30px;border-radius:9px;border:2px solid rgba(0,0,0,.10);cursor:pointer;}
+  .swatch.sel{box-shadow:0 0 0 3px var(--blue-dark);}
 </style>
 </head>
 <body>
@@ -119,11 +140,13 @@
   </div>
 </nav>
 
-<div class="page">
-
   <div id="view-auth">
-    <div class="brand"><img class="coin" src="mynt.webp" alt="Myntland-mynt"><h1>Myntland</h1></div>
-    <p class="sub">Min side – for lærere</p>
+    <section class="khero">
+      <span class="hpill">Min side · for lærere</span>
+      <h1>Velkommen til Myntland</h1>
+      <p>Logg inn eller opprett en konto for å lage klasser, skrive ut bankkort og følge elevenes økonomi.</p>
+    </section>
+    <div class="kwrap">
 
     <div class="card">
       <div class="tabs">
@@ -163,10 +186,17 @@
       Dataene dine er dine egne. Hver klasse er adskilt, og bare du og lærere du
       inviterer har tilgang.
     </p>
+    </div>
   </div>
 
-  <div id="view-app" class="hide" style="width:100%;display:flex;flex-direction:column;align-items:center;">
-    <div class="topbar" style="justify-content:flex-end;">
+  <div id="view-app" class="hide">
+    <section class="khero">
+      <span class="hpill">Min side · for lærere</span>
+      <h1>Mine klasser</h1>
+      <p>Del <strong>elevlenken</strong> til hver klasse med elevene — den åpner elevappen for klassen deres. Elevene logger inn med PIN-koden og bankkortet du skriver ut (ikke automatisk). Opprett nye klasser nederst.</p>
+    </section>
+    <div class="kwrap">
+    <div class="topbar" style="justify-content:flex-end;max-width:760px;width:100%;">
       <div style="display:flex;align-items:center;gap:14px;">
         <span class="who" id="who"></span>
         <button class="link" style="margin:0;" onclick="doLogout()">Logg ut</button>
@@ -189,14 +219,15 @@
           <label><input type="radio" name="trinn" value="14" checked><div class="opt">1.–4. trinn</div></label>
           <label><input type="radio" name="trinn" value="57"><div class="opt">5.–7. trinn</div></label>
         </div>
+        <label>Farge på klassekortet</label>
+        <div class="colorpick" id="nc-colors"></div>
         <p class="muted-note" id="slug-preview" style="margin-bottom:0;">Klassen får sin egen tilfeldige delingslenke (myntland.no/k/…) når du oppretter den.</p>
         <button class="btn btn-amber" onclick="doCreateClass()">Opprett klasse</button>
         <div id="create-alert" class="alert"></div>
       </form>
     </div>
+    </div>
   </div>
-
-</div>
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -268,7 +299,7 @@
       await set(ref(db,'users/'+cred.user.uid),{name,email,created:Date.now()});
       return cred.user;
     },
-    async createClass({name,trinn}){
+    async createClass({name,trinn,colorIdx}){
       const uid=auth.currentUser.uid;
       let slug, tries=0;
       while(true){
@@ -279,7 +310,7 @@
       }
       const classRef=push(ref(db,'classes'));
       const classId=classRef.key, now=Date.now();
-      await set(classRef,{ name, slug, trinn, ownerUid:uid, created:now, members:{[uid]:'owner'} });
+      await set(classRef,{ name, slug, trinn, colorIdx:(Number.isInteger(colorIdx)?colorIdx:0), ownerUid:uid, created:now, members:{[uid]:'owner'} });
       await set(ref(db,'slugs/'+slug), { classId, name, trinn });
       await update(ref(db,'users/'+uid), { ['memberships/'+classId]:'owner', lastActiveClass:classId });
       return { classId, slug };
@@ -359,10 +390,11 @@
     clearAlert('create-alert');
     const name=document.getElementById('nc-name').value.trim();
     const trinn=document.querySelector('input[name="trinn"]:checked').value;
+    const colorIdx=window.__selColorIdx||0;
     if(!name) return alertBox('create-alert','error','Gi klassen et navn.');
     try{
       alertBox('create-alert','info','Oppretter klasse …');
-      const {slug}=await MyntData.createClass({name,trinn});
+      const {slug}=await MyntData.createClass({name,trinn,colorIdx});
       document.getElementById('nc-name').value='';
       alertBox('create-alert','ok','Klassen «'+name+'» er opprettet! Lenke: myntland.no/k/'+slug);
       renderClasses();
@@ -408,7 +440,7 @@
 
   window.copyLink=function(slug,btn){
     const url='myntland.no/k/'+slug;
-    navigator.clipboard?.writeText(url).then(()=>{ btn.textContent='Kopiert!'; setTimeout(()=>btn.textContent='Kopier',1500); });
+    navigator.clipboard?.writeText(url).then(()=>{ const o=btn.innerHTML; btn.textContent='Kopiert!'; setTimeout(()=>{ btn.innerHTML=o; },1500); });
   };
 
   window.openClass=function(classId,trinn){
@@ -416,26 +448,50 @@
     location.href = file+'?class='+encodeURIComponent(classId);
   };
 
+  const CLASS_COLORS=[
+    ['#FAEEDA','#E6C781'],['#E1F5EE','#9FE1CB'],['#EEEDFE','#C3BEF0'],['#DBEAFE','#A9C9F5'],
+    ['#FBEAF0','#EFAFC6'],['#EAF3DE','#C7E08F'],['#FBE7E1','#F0BBA8'],['#E6F5F7','#A9DCE6']
+  ];
+  function classColors(c){
+    let idx;
+    if(Number.isInteger(c.colorIdx)){ idx=((c.colorIdx%CLASS_COLORS.length)+CLASS_COLORS.length)%CLASS_COLORS.length; }
+    else { let hh=0; const s=String(c.classId||c.slug||''); for(let i=0;i<s.length;i++) hh=(hh*31+s.charCodeAt(i))>>>0; idx=hh%CLASS_COLORS.length; }
+    return CLASS_COLORS[idx];
+  }
+  window.__selColorIdx=0;
+  function buildColorPicker(){
+    const box=document.getElementById('nc-colors'); if(!box||box.dataset.built) return;
+    box.dataset.built='1';
+    box.innerHTML=CLASS_COLORS.map((col,i)=>'<span class="swatch'+(i===0?' sel':'')+'" data-idx="'+i+'" style="background:'+col[0]+'" title="Farge '+(i+1)+'"></span>').join('');
+    box.querySelectorAll('.swatch').forEach(sw=>{
+      sw.onclick=()=>{ window.__selColorIdx=+sw.dataset.idx; box.querySelectorAll('.swatch').forEach(s=>s.classList.remove('sel')); sw.classList.add('sel'); };
+    });
+  }
+  buildColorPicker();
+
   function renderClassList(classes){
     const wrap=document.getElementById('class-list');
     if(!classes.length){ wrap.innerHTML='<div class="empty">Ingen klasser ennå. Opprett din første under! 👇</div>'; return; }
     wrap.innerHTML=classes.map(c=>{
       const emoji=c.trinn==='57'?'🎒':'🧸';
-      const badgeCls=c.trinn==='57'?'badge-57':'badge-14';
       const trinnTxt=c.trinn==='57'?'5.–7. trinn':'1.–4. trinn';
       const roleTxt=c.role==='owner'?'Eier':'Lærer';
       const owner=c.role==='owner';
+      const col=classColors(c);
+      const svgLink='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=\'M9 15 15 9\'/><path d=\'M11 6l1-1a4 4 0 0 1 6 6l-1 1\'/><path d=\'M13 18l-1 1a4 4 0 0 1-6-6l1-1\'/></svg>';
+      const svgCopy='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d=\'M5 15V5a2 2 0 0 1 2-2h10\'/></svg>';
       const svgOpen='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=\'M5 12h14\'/><path d=\'m12 5 7 7-7 7\'/></svg>';
       const svgInv='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d=\'M3.5 19a5.5 5.5 0 0 1 11 0\'/><path d=\'M19 8v6M16 11h6\'/></svg>';
       const svgDel='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=\'M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13\'/></svg>';
-      return '<div class="class-card">'
-        +'<div class="badge '+badgeCls+'">'+emoji+'</div>'
+      return '<div class="class-card" style="background:'+col[0]+';border-color:'+col[1]+';border-width:1.5px;">'
+        +'<div class="badge">'+emoji+'</div>'
         +'<div class="meta">'
           +'<div class="cname">'+c.name+' <span class="role-pill">'+roleTxt+'</span></div>'
           +'<div class="cdetail">'+trinnTxt+'</div>'
+          +'<div class="sharelabel">'+svgLink+'Elevenes lenke til appen</div>'
           +'<div class="sharebox">'
             +'<code>myntland.no/k/'+c.slug+'</code>'
-            +'<button onclick="copyLink(\''+c.slug+'\',this)">Kopier</button>'
+            +'<button onclick="copyLink(\''+c.slug+'\',this)">'+svgCopy+'Kopier</button>'
           +'</div>'
           +'<div class="cact">'
             +'<button class="ca ca-open" onclick="openClass(\''+c.classId+'\',\''+c.trinn+'\')">'+svgOpen+'Åpne</button>'
