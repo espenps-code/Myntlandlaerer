@@ -2297,12 +2297,13 @@ async function confirmPurchase() {
 // ── MERKER (BADGES) ────────────────────────────────────────────────────────
 // Badge parameters loaded from settings/badgeParams (teacher-editable)
 function getBadgeParams() {
-  return getEffectiveBadgeParamsElev() || {
+  const defaults = {
     quizBronse: 25, quizSolv: 50, quizGull: 75,
     spareBronse: 100, spareSolv: 1000, spareGull: 10000,
     skattBronse: 1000, skattSolv: 5000, skattGull: 10000,
     bonusBronse: 500, bonusSolv: 2500, bonusGull: 5000
   };
+  return { ...defaults, ...(getEffectiveBadgeParamsElev() || {}) };
 }
 
 function getMedalLabel(type) {
