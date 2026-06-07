@@ -2844,13 +2844,19 @@ async function openGuardianLetters(){
   students.sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
   if(!students.length){ alert('Ingen elever å lage brev for.'); return; }
   const codes=window._guardianCodes||{};
-  const used=new Set(Object.values(codes).map(c=>c&&c.code).filter(Boolean));
+  // Global unikhet: sjekk nye koder mot ALLE eksisterende koder på tvers av
+  // klasser via rot-indeksen, ikke bare denne klassen.
+  const _normCode=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  let _idxAll={};
+  try{ _idxAll=(await window._get(fbRef('guardianIndex'))).val()||{}; }catch(e){ _idxAll={}; }
+  const usedNorm=new Set(Object.keys(_idxAll));   // indeks-nøklene er normaliserte koder
+  Object.values(codes).forEach(c=>{ if(c&&c.code) usedNorm.add(_normCode(c.code)); });
   const upd={};
   students.forEach(s=>{
     if(!codes[s.fbKey]?.code){
       let c=wpRandomCode();
-      while(used.has(c)) c=wpRandomCode();
-      used.add(c);
+      while(usedNorm.has(_normCode(c))) c=wpRandomCode();
+      usedNorm.add(_normCode(c));
       upd['guardianCodes/'+s.fbKey]={code:c};
     }
   });
@@ -2860,7 +2866,6 @@ async function openGuardianLetters(){
   // Rot-indeks: kode -> {classId, studentKey}, slik at foresattsida kan slå opp
   // hvilken klasse (scoped sti) en kode hører til. Skrives for ALLE valgte elever,
   // også de som allerede har kode (backfill). guardianIndex er ikke klasse-scoped.
-  const _normCode=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   const idxUpd={};
   students.forEach(s=>{
     const c=fresh[s.fbKey]&&fresh[s.fbKey].code;
