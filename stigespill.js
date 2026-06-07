@@ -1010,10 +1010,15 @@ let resizeTimer = null;
 // ikke til markedsføringssiden.
 // ═══════════════════════════════════════════════════════
 function applyNavContext() {
-  const from = new URLSearchParams(window.location.search).get("from");
+  const params = new URLSearchParams(window.location.search);
+  const from = params.get("from");
+  // Ta klassen med tilbake, ellers «glemmer» elevappen klassen. Den levande
+  // elevappen er elevapp{14|57}-ny.html — same som ruteren /k/<slug> opnar.
+  const cls = params.get("class") || params.get("cls") || "";
+  const q = cls ? ("?class=" + encodeURIComponent(cls)) : "";
   let backUrl = "index.html", backText = "Tilbake til forsiden";
-  if (from === "elevapp14") { backUrl = "elevapp14.html"; backText = "Tilbake til appen min"; }
-  else if (from === "elevapp57") { backUrl = "elevapp57.html"; backText = "Tilbake til appen min"; }
+  if (from === "elevapp14") { backUrl = "elevapp14-ny.html" + q; backText = "Tilbake til appen min"; }
+  else if (from === "elevapp57") { backUrl = "elevapp57-ny.html" + q; backText = "Tilbake til appen min"; }
   const logo = document.querySelector(".topnav-logo");
   const back = document.querySelector(".topnav-back");
   const backSpan = document.querySelector(".topnav-back span");

@@ -1903,11 +1903,16 @@ body {
 const NAV_CONTEXT = (() => {
   const params = new URLSearchParams(window.location.search);
   const from = params.get('from');
+  // Ta klassen med tilbake, ellers «glemmer» elevappen klassen (nettbank,
+  // butikk, arbeidsplan, Dagen i dag faller sammen). Den levende elevappen
+  // er elevapp{14|57}-ny.html — same som ruteren /k/<slug> opnar.
+  const cls = params.get('class') || params.get('cls') || '';
+  const q = cls ? ('?class=' + encodeURIComponent(cls)) : '';
   if (from === 'elevapp14') {
-    return { backUrl: 'elevapp14.html', backText: '← Tilbake til appen min', isInApp: true };
+    return { backUrl: 'elevapp14-ny.html' + q, backText: '← Tilbake til appen min', isInApp: true };
   }
   if (from === 'elevapp57') {
-    return { backUrl: 'elevapp57.html', backText: '← Tilbake til appen min', isInApp: true };
+    return { backUrl: 'elevapp57-ny.html' + q, backText: '← Tilbake til appen min', isInApp: true };
   }
   return { backUrl: 'index.html', backText: 'Tilbake til forsiden', isInApp: false };
 })();
