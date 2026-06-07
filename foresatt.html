@@ -35,8 +35,24 @@
   const auth=getAuth(app);
   try { await signInAnonymously(auth); } catch(e){ console.error('Anonym innlogging feilet:', e); }
   const db=getDatabase(app);
-  window._db=db; window._ref=ref; window._onValue=onValue;
-  window._update=update; window._push=push; window._set=set; window._get=get;
+  window._fgClassId = null;
+  const FG_CLASS_ROOTS = new Set(['students57','transactions57','workPlanProgress','workPlans','guardianCodes']);
+  function fgScope(p){
+    if(!window._fgClassId) return p;
+    const clean = String(p).replace(/^\/+/,'');
+    if(FG_CLASS_ROOTS.has(clean.split('/')[0])) return 'classes/'+window._fgClassId+'/data/'+clean;
+    return p;
+  }
+  window._db=db; window._onValue=onValue; window._push=push; window._set=set; window._get=get;
+  window._ref=(dbi,p)=>ref(dbi, fgScope(p));
+  window._update=(r,obj)=>{
+    if(obj && typeof obj==='object' && !Array.isArray(obj)){
+      const sc={}; let ch=false;
+      for(const k in obj){ const nk=fgScope(k); sc[nk]=obj[k]; if(nk!==k) ch=true; }
+      return update(r, ch?sc:obj);
+    }
+    return update(r,obj);
+  };
   window._fbReady=true;
   // Forhåndsutfyll kode fra ?kode= i URL-en
   const urlCode=new URLSearchParams(location.search).get('kode');
@@ -271,7 +287,6 @@
     <div id="fg-summary"></div>
     <div class="fg-subjects" id="fg-subjects"></div>
     <div id="fg-body"></div>
-    <div id="fg-diag"></div>
   </section>
 
 </main>
@@ -339,17 +354,25 @@ async function fgLogin(){
   const norm=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   errEl.textContent='Sjekker …';
   try{
+    window._fgClassId=null;
+    // 1) Slå opp koden i rot-indeksen: kode -> { classId, studentKey }.
+    let idx=null;
+    try{ idx=(await window._get(fgRef('guardianIndex/'+norm(code)))).val(); }catch(e){ idx=null; }
+    if(idx && idx.studentKey){
+      window._fgClassId = idx.classId || null;   // null => eldre data i rota
+      _studentKey = idx.studentKey;
+      try{ const gc=(await window._get(fgRef('guardianCodes/'+_studentKey))).val(); _guardianLastSeen=(gc&&gc.lastSeen)||0; }catch(e){ _guardianLastSeen=0; }
+      startGuardian();
+      return;
+    }
+    // 2) Fallback: eldre koder uten indeks ligger i rota.
+    window._fgClassId=null;
     const snap=await window._get(fgRef('guardianCodes'));
     const all=snap.val()||{};
-    const nCodes=Object.keys(all).length;
     let foundKey=null;
-    Object.entries(all).forEach(([sk,v])=>{
-      if(v && norm(v.code)===norm(code)) foundKey=sk;
-    });
+    Object.entries(all).forEach(([sk,v])=>{ if(v && norm(v.code)===norm(code)) foundKey=sk; });
     if(!foundKey){
-      errEl.textContent = nCodes===0
-        ? 'Fant ingen koder i systemet (databasen ga tom liste). Sjekk at brevene er laget, eller databaserettighetene.'
-        : 'Fant ingen elev med denne koden. Sjekk at den er skrevet riktig.';
+      errEl.textContent='Fant ingen elev med denne koden. Sjekk at den er skrevet riktig.';
       return;
     }
     _studentKey=foundKey;
@@ -357,7 +380,7 @@ async function fgLogin(){
     startGuardian();
   }catch(e){
     console.error(e);
-    errEl.textContent='Noe gikk galt: '+((e&&(e.code||e.message))||e)+' — vis dette til Espen.';
+    errEl.textContent='Noe gikk galt: '+((e&&(e.code||e.message))||e);
   }
 }
 function fgLogout(){
@@ -472,34 +495,13 @@ function fgRender(){
   if(!_studentKey) return;
   fgRenderSummary();
   const plans=fgPlans();
-  const _diag=document.getElementById('fg-diag');
-  if(_diag){
-    const _cls=_student?(_student.class||'(uten klasse)'):'(eleven ikke lest)';
-    const _rows=_workPlans.length
-      ? _workPlans.map(p=>'\u2022 '+fgEsc(String(p.subject||p.icon||'?'))+' \u2014 klasse \u00ab'+fgEsc(String(p.class))+'\u00bb, '+(p.active===false?'KLADD (ikke publisert)':'aktiv')).join('<br>')
-      : '(ingen planer lest)';
-    _diag.innerHTML='<div class="fg-card" style="font-size:.74rem;color:var(--ink-soft);line-height:1.6">'
-      +'<b>Teknisk diagnose (vis til Espen):</b><br>'
-      +'Barnets klasse: \u00ab'+fgEsc(_cls)+'\u00bb \u00b7 viser '+plans.length+' av '+_workPlans.length+' leste planer.<br>'
-      +(_fgErr?'<b style="color:#c0392b">Lesefeil:</b> '+fgEsc(_fgErr)+'<br>':'Ingen lesefeil.<br>')
-      +'<br>Alle leste planer:<br>'+_rows+'</div>';
-  }
   const subjEl=document.getElementById('fg-subjects');
   const body=document.getElementById('fg-body');
   if(!plans.length){
     subjEl.innerHTML='';
-    const _cls=_student?(_student.class||'(uten klasse)'):'(eleven ikke lest)';
-    const _total=_workPlans.length;
-    const _classes=[...new Set(_workPlans.map(p=>String(p.class)))].join(', ')||'ingen';
-    const _activeAll=_workPlans.filter(p=>p.active!==false).length;
     body.innerHTML='<div class="fg-card fg-empty"><div class="e">📋</div>'
       +'<div style="font-weight:700;color:var(--ink);font-size:1.1rem">Ingen arbeidsplan ennå</div>'
-      +'<div style="font-size:.9rem;margin-top:4px;color:var(--ink-soft)">Læreren har ikke laget en arbeidsplan til klassen enda.</div>'
-      +'<div style="font-size:.74rem;color:var(--ink-soft);margin-top:16px;line-height:1.55;border-top:2px solid rgba(42,31,61,.15);padding-top:11px;text-align:left">'
-      +'<b>Teknisk info (vis til Espen):</b><br>Barnets klasse: «'+fgEsc(_cls)+'»<br>'
-      +'Leste '+_total+' arbeidsplaner totalt ('+_activeAll+' aktive). Klasser i planene: '+fgEsc(_classes)+'.<br>'
-      +(_fgErr?'<b style="color:#c0392b">Lesefeil:</b> '+fgEsc(_fgErr):'Ingen lesefeil registrert.')
-      +'</div></div>';
+      +'<div style="font-size:.9rem;margin-top:4px;color:var(--ink-soft)">Læreren har ikke laget en arbeidsplan til klassen enda.</div></div>';
     return;
   }
   if(!plans.some(p=>p.fbKey===_fgPlanKey)) _fgPlanKey=plans[0].fbKey;

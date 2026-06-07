@@ -2857,6 +2857,16 @@ async function openGuardianLetters(){
   if(Object.keys(upd).length) await window._update(fbRef('/'),upd);
   const fresh=(await window._get(fbRef('guardianCodes'))).val()||{};
   window._guardianCodes=fresh;
+  // Rot-indeks: kode -> {classId, studentKey}, slik at foresattsida kan slå opp
+  // hvilken klasse (scoped sti) en kode hører til. Skrives for ALLE valgte elever,
+  // også de som allerede har kode (backfill). guardianIndex er ikke klasse-scoped.
+  const _normCode=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const idxUpd={};
+  students.forEach(s=>{
+    const c=fresh[s.fbKey]&&fresh[s.fbKey].code;
+    if(c) idxUpd['guardianIndex/'+_normCode(c)]={ classId: (window._CLASS_ID||null), studentKey: s.fbKey, ts: Date.now() };
+  });
+  if(Object.keys(idxUpd).length) await window._update(fbRef('/'),idxUpd);
 
   // Grupper elever per klasse, sorter klasser stigende
   const byClass={};
