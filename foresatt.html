@@ -324,12 +324,15 @@ async function fgLogin(){
   try{
     const snap=await window._get(fgRef('guardianCodes'));
     const all=snap.val()||{};
+    const nCodes=Object.keys(all).length;
     let foundKey=null;
     Object.entries(all).forEach(([sk,v])=>{
       if(v && norm(v.code)===norm(code)) foundKey=sk;
     });
     if(!foundKey){
-      errEl.textContent='Fant ingen elev med denne koden. Sjekk at den er skrevet riktig.';
+      errEl.textContent = nCodes===0
+        ? 'Fant ingen koder i systemet (databasen ga tom liste). Sjekk at brevene er laget, eller databaserettighetene.'
+        : 'Fant ingen elev med denne koden. Sjekk at den er skrevet riktig.';
       return;
     }
     _studentKey=foundKey;
@@ -337,7 +340,7 @@ async function fgLogin(){
     startGuardian();
   }catch(e){
     console.error(e);
-    errEl.textContent='Noe gikk galt. Prøv igjen.';
+    errEl.textContent='Noe gikk galt: '+((e&&(e.code||e.message))||e)+' — vis dette til Espen.';
   }
 }
 function fgLogout(){
