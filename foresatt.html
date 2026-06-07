@@ -12,6 +12,7 @@
   import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
   import { getDatabase, ref, onValue, update, push, set, get }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
   const firebaseConfig = {
     apiKey:"AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
@@ -31,6 +32,8 @@
     getToken(appCheck).catch(err=>console.warn('[App Check]',err)),
     new Promise(r=>setTimeout(r,3000))
   ]);
+  const auth=getAuth(app);
+  try { await signInAnonymously(auth); } catch(e){ console.error('Anonym innlogging feilet:', e); }
   const db=getDatabase(app);
   window._db=db; window._ref=ref; window._onValue=onValue;
   window._update=update; window._push=push; window._set=set; window._get=get;
@@ -61,7 +64,7 @@
     justify-content:space-between;align-items:center;}
   .topnav-logo{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);
     text-decoration:none;display:flex;align-items:center;gap:.5rem;}
-  .topnav-logo::before{content:"🪙";font-size:1.4rem;}
+  .topnav-logo::before{content:"";width:1.3em;height:1.3em;background:url('mynt.webp') center/contain no-repeat;flex:0 0 auto;}
   .topnav-back{font-size:.9rem;font-weight:800;color:var(--green-dark);text-decoration:none;
     display:inline-flex;align-items:center;gap:4px;}
   .topnav-back:hover{color:var(--teal-dark);}
