@@ -411,6 +411,16 @@ h1.sticker{
 .plan-row .ptimes select{width:80px;padding:6px 4px;font-size:16px}
 .plan-row .ptimes .pdash{font-weight:700}
 .plan-row .pname{flex:1;min-width:130px}
+.plan-daymsg{display:flex;flex-direction:column;gap:4px;margin:2px 0 12px}
+.plan-daymsg .pdm-label{font-weight:700;font-size:15px}
+.plan-daymsg .pdm-label small{font-weight:600;opacity:.7}
+.plan-daymsg .pdm-input{font-family:var(--font);font-size:16px;border:2px solid var(--ink);border-radius:9px;padding:8px 10px;background:#fff;color:var(--ink)}
+.plan-bdays{margin-top:14px;border-top:3px dashed var(--ink);padding-top:12px}
+.plan-bdays .pbd-title{margin:0 0 8px;font-size:18px}
+.bday-rows{display:flex;flex-direction:column;gap:8px}
+.bday-row{display:flex;align-items:center;gap:8px}
+.bday-row input,.bday-row select{font-family:var(--font);font-size:16px;border:2px solid var(--ink);border-radius:9px;padding:6px 8px;background:#fff;color:var(--ink)}
+.bday-row .bdname{flex:1;min-width:120px}
 .swatches{display:flex;gap:5px}
 .sw{width:26px;height:26px;border-radius:7px;border:2px solid var(--ink);cursor:pointer}
 .sw.sel{box-shadow:0 0 0 3px var(--gold)}
@@ -920,8 +930,8 @@ h1.sticker{
           <div class="confetti" id="confetti" aria-hidden="true"></div>
           <img src="" id="bdMascot" class="bd-mascot" alt="" aria-hidden="true">
           <div class="bd-banner">Bursdag!</div>
-          <div class="bd-name" data-edit="" data-key="bdname">Emma</div>
-          <div class="bd-age">blir <span data-edit="" data-key="bdage">9</span> år i dag</div>
+          <div class="bd-name">Emma</div>
+          <div class="bd-age">blir <span>9</span> år i dag</div>
           <div class="bd-hip">Hipp hipp hurra! 🎈</div>
         </section>
       </div>
@@ -1153,9 +1163,18 @@ h1.sticker{
     <div class="ovl-head"><h3>&#128197; Planlegg uka</h3><button class="ovl-x" id="planClose">&times;</button></div>
     <div class="ovl-body">
       <div class="daytabs" id="dayTabs"></div>
+      <div class="plan-daymsg">
+        <label class="pdm-label">Fast beskjed for <span id="pdmDay">dagen</span> <small>(vises hver uke)</small></label>
+        <input id="planDayMsg" class="pdm-input" placeholder="F.eks. Husk gymtøy og drikkeflaske">
+      </div>
       <div class="plan-rows" id="planRows"></div>
       <button class="add-slot" id="addPlanRow">+ Legg til time eller friminutt</button>
-      <p class="ovl-hint">Hver ukedag har sin egen timeplan, og tavla viser automatisk dagens plan. Skriv ett klokkeslett som <b>08:30</b>, eller fra&ndash;til som <b>08:30&ndash;09:15</b> for timer og <b>09:15&ndash;09:30</b> for friminutt. Skriver du sluttid, blir nedtellingen p&aring; storskjermen helt riktig &ndash; uansett om timene er 45 eller 60 minutter.</p>
+      <div class="plan-bdays">
+        <h4 class="pbd-title">🎂 Ukas bursdager</h4>
+        <div id="bdayRows" class="bday-rows"></div>
+        <button class="add-slot" id="addBday">+ Legg til bursdag</button>
+      </div>
+      <p class="ovl-hint">Hver ukedag har sin egen timeplan, og tavla viser automatisk dagens plan. Velg <b>start</b> og <b>slutt</b> fra nedtrekksmenyene &ndash; sluttiden fylles ut automatisk, og neste rad starter der forrige sluttet. Faste beskjeder vises hver uke p&aring; dagen du legger dem; bursdager gjelder denne uka og dukker opp p&aring; riktig dag. Du kan fortsatt legge til spontane beskjeder direkte p&aring; &laquo;Fra l&aelig;reren&raquo;.</p>
     </div>
     <div class="plan-foot">
       <button class="btn-big ghost" id="planCancel">Lukk</button>
@@ -1279,11 +1298,13 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   if (!data.week || typeof data.week !== 'object') {
     data.week = { 1: clonePlan(), 2: clonePlan(), 3: clonePlan(), 4: clonePlan(), 5: clonePlan() };
   }
+  if (!data.dayMsg || typeof data.dayMsg !== 'object') data.dayMsg = {};
+  if (!Array.isArray(data.birthdays)) data.birthdays = [];
   function applyWeek(){
     const wd = todayWd();
     if (wd >= 6) { data.plan = []; }
     else if (data.week[wd]) { data.plan = JSON.parse(JSON.stringify(data.week[wd])); }
-    renderLessons(); save();
+    renderLessons(); renderNotes(); renderBirthday(); save();
   }
   applyWeek();
   function load() {
@@ -1349,6 +1370,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const wEl = document.getElementById('clockWords'); if (wEl) wEl.textContent = timeWords(h, m);
     renderLessons();
     renderWord();
+    renderBirthday();
   }
   tick(); setInterval(tick, 1000 * 20);
 
@@ -1450,6 +1472,15 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   /* ---------- notes ---------- */
   function renderNotes() {
     const b = document.getElementById('noteboard'); b.innerHTML = '';
+    const __wd = todayWd();
+    const __dm = (data.dayMsg && data.dayMsg[__wd]) ? String(data.dayMsg[__wd]).trim() : '';
+    if (__dm) {
+      const pn = document.createElement('div'); pn.className = 'note';
+      pn.innerHTML = `<span class="tape"></span><span class="ntext" contenteditable="true" spellcheck="false"></span>`;
+      pn.querySelector('.ntext').textContent = __dm;
+      pn.querySelector('.ntext').addEventListener('input', (e) => { data.dayMsg[__wd] = e.target.textContent; save(); });
+      b.appendChild(pn);
+    }
     data.notes.forEach((txt, i) => {
       const n = document.createElement('div');
       n.className = 'note';
@@ -1461,6 +1492,22 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       n.querySelector('.del').addEventListener('click', () => { data.notes.splice(i, 1); renderNotes(); save(); });
       b.appendChild(n);
     });
+  }
+  function renderBirthday(){
+    const panel = document.getElementById('birthday'); if (!panel) return;
+    const wd = todayWd();
+    const list = (data.birthdays || []).filter((b) => +b.day === +wd && String(b.name || '').trim());
+    const nameEl = panel.querySelector('.bd-name');
+    const ageEl = panel.querySelector('.bd-age');
+    if (!list.length) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    if (list.length === 1) {
+      if (nameEl) nameEl.textContent = list[0].name;
+      if (ageEl) { ageEl.style.display = ''; const sp = ageEl.querySelector('span'); if (sp) sp.textContent = list[0].age || ''; }
+    } else {
+      if (nameEl) nameEl.textContent = list.map((b) => b.name + (b.age ? (' (' + b.age + ')') : '')).join(' & ');
+      if (ageEl) ageEl.style.display = 'none';
+    }
   }
   document.getElementById('addNote').addEventListener('click', () => {
     data.notes.push('Ny beskjed …'); renderNotes(); save();
@@ -1621,6 +1668,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     get data(){ return data; },
     save: save,
     renderLessons: renderLessons,
+    renderNotes: renderNotes,
+    renderBirthday: renderBirthday,
     renderHelpers: renderHelpers,
     renderChecklist: renderChecklist,
     renderWord: renderWord,
@@ -1791,14 +1840,36 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   var planOvl=document.getElementById('planOverlay');
   var editDay=1;
 
-  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); }
+  function buildDayMsg(){
+    var inp=document.getElementById('planDayMsg'); var lbl=document.getElementById('pdmDay');
+    if(lbl) lbl.textContent=DAYNAMES[editDay]||'dagen';
+    if(inp) inp.value=(data.dayMsg && data.dayMsg[editDay])||'';
+  }
+  function bdayRow(b,i){
+    var row=el('div','bday-row');
+    var dayOpts=Object.keys(DAYNAMES).map(function(d){ return '<option value="'+d+'"'+((+b.day===+d)?' selected':'')+'>'+DAYNAMES[d]+'</option>'; }).join('');
+    row.innerHTML='<input class="bdname" value="'+esc(b.name||'')+'" placeholder="Navn">'+
+      '<input class="bdage" type="number" min="1" max="20" value="'+esc(b.age||'')+'" placeholder="Alder" style="width:84px">'+
+      '<select class="bdday">'+dayOpts+'</select>'+
+      '<button class="mini del" title="Fjern">&#128465;</button>';
+    row.querySelector('.bdname').oninput=function(){ data.birthdays[i].name=this.value; };
+    row.querySelector('.bdage').oninput=function(){ data.birthdays[i].age=this.value; };
+    row.querySelector('.bdday').onchange=function(){ data.birthdays[i].day=+this.value; };
+    row.querySelector('.del').onclick=function(){ data.birthdays.splice(i,1); buildBdayRows(); };
+    return row;
+  }
+  function buildBdayRows(){
+    var wrap=document.getElementById('bdayRows'); if(!wrap) return; wrap.innerHTML='';
+    (data.birthdays||[]).forEach(function(b,i){ wrap.appendChild(bdayRow(b,i)); });
+  }
+  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildDayMsg(); buildBdayRows(); }
   function closePlanner(){ planOvl.classList.remove('open'); }
 
   function buildDayTabs(){
     var t=document.getElementById('dayTabs'); t.innerHTML='';
     Object.keys(DAYNAMES).forEach(function(d){
       var b=el('button','daytab'+(+d===editDay?' active':''), DAYNAMES[d]);
-      b.onclick=function(){ harvestPlan(); editDay=+d; buildDayTabs(); buildPlanRows(); };
+      b.onclick=function(){ harvestPlan(); editDay=+d; buildDayTabs(); buildPlanRows(); buildDayMsg(); };
       t.appendChild(b);
     });
   }
@@ -1864,6 +1935,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   document.getElementById('planCancel').onclick=closePlanner;
   planOvl.onclick=function(e){ if(e.target===planOvl) closePlanner(); };
   document.getElementById('addPlanRow').onclick=function(){ harvestPlan(); portal.data.week[editDay].push({ type:'lesson', time:'', name:'', icon:'book', color:COLORS[0] }); buildPlanRows(); };
+  var __dmInp=document.getElementById('planDayMsg'); if(__dmInp) __dmInp.oninput=function(){ if(!data.dayMsg) data.dayMsg={}; data.dayMsg[editDay]=this.value; };
+  var __abBtn=document.getElementById('addBday'); if(__abBtn) __abBtn.onclick=function(){ if(!Array.isArray(data.birthdays)) data.birthdays=[]; data.birthdays.push({name:'',age:'',day:editDay||1}); buildBdayRows(); };
   document.getElementById('planSave').onclick=function(){ harvestPlan(); if(portal.save) portal.save(); if(portal.applyWeek) portal.applyWeek(); closePlanner(); };
 
   /* ---------- vær: automatisk etter sted (Open-Meteo, gratis, uten nøkkel) ---------- */
