@@ -2960,10 +2960,11 @@ function printGuardianLetters(){
     </div></div>`;
   });
   const css=`
-    @page{size:A4;margin:0;}
+    @page{size:210mm 297mm;margin:0;}
     *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    html,body{width:210mm;}
     body{font-family:'Nunito',Arial,sans-serif;color:#1a2e1a;}
-    .sheet{padding:15mm 17mm;page-break-after:always;}
+    .sheet{width:210mm;margin:0 auto;padding:15mm 17mm;page-break-after:always;}
     .sheet:last-of-type{page-break-after:auto;}
     .letter{border:2px solid #c8dfc8;border-radius:16px;padding:10mm 11mm;}
     .lt-ident{font-size:8.5pt;color:#5a7a5a;font-weight:700;letter-spacing:.3px;margin-bottom:4mm;}
@@ -2988,7 +2989,7 @@ function printGuardianLetters(){
     .lt-sign{font-size:10pt;font-weight:700;margin-top:4mm;}
   `;
   const win=window.open('','_blank');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>img.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style><script>(function(){var U=(window.opener&&window.opener.__MYNTCOIN__)||"https://myntland.no/mynt.webp";var E="🪙";function C(n){if(n.nodeType===3){var v=n.nodeValue;if(!v||v.indexOf(E)<0)return;var p=n.parentNode;if(!p)return;var t=p.nodeName;if(t==="SCRIPT"||t==="STYLE"||t==="TEXTAREA")return;var a=v.split(E),f=document.createDocumentFragment();for(var i=0;i<a.length;i++){if(a[i])f.appendChild(document.createTextNode(a[i]));if(i<a.length-1){var m=document.createElement("img");m.className="myntico";m.src=U;m.alt="mynt";f.appendChild(m);}}p.replaceChild(f,n);}else if(n.nodeType===1){var k=[].slice.call(n.childNodes);for(var j=0;j<k.length;j++)C(k[j]);}}function R(){try{C(document.body);}catch(e){}}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",R);}else{R();}})();</script><title>Foresattbrev</title>'
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>img.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style><script>(function(){var U=(window.opener&&window.opener.__MYNTCOIN__)||"https://myntland.no/mynt.webp";var E="🪙";function C(n){if(n.nodeType===3){var v=n.nodeValue;if(!v||v.indexOf(E)<0)return;var p=n.parentNode;if(!p)return;var t=p.nodeName;if(t==="SCRIPT"||t==="STYLE"||t==="TEXTAREA")return;var a=v.split(E),f=document.createDocumentFragment();for(var i=0;i<a.length;i++){if(a[i])f.appendChild(document.createTextNode(a[i]));if(i<a.length-1){var m=document.createElement("img");m.className="myntico";m.src=U;m.alt="mynt";f.appendChild(m);}}p.replaceChild(f,n);}else if(n.nodeType===1){var k=[].slice.call(n.childNodes);for(var j=0;j<k.length;j++)C(k[j]);}}function R(){try{C(document.body);}catch(e){}}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",R);}else{R();}})();</script><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foresattbrev</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">'
     +'<style>'+css+'</style></head><body>'+letters.join('')
     +'<script>setTimeout(function(){window.print();},500);<\/script></body></html>');
