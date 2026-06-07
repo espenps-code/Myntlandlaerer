@@ -614,6 +614,7 @@ h1.sticker{
 #dtFigSvg .handle{ pointer-events:auto; cursor:nwse-resize; }
 #dtFigSvg .mark{ pointer-events:auto; cursor:ew-resize; }
 #dtFigSvg .delbtn{ pointer-events:auto; cursor:pointer; }
+#dtFigSvg .fig,#dtFigSvg .handle,#dtFigSvg .mark,#dtFigSvg .delbtn{ touch-action:none; }
 .dt-dock-right .dt-rp{ display:none; }
 .dt-dock-right .dt-rp.on{ display:flex; }
 #dtFigTools{ flex-direction:column; align-items:stretch; gap:8px; max-height:70vh; overflow:auto; }
@@ -1125,7 +1126,7 @@ h1.sticker{
       <div class="dt-grow">
         <button class="dt-btn dt-tool" id="dtTallinje"><span class="dt-ico">&#128207;</span><span class="dt-tlabel">Tallinje</span></button>
         <button class="dt-btn dt-tool" id="dt2d"><span class="dt-ico">&#11036;</span><span class="dt-tlabel">2D</span></button>
-        <button class="dt-btn dt-tool" id="dt3d"><span class="dt-ico">&#129513;</span><span class="dt-tlabel">3D</span></button>
+        <button class="dt-btn dt-tool" id="dt3d"><span class="dt-ico">&#129482;</span><span class="dt-tlabel">3D</span></button>
         <button class="dt-btn dt-tool" id="dtBrok"><span class="dt-ico">&#189;</span><span class="dt-tlabel">Brøk</span></button>
       </div>
     </div>
@@ -2641,6 +2642,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     else if(o.type==='muldiv') drawMulDiv(g,o);
     else if(SOLIDS.indexOf(o.type)>=0) drawSolid(g,o);
     else drawShape2D(g,o);
+    var hit=FE('rect',{x:-8,y:-8,width:o.w+16,height:o.h+16,fill:'transparent','pointer-events':'all'}); g.insertBefore(hit,g.firstChild);
     figAttachDrag(g,o);
     if(o.id===selShape) figAddChrome(g,o);
     return g;
