@@ -36,7 +36,7 @@
   try { await signInAnonymously(auth); } catch(e){ console.error('Anonym innlogging feilet:', e); }
   const db=getDatabase(app);
   window._fgClassId = null;
-  const FG_CLASS_ROOTS = new Set(['students57','transactions57','workPlanProgress','workPlans','guardianCodes']);
+  const FG_CLASS_ROOTS = new Set(['students57','transactions57','workPlanProgress','workPlans','guardianCodes','settings','classGoals']);
   function fgScope(p){
     if(!window._fgClassId) return p;
     const clean = String(p).replace(/^\/+/,'');
@@ -416,6 +416,8 @@ function startGuardian(){
     _progress=snap.val()||{};
     fgRender();
   }, e=>{ _fgErr='workPlanProgress: '+((e&&(e.code||e.message))||e); fgRender(); });
+  window._onValue(fgRef('settings'),snap=>{ window._fgSettings=snap.val()||{}; },()=>{});
+  window._onValue(fgRef('classGoals'),snap=>{ window._fgClassGoals=snap.val()?Object.entries(snap.val()).map(([k,v])=>({...v,fbKey:k})):[]; },()=>{});
 }
 
 // ── DATA ────────────────────────────────────────────────────
@@ -657,6 +659,20 @@ async function fgApprove(){
     { guardianApproved:true, guardianApprovedTs:Date.now() });
   await fgCheckCompletion(planKey);
 }
+// Skatt (samme modell som elevappen): 20% av bonus til sparemålet.
+function fgTax(){ return ((window._fgSettings&&window._fgSettings.taxRate)||20)/100; }
+async function fgDistributeToGoals(amount){
+  if(!amount) return;
+  const goals=(window._fgClassGoals||[]).filter(g=>!g.completed);
+  if(!goals.length) return;
+  const pref=_student&&_student.preferredGoal;
+  const targets=pref?goals.filter(g=>g.fbKey===pref):goals;
+  const list=targets.length?targets:goals;
+  const perGoal=Math.floor(amount/list.length);
+  const upd={};
+  list.forEach(g=>{ const ns=(g.saved||0)+perGoal; upd['classGoals/'+g.fbKey+'/saved']=ns; if(ns>=g.target) upd['classGoals/'+g.fbKey+'/completed']=true; });
+  await window._update(fgRef('/'),upd);
+}
 // Samme fullføringslogikk som i lærerportalen.
 async function fgCheckCompletion(planKey){
   const plan=_workPlans.find(p=>p.fbKey===planKey);
@@ -681,10 +697,14 @@ async function fgCheckCompletion(planKey){
   if((step.bonus||0)>0 && !ss.bonusPaid){
     const sSnap=await window._get(fgRef('students57/'+_studentKey));
     const sv=sSnap.val()||{};
-    await window._update(fgRef('students57/'+_studentKey),{balance:(sv.balance||0)+step.bonus});
+    const bonus=step.bonus||0;
+    const taxAmt=Math.floor(bonus*fgTax());
+    const net=bonus-taxAmt;
+    await window._update(fgRef('students57/'+_studentKey),{balance:(sv.balance||0)+net, badgeTaxContributed:(sv.badgeTaxContributed||0)+taxAmt});
+    if(taxAmt>0) await fgDistributeToGoals(taxAmt);
     await window._set(window._push(fgRef('transactions57/'+_studentKey)),{
       type:'income', icon:'🪙',
-      desc:'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført', amount:step.bonus, ts:Date.now()
+      desc:'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(taxAmt>0?' (netto etter skatt)':''), amount:net, ts:Date.now()
     });
   }
 }

@@ -588,8 +588,12 @@ async function apCheckCompletion(planKey){
   await window._update(fbRef('/'),upd);
   if((step.bonus||0)>0 && !ss.bonusPaid){
     const s2=(await window._get(fbRef('students57/'+sk))).val()||{};
-    await window._update(fbRef('students57/'+sk),{balance:(s2.balance||0)+(step.bonus||0)});
-    await saveTx(sk,'income','🪙','Arbeidsplan: «'+(step.title||'Trinn')+'» fullført',step.bonus);
+    const bonus=step.bonus||0;
+    const taxAmt=Math.floor(bonus*getTax());
+    const net=bonus-taxAmt;
+    await window._update(fbRef('students57/'+sk),{balance:(s2.balance||0)+net, badgeTaxContributed:(s2.badgeTaxContributed||0)+taxAmt});
+    if(taxAmt>0) await distributeToGoals(taxAmt);
+    await saveTx(sk,'income','🪙','Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(taxAmt>0?' (netto etter skatt)':''),net);
   }
   return true;
 }

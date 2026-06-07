@@ -2829,9 +2829,14 @@ async function wpCheckCompletion(planKey, studentKey){
   if((step.bonus||0)>0 && !ss.bonusPaid){
     const sSnap=await window._get(fbRef('students57/'+studentKey));
     const sv=sSnap.val()||{};
-    await window._update(fbRef('students57/'+studentKey),{balance:(sv.balance||0)+step.bonus});
+    const bonus=step.bonus||0;
+    const _tax=((window._settings&&window._settings.taxRate)||20)/100;
+    const taxAmt=Math.floor(bonus*_tax);
+    const net=bonus-taxAmt;
+    await window._update(fbRef('students57/'+studentKey),{balance:(sv.balance||0)+net, badgeTaxContributed:(sv.badgeTaxContributed||0)+taxAmt});
+    if(taxAmt>0) await distributeToGoalsPortal(taxAmt);
     await logTx(studentKey,'income','🪙',
-      'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført',step.bonus);
+      'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(taxAmt>0?' (netto etter skatt)':''),net);
   }
 }
 
