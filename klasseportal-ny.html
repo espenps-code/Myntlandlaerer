@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dagen i dag &middot; Klasseportal</title>
 <script>window._CLASS_ID = (new URLSearchParams(location.search).get("class") || "");<\/script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -805,7 +805,7 @@ h1.sticker{
 
 /* ===================== BELØNNING-OVERLAY ===================== */
 .rw-amounts{ display:flex; gap:12px; }
-.rw-amt{ flex:1; font-family:inherit; font-size:24px; font-weight:700; color:var(--ink); background:var(--gold); border:4px solid var(--ink); border-radius:18px; padding:16px 8px; cursor:pointer; box-shadow:0 5px 0 rgba(42,31,61,.2); }
+.rw-amt{ flex:1; font-family:inherit; font-size:24px; font-weight:700; color:var(--ink); background:var(--teal); border:4px solid var(--ink); border-radius:18px; padding:16px 8px; cursor:pointer; box-shadow:0 5px 0 rgba(42,31,61,.2); }
 .rw-amt:active{ transform:translateY(3px); box-shadow:none; }
 .rw-custom{ display:flex; gap:10px; align-items:center; }
 .rw-custom input{ flex:1; font-family:inherit; font-size:20px; font-weight:700; color:var(--ink); border:3px solid var(--ink); border-radius:14px; padding:10px 14px; background:var(--paper); }
@@ -2900,8 +2900,15 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var rid=genRid();
     var payload=JSON.stringify({ type:'reward', amount:amount, rid:rid });
     qrBox.innerHTML='';
-    if(typeof QRCode==='undefined'){ info.textContent='QR-bibliotek lastet ikke. Sjekk nett.'; return; }
-    try{ new QRCode(qrBox, { text:payload, width:260, height:260, correctLevel: QRCode.CorrectLevel.L }); }catch(e){ info.textContent='Klarte ikke å lage QR.'; return; }
+    if(typeof QRCode!=='undefined'){
+      try{ new QRCode(qrBox, { text:payload, width:260, height:260, correctLevel: QRCode.CorrectLevel.L }); }
+      catch(e){ info.textContent='Klarte ikke å lage QR.'; return; }
+    } else {
+      var img=document.createElement('img'); img.width=260; img.height=260; img.alt='QR';
+      img.onerror=function(){ qrBox.innerHTML=''; info.textContent='QR-bibliotek lastet ikke. Sjekk nett.'; };
+      img.src='https://api.qrserver.com/v1/create-qr-code/?size=260x260&ecc=L&data='+encodeURIComponent(payload);
+      qrBox.appendChild(img);
+    }
     info.innerHTML='<b>'+amount+' 🪙</b> &middot; Hver elev kan skanne én gang';
   }
   btn.onclick=function(){ ovl.classList.add('open'); };
