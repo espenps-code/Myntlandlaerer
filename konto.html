@@ -575,8 +575,10 @@
 
   // Levende lytter: fyller lista når medlemskap-dataene kommer, uansett timing,
   // og oppdaterer seg selv når klasser lages/slettes.
+  let _classesUnsub=null;
   function watchClasses(uid){
-    onValue(ref(db,'users/'+uid+'/memberships'), async (msnap)=>{
+    if(_classesUnsub){ try{ _classesUnsub(); }catch(e){} _classesUnsub=null; }
+    _classesUnsub=onValue(ref(db,'users/'+uid+'/memberships'), async (msnap)=>{
       const m=msnap.val()||{};
       const ids=Object.keys(m);
       if(!ids.length){ renderClassList([]); return; }
@@ -592,7 +594,7 @@
   // Idempotent: kobler på lytteren én gang per bruker. Trygt å kalle flere ganger.
   function renderClasses(){
     const u=auth.currentUser; if(!u) return;
-    if(window.__watchUid!==u.uid){ window.__watchUid=u.uid; watchClasses(u.uid); }
+    window.__watchUid=u.uid; watchClasses(u.uid);
   }
 
   onAuthStateChanged(auth, async user=>{
@@ -610,6 +612,11 @@
       if(inviteToken) alertBox('login-alert','info','Du er invitert til en klasse — logg inn eller lag konto for å bli med.');
     }
   });
+
+  // Når sida vises igjen (tilbake-knapp / bfcache / fanebytte): koble data-
+  // lytteren på nytt. Ellers kan en død lytter gjøre at klassene ikke dukker opp.
+  window.addEventListener('pageshow', ()=>{ if(auth.currentUser) renderClasses(); });
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && auth.currentUser) renderClasses(); });
 
   window.MyntData=MyntData;
 </script>
