@@ -469,11 +469,8 @@ function renderStudentTable() {
         ${avatarHTML}
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
       <td data-label="PIN"><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
-      <td data-label="Saldo"><span class="balance-badge">🪙 ${s.balance||0}</span></td>
+      <td data-label="Saldo"><span class="balance-badge" title="Sum av alle kontoer: brukskonto + sparekonto + fond">🪙 ${(s.balance||0) + (s.savings||0) + fondVerdi(s.fund_low_units, window._curFundLow||100) + fondVerdi(s.fund_high_units, window._curFundHigh||100)}</span></td>
       <td data-label=""><div class="balance-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
-        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
-        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
         <button class="btn btn-ghost btn-sm" onclick="openPinModal('${s.fbKey}')" title="Endre PIN">🔑</button>
         <button class="btn btn-ghost btn-sm" onclick="rerollStudentMonster('${s.fbKey}')" title="Bytt monsteravatar">🎲</button>
         <button class="btn btn-coral btn-sm" onclick="openDeleteModal('${s.fbKey}','${s.firstname} ${s.lastname}')">🗑️</button>
@@ -2272,6 +2269,31 @@ function wpBlankStep(){
 }
 
 // ── EDITOR ──────────────────────────────────────────────────
+// ── Fag-velger for periodeplan (fast fagliste; ikon følger valget) ──────────
+const WP_FAG=[['book','Norsk'],['math','Matematikk'],['engelsk','Engelsk'],['nature','Naturfag'],
+  ['samfunn','Samfunnsfag'],['krle','KRLE'],['art','Kunst og håndverk'],['music','Musikk'],
+  ['gym','Kroppsøving'],['mathelse','Mat og helse']];
+const WP_FAG_NAME=Object.fromEntries(WP_FAG);
+const WP_SUBJECT_ICON={ 'norsk':'book','lesing':'book','matematikk':'math','matte':'math','engelsk':'engelsk',
+  'naturfag':'nature','natur':'nature','samfunnsfag':'samfunn','samfunn':'samfunn','krle':'krle',
+  'kunst og håndverk':'art','kunst':'art','håndverk':'art','musikk':'music','kroppsøving':'gym','gym':'gym',
+  'svømming':'svomming','mat og helse':'mathelse','data og digitalt':'digital','digitalt':'digital','data':'digital',
+  'klassens time':'sosial','arbeidstime':'arbeid','valgfag':'valgfag' };
+function wpFagName(icon){ return WP_FAG_NAME[icon]||''; }
+function wpIconForSubject(subject){
+  const s=String(subject||'').toLowerCase().trim();
+  if(WP_SUBJECT_ICON[s]) return WP_SUBJECT_ICON[s];
+  for(const k in WP_SUBJECT_ICON){ if(s.indexOf(k)>=0) return WP_SUBJECT_ICON[k]; }
+  return '';
+}
+function wpPlanIcon(p){ return (p&&p.icon)||wpIconForSubject(p&&p.subject)||'book'; }
+function wpFagIconHtml(p,size){
+  size=size||38;
+  if((p&&p.icon) || wpIconForSubject(p&&p.subject)){
+    return '<img src="fagikoner/ikon-'+wpPlanIcon(p)+'.webp" alt="" style="width:'+size+'px;height:'+size+'px;object-fit:contain;display:block" onerror="this.style.display=\'none\'">';
+  }
+  return (p&&p.emoji)||'📘';
+}
 // Ett trinn redigeres om gangen. Lagrede trinn vises sammenslått øverst.
 function openPlanEditor(planKey){
   _wpEditKey=planKey;
@@ -2286,8 +2308,7 @@ function openPlanEditor(planKey){
   if(planKey){
     const p=(window._workPlans||[]).find(x=>x.fbKey===planKey)||{};
     document.getElementById('wp-editor-title').textContent='✏️ Rediger periodeplan';
-    document.getElementById('wp-emoji').value=p.emoji||'📘';
-    document.getElementById('wp-subject').value=p.subject||'';
+    document.getElementById('wp-fag').value=wpPlanIcon(p);
     if(p.class) clsSel.value=p.class;
     document.getElementById('wp-approval').value=
       (p.approval||(p.steps&&p.steps[0]&&p.steps[0].approval)||'teacher')==='both'?'both':'teacher';
@@ -2297,8 +2318,7 @@ function openPlanEditor(planKey){
     else { _wpActiveStep=-1; }   // lagrede trinn vises sammenslått
   } else {
     document.getElementById('wp-editor-title').textContent='➕ Ny periodeplan';
-    document.getElementById('wp-emoji').value='📘';
-    document.getElementById('wp-subject').value='';
+    document.getElementById('wp-fag').value='book';
     document.getElementById('wp-approval').value='teacher';
     _wpEditSteps=[wpBlankStep()];
     _wpActiveStep=0;
@@ -2447,8 +2467,8 @@ function wpRenderSteps(){
 async function savePlan(publish){
   if(!ready()){ wpEdAlert('Firebase ikke klar – prøv igjen om et øyeblikk.','error'); return; }
   wpCaptureActiveStep();
-  const emoji=document.getElementById('wp-emoji').value.trim()||'📘';
-  const subject=document.getElementById('wp-subject').value.trim();
+  const icon=document.getElementById('wp-fag').value||'book';
+  const subject=wpFagName(icon)||'Fag';
   const cls=document.getElementById('wp-class').value;
   // Godkjenningsvalg gjelder hele periodeplanen – kopieres inn på hvert trinn.
   const approval=document.getElementById('wp-approval').value==='both'?'both':'teacher';
@@ -2469,10 +2489,10 @@ async function savePlan(publish){
   const willActive = publish ? true : (_wpEditKey ? (ex.active!==false) : false);
   if(_wpEditKey){
     await window._update(fbRef('workPlans/'+_wpEditKey),
-      { emoji, subject, class:cls, approval, steps, active:willActive });
+      { icon, subject, class:cls, approval, steps, active:willActive });
   } else {
     await window._set(window._push(fbRef('workPlans')),
-      { emoji, subject, class:cls, approval, steps, active:willActive,
+      { icon, subject, class:cls, approval, steps, active:willActive,
         workspaceId: currentWorkspaceId() || 'main', created:Date.now() });
   }
   closePlanEditor();
@@ -2597,7 +2617,7 @@ function wpPlanCardHTML(p){
     : '👥 Hele klassen';
   return `<div class="wp-plan-card${active?'':' inactive'}">
     <div class="wp-plan-head">
-      <div class="wp-plan-emoji">${p.emoji||'📘'}</div>
+      <div class="wp-plan-emoji">${wpFagIconHtml(p,38)}</div>
       <div style="flex:1;min-width:140px;">
         <div style="font-weight:800;font-size:1.05rem;color:var(--teal-dark);">${wpEscAttr(p.subject)}</div>
         <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:2px;">
@@ -2727,7 +2747,7 @@ function refreshApproveModal(){
   if(!modal || !modal.classList.contains('open') || !_wpApproveKey) return;
   const p=(window._workPlans||[]).find(x=>x.fbKey===_wpApproveKey);
   if(!p){ closeModal('modal-wp-approve'); return; }
-  document.getElementById('modal-wp-approve-title').textContent=(p.emoji||'📘')+' '+p.subject;
+  document.getElementById('modal-wp-approve-title').innerHTML='<span style="display:inline-flex;align-items:center;gap:8px">'+wpFagIconHtml(p,26)+wpEscAttr(p.subject)+'</span>';
   document.getElementById('modal-wp-approve-sub').textContent=
     p.class+' · '+(p.steps||[]).length+' trinn. Godkjenn trinnet eleven jobber med nå.';
   const students=wpAssignedStudents(p);

@@ -535,18 +535,30 @@
 </div>
 
 <!-- ARBEIDSPLAN -->
-<div class="screen" id="screen-arbeidsplan">
-  <div class="top-bar">
-    <button class="back-btn" onclick="apBack()" id="ap-back-btn">← Ut</button>
-    <div style="text-align:center">
-      <div class="top-bar-title">📋 Arbeidsplan</div>
-      <div class="top-bar-sub" id="ap-sub"></div>
+<div class="screen ap2" id="screen-arbeidsplan">
+  <div class="ap2-scene" id="ap-scene" aria-hidden="true"></div>
+  <a class="ap2-back" id="ap-back-btn" onclick="apBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg><span id="ap-back-lbl">Ut</span></a>
+
+  <div class="ap2-landing" id="ap-landing">
+    <header class="ap2-head">
+      <div class="ap2-kicker"><span class="spark">✦</span> Myntland <span class="spark">✦</span></div>
+      <div class="ap2-title">Mine arbeidsplaner</div>
+    </header>
+    <div class="ap2-stage">
+      <button class="ap2-arrow prev" id="ap-prev" type="button" aria-label="Forrige"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
+      <div class="ap2-viewport" id="ap-viewport"><div class="ap2-board" id="ap-board"></div></div>
+      <button class="ap2-arrow next" id="ap-next" type="button" aria-label="Neste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></button>
+      <div class="ap2-dots" id="ap-dots"></div>
     </div>
-    <div style="width:54px"></div>
   </div>
-  <div class="ap-subjects" id="ap-subjects"></div>
-  <div class="ap-pane" id="ap-steps"></div>
-  <div class="ap-pane" id="ap-detail"></div>
+
+  <div class="ap2-plan" id="ap-plan" style="display:none">
+    <header class="ap2-head">
+      <div class="ap2-kicker"><span class="dot"></span> Myntland &middot; Arbeidsplan <span class="dot"></span></div>
+      <div class="ap2-title-wrap"><span class="ap2-fagikon" id="ap-fagikon"></span><span class="ap2-title" id="ap-plan-title">Norsk</span></div>
+    </header>
+    <main class="ap2-grid" id="ap-grid"></main>
+  </div>
 </div>
 
 <!-- OVERLAYS -->

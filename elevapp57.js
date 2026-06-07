@@ -259,109 +259,7 @@ function apLaggingSubjects(){
   const minCur=Math.min.apply(null,nonDone.map(p=>apProgress(p.fbKey).current||0));
   return nonDone.filter(p=>(apProgress(p.fbKey).current||0)===minCur).map(p=>p.subject).join(' og ');
 }
-function enterArbeidsplan(){
-  const plans=apActivePlans();
-  _apPlanKey=plans.length?plans[0].fbKey:null;
-  _apView='trapp';
-  _apStepIdx=_apPlanKey?(apProgress(_apPlanKey).current||0):0;
-  showScreen('screen-arbeidsplan');
-  apRefresh(true);
-}
-function apBack(){
-  if(_apView==='step' && !apIsTablet()){ _apView='trapp'; apShowPane(); }
-  else { goToSplash(); }
-}
-// Telefon: vis ett panel om gangen. iPad: CSS (!important) viser begge.
-function apShowPane(){
-  const steps=document.getElementById('ap-steps');
-  const detail=document.getElementById('ap-detail');
-  if(!steps||!detail) return;
-  if(_apView==='step'){ steps.style.display='none'; detail.style.display='block'; }
-  else { steps.style.display='block'; detail.style.display='none'; }
-}
-function apRefresh(scrollActive){
-  const plans=apActivePlans();
-  const sub=document.getElementById('ap-sub');
-  const subjEl=document.getElementById('ap-subjects');
-  const steps=document.getElementById('ap-steps');
-  const detail=document.getElementById('ap-detail');
-  if(window._currentStudent) sub.textContent=window._currentStudent.firstname;
-  if(!plans.length){
-    subjEl.innerHTML='';
-    steps.innerHTML='<div class="ap-empty"><div class="e">📋</div>'
-      +'<div style="font-weight:800;color:var(--text)">Ingen arbeidsplan ennå</div>'
-      +'<div style="font-size:.88rem;margin-top:4px">Læreren har ikke laget en arbeidsplan til klassen din enda.</div></div>';
-    detail.innerHTML='';
-    apShowPane();
-    return;
-  }
-  if(!plans.some(p=>p.fbKey===_apPlanKey)) _apPlanKey=plans[0].fbKey;
-  // fagmeny
-  const apLk=apLeadLockedPlans();
-  subjEl.innerHTML=plans.map(p=>
-    `<button class="ap-subj-btn${p.fbKey===_apPlanKey?' active':''}" onclick="apSelectSubject('${p.fbKey}')">`
-    +`${p.emoji||'📘'} ${apEsc(p.subject)}${apLk[p.fbKey]?' 🔒':''}</button>`).join('');
-  apRenderTrapp();
-  apRenderStepDetail();
-  apShowPane();
-  if(scrollActive){
-    const el=document.querySelector('#ap-steps .ap-step.active');
-    if(el) el.scrollIntoView({block:'center'});
-  }
-}
-function apSelectSubject(planKey){
-  _apPlanKey=planKey;
-  _apView='trapp';
-  _apStepIdx=apProgress(planKey).current||0;
-  apRefresh(true);
-}
-function apRenderTrapp(){
-  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===_apPlanKey);
-  const host=document.getElementById('ap-steps');
-  if(!plan){ host.innerHTML=''; return; }
-  const steps=plan.steps||[];
-  const pr=apProgress(_apPlanKey);
-  const cur=pr.current||0;
-  const leadLocked=!!apLeadLockedPlans()[_apPlanKey];
-  const allDone=cur>=steps.length;
-  let html='';
-  html+='<div class="ap-intro">🪜 Jobb deg oppover trappa – trinn 1 nederst! Du jobber med ett trinn '
-       +'om gangen. Når læreren'+(steps.some(s=>s.approval==='both')?' (og en voksen hjemme)':'')
-       +' har godkjent, låses neste trinn opp.</div>';
-  if(allDone){
-    html+='<div class="ap-status-box ap-status-ok" style="margin:0 0 1rem">🎉 Du har fullført hele '
-         +apEsc(plan.subject)+'-trappa! Veldig bra jobba!</div>';
-  }
-  // Øverst = høyeste trinn, nederst = trinn 1 — eleven klatrer oppover.
-  for(let i=steps.length-1;i>=0;i--){
-    const st=steps[i];
-    let cls='locked', ring='🔒', status='🔒 Låst';
-    if(i<cur){ cls='done'; ring='✓'; status='✓ Fullført'; }
-    else if(i===cur){
-      cls='active'; ring=(i+1);
-      const ss=pr.steps?.[i]||{};
-      if(ss.teacherApproved && st.approval==='both' && !ss.guardianApproved)
-        status='✓ Lærer godkjent – venter på voksen hjemme';
-      else if(ss.teacherApproved)
-        status='✓ Læreren har godkjent';
-      else status='👉 Trykk for å se hva du skal gjøre';
-      if(leadLocked) status='🔒 Låst – du ligger for langt foran';
-    } else { ring=(i+1); }
-    const tappable=(i<=cur);
-    const sel=(i===_apStepIdx)?' ap-step-sel':'';
-    html+=`<div class="ap-step ${cls}${sel}">
-      <div class="ap-railwrap"><div class="ap-ring">${ring}</div><div class="ap-rail"></div></div>
-      <div class="ap-card" ${tappable?`onclick="apOpenStep(${i})"`:''}>
-        <div class="ap-card-title">Trinn ${i+1}: ${apEsc(st.title)}</div>
-        <div class="ap-card-status">${status}</div>
-      </div>
-      <div class="ap-monster" ${tappable?`onclick="apOpenStep(${i})"`:''}>${wpMonsterImg(_apPlanKey,i,i<cur)}</div>
-    </div>`;
-  }
-  host.innerHTML=html;
-}
-// Hvert trinn får sitt eget monster (samme 20 som forsiden). Godkjent trinn
-// viser tommel-opp-versjonen fra monsters/tommel/.
+// ── Monstre per trinn (vokter) + tommel-opp ved godkjenning ─────────────────
 const WP_MONSTERS=['groennhaar','appelsin','rosa','graa','moerkelilla','indigo',
   'marineblaa','vinroed','ildkatt','gullgul','gressgroenn','rustbrun','laksrosa',
   'mintgroenn','solskinn','turkis','lilla','himmelblaa','beige','havblaa'];
@@ -376,97 +274,279 @@ function wpMonsterImg(planKey,stepIdx,done){
   return '<img src="'+url+'" alt="" loading="lazy"'
     +(done?' onerror="this.onerror=null;this.src=\'monsters/'+name+'.webp\'"':'')+'>';
 }
-function apOpenStep(idx){
-  _apStepIdx=idx; _apView='step';
-  apRenderTrapp();          // oppdater valgt-markering i menyen
-  apRenderStepDetail();
-  apShowPane();
+
+// ── SVG-ikoner + scene-dekor ────────────────────────────────────────────────
+const AP_STAR='<svg class="star" viewBox="0 0 24 24" fill="#fff3c2" stroke="#2a1f3d" stroke-width="2" stroke-linejoin="round"><path d="M12 2l2.9 6.2 6.8.8-5 4.6 1.3 6.7L12 17.8 6 20.1l1.3-6.7-5-4.6 6.8-.8z"/></svg>';
+const AP_CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+const AP_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 6"/></svg>';
+const AP_LOCK='<svg viewBox="0 0 24 24" fill="none" stroke="#2a1f3d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const AP_SCAN_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg>';
+const AP_LINK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>';
+const AP_MTN='<svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><polygon points="0,200 0,118 150,58 330,150 480,66 650,158 820,74 1000,150 1200,86 1200,200" fill="#b7d0db"/><polygon points="0,200 230,104 400,200" fill="#9dbdd0"/><polygon points="320,200 580,60 840,200" fill="#9dbdd0"/><polygon points="740,200 1000,92 1200,200" fill="#9dbdd0"/><polygon points="580,60 540,104 620,104" fill="#fdfeff"/><polygon points="230,104 206,134 254,134" fill="#fdfeff"/><polygon points="1000,92 974,126 1026,126" fill="#fdfeff"/></svg>';
+const AP_PINE='<svg viewBox="0 0 160 270"><rect x="68" y="196" width="24" height="66" rx="9" fill="#b97a32" stroke="#2a1f3d" stroke-width="8"/><polygon points="80,28 140,124 20,124" fill="#5d9417" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"/><polygon points="80,82 150,176 10,176" fill="#7bb026" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"/><polygon points="80,134 158,214 2,214" fill="#8fbb1e" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"/></svg>';
+const AP_BUSH='<svg viewBox="0 0 160 244"><rect x="68" y="152" width="24" height="88" rx="9" fill="#b97a32" stroke="#2a1f3d" stroke-width="8"/><circle cx="80" cy="94" r="68" fill="#7bb026" stroke="#2a1f3d" stroke-width="8"/><circle cx="56" cy="72" r="20" fill="#a6d33a"/><circle cx="114" cy="116" r="15" fill="#e3a82a" stroke="#2a1f3d" stroke-width="6"/><circle cx="114" cy="116" r="5" fill="#fff3c2"/></svg>';
+const AP_TREES=
+  '<div class="tree sway" style="left:-3%;width:120px;animation-duration:6s">'+AP_PINE+'</div>'
+ +'<div class="tree sway" style="left:16%;width:74px;animation-duration:4.6s">'+AP_BUSH+'</div>'
+ +'<div class="tree sway" style="right:16%;width:74px;animation-duration:4.2s">'+AP_BUSH+'</div>'
+ +'<div class="tree sway" style="right:-3%;width:120px;animation-duration:5.4s">'+AP_PINE+'</div>';
+
+// ── Fag → ikon + farge (fast fagliste; bakoverkompatibelt med eldre planer) ──
+const AP_FAG_ICON={ 'norsk':'book','lesing':'book','matematikk':'math','matte':'math','engelsk':'engelsk',
+  'naturfag':'nature','natur':'nature','samfunnsfag':'samfunn','samfunn':'samfunn','krle':'krle',
+  'kunst og håndverk':'art','kunst':'art','håndverk':'art','musikk':'music','kroppsøving':'gym','gym':'gym',
+  'svømming':'svomming','mat og helse':'mathelse','data og digitalt':'digital','digitalt':'digital','data':'digital',
+  'klassens time':'sosial','arbeidstime':'arbeid','valgfag':'valgfag' };
+const AP_FAG_COLOR={ book:['#5aa9b4','#43868f'], math:['#dc7264','#c25446'], engelsk:['#8fb35a','#71953e'],
+  nature:['#6c9bd1','#5480b5'], samfunn:['#d59a3c','#bb812a'], krle:['#9b7cc4','#7d5fa6'], art:['#e0788f','#c25a73'],
+  music:['#7ba0d6','#5f82b8'], gym:['#d98c4a','#bb6f30'], mathelse:['#7cb88f','#5d9b71'], digital:['#5b9bb0','#447e92'],
+  svomming:['#4fa3c7','#3a85a8'], sosial:['#caa14e','#a98233'], arbeid:['#9a8fb5','#7c7099'], valgfag:['#c98aa0','#a96d83'], annet:['#7fa0b3','#5f8294'] };
+function apSubjectIcon(p){
+  if(p&&p.icon) return p.icon;
+  const s=String(p&&p.subject||'').toLowerCase().trim();
+  if(AP_FAG_ICON[s]) return AP_FAG_ICON[s];
+  for(const k in AP_FAG_ICON){ if(s.indexOf(k)>=0) return AP_FAG_ICON[k]; }
+  return 'annet';
 }
-function apRenderStepDetail(){
-  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===_apPlanKey);
-  const host=document.getElementById('ap-detail');
-  if(!plan){ host.innerHTML=''; return; }
-  const i=_apStepIdx;
-  const st=(plan.steps||[])[i];
-  if(!st){ host.innerHTML=''; return; }
-  const pr=apProgress(_apPlanKey);
-  const cur=pr.current||0;
-  const ss=pr.steps?.[i]||{};
-  const isActive=(i===cur);
-  const isDone=(i<cur);
-  const checks=ss.checks||{};
-  let html='';
-  html+=`<div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);margin-bottom:.6rem">`
-       +`Trinn ${i+1}: ${apEsc(st.title)}</div>`;
-  if(st.goal){
-    html+='<div class="ap-detail-goal"><div class="g">'
-         +apEsc(st.goal).replace(/\n/g,'<br>')+'</div></div>';
+function apFagColor(p){ return AP_FAG_COLOR[apSubjectIcon(p)]||['#5aa9b4','#43868f']; }
+
+// Elevens egen avatar = ett av de 20 monstrene, valgt av avatarSeed (samme som lærerportalen).
+function apSr(seed,max){ let x=Math.sin(seed*9301+49297)*233280; return Math.floor((x-Math.floor(x))*max); }
+function apStudentMonster(){
+  const s=window._currentStudent;
+  const seed=(s&&typeof s.avatarSeed==='number')?s.avatarSeed:0;
+  return 'monsters/'+WP_MONSTERS[apSr(seed+7,WP_MONSTERS.length)]+'.webp';
+}
+
+// ── Navigasjon ──────────────────────────────────────────────────────────────
+function apBuildScene(){
+  const sc=document.getElementById('ap-scene'); if(!sc||sc.dataset.built) return;
+  sc.dataset.built='1';
+  sc.innerHTML='<div class="sun"></div><div class="mountains">'+AP_MTN+'</div>'
+    +'<div class="forest">'+AP_TREES+'</div><div class="ground"><div class="grass"></div></div>';
+  if(!window._apResizeBound){
+    window._apResizeBound=1;
+    window.addEventListener('resize',function(){
+      clearTimeout(window._apRT);
+      window._apRT=setTimeout(function(){
+        const scr=document.getElementById('screen-arbeidsplan');
+        if(_apView==='landing' && scr && scr.classList.contains('active')){ apPlaceLandingMonsters(); apLandingCarousel(); }
+      },120);
+    });
   }
-  if(isActive && apLeadLockedPlans()[_apPlanKey]){
-    const lag=apLaggingSubjects();
-    html+='<div class="ap-status-box ap-status-wait">📌 Du ligger langt foran her. Jobb deg videre på '
-         +(lag?apEsc(lag):'de andre fagene')+' før du fortsetter på dette faget.</div>';
-    html+='<button onclick="apBack()" class="ap-detail-back" style="width:100%;margin-top:1rem;background:var(--white);border:2px solid var(--border);color:var(--muted);padding:12px;border-radius:12px;font-family:Nunito,sans-serif;font-weight:800;cursor:pointer">← Tilbake til trappa</button>';
-    host.innerHTML=html; host.scrollTop=0;
+}
+function enterArbeidsplan(){
+  apBuildScene();
+  const plans=apActivePlans();
+  _apView='landing';
+  _apPlanKey=plans.length?plans[0].fbKey:null;
+  showScreen('screen-arbeidsplan');
+  apRefresh();
+}
+function apBack(){
+  if(_apView==='plan'){ _apView='landing'; apRefresh(); }
+  else { goToSplash(); }
+}
+function apShowPane(){
+  const L=document.getElementById('ap-landing'), P=document.getElementById('ap-plan');
+  const lbl=document.getElementById('ap-back-lbl');
+  if(!L||!P) return;
+  if(_apView==='plan'){ L.style.display='none'; P.style.display='flex'; if(lbl)lbl.textContent='Forsiden'; }
+  else { L.style.display='flex'; P.style.display='none'; if(lbl)lbl.textContent='Ut'; }
+}
+function apRefresh(){
+  apShowPane();
+  if(_apView==='plan') apRenderPlan();
+  else apRenderLanding();
+}
+function apOpenPlan(key){
+  _apPlanKey=key;
+  _apStepIdx=apProgress(key).current||0;
+  _apView='plan';
+  apRefresh();
+}
+function apSelectStep(i){
+  const cur=apProgress(_apPlanKey).current||0;
+  if(i>cur) return;
+  _apStepIdx=i;
+  apRenderPlan();
+}
+
+// ── LANDING: fagkort med trapp + elevens avatar ─────────────────────────────
+function apRenderLanding(){
+  apBuildScene();
+  const board=document.getElementById('ap-board'); if(!board) return;
+  const prev=document.getElementById('ap-prev'), next=document.getElementById('ap-next'), dots=document.getElementById('ap-dots');
+  const plans=apActivePlans();
+  if(!plans.length){
+    board.innerHTML='<div class="ap2-empty"><div class="e">📋</div><div class="t">Ingen arbeidsplan ennå</div>'
+      +'<div class="s">Læreren har ikke laget en arbeidsplan til klassen din enda.</div></div>';
+    if(prev)prev.classList.remove('show'); if(next)next.classList.remove('show'); if(dots)dots.classList.remove('show');
     return;
   }
-  const reqs=st.reqs||[];
-  const goalsRead=!!ss.goalsRead;
-  // På aktivt trinn vises alltid «Jeg har lest læringsmålene». Avkrysningen blir
-  // uaktiv (grå) etter at den er huket av – og arbeidskravene kommer fram da.
-  if(isActive && st.goal){
-    html+=`<div class="ap-goalcheck">
-      <div class="ap-check${goalsRead?' on ro':''}" ${goalsRead?'':'onclick="apMarkGoalsRead()"'}>${goalsRead?'✓':''}</div>
-      <div class="ap-req-text">Jeg har lest læringsmålene</div>
-    </div>`;
+  const lk=apLeadLockedPlans();
+  const avatar=apStudentMonster();
+  board.innerHTML=plans.map(function(p){
+    const steps=p.steps||[]; const N=steps.length;
+    const pr=apProgress(p.fbKey); const cur=Math.min(pr.current||0,N);
+    const col=apFagColor(p); const icon=apSubjectIcon(p); const locked=!!lk[p.fbKey]; const full=(N>0&&cur>=N);
+    let bars='';
+    for(let i=0;i<N;i++){
+      const h=N>1?(34+(i/(N-1))*60):70;
+      const cls=i<cur?'done':((i===cur&&cur<N)?'current':'');
+      const flag=(i===N-1)?'<div class="ap2-flag"><div class="pole"></div><div class="cloth"></div></div>':'';
+      bars+='<div class="ap2-bar '+cls+'" style="height:'+h.toFixed(1)+'%">'+flag+AP_STAR+'</div>';
+    }
+    return '<div class="ap2-card'+(full?' done':'')+(locked?' locked':'')+'" data-cur="'+cur+'" '
+      +'style="--ctop:'+col[0]+';--cbot:'+col[1]+'" onclick="apOpenPlan(\''+p.fbKey+'\')">'
+      +'<div class="ap2-card-head"><span class="ap2-card-ikon"><img src="fagikoner/ikon-'+icon+'.webp" alt="" '
+      +'onerror="this.parentNode.style.display=\'none\'"></span><span class="ap2-card-title">'+apEsc(p.subject)+'</span></div>'
+      +'<div class="ap2-prog">godkjent <span class="pill">'+cur+' / '+N+'</span></div>'
+      +'<div class="ap2-stairs">'+bars+'<div class="ap2-mon"><img src="'+avatar+'" alt=""></div></div>'
+      +'<div class="ap2-open">Åpne arbeidsplan <span class="go">'+AP_CHEV+'</span></div>'
+      +'</div>';
+  }).join('');
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ apPlaceLandingMonsters(); apLandingCarousel(); }); });
+}
+function apPlaceLandingMonsters(){
+  const board=document.getElementById('ap-board'); if(!board) return;
+  Array.prototype.forEach.call(board.querySelectorAll('.ap2-card'),function(card){
+    const stairs=card.querySelector('.ap2-stairs'), mon=card.querySelector('.ap2-mon');
+    if(!stairs||!mon) return;
+    const bars=Array.prototype.slice.call(stairs.querySelectorAll('.ap2-bar'));
+    if(!bars.length) return;
+    const cur=parseInt(card.dataset.cur||'0',10), N=bars.length;
+    const bar=bars[cur<N?cur:N-1];
+    const ch=stairs.clientHeight, mW=mon.offsetWidth;
+    let left=bar.offsetLeft+bar.offsetWidth/2-mW/2;
+    if(left<2) left=2;
+    mon.style.left=left+'px';
+    mon.style.bottom=(ch-bar.offsetTop-6)+'px';
+  });
+}
+function apLandingCarousel(){
+  const vp=document.getElementById('ap-viewport'), board=document.getElementById('ap-board');
+  const prev=document.getElementById('ap-prev'), next=document.getElementById('ap-next'), dots=document.getElementById('ap-dots');
+  if(!vp||!board||!prev||!next||!dots) return;
+  const cards=Array.prototype.slice.call(board.querySelectorAll('.ap2-card'));
+  if(!cards.length){ prev.classList.remove('show'); next.classList.remove('show'); dots.classList.remove('show'); return; }
+  function gap(){ return parseFloat(getComputedStyle(board).gap)||0; }
+  function cw(){ return cards[0].getBoundingClientRect().width||1; }
+  function perView(){ return Math.max(1,Math.round(vp.clientWidth/(cw()+gap()))); }
+  const multi=cards.length>perView();
+  prev.classList.toggle('show',multi); next.classList.toggle('show',multi); dots.classList.toggle('show',multi);
+  dots.innerHTML='';
+  if(multi){
+    const pages=Math.ceil(cards.length/perView());
+    for(let i=0;i<pages;i++){
+      const d=document.createElement('div'); d.className='ap2-dot'+(i===0?' active':'');
+      d.onclick=(function(i){ return function(){ const t=cards[Math.min(i*perView(),cards.length-1)]; if(t) vp.scrollTo({left:t.offsetLeft-board.offsetLeft,behavior:'smooth'}); }; })(i);
+      dots.appendChild(d);
+    }
   }
-  if(goalsRead || !(isActive && st.goal)){
-    if(reqs.length){
-      html+='<div class="section-title" style="margin-top:.3rem">✅ Arbeidskrav</div>';
-      reqs.forEach((r,j)=>{
-        const on=!!checks[j];
-        const ro=!isActive;
-        html+=`<div class="ap-req">
-          <div class="ap-check${on?' on':''}${ro?' ro':''}" ${isActive?`onclick="apToggleCheck(${j})"`:''}>${on?'✓':''}</div>
-          <div style="flex:1">
-            <div class="ap-req-text">${apEsc(r.text)}</div>
-            ${r.link?`<a class="ap-req-link" href="${apEsc(apFixUrl(r.link))}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
-          </div></div>`;
-      });
-    } else {
-      html+='<div class="info-box">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
-    }
-    // status
-    if(isDone){
-      html+='<div class="ap-status-box ap-status-ok">✓ Dette trinnet er fullført og godkjent. Bra jobba!</div>';
-    } else if(isActive){
-      const needBoth=st.approval==='both';
-      if(ss.teacherApproved && needBoth && !ss.guardianApproved){
-        html+='<div class="ap-status-box ap-status-wait">✓ Læreren har godkjent. Nå venter vi på at en voksen hjemme bekrefter.</div>';
-      } else if(ss.teacherApproved){
-        html+='<div class="ap-status-box ap-status-ok">✓ Læreren har godkjent trinnet ditt!</div>';
-      } else {
-        const nDone=reqs.filter((r,j)=>checks[j]).length;
-        const allChecked=reqs.every((r,j)=>checks[j]);
-        html+='<div class="ap-status-box ap-status-wait">'
-             +(allChecked?'🌟 Alt er huket av! Vis arbeidet til læreren og scan godkjennings-QR-en.'
-                         :`Huk av alle arbeidskrav – vis arbeidet ditt til læreren eller ta prøven for godkjenning (${nDone}/${reqs.length})`)
-             +'</div>';
-        html+='<button onclick="startScan(\'wpapprove\')" class="big-btn bb-teal" '
-             +(allChecked?'':'disabled ')
-             +'style="margin-top:.85rem'+(allChecked?'':';opacity:.45;cursor:not-allowed')+'">'
-             +'📷 Scan godkjenning fra læreren</button>';
-      }
-    }
+  prev.onclick=function(){ vp.scrollBy({left:-vp.clientWidth*0.9,behavior:'smooth'}); };
+  next.onclick=function(){ vp.scrollBy({left:vp.clientWidth*0.9,behavior:'smooth'}); };
+  vp.onscroll=function(){
+    clearTimeout(apLandingCarousel._t);
+    apLandingCarousel._t=setTimeout(function(){
+      const pv=perView(); const idx=Math.round(vp.scrollLeft/((cw()+gap())*pv));
+      Array.prototype.forEach.call(dots.children,function(d,i){ d.classList.toggle('active',i===idx); });
+      prev.disabled=vp.scrollLeft<8; next.disabled=vp.scrollLeft>vp.scrollWidth-vp.clientWidth-8;
+    },80);
+  };
+}
+
+// ── PLANSIDE: stige med vokter-monstre + læringsmål/arbeidskrav/scan ─────────
+function apRenderPlan(){
+  const screen=document.getElementById('screen-arbeidsplan');
+  const grid=document.getElementById('ap-grid');
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===_apPlanKey);
+  if(!plan||!grid){ _apView='landing'; apShowPane(); apRenderLanding(); return; }
+  const col=apFagColor(plan);
+  screen.style.setProperty('--subj',col[0]); screen.style.setProperty('--subj-deep',col[1]);
+  const ik=document.getElementById('ap-fagikon');
+  if(ik) ik.innerHTML='<img src="fagikoner/ikon-'+apSubjectIcon(plan)+'.webp" alt="" onerror="this.parentNode.style.display=\'none\'">';
+  const ttl=document.getElementById('ap-plan-title'); if(ttl) ttl.textContent=plan.subject;
+
+  const steps=plan.steps||[]; const N=steps.length;
+  const pr=apProgress(_apPlanKey); const cur=pr.current||0;
+  let sel=_apStepIdx; if(sel>cur) sel=cur; if(sel<0) sel=0; if(N>0&&sel>=N) sel=N-1; _apStepIdx=sel;
+  const leadLocked=!!apLeadLockedPlans()[_apPlanKey];
+
+  let rail='<div class="ap2-rail">';
+  for(let i=0;i<N;i++){
+    const isDone=i<cur, isCur=i===cur, isLocked=i>cur;
+    const cls='ap2-trinn'+(isDone?' done':'')+(isCur?' current':'')+(isLocked?' locked':'')+(i===sel?' sel':'');
+    const lock=isLocked?'<span class="ap2-lock">'+AP_LOCK+'</span>':'';
+    rail+='<div class="'+cls+'" '+(i<=cur?'onclick="apSelectStep('+i+')"':'')+'>'
+      +'<span class="tlabel">Trinn '+(i+1)+'</span><span class="ava">'+wpMonsterImg(_apPlanKey,i,isDone)+'</span>'+lock+'</div>';
+  }
+  rail+='</div>';
+  grid.innerHTML=rail+apPlanPanels(plan,steps,cur,sel,leadLocked);
+  const selEl=grid.querySelector('.ap2-trinn.sel'); if(selEl) selEl.scrollIntoView({inline:'center',block:'nearest'});
+}
+function apPlanPanels(plan,steps,cur,sel,leadLocked){
+  const st=steps[sel]||{};
+  const pr=apProgress(_apPlanKey); const ss=(pr.steps&&pr.steps[sel])||{};
+  const isActive=(sel===cur), isDone=(sel<cur);
+  const checks=ss.checks||{}; const reqs=st.reqs||[];
+  const goalsRead=!!ss.goalsRead; const hasGoal=!!st.goal;
+
+  let mal='<div class="ap2-panel"><h3>Mine læringsmål <span class="ap2-badge">Trinn '+(sel+1)+'</span></h3>';
+  if(hasGoal){
+    const lines=String(st.goal).split('\n').map(x=>x.trim()).filter(Boolean);
+    mal+='<ul class="ap2-mal">'+lines.map(l=>'<li>'+apEsc(l)+'</li>').join('')+'</ul>';
   } else {
-    html+='<div class="info-box">👆 Huk av «Jeg har lest læringsmålene» når du har lest dem '
-         +'– da kommer arbeidskravene fram.</div>';
+    mal+='<div class="ap2-info">Ingen læringsmål lagt inn på dette trinnet.</div>';
   }
-  html+='<button onclick="apBack()" class="ap-detail-back" style="width:100%;margin-top:1rem;background:var(--white);'
-       +'border:2px solid var(--border);color:var(--muted);padding:12px;border-radius:12px;'
-       +"font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer\">← Tilbake til trappa</button>";
-  host.innerHTML=html;
-  host.scrollTop=0;
+  if(isActive && hasGoal){
+    mal+='<div class="ap2-lest'+(goalsRead?' on':'')+'" '+(goalsRead?'':'onclick="apMarkGoalsRead()"')+'>'
+      +'<span class="ap2-tick">'+AP_CHECK+'</span><span>Jeg har lest læringsmålene</span></div>';
+  }
+  mal+='</div>';
+
+  if(isActive && leadLocked){
+    const lag=apLaggingSubjects();
+    return mal+'<div class="ap2-panel"><div class="ap2-status wait">📌 Du ligger langt foran her. Jobb deg videre på '
+      +(lag?apEsc(lag):'de andre fagene')+' før du fortsetter på dette faget.</div></div>';
+  }
+  if(!(goalsRead || !(isActive && hasGoal))){
+    return mal+'<div class="ap2-panel"><div class="ap2-info">👆 Huk av «Jeg har lest læringsmålene» når du har lest dem – da kommer arbeidskravene fram.</div></div>';
+  }
+
+  let krav='<div class="ap2-panel"><h3>Mine arbeidskrav</h3>';
+  if(reqs.length){
+    krav+='<ul class="ap2-krav">';
+    reqs.forEach(function(r,j){
+      const on=!!checks[j];
+      const link=r.link?'<a class="ap2-klenke" href="'+apEsc(apFixUrl(r.link))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+AP_LINK+' Åpne lenke</a>':'';
+      krav+='<li class="ap2-kitem'+(on?' on':'')+'" '+(isActive?'onclick="apToggleCheck('+j+')"':'')+'>'
+        +'<span class="ap2-box">'+AP_CHECK+'</span><div class="ap2-kbody"><span class="ap2-ktext">'+apEsc(r.text)+'</span>'+link+'</div></li>';
+    });
+    krav+='</ul>';
+    const nDone=reqs.filter((r,j)=>checks[j]).length; const all=(nDone===reqs.length);
+    krav+='<div class="ap2-foot'+(all?' alldone':'')+'"><span class="frac">'+nDone+' / '+reqs.length+'</span> arbeidskrav huket av</div>';
+  } else {
+    krav+='<div class="ap2-info">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
+  }
+  krav+='</div>';
+
+  let tail='';
+  if(isDone){
+    tail='<div class="ap2-panel"><div class="ap2-status ok">✓ Dette trinnet er fullført og godkjent. Bra jobba!</div></div>';
+  } else if(isActive){
+    const needBoth=st.approval==='both';
+    if(ss.teacherApproved && needBoth && !ss.guardianApproved){
+      tail='<div class="ap2-panel"><div class="ap2-status wait">✓ Læreren har godkjent. Nå venter vi på at en voksen hjemme bekrefter.</div></div>';
+    } else if(ss.teacherApproved){
+      tail='<div class="ap2-panel"><div class="ap2-status ok">✓ Læreren har godkjent trinnet ditt!</div></div>';
+    } else {
+      const all=reqs.every((r,j)=>checks[j]);
+      tail='<button class="ap2-scan'+(all?'':' disabled')+'" '+(all?'onclick="startScan(\'wpapprove\')"':'')+'>'
+        +AP_SCAN_ICON+'<span>Scan godkjenning fra læreren</span></button>';
+    }
+  }
+  return mal+krav+tail;
 }
 async function apToggleCheck(reqIdx){
   const sk=window._currentStudent?.fbKey; if(!sk||!_apPlanKey) return;
@@ -549,7 +629,7 @@ async function doWpApproveScan(){
     showSuccess('✓','Godkjent av læreren!','',
       step.approval==='both'?'Nå mangler bare bekreftelse fra en voksen hjemme.':'');
   }
-  _apPlanKey=planKey; _apStepIdx=cur; _apView='step';
+  _apPlanKey=planKey; _apStepIdx=cur; _apView='plan';
   if(document.getElementById('screen-arbeidsplan').classList.contains('active')) apRefresh();
 }
 
