@@ -421,6 +421,8 @@ h1.sticker{
 .bday-row{display:flex;align-items:center;gap:8px}
 .bday-row input,.bday-row select{font-family:var(--font);font-size:16px;border:2px solid var(--ink);border-radius:9px;padding:6px 8px;background:#fff;color:var(--ink)}
 .bday-row .bdname{flex:1;min-width:120px}
+.plan-tab-btn{font-family:inherit;font-size:17px;font-weight:700;color:var(--ink-soft);background:transparent;border:none;border-bottom:4px solid transparent;padding:8px 14px;cursor:pointer;margin-bottom:-3px}
+.plan-tab-btn.active{color:var(--ink);border-bottom-color:var(--gold)}
 .plan-panel{display:flex;flex-direction:column;gap:14px}
 .week-msgs{display:flex;flex-direction:column;gap:10px}
 .week-msg{display:flex;align-items:center;gap:10px}
@@ -1228,9 +1230,9 @@ h1.sticker{
     <div class="ovl-head"><h3>&#128197; Planlegg uka</h3><button class="ovl-x" id="planClose">&times;</button></div>
     <div class="ovl-body">
       <div class="set-tabs" id="planTabs">
-        <button class="set-tab-btn active" data-ptab="timeplan">Timeplan</button>
-        <button class="set-tab-btn" data-ptab="beskjeder">Beskjeder</button>
-        <button class="set-tab-btn" data-ptab="bursdager">Bursdager</button>
+        <button class="plan-tab-btn active" data-ptab="timeplan">Timeplan</button>
+        <button class="plan-tab-btn" data-ptab="beskjeder">Beskjeder</button>
+        <button class="plan-tab-btn" data-ptab="bursdager">Bursdager</button>
       </div>
       <div class="plan-panel" id="planPanel-timeplan">
         <div class="daytabs" id="dayTabs"></div>
@@ -1924,7 +1926,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     });
   }
   function setPlanTab(name){
-    var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.set-tab-btn').forEach(function(x){ x.classList.toggle('active', x.dataset.ptab===name); });
+    var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.plan-tab-btn').forEach(function(x){ x.classList.toggle('active', x.dataset.ptab===name); });
     ['timeplan','beskjeder','bursdager'].forEach(function(t){ var p=document.getElementById('planPanel-'+t); if(p) p.style.display=(t===name)?'flex':'none'; });
   }
   function bdayRow(b,i){
@@ -2017,7 +2019,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   document.getElementById('planCancel').onclick=closePlanner;
   planOvl.onclick=function(e){ if(e.target===planOvl) closePlanner(); };
   document.getElementById('addPlanRow').onclick=function(){ harvestPlan(); var arr=portal.data.week[editDay]; var prevEnd=''; if(arr.length){ var pr=parseRange(arr[arr.length-1].time); prevEnd=pr[1]||''; } var t=prevEnd?(prevEnd+'–'+addMin(prevEnd,45)):''; arr.push({ type:'lesson', time:t, name:'', icon:'book', color:COLORS[0] }); buildPlanRows(); };
-  (function(){ var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.set-tab-btn').forEach(function(b){ b.onclick=function(){ setPlanTab(b.dataset.ptab); }; }); })();
+  (function(){ var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.plan-tab-btn').forEach(function(b){ b.onclick=function(){ setPlanTab(b.dataset.ptab); }; }); })();
   var __abBtn=document.getElementById('addBday'); if(__abBtn) __abBtn.onclick=function(){ if(!Array.isArray(data.birthdays)) data.birthdays=[]; data.birthdays.push({name:'',age:'',day:editDay||1}); buildBdayRows(); };
   document.getElementById('planSave').onclick=function(){ harvestPlan(); if(portal.save) portal.save(); if(portal.applyWeek) portal.applyWeek(); closePlanner(); };
 
