@@ -421,6 +421,11 @@ h1.sticker{
 .bday-row{display:flex;align-items:center;gap:8px}
 .bday-row input,.bday-row select{font-family:var(--font);font-size:16px;border:2px solid var(--ink);border-radius:9px;padding:6px 8px;background:#fff;color:var(--ink)}
 .bday-row .bdname{flex:1;min-width:120px}
+.plan-panel{display:flex;flex-direction:column;gap:14px}
+.week-msgs{display:flex;flex-direction:column;gap:10px}
+.week-msg{display:flex;align-items:center;gap:10px}
+.week-msg .wm-day{width:92px;flex:none;font-weight:700;font-size:15px}
+.week-msg input{flex:1}
 .swatches{display:flex;gap:5px}
 .sw{width:26px;height:26px;border-radius:7px;border:2px solid var(--ink);cursor:pointer}
 .sw.sel{box-shadow:0 0 0 3px var(--gold)}
@@ -1222,19 +1227,26 @@ h1.sticker{
   <div class="ovl-card">
     <div class="ovl-head"><h3>&#128197; Planlegg uka</h3><button class="ovl-x" id="planClose">&times;</button></div>
     <div class="ovl-body">
-      <div class="daytabs" id="dayTabs"></div>
-      <div class="plan-daymsg">
-        <label class="pdm-label">Fast beskjed for <span id="pdmDay">dagen</span> <small>(vises hver uke)</small></label>
-        <input id="planDayMsg" class="pdm-input" placeholder="F.eks. Husk gymtøy og drikkeflaske">
+      <div class="set-tabs" id="planTabs">
+        <button class="set-tab-btn active" data-ptab="timeplan">Timeplan</button>
+        <button class="set-tab-btn" data-ptab="beskjeder">Beskjeder</button>
+        <button class="set-tab-btn" data-ptab="bursdager">Bursdager</button>
       </div>
-      <div class="plan-rows" id="planRows"></div>
-      <button class="add-slot" id="addPlanRow">+ Legg til time eller friminutt</button>
-      <div class="plan-bdays">
-        <h4 class="pbd-title">🎂 Ukas bursdager</h4>
+      <div class="plan-panel" id="planPanel-timeplan">
+        <div class="daytabs" id="dayTabs"></div>
+        <div class="plan-rows" id="planRows"></div>
+        <button class="add-slot" id="addPlanRow">+ Legg til time eller friminutt</button>
+        <p class="ovl-hint">Hver ukedag har sin egen timeplan. Velg <b>start</b> og <b>slutt</b> fra nedtrekksmenyene &ndash; sluttiden fylles ut automatisk, og en ny rad starter der forrige sluttet.</p>
+      </div>
+      <div class="plan-panel" id="planPanel-beskjeder" style="display:none">
+        <p class="ovl-hint">Faste beskjeder vises hver uke p&aring; dagen du legger dem. Du kan ogs&aring; legge til spontane beskjeder direkte p&aring; &laquo;Fra l&aelig;reren&raquo;.</p>
+        <div id="weekMsgs" class="week-msgs"></div>
+      </div>
+      <div class="plan-panel" id="planPanel-bursdager" style="display:none">
+        <p class="ovl-hint">Bursdager gjelder denne uka og dukker opp p&aring; riktig dag.</p>
         <div id="bdayRows" class="bday-rows"></div>
         <button class="add-slot" id="addBday">+ Legg til bursdag</button>
       </div>
-      <p class="ovl-hint">Hver ukedag har sin egen timeplan, og tavla viser automatisk dagens plan. Velg <b>start</b> og <b>slutt</b> fra nedtrekksmenyene &ndash; sluttiden fylles ut automatisk, og neste rad starter der forrige sluttet. Faste beskjeder vises hver uke p&aring; dagen du legger dem; bursdager gjelder denne uka og dukker opp p&aring; riktig dag. Du kan fortsatt legge til spontane beskjeder direkte p&aring; &laquo;Fra l&aelig;reren&raquo;.</p>
     </div>
     <div class="plan-foot">
       <button class="btn-big ghost" id="planCancel">Lukk</button>
@@ -1900,10 +1912,20 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   var planOvl=document.getElementById('planOverlay');
   var editDay=1;
 
-  function buildDayMsg(){
-    var inp=document.getElementById('planDayMsg'); var lbl=document.getElementById('pdmDay');
-    if(lbl) lbl.textContent=DAYNAMES[editDay]||'dagen';
-    if(inp) inp.value=(data.dayMsg && data.dayMsg[editDay])||'';
+  function buildWeekMsgs(){
+    var box=document.getElementById('weekMsgs'); if(!box) return; box.innerHTML='';
+    if(!data.dayMsg||typeof data.dayMsg!=='object') data.dayMsg={};
+    Object.keys(DAYNAMES).forEach(function(d){
+      var row=el('div','week-msg');
+      row.appendChild(el('span','wm-day',DAYNAMES[d]));
+      var inp=document.createElement('input'); inp.className='pdm-input'; inp.placeholder='Fast beskjed …'; inp.value=data.dayMsg[d]||'';
+      inp.oninput=function(){ data.dayMsg[d]=this.value; };
+      row.appendChild(inp); box.appendChild(row);
+    });
+  }
+  function setPlanTab(name){
+    var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.set-tab-btn').forEach(function(x){ x.classList.toggle('active', x.dataset.ptab===name); });
+    ['timeplan','beskjeder','bursdager'].forEach(function(t){ var p=document.getElementById('planPanel-'+t); if(p) p.style.display=(t===name)?'flex':'none'; });
   }
   function bdayRow(b,i){
     var row=el('div','bday-row');
@@ -1922,14 +1944,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var wrap=document.getElementById('bdayRows'); if(!wrap) return; wrap.innerHTML='';
     (data.birthdays||[]).forEach(function(b,i){ wrap.appendChild(bdayRow(b,i)); });
   }
-  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildDayMsg(); buildBdayRows(); }
+  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); buildBdayRows(); setPlanTab('timeplan'); }
   function closePlanner(){ planOvl.classList.remove('open'); }
 
   function buildDayTabs(){
     var t=document.getElementById('dayTabs'); t.innerHTML='';
     Object.keys(DAYNAMES).forEach(function(d){
       var b=el('button','daytab'+(+d===editDay?' active':''), DAYNAMES[d]);
-      b.onclick=function(){ harvestPlan(); editDay=+d; buildDayTabs(); buildPlanRows(); buildDayMsg(); };
+      b.onclick=function(){ harvestPlan(); editDay=+d; buildDayTabs(); buildPlanRows(); };
       t.appendChild(b);
     });
   }
@@ -1994,8 +2016,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   document.getElementById('planClose').onclick=closePlanner;
   document.getElementById('planCancel').onclick=closePlanner;
   planOvl.onclick=function(e){ if(e.target===planOvl) closePlanner(); };
-  document.getElementById('addPlanRow').onclick=function(){ harvestPlan(); portal.data.week[editDay].push({ type:'lesson', time:'', name:'', icon:'book', color:COLORS[0] }); buildPlanRows(); };
-  var __dmInp=document.getElementById('planDayMsg'); if(__dmInp) __dmInp.oninput=function(){ if(!data.dayMsg) data.dayMsg={}; data.dayMsg[editDay]=this.value; };
+  document.getElementById('addPlanRow').onclick=function(){ harvestPlan(); var arr=portal.data.week[editDay]; var prevEnd=''; if(arr.length){ var pr=parseRange(arr[arr.length-1].time); prevEnd=pr[1]||''; } var t=prevEnd?(prevEnd+'–'+addMin(prevEnd,45)):''; arr.push({ type:'lesson', time:t, name:'', icon:'book', color:COLORS[0] }); buildPlanRows(); };
+  (function(){ var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.set-tab-btn').forEach(function(b){ b.onclick=function(){ setPlanTab(b.dataset.ptab); }; }); })();
   var __abBtn=document.getElementById('addBday'); if(__abBtn) __abBtn.onclick=function(){ if(!Array.isArray(data.birthdays)) data.birthdays=[]; data.birthdays.push({name:'',age:'',day:editDay||1}); buildBdayRows(); };
   document.getElementById('planSave').onclick=function(){ harvestPlan(); if(portal.save) portal.save(); if(portal.applyWeek) portal.applyWeek(); closePlanner(); };
 
