@@ -24,7 +24,8 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
-  import { getDatabase, ref, get, set, update, push, runTransaction }
+  import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getDatabase, ref as _ref0, get, set, update as _update0, push, runTransaction }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
@@ -53,6 +54,29 @@
   ]);
 
   const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  // ── Klasse-scoping: elevdata ligg under classes/<id>/data/ i den nye
+  //    fleirklasse-strukturen. Vi skriv om kjende rot-stiar dit, slik
+  //    elevappen gjer. Krev anonym innlogging (reglane: auth != null).
+  const CLASS_ROOTS = new Set(['students14','students57','transactions14','transactions57','settings']);
+  function classScope(pth){
+    if(!window._CLASS_ID) return pth;
+    const clean = String(pth).replace(/^\/+/,'');
+    if(clean==='') return pth;
+    if(CLASS_ROOTS.has(clean.split('/')[0])) return 'classes/'+window._CLASS_ID+'/data/'+clean;
+    return pth;
+  }
+  const ref = (dbi,pth)=> _ref0(dbi, classScope(pth));
+  const update = (r,obj)=>{
+    if(obj && typeof obj==='object' && !Array.isArray(obj)){
+      const sc={}; let ch=false;
+      for(const k in obj){ const nk=classScope(k); sc[nk]=obj[k]; if(nk!==k) ch=true; }
+      return _update0(r, ch?sc:obj);
+    }
+    return _update0(r,obj);
+  };
+
   window._db = db;
   window._ref = ref;
   window._get = get;
@@ -60,6 +84,22 @@
   window._update = update;
   window._push = push;
   window._runTransaction = runTransaction;
+
+  // Anonym innlogging – same som elevappen. Utan dette nektar reglane
+  // all lesing/skriving av klassedata (PERMISSION_DENIED).
+  try { await signInAnonymously(auth); } catch(e){ console.error('Anonym innlogging feilet:', e); }
+
+  // Kva klasse? ?class=<id> (sendt frå elevappen) eller ?k=<slug>.
+  const _params = new URLSearchParams(location.search);
+  let _cid = _params.get('class') || _params.get('cls') || null;
+  const _slug = _params.get('k');
+  if(!_cid && _slug){
+    try{ const ss=await get(_ref0(db,'slugs/'+_slug.toLowerCase())); const v=ss.val();
+      _cid=(typeof v==='string')?v:(v&&v.classId)||null; }catch(e){ console.warn('slug-oppslag feilet:', e); }
+  }
+  window._CLASS_ID = _cid;
+  if(!_cid){ console.warn('Myntstigen: inga klasse i lenka – innskot vil ikkje fungere. Opne spelet frå elevappen.'); }
+
   window._fbReady = true;
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
