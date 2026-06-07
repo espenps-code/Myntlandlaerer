@@ -466,7 +466,7 @@
   .ap2-card.locked{ filter:saturate(.55); }
   .ap2-card.locked::after{ content:"🔒 Låst – jobb på de andre fagene"; position:absolute; left:0; right:0; bottom:0; padding:8px; text-align:center; font-family:'Fredoka',sans-serif; font-weight:700; font-size:.8rem; color:#fff; background:rgba(42,31,61,.55); }
 
-  .ap2-stairs{ position:relative; flex:1; min-height:150px; display:flex; align-items:flex-end; justify-content:center; gap:9px; padding:0 6px 12px; }
+  .ap2-stairs{ position:relative; flex:none; height:clamp(160px,30vh,250px); margin-top:auto; display:flex; align-items:flex-end; justify-content:center; gap:9px; padding:0 6px 12px; }
   .ap2-stairs::after{ content:""; position:absolute; left:6px; right:6px; bottom:12px; height:5px; background:rgba(255,255,255,.35); border-radius:4px; }
   .ap2-bar{ position:relative; flex:1; max-width:64px; border:4px solid var(--ink); border-radius:11px 11px 5px 5px; background:linear-gradient(180deg,#3a2d54,var(--ink)); box-shadow:inset 0 -6px 0 rgba(0,0,0,.16); transition:background .35s; }
   .ap2-bar.done{ background:linear-gradient(180deg,var(--gold-light),var(--gold) 52%,var(--gold-deep)); box-shadow:inset 0 -6px 0 rgba(0,0,0,.14), 0 0 0 3px rgba(227,168,42,.4); }
@@ -551,12 +551,12 @@
   .ap2-scan.approved{ background:linear-gradient(180deg,#a7d85f,var(--grn)); box-shadow:0 7px 0 var(--grn-deep); color:#fff; }
 
   /* tablet/desktop: bredere, stigen til venstre */
-  @media (min-width:700px) and (min-height:700px){
+  @media (min-width:760px) and (min-height:560px){
     #screen-arbeidsplan.ap2{ max-width:none; }
     .ap2-board{ justify-content:center; }
     .ap2-card{ flex-basis:clamp(280px,30%,400px); }
     .ap2-grid{ display:grid; grid-template-columns:240px 1fr; align-content:start; max-width:1180px; width:100%; margin:0 auto; }
-    .ap2-rail{ flex-direction:column; grid-row:1 / span 3; align-self:start; }
+    .ap2-rail{ flex-direction:column-reverse; grid-row:1 / span 3; align-self:start; }
     .ap2-trinn{ flex-direction:row; width:100%; gap:10px; min-height:60px; }
     .ap2-trinn .tlabel{ font-size:1rem; } .ap2-trinn .ava{ margin-left:auto; }
     .ap2-krav{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
