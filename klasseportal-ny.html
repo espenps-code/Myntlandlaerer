@@ -407,6 +407,9 @@ h1.sticker{
   border-radius:14px;padding:9px 10px;flex-wrap:wrap}
 .plan-row select,.plan-row input{font-family:var(--font);font-size:16px;border:2px solid var(--ink);border-radius:9px;padding:6px 8px;background:#fff;color:var(--ink)}
 .plan-row .ptime{width:96px}
+.plan-row .ptimes{display:flex;align-items:center;gap:4px}
+.plan-row .ptimes select{width:80px;padding:6px 4px;font-size:16px}
+.plan-row .ptimes .pdash{font-weight:700}
 .plan-row .pname{flex:1;min-width:130px}
 .swatches{display:flex;gap:5px}
 .sw{width:26px;height:26px;border-radius:7px;border:2px solid var(--ink);cursor:pointer}
@@ -1806,11 +1809,16 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     arr.forEach(function(it,i){ wrap.appendChild(planRow(it,i,arr.length)); });
   }
 
+  function timeOpts(sel){ var out=''; for(var h=6;h<=18;h++){ for(var m=0;m<60;m+=5){ if(h===18&&m>0) break; var v=(h<10?'0'+h:h)+':'+(m<10?'0'+m:m); out+='<option value="'+v+'"'+(v===sel?' selected':'')+'>'+v+'</option>'; } } return out; }
+  function parseRange(t){ t=String(t||''); var p=t.split(/[–-]/); return [(p[0]||'').trim(),(p[1]||'').trim()]; }
+  function addMin(t,mins){ var p=String(t||'').split(':'); if(p.length<2) return ''; var tot=(+p[0])*60+(+p[1])+mins; if(tot>18*60) tot=18*60; if(tot<6*60) tot=6*60; tot=Math.round(tot/5)*5; var h=Math.floor(tot/60),m=tot%60; return (h<10?'0'+h:h)+':'+(m<10?'0'+m:m); }
+  function timeSelects(t){ var r=parseRange(t); return '<span class="ptimes"><select class="pstart"><option value="">–</option>'+timeOpts(r[0])+'</select><span class="pdash">–</span><select class="pend"><option value="">–</option>'+timeOpts(r[1])+'</select></span>'; }
+
   function planRow(it,i,n){
     var row=el('div','plan-row');
     var isBreak=it.type==='break';
     var html='<select class="ptype"><option value="lesson"'+(!isBreak?' selected':'')+'>Time</option><option value="break"'+(isBreak?' selected':'')+'>Friminutt</option></select>'+
-      '<input class="ptime" value="'+esc(it.time)+'" placeholder="'+(isBreak?'09:15–09:30':'08:30–09:15')+'">';
+      timeSelects(it.time);
     if(isBreak){
       html+='<input class="pname" value="'+esc(it.note)+'" placeholder="uteleik">'+
         '<label style="font-weight:600;font-size:15px;display:flex;align-items:center;gap:6px"><input type="checkbox" class="pbig"'+(it.big?' checked':'')+'> Storefri</label>';
@@ -1822,6 +1830,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     html+='<button class="mini pup" title="Flytt opp">&#8593;</button><button class="mini pdn" title="Flytt ned">&#8595;</button><button class="mini del" title="Fjern">&#128465;</button>';
     row.innerHTML=html;
     row.querySelector('.ptype').onchange=function(){ harvestPlan(); portal.data.week[editDay][i].type=this.value; buildPlanRows(); };
+    var durOf=function(it2){ return it2&&it2.type==='break'?15:45; };
+    var psEl=row.querySelector('.pstart'); var peEl=row.querySelector('.pend');
+    if(psEl) psEl.onchange=function(){ harvestPlan(); var a=portal.data.week[editDay]; var st=this.value; var dur=durOf(a[i]); a[i].time = st ? (st+'–'+addMin(st,dur)) : ''; if(st && i+1<a.length){ var nst=addMin(st,dur); a[i+1].time = nst+'–'+addMin(nst,durOf(a[i+1])); } buildPlanRows(); };
+    if(peEl) peEl.onchange=function(){ harvestPlan(); var a=portal.data.week[editDay]; var rng=parseRange(a[i].time); var en=this.value; a[i].time = (rng[0]||'')+'–'+en; if(en && i+1<a.length){ a[i+1].time = en+'–'+addMin(en,durOf(a[i+1])); } buildPlanRows(); };
     row.querySelectorAll('.sw').forEach(function(s){ s.onclick=function(){ row.querySelectorAll('.sw').forEach(function(x){x.classList.remove('sel');}); s.classList.add('sel'); }; });
     row.querySelector('.del').onclick=function(){ harvestPlan(); portal.data.week[editDay].splice(i,1); buildPlanRows(); };
     row.querySelector('.pup').onclick=function(){ harvestPlan(); var a=portal.data.week[editDay]; if(i>0){ var tmp=a[i-1]; a[i-1]=a[i]; a[i]=tmp; } buildPlanRows(); };
@@ -1833,7 +1845,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var rows=document.querySelectorAll('#planRows .plan-row');
     var arr=[];
     rows.forEach(function(r){
-      var timeEl=r.querySelector('.ptime'); var time=timeEl?timeEl.value:'';
+      var ps=r.querySelector('.pstart'); var pe=r.querySelector('.pend'); var st=ps?ps.value:''; var en=pe?pe.value:''; var time=(st||en)?(st+'–'+en):'';
       var nameEl=r.querySelector('.pname'); var name=nameEl?nameEl.value:'';
       var pbig=r.querySelector('.pbig');
       if(pbig){
