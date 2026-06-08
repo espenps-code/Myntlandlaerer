@@ -235,6 +235,24 @@
     border-top:3px solid rgba(42,31,61,.18);color:var(--ink-soft);font-size:.85rem;font-weight:600;line-height:1.7;}
   .fg-footer strong{color:var(--ink);}
   .fg-footer a{color:var(--blu-deep);font-weight:700;text-decoration:none;}
+
+  /* ── BEKREFT-MODAL ── */
+  .fg-modal-overlay{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;
+    padding:20px;background:rgba(42,31,61,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+  .fg-modal-overlay.show{display:flex;animation:fgFade .18s ease;}
+  @keyframes fgFade{from{opacity:0;}to{opacity:1;}}
+  .fg-modal{background:var(--cream);border:var(--border);border-radius:26px;max-width:380px;width:100%;
+    padding:1.7rem 1.6rem 1.5rem;text-align:center;
+    box-shadow:0 12px 0 rgba(42,31,61,.18),0 22px 38px rgba(42,31,61,.30);
+    animation:fgPop .24s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes fgPop{from{transform:scale(.85) translateY(14px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
+  .fg-modal-icon{width:74px;height:74px;margin:0 auto 1rem;border-radius:50%;border:5px solid var(--ink);
+    background:radial-gradient(circle at 38% 32%,var(--gold-light),var(--gold) 72%);display:flex;
+    align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 5px 0 rgba(42,31,61,.18);}
+  .fg-modal-title{font-family:var(--font);font-weight:700;font-size:1.4rem;color:var(--ink);line-height:1.18;margin-bottom:.55rem;}
+  .fg-modal-text{font-size:.97rem;font-weight:600;color:var(--ink-soft);line-height:1.5;margin-bottom:1.35rem;}
+  .fg-modal-btns{display:flex;flex-direction:column;gap:.6rem;}
+  .fg-modal-btns .fg-btn{margin-top:0;}
 </style>
 </head>
 <body>
@@ -635,7 +653,49 @@ function fgRenderStep(){
 }
 function fgBackToTrapp(){ _fgView='trapp'; fgRender(); window.scrollTo(0,0); }
 
-// ── GODKJENNING ─────────────────────────────────────────────
+// Pen Myntland-bekreftelse (erstatter nettleserens confirm)
+function fgConfirm(message,opts){
+  opts=opts||{};
+  return new Promise(resolve=>{
+    const ov=document.getElementById('fg-confirm');
+    const txt=document.getElementById('fg-confirm-text');
+    const ttl=document.getElementById('fg-confirm-title');
+    const ico=document.getElementById('fg-confirm-icon');
+    const ok=document.getElementById('fg-confirm-ok');
+    const cancel=document.getElementById('fg-confirm-cancel');
+    txt.textContent=message;
+    ttl.textContent=opts.title||'Bekrefte?';
+    ico.textContent=opts.icon||'\u2705';
+    ok.textContent=opts.okLabel||'\u2713 Ja';
+    cancel.textContent=opts.cancelLabel||'Avbryt';
+    cancel.style.display=opts.alertOnly?'none':'';
+    ov.classList.add('show');
+    function close(val){
+      ov.classList.remove('show');
+      ok.removeEventListener('click',onOk);
+      cancel.removeEventListener('click',onCancel);
+      ov.removeEventListener('click',onBackdrop);
+      document.removeEventListener('keydown',onKey);
+      resolve(val);
+    }
+    function onOk(){close(true);}
+    function onCancel(){close(false);}
+    function onBackdrop(e){if(e.target===ov)close(false);}
+    function onKey(e){if(e.key==='Escape')close(false);else if(e.key==='Enter')close(true);}
+    ok.addEventListener('click',onOk);
+    cancel.addEventListener('click',onCancel);
+    ov.addEventListener('click',onBackdrop);
+    document.addEventListener('keydown',onKey);
+    setTimeout(()=>ok.focus(),30);
+  });
+}
+// Pen Myntland-melding (erstatter nettleserens alert)
+function fgAlert(message,opts){
+  opts=opts||{};
+  return fgConfirm(message,{alertOnly:true,title:opts.title||'Vent litt',
+    icon:opts.icon||'\u270B',okLabel:opts.okLabel||'Greit'});
+}
+// ── GODKJENNING ──────────────────
 async function fgApprove(){
   const planKey=_fgPlanKey;
   const plan=_workPlans.find(p=>p.fbKey===planKey);
@@ -647,14 +707,16 @@ async function fgApprove(){
   const step=plan.steps[cur]||{};
   const ssNow=(pr.steps&&pr.steps[cur])||{};
   if(!(step.reqs||[]).every((r,j)=>(ssNow.checks||{})[j])){
-    alert('Eleven må huke av alle arbeidskravene før trinnet kan bekreftes.');
+    await fgAlert('Eleven må huke av alle arbeidskravene før trinnet kan bekreftes.',
+      {title:'Ikke helt klart ennå',icon:'\u2705'});
     return;
   }
   if(!ssNow.teacherApproved){
-    alert('Læreren må godkjenne trinnet før du kan bekrefte det.');
+    await fgAlert('Læreren må godkjenne trinnet før du kan bekrefte det.',
+      {title:'Venter på læreren',icon:'\u23F3'});
     return;
   }
-  if(!confirm('Bekrefte at du har sett framgangen på dette trinnet?')) return;
+  if(!(await fgConfirm('Du bekrefter at du har sett over framgangen på dette trinnet. Da blir trinnet fullført.',{title:'Bekrefte trinnet?',icon:'👀',okLabel:'✓ Ja, bekreft'}))) return;
   await window._update(fgRef('workPlanProgress/'+_studentKey+'/'+planKey+'/steps/'+cur),
     { guardianApproved:true, guardianApprovedTs:Date.now() });
   await fgCheckCompletion(planKey);
@@ -754,5 +816,19 @@ async function fgCheckCompletion(planKey){
   else run();
 })();
 </script>
+
+<!-- Myntland bekreft-modal -->
+<div class="fg-modal-overlay" id="fg-confirm" role="dialog" aria-modal="true" aria-labelledby="fg-confirm-title">
+  <div class="fg-modal">
+    <div class="fg-modal-icon" id="fg-confirm-icon">👀</div>
+    <div class="fg-modal-title" id="fg-confirm-title">Bekrefte trinnet?</div>
+    <div class="fg-modal-text" id="fg-confirm-text"></div>
+    <div class="fg-modal-btns">
+      <button class="fg-btn amber" id="fg-confirm-ok">✓ Ja, bekreft</button>
+      <button class="fg-btn ghost" id="fg-confirm-cancel">Avbryt</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
