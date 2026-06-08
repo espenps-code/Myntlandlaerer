@@ -2747,6 +2747,25 @@ function dagBoard(){
   return null;
 }
 function dagToday(){ var b=dagBoard(); var wd=new Date().getDay(); wd=wd===0?7:wd; return {plan:(b&&b.week&&b.week[wd])||[], notes:(b&&b.notes)||[], has:!!b}; }
+function dagPlanToMin(t){
+  var s=String(t==null?'':t);
+  var m=s.match(/(\d{1,2})\s*[:.]\s*(\d{2})/);
+  if(m) return (+m[1])*60+(+m[2]);
+  var d=s.match(/(\d{3,4})/);
+  if(d){ var n=d[1]; var hh=+n.slice(0,n.length-2); var mm=+n.slice(-2); if(hh<24&&mm<60) return hh*60+mm; }
+  return null;
+}
+function dagPlanSpans(p){
+  p=p||[];
+  var starts=p.map(function(it){return dagPlanToMin(it.time);});
+  var ends=p.map(function(it,i){
+    var rparts=String(it.time||'').split(/[\u2013\u2014-]| til /);
+    if(rparts.length>=2){ var e=dagPlanToMin(rparts[1]); if(e!=null) return e; }
+    for(var j=i+1;j<p.length;j++){ if(starts[j]!=null) return starts[j]; }
+    return starts[i]!=null?starts[i]+45:null;
+  });
+  return {starts:starts,ends:ends};
+}
 function renderDag(){
   var wrap=document.getElementById('dag-wrap'); if(wrap)wrap.style.display='';
   var pk=document.getElementById('dag-picker'); if(pk)pk.style.display='none';
@@ -2763,14 +2782,27 @@ function renderDag(){
     if(!t.has){ ol.innerHTML='<li class="dag-empty">Læreren har ikke delt en plan ennå.</li>'; }
     else if(!t.plan.length){ ol.innerHTML='<li class="dag-empty">Ingen timer i dag 🎉</li>'; }
     else {
-      t.plan.forEach(function(it){
+      var _now=new Date();
+      var _nowMin=_now.getHours()*60+_now.getMinutes()+_now.getSeconds()/60;
+      var _sp=dagPlanSpans(t.plan);
+      var _ai=-1;
+      for(var _i=0;_i<_sp.starts.length;_i++){ if(_sp.starts[_i]!=null&&_sp.ends[_i]!=null&&_nowMin>=_sp.starts[_i]&&_nowMin<_sp.ends[_i]){ _ai=_i; break; } }
+      t.plan.forEach(function(it,idx){
         var li=document.createElement('li');
+        var isNow=idx===_ai;
+        var prog='',meta='';
+        if(isNow&&_sp.starts[idx]!=null&&_sp.ends[idx]!=null&&_sp.ends[idx]>_sp.starts[idx]){
+          var pct=Math.min(100,Math.max(0,(_nowMin-_sp.starts[idx])/(_sp.ends[idx]-_sp.starts[idx])*100));
+          var minsLeft=Math.max(0,Math.ceil(_sp.ends[idx]-_nowMin));
+          prog='<div class="dag-bar"><i style="width:'+pct.toFixed(1)+'%"></i></div>';
+          meta='<span class="dag-now-meta">'+minsLeft+' min igjen</span>';
+        }
         if(it.type==='break'){
-          li.className='dag-break';
-          li.innerHTML='<span class="dag-btime">'+dagEsc(it.time||'')+'</span><span class="dag-bname">'+(it.big?'Storefri':'Friminutt')+(it.note?' · '+dagEsc(it.note):'')+'</span>';
+          li.className='dag-break'+(isNow?' is-now':'');
+          li.innerHTML='<span class="dag-btime">'+dagEsc(it.time||'')+'</span><span class="dag-bname">'+(it.big?'Storefri':'Friminutt')+(it.note?' · '+dagEsc(it.note):'')+'</span>'+meta+prog;
         } else {
-          li.className='dag-lesson';
-          li.innerHTML='<span class="dag-time">'+dagEsc(it.time||'')+'</span><span class="dag-ic"><img src="fagikoner/ikon-'+dagEsc(it.icon||'annet')+'.webp" alt="" onerror="this.parentNode.style.display=\'none\'"></span><span class="dag-name">'+dagEsc(it.name||'')+'</span>';
+          li.className='dag-lesson'+(isNow?' is-now':'');
+          li.innerHTML='<span class="dag-time">'+dagEsc(it.time||'')+'</span><span class="dag-ic"><img src="fagikoner/ikon-'+dagEsc(it.icon||'annet')+'.webp" alt="" onerror="this.parentNode.style.display=\'none\'"></span><span class="dag-name">'+dagEsc(it.name||'')+'</span><span class="dag-now-tag">NÅ</span>'+meta+prog;
         }
         ol.appendChild(li);
       });

@@ -699,6 +699,18 @@
     .dag-break{ display:flex; align-items:center; gap:12px; align-self:center; width:96%; background:linear-gradient(90deg,#eafad0,#dff3c0); border:3px dashed #5d9417; border-radius:30px; padding:7px 16px; }
     .dag-btime{ font-size:17px; font-weight:700; color:#4a3c63; font-variant-numeric:tabular-nums; }
     .dag-bname{ font-size:17px; font-weight:700; color:#5d9417; }
+    .dag-lesson{ position:relative; overflow:hidden; }
+    .dag-break{ position:relative; overflow:hidden; }
+    .dag-now-tag{ margin-left:auto; background:#e64b3b; color:#fff; font-weight:800; font-size:15px; padding:3px 12px; border-radius:30px; border:3px solid #2a1f3d; transform:rotate(-4deg); opacity:0; white-space:nowrap; }
+    .dag-lesson.is-now{ background:#fff7df; box-shadow:0 0 0 4px #f0b51e, 0 6px 0 rgba(42,31,61,.2); animation:dagnowglow 2.2s ease-in-out infinite; }
+    .dag-lesson.is-now .dag-now-tag{ opacity:1; animation:dagtagwiggle 1.6s ease-in-out infinite; }
+    .dag-break.is-now{ box-shadow:0 0 0 3px #f0b51e; background:linear-gradient(90deg,#eafad0,#d7efb6); }
+    .dag-now-meta{ margin-left:8px; align-self:center; white-space:nowrap; background:#2a1f3d; color:#fff; font-weight:700; font-size:14px; padding:3px 10px; border-radius:30px; }
+    .dag-break .dag-now-meta{ margin-left:auto; }
+    .dag-bar{ position:absolute; left:0; right:0; bottom:0; height:6px; background:rgba(42,31,61,.12); }
+    .dag-bar i{ display:block; height:100%; background:#1aa6a0; border-radius:0 5px 5px 0; transition:width .9s linear; }
+    @keyframes dagnowglow{ 50%{ box-shadow:0 0 0 5px #e64b3b, 0 6px 0 rgba(42,31,61,.2); } }
+    @keyframes dagtagwiggle{ 0%,100%{ transform:rotate(-6deg) scale(1); } 50%{ transform:rotate(2deg) scale(1.06); } }
     .dag-notes{ display:flex; flex-direction:column; gap:11px; }
     .dag-note{ background:#fff5c7; border:3px solid #2a1f3d; border-radius:14px; padding:13px 16px; font-size:20px; font-weight:600; color:#2a1f3d; line-height:1.3; box-shadow:0 4px 0 rgba(42,31,61,.12); }
     .dag-note:nth-child(2n){ background:#ffe0cf; }
