@@ -302,6 +302,25 @@
   .fillans { color:var(--coral); font-weight:800; }
   .cloze-note { margin-top:14px; font-size:0.85rem; color:var(--muted); font-weight:700; }
 
+  /* ---------- ordstokk (scramble) ---------- */
+  table.scramble { width:100%; border-collapse:collapse; margin-top:10px; }
+  table.scramble th {
+    text-align:left; font-family:'Fredoka One',cursive; font-size:0.95rem;
+    color:var(--green-dark); padding:6px 12px; border-bottom:2px solid var(--border);
+  }
+  table.scramble td { padding:13px 12px; border-bottom:1.5px solid var(--border); vertical-align:middle; }
+  table.scramble td.num { width:34px; color:var(--muted); font-weight:800; font-size:0.95rem; }
+  table.scramble td.scr {
+    font-weight:800; letter-spacing:0.32em; text-transform:uppercase;
+    color:var(--teal-dark); font-size:1.15rem; white-space:nowrap; width:44%;
+  }
+  table.scramble td.wr { width:52%; }
+  table.scramble .ans-line {
+    display:inline-block; min-width:170px; height:1.4em;
+    border-bottom:2.5px solid var(--teal-dark); vertical-align:-0.3em;
+  }
+  table.scramble td.wr .answer { color:var(--coral); font-weight:800; text-transform:uppercase; }
+
   /* ---------- footer ---------- */
   footer {
     background: var(--white);
@@ -414,6 +433,7 @@
         <button data-type="search" class="active">🔍 Ordsøk</button>
         <button data-type="crossword">✏️ Kryssord</button>
         <button data-type="fill">✍️ Fyll inn</button>
+        <button data-type="scramble">🔀 Ordstokk</button>
       </div>
     </div>
 
@@ -469,6 +489,14 @@
           <option value="stor">Stor – lettere å lese og skrive</option>
         </select>
       </div>
+    </div>
+
+    <div id="scrambleOpts" style="display:none;">
+      <p class="sub" style="margin-top:4px;">Hvert valgt ord vises med bokstavene i stokket rekkefølge. Eleven skriver det riktige ordet ved siden av.</p>
+      <label class="check-row">
+        <input type="checkbox" id="scrBank">
+        <span>Vis ordbank på arket <em>– en stokket liste med de riktige ordene som hjelp</em></span>
+      </label>
     </div>
 
     <div class="toolbar">
@@ -712,6 +740,7 @@ $('puzzleType').addEventListener('click', e => {
   $('searchOpts').style.display = puzzleType==='search' ? 'block':'none';
   $('crossOpts').style.display  = puzzleType==='crossword' ? 'block':'none';
   $('fillOpts').style.display   = puzzleType==='fill' ? 'block':'none';
+  $('scrambleOpts').style.display = puzzleType==='scramble' ? 'block':'none';
   if (puzzleType==='crossword') buildClueEditor();
 });
 
@@ -945,6 +974,46 @@ function renderCloze(title,meta,answer){
   return sheet(title,meta,inner);
 }
 
+/* ============ ORDSTOKK (SCRAMBLE) ============ */
+function scrambleWord(w){
+  if (w.length < 2) return w;
+  const arr = w.split('');
+  for (let attempt=0; attempt<50; attempt++){
+    for (let i=arr.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    const out = arr.join('');
+    if (out !== w) return out;   // sørg for at det faktisk er stokket
+  }
+  return arr.join('');
+}
+
+function makeScramble(words){
+  return words.map(w => ({ word:w, scrambled: scrambleWord(w) }));
+}
+
+function renderScramble(items,title,meta,answer){
+  let inner = answer ? '<span class="ans-tag">🪙 Fasit</span>' : '';
+  if (!answer && $('scrBank') && $('scrBank').checked){
+    const bank = items.map(it=>it.word);
+    for (let i=bank.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [bank[i],bank[j]]=[bank[j],bank[i]];
+    }
+    inner += `<div class="wordbank"><h4>🪙 Ordbank</h4><div class="bankwords">${
+      bank.map(w=>`<span class="bankword">${w}</span>`).join('')}</div></div>`;
+  }
+  const rows = items.map((it,i)=>`
+    <tr>
+      <td class="num">${i+1}.</td>
+      <td class="scr">${it.scrambled}</td>
+      <td class="wr">${answer?`<span class="answer">${it.word}</span>`:'<span class="ans-line"></span>'}</td>
+    </tr>`).join('');
+  inner += `<table class="scramble"><thead><tr><th></th><th>Stokket</th><th>Skriv ordet riktig</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return sheet(title,meta,inner);
+}
+
 /* ============ GENERATE ============ */
 function generate(){
   const title=$('title').value.trim();
@@ -973,6 +1042,11 @@ function generate(){
     out.innerHTML=renderCloze(title,meta,false)
                  +renderCloze(title+' – fasit',meta,true);
     msg.innerHTML=`<div class="msg ok">🪙 Fyll inn-oppgave laget med ${cz.blanks} luker!</div>`;
+  } else if (puzzleType==='scramble'){
+    const items=makeScramble(pickedWords());
+    out.innerHTML=renderScramble(items,title,meta,false)
+                 +renderScramble(items,title+' – fasit',meta,true);
+    msg.innerHTML=`<div class="msg ok">🪙 Ordstokk laget med ${items.length} ord!</div>`;
   } else {
     const cw=makeCrossword(pickedWords().map(w=>({word:w,clue:clues[w]||''})));
     out.innerHTML=renderCrossword(cw,title,meta,false)
