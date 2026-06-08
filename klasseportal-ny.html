@@ -3279,14 +3279,25 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     }
   }
 
+  function syncHelperName(slot, name){
+    try {
+      var p = window.portal;
+      if (!p || !p.data) return;
+      if (!Array.isArray(p.data.helpers)) p.data.helpers = ['', '', '', ''];
+      while (p.data.helpers.length < 4) p.data.helpers.push('');
+      p.data.helpers[+slot] = name || '';
+      if (p.save) p.save();
+      if (p.renderHelpers) p.renderHelpers();
+    } catch(e){}
+  }
   function linkHelper(slot, student){
     slot = +slot;
     sal.links[slot] = { key: student.fbKey, name: fullName(student) };
-    saveSal(); renderSalaryUI();
+    saveSal(); syncHelperName(slot, fullName(student)); renderSalaryUI();
   }
   function salAction(slot, act){
     slot = +slot;
-    if (act === 'clear'){ sal.links[slot] = { key: '', name: '' }; saveSal(); renderSalaryUI(); return; }
+    if (act === 'clear'){ sal.links[slot] = { key: '', name: '' }; saveSal(); syncHelperName(slot, ''); renderSalaryUI(); return; }
     if (act === 'list') openStudentList(slot);
     if (act === 'scan') openScan(slot);
   }
