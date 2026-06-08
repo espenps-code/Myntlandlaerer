@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Innboks – tilbakemeldinger · Myntland</title>
+<link rel="stylesheet" href="myntland.css">
+<style>
+  :root{ --gr:#085041; --gr2:#1D9E75; --bg:#f3f8f6; --ink:#143a2e; --mut:#5a7a6e; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Nunito,system-ui,sans-serif;background:var(--bg);color:var(--ink);}
+  header.top{background:var(--gr);color:#fff;padding:14px 20px;display:flex;
+    align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  header.top h1{margin:0;font-size:19px;}
+  header.top .who{font-size:13px;color:#cdeee0;display:flex;align-items:center;gap:10px;}
+  .btn{border:none;border-radius:10px;padding:9px 15px;font-weight:800;font-size:14px;
+    cursor:pointer;font-family:inherit;}
+  .btn.pri{background:var(--gr2);color:#fff;} .btn.pri:hover{background:#168a64;}
+  .btn.pri:disabled{background:#9cd1bd;cursor:default;}
+  .btn.ghost{background:#eef4f1;color:#2c5446;} .btn.ghost:hover{background:#e0ece7;}
+  .btn.warn{background:#fff;color:#b23a23;border:2px solid #f0c3b8;}
+  .btn.sm{padding:6px 11px;font-size:13px;border-radius:9px;}
+
+  /* Innlogging */
+  #login{max-width:380px;margin:8vh auto;background:#fff;border-radius:18px;
+    box-shadow:0 12px 40px rgba(8,80,65,.14);padding:28px 26px;text-align:center;}
+  #login h2{margin:0 0 4px;color:var(--gr);}
+  #login p{color:var(--mut);font-size:14px;margin:0 0 18px;}
+  #login input{width:100%;padding:11px 13px;border:2px solid #d6e6df;border-radius:11px;
+    font:400 15px Nunito,system-ui,sans-serif;margin-bottom:10px;box-sizing:border-box;}
+  #login input:focus{outline:none;border-color:var(--gr2);}
+  #login .btn{width:100%;margin-top:4px;}
+  #login .or{margin:14px 0 10px;color:#9ab2a8;font-size:13px;}
+  #login .err{color:#c0392b;font-weight:700;font-size:14px;min-height:20px;margin-top:8px;}
+
+  /* UID-banner */
+  .uidbar{background:#fff7e0;border-bottom:1px solid #f0e0a8;color:#7a5d00;
+    padding:8px 20px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .uidbar code{background:#fff;border:1px solid #e7d68a;border-radius:6px;padding:2px 7px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;}
+
+  /* Layout */
+  .wrap{max-width:1080px;margin:0 auto;padding:16px;display:grid;
+    grid-template-columns:minmax(280px,380px) 1fr;gap:16px;align-items:start;}
+  @media(max-width:780px){.wrap{grid-template-columns:1fr;}}
+  .panel{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(8,80,65,.07);overflow:hidden;}
+  .filters{display:flex;gap:6px;padding:12px;border-bottom:1px solid #eef3f1;flex-wrap:wrap;}
+  .chip{border:2px solid #dde9e4;background:#fff;border-radius:999px;padding:5px 13px;
+    font-weight:800;font-size:13px;cursor:pointer;color:#3a5a4e;}
+  .chip.on{background:var(--gr2);border-color:var(--gr2);color:#fff;}
+  .chip .n{opacity:.8;font-weight:700;}
+
+  .list{max-height:70vh;overflow:auto;}
+  .row{padding:13px 15px;border-bottom:1px solid #f1f6f3;cursor:pointer;display:flex;
+    flex-direction:column;gap:5px;}
+  .row:hover{background:#f7fbf9;}
+  .row.sel{background:#eafaf3;}
+  .row.unread .row-text{font-weight:800;}
+  .row-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:space-between;}
+  .row-text{font-size:14px;line-height:1.35;color:#22463a;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .row-meta{font-size:12px;color:#7a9389;}
+  .tag{font-size:11px;font-weight:800;border-radius:999px;padding:2px 9px;}
+  .tag.feil{background:#fde8e4;color:#b23a23;} .tag.forslag{background:#e6f0fb;color:#2563a8;}
+  .st{font-size:11px;font-weight:800;border-radius:999px;padding:2px 9px;}
+  .st.sent{background:#eef1f4;color:#56657a;} .st.read{background:#fff3d6;color:#9a6a00;}
+  .st.resolved{background:#e2f7ea;color:#1a8a5c;}
+  .empty{padding:30px 18px;text-align:center;color:#7a9389;}
+
+  /* Detalj */
+  .detail{padding:20px;min-height:300px;}
+  .detail .none{color:#9ab2a8;text-align:center;padding:60px 10px;}
+  .d-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .d-from{font-size:13px;color:var(--mut);margin-bottom:12px;line-height:1.5;}
+  .d-from b{color:var(--ink);}
+  .d-text{background:#f7fbf9;border:1px solid #e8f0ec;border-radius:12px;padding:14px;
+    font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+  .d-lbl{display:block;font-weight:800;font-size:14px;margin:18px 0 7px;}
+  .d-reply{width:100%;min-height:110px;border:2px solid #d6e6df;border-radius:12px;padding:12px;
+    font:400 15px/1.45 Nunito,system-ui,sans-serif;resize:vertical;box-sizing:border-box;}
+  .d-reply:focus{outline:none;border-color:var(--gr2);}
+  .d-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .d-saved{font-size:13px;font-weight:700;color:#1a8a5c;min-height:18px;margin-top:8px;}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- INNLOGGING -->
+<div id="login">
+  <h2>🔐 Innboks</h2>
+  <p>Logg inn med Myntland-kontoen din for å lese tilbakemeldinger.</p>
+  <input id="li-email" type="email" placeholder="E-post" autocomplete="username">
+  <input id="li-pass" type="password" placeholder="Passord" autocomplete="current-password">
+  <button class="btn pri" id="li-go">Logg inn</button>
+  <div class="or">– eller –</div>
+  <button class="btn ghost" id="li-google">Fortsett med Google</button>
+  <div class="err" id="li-err"></div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header class="top">
+    <h1>💬 Tilbakemeldinger</h1>
+    <div class="who"><span id="who-name"></span>
+      <button class="btn ghost sm" id="logout">Logg ut</button></div>
+  </header>
+
+  <div class="uidbar" id="uidbar">
+    Din bruker-ID (for database-reglene): <code id="my-uid">…</code>
+    <button class="btn ghost sm" id="copy-uid">Kopier</button>
+  </div>
+
+  <div class="wrap">
+    <div class="panel">
+      <div class="filters" id="filters">
+        <button class="chip on" data-f="all">Alle <span class="n" data-c="all">0</span></button>
+        <button class="chip" data-f="sent">Sendt <span class="n" data-c="sent">0</span></button>
+        <button class="chip" data-f="read">Lest <span class="n" data-c="read">0</span></button>
+        <button class="chip" data-f="resolved">Løst <span class="n" data-c="resolved">0</span></button>
+      </div>
+      <div class="list" id="list"><div class="empty">Laster…</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="detail" id="detail"><div class="none">Velg en melding fra lista.</div></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+  import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword,
+           GoogleAuthProvider, signInWithPopup }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getDatabase, ref, onValue, update, get }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCpuTkZsIN_o2KASmuFXVf-aSzOifuLrU",
+    authDomain: "myntland.firebaseapp.com",
+    databaseURL: "https://myntland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "myntland",
+    storageBucket: "myntland.firebasestorage.app",
+    messagingSenderId: "711264415533",
+    appId: "1:711264415533:web:644a77a1e8b234667b2da4",
+    measurementId: "G-95QZNLQ6V9"
+  };
+  const app = initializeApp(firebaseConfig);
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider('6Ldqk-4sAAAAANwqW7dQbjnbV7LP1tXAP66mzt8b'),
+      isTokenAutoRefreshEnabled: true
+    });
+  } catch (e) { console.warn('App Check init:', e); }
+
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  // Valgfritt: lim inn din egen uid her for å skjule UI for andre også på klienten.
+  // (Serveren håndhever uansett tilgang via database-reglene.)
+  const ADMIN_UID = "";
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const fmt = (ms) => { if(!ms) return ''; try{ const d=new Date(ms);
+    return d.toLocaleDateString('no-NO',{day:'2-digit',month:'short',year:'numeric'})
+      +' kl. '+d.toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'}); }catch(e){return'';} };
+
+  // ── Innlogging ────────────────────────────────────────────────────────────
+  $('li-go').addEventListener('click', async () => {
+    $('li-err').textContent = '';
+    try {
+      await signInWithEmailAndPassword(auth, $('li-email').value.trim(), $('li-pass').value);
+    } catch (e) { $('li-err').textContent = 'Innlogging feilet – sjekk e-post og passord.'; }
+  });
+  $('li-pass').addEventListener('keydown', e => { if(e.key==='Enter') $('li-go').click(); });
+  $('li-google').addEventListener('click', async () => {
+    $('li-err').textContent = '';
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    catch (e) { $('li-err').textContent = 'Google-innlogging avbrutt.'; }
+  });
+  $('logout').addEventListener('click', () => signOut(auth));
+
+  let unsub = null, currentUid = null;
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      currentUid = null; if (unsub) { unsub(); unsub = null; }
+      $('login').classList.remove('hidden'); $('app').classList.add('hidden');
+      return;
+    }
+    if (ADMIN_UID && user.uid !== ADMIN_UID) {
+      $('login').classList.remove('hidden'); $('app').classList.add('hidden');
+      $('li-err').textContent = 'Denne kontoen har ikke tilgang til innboksen.';
+      signOut(auth); return;
+    }
+    currentUid = user.uid;
+    $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+    $('who-name').textContent = user.displayName || user.email || '';
+    $('my-uid').textContent = user.uid;
+    startInbox();
+  });
+
+  $('copy-uid').addEventListener('click', () => {
+    navigator.clipboard && navigator.clipboard.writeText($('my-uid').textContent);
+    $('copy-uid').textContent = 'Kopiert!';
+    setTimeout(() => { $('copy-uid').textContent = 'Kopier'; }, 1500);
+  });
+
+  // ── Innboks-data ───────────────────────────────────────────────────────────
+  let items = [];        // [{_uid,_id,...}]
+  let filter = 'all';
+  let selId = null;
+
+  function startInbox() {
+    if (unsub) unsub();
+    unsub = onValue(ref(db, 'feedback'), (snap) => {
+      const root = snap.val() || {};
+      const out = [];
+      Object.keys(root).forEach(uid => {
+        const byUser = root[uid] || {};
+        Object.keys(byUser).forEach(id => {
+          const m = byUser[id] || {};
+          out.push(Object.assign({ _uid: uid, _id: id }, m));
+        });
+      });
+      out.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+      items = out;
+      renderCounts(); renderList();
+      if (selId) renderDetail(items.find(x => x._id === selId));
+    }, (err) => {
+      console.warn('Lesefeil:', err);
+      $('list').innerHTML = '<div class="empty">Får ikke lest meldinger.<br>'
+        + 'Sjekk at database-reglene er satt opp med din bruker-ID.</div>';
+    });
+  }
+
+  function renderCounts() {
+    const c = { all: items.length, sent:0, read:0, resolved:0 };
+    items.forEach(m => { c[m.status] = (c[m.status]||0) + 1; });
+    document.querySelectorAll('[data-c]').forEach(el => {
+      el.textContent = c[el.getAttribute('data-c')] || 0;
+    });
+  }
+
+  function visible() {
+    return filter === 'all' ? items : items.filter(m => m.status === filter);
+  }
+
+  function renderList() {
+    const v = visible();
+    if (!v.length) { $('list').innerHTML = '<div class="empty">Ingen meldinger her.</div>'; return; }
+    $('list').innerHTML = v.map(m => {
+      const tcls = m.type === 'forslag' ? 'forslag' : 'feil';
+      const ttxt = m.type === 'forslag' ? '💡 Forslag' : '🐞 Feil';
+      const st = m.status || 'sent';
+      const stTxt = st === 'resolved' ? 'Løst' : st === 'read' ? 'Lest' : 'Sendt';
+      const unread = st === 'sent' ? ' unread' : '';
+      const sel = m._id === selId ? ' sel' : '';
+      return '<div class="row'+unread+sel+'" data-id="'+m._id+'">'
+        + '<div class="row-top"><span class="tag '+tcls+'">'+ttxt+'</span>'
+        + '<span class="st '+st+'">'+stTxt+'</span></div>'
+        + '<div class="row-text">'+esc(m.text)+'</div>'
+        + '<div class="row-meta">'+esc(m.teacherName||'Lærer')
+        + (m.className?(' · '+esc(m.className)):'')+' · '+fmt(m.createdAt)+'</div>'
+        + '</div>';
+    }).join('');
+    $('list').querySelectorAll('.row').forEach(r => {
+      r.addEventListener('click', () => openMsg(r.getAttribute('data-id')));
+    });
+  }
+
+  function openMsg(id) {
+    selId = id;
+    const m = items.find(x => x._id === id);
+    if (!m) return;
+    // Sendt -> Lest når jeg åpner den
+    if (m.status === 'sent') {
+      update(ref(db, 'feedback/'+m._uid+'/'+m._id), { status:'read', readAt: Date.now() })
+        .catch(e => console.warn('Status-oppdatering feilet:', e));
+    }
+    renderList();
+    renderDetail(m);
+  }
+
+  function renderDetail(m) {
+    if (!m) { $('detail').innerHTML = '<div class="none">Velg en melding fra lista.</div>'; return; }
+    const tcls = m.type === 'forslag' ? 'forslag' : 'feil';
+    const ttxt = m.type === 'forslag' ? '💡 Forslag' : '🐞 Feil';
+    const st = m.status || 'sent';
+    const stTxt = st === 'resolved' ? 'Løst' : st === 'read' ? 'Lest' : 'Sendt';
+    $('detail').innerHTML =
+      '<div class="d-head"><span class="tag '+tcls+'">'+ttxt+'</span>'
+      + '<span class="st '+st+'">'+stTxt+'</span></div>'
+      + '<div class="d-from"><b>'+esc(m.teacherName||'Lærer')+'</b>'
+      + (m.className?(' · klasse '+esc(m.className)):'')+'<br>'
+      + esc(m.page||'')+' · '+fmt(m.createdAt)
+      + (m.classId?('<br>Klasse-ID: '+esc(m.classId)):'')+'</div>'
+      + '<div class="d-text">'+esc(m.text)+'</div>'
+      + '<label class="d-lbl" for="d-reply">Skriftlig tilbakemelding til læreren</label>'
+      + '<textarea id="d-reply" class="d-reply" placeholder="Skriv svar (valgfritt)…">'
+      + esc(m.reply||'')+'</textarea>'
+      + '<div class="d-actions">'
+      + '<button class="btn pri" id="d-save">Lagre svar</button>'
+      + '<button class="btn ghost" id="d-resolve">Marker som løst</button>'
+      + (st==='resolved' ? '<button class="btn warn" id="d-reopen">Gjenåpne</button>' : '')
+      + '</div><div class="d-saved" id="d-saved"></div>';
+
+    $('d-save').addEventListener('click', () => saveReply(m, false));
+    $('d-resolve').addEventListener('click', () => saveReply(m, true));
+    const ro = $('d-reopen'); if (ro) ro.addEventListener('click', () => reopen(m));
+  }
+
+  function saveReply(m, resolve) {
+    const reply = ($('d-reply').value || '').trim();
+    const patch = { reply: reply };
+    if (resolve) { patch.status = 'resolved'; patch.resolvedAt = Date.now(); }
+    update(ref(db, 'feedback/'+m._uid+'/'+m._id), patch)
+      .then(() => { $('d-saved').textContent = resolve ? '✅ Lagret og markert som løst.' : '✅ Svar lagret.'; })
+      .catch(e => { console.warn(e); $('d-saved').textContent = 'Kunne ikke lagre.'; });
+  }
+  function reopen(m) {
+    update(ref(db, 'feedback/'+m._uid+'/'+m._id), { status:'read', resolvedAt: 0 })
+      .then(() => { $('d-saved').textContent = 'Gjenåpnet.'; })
+      .catch(e => console.warn(e));
+  }
+
+  // Filter-knapper
+  document.querySelectorAll('.chip').forEach(ch => {
+    ch.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+      ch.classList.add('on');
+      filter = ch.getAttribute('data-f');
+      renderList();
+    });
+  });
+</script>
+</body>
+</html>

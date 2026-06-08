@@ -641,11 +641,8 @@ function renderStudentTable() {
         <div id="av-${s.fbKey}" style="width:36px;height:36px;flex-shrink:0;" data-seed="${s.avatarSeed||0}"></div>
         <strong>${s.firstname} ${s.lastname}</strong></div></td>
       <td data-label="PIN"><code style="background:var(--bg);padding:4px 8px;border-radius:6px;">${s.pin}</code></td>
-      <td data-label="Saldo"><span class="balance-badge">🪙 ${s.balance}</span></td>
+      <td data-label="Saldo"><span class="balance-badge" title="Sum av alle kontoer: lommebok + sparekonto">🪙 ${(s.balance||0) + ((window._savings && window._savings[s.fbKey] && window._savings[s.fbKey].balance) || 0)}</span></td>
       <td data-label=""><div class="balance-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')">➕</button>
-        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')">➖</button>
-        <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')">✏️</button>
         <button class="btn btn-ghost btn-sm" onclick="rerollStudentMonster('${s.fbKey}')" title="Bytt monsteravatar">🎲</button>
         <button class="btn btn-coral btn-sm" onclick="openDeleteModal('${s.fbKey}','${s.firstname} ${s.lastname}')">🗑️</button>
       </div></td>
