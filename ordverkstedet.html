@@ -501,8 +501,8 @@
 let inputMode = 'text';
 let puzzleType = 'search';
 let tokens = [];          // {text, isWord, clean, idx} – rekonstruert tekst
-let picked = [];          // {word, clue}
-let pickedSet = new Set();
+let selected = new Set(); // token-indekser som er valgt (per forekomst)
+let clues = {};           // reint ord -> hint (til kryssord)
 
 const NORDIC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ';
 const STOP = new Set(('og i jeg det at en et den til er som på de med han av ikke der så var meg seg men ' +
@@ -569,7 +569,7 @@ $('toStep2').addEventListener('click', () => {
     }
   }
 
-  picked = []; pickedSet = new Set();
+  selected = new Set(); clues = {};
   renderPickbox();
   updatePicks();
   refreshFillBtn();
@@ -585,7 +585,7 @@ function renderPickbox() {
       const cls = /\S/.test(t.text) ? 'tok dead' : 'tok';
       return `<span class="${cls}">${escapeHtml(t.text)}</span>`;
     }
-    const on = pickedSet.has(t.clean);
+    const on = selected.has(i);
     return `<span class="tok word${on?' picked':''}" data-i="${i}">${escapeHtml(t.text)}</span>`;
   }).join(inputMode==='list' ? '<br>' : '');
 
@@ -597,44 +597,48 @@ function renderPickbox() {
 function escapeHtml(s){ return s.replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
 function toggleWord(i, el) {
-  const cl = tokens[i].clean;
-  if (pickedSet.has(cl)) {
-    pickedSet.delete(cl);
-    picked = picked.filter(p=>p.word!==cl);
+  if (selected.has(i)) {
+    selected.delete(i);
   } else {
-    if (picked.length >= 16) {
+    if (selected.size >= 16) {
       flash2('Maks 16 ord – fjern et før du legger til flere.','err');
       return;
     }
-    pickedSet.add(cl);
-    picked.push({word:cl, clue:''});
+    selected.add(i);
   }
-  // oppdater ALLE forekomster av ordet (samme ord kan stå flere steder)
-  $('pickbox').querySelectorAll('.tok.word').forEach(t => {
-    if (tokens[+t.dataset.i].clean===cl) t.classList.toggle('picked', pickedSet.has(cl));
-  });
+  // marker KUN den forekomsten læreren trykte på
+  el.classList.toggle('picked', selected.has(i));
   updatePicks();
 }
 
+function pickedWords() {
+  // unike reine ord i valgrekkefølge (til ordsøk/kryssord)
+  const seen = new Set(), out = [];
+  [...selected].sort((a,b)=>a-b).forEach(i => {
+    const w = tokens[i].clean;
+    if (!seen.has(w)) { seen.add(w); out.push(w); }
+  });
+  return out;
+}
+
 function updatePicks() {
-  $('pickCount').textContent = picked.length;
-  $('pickChips').innerHTML = picked.map(p =>
-    `<span class="chip">${p.word}<span class="x" data-w="${p.word}">×</span></span>`).join('');
+  const arr = [...selected].sort((a,b)=>a-b);
+  $('pickCount').textContent = arr.length;
+  $('pickChips').innerHTML = arr.map(i =>
+    `<span class="chip">${tokens[i].clean}<span class="x" data-i="${i}">×</span></span>`).join('');
   $('pickChips').querySelectorAll('.x').forEach(x => {
     x.addEventListener('click', () => {
-      const w = x.dataset.w;
-      pickedSet.delete(w);
-      picked = picked.filter(p=>p.word!==w);
-      $('pickbox').querySelectorAll('.tok.word').forEach(t => {
-        if (tokens[+t.dataset.i].clean===w) t.classList.remove('picked');
-      });
+      const i = +x.dataset.i;
+      selected.delete(i);
+      const el = $('pickbox').querySelector('.tok.word[data-i="'+i+'"]');
+      if (el) el.classList.remove('picked');
       updatePicks();
     });
   });
 }
 
 $('pickClear').addEventListener('click', () => {
-  picked=[]; pickedSet=new Set();
+  selected = new Set();
   $('pickbox').querySelectorAll('.tok.word').forEach(t=>t.classList.remove('picked'));
   updatePicks();
 });
@@ -651,10 +655,14 @@ $('autoPick').addEventListener('click', () => {
   const ranked = Object.keys(freq)
     .sort((a,b)=> freq[b]-freq[a] || b.length-a.length)
     .slice(0,10);
-  picked=[]; pickedSet=new Set();
-  ranked.forEach(w => { pickedSet.add(w); picked.push({word:w,clue:''}); });
+  selected = new Set();
+  // velg første forekomst av hvert foreslåtte ord
+  ranked.forEach(w => {
+    const t = tokens.find(t => t.isWord && t.clean===w);
+    if (t) selected.add(t.idx);
+  });
   $('pickbox').querySelectorAll('.tok.word').forEach(t => {
-    t.classList.toggle('picked', pickedSet.has(tokens[+t.dataset.i].clean));
+    t.classList.toggle('picked', selected.has(+t.dataset.i));
   });
   updatePicks();
   flash2('Forslag lagt inn – juster gjerne ved å trykke på ord.','info');
@@ -685,7 +693,7 @@ function refreshFillBtn(){
 /* ============ STEG 2 → 3 ============ */
 $('backTo1').addEventListener('click', ()=>setStep(1));
 $('toStep3').addEventListener('click', () => {
-  if (picked.length < 3) { flash2('Velg minst 3 ord før du går videre.','err'); return; }
+  if (selected.size < 3) { flash2('Velg minst 3 ord før du går videre.','err'); return; }
   if (puzzleType==='crossword') buildClueEditor();
   setStep(3);
 });
@@ -708,13 +716,14 @@ $('puzzleType').addEventListener('click', e => {
 });
 
 function buildClueEditor() {
-  $('clueEditor').innerHTML = picked.map((p,i)=>`
+  const words = pickedWords();
+  $('clueEditor').innerHTML = words.map(w=>`
     <div class="clue-row">
-      <span class="w">${p.word}</span>
-      <input type="text" data-i="${i}" value="${p.clue.replace(/"/g,'&quot;')}" placeholder="hint til «${p.word.toLowerCase()}»">
+      <span class="w">${w}</span>
+      <input type="text" data-w="${w}" value="${(clues[w]||'').replace(/"/g,'&quot;')}" placeholder="hint til «${w.toLowerCase()}»">
     </div>`).join('');
   $('clueEditor').querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('input', e => { picked[+e.target.dataset.i].clue = e.target.value; });
+    inp.addEventListener('input', e => { clues[e.target.dataset.w] = e.target.value; });
   });
 }
 
@@ -902,15 +911,15 @@ function renderCrossword(cw,title,meta,answer){
 /* ============ FYLL INN (CLOZE) ============ */
 function makeCloze(){
   let blanks = 0;
-  const body = tokens.map(t => {
-    if (t.isWord && pickedSet.has(t.clean)){
+  const body = tokens.map((t,i) => {
+    if (t.isWord && selected.has(i)){
       blanks++;
       return `<span class="blank" style="width:${t.clean.length+4}ch"></span>`;
     }
     return escapeHtml(t.text);
   }).join('');
-  const fasit = tokens.map(t => {
-    if (t.isWord && pickedSet.has(t.clean))
+  const fasit = tokens.map((t,i) => {
+    if (t.isWord && selected.has(i))
       return `<span class="fillans">${escapeHtml(t.text)}</span>`;
     return escapeHtml(t.text);
   }).join('');
@@ -921,7 +930,7 @@ function renderCloze(title,meta,answer){
   const cz = makeCloze();
   let inner = answer ? '<span class="ans-tag">🪙 Fasit</span>' : '';
   if (!answer && $('showBank').checked){
-    const bank = picked.map(p=>p.word);
+    const bank = pickedWords();
     for (let i=bank.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       [bank[i],bank[j]]=[bank[j],bank[i]];
@@ -931,7 +940,7 @@ function renderCloze(title,meta,answer){
   }
   const sz = ($('fillSize') && $('fillSize').value) || 'middels';
   inner += `<div class="cloze sz-${sz}">${answer?cz.fasit:cz.body}</div>`;
-  if (!answer && cz.blanks > picked.length)
+  if (!answer && cz.blanks > pickedWords().length)
     inner += '<p class="cloze-note">💡 Noen ord skal brukes flere ganger.</p>';
   return sheet(title,meta,inner);
 }
@@ -942,10 +951,10 @@ function generate(){
   const meta=$('meta').value.trim();
   const out=$('output'), msg=$('msg3');
   msg.innerHTML='';
-  if (picked.length<3){ msg.innerHTML='<div class="msg err">Velg minst 3 ord.</div>'; return; }
+  if (selected.size<3){ msg.innerHTML='<div class="msg err">Velg minst 3 ord.</div>'; return; }
 
   if (puzzleType==='search'){
-    const ws=makeWordSearch(picked.map(p=>p.word),$('gridSize').value,$('difficulty').value);
+    const ws=makeWordSearch(pickedWords(),$('gridSize').value,$('difficulty').value);
     out.innerHTML=renderWordSearch(ws,title,meta,false)
                  +renderWordSearch(ws,title+' – fasit',meta,true);
     msg.innerHTML = ws.failed.length
@@ -965,7 +974,7 @@ function generate(){
                  +renderCloze(title+' – fasit',meta,true);
     msg.innerHTML=`<div class="msg ok">🪙 Fyll inn-oppgave laget med ${cz.blanks} luker!</div>`;
   } else {
-    const cw=makeCrossword(picked.map(p=>({word:p.word,clue:p.clue})));
+    const cw=makeCrossword(pickedWords().map(w=>({word:w,clue:clues[w]||''})));
     out.innerHTML=renderCrossword(cw,title,meta,false)
                  +renderCrossword(cw,title+' – fasit',meta,true);
     msg.innerHTML = cw.failed.length
@@ -982,7 +991,7 @@ $('regenBtn').addEventListener('click', generate);
 /* ============ CLEAR ============ */
 $('clearAll').addEventListener('click', () => {
   $('rawInput').value=''; $('msg1').innerHTML='';
-  tokens=[]; picked=[]; pickedSet=new Set();
+  tokens=[]; selected=new Set(); clues={};
   $('output').innerHTML=''; $('printBar').style.display='none';
   setStep(1);
 });
