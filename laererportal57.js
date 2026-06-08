@@ -2749,7 +2749,7 @@ function refreshApproveModal(){
   if(!p){ closeModal('modal-wp-approve'); return; }
   document.getElementById('modal-wp-approve-title').innerHTML='<span style="display:inline-flex;align-items:center;gap:8px">'+wpFagIconHtml(p,26)+wpEscAttr(p.subject)+'</span>';
   document.getElementById('modal-wp-approve-sub').textContent=
-    p.class+' · '+(p.steps||[]).length+' trinn. Godkjenn trinnet eleven jobber med nå.';
+    p.class+' · '+(p.steps||[]).length+' trinn. Godkjenn trinnet eleven står på. Bonus på trinn som venter på hjemmet kan frigis her.';
   const students=wpAssignedStudents(p);
   const nSteps=(p.steps||[]).length;
   const body=document.getElementById('modal-wp-approve-body');
@@ -2758,32 +2758,50 @@ function refreshApproveModal(){
     const pr=wpGetProgress(s.fbKey,_wpApproveKey);
     const cur=pr.current||0;
     const nm=`${wpEscAttr(s.firstname)} ${s.lastname?wpEscAttr(s.lastname.charAt(0))+'.':''}`;
-    if(cur>=nSteps){
-      return `<div class="wp-approve-row"><div style="flex:1;font-weight:800;">${nm}</div>`
-        +`<span class="wp-pill wp-pill-done">🎉 Fullført hele trappa</span></div>`;
+    let rows='';
+    // Passerte «both»-trinn der bonusen ennå venter på en voksen hjemme.
+    for(let i=0;i<Math.min(cur,nSteps);i++){
+      const step=p.steps[i]||{};
+      const ss=pr.steps?.[i]||{};
+      if(step.approval==='both' && ss.teacherApproved && !ss.bonusPaid){
+        const gOk=!!ss.guardianApproved;
+        rows+=`<div class="wp-approve-row">
+          <div style="flex:1;min-width:130px;">
+            <div style="font-weight:800;">${nm}</div>
+            <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
+              Trinn ${i+1}/${nSteps}: ${wpEscAttr(step.title)} · bonus venter
+            </div>
+          </div>
+          ${gOk?'<span class="wp-pill wp-pill-ok">✓ Foresatt</span>':'<span class="wp-pill wp-pill-wait">⏳ Foresatt</span>'}
+          <button class="btn btn-primary btn-sm" onclick="teacherReleaseBonus('${s.fbKey}',${i})">Frigi bonus</button>
+          ${i===cur-1?`<button class="btn btn-ghost btn-sm" onclick="teacherUnapprove('${s.fbKey}',${i})">Angre</button>`:''}
+        </div>`;
+      }
     }
-    const step=p.steps[cur]||{};
-    const ss=pr.steps?.[cur]||{};
-    const nReqs=(step.reqs||[]).length;
-    const nChk=Object.values(ss.checks||{}).filter(Boolean).length;
-    const tOk=!!ss.teacherApproved, needG=step.approval==='both', gOk=!!ss.guardianApproved;
-    const tPill=tOk?'<span class="wp-pill wp-pill-ok">✓ Lærer</span>'
-      :'<span class="wp-pill wp-pill-wait">⏳ Lærer</span>';
-    const gPill=!needG?'<span class="wp-pill wp-pill-na">Foresatt ikke nødvendig</span>'
-      :gOk?'<span class="wp-pill wp-pill-ok">✓ Foresatt</span>'
-      :'<span class="wp-pill wp-pill-wait">⏳ Foresatt</span>';
-    return `<div class="wp-approve-row">
-      <div style="flex:1;min-width:130px;">
-        <div style="font-weight:800;">${nm}</div>
-        <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
-          Trinn ${cur+1}/${nSteps}: ${wpEscAttr(step.title)} · ${nChk}/${nReqs} huket av
+    // Trinnet eleven står på nå (eller fullført hele trappa).
+    if(cur>=nSteps){
+      rows+=`<div class="wp-approve-row"><div style="flex:1;font-weight:800;">${nm}</div>`
+        +`<span class="wp-pill wp-pill-done">🎉 Fullført hele trappa</span></div>`;
+    } else {
+      const step=p.steps[cur]||{};
+      const ss=pr.steps?.[cur]||{};
+      const nReqs=(step.reqs||[]).length;
+      const nChk=Object.values(ss.checks||{}).filter(Boolean).length;
+      const needG=step.approval==='both';
+      const gPill=!needG?'<span class="wp-pill wp-pill-na">Foresatt ikke nødvendig</span>'
+        :'<span class="wp-pill wp-pill-na">Foresatt (etter lærer)</span>';
+      rows+=`<div class="wp-approve-row">
+        <div style="flex:1;min-width:130px;">
+          <div style="font-weight:800;">${nm}</div>
+          <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
+            Trinn ${cur+1}/${nSteps}: ${wpEscAttr(step.title)} · ${nChk}/${nReqs} huket av
+          </div>
         </div>
-      </div>
-      ${tPill}${gPill}
-      ${tOk
-        ? `<button class="btn btn-ghost btn-sm" onclick="teacherUnapprove('${s.fbKey}')">Angre</button>`
-        : `<button class="btn btn-primary btn-sm" onclick="teacherApproveStep('${s.fbKey}')">Godkjenn</button>`}
-    </div>`;
+        <span class="wp-pill wp-pill-wait">⏳ Lærer</span>${gPill}
+        <button class="btn btn-primary btn-sm" onclick="teacherApproveStep('${s.fbKey}')">Godkjenn</button>
+      </div>`;
+    }
+    return rows;
   }).join('');
 }
 async function teacherApproveStep(studentKey){
@@ -2793,40 +2811,57 @@ async function teacherApproveStep(studentKey){
   if(cur>=(p.steps||[]).length) return;
   await window._update(fbRef('workPlanProgress/'+studentKey+'/'+planKey+'/steps/'+cur),
     { teacherApproved:true, teacherApprovedTs:Date.now() });
-  await wpCheckCompletion(planKey, studentKey);
+  await wpAfterTeacherApprove(planKey, studentKey);
+  refreshApproveModal();
 }
-async function teacherUnapprove(studentKey){
+async function teacherUnapprove(studentKey, idx){
   const planKey=_wpApproveKey;
-  const pr=wpGetProgress(studentKey,planKey);
+  const snap=await window._get(fbRef('workPlanProgress/'+studentKey+'/'+planKey));
+  const pr=snap.val()||{current:0,steps:{}};
   const cur=pr.current||0;
-  if(pr.steps?.[cur]?.completed){
-    alert('Trinnet er allerede fullført og bonus er utbetalt – det kan ikke angres.');
-    return;
-  }
-  await window._update(fbRef('workPlanProgress/'+studentKey+'/'+planKey+'/steps/'+cur),
-    { teacherApproved:false, teacherApprovedTs:null });
+  if(idx==null) idx=cur-1;
+  const ss=pr.steps?.[idx]||{};
+  if(ss.bonusPaid){ alert('Bonusen er allerede utbetalt for dette trinnet – det kan ikke angres.'); return; }
+  if(idx!==cur-1){ alert('Eleven har alt gått videre. Du kan bare angre den siste godkjenningen.'); return; }
+  const base='workPlanProgress/'+studentKey+'/'+planKey;
+  await window._update(fbRef('/'),{
+    [base+'/steps/'+idx+'/teacherApproved']:false,
+    [base+'/steps/'+idx+'/teacherApprovedTs']:null,
+    [base+'/current']:idx
+  });
+  refreshApproveModal();
 }
-// Felles fullføringslogikk – brukes når lærer (her) eller foresatt godkjenner.
-async function wpCheckCompletion(planKey, studentKey){
+// Eleven klatrer videre så snart læreren har godkjent. Bonus utbetales separat.
+async function wpAfterTeacherApprove(planKey, studentKey){
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
   const steps=p.steps||[];
   const snap=await window._get(fbRef('workPlanProgress/'+studentKey+'/'+planKey));
   const pr=snap.val()||{current:0,steps:{}};
   const cur=pr.current||0;
   if(cur>=steps.length) return;
-  const step=steps[cur];
   const ss=(pr.steps&&pr.steps[cur])||{};
-  if(ss.completed) return;
-  const ok = ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved);
-  if(!ok) return;
+  if(!ss.teacherApproved) return;
+  await window._update(fbRef('workPlanProgress/'+studentKey+'/'+planKey),{ current:cur+1 });
+  await wpSettleBonus(planKey, studentKey, cur);
+}
+// Utbetaler bonus for ett bestemt trinn når alle nødvendige godkjenninger er
+// på plass (lærer + ev. foresatt, eller lærer-frigjøring). Idempotent.
+async function wpSettleBonus(planKey, studentKey, idx){
+  const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return false;
+  const step=(p.steps||[])[idx]; if(!step) return false;
+  const snap=await window._get(fbRef('workPlanProgress/'+studentKey+'/'+planKey));
+  const pr=snap.val()||{current:0,steps:{}};
+  const ss=(pr.steps&&pr.steps[idx])||{};
+  if(ss.bonusPaid) return true;
+  const ready = ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved || ss.bonusReleased);
+  if(!ready) return false;
   const base='workPlanProgress/'+studentKey+'/'+planKey;
-  const upd={};
-  upd[base+'/steps/'+cur+'/completed']=true;
-  upd[base+'/steps/'+cur+'/completedTs']=Date.now();
-  upd[base+'/steps/'+cur+'/bonusPaid']=true;
-  upd[base+'/current']=cur+1;
-  await window._update(fbRef('/'),upd);
-  if((step.bonus||0)>0 && !ss.bonusPaid){
+  await window._update(fbRef('/'),{
+    [base+'/steps/'+idx+'/bonusPaid']:true,
+    [base+'/steps/'+idx+'/completed']:true,
+    [base+'/steps/'+idx+'/completedTs']:Date.now()
+  });
+  if((step.bonus||0)>0){
     const sSnap=await window._get(fbRef('students57/'+studentKey));
     const sv=sSnap.val()||{};
     const bonus=step.bonus||0;
@@ -2838,6 +2873,16 @@ async function wpCheckCompletion(planKey, studentKey){
     await logTx(studentKey,'income','🪙',
       'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(taxAmt>0?' (netto etter skatt)':''),net);
   }
+  return true;
+}
+// Lærer-ventil: frigi bonus uten foresattbekreftelse (når hjemmet ikke svarer).
+async function teacherReleaseBonus(studentKey, idx){
+  const planKey=_wpApproveKey;
+  if(!confirm('Utbetale bonusen for dette trinnet uten at en voksen hjemme har bekreftet?\n\nBruk dette bare hvis hjemmet ikke svarer.')) return;
+  await window._update(fbRef('workPlanProgress/'+studentKey+'/'+planKey+'/steps/'+idx),
+    { bonusReleased:true, bonusReleasedTs:Date.now() });
+  await wpSettleBonus(planKey, studentKey, idx);
+  refreshApproveModal();
 }
 
 // ── FORESATTBREV ────────────────────────────────────────────

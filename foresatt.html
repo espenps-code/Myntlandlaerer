@@ -477,14 +477,13 @@ function fgRenderSummary(){
           html:'👍 Læreren godkjente <b>Trinn '+(idx+1)+': '+fgEsc(step.title)+'</b> ('+fgEsc(p.subject)+')'});
       }
     });
-    if(cur<steps.length){
-      const step=steps[cur];
-      const ss=pr.steps?.[cur]||{};
+    steps.forEach((step,idx)=>{
+      const ss=pr.steps?.[idx]||{};
       const allChecked=(step.reqs||[]).every((r,j)=>(ss.checks||{})[j]);
-      if(step.approval==='both' && ss.teacherApproved && !ss.guardianApproved && allChecked){
-        canApprove.push({planKey:p.fbKey, idx:cur, subject:p.subject, title:step.title});
+      if(step.approval==='both' && ss.teacherApproved && !ss.guardianApproved && !ss.bonusPaid && allChecked){
+        canApprove.push({planKey:p.fbKey, idx, subject:p.subject, title:step.title});
       }
-    }
+    });
   });
   events.sort((a,b)=>b.ts-a.ts);
   let html='<div class="fg-card fg-summary-card">';
@@ -555,7 +554,12 @@ function fgRenderTrapp(){
   for(let i=steps.length-1;i>=0;i--){
     const st=steps[i];
     let cls='locked',ring='🔒',status='🔒 Ikke startet ennå';
-    if(i<cur){ cls='done'; ring='✓'; status='✓ Fullført og godkjent'; }
+    if(i<cur){
+      const ss=pr.steps?.[i]||{};
+      if(st.approval==='both' && !ss.guardianApproved && !ss.bonusPaid){
+        cls='done'; ring='👀'; status='⏳ Venter på deg – trykk for å bekrefte';
+      } else { cls='done'; ring='✓'; status='✓ Fullført og godkjent'; }
+    }
     else if(i===cur){
       cls='active'; ring=(i+1);
       const ss=pr.steps?.[i]||{};
@@ -619,34 +623,38 @@ function fgRenderStep(){
     html+='<div class="fg-intro">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
   }
   // STATUS / GODKJENNING
-  if(isDone){
-    html+='<div class="ap-status-box ap-status-ok">✓ Dette trinnet er fullført og godkjent.</div>';
-  } else if(isActive){
+  {
     const needBoth=st.approval==='both';
-    if(!needBoth){
-      html+='<div class="ap-status-box ap-status-info">'
-           +(ss.teacherApproved?'✓ Læreren har godkjent dette trinnet.'
-            :'Dette trinnet godkjennes av læreren. Du trenger ikke gjøre noe her.')
-           +'</div>';
-    } else if(ss.guardianApproved){
-      html+='<div class="ap-status-box ap-status-ok">✓ Du har bekreftet dette trinnet.'
-           +(ss.teacherApproved?'':' Det fullføres når læreren også har godkjent.')+'</div>';
-    } else {
-      const allChecked=reqs.every((r,j)=>checks[j]);
-      if(!allChecked){
+    const allChecked=reqs.length?reqs.every((r,j)=>checks[j]):true;
+    const pendingGuardian=needBoth && ss.teacherApproved && !ss.guardianApproved && !ss.bonusPaid;
+    if(pendingGuardian){
+      if(allChecked){
+        html+='<div class="ap-status-box ap-status-wait">👀 Læreren har godkjent, og eleven jobber videre. '
+             +'Når du har sett over framgangen, bekreft den – så får eleven bonusen for dette trinnet.</div>';
+        html+=`<button class="fg-btn amber" onclick="fgApprove(${i})">✓ Jeg har sett dette – bekreft trinnet</button>`;
+      } else {
+        html+='<div class="ap-status-box ap-status-info">⏳ Eleven har ikke huket av alle arbeidskravene ennå.</div>';
+      }
+    } else if(needBoth && (ss.guardianApproved||ss.bonusPaid)){
+      html+='<div class="ap-status-box ap-status-ok">✓ Du har bekreftet dette trinnet. Bonusen er utbetalt.</div>';
+    } else if(isDone){
+      html+='<div class="ap-status-box ap-status-ok">✓ Dette trinnet er fullført og godkjent.</div>';
+    } else if(isActive){
+      if(!needBoth){
+        html+='<div class="ap-status-box ap-status-info">'
+             +(ss.teacherApproved?'✓ Læreren har godkjent dette trinnet.'
+              :'Dette trinnet godkjennes av læreren. Du trenger ikke gjøre noe her.')
+             +'</div>';
+      } else if(!allChecked){
         html+='<div class="ap-status-box ap-status-info">⏳ Eleven har ikke huket av alle '
              +'arbeidskravene ennå. Du kan bekrefte trinnet når alt er huket av og læreren har godkjent.</div>';
-      } else if(!ss.teacherApproved){
+      } else {
         html+='<div class="ap-status-box ap-status-info">⏳ Eleven har gjort arbeidskravene. '
              +'Du kan bekrefte trinnet så snart læreren har godkjent det.</div>';
-      } else {
-        html+='<div class="ap-status-box ap-status-wait">👀 Læreren har godkjent. Når du har sett '
-             +'over framgangen, bekreft at du har sett den – så er trinnet fullført.</div>';
-        html+=`<button class="fg-btn amber" onclick="fgApprove()">✓ Jeg har sett dette – bekreft trinnet</button>`;
       }
+    } else {
+      html+='<div class="ap-status-box ap-status-info">🔒 Dette trinnet er ikke startet ennå.</div>';
     }
-  } else {
-    html+='<div class="ap-status-box ap-status-info">🔒 Dette trinnet er ikke startet ennå.</div>';
   }
   html+='<button class="fg-back" onclick="fgBackToTrapp()">← Tilbake til trappa</button>';
   body.innerHTML=html;
@@ -696,16 +704,16 @@ function fgAlert(message,opts){
     icon:opts.icon||'\u270B',okLabel:opts.okLabel||'Greit'});
 }
 // ── GODKJENNING ──────────────────
-async function fgApprove(){
+async function fgApprove(_arg){
   const planKey=_fgPlanKey;
   const plan=_workPlans.find(p=>p.fbKey===planKey);
   if(!plan) return;
   const pr=fgProgress(planKey);
-  const cur=pr.current||0;
-  if(cur>=(plan.steps||[]).length) return;
-  if(_fgStepIdx!==cur) return;
-  const step=plan.steps[cur]||{};
-  const ssNow=(pr.steps&&pr.steps[cur])||{};
+  const idx=(typeof _arg==='number')?_arg:_fgStepIdx;
+  const step=(plan.steps||[])[idx]||{};
+  const ssNow=(pr.steps&&pr.steps[idx])||{};
+  if(step.approval!=='both') return;
+  if(ssNow.guardianApproved||ssNow.bonusPaid) return;
   if(!(step.reqs||[]).every((r,j)=>(ssNow.checks||{})[j])){
     await fgAlert('Eleven må huke av alle arbeidskravene før trinnet kan bekreftes.',
       {title:'Ikke helt klart ennå',icon:'\u2705'});
@@ -716,10 +724,10 @@ async function fgApprove(){
       {title:'Venter på læreren',icon:'\u23F3'});
     return;
   }
-  if(!(await fgConfirm('Du bekrefter at du har sett over framgangen på dette trinnet. Da blir trinnet fullført.',{title:'Bekrefte trinnet?',icon:'👀',okLabel:'✓ Ja, bekreft'}))) return;
-  await window._update(fgRef('workPlanProgress/'+_studentKey+'/'+planKey+'/steps/'+cur),
+  if(!(await fgConfirm('Du bekrefter at du har sett over framgangen på dette trinnet. Da får eleven bonusen for trinnet.',{title:'Bekrefte trinnet?',icon:'👀',okLabel:'✓ Ja, bekreft'}))) return;
+  await window._update(fgRef('workPlanProgress/'+_studentKey+'/'+planKey+'/steps/'+idx),
     { guardianApproved:true, guardianApprovedTs:Date.now() });
-  await fgCheckCompletion(planKey);
+  await fgSettleBonus(planKey, idx);
 }
 // Skatt (samme modell som elevappen): 20% av bonus til sparemålet.
 function fgTax(){ return ((window._fgSettings&&window._fgSettings.taxRate)||20)/100; }
@@ -735,28 +743,26 @@ async function fgDistributeToGoals(amount){
   list.forEach(g=>{ const ns=(g.saved||0)+perGoal; upd['classGoals/'+g.fbKey+'/saved']=ns; if(ns>=g.target) upd['classGoals/'+g.fbKey+'/completed']=true; });
   await window._update(fgRef('/'),upd);
 }
-// Samme fullføringslogikk som i lærerportalen.
-async function fgCheckCompletion(planKey){
+// Utbetaler bonus for ett bestemt trinn når foresatt (eller lærer-frigjøring)
+// har bekreftet. Idempotent – gjør ingenting hvis bonusen alt er utbetalt.
+async function fgSettleBonus(planKey, idx){
   const plan=_workPlans.find(p=>p.fbKey===planKey);
   if(!plan) return;
-  const steps=plan.steps||[];
+  const step=(plan.steps||[])[idx];
+  if(!step) return;
   const snap=await window._get(fgRef('workPlanProgress/'+_studentKey+'/'+planKey));
   const pr=snap.val()||{current:0,steps:{}};
-  const cur=pr.current||0;
-  if(cur>=steps.length) return;
-  const step=steps[cur];
-  const ss=(pr.steps&&pr.steps[cur])||{};
-  if(ss.completed) return;
-  const ok=ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved);
-  if(!ok) return;
+  const ss=(pr.steps&&pr.steps[idx])||{};
+  if(ss.bonusPaid) return;
+  const ready=ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved || ss.bonusReleased);
+  if(!ready) return;
   const base='workPlanProgress/'+_studentKey+'/'+planKey;
-  const upd={};
-  upd[base+'/steps/'+cur+'/completed']=true;
-  upd[base+'/steps/'+cur+'/completedTs']=Date.now();
-  upd[base+'/steps/'+cur+'/bonusPaid']=true;
-  upd[base+'/current']=cur+1;
-  await window._update(fgRef('/'),upd);
-  if((step.bonus||0)>0 && !ss.bonusPaid){
+  await window._update(fgRef('/'),{
+    [base+'/steps/'+idx+'/bonusPaid']:true,
+    [base+'/steps/'+idx+'/completed']:true,
+    [base+'/steps/'+idx+'/completedTs']:Date.now()
+  });
+  if((step.bonus||0)>0){
     const sSnap=await window._get(fgRef('students57/'+_studentKey));
     const sv=sSnap.val()||{};
     const bonus=step.bonus||0;

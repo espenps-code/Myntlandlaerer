@@ -533,7 +533,11 @@ function apPlanPanels(plan,steps,cur,sel,leadLocked){
 
   let tail='';
   if(isDone){
-    tail='<div class="ap2-panel"><div class="ap2-status ok">✓ Dette trinnet er fullført og godkjent. Bra jobba!</div></div>';
+    if(st.approval==='both' && !ss.guardianApproved && !ss.bonusPaid){
+      tail='<div class="ap2-panel"><div class="ap2-status wait">✓ Læreren har godkjent – du er videre! 🪙 Bonusen venter på en voksen hjemme.</div></div>';
+    } else {
+      tail='<div class="ap2-panel"><div class="ap2-status ok">✓ Dette trinnet er fullført og godkjent. Bra jobba!</div></div>';
+    }
   } else if(isActive){
     const needBoth=st.approval==='both';
     if(ss.teacherApproved && needBoth && !ss.guardianApproved){
@@ -565,28 +569,43 @@ async function apMarkGoalsRead(){
     fbRef('workPlanProgress/'+sk+'/'+_apPlanKey+'/steps/'+_apStepIdx),
     { goalsRead:true });
 }
-// Felles fullføringslogikk (samme som lærerportal/foresattside).
-async function apCheckCompletion(planKey){
-  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===planKey); if(!plan) return false;
+// Eleven klatrer videre så snart læreren har godkjent. Bonus utbetales
+// separat (apSettleBonus) – med en gang for vanlige trinn, men først når en
+// voksen hjemme har bekreftet på trinn merket «both».
+async function apAfterTeacherApprove(planKey){
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===planKey); if(!plan) return {advanced:false};
   const steps=plan.steps||[];
-  const sk=window._currentStudent?.fbKey; if(!sk) return false;
+  const sk=window._currentStudent?.fbKey; if(!sk) return {advanced:false};
   const snap=await window._get(fbRef('workPlanProgress/'+sk+'/'+planKey));
   const pr=snap.val()||{current:0,steps:{}};
   const cur=pr.current||0;
-  if(cur>=steps.length) return false;
+  if(cur>=steps.length) return {advanced:false};
   const step=steps[cur];
   const ss=(pr.steps&&pr.steps[cur])||{};
-  if(ss.completed) return false;
-  const ok=ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved);
-  if(!ok) return false;
+  if(!ss.teacherApproved) return {advanced:false};
+  await window._update(fbRef('workPlanProgress/'+sk+'/'+planKey),{ current:cur+1 });
+  const paid=await apSettleBonus(planKey,cur);
+  return {advanced:true, bonusPaid:paid, pendingGuardian:(step.approval==='both' && !paid), step};
+}
+// Utbetaler bonus for ett bestemt trinn når alle nødvendige godkjenninger er
+// på plass. Idempotent (gjør ingenting hvis bonusPaid alt er satt).
+async function apSettleBonus(planKey, idx){
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===planKey); if(!plan) return false;
+  const step=(plan.steps||[])[idx]; if(!step) return false;
+  const sk=window._currentStudent?.fbKey; if(!sk) return false;
+  const snap=await window._get(fbRef('workPlanProgress/'+sk+'/'+planKey));
+  const pr=snap.val()||{current:0,steps:{}};
+  const ss=(pr.steps&&pr.steps[idx])||{};
+  if(ss.bonusPaid) return true;
+  const ready=ss.teacherApproved && (step.approval!=='both' || ss.guardianApproved || ss.bonusReleased);
+  if(!ready) return false;
   const base='workPlanProgress/'+sk+'/'+planKey;
-  const upd={};
-  upd[base+'/steps/'+cur+'/completed']=true;
-  upd[base+'/steps/'+cur+'/completedTs']=Date.now();
-  upd[base+'/steps/'+cur+'/bonusPaid']=true;
-  upd[base+'/current']=cur+1;
-  await window._update(fbRef('/'),upd);
-  if((step.bonus||0)>0 && !ss.bonusPaid){
+  await window._update(fbRef('/'),{
+    [base+'/steps/'+idx+'/bonusPaid']:true,
+    [base+'/steps/'+idx+'/completed']:true,
+    [base+'/steps/'+idx+'/completedTs']:Date.now()
+  });
+  if((step.bonus||0)>0){
     const s2=(await window._get(fbRef('students57/'+sk))).val()||{};
     const bonus=step.bonus||0;
     const taxAmt=Math.floor(bonus*getTax());
@@ -625,13 +644,15 @@ async function doWpApproveScan(){
   }
   await window._update(fbRef('workPlanProgress/'+sk+'/'+planKey+'/steps/'+cur),
     { teacherApproved:true, teacherApprovedTs:Date.now() });
-  const completed=await apCheckCompletion(planKey);
-  if(completed){
+  const res=await apAfterTeacherApprove(planKey);
+  if(res.bonusPaid){
     showSuccess('🎉','Trinn fullført!', (step.bonus>0?'+🪙 '+step.bonus:''),
       'Bra jobba i '+plan.subject+'! Neste trinn er låst opp.');
+  } else if(res.pendingGuardian){
+    showSuccess('🎉','Du er videre!','',
+      'Læreren har godkjent. 🪙 Bonusen venter på at en voksen hjemme bekrefter.');
   } else {
-    showSuccess('✓','Godkjent av læreren!','',
-      step.approval==='both'?'Nå mangler bare bekreftelse fra en voksen hjemme.':'');
+    showSuccess('✓','Godkjent av læreren!','','');
   }
   _apPlanKey=planKey; _apStepIdx=cur; _apView='plan';
   if(document.getElementById('screen-arbeidsplan').classList.contains('active')) apRefresh();
