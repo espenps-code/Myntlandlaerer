@@ -1309,22 +1309,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   /* ---------- default data ---------- */
   const DEFAULTS = {
-    klasse: '3B', temp: '18°',
-    plan: [
-      { type: 'lesson', time: '08:30', name: 'Norsk', icon: 'book', color: '#ffe0cf' },
-      { type: 'break', time: '09:15–09:30', note: 'uteleik' },
-      { type: 'lesson', time: '09:30', name: 'Matematikk', icon: 'math', color: '#d6ecff' },
-      { type: 'break', time: '11:00–11:45', note: 'mat + storefri', big: true },
-      { type: 'lesson', time: '11:45', name: 'Kunst & håndverk', icon: 'art', color: '#ffe6a8' },
-      { type: 'break', time: '12:30–12:45', note: 'uteleik' },
-      { type: 'lesson', time: '12:45', name: 'Kroppsøving', icon: 'gym', color: '#d8f0d0' },
-    ],
-    nowIdx: 2,
-    notes: [
-      'Husk gymtøy og innesko til i dag! 🩴',
-      'Vi øver til sommeravslutningen — ta med sangark.',
-      'Foreldremøte torsdag kl. 18.00 i klasserommet.',
-    ],
+    klasse: '', temp: '18°',
+    plan: [],
+    nowIdx: 0,
+    notes: [],
     word: 'raushet',
     worddef: 'å være snill og dele med andre, uten å vente noe tilbake',
     quote: 'Sammen er vi sterke!',
@@ -1351,14 +1339,9 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       { w:'ønske', d:'noe du har lyst på, men ikke må ha' },
       { w:'klokskap', d:'å tenke seg om før man bestemmer seg' },
     ],
-    helperCount: 2, helpers: ['Nora', 'Jonas', '', ''],
-    checklist: [
-      { t: 'Vanne blomstene', d: false },
-      { t: 'Tørke av tavla', d: true },
-      { t: 'Rydde lesekroken', d: false },
-      { t: 'Sjekke garderoben', d: false },
-    ],
-    bdname: 'Emma', bdage: '9',
+    helperCount: 2, helpers: ['', '', '', ''],
+    checklist: [],
+    bdname: '', bdage: '',
     weather: 0,
     weatherAuto: false, weatherPlace: '', weatherLat: null, weatherLon: null, progressPercent: false, dayEnabled: true,
   };
@@ -1784,8 +1767,16 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   /* ===================== MUSIKK ===================== */
   var MKEY = 'myntland-music-v1';
   var M = loadM();
+  window._music = M;
+  window._applyMusicFromCloud = function(bank){
+    if(!Array.isArray(bank)) return;
+    M.bank = bank;
+    try { localStorage.setItem(MKEY, JSON.stringify(M)); } catch(e){}
+    try { if (overlay && overlay.classList.contains('open')) renderBank(); } catch(e){}
+    try { renderDock(); } catch(e){}
+  };
   function loadM(){ try { return Object.assign({ bank:[], repeat:false, showVideo:true, current:null }, JSON.parse(localStorage.getItem(MKEY) || '{}')); } catch(e){ return { bank:[], repeat:false, showVideo:true, current:null }; } }
-  function saveM(){ try { localStorage.setItem(MKEY, JSON.stringify(M)); } catch(e){} }
+  function saveM(){ try { localStorage.setItem(MKEY, JSON.stringify(M)); } catch(e){} if(window._onPortalSave){ try{ window._onPortalSave(); }catch(e){} } }
 
   function ytId(u){ if(!u) return null; var m=String(u).match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; }
   function isAudio(u){ return /\.(mp3|ogg|wav|m4a|aac)(\?|#|$)/i.test(u||''); }
@@ -3433,13 +3424,29 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   if (link){ startData(); } else { fundPanel.style.display = 'none'; }
   buildSalaryUI(); renderSalaryUI(); window._renderSalaryUI = renderSalaryUI;
   /* ---------- publiser dagens plan + beskjeder til skyen (dayboard) ---------- */
-  var _daySig = '', _dayT = null;
+  var _daySig = '', _dayT = null, _cloudLoaded = false;
+  function _sigOf(p){
+    return JSON.stringify({ w: p.week, n: p.notes, dm: p.dayMsg, bd: p.birthdays, h: p.helpers, hc: p.helperCount, bn: p.bdname, ba: p.bdage, wt: p.weather, wa: p.weatherAuto, wp: p.weatherPlace, pp: p.progressPercent, mu: p.music, k: p.klasse, nv: p.navn, e: p.enabled });
+  }
+  function _payloadOf(d){
+    var mus = (window._music && Array.isArray(window._music.bank)) ? window._music.bank : [];
+    return {
+      week: d.week || {}, notes: d.notes || [], dayMsg: d.dayMsg || {},
+      birthdays: d.birthdays || [], helpers: d.helpers || [], helperCount: d.helperCount || 2,
+      bdname: d.bdname || '', bdage: d.bdage || '',
+      weather: d.weather || 0, weatherAuto: !!d.weatherAuto, weatherPlace: d.weatherPlace || '',
+      weatherLat: (d.weatherLat == null ? null : d.weatherLat), weatherLon: (d.weatherLon == null ? null : d.weatherLon),
+      progressPercent: !!d.progressPercent, music: mus,
+      klasse: d.klasse || '', navn: (link && link.className) || d.klasse || '', enabled: (d.dayEnabled !== false), ts: Date.now()
+    };
+  }
   function pushDayboard(){
     if (!link) return;
+    if (!_cloudLoaded) return;            // ALDRI skriv til skyen for vi har lest den
     var d = (window.portal && window.portal.data) ? window.portal.data : null;
     if (!d) return;
-    var payload = { week: d.week || {}, notes: d.notes || [], klasse: d.klasse || '', navn: (link && link.className) || d.klasse || '', enabled: (d.dayEnabled !== false), ts: Date.now() };
-    var sig = JSON.stringify({ w: payload.week, n: payload.notes, k: payload.klasse, nv: payload.navn, e: payload.enabled });
+    var payload = _payloadOf(d);
+    var sig = _sigOf(payload);
     if (sig === _daySig) return;
     _daySig = sig;
     try { set(ref(db, 'dayboard/' + (link.workspaceId || 'main')), payload); } catch(e){}
@@ -3449,18 +3456,37 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   // Live deling: alle laerere i klassen ser samme plan, oppdateres automatisk.
   if (link && window._CLASS_ID && window.portal) {
     onValue(_ref0(db, 'dayboard/' + window._CLASS_ID), function(snap){
-      const b = snap.val(); if (!b) return;
-      const sig = JSON.stringify({ w: b.week||{}, n: b.notes||[], k: b.klasse||'', nv: b.navn||'', e: (b.enabled!==false) });
-      if (sig === _daySig) return;
-      _daySig = sig;
+      _cloudLoaded = true;                         // skyen er lest - na er det trygt a skrive
+      const b = snap.val();
+      if (!b) return;                              // tom klasse: behold lokale standarder, men tillat skriving
       const d = window.portal.data; if (!d) return;
-      d.week = b.week || {};
-      d.notes = b.notes || [];
+      // Bruk KUN felt som faktisk finnes i skyen (trygg migrering fra gammelt format)
+      if (b.week && typeof b.week === 'object') d.week = b.week;
+      if (Array.isArray(b.notes)) d.notes = b.notes;
+      if (b.dayMsg && typeof b.dayMsg === 'object') d.dayMsg = b.dayMsg;
+      if (Array.isArray(b.birthdays)) d.birthdays = b.birthdays;
+      if (Array.isArray(b.helpers)) d.helpers = b.helpers;
+      if (b.helperCount != null) d.helperCount = b.helperCount;
+      if (b.bdname != null) d.bdname = b.bdname;
+      if (b.bdage != null) d.bdage = b.bdage;
+      if (b.weather != null) d.weather = b.weather;
+      if (b.weatherAuto != null) d.weatherAuto = b.weatherAuto;
+      if (b.weatherPlace != null) d.weatherPlace = b.weatherPlace;
+      if (b.weatherLat !== undefined) d.weatherLat = b.weatherLat;
+      if (b.weatherLon !== undefined) d.weatherLon = b.weatherLon;
+      if (b.progressPercent != null) d.progressPercent = b.progressPercent;
       if (b.klasse) d.klasse = b.klasse;
-      d.dayEnabled = (b.enabled !== false);
+      if (b.enabled != null) d.dayEnabled = (b.enabled !== false);
+      if (Array.isArray(b.music) && window._applyMusicFromCloud) window._applyMusicFromCloud(b.music);
+      _daySig = _sigOf(_payloadOf(d));
+      try { window.portal.applyWeek && window.portal.applyWeek(); } catch(e){}
       try { window.portal.renderLessons && window.portal.renderLessons(); } catch(e){}
+      try { window.portal.renderNotes && window.portal.renderNotes(); } catch(e){}
+      try { window.portal.renderBirthday && window.portal.renderBirthday(); } catch(e){}
       try { window.portal.renderHelpers && window.portal.renderHelpers(); } catch(e){}
       try { window.portal.renderChecklist && window.portal.renderChecklist(); } catch(e){}
+      try { window.portal.renderWeather && window.portal.renderWeather(); } catch(e){}
+      if (window._renderSalaryUI) { try { window._renderSalaryUI(); } catch(e){} }
     });
   }
   setTimeout(pushDayboard, 3000);
