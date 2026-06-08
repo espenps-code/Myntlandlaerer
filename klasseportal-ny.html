@@ -2561,6 +2561,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function fsnap(v,step){return Math.round(v/step)*step;}
   function clampInt(v,m){v=parseInt(v,10);if(isNaN(v))v=m;return v<m?m:v;}
   function poly2(p){return '<polygon points="'+p.map(function(q){return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ')+'"/>';}
+  function ptsStr(p){return p.map(function(q){return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ');}
   function reg2(cx,cy,r,n,rot){var a=[],i;for(i=0;i<n;i++){var ang=(-90+rot+i*360/n)*Math.PI/180;a.push([cx+r*Math.cos(ang),cy+r*Math.sin(ang)]);}return a;}
   function sector(cx,cy,r,a0,a1){var x0=cx+r*Math.cos(a0*Math.PI/180),y0=cy+r*Math.sin(a0*Math.PI/180),x1=cx+r*Math.cos(a1*Math.PI/180),y1=cy+r*Math.sin(a1*Math.PI/180),large=(a1-a0)>180?1:0;return 'M '+cx+' '+cy+' L '+x0.toFixed(2)+' '+y0.toFixed(2)+' A '+r+' '+r+' 0 '+large+' 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+' Z';}
   function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t;}return a||1;}
@@ -2720,15 +2721,15 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     else if(t==='ellipse')el=FE('ellipse',Object.assign({cx:W/2,cy:H/2,rx:W/2-3,ry:H/2-3},att));
     else if(t==='square'){o.h=o.w;el=FE('rect',Object.assign({x:3,y:3,width:W-6,height:W-6,rx:3},att));}
     else if(t==='rect')el=FE('rect',Object.assign({x:3,y:3,width:W-6,height:H-6,rx:3},att));
-    else if(t==='tri')el=FE('polygon',Object.assign({points:poly2([[W/2,3],[W-3,H-3],[3,H-3]])},att));
-    else if(t==='rtri')el=FE('polygon',Object.assign({points:poly2([[3,3],[3,H-3],[W-3,H-3]])},att));
-    else if(t==='para')el=FE('polygon',Object.assign({points:poly2([[W*0.28,3],[W-3,3],[W*0.72,H-3],[3,H-3]])},att));
-    else if(t==='rhomb')el=FE('polygon',Object.assign({points:poly2([[W/2,3],[W-3,H/2],[W/2,H-3],[3,H/2]])},att));
-    else if(t==='trap')el=FE('polygon',Object.assign({points:poly2([[W*0.26,3],[W*0.74,3],[W-3,H-3],[3,H-3]])},att));
-    else if(t==='penta')el=FE('polygon',Object.assign({points:poly2(reg2(W/2,H/2,Math.min(W,H)/2-3,5,0))},att));
-    else if(t==='hexa')el=FE('polygon',Object.assign({points:poly2(reg2(W/2,H/2,Math.min(W,H)/2-3,6,90))},att));
-    else if(t==='octa')el=FE('polygon',Object.assign({points:poly2(reg2(W/2,H/2,Math.min(W,H)/2-3,8,22.5))},att));
-    else if(t==='star'){var cx=W/2,cy=H/2,R=Math.min(W,H)/2-3,r=R*0.42,pts=[],i;for(i=0;i<10;i++){var ang=(-90+i*36)*Math.PI/180,rr=(i%2?r:R);pts.push([cx+rr*Math.cos(ang),cy+rr*Math.sin(ang)]);}el=FE('polygon',Object.assign({points:poly2(pts)},att));}
+    else if(t==='tri')el=FE('polygon',Object.assign({points:ptsStr([[W/2,3],[W-3,H-3],[3,H-3]])},att));
+    else if(t==='rtri')el=FE('polygon',Object.assign({points:ptsStr([[3,3],[3,H-3],[W-3,H-3]])},att));
+    else if(t==='para')el=FE('polygon',Object.assign({points:ptsStr([[W*0.28,3],[W-3,3],[W*0.72,H-3],[3,H-3]])},att));
+    else if(t==='rhomb')el=FE('polygon',Object.assign({points:ptsStr([[W/2,3],[W-3,H/2],[W/2,H-3],[3,H/2]])},att));
+    else if(t==='trap')el=FE('polygon',Object.assign({points:ptsStr([[W*0.26,3],[W*0.74,3],[W-3,H-3],[3,H-3]])},att));
+    else if(t==='penta')el=FE('polygon',Object.assign({points:ptsStr(reg2(W/2,H/2,Math.min(W,H)/2-3,5,0))},att));
+    else if(t==='hexa')el=FE('polygon',Object.assign({points:ptsStr(reg2(W/2,H/2,Math.min(W,H)/2-3,6,90))},att));
+    else if(t==='octa')el=FE('polygon',Object.assign({points:ptsStr(reg2(W/2,H/2,Math.min(W,H)/2-3,8,22.5))},att));
+    else if(t==='star'){var cx=W/2,cy=H/2,R=Math.min(W,H)/2-3,r=R*0.42,pts=[],i;for(i=0;i<10;i++){var ang=(-90+i*36)*Math.PI/180,rr=(i%2?r:R);pts.push([cx+rr*Math.cos(ang),cy+rr*Math.sin(ang)]);}el=FE('polygon',Object.assign({points:ptsStr(pts)},att));}
     else el=FE('rect',Object.assign({x:3,y:3,width:W-6,height:H-6},att));
     g.appendChild(el);
   }
