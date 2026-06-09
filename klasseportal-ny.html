@@ -990,6 +990,7 @@ h1.sticker{
   <button id="tbMusic" title="Musikk">&#127925;</button>
   <button id="tbTimer" title="Timer">&#9201;&#65039;</button>
   <button id="tbPlan" title="Planlegg uke">&#128197;</button>
+  <button id="tbWheel" title="Lykkehjul">&#127905;</button>
   <button id="tbFs" title="Fullskjerm">&#9974;</button>
   <button id="tbSettings" title="Innstillinger">&#9881;&#65039;</button>
 </div>
@@ -1818,7 +1819,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       loadYT(function(){
         ytPlayer = new YT.Player('ytMount', {
           videoId: id,
-          playerVars: { autoplay:1, rel:0, modestbranding:1, playsinline:1, loop: M.repeat?1:0, playlist: M.repeat?id:'' },
+          playerVars: (function(){ var pv={ autoplay:1, rel:0, modestbranding:1, playsinline:1 }; if(M.repeat){ pv.loop=1; pv.playlist=id; } return pv; })(),
           events: {
             onReady: function(e){ try{ e.target.playVideo(); }catch(x){} playing=true; renderDock(); },
             onStateChange: function(e){
@@ -3092,6 +3093,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (link){ studentsUnsub = onValue(ref(db, 'students' + link.trinn), s => {
       const v = s.val(); studentsAll = v ? Object.keys(v).map(function(k){ return Object.assign({}, v[k], { fbKey: k }); }) : [];
       renderSalaryUI();
+      try { window._portalStudents = studentsAll; if (window._onPortalStudents) window._onPortalStudents(studentsAll); } catch(e){}
     }); }
   }
   function stopData(){
@@ -3549,6 +3551,252 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }catch(e){}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
   else run();
+})();
+</script>
+
+
+<!-- ====== LYKKEHJUL (Myntland) ====== -->
+<style>
+#wheelOverlay .ovl-card{ max-width:900px; width:min(95vw,900px); }
+#wheelOverlay .ovl-body{ gap:14px; }
+.wheel-modes{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.wheel-modes button{ font:inherit; font-weight:600; font-size:17px; padding:8px 16px; border:3px solid var(--ink); border-radius:14px; background:var(--cream); color:var(--ink); cursor:pointer; box-shadow:0 4px 0 rgba(42,31,61,.18); }
+.wheel-modes button.active{ background:var(--gold); }
+.wheel-stage{ display:flex; gap:22px; align-items:center; justify-content:center; flex-wrap:wrap; }
+.wheel-wrap{ position:relative; width:min(56vmin,440px); aspect-ratio:1; flex:0 0 auto; }
+.wheel-svg{ width:100%; height:100%; display:block; transform:rotate(0deg); }
+.wheel-pointer{ position:absolute; top:-4px; left:50%; transform:translateX(-50%); z-index:3; width:0; height:0; border-left:18px solid transparent; border-right:18px solid transparent; border-top:32px solid var(--red); filter:drop-shadow(0 2px 0 rgba(42,31,61,.55)); }
+.wheel-hub{ position:absolute; top:50%; left:50%; width:62px; height:62px; transform:translate(-50%,-50%); background:var(--cream); border:4px solid var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px; z-index:2; box-shadow:0 4px 0 rgba(42,31,61,.2); }
+.wheel-side{ display:flex; flex-direction:column; gap:12px; min-width:240px; flex:1 1 240px; }
+.wheel-ta{ font:inherit; font-size:18px; line-height:1.4; border:3px solid var(--ink); border-radius:14px; padding:10px 12px; min-height:150px; resize:vertical; background:var(--paper); color:var(--ink); }
+.wheel-spin{ font:inherit; font-weight:700; font-size:24px; padding:14px 22px; border:4px solid var(--ink); border-radius:18px; background:var(--green); color:#fff; cursor:pointer; box-shadow:0 6px 0 var(--green-deep); }
+.wheel-spin:active{ transform:translateY(4px); box-shadow:0 2px 0 var(--green-deep); }
+.wheel-spin:disabled{ opacity:.45; cursor:default; box-shadow:0 6px 0 var(--green-deep); transform:none; }
+.wheel-result{ text-align:center; font-weight:700; font-size:28px; color:var(--ink); min-height:40px; }
+.wheel-result .ww{ color:var(--gold-deep); }
+.wheel-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.wheel-toggle{ display:flex; align-items:center; gap:8px; font-size:16px; color:var(--ink-soft); cursor:pointer; }
+.wheel-toggle input{ width:20px; height:20px; }
+.wheel-reset{ font:inherit; font-weight:600; font-size:15px; padding:8px 14px; border:3px solid var(--ink); border-radius:12px; background:var(--cream); color:var(--ink); cursor:pointer; }
+.wheel-empty{ color:var(--ink-soft); font-size:16px; text-align:center; line-height:1.45; }
+</style>
+<div class="ovl" id="wheelOverlay">
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#127905; Lykkehjul</h3><button class="ovl-x" id="wheelClose">&times;</button></div>
+    <div class="ovl-body">
+      <div class="wheel-modes">
+        <button data-mode="elever" class="active">&#128100; Elever</button>
+        <button data-mode="tekst">&#9999;&#65039; Egne valg</button>
+        <button data-mode="mynter">&#129689; Mynter</button>
+      </div>
+      <div class="wheel-stage">
+        <div class="wheel-wrap">
+          <div class="wheel-pointer"></div>
+          <svg class="wheel-svg" id="wheelSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="wheel-hub">&#129689;</div>
+        </div>
+        <div class="wheel-side">
+          <textarea class="wheel-ta" id="wheelTa" placeholder="Skriv ett valg per linje &hellip;"></textarea>
+          <div class="wheel-empty" id="wheelStudentMsg" style="display:none"></div>
+          <button class="wheel-spin" id="wheelSpin">&#127919; Snurr!</button>
+          <div class="wheel-row">
+            <label class="wheel-toggle"><input type="checkbox" id="wheelRemove"> Fjern vinneren etterp&aring;</label>
+            <button class="wheel-reset" id="wheelReset">&#8635; Nullstill</button>
+          </div>
+        </div>
+      </div>
+      <div class="wheel-result" id="wheelResult"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var CLASS_ID = window._CLASS_ID || (new URLSearchParams(location.search).get('class') || '');
+  var WKEY = 'myntland-portal-wheel-v1-' + CLASS_ID;
+  var PALETTE = ['#e3a82a','#27b3c6','#e64b3b','#7bb026','#c8901a','#1f9bad','#d98f1f','#69991a'];
+  var DEF_MYNT = '10\n20\n30\n50\n100\n5';
+  var state = { mode:'elever', removeWinner:false, text:{ tekst:'', mynter:DEF_MYNT }, pool:[], base:[], spinning:false, rot:0 };
+  try {
+    var saved = JSON.parse(localStorage.getItem(WKEY) || 'null');
+    if (saved){
+      state.mode = saved.mode || 'elever';
+      state.removeWinner = !!saved.removeWinner;
+      if (saved.text){ state.text.tekst = saved.text.tekst || ''; state.text.mynter = saved.text.mynter || DEF_MYNT; }
+    }
+  } catch(e){}
+  function persist(){ try { localStorage.setItem(WKEY, JSON.stringify({ mode:state.mode, removeWinner:state.removeWinner, text:state.text })); } catch(e){} }
+
+  var ovl       = document.getElementById('wheelOverlay');
+  var svg       = document.getElementById('wheelSvg');
+  var ta        = document.getElementById('wheelTa');
+  var spinBtn   = document.getElementById('wheelSpin');
+  var resultEl  = document.getElementById('wheelResult');
+  var removeChk = document.getElementById('wheelRemove');
+  var studentMsg= document.getElementById('wheelStudentMsg');
+  var modeBtns  = ovl.querySelectorAll('.wheel-modes button');
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function parseLines(t){ return String(t || '').split('\n').map(function(x){ return x.trim(); }).filter(function(x){ return x; }); }
+
+  function studentNames(){
+    var arr = window._portalStudents || null;
+    if (!arr) return null;
+    return arr.map(function(s){
+      if (s.firstname) return (s.firstname + (s.lastname ? ' ' + s.lastname : '')).trim();
+      return s.name || s.nick || 'Elev';
+    }).filter(function(x){ return x && x.trim(); });
+  }
+
+  function computeBase(){
+    if (state.mode === 'elever'){
+      var n = studentNames();
+      if (n === null) return { list:[], msg:'Koble tavla til en klasse for å hente elevene (🏦-knappen nede til høyre).' };
+      if (!n.length)  return { list:[], msg:'Ingen elever i klassen ennå.' };
+      return { list:n, msg:'' };
+    }
+    if (state.mode === 'mynter'){ var m = parseLines(state.text.mynter); return { list:m, msg: m.length ? '' : 'Skriv ett myntbeløp per linje.' }; }
+    var tk = parseLines(state.text.tekst); return { list:tk, msg: tk.length ? '' : 'Skriv ett valg per linje i feltet.' };
+  }
+
+  function updateSpinState(){ spinBtn.disabled = state.spinning || state.pool.length < 2; }
+
+  function resetWheelTransform(){ state.rot = 0; svg.style.transition = 'none'; svg.style.transform = 'rotate(0deg)'; }
+
+  function rebuild(){
+    var b = computeBase();
+    state.base = b.list.slice();
+    state.pool = b.list.slice();
+    resetWheelTransform();
+    draw();
+    if (state.mode === 'elever'){
+      ta.style.display = 'none';
+      studentMsg.style.display = b.list.length ? 'none' : '';
+      studentMsg.textContent = b.msg;
+    } else {
+      ta.style.display = '';
+      studentMsg.style.display = 'none';
+      ta.value = (state.mode === 'mynter') ? state.text.mynter : state.text.tekst;
+    }
+    resultEl.innerHTML = '';
+    updateSpinState();
+  }
+
+  function labelText(s){
+    var n = state.pool.length, max = n <= 8 ? 14 : (n <= 14 ? 10 : 8);
+    var t = String(s);
+    if (t.length > max) t = t.slice(0, max - 1) + '…';
+    return t;
+  }
+  function fontSize(){ var n = state.pool.length; return n <= 8 ? 11 : (n <= 14 ? 9 : (n <= 22 ? 7 : 6)); }
+  function pt(angle, r){ var rad = angle * Math.PI / 180; return [100 + r * Math.sin(rad), 100 - r * Math.cos(rad)]; }
+
+  function draw(){
+    var n = state.pool.length;
+    if (n === 0){ svg.innerHTML = ''; return; }
+    var parts = ['<circle cx="100" cy="100" r="97" fill="#fff8e6" stroke="#2a1f3d" stroke-width="3"></circle>'];
+    if (n === 1){
+      parts.push('<circle cx="100" cy="100" r="95" fill="' + PALETTE[0] + '" stroke="#2a1f3d" stroke-width="2"></circle>');
+      parts.push('<text x="100" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="12" fill="#2a1f3d">' + esc(labelText(state.pool[0])) + '</text>');
+      svg.innerHTML = parts.join(''); return;
+    }
+    var seg = 360 / n, fs = fontSize();
+    for (var i = 0; i < n; i++){
+      var a0 = i * seg, a1 = (i + 1) * seg, mid = (a0 + a1) / 2;
+      var p0 = pt(a0, 95), p1 = pt(a1, 95);
+      var large = seg > 180 ? 1 : 0;
+      parts.push('<path d="M100 100 L' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A95 95 0 ' + large + ' 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) + ' Z" fill="' + PALETTE[i % PALETTE.length] + '" stroke="#2a1f3d" stroke-width="1.4"></path>');
+      var flip = mid > 90 && mid < 270;
+      var ly = flip ? 158 : 42;
+      var rot = flip ? mid + 180 : mid;
+      parts.push('<text x="100" y="' + ly + '" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + rot.toFixed(2) + ' 100 100)" font-family="Fredoka, sans-serif" font-weight="700" font-size="' + fs + '" fill="#2a1f3d">' + esc(labelText(state.pool[i])) + '</text>');
+    }
+    svg.innerHTML = parts.join('');
+  }
+
+  function display(val){
+    if (state.mode === 'mynter' && /^\d+$/.test(String(val).trim())){
+      resultEl.innerHTML = '🎉 <span class="ww">🪙 ' + esc(val) + '</span>';
+    } else {
+      resultEl.innerHTML = '🎉 <span class="ww">' + esc(val) + '</span>';
+    }
+  }
+
+  function spin(){
+    if (state.spinning) return;
+    var n = state.pool.length;
+    if (n < 2) return;
+    state.spinning = true; updateSpinState(); resultEl.innerHTML = '';
+    var seg = 360 / n;
+    var i = Math.floor(Math.random() * n);
+    var jitter = (Math.random() - 0.5) * seg * 0.6;
+    var stopAt = 360 - ((i + 0.5) * seg) + jitter;
+    var cur = state.rot % 360; if (cur < 0) cur += 360;
+    var delta = 360 * 5 + ((stopAt - cur + 360) % 360);
+    state.rot += delta;
+    svg.style.transition = 'transform 5s cubic-bezier(.15,.72,.18,1)';
+    void svg.offsetWidth;
+    svg.style.transform = 'rotate(' + state.rot + 'deg)';
+    var winner = state.pool[i];
+    var done = function(){
+      svg.removeEventListener('transitionend', done);
+      state.spinning = false;
+      display(winner);
+      if (state.removeWinner){
+        setTimeout(function(){
+          var idx = state.pool.indexOf(winner);
+          if (idx >= 0) state.pool.splice(idx, 1);
+          resetWheelTransform();
+          draw();
+          if (state.pool.length === 0){
+            resultEl.innerHTML = '✅ <span class="ww">Alle har vært med!</span> Trykk Nullstill.';
+          } else if (state.pool.length === 1){
+            resultEl.innerHTML = '🏁 <span class="ww">Sist igjen: ' + esc(state.pool[0]) + '</span>';
+          }
+          updateSpinState();
+        }, 1400);
+      } else {
+        updateSpinState();
+      }
+    };
+    svg.addEventListener('transitionend', done);
+  }
+
+  modeBtns.forEach(function(b){
+    b.onclick = function(){
+      state.mode = b.dataset.mode;
+      modeBtns.forEach(function(x){ x.classList.toggle('active', x === b); });
+      persist(); rebuild();
+    };
+  });
+  ta.addEventListener('input', function(){
+    if (state.mode === 'mynter') state.text.mynter = ta.value;
+    else if (state.mode === 'tekst') state.text.tekst = ta.value;
+    persist();
+    var b = computeBase();
+    state.base = b.list.slice();
+    state.pool = b.list.slice();
+    resetWheelTransform();
+    draw();
+    resultEl.innerHTML = '';
+    updateSpinState();
+  });
+  removeChk.onchange = function(){ state.removeWinner = removeChk.checked; persist(); };
+  document.getElementById('wheelReset').onclick = function(){ rebuild(); };
+  spinBtn.onclick = spin;
+  document.getElementById('wheelClose').onclick = function(){ ovl.classList.remove('open'); };
+  ovl.addEventListener('click', function(e){ if (e.target === ovl) ovl.classList.remove('open'); });
+
+  var tb = document.getElementById('tbWheel');
+  if (tb) tb.onclick = function(){
+    ovl.classList.add('open');
+    modeBtns.forEach(function(x){ x.classList.toggle('active', x.dataset.mode === state.mode); });
+    removeChk.checked = state.removeWinner;
+    rebuild();
+  };
+
+  window._onPortalStudents = function(){
+    if (ovl.classList.contains('open') && state.mode === 'elever') rebuild();
+  };
 })();
 </script>
 
