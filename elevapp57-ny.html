@@ -761,6 +761,14 @@
 
 <script defer src="elevapp57.js"></script>
 <script>
+/* Service worker: rask gjenapning av elevappen (cacher app-filer + bibliotek lokalt). */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+<script>
 // ── workspaceSettings snapshot for elevappen (fase 3) ───────────────────────
 (function() {
   function whenReadyE(cb, tries) {
