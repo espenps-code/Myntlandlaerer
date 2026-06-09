@@ -71,26 +71,30 @@ body{
   box-shadow:0 0 0 14px rgba(255,255,255,.45); }
 .cloud{ filter:drop-shadow(0 6px 0 rgba(42,31,61,.05)); }
 
-.mountains{ position:absolute; left:0; right:0; top:300px; height:360px; opacity:.5; }
+.mountains{ position:absolute; left:0; right:0; bottom:64px; height:560px; opacity:.5; }
 .mtn{ position:absolute; bottom:0; width:0; height:0; border-style:solid;
   border-color:transparent; border-bottom-color:#a9c6d4; }
-.mtn.m1{ left:6%;  border-width:0 220px 260px 220px; border-bottom-color:#a3c1d6; }
-.mtn.m2{ left:34%; border-width:0 300px 340px 300px; border-bottom-color:#93b6cf; }
-.mtn.m3{ left:66%; border-width:0 260px 300px 260px; border-bottom-color:#abc7da; }
+.mtn.m1{ left:1%;  border-width:0 320px 400px 320px; border-bottom-color:#a3c1d6; }
+.mtn.m2{ left:28%; border-width:0 440px 540px 440px; border-bottom-color:#93b6cf; }
+.mtn.m3{ left:60%; border-width:0 380px 460px 380px; border-bottom-color:#abc7da; }
 
 .ground{ position:absolute; left:0; right:0; bottom:0; height:120px; }
 .grass{ position:absolute; left:0; right:0; bottom:0; height:74px;
   background:linear-gradient(180deg,#8fbb1e,#76a017);
   border-top:4px solid #5d8410;
   border-radius:50% 50% 0 0 / 26px 26px 0 0; transform:scaleX(1.04); }
-.trees{ position:absolute; left:0; right:0; bottom:52px; height:90px; }
-.tree{ position:absolute; bottom:0; width:0; height:0;
-  border-left:26px solid transparent; border-right:26px solid transparent;
-  border-bottom:64px solid #3f7d2a;
-  filter:drop-shadow(0 0 0 #2f6320); }
-.tree::after{ content:""; position:absolute; left:-26px; top:24px;
-  border-left:26px solid transparent; border-right:26px solid transparent;
-  border-bottom:52px solid #4a8f31; }
+.trees{ position:absolute; inset:0; }
+.tree{ position:absolute; transform-origin:bottom center; filter:drop-shadow(0 7px 6px rgba(42,31,61,.14)); }
+.tree svg{ display:block; width:100%; height:auto; }
+.tree svg *{ transition:fill .6s ease; }
+.tree.sway{ animation:treesway 5s ease-in-out infinite; }
+@keyframes treesway{ 0%,100%{ transform:rotate(-2deg); } 50%{ transform:rotate(2deg); } }
+.tree .snow{ display:none; }
+.tree .xmas{ display:none; }
+@keyframes twinkle{ 0%,100%{ opacity:.25; } 50%{ opacity:1; } }
+.extras{ position:absolute; inset:0; pointer-events:none; }
+.extras i{ position:absolute; display:block; border-radius:50%; }
+@keyframes fall{ 0%{ transform:translateY(-40px) translateX(0) rotate(0); opacity:0; } 10%{ opacity:.9; } 90%{ opacity:.9; } 100%{ transform:translateY(1140px) translateX(60px) rotate(360deg); opacity:0; } }
 
 /* floating coins */
 .coin{ position:absolute; width:48px; height:48px;
@@ -329,6 +333,81 @@ h1.sticker{
 .canvas[data-theme="pop"] .clouds span{ background:rgba(255,255,255,.55); box-shadow:0 0 0 14px rgba(255,255,255,.25); }
 .canvas[data-theme="pop"] .kicker{ background:#fff; color:var(--red); }
 .canvas[data-theme="pop"] h1.sticker{ color:#fff; text-shadow:5px 6px 0 var(--ink); }
+
+/* ============ AARSTIDER ============ */
+.canvas[data-theme="var"]{ background:linear-gradient(180deg,#d8f0f4 0%,#e6f2da 55%,#eef6cf 100%); }
+.canvas[data-theme="var"] .sun{ background:radial-gradient(circle at 50% 50%,#fff6d4 0%,#ffe98a 40%,rgba(255,233,138,0) 70%); }
+.canvas[data-theme="var"] .mountains{ opacity:.55; }
+.canvas[data-theme="var"] .mtn.m1{ border-bottom-color:#c2d6dd; }
+.canvas[data-theme="var"] .mtn.m2{ border-bottom-color:#b1ccd6; }
+.canvas[data-theme="var"] .mtn.m3{ border-bottom-color:#c9dde2; }
+.canvas[data-theme="var"] .grass{ background:linear-gradient(180deg,#a6d24a,#8cbb2e); border-top-color:#6fa024; }
+.canvas[data-theme="var"] .pf-top{ fill:#6aa524; }
+.canvas[data-theme="var"] .pf-mid{ fill:#8cc62e; }
+.canvas[data-theme="var"] .pf-bot{ fill:#a6d24a; }
+.canvas[data-theme="var"] .bf-main{ fill:#8cc62e; }
+.canvas[data-theme="var"] .bf-hi{ fill:#bfe06a; }
+.canvas[data-theme="var"] .bf-orn{ fill:#f7b8d2; }
+
+.canvas[data-theme="sommer"]{ background:linear-gradient(180deg,#bfeaf2 0%, #cdeede 42%, #dcefc7 70%, #e7f3bf 100%); }
+.canvas[data-theme="sommer"] .pf-top{ fill:#5d9417; }
+.canvas[data-theme="sommer"] .pf-mid{ fill:#7bb026; }
+.canvas[data-theme="sommer"] .pf-bot{ fill:#8fbb1e; }
+.canvas[data-theme="sommer"] .bf-main{ fill:#7bb026; }
+.canvas[data-theme="sommer"] .bf-hi{ fill:#a6d33a; }
+.canvas[data-theme="sommer"] .bf-orn{ fill:#e3a82a; }
+
+.canvas[data-theme="host"]{ background:linear-gradient(180deg,#e8eecf 0%,#f1e9cf 55%,#edf0d4 100%); }
+.canvas[data-theme="host"] .sun{ background:radial-gradient(circle at 50% 50%,#ffe6a3 0%,#ffc06a 42%,rgba(255,192,106,0) 70%); }
+.canvas[data-theme="host"] .mountains{ opacity:.5; }
+.canvas[data-theme="host"] .mtn.m1{ border-bottom-color:#b6cad0; }
+.canvas[data-theme="host"] .mtn.m2{ border-bottom-color:#a6bcc6; }
+.canvas[data-theme="host"] .mtn.m3{ border-bottom-color:#c2d2d6; }
+.canvas[data-theme="host"] .grass{ background:linear-gradient(180deg,#84a82e,#638019); border-top-color:#4d6618; }
+.canvas[data-theme="host"] .pf-top{ fill:#5d9417; }
+.canvas[data-theme="host"] .pf-mid{ fill:#cf7a2a; }
+.canvas[data-theme="host"] .pf-bot{ fill:#6fa31e; }
+.canvas[data-theme="host"] .bf-main{ fill:#6fa31e; }
+.canvas[data-theme="host"] .bf-hi{ fill:#a6d33a; }
+.canvas[data-theme="host"] .bf-orn{ fill:#d2762a; }
+.canvas[data-theme="host"] .trunk{ fill:#8a5a28; }
+
+.canvas[data-theme="vinter"]{ background:linear-gradient(180deg,#e6eef7 0%,#eef2f8 55%,#f5f7fa 100%); }
+.canvas[data-theme="vinter"] .sun{ background:radial-gradient(circle at 50% 50%,#fff8e6 0%,#fff0c8 45%,rgba(255,240,200,0) 72%); }
+.canvas[data-theme="vinter"] .mountains{ opacity:.75; }
+.canvas[data-theme="vinter"] .mtn.m1{ border-bottom-color:#cdd9e6; }
+.canvas[data-theme="vinter"] .mtn.m2{ border-bottom-color:#bccadb; }
+.canvas[data-theme="vinter"] .mtn.m3{ border-bottom-color:#dde6f0; }
+.canvas[data-theme="vinter"] .grass{ background:linear-gradient(180deg,#f6f9fc,#e3ebf3); border-top-color:#ffffff; }
+.canvas[data-theme="vinter"] .pf-top{ fill:#2f5d3a; }
+.canvas[data-theme="vinter"] .pf-mid{ fill:#3a6a4a; }
+.canvas[data-theme="vinter"] .pf-bot{ fill:#46795a; }
+.canvas[data-theme="vinter"] .bf-main{ fill:#3a6a4a; }
+.canvas[data-theme="vinter"] .bf-hi{ fill:#4e8460; }
+.canvas[data-theme="vinter"] .bf-orn{ fill:#cfe0ea; }
+.canvas[data-theme="vinter"] .trunk{ fill:#7a5a3a; }
+.canvas[data-theme="vinter"] .tree .snow{ display:block; }
+.canvas[data-theme="vinter"] .clouds span{ opacity:.4; }
+
+.canvas[data-theme="jul"]{ background:linear-gradient(180deg,#20335c 0%,#38476e 48%,#5b6285 100%); }
+.canvas[data-theme="jul"] .sky-glow{ opacity:.28; }
+.canvas[data-theme="jul"] .sun{ background:radial-gradient(circle at 50% 50%,#fdf7e6 0%,#f1e8cf 46%,rgba(241,232,207,0) 72%); top:30px; right:90px; width:170px; height:170px; }
+.canvas[data-theme="jul"] .stars{ opacity:1; }
+.canvas[data-theme="jul"] .mountains{ opacity:.6; }
+.canvas[data-theme="jul"] .mtn.m1{ border-bottom-color:#cdd9e6; }
+.canvas[data-theme="jul"] .mtn.m2{ border-bottom-color:#bccadb; }
+.canvas[data-theme="jul"] .mtn.m3{ border-bottom-color:#dde6f0; }
+.canvas[data-theme="jul"] .grass{ background:linear-gradient(180deg,#f6f9fc,#dde7f0); border-top-color:#ffffff; }
+.canvas[data-theme="jul"] .pf-top{ fill:#246b30; }
+.canvas[data-theme="jul"] .pf-mid{ fill:#2f7d3a; }
+.canvas[data-theme="jul"] .pf-bot{ fill:#3a8f46; }
+.canvas[data-theme="jul"] .bf-main{ fill:#2f7d3a; }
+.canvas[data-theme="jul"] .bf-hi{ fill:#46a052; }
+.canvas[data-theme="jul"] .bf-orn{ fill:#e23b3b; }
+.canvas[data-theme="jul"] .trunk{ fill:#7a5a3a; }
+.canvas[data-theme="jul"] .tree .snow{ display:block; }
+.canvas[data-theme="jul"] .tree .xmas{ display:block; }
+.canvas[data-theme="jul"] .clouds span{ opacity:.16; }
 
 /* tweak-driven flags */
 .canvas.no-mascots .corner-mascot, .canvas.no-mascots .bd-mascot{ display:none; }
@@ -836,6 +915,7 @@ h1.sticker{
       <div class="mountains">
         <span class="mtn m1"></span><span class="mtn m2"></span><span class="mtn m3"></span>
       </div>
+      <div class="extras" id="extras"></div>
       <div class="coins" id="coins"></div>
       <div class="ground">
         <div class="trees" id="trees"></div>
@@ -1006,6 +1086,15 @@ h1.sticker{
         <button class="set-tab-btn" data-tab="app">Elevapp</button>
       </div>
       <div class="set-panel active" id="set-panel-tavla">
+        <div class="set-heading">Bakgrunn</div>
+        <div class="set-row">
+          <div class="set-label">Landskap etter årstid<span class="set-sub">Standard viser sommerlandskapet hele året. Auto bytter mellom vår, sommer, høst, vinter og jul etter måneden.</span></div>
+          <div class="seg" id="seasonBgSeg">
+            <button type="button" class="seg-btn" data-bg="standard">Standard</button>
+            <button type="button" class="seg-btn" data-bg="auto">Auto etter måned</button>
+          </div>
+        </div>
+        <div class="set-divider"></div>
         <div class="set-heading">Vær</div>
         <div class="set-row">
           <div class="set-label">Automatisk vær<span class="set-sub">Henter og oppdaterer været hver halvtime.</span></div>
@@ -1344,7 +1433,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     checklist: [],
     bdname: '', bdage: '',
     weather: 0,
-    weatherAuto: false, weatherPlace: '', weatherLat: null, weatherLon: null, progressPercent: false, dayEnabled: true,
+    weatherAuto: false, weatherPlace: '', weatherLat: null, weatherLon: null, progressPercent: false, dayEnabled: true, seasonBg: 'standard',
   };
 
   const KEY = 'myntland-portal-v1-' + (window._CLASS_ID || '');
@@ -1680,11 +1769,48 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 62}%;animation-duration:${2 + Math.random() * 3}s;animation-delay:${-Math.random() * 4}s`;
       sc.appendChild(s);
     }
-    // trees
+    // trees (SVG furutraer + busker)
+    var PINE='<svg viewBox="0 0 160 270">'
+      +'<rect class="trunk" x="68" y="196" width="24" height="66" rx="9" fill="#b97a32" stroke="#2a1f3d" stroke-width="8"/>'
+      +'<polygon class="pf-top" points="80,28 140,124 20,124" fill="#5d9417" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"/>'
+      +'<polygon class="pf-mid" points="80,82 150,176 10,176" fill="#7bb026" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"/>'
+      +'<polygon class="pf-bot" points="80,134 158,214 2,214" fill="#8fbb1e" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"/>'
+      +'<polygon class="snow" points="80,30 106,74 54,74" fill="#fff"/>'
+      +'<circle class="xmas" cx="62" cy="150" r="7" fill="#e23b3b" stroke="#2a1f3d" stroke-width="3"/>'
+      +'<circle class="xmas" cx="100" cy="150" r="7" fill="#3b78e2" stroke="#2a1f3d" stroke-width="3"/>'
+      +'<circle class="xmas" cx="80" cy="186" r="7" fill="#ffd23f" stroke="#2a1f3d" stroke-width="3"/>'
+      +'<circle class="xmas" cx="70" cy="112" r="6" fill="#ffd23f" stroke="#2a1f3d" stroke-width="3"/>'
+      +'<circle class="xmas" cx="96" cy="114" r="6" fill="#e23b3b" stroke="#2a1f3d" stroke-width="3"/>'
+      +'<polygon class="xmas" points="80,2 84,13 96,13 86,20 90,32 80,24 70,32 74,20 64,13 76,13" fill="#ffd23f" stroke="#2a1f3d" stroke-width="3" stroke-linejoin="round"/>'
+      +'</svg>';
+    var BUSH='<svg viewBox="0 0 160 244">'
+      +'<rect class="trunk" x="68" y="152" width="24" height="88" rx="9" fill="#b97a32" stroke="#2a1f3d" stroke-width="8"/>'
+      +'<circle class="bf-main" cx="80" cy="94" r="68" fill="#7bb026" stroke="#2a1f3d" stroke-width="8"/>'
+      +'<circle class="bf-hi" cx="56" cy="72" r="20" fill="#a6d33a"/>'
+      +'<circle class="bf-orn" cx="114" cy="116" r="15" fill="#e3a82a" stroke="#2a1f3d" stroke-width="6"/>'
+      +'<circle cx="114" cy="116" r="5" fill="#fff3c2"/>'
+      +'<ellipse class="snow" cx="74" cy="44" rx="46" ry="18" fill="#fff"/>'
+      +'<circle class="xmas" cx="58" cy="104" r="7" fill="#3b78e2" stroke="#2a1f3d" stroke-width="3"/>'
+      +'<circle class="xmas" cx="98" cy="92" r="7" fill="#e23b3b" stroke="#2a1f3d" stroke-width="3"/>'
+      +'<circle class="xmas" cx="80" cy="128" r="6" fill="#ffd23f" stroke="#2a1f3d" stroke-width="3"/>'
+      +'</svg>';
+    var _trees=[
+      {svg:PINE,css:'left:-2%;width:270px;bottom:54px',dur:6.0},
+      {svg:BUSH,css:'left:7%;width:175px;bottom:62px',dur:4.6},
+      {svg:PINE,css:'left:16%;width:210px;bottom:58px',dur:5.4},
+      {svg:BUSH,css:'left:27%;width:150px;bottom:64px',dur:4.2},
+      {svg:PINE,css:'left:37%;width:150px;bottom:66px',dur:5.8},
+      {svg:PINE,css:'left:60%;width:150px;bottom:66px',dur:5.2},
+      {svg:BUSH,css:'left:70%;width:150px;bottom:64px',dur:4.4},
+      {svg:PINE,css:'left:79%;width:210px;bottom:58px',dur:5.6},
+      {svg:BUSH,css:'left:88%;width:175px;bottom:62px',dur:4.8},
+      {svg:PINE,css:'left:97%;width:270px;bottom:54px',dur:6.2}
+    ];
     const tr = document.getElementById('trees');
-    [40, 180, 1640, 1820, 1500].forEach((x) => {
-      const t = document.createElement('span'); t.className = 'tree';
-      t.style.left = x + 'px'; tr.appendChild(t);
+    if (tr) _trees.forEach(function(t){
+      var d=document.createElement('div'); d.className='tree sway';
+      d.style.cssText=t.css+';animation-duration:'+t.dur+'s';
+      d.innerHTML=t.svg; tr.appendChild(d);
     });
     // confetti
     const cf = document.getElementById('confetti');
@@ -1705,6 +1831,40 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       setTimeout(function () { document.body.classList.remove('is-animating'); }, 1400);
     });
   });
+
+  /* ---------- aarstidsbakgrunn ---------- */
+  function buildSeasonExtras(theme){
+    var ex = document.getElementById('extras'); if(!ex) return;
+    ex.innerHTML='';
+    var cfg=null;
+    if(theme==='var')         cfg={n:18,colors:['#f7b8d2','#fbd0e1','#ffffff'],size:[6,12],dur:[9,15]};
+    else if(theme==='host')   cfg={n:26,colors:['#d2762a','#c2451f','#e0922f','#7ea22c'],size:[7,13],dur:[7,13]};
+    else if(theme==='vinter') cfg={n:40,colors:['#ffffff','#eaf2fb'],size:[4,9],dur:[8,16]};
+    else if(theme==='jul')    cfg={n:40,colors:['#ffffff','#eaf2fb'],size:[4,9],dur:[8,16]};
+    if(!cfg) return;
+    for(var i=0;i<cfg.n;i++){
+      var p=document.createElement('i');
+      var sz=cfg.size[0]+Math.random()*(cfg.size[1]-cfg.size[0]);
+      var col=cfg.colors[Math.floor(Math.random()*cfg.colors.length)];
+      var du=cfg.dur[0]+Math.random()*(cfg.dur[1]-cfg.dur[0]);
+      p.style.cssText='left:'+(Math.random()*100)+'%;top:-20px;width:'+sz+'px;height:'+sz+'px;background:'+col+';animation:fall '+du+'s linear infinite;animation-delay:'+(-Math.random()*du)+'s';
+      ex.appendChild(p);
+    }
+  }
+  function seasonForMonth(m){
+    if(m>=2&&m<=4) return 'var';
+    if(m>=5&&m<=7) return 'sommer';
+    if(m>=8&&m<=10) return 'host';
+    if(m===11) return 'jul';
+    return 'vinter';
+  }
+  function applySeason(){
+    var mode = (data && data.seasonBg) || 'standard';
+    var theme = (mode==='auto') ? seasonForMonth(new Date().getMonth()) : 'landscape';
+    canvas.setAttribute('data-theme', theme);
+    buildSeasonExtras(theme);
+  }
+  window._applySeason = applySeason;
 
   /* ---------- expose tweak hook ---------- */
   window.applyPortalTweaks = function (t) {
@@ -2184,6 +2344,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const swd = document.getElementById('setWordDef'); if (swd) swd.value = data.worddef || '';
     renderWordBankEditor();
     var _de = document.getElementById('setDayEnabled'); if (_de) _de.checked = data.dayEnabled !== false;
+    var _sb = (data.seasonBg === 'auto') ? 'auto' : 'standard';
+    document.querySelectorAll('#seasonBgSeg .seg-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bg === _sb); });
   }
   (function initSettings(){
     const ovl = document.getElementById('settingsOverlay');
@@ -2232,10 +2394,19 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     document.querySelectorAll('.set-tab-btn').forEach(function(b){ b.onclick = function(){ document.querySelectorAll('.set-tab-btn').forEach(function(x){x.classList.remove('active');}); document.querySelectorAll('.set-panel').forEach(function(x){x.classList.remove('active');}); b.classList.add('active'); var p = document.getElementById('set-panel-' + b.dataset.tab); if (p) p.classList.add('active'); }; });
     var _de = document.getElementById('setDayEnabled');
     if (_de) _de.onchange = function(){ data.dayEnabled = _de.checked; save(); };
+    document.querySelectorAll('#seasonBgSeg .seg-btn').forEach(function(b){
+      b.onclick = function(){
+        data.seasonBg = (b.dataset.bg === 'auto') ? 'auto' : 'standard';
+        save();
+        document.querySelectorAll('#seasonBgSeg .seg-btn').forEach(function(x){ x.classList.toggle('active', x === b); });
+        if (window._applySeason) window._applySeason();
+      };
+    });
   })();
   startAutoWeather();
 
   /* init */
+  applySeason();
   applyVideoVis();
 })();
 
@@ -3450,7 +3621,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       bdname: d.bdname || '', bdage: d.bdage || '',
       weather: d.weather || 0, weatherAuto: !!d.weatherAuto, weatherPlace: d.weatherPlace || '',
       weatherLat: (d.weatherLat == null ? null : d.weatherLat), weatherLon: (d.weatherLon == null ? null : d.weatherLon),
-      progressPercent: !!d.progressPercent, music: mus,
+      progressPercent: !!d.progressPercent, seasonBg: d.seasonBg || 'standard', music: mus,
       klasse: d.klasse || '', navn: (link && link.className) || d.klasse || '', enabled: (d.dayEnabled !== false), ts: Date.now()
     };
   }
@@ -3489,6 +3660,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       if (b.weatherLat !== undefined) d.weatherLat = b.weatherLat;
       if (b.weatherLon !== undefined) d.weatherLon = b.weatherLon;
       if (b.progressPercent != null) d.progressPercent = b.progressPercent;
+      if (b.seasonBg != null) { d.seasonBg = b.seasonBg; if (window._applySeason) window._applySeason(); }
       if (b.klasse) d.klasse = b.klasse;
       if (b.enabled != null) d.dayEnabled = (b.enabled !== false);
       if (Array.isArray(b.music) && window._applyMusicFromCloud) window._applyMusicFromCloud(b.music);
@@ -3579,6 +3751,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 .wheel-toggle input{ width:20px; height:20px; }
 .wheel-reset{ font:inherit; font-weight:600; font-size:15px; padding:8px 14px; border:3px solid var(--ink); border-radius:12px; background:var(--cream); color:var(--ink); cursor:pointer; }
 .wheel-empty{ color:var(--ink-soft); font-size:16px; text-align:center; line-height:1.45; }
+.wheel-win{ z-index:90; }
+.wheel-win-canvas{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.wheel-win-card{ position:relative; z-index:2; background:var(--cream); border:5px solid var(--ink); border-radius:28px; padding:34px 48px; text-align:center; box-shadow:0 14px 0 rgba(42,31,61,.25); max-width:92vw; animation:wheelPop .45s cubic-bezier(.2,1.3,.4,1); }
+.wheel-win-kicker{ font-size:28px; font-weight:700; color:var(--gold-deep); margin-bottom:8px; }
+.wheel-win-name{ font-size:clamp(42px,9vw,104px); font-weight:700; color:var(--ink); line-height:1.04; word-break:break-word; }
+.wheel-win-close{ margin-top:22px; font:inherit; font-weight:700; font-size:20px; padding:12px 30px; border:4px solid var(--ink); border-radius:16px; background:var(--teal); color:#fff; cursor:pointer; box-shadow:0 5px 0 #1c8a99; }
+.wheel-win-close:active{ transform:translateY(3px); box-shadow:none; }
+@keyframes wheelPop{ 0%{ transform:scale(.6); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
 </style>
 <div class="ovl" id="wheelOverlay">
   <div class="ovl-card">
@@ -3607,6 +3787,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       </div>
       <div class="wheel-result" id="wheelResult"></div>
     </div>
+  </div>
+</div>
+<div class="ovl wheel-win" id="wheelWinOvl">
+  <canvas id="wheelWinCanvas" class="wheel-win-canvas"></canvas>
+  <div class="wheel-win-card">
+    <div class="wheel-win-kicker">&#127881; Vinneren er &#127881;</div>
+    <div class="wheel-win-name" id="wheelWinName"></div>
+    <button class="wheel-win-close" id="wheelWinCloseBtn">Lukk</button>
   </div>
 </div>
 <script>
@@ -3722,6 +3910,50 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     }
   }
 
+  var winOvl=null, winName=null, winCanvas=null, confettiRAF=null, confetti=[];
+  function buildWin(){
+    winOvl    = document.getElementById('wheelWinOvl');
+    winName   = document.getElementById('wheelWinName');
+    winCanvas = document.getElementById('wheelWinCanvas');
+    if (winOvl) winOvl.addEventListener('click', closeWin);
+  }
+  function closeWin(){
+    if (!winOvl) return;
+    winOvl.classList.remove('open');
+    if (confettiRAF){ cancelAnimationFrame(confettiRAF); confettiRAF = null; }
+  }
+  function celebrate(val){
+    if (!winOvl) buildWin();
+    if (!winOvl) return;
+    winName.textContent = (state.mode === 'mynter' && /^\d+$/.test(String(val).trim())) ? ('🪙 ' + val) : val;
+    winOvl.classList.add('open');
+    startConfetti();
+  }
+  function startConfetti(){
+    if (!winCanvas) return;
+    var c = winCanvas, ctx = c.getContext('2d');
+    confetti = [];
+    var iw = c.clientWidth || 800, ih = c.clientHeight || 600;
+    for (var k = 0; k < 150; k++){
+      confetti.push({ x:Math.random()*iw, y:-20-Math.random()*ih*0.6, w:6+Math.random()*8, h:8+Math.random()*10, vx:(Math.random()-0.5)*1.6, vy:2+Math.random()*3.2, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.32, col:PALETTE[(Math.random()*PALETTE.length)|0] });
+    }
+    if (confettiRAF) cancelAnimationFrame(confettiRAF);
+    function frame(){
+      var W = c.width = c.clientWidth, H = c.height = c.clientHeight;
+      ctx.clearRect(0,0,W,H);
+      for (var j = 0; j < confetti.length; j++){
+        var p = confetti[j];
+        p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.rot += p.vr;
+        if (p.y > H + 20){ p.y = -20; p.x = Math.random()*W; p.vy = 2+Math.random()*3.2; }
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.col; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      }
+      confettiRAF = requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
   function spin(){
     if (state.spinning) return;
     var n = state.pool.length;
@@ -3742,6 +3974,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       svg.removeEventListener('transitionend', done);
       state.spinning = false;
       display(winner);
+      celebrate(winner);
       if (state.removeWinner){
         setTimeout(function(){
           var idx = state.pool.indexOf(winner);
