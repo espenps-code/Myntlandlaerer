@@ -2768,6 +2768,20 @@ function dagPlanSpans(p){
 }
 function renderDag(){
   var wrap=document.getElementById('dag-wrap'); if(wrap)wrap.style.display='';
+  (function(){
+    var b=(typeof dagBoard==='function')?dagBoard():null; var mode=(b&&b.seasonBg)||'standard';
+    var th='standard'; if(mode==='auto'){ var m=new Date().getMonth(); th=(m>=2&&m<=4)?'var':(m>=5&&m<=7)?'sommer':(m>=8&&m<=10)?'host':(m===11)?'jul':'vinter'; }
+    var sc=document.getElementById('screen-dag'); if(!sc) return; sc.setAttribute('data-season',th);
+    if(sc._dagSeason===th) return; sc._dagSeason=th;
+    var ex=sc.querySelector('.dag-extras'); if(ex){ ex.innerHTML='';
+      var cfg=null;
+      if(th==='var') cfg={n:14,c:['#f7b8d2','#fbd0e1','#ffffff'],s:[6,12],d:[9,15]};
+      else if(th==='host') cfg={n:20,c:['#d2762a','#c2451f','#e0922f','#7ea22c'],s:[7,13],d:[7,13]};
+      else if(th==='vinter'||th==='jul') cfg={n:30,c:['#ffffff','#eaf2fb'],s:[4,9],d:[8,16]};
+      if(cfg){ for(var i=0;i<cfg.n;i++){ var p=document.createElement('i'); var sz=cfg.s[0]+Math.random()*(cfg.s[1]-cfg.s[0]); var du=cfg.d[0]+Math.random()*(cfg.d[1]-cfg.d[0]); p.style.cssText='left:'+(Math.random()*100)+'%;top:-20px;width:'+sz+'px;height:'+sz+'px;background:'+cfg.c[Math.floor(Math.random()*cfg.c.length)]+';animation:dagFall '+du+'s linear infinite;animation-delay:'+(-Math.random()*du)+'s'; ex.appendChild(p); } }
+    }
+    var st=sc.querySelector('.dag-stars'); if(st){ st.innerHTML=''; if(th==='jul'){ for(var k=0;k<22;k++){ var q=document.createElement('i'); var ss=2+Math.random()*3; q.style.cssText='left:'+(Math.random()*100)+'%;top:'+(Math.random()*42)+'%;width:'+ss+'px;height:'+ss+'px;animation:dagTwinkle '+(2+Math.random()*3)+'s ease-in-out infinite;animation-delay:'+(-Math.random()*4)+'s'; st.appendChild(q); } } }
+  })();
   var pk=document.getElementById('dag-picker'); if(pk)pk.style.display='none';
   var t=dagToday();
   var cl=document.getElementById('dag-class');

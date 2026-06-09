@@ -783,6 +783,10 @@ h1.sticker{
 .seg-btn{ font-family:inherit; font-size:18px; font-weight:700; color:var(--ink); background:var(--paper);
   border:0; border-left:3px solid var(--ink); width:46px; height:42px; cursor:pointer; }
 .seg-btn:first-child{ border-left:0; }
+  #seasonBgSeg{ flex-shrink:0; }
+  #seasonBgSeg .seg-btn{ width:auto; min-width:0; flex:1; padding:0 16px; height:44px; font-size:15px; white-space:nowrap; color:rgba(42,31,61,.42); background:var(--paper); transition:background .15s, color .15s; }
+  #seasonBgSeg .seg-btn.active{ background:var(--gold); color:var(--ink); }
+  #seasonBgSeg .seg-btn.active::before{ content:"\2713 "; font-weight:700; }
 .seg-btn.active{ background:var(--gold); }
 .seg-btn:active{ transform:translateY(1px); }
 .sal-links{ display:flex; flex-direction:column; gap:8px; }
