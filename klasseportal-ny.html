@@ -1346,7 +1346,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     weatherAuto: false, weatherPlace: '', weatherLat: null, weatherLon: null, progressPercent: false, dayEnabled: true,
   };
 
-  const KEY = 'myntland-portal-v1';
+  const KEY = 'myntland-portal-v1-' + (window._CLASS_ID || '');
   let data = load();
 
   /* ---------- week planning (1=Man .. 5=Fre), auto-velger dagens plan ---------- */
@@ -1765,7 +1765,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   document.getElementById('tbFs').onclick = function(){ toggleFs(document.documentElement); };
 
   /* ===================== MUSIKK ===================== */
-  var MKEY = 'myntland-music-v1';
+  var MKEY = 'myntland-music-v1-' + (window._CLASS_ID || '');
   var M = loadM();
   window._music = M;
   window._applyMusicFromCloud = function(bank){
@@ -3203,7 +3203,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   updateConnectLabel();
   renderGoals();
   /* ====== ORDENSELEV-LØNN (Myntland) ====== */
-  const SAL_KEY = 'myntland-portal-ordens-v1';
+  const SAL_KEY = 'myntland-portal-ordens-v1-' + (window._CLASS_ID || '');
   const SAL_DEF = { amount: 100, autoFriday: true, links: [] };
   function loadSal(){
     let raw = {};
