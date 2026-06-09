@@ -632,7 +632,7 @@ function handleTileTap(n) {
     if (c.counted >= c.steps) {
       const mv = document.getElementById('btn-move');
       if (mv) mv.disabled = false;
-      miniLog('Bra telt! Trykk «Flytt hit» for aa hoppe.');
+      miniLog('Bra telt! Trykk «Flytt hit» for å hoppe.');
     }
   } else {
     SFX.wrong();
