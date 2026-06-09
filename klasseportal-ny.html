@@ -3705,10 +3705,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       var p0 = pt(a0, 95), p1 = pt(a1, 95);
       var large = seg > 180 ? 1 : 0;
       parts.push('<path d="M100 100 L' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A95 95 0 ' + large + ' 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) + ' Z" fill="' + PALETTE[i % PALETTE.length] + '" stroke="#2a1f3d" stroke-width="1.4"></path>');
-      var flip = mid > 90 && mid < 270;
-      var ly = flip ? 158 : 42;
-      var rot = flip ? mid + 180 : mid;
-      parts.push('<text x="100" y="' + ly + '" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + rot.toFixed(2) + ' 100 100)" font-family="Fredoka, sans-serif" font-weight="700" font-size="' + fs + '" fill="#2a1f3d">' + esc(labelText(state.pool[i])) + '</text>');
+      var lr = 58, lrad = mid * Math.PI / 180;
+      var ax = 100 + lr * Math.sin(lrad), ay = 100 - lr * Math.cos(lrad);
+      var rot = mid + 90;
+      if (rot > 90 && rot < 270) rot -= 180;
+      parts.push('<text x="' + ax.toFixed(2) + '" y="' + ay.toFixed(2) + '" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + rot.toFixed(2) + ' ' + ax.toFixed(2) + ' ' + ay.toFixed(2) + ')" font-family="Fredoka, sans-serif" font-weight="700" font-size="' + fs + '" fill="#2a1f3d">' + esc(labelText(state.pool[i])) + '</text>');
     }
     svg.innerHTML = parts.join('');
   }
