@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Escape rooms – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --teal: #1a5fa5;
+    --teal-dark: #1e0f52;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-dark: #d4890f;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --bg: #F7F9F7;
+    --white: #fff;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --border: #c8dfc8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-title {
+    flex: 1;
+    text-align: center;
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1rem;
+  }
+  .topnav-back {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--green-dark);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+  @media (max-width: 700px) {
+    .topnav-title { display: none; }
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* ===== Hero (gradient-banner) ===== */
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    text-align: center;
+    padding: 3.2rem 1.5rem 3.6rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before, .hero::after {
+    content: "🪙";
+    position: absolute;
+    font-size: 7rem;
+    opacity: 0.10;
+    pointer-events: none;
+  }
+  .hero::before { top: -1.4rem; left: 4%; transform: rotate(-18deg); }
+  .hero::after { bottom: -2rem; right: 5%; transform: rotate(14deg); font-size: 9rem; }
+  .hero-inner { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
+  .hero .emoji { font-size: 3rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,.35)); }
+  .hero h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+    color: var(--white);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-shadow: 0 3px 14px rgba(0,0,0,.25);
+  }
+  .hero h1 .gull { color: var(--amber); }
+  .hero p {
+    font-size: 1.1rem;
+    color: #DCD8F5;
+    font-weight: 600;
+  }
+
+  /* ===== Lærerboks ===== */
+  .laererboks {
+    max-width: 860px;
+    margin: 0 auto 2.5rem;
+    background: var(--amber-light);
+    border: 2px solid #ecd6ab;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .laererboks summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 1rem 1.5rem;
+    font-weight: 900;
+    color: var(--amber-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+  }
+  .laererboks summary::-webkit-details-marker { display: none; }
+  .laererboks summary::after { content: "▾"; margin-left: auto; transition: transform .2s; }
+  .laererboks[open] summary::after { transform: rotate(180deg); }
+  .laererboks .innhold {
+    padding: 0 1.5rem 1.25rem;
+    font-size: 0.97rem;
+    color: var(--text);
+  }
+  .laererboks .innhold p { margin-bottom: 0.6rem; }
+  .laererboks .innhold strong { color: var(--amber-dark); }
+
+  /* ===== Filter ===== */
+  .filter-rad {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  .filter-chip {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 0.45rem 1.15rem;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .filter-chip:hover { border-color: var(--green); color: var(--green-dark); }
+  .filter-chip.aktiv {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: var(--white);
+  }
+
+  /* ===== Kortgrid ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .kort {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 12px 40px rgba(30, 15, 82, 0.06);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    position: relative;
+  }
+  .kort.klikkbar:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 50px rgba(30, 15, 82, 0.12);
+  }
+  .kort.kommer { opacity: 0.85; cursor: default; }
+
+  .kort-bilde {
+    aspect-ratio: 4 / 3;
+    position: relative;
+    background: linear-gradient(135deg, #2A2E5E, #1e0f52);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .kort-bilde img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .kort-bilde .plassholder {
+    font-size: 3.4rem;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
+  }
+  .kort-merke {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--amber);
+    color: var(--teal-dark);
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .kort-merke.kommer-merke { background: var(--purple); color: var(--white); }
+  .kort-laas {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255,255,255,.92);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+
+  .kort-innhold {
+    padding: 1.25rem 1.4rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .kort-kategori {
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+  .kat-blandet  { color: var(--amber-dark); }
+  .kat-sparing  { color: var(--green-dark); }
+  .kat-forbruk  { color: var(--coral); }
+  .kat-lan      { color: var(--purple); }
+  .kat-risiko   { color: var(--teal); }
+  .kat-fellesskap { color: var(--green); }
+
+  .kort h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.35rem;
+    color: var(--teal-dark);
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+  .kort .ingress {
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 0.9rem;
+    flex: 1;
+  }
+
+  .tema-rad {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.9rem;
+  }
+  .tema {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 0.74rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .fakta-rad {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 0.85rem;
+  }
+  .fakta-rad span { display: inline-flex; align-items: center; gap: 4px; }
+
+  .niva-prikker { display: inline-flex; gap: 3px; }
+  .niva-prikk {
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 1.5px solid rgba(0,0,0,.08);
+  }
+  .niva-prikk.lett { background: #4FB477; }
+  .niva-prikk.middels { background: var(--amber); }
+  .niva-prikk.utfordring { background: var(--coral); }
+
+  .tom-melding {
+    text-align: center;
+    color: var(--muted);
+    font-weight: 700;
+    padding: 3rem 1rem;
+    display: none;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0 1.5rem 2.5rem;
+  }
+  footer a { color: var(--green-dark); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-logo" href="index.html">Myntland</a>
+    <div class="topnav-title">🔐 Escape rooms</div>
+    <a class="topnav-back" href="index.html">← Tilbake til Myntland</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="emoji">🏦🔐</div>
+    <h1>Escape <span class="gull">rooms</span></h1>
+    <p>Digitale fluktrom for klasserommet — løs økonomigåter sammen, knekk koden og redd dagen før tiden renner ut. Spilles på smartboard med hele klassen eller i grupper på iPad.</p>
+  </div>
+</header>
+
+<main>
+  <details class="laererboks">
+    <summary>🍎 Slik bruker du escape rooms i klassen</summary>
+    <div class="innhold">
+      <p><strong>Organisering:</strong> Del klassen i grupper på 3–4 elever med én iPad per gruppe — eller spill samlet på smartboardet og la gruppene kappes om å regne først. Hvert spill har tre vanskelighetsgrader, og sifrene i koden er ulike per nivå, så gruppene kan ikke låne svar av hverandre.</p>
+      <p><strong>Tid:</strong> Velg 30, 45 eller 60 minutter når spillet starter. Pauseknappen stopper klokka hvis dere trenger en felles gjennomgang underveis.</p>
+      <p><strong>Belønning:</strong> Knytt seieren til Myntland — lag en hendelses-QR i lærerportalen med bonusmynter, eller la åpningen av hvelvet gi et hopp på klassens sparemål.</p>
+      <p><strong>Etterarbeid:</strong> Hvert spill ender med refleksjonsspørsmål. Sett av ti minutter til å snakke om hvilke gåter som var vanskeligst og hvilke strategier gruppene brukte.</p>
+    </div>
+  </details>
+
+  <div class="filter-rad" id="filterRad"></div>
+
+  <div class="grid" id="grid"></div>
+  <p class="tom-melding" id="tomMelding">Ingen escape rooms i denne kategorien ennå — men flere er på vei! 🔧</p>
+</main>
+
+<footer>
+  Myntland · Læringsverktøy for klasseromsøkonomi · <a href="index.html">myntland.no</a>
+</footer>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   ESCAPE ROOMS — legg til nye spill her.
+   Mal for en oppføring:
+   {
+     id: 'kort-id',                      // samme som HTML-filnavnet uten .html
+     category: 'blandet',                // blandet | sparing | forbruk | lan | risiko | fellesskap
+     title: 'Tittel på spillet',
+     ingress: '2–3 setninger som lokker.',
+     themes: ['Rente', 'Skatt'],         // små temamerker på kortet
+     trinn: '5.–7. trinn',
+     duration: '30–60 min',
+     nivaer: ['lett','middels','utfordring'],  // hvilke vanskelighetsgrader som finnes
+     rom: 4,                             // antall gåterom
+     emoji: '🏦',                        // plassholder hvis thumb mangler
+     thumb: 'escaperom/thumbs/kort-id-thumb.png',
+     gameFile: 'escaperom/kort-id.html',
+     status: 'ready'                     // 'ready' = spillbar, 'kommer' = vises som "Kommer snart"
+   }
+   ===================================================================== */
+const ESCAPE_ROOMS = [
+  {
+    id: 'banken-i-myntland',
+    category: 'blandet',
+    title: 'Banken i Myntland er låst!',
+    ingress: 'Hvelvet med klassens sparemål er sperret! Hjelp Bølge, Drage, Måne og Stjerne med fire økonomigåter, finn den hemmelige koden og åpne hvelvet før banken stenger.',
+    themes: ['Rente', 'Fond', 'Skatt', 'Budsjett'],
+    trinn: '5.–7. trinn',
+    duration: '30–60 min',
+    nivaer: ['lett','middels','utfordring'],
+    rom: 4,
+    emoji: '🏦',
+    thumb: 'escaperom/thumbs/banken-i-myntland-thumb.png',
+    gameFile: 'escaperom/banken-i-myntland.html',
+    status: 'ready'
+  }
+];
+
+const KATEGORIER = [
+  { id: 'alle',       navn: 'Alle' },
+  { id: 'blandet',    navn: '🪙 Blandet' },
+  { id: 'sparing',    navn: '🐷 Sparing & rente' },
+  { id: 'forbruk',    navn: '🛒 Budsjett & forbruk' },
+  { id: 'lan',        navn: '🤝 Lån & gjeld' },
+  { id: 'risiko',     navn: '📈 Fond & risiko' },
+  { id: 'fellesskap', navn: '🏛️ Skatt & fellesskap' }
+];
+const KAT_NAVN = {
+  blandet: 'Blandet økonomi', sparing: 'Sparing & rente', forbruk: 'Budsjett & forbruk',
+  lan: 'Lån & gjeld', risiko: 'Fond & risiko', fellesskap: 'Skatt & fellesskap'
+};
+const NIVA_NAVN = { lett: 'Lett', middels: 'Middels', utfordring: 'Utfordring' };
+
+let aktivKategori = 'alle';
+
+function byggFilter(){
+  const rad = document.getElementById('filterRad');
+  rad.innerHTML = '';
+  KATEGORIER.forEach(k => {
+    // vis bare kategorier som finnes (pluss Alle)
+    if (k.id !== 'alle' && !ESCAPE_ROOMS.some(r => r.category === k.id)) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'filter-chip' + (k.id === aktivKategori ? ' aktiv' : '');
+    b.textContent = k.navn;
+    b.addEventListener('click', () => { aktivKategori = k.id; byggFilter(); byggGrid(); });
+    rad.appendChild(b);
+  });
+}
+
+function byggGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const liste = ESCAPE_ROOMS.filter(r => aktivKategori === 'alle' || r.category === aktivKategori);
+  document.getElementById('tomMelding').style.display = liste.length ? 'none' : 'block';
+
+  liste.forEach(r => {
+    const spillbar = r.status === 'ready';
+    const el = document.createElement(spillbar ? 'a' : 'div');
+    el.className = 'kort ' + (spillbar ? 'klikkbar' : 'kommer');
+    if (spillbar) el.href = r.gameFile;
+
+    const nivaPrikker = (r.nivaer || []).map(n =>
+      `<span class="niva-prikk ${n}" title="${NIVA_NAVN[n] || n}"></span>`).join('');
+
+    el.innerHTML = `
+      <div class="kort-bilde">
+        <span class="plassholder">${r.emoji || '🔐'}</span>
+        <img src="${r.thumb}" alt="" loading="lazy"
+             onload="this.previousElementSibling.style.display='none'"
+             onerror="this.style.display='none'">
+        <span class="kort-merke ${spillbar ? '' : 'kommer-merke'}">${spillbar ? 'Spill nå' : 'Kommer snart'}</span>
+        <span class="kort-laas">${spillbar ? '🔓' : '🔒'}</span>
+      </div>
+      <div class="kort-innhold">
+        <div class="kort-kategori kat-${r.category}">${KAT_NAVN[r.category] || r.category}</div>
+        <h2>${r.title}</h2>
+        <p class="ingress">${r.ingress}</p>
+        <div class="tema-rad">${(r.themes || []).map(t => `<span class="tema">${t}</span>`).join('')}</div>
+        <div class="fakta-rad">
+          <span>🎓 ${r.trinn}</span>
+          <span>⏱️ ${r.duration}</span>
+          <span>🚪 ${r.rom} rom</span>
+          <span>Nivå: <span class="niva-prikker">${nivaPrikker}</span></span>
+        </div>
+      </div>`;
+    grid.appendChild(el);
+  });
+}
+
+byggFilter();
+byggGrid();
+</script>
+</body>
+</html>

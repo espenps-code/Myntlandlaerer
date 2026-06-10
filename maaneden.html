@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="nb"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Måneden – Myntland</title>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%232a1f3d'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23e3a82a'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Måneden">
+<meta name="theme-color" content="#2a1f3d">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>/* ============================================================
+   MYNTLAND – MÅNEDEN · stilark
+   Visuelt språk fra Myntland Klasseportal: krem-kort med tykke
+   blekk-kanter, harde «sticker»-skygger, Fredoka + DM Serif
+   Display, og en levende scene bak alt innhold.
+   ============================================================ */
+:root{
+  --cream:#fbf2d6;
+  --cream-2:#f6e8bf;
+  --cream-3:#f1dda8;
+  --ink:#2a1f3d;
+  --ink-soft:#4a3c63;
+  --gold:#e3a82a;
+  --gold-deep:#c8901a;
+  --red:#e64b3b;
+  --green:#7bb026;
+  --green-deep:#5d9417;
+  --teal:#27b3c6;
+  --paper:#fffaf0;
+  --shadow:0 8px 0 rgba(42,31,61,.18), 0 14px 26px rgba(42,31,61,.14);
+  --shadow-sm:0 4px 0 rgba(42,31,61,.16);
+  --border:4px solid var(--ink);
+  --radius:26px;
+  --font:'Fredoka', system-ui, sans-serif;
+  --serif:'DM Serif Display', Georgia, serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html{ scroll-behavior:smooth; }
+body{
+  font-family:var(--font);
+  color:var(--ink);
+  min-height:100vh;
+  background:linear-gradient(180deg,#bfeaf2 0%, #cdeede 42%, #dcefc7 70%, #e7f3bf 100%);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button{ font-family:inherit; cursor:pointer; border:none; }
+a{ color:inherit; }
+
+/* ===================== SCENEN BAK ALT ===================== */
+.scene{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.sky-glow{ position:absolute; inset:0;
+  background:radial-gradient(70% 55% at 50% -8%, rgba(255,255,255,.7), transparent 60%); }
+.sun{ position:absolute; top:-90px; right:-90px; width:320px; height:320px; border-radius:50%;
+  background:radial-gradient(circle at 50% 50%, #ffe9a3 0%, #ffd96b 38%, rgba(255,217,107,0) 70%);
+  animation:sunpulse 7s ease-in-out infinite; }
+@keyframes sunpulse{ 50%{ transform:scale(1.08); opacity:.92; } }
+.clouds span{ position:absolute; background:rgba(255,255,255,.9); border-radius:100px;
+  box-shadow:0 0 0 14px rgba(255,255,255,.45); animation:clouddrift 60s linear infinite; }
+@keyframes clouddrift{ 0%{ transform:translateX(0); } 50%{ transform:translateX(60px); } 100%{ transform:translateX(0); } }
+.mountains{ position:absolute; left:-5vw; right:-5vw; bottom:54px; height:46vh; opacity:.45; }
+.mtn{ position:absolute; bottom:0; width:0; height:0; border-style:solid; border-color:transparent; }
+.mtn.m1{ left:0;   border-width:0 24vw 34vh 24vw; border-bottom-color:#a3c1d6; }
+.mtn.m2{ left:26%; border-width:0 32vw 44vh 32vw; border-bottom-color:#93b6cf; }
+.mtn.m3{ left:62%; border-width:0 28vw 38vh 28vw; border-bottom-color:#abc7da; }
+.grass{ position:absolute; left:-2vw; right:-2vw; bottom:0; height:64px;
+  background:linear-gradient(180deg,#8fbb1e,#76a017);
+  border-top:4px solid #5d8410;
+  border-radius:50% 50% 0 0 / 26px 26px 0 0; }
+
+/* trær og busker (samme SVG-er som i Klasseportalen) */
+.trees{ position:absolute; inset:0; }
+.tree{ position:absolute; transform-origin:bottom center;
+  filter:drop-shadow(0 7px 6px rgba(42,31,61,.14)); }
+.tree svg{ display:block; width:100%; height:auto; }
+.tree.sway{ animation:treesway 5s ease-in-out infinite; }
+@keyframes treesway{ 0%,100%{ transform:rotate(-2deg); } 50%{ transform:rotate(2deg); } }
+
+/* svevende mynter (tegnet i CSS – som minimyntene i portalen) */
+.coin{ position:absolute; bottom:-60px; width:42px; height:42px; border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, #ffe07a, #f0b51e 70%);
+  border:3px solid var(--gold-deep);
+  display:grid; place-items:center;
+  font-weight:700; font-size:15px; color:var(--gold-deep);
+  filter:drop-shadow(0 3px 4px rgba(42,31,61,.22));
+  animation:floatcoin linear infinite; opacity:0; }
+.coin::after{ content:'kr'; }
+@keyframes floatcoin{
+  0%{ transform:translateY(0) rotate(0deg); opacity:0; }
+  10%,80%{ opacity:.8; }
+  100%{ transform:translateY(-115vh) rotate(220deg); opacity:0; } }
+
+/* alt innhold over scenen */
+.screen{ display:none; position:relative; z-index:2; min-height:100vh; }
+.screen.active{ display:block; }
+
+/* ===================== ENTRANSE-ANIMASJON =====================
+   Basen er alltid synlig; animasjonen kobles KUN på mens
+   body.is-animating – en JS-timer fjerner klassen etterpå. */
+.pop{ opacity:1; }
+@media (prefers-reduced-motion:no-preference){
+  body.is-animating .pop{ animation:popin .55s cubic-bezier(.34,1.56,.64,1) both;
+    animation-delay:calc(var(--d, 0) * .09s); }
+}
+@keyframes popin{ from{ opacity:0; transform:translateY(26px) scale(.96); } to{ opacity:1; transform:none; } }
+
+/* ===================== TOPPNAV ===================== */
+.topnav{ position:relative; z-index:5; background:var(--cream);
+  border-bottom:var(--border); box-shadow:0 6px 0 rgba(42,31,61,.12);
+  padding:.7rem 1.2rem; }
+.topnav-inner{ max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.topnav-logo{ display:inline-flex; align-items:center; gap:9px; font-size:1.45rem; font-weight:700;
+  color:var(--ink); text-decoration:none; letter-spacing:.5px; }
+.logo-coin{ width:26px; height:26px; border-radius:50%; flex-shrink:0;
+  background:radial-gradient(circle at 38% 32%, #ffe07a, #f0b51e 70%);
+  border:3px solid var(--ink); display:grid; place-items:center;
+  font-size:12px; font-weight:700; color:var(--gold-deep); }
+.nav-right{ display:flex; align-items:center; gap:10px; }
+.navbtn{ width:42px; height:42px; border-radius:13px; border:3px solid var(--ink);
+  background:var(--paper); font-size:19px; line-height:1; box-shadow:var(--shadow-sm);
+  transition:transform .1s; }
+.navbtn:hover{ background:var(--gold); }
+.navbtn:active{ transform:translateY(3px); box-shadow:none; }
+.topnav-back{ display:inline-flex; align-items:center; gap:6px; color:var(--ink-soft);
+  text-decoration:none; font-weight:600; font-size:.95rem; border:3px solid transparent;
+  border-radius:30px; padding:6px 12px; }
+.topnav-back:hover{ background:var(--paper); border-color:var(--ink); box-shadow:var(--shadow-sm); }
+
+/* ===================== HERO ===================== */
+.hero{ text-align:center; padding:2.6rem 1.2rem 1.6rem; position:relative; }
+.hero.hero-sm{ padding:2rem 1.2rem 1rem; }
+.kicker{ display:inline-flex; gap:10px; align-items:center;
+  font-size:.85rem; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+  background:var(--ink); color:var(--cream); padding:6px 18px; border-radius:30px;
+  box-shadow:var(--shadow-sm); }
+.kicker .spark{ color:var(--gold); animation:spin 4s linear infinite; display:inline-block; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+h1.sticker{
+  font-size:clamp(3rem, 9vw, 5.6rem); font-weight:700; line-height:.95; letter-spacing:2px;
+  margin-top:14px; color:var(--gold);
+  -webkit-text-stroke:5px var(--ink); paint-order:stroke fill;
+  text-shadow:5px 6px 0 var(--ink);
+}
+.hero-sub{ max-width:600px; margin:14px auto 0; font-size:clamp(1.02rem,1.6vw,1.2rem);
+  font-weight:500; color:var(--ink-soft); line-height:1.5; text-wrap:pretty; }
+
+/* ===================== KORT + VALG ===================== */
+.wrap{ max-width:780px; margin:0 auto; padding:1rem 1.2rem 4rem; }
+.card{ background:var(--cream); border:var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:1.5rem 1.5rem 1.6rem; margin-bottom:1.5rem; }
+.card h2{ font-size:1.5rem; font-weight:700; display:flex; align-items:center; gap:10px; }
+.step-dot{ width:34px; height:34px; flex-shrink:0; border-radius:50%; background:var(--gold);
+  border:3px solid var(--ink); display:grid; place-items:center;
+  font-size:1.05rem; font-weight:700; color:var(--ink); }
+.card .hint{ color:var(--ink-soft); font-size:1rem; font-weight:500; margin:.4rem 0 1.1rem; line-height:1.45; }
+
+.opt-row{ display:flex; gap:.9rem; flex-wrap:wrap; }
+.opt{ flex:1; min-width:175px; background:var(--paper); border:3px solid var(--ink); border-radius:18px;
+  padding:1.05rem .9rem .95rem; text-align:center; cursor:pointer;
+  box-shadow:var(--shadow-sm); transition:transform .14s, box-shadow .14s, background .14s; }
+.opt:hover{ transform:translateY(-4px); box-shadow:0 8px 0 rgba(42,31,61,.16); }
+.opt:active{ transform:translateY(1px); box-shadow:none; }
+.opt.selected{ background:#fff7df; box-shadow:0 0 0 4px var(--gold), var(--shadow-sm);
+  animation:pickpop .3s ease; }
+@keyframes pickpop{ 50%{ transform:scale(1.04); } }
+.opt .o-emoji{ font-size:2.3rem; line-height:1.1; }
+.opt .o-title{ font-weight:700; font-size:1.15rem; margin-top:.35rem; }
+.opt .o-sub{ font-size:.88rem; color:var(--ink-soft); font-weight:500; margin-top:.2rem; line-height:1.35; }
+.opt .o-amt{ display:inline-block; margin-top:.5rem; font-size:.86rem; font-weight:700; color:var(--ink);
+  background:var(--cream-2); border:2px solid var(--ink); border-radius:30px; padding:2px 12px; }
+
+/* ===================== KNAPPER ===================== */
+.btn{ border:3px solid var(--ink); border-radius:16px; font-weight:700; font-size:1.1rem;
+  padding:.85rem 1.8rem; box-shadow:0 5px 0 rgba(42,31,61,.25);
+  transition:transform .1s, box-shadow .1s, filter .15s; color:#fff; }
+.btn:hover{ filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 7px 0 rgba(42,31,61,.25); }
+.btn:active{ transform:translateY(4px); box-shadow:none; }
+.btn-primary{ background:var(--gold); color:var(--ink); }
+.btn-green{ background:var(--green); }
+.btn-lg{ font-size:1.3rem; padding:1rem 2.4rem; border-radius:20px; }
+.btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; box-shadow:0 5px 0 rgba(42,31,61,.25); }
+.start-row{ text-align:center; margin-top:.4rem; }
+
+/* ===================== SPILLTOPP ===================== */
+.gametop{ position:sticky; top:0; z-index:50; background:var(--cream);
+  border-bottom:var(--border); box-shadow:0 8px 0 rgba(42,31,61,.14);
+  padding:.65rem 1rem .55rem; }
+.gametop-inner{ max-width:780px; margin:0 auto; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.gt-day{ background:var(--red); color:#fff; font-weight:700; font-size:1rem;
+  border:3px solid var(--ink); border-radius:14px; padding:.32rem .85rem;
+  transform:rotate(-2deg); box-shadow:0 4px 0 rgba(42,31,61,.22); white-space:nowrap; }
+.gt-bal-wrap{ display:flex; align-items:center; gap:8px; position:relative; }
+.gt-coin{ width:30px; height:30px; border-radius:50%; flex-shrink:0;
+  background:radial-gradient(circle at 38% 32%, #ffe07a, #f0b51e 70%);
+  border:3px solid var(--ink); display:grid; place-items:center;
+  font-size:12px; font-weight:700; color:var(--gold-deep); }
+.gt-coin::after{ content:'kr'; }
+.gt-coin.spin-once{ animation:coinflip .55s ease; }
+@keyframes coinflip{ 50%{ transform:rotateY(180deg) scale(1.15); } }
+.gt-bal{ font-size:1.6rem; font-weight:700; color:var(--ink); white-space:nowrap;
+  font-variant-numeric:tabular-nums; line-height:1; }
+.gt-bal.neg{ color:var(--red); }
+.gt-bal.flash-up{ animation:flashup .6s ease; }
+.gt-bal.flash-down{ animation:flashdown .6s ease; }
+@keyframes flashup{ 30%{ transform:scale(1.12); color:var(--green-deep); } }
+@keyframes flashdown{ 30%{ transform:scale(.94); color:var(--red); } }
+.delta-chip{ position:absolute; bottom:100%; left:20%; font-size:1.05rem; font-weight:700;
+  white-space:nowrap; animation:chiprise 1.2s ease forwards; pointer-events:none; z-index:5; }
+.delta-chip.up{ color:var(--green-deep); }
+.delta-chip.down{ color:var(--red); }
+@keyframes chiprise{ from{ opacity:0; transform:translateY(8px); } 25%{ opacity:1; }
+  to{ opacity:0; transform:translateY(-26px); } }
+
+.gt-goal{ flex:1; min-width:170px; }
+.gt-goal .g-label{ font-size:.8rem; font-weight:600; color:var(--ink-soft);
+  display:flex; justify-content:space-between; gap:8px; }
+.gt-goal .g-label b{ color:var(--ink); font-weight:700; }
+.g-bar{ height:18px; background:#ece0c2; border:2px solid var(--ink); border-radius:30px;
+  overflow:hidden; margin-top:4px; position:relative; }
+.g-fill{ height:100%; width:0; background:linear-gradient(90deg,#ffe07a,var(--gold));
+  border-radius:30px; transition:width .7s cubic-bezier(.34,1.4,.64,1); position:relative; overflow:hidden; }
+.g-fill.done{ background:linear-gradient(90deg,#a6d33a,var(--green)); }
+.g-fill::after{ content:''; position:absolute; inset:0;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);
+  animation:shimmer 2.6s linear infinite; }
+@keyframes shimmer{ from{ transform:translateX(-100%); } to{ transform:translateX(100%); } }
+
+.day-dots{ max-width:780px; margin:.55rem auto 0; display:flex; gap:4px; }
+.dd{ flex:1; height:7px; border-radius:99px; background:rgba(42,31,61,.14); transition:background .4s; }
+.dd.on{ background:var(--green); }
+.dd.now{ background:var(--red); box-shadow:0 0 0 2px var(--cream), 0 0 0 4px var(--red);
+  animation:dotpulse 1.6s ease-in-out infinite; }
+@keyframes dotpulse{ 50%{ opacity:.55; } }
+
+/* ===================== HENDELSESKORT ===================== */
+.playwrap{ max-width:740px; margin:0 auto; padding:1.6rem 1.2rem 4.5rem; }
+.ev-card{ background:var(--cream); border:var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:1.8rem 1.6rem; }
+@media (prefers-reduced-motion:no-preference){
+  .ev-card.deal{ animation:popin .45s cubic-bezier(.34,1.56,.64,1); }
+}
+.ev-day{ display:inline-block; font-size:.8rem; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--ink); background:var(--gold);
+  border:3px solid var(--ink); border-radius:30px; padding:3px 14px; }
+.ev-emoji{ font-size:3.2rem; line-height:1; margin:.7rem 0 .25rem; display:inline-block;
+  animation:bob 2.8s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{ transform:translateY(0) rotate(-2deg); } 50%{ transform:translateY(-7px) rotate(3deg); } }
+.ev-card h2{ font-size:1.7rem; font-weight:700; margin-bottom:.45rem; }
+.ev-text{ font-size:1.12rem; font-weight:500; line-height:1.55; color:var(--ink-soft); text-wrap:pretty; }
+
+.talk{ display:none; margin-top:1rem; border:3px solid var(--ink); border-radius:16px;
+  padding:.95rem 1.1rem; background:#d9f2f6; font-weight:500; font-size:1.05rem; line-height:1.5; }
+.talk b{ color:var(--ink); }
+body.klasse .talk{ display:block; }
+body.klasse .ev-text{ font-size:1.34rem; }
+body.klasse .ev-card h2{ font-size:2rem; }
+body.klasse .talk{ font-size:1.2rem; }
+
+.choices{ display:flex; flex-direction:column; gap:.75rem; margin-top:1.25rem; }
+.choice{ display:flex; justify-content:space-between; align-items:center; gap:.9rem; width:100%;
+  text-align:left; background:var(--paper); border:3px solid var(--ink); border-radius:16px;
+  padding:.95rem 1.15rem; font-size:1.06rem; font-weight:600; color:var(--ink);
+  box-shadow:var(--shadow-sm); transition:transform .14s, box-shadow .14s, background .14s; }
+.choice:hover{ transform:translateX(5px); background:#fff7df; }
+.choice:active{ transform:translateX(5px) translateY(2px); box-shadow:none; }
+.choice .c-amt{ white-space:nowrap; font-weight:700; font-variant-numeric:tabular-nums; }
+.c-amt.minus{ color:var(--red); }
+.c-amt.plus{ color:var(--green-deep); }
+.c-amt.zero{ color:var(--ink-soft); }
+.choice.picked{ background:#fff7df; box-shadow:0 0 0 4px var(--gold), var(--shadow-sm);
+  animation:pickpop .3s ease; }
+.choice.dim{ opacity:.4; pointer-events:none; box-shadow:none; }
+body.klasse .choice{ font-size:1.24rem; padding:1.1rem 1.25rem; }
+
+/* utfall + faktalapp (gul lapp med teip, som beskjedene i portalen) */
+.outcome{ margin-top:1.25rem; border:3px solid var(--ink); border-radius:16px;
+  padding:1rem 1.15rem; background:#eafad0; font-weight:600; font-size:1.06rem; line-height:1.5; }
+.fact{ position:relative; margin:1.1rem auto 0; max-width:96%; border:3px solid var(--ink);
+  border-radius:14px; padding:1.05rem 1.15rem .95rem; background:#fff5c7;
+  font-weight:500; font-size:1rem; line-height:1.5; transform:rotate(-.8deg);
+  box-shadow:0 5px 0 rgba(42,31,61,.16); }
+.fact b{ color:var(--gold-deep); }
+.fact .tape{ position:absolute; top:-13px; left:50%; transform:translateX(-50%) rotate(-3deg);
+  width:64px; height:22px; background:rgba(231,168,42,.6); border:2px solid rgba(42,31,61,.25);
+  border-radius:3px; }
+/* animasjonen kobles kun på via .deal-in, som en JS-veggklokke fjerner –
+   så en frossen animasjon aldri kan holde innholdet skjult */
+@media (prefers-reduced-motion:no-preference){
+  .deal-in .outcome{ animation:slidein .3s ease both; }
+  .deal-in .fact{ animation:slidein .35s .12s ease both; }
+}
+@keyframes slidein{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; } }
+body.klasse .outcome{ font-size:1.2rem; }
+body.klasse .fact{ font-size:1.14rem; }
+
+/* regningsdag / auto-linjer (bank-rad-stil) */
+.auto-lines{ margin-top:1.1rem; display:flex; flex-direction:column; gap:.55rem; }
+.auto-line{ display:flex; justify-content:space-between; align-items:center; gap:1rem;
+  background:var(--paper); border:3px solid var(--ink); border-radius:14px;
+  padding:.7rem 1rem; font-weight:600; box-shadow:var(--shadow-sm); }
+.next-row{ margin-top:1.5rem; text-align:center; }
+
+/* ===================== SLUTTSKJERM ===================== */
+.end-emoji{ font-size:4.5rem; text-align:center; margin-top:.3rem; }
+/* gated på body.is-animating (veggklokke) så emojien aldri kan fryses usynlig */
+@media (prefers-reduced-motion:no-preference){
+  body.is-animating .end-emoji{ animation:bigpop .6s cubic-bezier(.2,1.4,.4,1) both; }
+}
+@keyframes bigpop{ from{ transform:scale(0) rotate(-20deg); opacity:0; } }
+.end-tier{ text-align:center; font-family:var(--serif); font-style:italic; font-weight:400;
+  font-size:clamp(2.2rem,5vw,3rem); color:var(--ink); margin:.3rem 0 .4rem; }
+.end-sub{ text-align:center; font-weight:500; color:var(--ink-soft); font-size:1.12rem;
+  line-height:1.55; max-width:540px; margin:0 auto 1.5rem; text-wrap:pretty; }
+.stats{ display:flex; gap:.9rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.stat{ flex:1; min-width:150px; background:var(--paper); border:3px solid var(--ink);
+  border-radius:18px; box-shadow:var(--shadow-sm); padding:1rem .8rem; text-align:center; }
+.stat .s-num{ font-size:1.7rem; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+.stat .s-lab{ font-size:.8rem; font-weight:700; color:var(--ink-soft);
+  text-transform:uppercase; letter-spacing:1.2px; margin-top:2px; }
+.snakk{ list-style:none; }
+.snakk li{ position:relative; margin:.6rem 0; padding-left:1.7rem;
+  font-weight:500; font-size:1.06rem; line-height:1.5; }
+.snakk li::before{ content:''; position:absolute; left:0; top:.36em; width:13px; height:13px;
+  border-radius:50%; background:var(--gold); border:2px solid var(--ink); }
+body.klasse .snakk li{ font-size:1.25rem; }
+
+/* konfetti */
+.confetti-piece{ position:fixed; top:-20px; z-index:999; animation:fall linear forwards; pointer-events:none; }
+@keyframes fall{ to{ transform:translateY(108vh) rotate(740deg); } }
+
+/* ===================== RESPONS + RO ===================== */
+@media (max-width:560px){
+  .gt-bal{ font-size:1.3rem; }
+  .ev-card{ padding:1.35rem 1.1rem; }
+  .card{ padding:1.2rem 1.1rem 1.3rem; }
+  .topnav-back span{ display:none; }
+  h1.sticker{ -webkit-text-stroke:4px var(--ink); text-shadow:4px 5px 0 var(--ink); }
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation:none !important; transition:none !important; }
+  html{ scroll-behavior:auto; }
+}
+</style>
+</head>
+<body>
+
+
+
+<!-- ════════════════ SCENEN (bak alt innhold) ════════════════ -->
+<div class="scene" aria-hidden="true">
+  <div class="sky-glow"></div>
+  <div class="sun"></div>
+  <div class="clouds">
+    <span style="left:8%;  top:12%; width:120px; height:30px;"></span>
+    <span style="left:55%; top:7%;  width:90px;  height:24px; animation-delay:-20s;"></span>
+    <span style="left:78%; top:20%; width:140px; height:32px; animation-delay:-40s;"></span>
+  </div>
+  <div class="mountains"><i class="mtn m1"></i><i class="mtn m2"></i><i class="mtn m3"></i></div>
+  <div class="coins" id="scene-coins"></div>
+  <div class="trees" id="scene-trees"></div>
+  <div class="grass"></div>
+</div>
+
+<!-- flytende lydknapp -->
+<button class="navbtn" id="btn-lyd" title="Lyd av/på" style="position:fixed;right:14px;bottom:14px;z-index:60;">🔊</button>
+
+<!-- ════════════════ SKJERM 1: OPPSETT ════════════════ -->
+<section id="screen-setup" class="screen active" data-screen-label="Oppsett">
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a href="index.html" class="topnav-logo"><span class="logo-coin"></span>Myntland</a>
+      <a href="index.html" class="topnav-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Tilbake til forsiden</span>
+      </a>
+    </div>
+  </nav>
+  <header class="hero">
+    <div class="kicker pop" style="--d:0;"><span class="spark">✦</span> Myntland presenterer <span class="spark">✦</span></div>
+    <h1 class="sticker pop" style="--d:1;">Måneden</h1>
+    <p class="hero-sub pop" style="--d:2;">Én måned. Ekte kroner, ekte valg. Klarer du å nå sparemålet ditt før måneden er omme?</p>
+  </header>
+  <div class="wrap">
+
+    <div class="card pop" style="--d:3;">
+      <h2><span class="step-dot">1</span>Velg nivå</h2>
+      <div class="hint">Begge handler om å velge klokt – nivå 2 har større tall og voksne regninger.</div>
+      <div class="opt-row" id="level-row">
+        <div class="opt selected" data-level="1">
+          <div class="o-emoji">🛴</div>
+          <div class="o-title">Din måned</div>
+          <div class="o-sub">Ukelønn, fristelser og småjobber. Du er deg selv.</div>
+        </div>
+        <div class="opt" data-level="2">
+          <div class="o-emoji">🏢</div>
+          <div class="o-title">Voksen for en måned</div>
+          <div class="o-sub">Lønn, husleie og regninger. Du er 25 år og bor alene.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card pop" style="--d:4;">
+      <h2><span class="step-dot">2</span>Hvordan spiller dere?</h2>
+      <div class="hint">I klassemodus blir teksten større, og hvert valg får et «snakk sammen»-spørsmål.</div>
+      <div class="opt-row" id="mode-row">
+        <div class="opt selected" data-mode="alene">
+          <div class="o-emoji">🧑‍💻</div>
+          <div class="o-title">Alene</div>
+          <div class="o-sub">På egen skjerm</div>
+        </div>
+        <div class="opt" data-mode="klasse">
+          <div class="o-emoji">🖥️</div>
+          <div class="o-title">Klasse</div>
+          <div class="o-sub">På storskjerm – velg sammen</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="start-row pop" style="--d:5;">
+      <button class="btn btn-green btn-lg" id="btn-to-intro">Sett i gang →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ SKJERM 2: INTRO / STARTVALG ════════════════ -->
+<section id="screen-intro" class="screen" data-screen-label="Startvalg">
+  <header class="hero hero-sm">
+    <div class="kicker pop" style="--d:0;"><span class="spark">✦</span> Myntland · Måneden <span class="spark">✦</span></div>
+    <h1 class="sticker pop" id="intro-title" style="--d:1;">Din måned</h1>
+    <p class="hero-sub pop" id="intro-sub" style="--d:2;"></p>
+  </header>
+  <div class="wrap" id="intro-body"><!-- bygges av JS --></div>
+</section>
+
+<!-- ════════════════ SKJERM 3: SPILLET ════════════════ -->
+<section id="screen-game" class="screen" data-screen-label="Spillet">
+  <div class="gametop">
+    <div class="gametop-inner">
+      <div class="gt-day" id="gt-day">Dag 1</div>
+      <div class="gt-bal-wrap">
+        <span class="gt-coin" id="gt-coin"></span>
+        <span class="gt-bal" id="gt-bal">0 kr</span>
+      </div>
+      <div class="gt-goal">
+        <div class="g-label"><b id="gt-goal-label">Sparemål</b><span id="gt-goal-pct">0 %</span></div>
+        <div class="g-bar"><div class="g-fill" id="gt-goal-fill"></div></div>
+      </div>
+    </div>
+    <div class="day-dots" id="day-dots"></div>
+  </div>
+  <div class="playwrap">
+    <div class="ev-card" id="ev-card"><!-- bygges av JS --></div>
+  </div>
+</section>
+
+<!-- ════════════════ SKJERM 4: SLUTT ════════════════ -->
+<section id="screen-end" class="screen" data-screen-label="Slutt">
+  <header class="hero hero-sm">
+    <div class="kicker pop" style="--d:0;"><span class="spark">✦</span> Myntland · Måneden <span class="spark">✦</span></div>
+    <h1 class="sticker pop" style="--d:1;">Måneden er omme!</h1>
+  </header>
+  <div class="wrap">
+    <div class="end-emoji" id="end-emoji">🎉</div>
+    <h2 class="end-tier pop" id="end-tier" style="--d:1;"></h2>
+    <p class="end-sub pop" id="end-sub" style="--d:2;"></p>
+    <div class="stats pop" style="--d:3;">
+      <div class="stat"><div class="s-num" id="st-inn">0</div><div class="s-lab">Fikk inn</div></div>
+      <div class="stat"><div class="s-num" id="st-ut">0</div><div class="s-lab">Brukte</div></div>
+      <div class="stat"><div class="s-num" id="st-slutt">0</div><div class="s-lab">På konto nå</div></div>
+    </div>
+    <div class="card pop" style="--d:4;">
+      <h2>🗣️ Snakk sammen</h2>
+      <div class="hint">Det viktigste i spillet er ikke tallet – det er samtalen etterpå.</div>
+      <ul class="snakk" id="end-snakk"></ul>
+    </div>
+    <div class="start-row pop" style="--d:5;">
+      <button class="btn btn-primary btn-lg" id="btn-restart">Spill igjen</button>
+      <div style="margin-top:.9rem;"><a href="index.html" class="topnav-back" style="justify-content:center;">Tilbake til Myntland</a></div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* Måneden – spilldata (uendret innhold fra originalen) */
+
+/* ============================================================
+   DATA – NIVÅ 1: «Din måned» (barneøkonomi)
+   Du er deg selv. Start: 150 kr. Ukelønn 75 kr hver søndag.
+   Mål: nå sparemålet du selv velger før dag 28.
+   ============================================================ */
+const L1_GOALS = [
+  { id:'spill',  emoji:'🎮', label:'Nytt spill',           amt:500, sub:'Det nye spillet alle snakker om' },
+  { id:'ball',   emoji:'⚽', label:'Fotball og pumpe',      amt:400, sub:'Ordentlig matchball' },
+  { id:'kino',   emoji:'🍿', label:'Kinotur med en venn',   amt:350, sub:'Billetter og snacks til to' }
+];
+
+const L1_TIMELINE = [
+  { day:1, type:'auto', emoji:'🌅', title:'Måneden starter', 
+    text:'Du har 150 kr i sparegrisen og et mål du vil nå. Hver søndag får du 75 kr i ukelønn. Resten er opp til valgene dine!',
+    lines:[{label:'I sparegrisen fra før', amt:150, startBal:true}] },
+
+  { day:2, type:'ev', emoji:'🥤', title:'Kiosken etter skolen',
+    text:'Gjengen stikker innom kiosken. Alle skal kjøpe slush.',
+    talk:'Hvorfor er det vanskeligere å si nei når alle andre kjøper?',
+    choices:[
+      { t:'Kjøpe stor slush', amt:-35, out:'Mmm, kald og god. Men sparegrisen merket det.',
+        fact:'En slush i uka høres lite ut – men 35 kr hver uke blir <b>1 820 kr i året</b>.' },
+      { t:'Kjøpe en liten is i stedet', amt:-20, out:'Litt kos, litt sparing. Helt grei mellomting!',
+        fact:'Å velge en billigere variant kalles ofte et <b>kompromiss</b> – du får litt av begge deler.' },
+      { t:'Henge med – men drikke vann', amt:0, out:'Du var med på det sosiale uten å bruke en krone.',
+        fact:'Det går helt fint å være med vennene sine <b>uten å kjøpe noe</b>. Det er selskapet som teller.' }
+    ]},
+
+  { day:3, type:'ev', emoji:'🍂', title:'Naboen trenger hjelp',
+    text:'Naboen spør om du kan rake løv i hagen. Det tar en times tid, og du får 50 kr.',
+    talk:'Hva er timelønn? Hva tjente du i timen her?',
+    choices:[
+      { t:'Klart det! Rake løv', amt:50, out:'En time med raking – og 50 kr rett i sparegrisen.',
+        fact:'Penger du tjener på egen innsats kalles <b>inntekt</b>. Småjobber er den vanligste måten barn tjener penger på.' },
+      { t:'Nei takk, jeg skal game', amt:0, out:'Du valgte fritid i stedet for inntekt. Det er også et valg!',
+        fact:'Å si nei til å tjene penger «koster» deg det du kunne tjent. Det kalles <b>alternativkostnad</b>.' }
+    ]},
+
+  { day:5, type:'ev', emoji:'🎮', title:'Salg i spillbutikken!',
+    text:'Favorittspillet ditt har salg på et kult skinn. Bare i dag: 60 kr.',
+    talk:'Er noe billig hvis du ikke trengte det i utgangspunktet?',
+    choices:[
+      { t:'Kjøpe skinnet nå', amt:-60, out:'Karakteren din ser rå ut. Men trengte du det?',
+        fact:'«Bare i dag!» er et <b>salgstriks</b> som skal få deg til å bestemme deg fort. Ekte behov haster sjelden.' },
+      { t:'Stå over – jeg sparer til målet', amt:0, out:'Du lot fristelsen gå forbi. Sparemålet takker deg!',
+        fact:'Et godt triks: vent <b>én dag</b> før du kjøper noe du plutselig fikk lyst på. Ofte er lysten borte dagen etter.' }
+    ]},
+
+  { day:7, type:'auto', emoji:'💰', title:'Søndag – ukelønn!',
+    text:'Første uke er gjort. Ukelønna tikker inn.',
+    lines:[{label:'Ukelønn', amt:75}] },
+
+  { day:8, type:'ev', emoji:'🍼', title:'Drikkeflaska er borte',
+    text:'Drikkeflaska di ble igjen på trening. Du trenger noe å drikke av på skolen.',
+    talk:'Når må man kjøpe nytt, og når kan man klare seg med det man har?',
+    choices:[
+      { t:'Kjøpe en ny, kul flaske', amt:-80, out:'Ny flaske – men 80 kr fattigere.',
+        fact:'Å erstatte ting med en gang er fort gjort. Men sjekk alltid først om du har noe som <b>funker like bra</b>.' },
+      { t:'Bruke den gamle i skapet', amt:0, out:'Den gamle flaska duger fint. Null kroner brukt!',
+        fact:'Å bruke det man har i stedet for å kjøpe nytt sparer både <b>penger og miljø</b>.' },
+      { t:'Sjekke gjenglemt-kassa først', amt:0, out:'Der lå den! Flaska di var levert inn på skolen.',
+        fact:'Mange «tapte» ting dukker opp igjen. Det lønner seg å <b>lete før man kjøper</b>.' }
+    ]},
+
+  { day:9, type:'ev', emoji:'👵', title:'Bestemor på besøk',
+    text:'Bestemor kommer på besøk – og stikker til deg 100 kr! «Bruk dem klokt», sier hun med et blunk.',
+    talk:'Hva betyr det å bruke penger «klokt»? Er kos uklokt?',
+    choices:[
+      { t:'Alt rett i sparegrisen', amt:100, out:'Hele hundrelappen går til sparemålet. Bestemor nikker fornøyd.',
+        fact:'Penger du får i gave er den <b>enkleste sparingen</b> som finnes – du har ikke rukket å venne deg til å ha dem.' },
+      { t:'Spare 50, kose meg for 50', amt:50, out:'Litt godteri i dag, litt nærmere målet. Balanse!',
+        fact:'Mange voksne bruker en regel: <b>litt til kos, mest til mål</b>. Da blir sparing lettere å holde ut.' }
+    ]},
+
+  { day:11, type:'ev', emoji:'🧸', title:'Loppemarked på skolen',
+    text:'Skolen har loppemarked på lørdag. Du har gamle leker og spill du aldri bruker.',
+    talk:'Hva har dere hjemme som noen andre kunne hatt glede av?',
+    choices:[
+      { t:'Rydde, prise og selge', amt:70, out:'Lekene fikk nytt hjem – og du fikk 70 kr!',
+        fact:'Ting du ikke bruker har ofte <b>verdi for andre</b>. Å selge brukt er bra for både lommeboka og kloden.' },
+      { t:'Orker ikke styret', amt:0, out:'Lekene blir liggende i skapet. Kanskje neste gang?',
+        fact:'Det er lov å la være! Men ubrukte ting i skap er litt som <b>penger som sover</b>.' }
+    ]},
+
+  { day:13, type:'ev', emoji:'🏪', title:'Kiosken igjen',
+    text:'«Blir du med på kiosken?» spør bestevennen din. Du kjenner at du har lyst på noe godt.',
+    talk:'Har det noe å si at det er bestevennen som spør?',
+    choices:[
+      { t:'Kjøpe godteri og brus', amt:-40, out:'Lørdagskos på en onsdag. Godt, men det koster.',
+        fact:'Småkjøp i hverdagen kalles ofte <b>lekkasjer</b> – små hull som tømmer sparegrisen sakte.' },
+      { t:'Bli med, men bare henge', amt:0, out:'Du var med på praten – uten å åpne lommeboka.',
+        fact:'Å bli med uten å handle er en <b>superkraft</b> i privatøkonomi. Få klarer det hver gang, og det er greit.' }
+    ]},
+
+  { day:14, type:'auto', emoji:'💰', title:'Søndag – ukelønn!',
+    text:'Halvveis i måneden. Ukelønna kommer.',
+    lines:[{label:'Ukelønn', amt:75}] },
+
+  { day:15, type:'ev', emoji:'🃏', title:'Samlekort-feber',
+    text:'Alle i klassen kjøper samlekort-pakker. «Du KAN få et sjeldent kort verdt hundrevis av kroner!» Én pakke koster 25 kr.',
+    talk:'Hvor stor tror dere sjansen er for et sjeldent kort? Hvem tjener på at den er liten?',
+    choices:[
+      { t:'Kjøpe tre pakker – jakte det sjeldne', amt:-75, out:'Tre pakker, null sjeldne kort. Sånn går det som oftest.',
+        fact:'Å betale for en <b>sjanse</b> til å vinne ligner på lotteri. Butikken tjener nesten alltid mer enn deg.' },
+      { t:'Kjøpe én pakke for moro', amt:-25, out:'Ett vanlig kort og litt spenning. Du satte en grense for deg selv.',
+        fact:'Å bestemme et <b>maksbeløp før</b> du kjøper er et av de beste triksene mot å bruke for mye.' },
+      { t:'Stå over', amt:0, out:'Du beholdt pengene. Sjeldne kort er sjeldne av en grunn.',
+        fact:'Når noe frister fordi «alle gjør det», hjelper det å spørre: <b>ville jeg kjøpt dette hvis ingen andre gjorde det?</b>' }
+    ]},
+
+  { day:16, type:'ev', emoji:'📱', title:'Mobilspillet maser',
+    text:'Spillet du spiller gratis tilbyr «1000 gems» for 49 kr. Knappen blinker.',
+    talk:'Hvorfor tror dere gratis-spill er fulle av kjøpeknapper?',
+    choices:[
+      { t:'Kjøpe gems', amt:-49, out:'1000 gems rikere, 49 kroner fattigere. De varte i to dager.',
+        fact:'Gratis-spill lever av <b>kjøp i appen</b>. Spillet er laget for at du skal få lyst til å betale – det er jobben dets.' },
+      { t:'Spille videre gratis', amt:0, out:'Det tar litt lengre tid uten gems – men det koster ingenting.',
+        fact:'Penger i spill forsvinner når du slutter å spille. Penger i sparegrisen <b>blir værende</b>.' }
+    ]},
+
+  { day:18, type:'ev', emoji:'🚗', title:'Onkel trenger bilvask',
+    text:'Onkelen din tilbyr 60 kr hvis du vasker bilen hans skikkelig – med felger og det hele.',
+    talk:'Hva gjør en jobb verdt mer eller mindre betaling?',
+    choices:[
+      { t:'Vaske bilen', amt:60, out:'Blank bil, stolt onkel, 60 kr til deg.',
+        fact:'Jo flere småjobber du sier ja til, jo fortere vokser sparemålet. Inntekt slår nesten alltid <b>kutting alene</b>.' },
+      { t:'Ikke denne gangen', amt:0, out:'Bilen forblir skitten. Du valgte fri.',
+        fact:'Fritid har også verdi! Poenget er å vite <b>hva du velger bort</b> – ikke å si ja til alt.' }
+    ]},
+
+  { day:20, type:'ev', emoji:'🎁', title:'Bursdag i klassen',
+    text:'En venn i klassen har bursdag på lørdag, og du er invitert. Du må ha med gave.',
+    talk:'Er en dyr gave en bedre gave?',
+    choices:[
+      { t:'Kjøpe en gave', amt:-80, out:'En fin gave fra butikken. Vennen din blir glad.',
+        fact:'Gaver er en <b>fast utgift</b> mange glemmer å planlegge. Voksne sparer ofte til jul og bursdager hele året.' },
+      { t:'Lage noe selv (materialer)', amt:-20, out:'Du lagde noe personlig. Det ble kanskje den beste gaven i selskapet.',
+        fact:'Hjemmelagde gaver koster mindre penger, men mer <b>tid og omtanke</b> – og det merker den som får den.' }
+    ]},
+
+  { day:21, type:'auto', emoji:'💰', title:'Søndag – ukelønn!',
+    text:'Tre uker gjort. Innspurten starter nå.',
+    lines:[{label:'Ukelønn', amt:75}] },
+
+  { day:22, type:'ev', emoji:'🎬', title:'Hele klassen skal på kino',
+    text:'Den nye filmen har premiere, og mange i klassen skal. Billett koster 90 kr – snacks kommer i tillegg.',
+    talk:'Hva er forskjellen på å trenge noe og å ha lyst på noe? Hvor hører kino hjemme?',
+    choices:[
+      { t:'Kino + snacks', amt:-120, out:'Stor kveld med popkorn og det hele!',
+        fact:'Å bruke penger på <b>opplevelser med venner</b> er ikke feil – det er et valg. Poenget er å vite hva det koster.' },
+      { t:'Kino uten snacks', amt:-90, out:'Filmen var like bra uten popkorn. Nesten.',
+        fact:'På kino er det ofte <b>snacksen</b> som koster mest. Et glass vann og mett mage hjemmefra er et klassisk sparetriks.' },
+      { t:'Droppe det denne gangen', amt:0, out:'Du står over. Filmen går sikkert på strømming snart.',
+        fact:'Å vente på at noe blir billigere kalles å <b>utsette forbruk</b> – en av de eldste sparemetodene som finnes.' }
+    ]},
+
+  { day:23, type:'ev', emoji:'🧥', title:'Funn i jakkelomma!',
+    text:'Du tar på deg vårjakka for første gang i år – og finner 50 kr i lomma!',
+    talk:'Hvorfor føles «funnede» penger lettere å bruke enn penger man har spart?',
+    choices:[
+      { t:'Rett i sparegrisen', amt:50, out:'Pluss 50! Du var nærmere målet enn du trodde.',
+        fact:'Uventede penger er lettest å spare – du hadde jo allerede <b>planlagt livet uten dem</b>.' },
+      { t:'Bruke dem på småting', amt:0, out:'Lett tjent, lett brukt. De forsvant i løpet av dagen.',
+        fact:'Penger som kommer lett, går ofte lett. Det kalles gjerne <b>«funnet penger»-effekten</b>.' }
+    ]},
+
+  { day:25, type:'ev', emoji:'♻️', title:'Pantefjellet',
+    text:'Etter klassefesten står det poser fulle av tomflasker i boden. Ingen har giddet å pante dem.',
+    talk:'Hvorfor har vi pant i Norge? Hva skjer med flaskene?',
+    choices:[
+      { t:'Pante alt sammen', amt:45, out:'45 kr ut av panteautomaten. Penger som bare sto i boden!',
+        fact:'Nordmenn panter for over <b>700 millioner kroner i året</b> – og likevel kastes mange flasker i søpla.' },
+      { t:'La dem stå', amt:0, out:'Posene blir stående. Noen andre tar dem kanskje.',
+        fact:'Pant er penger du <b>allerede har betalt</b>. Å la være å pante er å gi dem fra seg.' }
+    ]},
+
+  { day:26, type:'ev', emoji:'🤝', title:'En venn vil låne penger',
+    text:'En god venn mangler 30 kr til noe de skal kjøpe, og lover å betale tilbake på søndag.',
+    talk:'Hva bør man avtale når man låner bort penger – selv til en venn?',
+    choices:[
+      { t:'Låne bort 30 kr', amt:-30, out:'Dere gjør en tydelig avtale: tilbake på søndag.', flag:'laant',
+        fact:'Et lån er en <b>avtale</b>. Tydelige avtaler («når og hvor mye») gjør at lån ikke ødelegger vennskap.' },
+      { t:'Si nei på en grei måte', amt:0, out:'«Jeg sparer til noe, så jeg kan ikke akkurat nå.» Vennen din skjønte det.',
+        fact:'Det er lov å si nei. Et ærlig nei er bedre for vennskapet enn et <b>ja man angrer på</b>.' }
+    ]},
+
+  { day:27, type:'ev', emoji:'🎡', title:'Tivoli i byen!',
+    text:'Siste helg i måneden: tivoli! Vennene dine skal. Billetter og turer koster fort 150 kr.',
+    talk:'Hvordan kan man være med på dyre ting uten å bruke like mye som alle andre?',
+    choices:[
+      { t:'Full pakke – alle turene', amt:-150, out:'Berg-og-dal-bane, sukkerspinn, hele greia. For en dag!',
+        fact:'Store opplevelser kan være <b>verdt pengene</b> – men sjekk alltid hva de gjør med målet ditt først.' },
+      { t:'Bli med, sette grense på 80 kr', amt:-80, out:'To turer og god stemning. Grensa holdt!',
+        fact:'Å bestemme beløpet <b>før du drar</b> er mye lettere enn å stoppe når du først er i gang.' },
+      { t:'Stå over – målet er nært', amt:0, out:'Du droppet tivoliet. Sparemålet er rett rundt hjørnet.',
+        fact:'Å si nei til noe gøy for å nå et mål kalles <b>selvdisiplin</b>. Det er som en muskel – den blir sterkere av trening.' }
+    ]},
+
+  { day:28, type:'auto', emoji:'🌙', title:'Siste dag i måneden',
+    text:'Måneden er over! Ukelønna kommer – og kanskje noen gjorde opp for seg?',
+    lines: s => {
+      const l = [{label:'Ukelønn', amt:75}];
+      if (s.flags.laant) l.push({label:'Vennen din betaler tilbake lånet', amt:30});
+      return l;
+    }}
+];
+
+
+/* ============================================================
+   DATA – NIVÅ 2: «Voksen for en måned»
+   Du er 25 år, har fast jobb og egen leilighet. Start: 4 000 kr.
+   Mål: betal alt i tide og ha minst 3 000 kr i buffer på konto
+   når måneden er omme. Normal, trygg økonomi – ingen katastrofer.
+   ============================================================ */
+const L2_JOBS = [
+  { id:'butikk',    emoji:'🛒', label:'Butikkmedarbeider',    pay:22000, sub:'Vanlig dagtid. Helt grei lønn, fri hver kveld.' },
+  { id:'lager',     emoji:'📦', label:'Lagermedarbeider',     pay:24000, sub:'Kveldsskift. Best lønn – men du går glipp av noen kvelder med venner.' },
+  { id:'barnehage', emoji:'🧒', label:'Barnehageassistent',   pay:21000, sub:'Kort dag. Lavest lønn – men tid til ekstravakter.' }
+];
+const L2_HOMES = [
+  { id:'sentrum',   emoji:'🏙️', label:'Liten leilighet i sentrum', rent:9000, transport:0,   sub:'Dyrest – men du går til jobb. Null reiseutgifter.' },
+  { id:'utenfor',   emoji:'🚌', label:'Leilighet utenfor sentrum', rent:7500, transport:850, sub:'Billigere leie, men du trenger månedskort på bussen.' },
+  { id:'kollektiv', emoji:'🧑‍🤝‍🧑', label:'Kollektiv med to venner',  rent:5500, transport:850, sub:'Billigst! Dere deler strøm og utgifter – og kjøkken.' }
+];
+
+const L2_TIMELINE = [
+  { day:1, type:'auto', emoji:'📋', title:'Den 1. – lønning og regningsdag',
+    text:'Lønna kommer inn – og de store faste utgiftene går ut. Sånn er starten på måneden for de fleste voksne.',
+    lines: s => {
+      const job  = L2_JOBS.find(j=>j.id===s.flags.job);
+      const home = L2_HOMES.find(h=>h.id===s.flags.home);
+      const l = [{label:'Lønn utbetalt ('+job.label.toLowerCase()+')', amt:job.pay},
+                 {label:'Husleie', amt:-home.rent}];
+      if (home.transport) l.push({label:'Månedskort buss', amt:-home.transport});
+      if (s.flags.forsikring) l.push({label:'Innboforsikring', amt:-180});
+      return l;
+    }},
+
+  { day:2, type:'ev', emoji:'🛒', title:'Matplan for måneden',
+    text:'Kjøleskapet er tomt. Hvordan vil du legge opp maten denne måneden? (Beløpet gjelder hele måneden.)',
+    talk:'Hva gjør at mat blir dyrt? Hva spiser dere hjemme som er billig OG godt?',
+    choices:[
+      { t:'Planlegge middager og handle med liste', amt:-3800, out:'Du lager ukesmenyer, handler etter tilbud og bruker restene.',
+        fact:'Matbudsjettet er den utgiften det er <b>lettest å påvirke</b>. Planlegging kan spare en voksen for over 1 000 kr i måneden.' },
+      { t:'Handle litt som det kommer', amt:-5000, out:'Noen gode valg, noen impulskjøp i butikken etter jobb.',
+        fact:'Å handle <b>sulten og uten liste</b> er den klassiske grunnen til at matbudsjettet sprekker.' },
+      { t:'Mye takeaway og kiosk', amt:-7500, out:'Deilig i øyeblikket – men det ble månedens største utgift etter husleia.',
+        fact:'Takeaway koster ofte <b>3–4 ganger mer</b> per middag enn å lage tilsvarende selv.' }
+    ]},
+
+  { day:3, type:'ev', emoji:'🏃', title:'Trening',
+    text:'Du vil komme i form. Treningssenteret koster 399 kr i måneden.',
+    talk:'Når er et abonnement verdt pengene – og når er det bortkastet?',
+    choices:[
+      { t:'Tegne medlemskap', amt:-399, out:'Du har tilgang til alt – nå gjelder det å faktisk gå dit.',
+        fact:'Abonnement lønner seg bare hvis du <b>bruker det</b>. Et ubrukt medlemskap er ren utgift.' },
+      { t:'Kjøpe klippekort (10 klipp)', amt:-150, out:'Du betaler per økt. Passer fint for å prøve seg fram.',
+        fact:'Å <b>prøve billig først</b> før man binder seg til abonnement er smart forbrukervett.' },
+      { t:'Løpe ute og trene hjemme', amt:0, out:'Joggesko og en bakke er gratis. Du kom i gang samme kveld.',
+        fact:'Mye av det dyre finnes i <b>gratisversjon</b>: løping, hjemmetrening, bibliotek, turer.' }
+    ]},
+
+  { day:5, type:'ev', emoji:'📺', title:'Abonnementssjekken',
+    text:'Du oppdager at du betaler for tre strømmetjenester – til sammen 447 kr i måneden. Du bruker mest én av dem.',
+    talk:'Hvor mange abonnementer har en vanlig familie? Vet de det selv?',
+    choices:[
+      { t:'Beholde alle tre', amt:-447, out:'Alt tilgjengelig – men du betaler for ting du knapt bruker.',
+        fact:'Småbeløp som trekkes <b>automatisk</b> er lette å glemme. Mange betaler årevis for ting de ikke bruker.' },
+      { t:'Si opp to, beholde favoritten', amt:-149, out:'Du sa opp to tjenester på fem minutter og sparer nesten 300 kr i måneden.',
+        fact:'En årlig <b>abonnementssjekk</b> er et av de enkleste sparetipsene som finnes: 298 kr spart × 12 = 3 576 kr i året.' },
+      { t:'Si opp alt', amt:0, out:'Null strømming denne måneden. Biblioteket og venner får ta underholdningen.',
+        fact:'Husk: sparing skal være <b>til å leve med</b>. Kutter du alt som er gøy, sprekker planen ofte senere.' }
+    ]},
+
+  { day:6, type:'ev', emoji:'🎂', title:'Spleis på jobben',
+    text:'En kollega fyller 30, og det samles inn 100 kr fra hver til gave.',
+    talk:'Føles det som et valg når alle andre betaler?',
+    choices:[
+      { t:'Bli med på spleisen', amt:-100, out:'Du blir med. Kollegaen ble rørt over gaven.',
+        fact:'Sosiale utgifter på jobb og skole er <b>vanlige og verdt å budsjettere</b> – de kommer oftere enn man tror.' },
+      { t:'Stå over denne gangen', amt:0, out:'Du sier høflig nei denne gangen og signerer kortet i stedet.',
+        fact:'Du bestemmer over egen lommebok. Et vennlig «ikke denne gangen» er <b>helt greit</b>.' }
+    ]},
+
+  { day:8, type:'ev', emoji:'🎸', title:'Konsert på fredag',
+    text:'Bandet du elsker spiller i byen. Vennene dine har kjøpt billetter til 650 kr.',
+    talk:'Hva er en opplevelse verdt? Kan man måle det i kroner?',
+    cond: s => s.flags.job !== 'lager',
+    choices:[
+      { t:'Kjøpe full billett', amt:-650, out:'Du sto på første rad. Det blir et minne for livet.',
+        fact:'Forskning tyder på at <b>opplevelser gir mer varig glede</b> enn ting – men de må fortsatt få plass i budsjettet.' },
+      { t:'Billigbillett bakerst', amt:-350, out:'Litt lenger bak, akkurat samme musikk.',
+        fact:'Mange dyre ting har en <b>billigversjon</b>: bakerste rad, matinéforestilling, brukt i stedet for nytt.' },
+      { t:'Droppe det – høre albumet hjemme', amt:0, out:'Du inviterte en venn hjem og hørte albumet høyt i stedet.',
+        fact:'Å si nei til én ting er ofte å si <b>ja til noe annet</b> – for eksempel bufferen din.' }
+    ]},
+  { day:8, type:'auto', emoji:'🌃', title:'Kveldsskift', cond: s => s.flags.job === 'lager',
+    text:'Vennene dine dro på konsert i kveld – men du står på lageret. Kveldsskift betyr bedre lønn, men færre kvelder fri. Du sparte 650 kr uten å velge det selv.',
+    lines:[] },
+
+  { day:10, type:'auto', emoji:'📱', title:'Mobilregningen',
+    text:'Mobilabonnementet trekkes automatisk.',
+    lines:[{label:'Mobilabonnement', amt:-350}] },
+
+  { day:11, type:'ev', emoji:'🎧', title:'Nye hodetelefoner?',
+    text:'Hodetelefonene dine funker fint, men det har kommet en ny modell med bedre lyd. 1 200 kr.',
+    talk:'Hvordan vet man forskjell på «trenger» og «har lyst på» når man er voksen?',
+    choices:[
+      { t:'Kjøpe de nye', amt:-1200, out:'Lyden er bedre. Men de gamle lå fortsatt i skuffen og virket.',
+        fact:'Å bytte ut ting <b>som virker</b> er den vanligste formen for unødvendig forbruk blant voksne.' },
+      { t:'Beholde de gamle', amt:0, out:'Du hører på musikk akkurat som før – med 1 200 kr mer på konto.',
+        fact:'Spørsmålet «<b>hva er galt med den jeg har?</b>» stopper overraskende mange kjøp.' }
+    ]},
+
+  { day:12, type:'ev', emoji:'⏰', title:'Tilbud om ekstravakt',
+    text:'Sjefen spør om du kan ta en ekstravakt på lørdag. Du får 900 kr – men du går glipp av fotballkampen med vennene dine.',
+    talk:'Hvor mye fritid er det verdt å bytte bort for penger?',
+    choices:[
+      { t:'Ta vakta', amt:900, out:'Lang lørdag – men kontoen vokste med 900 kr.',
+        fact:'Ekstra inntekt er ofte <b>raskeste vei</b> til et sparemål. Men pass på balansen – fritid har også verdi.' },
+      { t:'Si nei – kampen venter', amt:0, out:'Dere vant 3–2, og du var der. Noen ting kan ikke kjøpes.',
+        fact:'Økonomi handler ikke om å si ja til alt som gir penger, men om å <b>velge med åpne øyne</b>.' }
+    ]},
+
+  { day:14, type:'ev', emoji:'🚲', title:'Punktering!',
+    text:'Sykkelen din punkterer på vei hjem. Du bruker den hver dag.',
+    talk:'Hva lønner seg på kort sikt – og på lang sikt?',
+    choices:[
+      { t:'Levere på verksted', amt:-450, out:'Proft gjort på en dag. Men det kostet.',
+        fact:'Å betale andre for jobben kjøper deg <b>tid</b>. Noen ganger er det verdt det – ikke alltid.' },
+      { t:'Kjøpe lappesaker og fikse selv', amt:-150, out:'En YouTube-video og en halvtime senere ruller du igjen. Mestring!',
+        fact:'Å lære å fikse ting selv er en av de mest <b>lønnsomme ferdighetene</b> som finnes.' },
+      { t:'La sykkelen stå, ta buss resten av måneden', amt:-300, out:'Enkeltbilletter spiser seg fort opp – og sykkelen står fortsatt punktert.',
+        fact:'Å <b>utsette en liten reparasjon</b> blir ofte dyrere enn å ta den med en gang.' }
+    ]},
+
+  { day:15, type:'auto', emoji:'⚡', title:'Strømregningen',
+    text:'Midt i måneden kommer strømregningen.',
+    lines: s => s.flags.home === 'kollektiv'
+      ? [{label:'Strøm – din andel (delt på tre)', amt:-250}]
+      : [{label:'Strøm', amt:-600}] },
+
+  { day:16, type:'ev', emoji:'🤝', title:'En venn vil låne 1 000 kr',
+    text:'En god venn er blakk før lønning og spør om å låne 1 000 kr. Du vet at vennen din pleier å gjøre opp for seg.',
+    talk:'Hva kan skje med et vennskap hvis penger ikke betales tilbake? Hvordan unngår man det?',
+    choices:[
+      { t:'Låne bort 1 000 med tydelig avtale', amt:-1000, out:'Dere avtaler skriftlig: 500 tilbake den 26., resten neste måned.', flag:'laant1000',
+        fact:'Regelen mange voksne bruker: lån aldri bort mer enn du <b>tåler å miste</b> – og gjør alltid avtalen tydelig.' },
+      { t:'Låne bort 500 – det jeg tåler', amt:-500, out:'«500 klarer jeg, tilbake den 26.» Vennen din er kjempetakknemlig.', flag:'laant500',
+        fact:'Å låne bort <b>mindre enn det spørres om</b> er en ærlig mellomløsning som beskytter begge.' },
+      { t:'Si nei, men tilby middag', amt:-100, out:'Du sier ærlig at du bygger buffer – og inviterer på taco i stedet.',
+        fact:'Man kan hjelpe på andre måter enn med lån. <b>Et måltid og en prat</b> er ofte verdt mer.' }
+    ]},
+
+  { day:18, type:'ev', emoji:'💐', title:'Mammas bursdag',
+    text:'Mamma fyller år på søndag. Du vil gjøre noe hyggelig.',
+    talk:'Hva har gjort størst inntrykk på dere – en dyr gave eller noe noen gjorde for dere?',
+    choices:[
+      { t:'Stor blomsterbukett og gave', amt:-300, out:'Mamma ble glad. Blomster blir man alltid glad av.',
+        fact:'Gaver til familie er <b>forutsigbare utgifter</b> – de samme datoene kommer hvert år. Planlegg dem inn.' },
+      { t:'Lage bursdagsmiddag for henne', amt:-100, out:'Du lagde favorittretten hennes. Hun snakket om det i flere uker.',
+        fact:'Tid og innsats oppleves ofte som <b>mer personlig</b> enn pris. Og det vet faktisk mammaer.' }
+    ]},
+
+  { day:20, type:'auto', emoji:'💧', title:'Vannlekkasje hos naboen!',
+    text:'Naboen over deg har hatt en vannlekkasje, og det har dryppet ned på TV-en din. Den må erstattes.',
+    lines: s => s.flags.forsikring
+      ? [{label:'Innboforsikringen dekker ny TV – du betaler bare egenandel', amt:-500}]
+      : [{label:'Ny TV – uten forsikring må du betale alt selv', amt:-3500}] },
+
+  { day:21, type:'ev', emoji:'🧥', title:'Vinterjakke på sommersalg',
+    text:'Jakka di er utslitt, og du MÅ ha ny før vinteren. Nå er fjorårsmodellen på salg: 900 kr i stedet for 1 800 kr.',
+    talk:'Når lønner det seg å kjøpe på salg – og når er salg bare en felle?',
+    choices:[
+      { t:'Slå til nå – halv pris', amt:-900, out:'Du kjøpte noe du uansett måtte ha – til halv pris. Godt planlagt!',
+        fact:'Salg lønner seg når du kjøper noe du <b>likevel trengte</b> og har råd til. Da sparer du ekte penger.' },
+      { t:'Vente til vinteren', amt:0, out:'Du venter – men til vinteren koster samme jakke sannsynligvis 1 800 kr.',
+        fact:'Å planlegge kjøp <b>i forkant</b> (jakke om sommeren, ski om våren) er slik erfarne sparere handler.' }
+    ]},
+
+  { day:22, type:'ev', emoji:'🧒', title:'Ekstravakt i barnehagen', cond: s => s.flags.job === 'barnehage',
+    text:'En kollega er syk, og styreren spør om du kan ta en ekstra vakt i morgen. 800 kr.',
+    talk:'Hvilke jobber gir mulighet til å tjene ekstra når man trenger det?',
+    choices:[
+      { t:'Ta vakta', amt:800, out:'En dag ekstra med ungene – og 800 kr inn på konto.',
+        fact:'Kortere arbeidsdager gir rom for <b>ekstra inntekt</b> når du trenger det. Det er en verdi lønnsslippen ikke viser.' },
+      { t:'Si nei denne gangen', amt:0, out:'Du trengte hviledagen. Det er også å ta vare på seg selv.',
+        fact:'Å si nei til ekstra jobb er ikke latskap – <b>hvile er en investering</b> i å orke jobben du allerede har.' }
+    ]},
+
+  { day:23, type:'ev', emoji:'🏔️', title:'Helgetur?',
+    text:'Vennegjengen planlegger helgetur. Tre alternativer er på bordet.',
+    talk:'Hvordan kan en vennegjeng planlegge noe alle har råd til?',
+    choices:[
+      { t:'Hyttetur med spleis', amt:-800, out:'Hel helg på hytta med gjengen. Verdt hver krone?',
+        fact:'Felles opplevelser kan <b>deles på flere</b> – spleis på hytte er billigere per person enn hotell.' },
+      { t:'Dagstur med matpakke', amt:-200, out:'Topptur, bål og matpakke. Nesten gratis – og kanskje like gøy.',
+        fact:'Naturen er Norges <b>billigste fornøyelsespark</b>. Dagsturer gir mye opplevelse per krone.' },
+      { t:'Bli hjemme og hvile', amt:0, out:'En rolig helg hjemme. Kontoen og kroppen takker.',
+        fact:'FOMO («fear of missing out») er en av de sterkeste <b>pengedriverne</b> som finnes. Av og til er hjemme best.' }
+    ]},
+
+  { day:24, type:'auto', emoji:'🍲', title:'Søndagsmiddag hos foreldrene dine',
+    text:'Du blir invitert hjem på søndagsmiddag – og får med deg en pose rester og en boks lasagne hjem. Matkontoen merker det.',
+    lines:[{label:'Sparte matpenger (rester med hjem)', amt:200}] },
+
+  { day:26, type:'auto', emoji:'🤝', title:'Den 26. – vennen gjør opp',
+    cond: s => s.flags.laant1000 || s.flags.laant500,
+    text:'Som avtalt: vennen din betaler tilbake i dag. Tydelige avtaler virker!',
+    lines: s => [{label: s.flags.laant1000 ? 'Tilbakebetaling (500 nå, resten neste måned)' : 'Hele lånet tilbakebetalt', amt:500}] },
+
+  { day:27, type:'ev', emoji:'🌮', title:'Siste helg i måneden',
+    text:'Måneden er nesten i mål. Vennene dine vil feire helgen – ute eller hjemme?',
+    talk:'Trenger en god kveld å koste mye?',
+    choices:[
+      { t:'Restaurant med gjengen', amt:-600, out:'God mat, god stemning, stor regning.',
+        fact:'Å spise ute koster typisk <b>3–5 ganger mer</b> enn samme måltid hjemme.' },
+      { t:'Tacokveld hjemme – alle tar med noe', amt:-250, out:'Fullt hus, fjell av taco, og regningen delt på alle.',
+        fact:'«<b>Alle tar med noe</b>» er den eldste og beste spareoppskriften for sosiale kvelder.' },
+      { t:'Rolig kveld alene', amt:0, out:'Te, serie og tidlig kveld. Måneden er snart i boks.',
+        fact:'Den billigste kvelden er ikke alltid den kjipeste. <b>Gratis og godt</b> finnes.' }
+    ]},
+
+  { day:28, type:'auto', emoji:'🌙', title:'Siste dag i måneden',
+    text:'Måneden er omme. I morgen kommer ny lønn – men først: hvordan gikk det med bufferen din?',
+    lines:[] }
+];
+
+</script>
+<script>
+/* ============================================================
+   MOTOR – skjermbytte, valg, saldo, lyd, slutt
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const fmt = n => (n<0?'−':'') + Math.abs(n).toLocaleString('nb-NO') + ' kr';
+const amtCls = a => a<0 ? 'minus' : (a>0 ? 'plus' : 'zero');
+const amtTxt = a => a<0 ? '−'+Math.abs(a).toLocaleString('nb-NO')+' kr' : (a>0 ? '+'+a.toLocaleString('nb-NO')+' kr' : '0 kr');
+const DAGER = ['mandag','tirsdag','onsdag','torsdag','fredag','lørdag','søndag'];
+
+let S = null;
+let selLevel = 1, selMode = 'alene';
+let shownBal = 0;
+
+/* ── Små syntetiserte spill-lyder (med av/på-knapp) ── */
+const SND = {
+  on: (()=>{ try{ return localStorage.getItem('maaneden-lyd') !== 'av'; }catch(e){ return true; } })(),
+  ctx: null,
+  play(name){
+    if (!this.on) return;
+    try{
+      this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const c = this.ctx;
+      if (c.state === 'suspended') c.resume();
+      const now = c.currentTime;
+      const note = (f, at, dur, type, vol)=>{
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = type; o.frequency.value = f;
+        g.gain.setValueAtTime(.0001, now+at);
+        g.gain.exponentialRampToValueAtTime(vol, now+at+.012);
+        g.gain.exponentialRampToValueAtTime(.0001, now+at+dur);
+        o.connect(g); g.connect(c.destination);
+        o.start(now+at); o.stop(now+at+dur+.05);
+      };
+      if (name==='klikk'){ note(620,0,.07,'triangle',.07); }
+      else if (name==='mynt'){ note(880,0,.09,'sine',.1); note(1318,.07,.2,'sine',.1); }
+      else if (name==='ned'){ note(330,0,.11,'triangle',.08); note(220,.09,.18,'triangle',.08); }
+      else if (name==='jubel'){ [523,659,784,1047].forEach((f,i)=>note(f,i*.09,.22,'sine',.09)); }
+    }catch(e){}
+  }
+};
+function syncLydBtn(){ $('btn-lyd').textContent = SND.on ? '🔊' : '🔇'; }
+$('btn-lyd').addEventListener('click', ()=>{
+  SND.on = !SND.on;
+  try{ localStorage.setItem('maaneden-lyd', SND.on ? 'paa' : 'av'); }catch(e){}
+  syncLydBtn();
+  if (SND.on) SND.play('mynt');
+});
+syncLydBtn();
+
+/* ── Entranse-animasjon: kobles på i et kort vindu, så base alltid er synlig ── */
+let _animT = null;
+function animateIn(){
+  document.body.classList.remove('is-animating');
+  void document.body.offsetWidth;
+  document.body.classList.add('is-animating');
+  clearTimeout(_animT);
+  _animT = setTimeout(()=>document.body.classList.remove('is-animating'), 1600);
+}
+
+/* ── Scene: svevende mynter ── */
+(function spawnCoins(){
+  const host = $('scene-coins');
+  for (let i=0; i<7; i++){
+    const c = document.createElement('span');
+    c.className = 'coin';
+    c.style.left = (4 + Math.random()*92) + '%';
+    c.style.animationDuration = (15 + Math.random()*14) + 's';
+    c.style.animationDelay = (-Math.random()*22) + 's';
+    if (Math.random() < .4){ c.style.width = c.style.height = '30px'; c.style.fontSize = '11px'; }
+    host.appendChild(c);
+  }
+})();
+
+/* ── Scene: trær og busker (samme SVG-er som i Klasseportalen) ── */
+(function spawnTrees(){
+  const PINE = '<svg viewBox="0 0 160 270">'
+    + '<rect x="68" y="196" width="24" height="66" rx="9" fill="#b97a32" stroke="#2a1f3d" stroke-width="8"></rect>'
+    + '<polygon points="80,28 140,124 20,124" fill="#5d9417" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"></polygon>'
+    + '<polygon points="80,82 150,176 10,176" fill="#7bb026" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"></polygon>'
+    + '<polygon points="80,134 158,214 2,214" fill="#8fbb1e" stroke="#2a1f3d" stroke-width="8" stroke-linejoin="round"></polygon>'
+    + '</svg>';
+  const BUSH = '<svg viewBox="0 0 160 244">'
+    + '<rect x="68" y="152" width="24" height="88" rx="9" fill="#b97a32" stroke="#2a1f3d" stroke-width="8"></rect>'
+    + '<circle cx="80" cy="94" r="68" fill="#7bb026" stroke="#2a1f3d" stroke-width="8"></circle>'
+    + '<circle cx="56" cy="72" r="20" fill="#a6d33a"></circle>'
+    + '<circle cx="114" cy="116" r="15" fill="#e3a82a" stroke="#2a1f3d" stroke-width="6"></circle>'
+    + '<circle cx="114" cy="116" r="5" fill="#fff3c2"></circle>'
+    + '</svg>';
+  const smal = window.innerWidth < 700;          /* færre og mindre trær på mobil */
+  const k = smal ? .62 : 1;
+  const TRAER = [
+    { svg:PINE, left:'-2%', w:200, bottom:48, dur:6.0 },
+    { svg:BUSH, left:'7%',  w:130, bottom:54, dur:4.6 },
+    { svg:PINE, left:'17%', w:150, bottom:52, dur:5.4, skjulSmal:true },
+    { svg:BUSH, left:'30%', w:105, bottom:56, dur:4.2, skjulSmal:true },
+    { svg:PINE, left:'62%', w:110, bottom:58, dur:5.2, skjulSmal:true },
+    { svg:BUSH, left:'73%', w:115, bottom:56, dur:4.4 },
+    { svg:PINE, left:'83%', w:160, bottom:52, dur:5.6 },
+    { svg:PINE, left:'95%', w:210, bottom:48, dur:6.2 }
+  ];
+  const host = $('scene-trees');
+  TRAER.forEach(t=>{
+    if (smal && t.skjulSmal) return;
+    const d = document.createElement('div');
+    d.className = 'tree sway';
+    d.style.cssText = 'left:'+t.left+';width:'+Math.round(t.w*k)+'px;bottom:'+t.bottom+'px;animation-duration:'+t.dur+'s;animation-delay:'+(-Math.random()*4)+'s';
+    d.innerHTML = t.svg;
+    host.appendChild(d);
+  });
+})();
+
+/* ── Saldo som teller seg opp/ned ── */
+function animateNumber(el, from, to){
+  if (from === to){ el.textContent = fmt(to); return; }
+  const t0 = performance.now(), dur = 550;
+  (function tick(t){
+    const p = Math.min(1, (t - t0) / dur);
+    const v = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+    el.textContent = fmt(v);
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+  /* fallback: hvis rAF struper (bakgrunnsfane), sørg for riktig sluttall */
+  setTimeout(()=>{ el.textContent = fmt(to); }, dur + 120);
+}
+/* Svevende «+75 kr»-merke ved saldoen */
+function showDelta(a){
+  if (!a) return;
+  SND.play(a > 0 ? 'mynt' : 'ned');
+  const host = $('gt-bal-wrap') || $('gt-bal').parentElement;
+  const c = document.createElement('span');
+  c.className = 'delta-chip ' + (a > 0 ? 'up' : 'down');
+  c.textContent = amtTxt(a);
+  c.style.left = (10 + Math.random() * 40) + '%';
+  host.appendChild(c);
+  setTimeout(()=>c.remove(), 1300);
+}
+/* Konfetti – hoppes over ved «reduser bevegelse» */
+function confetti(n){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const farger = ['#e3a82a','#e64b3b','#7bb026','#27b3c6','#ffd96b','#fff5c7'];
+  for (let i = 0; i < n; i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = farger[i % farger.length];
+    const s = 6 + Math.random() * 7;
+    p.style.width = s + 'px'; p.style.height = s + 'px';
+    if (Math.random() < .4) p.style.borderRadius = '50%';
+    else p.style.border = '2px solid rgba(42,31,61,.35)';
+    p.style.animationDuration = (2.2 + Math.random() * 1.8) + 's';
+    p.style.animationDelay = (Math.random() * .5) + 's';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 5000);
+  }
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0,0);
+  animateIn();
+}
+function pickOne(row, el){
+  row.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ── Oppsett ── */
+$('level-row').addEventListener('click', e=>{
+  const o = e.target.closest('.opt'); if(!o) return;
+  pickOne($('level-row'), o); selLevel = +o.dataset.level; SND.play('klikk');
+});
+$('mode-row').addEventListener('click', e=>{
+  const o = e.target.closest('.opt'); if(!o) return;
+  pickOne($('mode-row'), o); selMode = o.dataset.mode; SND.play('klikk');
+});
+$('btn-to-intro').addEventListener('click', ()=>{
+  SND.play('klikk');
+  document.body.classList.toggle('klasse', selMode==='klasse');
+  buildIntro();
+  showScreen('screen-intro');
+});
+
+/* ── Intro / startvalg ── */
+const introState = {};
+function optHtml(o, key, extra){
+  return '<div class="opt" data-key="'+key+'" data-id="'+o.id+'">'
+    + '<div class="o-emoji">'+o.emoji+'</div>'
+    + '<div class="o-title">'+o.label+'</div>'
+    + '<div class="o-sub">'+o.sub+'</div>'
+    + (extra ? '<div class="o-amt">'+extra+'</div>' : '')
+    + '</div>';
+}
+function buildIntro(){
+  introState.goal = null; introState.job = null; introState.home = null; introState.forsikring = null;
+  const body = $('intro-body');
+  if (selLevel === 1){
+    $('intro-title').textContent = 'Din måned';
+    $('intro-sub').textContent = 'Du er deg selv. Du har 150 kr i sparegrisen og får 75 kr i ukelønn hver søndag. Resten avgjør du – dag for dag.';
+    body.innerHTML =
+      '<div class="card pop" style="--d:3;"><h2><span class="step-dot">🎯</span>Velg sparemålet ditt</h2>'
+      + '<div class="hint">Hva vil du ha spart nok til før måneden er omme?</div>'
+      + '<div class="opt-row" id="goal-row">'
+      + L1_GOALS.map(g=>optHtml(g,'goal', g.amt.toLocaleString('nb-NO')+' kr')).join('')
+      + '</div></div>'
+      + '<div class="start-row pop" style="--d:4;"><button class="btn btn-green btn-lg" id="btn-start" disabled>Start måneden →</button></div>';
+  } else {
+    $('intro-title').textContent = 'Voksen for en måned';
+    $('intro-sub').textContent = 'Du er 25 år og har nettopp flyttet for deg selv. Du har 4 000 kr på konto. Målet: betal alle regninger i tide – og ha minst 3 000 kr i buffer når måneden er omme.';
+    body.innerHTML =
+      '<div class="card pop" style="--d:3;"><h2><span class="step-dot">1</span>Velg jobb</h2><div class="hint">Lønna kommer den 1. Alle jobbene er helt vanlige, trygge jobber – men de gir litt ulik hverdag.</div>'
+      + '<div class="opt-row" id="job-row">'
+      + L2_JOBS.map(j=>optHtml(j,'job','Utbetalt: '+j.pay.toLocaleString('nb-NO')+' kr/mnd')).join('')
+      + '</div></div>'
+      + '<div class="card pop" style="--d:4;"><h2><span class="step-dot">2</span>Velg bolig</h2><div class="hint">Husleia er den største utgiften i de fleste voksne budsjetter. Nært og dyrt – eller billig og lengre unna?</div>'
+      + '<div class="opt-row" id="home-row">'
+      + L2_HOMES.map(h=>optHtml(h,'home','Leie: '+h.rent.toLocaleString('nb-NO')+' kr'+(h.transport?' + buss '+h.transport+' kr':''))).join('')
+      + '</div></div>'
+      + '<div class="card pop" style="--d:5;"><h2><span class="step-dot">3</span>Innboforsikring?</h2><div class="hint">Forsikring koster litt hver måned – og er mest verdt den dagen noe går galt.</div>'
+      + '<div class="opt-row" id="ins-row">'
+      + optHtml({id:'ja', emoji:'☔', label:'Ja takk', sub:'Tingene dine er dekket hvis uhellet er ute'},'forsikring','−180 kr/mnd')
+      + optHtml({id:'nei', emoji:'🎲', label:'Nei, jeg tar sjansen', sub:'Sparer 180 kr i måneden – så lenge alt går bra'},'forsikring','0 kr')
+      + '</div></div>'
+      + '<div class="start-row pop" style="--d:6;"><button class="btn btn-green btn-lg" id="btn-start" disabled>Start måneden →</button></div>';
+  }
+  body.onclick = e=>{
+    const o = e.target.closest('.opt'); if(!o) return;
+    pickOne(o.parentElement, o);
+    SND.play('klikk');
+    introState[o.dataset.key] = o.dataset.id;
+    const ready = selLevel===1 ? !!introState.goal
+      : (introState.job && introState.home && introState.forsikring);
+    $('btn-start').disabled = !ready;
+  };
+  $('btn-start').addEventListener('click', startGame);
+}
+
+/* ── Spillstart ── */
+function startGame(){
+  if ($('btn-start').disabled) return;
+  SND.play('klikk');
+  if (selLevel === 1){
+    const g = L1_GOALS.find(x=>x.id===introState.goal);
+    S = { level:1, bal:0, earned:0, spent:0, flags:{},
+          goal:g.amt, goalLabel:g.emoji+' '+g.label, idx:-1, timeline:L1_TIMELINE };
+  } else {
+    S = { level:2, bal:4000, earned:0, spent:0,
+          flags:{ job:introState.job, home:introState.home, forsikring:introState.forsikring==='ja' },
+          goal:3000, goalLabel:'🛡️ Buffer-mål', idx:-1, timeline:L2_TIMELINE };
+  }
+  shownBal = S.bal;
+  updateTop(1);
+  showScreen('screen-game');
+  nextStep();
+}
+
+function applyAmt(a, isStart){
+  S.bal += a;
+  if (!isStart){
+    if (a>0) S.earned += a; else S.spent += -a;
+    showDelta(a);
+  }
+}
+function updateTop(day){
+  $('gt-day').textContent = 'Dag '+day+' · '+DAGER[(day-1)%7];
+  const b = $('gt-bal');
+  if (S.bal !== shownBal){
+    animateNumber(b, shownBal, S.bal);
+    b.classList.remove('flash-up','flash-down');
+    void b.offsetWidth; /* restart animasjonen */
+    b.classList.add(S.bal > shownBal ? 'flash-up' : 'flash-down');
+    const coin = $('gt-coin');
+    coin.classList.remove('spin-once'); void coin.offsetWidth; coin.classList.add('spin-once');
+    shownBal = S.bal;
+  } else {
+    b.textContent = fmt(S.bal);
+  }
+  b.classList.toggle('neg', S.bal<0);
+  const dots = $('day-dots');
+  if (dots.childElementCount === 0)
+    for (let i = 0; i < 28; i++){ const d = document.createElement('div'); d.className = 'dd'; dots.appendChild(d); }
+  [...dots.children].forEach((d,i)=>{
+    d.classList.toggle('on', i+1 < day);
+    d.classList.toggle('now', i+1 === day);
+  });
+  const pct = Math.max(0, Math.min(100, Math.round(100*S.bal/S.goal)));
+  $('gt-goal-label').textContent = S.goalLabel+' – '+S.goal.toLocaleString('nb-NO')+' kr';
+  $('gt-goal-pct').textContent = pct+' %';
+  const f = $('gt-goal-fill');
+  f.style.width = pct+'%';
+  f.classList.toggle('done', S.bal>=S.goal);
+  if (S.bal >= S.goal && !S.flags._jubel){ S.flags._jubel = true; confetti(70); SND.play('jubel'); }
+}
+
+/* ── Stegmotor ── */
+function nextStep(){
+  do { S.idx++; }
+  while (S.idx < S.timeline.length && S.timeline[S.idx].cond && !S.timeline[S.idx].cond(S));
+  if (S.idx >= S.timeline.length){ endGame(); return; }
+  renderStep(S.timeline[S.idx]);
+}
+function renderStep(st){
+  const card = $('ev-card');
+  let html = '<div class="ev-day">Dag '+st.day+' · '+DAGER[(st.day-1)%7]+'</div>'
+    + '<div><span class="ev-emoji">'+st.emoji+'</span></div>'
+    + '<h2>'+st.title+'</h2>'
+    + '<p class="ev-text">'+st.text+'</p>';
+
+  if (st.type === 'auto'){
+    const lines = typeof st.lines === 'function' ? st.lines(S) : st.lines;
+    if (lines.length){
+      html += '<div class="auto-lines">'
+        + lines.map(l=>'<div class="auto-line"><span>'+l.label+'</span><span class="c-amt '+amtCls(l.amt)+'">'+amtTxt(l.amt)+'</span></div>').join('')
+        + '</div>';
+      lines.forEach(l=>applyAmt(l.amt, !!l.startBal));
+    }
+    html += '<div class="next-row"><button class="btn btn-primary btn-lg" id="btn-next">Neste →</button></div>';
+    card.innerHTML = html;
+    dealCard(card);
+    updateTop(st.day);
+    $('btn-next').addEventListener('click', ()=>{ SND.play('klikk'); nextStep(); });
+  } else {
+    if (st.talk) html += '<div class="talk">🗣️ <b>Snakk sammen først:</b> '+st.talk+'</div>';
+    // «Ikke råd»-sperre: valg som setter saldoen under null låses,
+    // så lenge minst ett valg er mulig (ellers må man få lov).
+    const affordable = st.choices.some(c => S.bal + c.amt >= 0);
+    html += '<div class="choices">'
+      + st.choices.map((c,i)=>{
+          const locked = affordable && (S.bal + c.amt < 0);
+          return '<button class="choice'+(locked?' dim':'')+'" data-i="'+i+'"'+(locked?' disabled':'')+'>'
+            + '<span>'+c.t+'</span><span class="c-amt '+amtCls(c.amt)+'">'+amtTxt(c.amt)+(locked?' · ikke råd':'')+'</span></button>';
+        }).join('')
+      + '</div><div id="ev-after"></div>';
+    card.innerHTML = html;
+    dealCard(card);
+    updateTop(st.day);
+    card.querySelectorAll('.choice').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const c = st.choices[+btn.dataset.i];
+        card.querySelectorAll('.choice').forEach(b=>b.classList.add(b===btn?'picked':'dim'));
+        if (c.amt === 0) SND.play('klikk');
+        applyAmt(c.amt, false);
+        if (c.flag) S.flags[c.flag] = true;
+        updateTop(st.day);
+        $('ev-after').innerHTML =
+          '<div class="outcome">'+c.out+'</div>'
+          + (c.fact ? '<div class="fact"><span class="tape"></span>💡 <b>Visste du?</b> '+c.fact+'</div>' : '')
+          + '<div class="next-row"><button class="btn btn-primary btn-lg" id="btn-next">Neste →</button></div>';
+        dealAfter($('ev-after'));
+        $('btn-next').addEventListener('click', ()=>{ SND.play('klikk'); nextStep(); });
+        const nb = $('btn-next');
+        const y = nb.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.62;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }, {once:true});
+    });
+  }
+}
+/* Veggklokke-mønster: animasjonsklassene fjernes alltid av en timer,
+   slik at basisstilen (synlig) gjelder selv om animasjoner fryses
+   (bakgrunnsfane, utskrift, skjermbilde-kapring). */
+let _dealT = null;
+function dealCard(card){
+  card.classList.remove('deal');
+  void card.offsetWidth;
+  card.classList.add('deal');
+  clearTimeout(_dealT);
+  _dealT = setTimeout(()=>card.classList.remove('deal'), 700);
+}
+let _dealAfterT = null;
+function dealAfter(el){
+  el.classList.add('deal-in');
+  clearTimeout(_dealAfterT);
+  _dealAfterT = setTimeout(()=>el.classList.remove('deal-in'), 900);
+}
+
+/* ── Slutt ── */
+const SNAKK1 = [
+  'Hva var det vanskeligste valget i løpet av måneden? Hvorfor?',
+  'Hva er forskjellen på å trenge noe og å ha lyst på noe? Finn eksempler fra spillet.',
+  'Noen valg ga penger inn – men kostet tid eller fritid. Var de verdt det?',
+  'Hvis du fikk en måned til: hva ville du gjort annerledes?'
+];
+const SNAKK2 = [
+  'Hvilke utgifter var umulige å velge bort – og hvilke valgte du helt selv?',
+  'Mange bruker 50-30-20-regelen: 50 % til det du MÅ, 30 % til det du VIL, 20 % til sparing. Hvordan så din måned ut?',
+  'Hva er en buffer – og hvorfor sover du kanskje bedre med 3 000 kr på konto?',
+  'Var forsikringen verdt det denne måneden? Ville svaret vært det samme hvis lekkasjen aldri skjedde?'
+];
+function endGame(){
+  let emoji, tier, sub;
+  if (S.level === 1){
+    if (S.bal >= S.goal){ emoji='🎉'; tier='Du nådde sparemålet!';
+      sub='Du endte med '+fmt(S.bal)+' – nok til '+S.goalLabel+'! Valgene dine gjennom måneden gjorde jobben.'; }
+    else if (S.bal >= S.goal*0.75){ emoji='🌟'; tier='Så nære!';
+      sub='Du endte med '+fmt(S.bal)+' av '+S.goal.toLocaleString('nb-NO')+' kr. Ett eller to andre valg, så hadde du vært i mål. Hvilke?'; }
+    else { emoji='💭'; tier='Pengene gikk til andre ting';
+      sub='Du endte med '+fmt(S.bal)+'. Kanskje var noen av tingene verdt det? Se på valgene dine – hva ville du gjort annerledes?'; }
+  } else {
+    if (S.bal >= 8000){ emoji='🏆'; tier='Buffermester!';
+      sub='Alle regninger betalt – og '+fmt(S.bal)+' på konto. Du har bygget en solid buffer OG levd et liv. Imponerende måned!'; }
+    else if (S.bal >= 3000){ emoji='🎉'; tier='I mål!';
+      sub='Alle regninger betalt og '+fmt(S.bal)+' i buffer. Akkurat slik en trygg voksenøkonomi ser ut.'; }
+    else if (S.bal >= 0){ emoji='🌟'; tier='Nesten i mål';
+      sub='Du endte på '+fmt(S.bal)+' – i pluss, men under buffer-målet på 3 000 kr. Hvilke valg kostet mest?'; }
+    else { emoji='💭'; tier='Lærepenger';
+      sub='Kontoen endte på '+fmt(S.bal)+'. I spillet koster det ingenting – i virkeligheten hadde dette blitt en dyr måned. Hva var de store utgiftene?'; }
+  }
+  $('end-emoji').textContent = emoji;
+  $('end-tier').textContent = tier;
+  $('end-sub').textContent = sub;
+  animateNumber($('st-inn'), 0, S.earned);
+  animateNumber($('st-ut'), 0, -S.spent);
+  animateNumber($('st-slutt'), 0, S.bal);
+  if (emoji === '🎉' || emoji === '🏆'){ confetti(140); SND.play('jubel'); }
+  $('end-snakk').innerHTML = (S.level===1?SNAKK1:SNAKK2).map(q=>'<li>'+q+'</li>').join('');
+  showScreen('screen-end');
+}
+$('btn-restart').addEventListener('click', ()=>location.reload());
+
+/* første entranse */
+animateIn();
+</script>
+
+
+</body></html>
