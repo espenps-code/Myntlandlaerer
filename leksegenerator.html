@@ -55,6 +55,25 @@ body {
   overflow: hidden;
   margin-bottom: 28px;
 }
+
+  /* Snurrende mynter i hero-bakgrunnen (bak innholdet) */
+  .hero { isolation: isolate; }
+  .hero-mynt {
+    position: absolute;
+    z-index: -1;
+    opacity: 0.13;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+    animation: myntspinn var(--fart, 16s) linear infinite;
+    animation-delay: var(--start, 0s);
+  }
+  @keyframes myntspinn {
+    from { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(0deg); }
+    to   { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hero-mynt { animation: none; } }
+
 .hero::before {
   content: '';
   position: absolute; inset: 0;
@@ -532,6 +551,11 @@ body {
 </nav>
 
 <div class="hero">
+  <div aria-hidden="true">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:90px;  top:-22px;  left:5%;   --tilt:-14deg; --fart:19s;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:60px;  top:18%;   right:16%; --tilt:-6deg;  --fart:28s; --start:-15s; opacity:0.10;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:110px; bottom:-30px; right:4%; --tilt:12deg; --fart:22s; --start:-5s;">
+  </div>
   <div class="hero-brand">
     <span class="hero-brand-dot"></span>
     Myntland · Lærerverktøy

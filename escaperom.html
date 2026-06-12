@@ -102,15 +102,23 @@
     position: relative;
     overflow: hidden;
   }
-  .hero::before, .hero::after {
-    content: "🪙";
+  /* Snurrende mynter i hero-bakgrunnen (bak innholdet) */
+  .hero-mynt {
     position: absolute;
-    font-size: 7rem;
-    opacity: 0.10;
+    opacity: 0.13;
     pointer-events: none;
+    user-select: none;
+    will-change: transform;
+    animation: myntspinn var(--fart, 16s) linear infinite;
+    animation-delay: var(--start, 0s);
   }
-  .hero::before { top: -1.4rem; left: 4%; transform: rotate(-18deg); }
-  .hero::after { bottom: -2rem; right: 5%; transform: rotate(14deg); font-size: 9rem; }
+  @keyframes myntspinn {
+    from { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(0deg); }
+    to   { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-mynt { animation: none; }
+  }
   .hero-inner { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
   .hero .emoji { font-size: 3rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,.35)); }
   .hero h1 {
@@ -361,6 +369,12 @@
 </nav>
 
 <header class="hero">
+  <div aria-hidden="true">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:130px; top:-30px;  left:4%;   --tilt:-14deg; --fart:19s;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:70px;  top:55%;   left:14%;  --tilt:8deg;   --fart:24s; --start:-9s;  opacity:0.09;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:90px;  top:12%;   right:18%; --tilt:-6deg;  --fart:28s; --start:-15s; opacity:0.10;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:160px; bottom:-45px; right:4%; --tilt:12deg; --fart:22s; --start:-5s;">
+  </div>
   <div class="hero-inner">
     <div class="emoji">🏦🔐</div>
     <h1>Escape <span class="gull">rooms</span></h1>

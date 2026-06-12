@@ -70,6 +70,25 @@
     position: relative;
     overflow: hidden;
   }
+
+  /* Snurrende mynter i hero-bakgrunnen (bak innholdet) */
+  .hero { isolation: isolate; }
+  .hero-mynt {
+    position: absolute;
+    z-index: -1;
+    opacity: 0.13;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+    animation: myntspinn var(--fart, 16s) linear infinite;
+    animation-delay: var(--start, 0s);
+  }
+  @keyframes myntspinn {
+    from { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(0deg); }
+    to   { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hero-mynt { animation: none; } }
+
   .hero::before {
     content: '';
     position: absolute; inset: 0;
@@ -552,6 +571,12 @@
 </nav>
 
 <section class="hero">
+  <div aria-hidden="true">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:130px; top:-30px;  left:4%;   --tilt:-14deg; --fart:19s;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:70px;  top:55%;   left:14%;  --tilt:8deg;   --fart:24s; --start:-9s;  opacity:0.09;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:90px;  top:12%;   right:18%; --tilt:-6deg;  --fart:28s; --start:-15s; opacity:0.10;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:160px; bottom:-45px; right:4%; --tilt:12deg; --fart:22s; --start:-5s;">
+  </div>
   <div class="hero-inner">
     <div class="hero-tag">For lærere · 5.–7. trinn</div>
     <h1>Økonomi<span class="accent">kalkulator</span></h1>
