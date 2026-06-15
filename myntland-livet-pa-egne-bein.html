@@ -121,9 +121,44 @@
   .statRute{display:inline-block;background:var(--navy);color:var(--gull2);border-radius:12px;
     padding:8px 14px;margin:4px;font-family:'Fredoka One';font-size:15px;}
   .lite{font-size:13px;opacity:.75;}
+
+  /* ---------- Lasteskjerm ---------- */
+  #laster{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;background:linear-gradient(180deg,#1d2a4d,#27376a);color:var(--krem);
+    transition:opacity .4s ease;text-align:center;padding:20px;}
+  #laster.borte{opacity:0;pointer-events:none;}
+  #laster .lasteMynt{font-size:64px;animation:lasteSnurr 1.4s linear infinite;}
+  #laster h2{font-family:'Fredoka One',cursive;color:var(--gull2);margin:14px 0 6px;font-size:24px;}
+  #laster p{font-size:15px;opacity:.9;margin:0;}
+  .lastePrikker{margin-top:18px;display:flex;gap:9px;}
+  .lastePrikker span{width:13px;height:13px;border-radius:50%;background:var(--gull);animation:lasteHopp 1s infinite;}
+  .lastePrikker span:nth-child(2){animation-delay:.15s;}
+  .lastePrikker span:nth-child(3){animation-delay:.3s;}
+  @keyframes lasteSnurr{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+  @keyframes lasteHopp{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-11px);opacity:1}}
+
+  /* Hindre dobbelttrykk-zoom på knapper og felter (iPad) */
+  button,input,select,textarea,a{touch-action:manipulation;}
 </style>
 </head>
 <body>
+<!-- Lasteskjerm: ligger over alt til spillet er klart -->
+<div id="laster">
+  <div class="lasteMynt">🪙</div>
+  <h2>Laster spillet …</h2>
+  <p>Vent litt – byen bygges opp!</p>
+  <div class="lastePrikker"><span></span><span></span><span></span></div>
+  <p id="lasteHint" style="display:none;margin-top:16px;color:#ffd34d;">Tar dette lang tid? Sjekk internett og last siden på nytt.</p>
+</div>
+<script>
+  // Kjører med en gang (uavhengig av Three.js): vis hint hvis lasting tar veldig lang tid
+  setTimeout(function(){
+    var l=document.getElementById('laster');
+    if(l && l.style.display!=='none' && !l.classList.contains('borte')){
+      var h=document.getElementById('lasteHint'); if(h) h.style.display='block';
+    }
+  },15000);
+</script>
 <div id="spill"></div>
 
 <!-- HUD -->
@@ -1792,8 +1827,19 @@ document.querySelectorAll('.vanskKnapp').forEach(k=>{
   });
 });
 
+// Hindre knip-zoom (pinch) på iPad/Safari
+['gesturestart','gesturechange','gestureend'].forEach(function(ev){
+  document.addEventListener(ev, function(e){ e.preventDefault(); }, {passive:false});
+});
+
 initTre();
 sloyfe();
+
+// Alt er bygget og klart – fjern lasteskjermen
+(function(){
+  var l = document.getElementById('laster');
+  if(l){ l.classList.add('borte'); setTimeout(function(){ l.style.display='none'; }, 450); }
+})();
 </script>
 </body>
 </html>
