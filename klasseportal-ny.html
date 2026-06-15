@@ -3622,6 +3622,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     return {
       week: d.week || {}, notes: d.notes || [], dayMsg: d.dayMsg || {},
       birthdays: d.birthdays || [], helpers: d.helpers || [], helperCount: d.helperCount || 2,
+      checklist: Array.isArray(d.checklist) ? d.checklist : [],
       bdname: d.bdname || '', bdage: d.bdage || '',
       weather: d.weather || 0, weatherAuto: !!d.weatherAuto, weatherPlace: d.weatherPlace || '',
       weatherLat: (d.weatherLat == null ? null : d.weatherLat), weatherLon: (d.weatherLon == null ? null : d.weatherLon),
@@ -3656,6 +3657,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       if (Array.isArray(b.birthdays)) d.birthdays = b.birthdays;
       if (Array.isArray(b.helpers)) d.helpers = b.helpers;
       if (b.helperCount != null) d.helperCount = b.helperCount;
+      if (Array.isArray(b.checklist)) d.checklist = b.checklist;
       if (b.bdname != null) d.bdname = b.bdname;
       if (b.bdage != null) d.bdage = b.bdage;
       if (b.weather != null) d.weather = b.weather;
