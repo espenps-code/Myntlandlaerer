@@ -1048,7 +1048,7 @@ async function startMaaned(){
   if(Math.random() < sjanse){
     S.prisSjokk = 1.3;
     await visInfo(aarstid(S.mnd).emoji + ' Måned ' + S.mnd + ' – prissjokk!',
-      '<p>📢 Prisene i butikken og på en del kjøp har <b>steget ca. 30 %</b> denne måneden!</p>' +
+      '<p>📢 Prisene i butikken har <b>steget ca. 30 %</b> denne måneden!</p>' +
       '<p class="lite">Sånn er inflasjon: når prisene stiger, får du mindre for pengene. Kanskje lurt å vente med store kjøp?</p>');
   } else {
     S.prisSjokk = 1;
@@ -1082,12 +1082,14 @@ function velgJobb(id){
 }
 
 function boligMeny(){
+  const aar = aarstid(S.mnd);
   let rader = '';
   for(const [id, b] of Object.entries(BOLIGER)){
-    const tot = b.leie + b.strom + b.nett;
+    const strom = Math.round(b.strom * aar.strom);
+    const tot = b.leie + strom + b.nett;
     rader += '<tr class="' + (S.bolig === id ? 'valgt' : '') + '">' +
       '<td>' + b.emoji + ' <b>' + b.navn + '</b></td>' +
-      '<td class="lite">' + fmt(b.leie) + ' + ' + fmt(b.strom) + ' + ' + fmt(b.nett) + '</td>' +
+      '<td class="lite">' + fmt(b.leie) + ' + ' + fmt(strom) + ' + ' + fmt(b.nett) + '</td>' +
       '<td><b>' + fmt(tot) + ' 🪙</b></td>' +
       '<td>' + (b.trivsel > 0 ? '+'+b.trivsel : b.trivsel) + ' ❤️</td>' +
       '<td>' + (S.bolig === id ? '✅ Her bor du' :
@@ -1097,6 +1099,7 @@ function boligMeny(){
     '<p>Hvor vil du bo? Regn ut <b>totalkostnaden</b>: leie + strøm + internett. Den trekkes automatisk hver måned.</p>' +
     '<table class="sml"><tr><th>Bolig</th><th>Leie+strøm+nett</th><th>Totalt/mnd</th><th>Trivsel</th><th></th></tr>' + rader + '</table>' +
     '<div class="infoRad">' + BOLIGER[S.bolig].emoji + ' ' + BOLIGER[S.bolig].info + '</div>' +
+    '<p class="lite">' + aar.emoji + ' Strømmen vises for ' + aar.navn + ' og varierer gjennom året – dyrere om vinteren, billigere om sommeren.</p>' +
     '<p class="lite">💡 Tips: Billigst er ikke alltid best, og dyrest er ikke alltid lurt. Hva har du råd til med lønnen din?</p>');
 }
 function velgBolig(id){
@@ -1356,7 +1359,7 @@ async function nesteMaaned(){
       const knapper = h.valg.map((v, idx)=>({l:v.l, v:idx, klass: idx === 0 ? 'groenn' : 'sekundaer'}));
       const r = await visValg('Noe skjer! ✨', '<p style="font-size:17px;">' + h.t + '</p>', knapper);
       const valg = h.valg[r.v];
-      const p = valg.p < 0 ? -pris(-valg.p) : valg.p;
+      const p = valg.p; // belast nøyaktig det knappeteksten sier
       S.penger += p;
       justerTrivsel(valg.h);
       if(p > 0) lydMynt(); else if(p < 0) lydDunk();
