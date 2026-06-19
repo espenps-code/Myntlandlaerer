@@ -123,7 +123,7 @@ body{
 @keyframes hop{ 0%,100%{ transform:translateY(0) rotate(2deg); } 50%{ transform:translateY(-16px) rotate(-2deg); } }
 
 /* ===================== LAYOUT ===================== */
-.canvas{ display:flex; flex-direction:column; padding:34px 52px 40px; gap:22px; }
+.canvas{ display:flex; flex-direction:column; padding:34px 110px 40px 52px; gap:22px; }
 .topbar, .grid, .footstrip{ position:relative; z-index:4; }
 
 /* generic card / panel */
@@ -181,7 +181,7 @@ h1.sticker{
 .wlabel{ font-size:18px; font-weight:600; color:var(--ink-soft); }
 
 /* ===================== GRID ===================== */
-.grid{ flex:1; display:grid; grid-template-columns:712px 556px 1fr; gap:22px; min-height:0; }
+.grid{ flex:1; display:grid; grid-template-columns:672px 540px 1fr; gap:22px; min-height:0; }
 .col{ display:flex; flex-direction:column; gap:22px; min-height:0; }
 
 .panel{ padding:20px 24px; display:flex; flex-direction:column; min-height:0; }
@@ -418,7 +418,7 @@ h1.sticker{
 </style>
 <style>
 /* ===== TILLEGG: verktøylinje, musikk, ukeplanlegger ===== */
-.portal-toolbar{position:fixed;top:16px;right:16px;z-index:60;display:flex;gap:8px}
+.portal-toolbar{position:absolute;top:50%;right:30px;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:10px}
 .portal-toolbar button{width:48px;height:48px;border-radius:14px;border:3px solid var(--ink);
   background:var(--cream);color:var(--ink);font-size:22px;cursor:pointer;font-family:var(--font);
   box-shadow:0 4px 0 rgba(42,31,61,.25);transition:transform .1s;line-height:1}
@@ -1061,23 +1061,24 @@ h1.sticker{
       <span class="dot"></span><span class="dot red"></span><span class="dot teal"></span>
       <span class="footname">Myntland · Klasseportal</span>
     </div>
+
+    <!-- Verktøysøyle: ligger nå INNE i arket, loddrett langs høyre kant, så den skalerer og plasserer seg likt i vindu og fullskjerm -->
+    <div class="portal-toolbar">
+      <button id="tbConnect" title="Koble til klasse">&#127974;</button>
+      <button id="tbDraw" title="Tegn på tavla">&#9999;&#65039;</button>
+      <button id="tbReward" title="Belønning">&#127873;</button>
+      <button id="tbMusic" title="Musikk">&#127925;</button>
+      <button id="tbTimer" title="Timer">&#9201;&#65039;</button>
+      <button id="tbPlan" title="Planlegg uke">&#128197;</button>
+      <button id="tbWheel" title="Lykkehjul">&#127905;</button>
+      <button id="tbFs" title="Fullskjerm">&#9974;</button>
+      <button id="tbSettings" title="Innstillinger">&#9881;&#65039;</button>
+    </div>
   </div>
 </div>
 
 <!-- Portal logic loads & paints immediately (vanilla, no build step) -->
 
-<!-- ====== FLYTENDE VERKTØYLINJE (rører ikke canvas-designet) ====== -->
-<div class="portal-toolbar">
-  <button id="tbConnect" title="Koble til klasse">&#127974;</button>
-  <button id="tbDraw" title="Tegn på tavla">&#9999;&#65039;</button>
-  <button id="tbReward" title="Belønning">&#127873;</button>
-  <button id="tbMusic" title="Musikk">&#127925;</button>
-  <button id="tbTimer" title="Timer">&#9201;&#65039;</button>
-  <button id="tbPlan" title="Planlegg uke">&#128197;</button>
-  <button id="tbWheel" title="Lykkehjul">&#127905;</button>
-  <button id="tbFs" title="Fullskjerm">&#9974;</button>
-  <button id="tbSettings" title="Innstillinger">&#9881;&#65039;</button>
-</div>
 
 <!-- ====== INNSTILLINGER-OVERLAY ====== -->
 <div class="ovl" id="settingsOverlay">
