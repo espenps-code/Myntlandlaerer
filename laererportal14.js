@@ -2681,10 +2681,14 @@ window._classGoals = window._classGoals || [];
 // Hjelper: hvilken klasse jobber læreren med på sparemål-siden?
 function getActiveGoalClass() {
   const t = window._currentTeacher;
-  if (t?.role === 'admin') {
-    return document.getElementById('goal-class-filter')?.value || '1. klasse';
-  }
-  return t?.class || '';
+  // 1) Lærer låst til egen klasse
+  if (t?.class) return t.class;
+  // 2) Klassen som vises i elevlista akkurat nå
+  if (typeof classFilter !== 'undefined' && classFilter) return classFilter;
+  // 3) Sikkerhetsnett: finnes nøyaktig én klasse blant elevene, bruk den
+  const klasser = [...new Set((window._students || []).map(s => s.class))].filter(Boolean);
+  if (klasser.length === 1) return klasser[0];
+  return '';
 }
 
 async function distributeToGoals14(amount) {
@@ -2745,9 +2749,9 @@ function renderClassGoalsPage() {
   const isAdmin = t?.role === 'admin';
   const cls = getActiveGoalClass();
 
-  // Vis klasse-velger kun for admin
+  // Klasse-velger fjernet – sparemål gjelder alltid lærerens egen klasse
   const filterCard = document.getElementById('goal-class-filter-card');
-  if (filterCard) filterCard.style.display = isAdmin ? 'block' : 'none';
+  if (filterCard) filterCard.style.display = 'none';
 
   // Oppdater "Nytt sparemål"-kortet med klassenavn
   const newCardLabel = document.getElementById('new-goal-class-label');
@@ -2756,9 +2760,9 @@ function renderClassGoalsPage() {
   // Subtitle
   const sub = document.getElementById('sparemaal-subtitle');
   if (sub) {
-    sub.textContent = isAdmin
-      ? 'Maks 3 aktive sparemål per klasse. Velg klasse over for å se og redigere sparemål.'
-      : 'Maks 3 aktive sparemål for ' + cls + '. Skatt fra elevene i ' + cls + ' går til disse sparemålene.';
+    sub.textContent = cls
+      ? 'Maks 3 aktive sparemål for ' + cls + '. Skatt fra elevene i ' + cls + ' går til disse sparemålene.'
+      : 'Maks 3 aktive sparemål per klasse. Skatt fra elevene går til sparemålene i deres egen klasse.';
   }
 
   // Filtrer sparemål etter aktiv klasse
@@ -2772,7 +2776,7 @@ function renderClassGoalsPage() {
 
   // Legacy-varsel kun for admin
   let legacyHTML = '';
-  if (isAdmin && legacy.length) {
+  if (legacy.length) {
     legacyHTML = `<div class="card" style="background:#FEF3C7;border:2px solid var(--amber);">
       <div style="font-weight:800;color:#854F0B;margin-bottom:.5rem;">⚠️ ${legacy.length} sparemål uten klasse</div>
       <div style="font-size:.85rem;color:#92400E;margin-bottom:.75rem;">Disse ble opprettet før klasse-funksjonen og vises ikke til elevene. Slett dem og opprett nye for hver klasse:</div>
