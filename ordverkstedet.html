@@ -340,6 +340,39 @@
   }
   table.scramble td.wr .answer { color:var(--coral); font-weight:800; text-transform:uppercase; }
 
+  /* ---------- kryptogram ---------- */
+  .keywrap { margin-top:4px; }
+  .keywrap h4 { font-family:'Fredoka One',cursive; font-size:1.05rem; margin-bottom:8px; color:var(--green-dark); }
+  .keytab { display:flex; flex-wrap:wrap; gap:6px; }
+  .keycell {
+    display:flex; flex-direction:column; align-items:stretch;
+    border:2px solid var(--border); border-radius:8px; overflow:hidden;
+    min-width:42px; background:#fff;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .keycell .kl {
+    text-align:center; font-weight:900; font-size:1rem; text-transform:uppercase;
+    color:var(--teal-dark); padding:4px 6px 2px; min-height:1.8em;
+  }
+  .keycell .kl.hidden { display:flex; align-items:flex-end; justify-content:center; }
+  .keycell .kl.hidden::after { content:''; width:18px; border-bottom:2px dashed #b8c4bd; margin-bottom:4px; }
+  .keycell .kc {
+    text-align:center; font-weight:800; font-size:0.9rem;
+    background:var(--amber-light); color:var(--amber-dark); padding:2px 6px 3px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .crypto-words { margin-top:22px; display:flex; flex-direction:column; gap:16px; }
+  .crypto-row { display:flex; align-items:flex-end; gap:10px; }
+  .crypto-row .wnum { font-weight:800; color:var(--muted); font-size:0.95rem; width:26px; padding-bottom:8px; flex-shrink:0; }
+  .crypto-word { display:flex; flex-wrap:wrap; gap:5px; }
+  .crypto-cell { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .crypto-cell .code { font-weight:800; font-size:0.85rem; color:var(--green-dark); min-height:1.2em; line-height:1.2; }
+  .crypto-cell .box {
+    width:32px; height:32px; border:2px solid var(--teal-dark); border-radius:6px;
+    background:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:1.05rem; text-transform:uppercase; color:var(--coral);
+  }
+
   /* ---------- footer ---------- */
   footer {
     background: var(--white);
@@ -459,6 +492,7 @@
         <button data-type="crossword">✏️ Kryssord</button>
         <button data-type="fill">✍️ Fyll inn</button>
         <button data-type="scramble">🔀 Ordstokk</button>
+        <button data-type="crypto">🕵️ Kryptogram</button>
       </div>
     </div>
 
@@ -522,6 +556,27 @@
         <input type="checkbox" id="scrBank">
         <span>Vis ordbank på arket <em>– en stokket liste med de riktige ordene som hjelp</em></span>
       </label>
+    </div>
+
+    <div id="cryptoOpts" style="display:none;">
+      <p class="sub" style="margin-top:4px;">Hver bokstav får en hemmelig kode. Elevene bruker kodenøkkelen til å avsløre ordene – som ekte kodeknekkere.</p>
+      <div class="row">
+        <div style="flex:0 0 220px;">
+          <label class="fld">Kodetype</label>
+          <select id="cryptoCode">
+            <option value="number" selected>🔢 Tall (A = 7)</option>
+            <option value="symbol">✨ Symboler (A = ★)</option>
+          </select>
+        </div>
+        <div style="flex:0 0 330px;">
+          <label class="fld">Vanskegrad</label>
+          <select id="cryptoDiff">
+            <option value="easy" selected>🟢 Lett – hele nøkkelen vises</option>
+            <option value="medium">🟡 Middels – halve nøkkelen er skjult</option>
+            <option value="hard">🔴 Vanskelig – bare 3 hjelpebokstaver</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -766,6 +821,7 @@ $('puzzleType').addEventListener('click', e => {
   $('crossOpts').style.display  = puzzleType==='crossword' ? 'block':'none';
   $('fillOpts').style.display   = puzzleType==='fill' ? 'block':'none';
   $('scrambleOpts').style.display = puzzleType==='scramble' ? 'block':'none';
+  $('cryptoOpts').style.display = puzzleType==='crypto' ? 'block':'none';
   if (puzzleType==='crossword') buildClueEditor();
 });
 
@@ -1039,6 +1095,63 @@ function renderScramble(items,title,meta,answer){
   return sheet(title,meta,inner);
 }
 
+/* ============ KRYPTOGRAM ============ */
+const CRYPTO_SYMBOLS = ['★','☀','☾','●','▲','■','◆','♥','♦','♣','♠','♪','✿','❄','✚','⚑','✎','⚓','☂','☘','⚡','☁','☕','☎','⚙','✈','⚽','⌛','☑'];
+
+function makeCrypto(words, codeType){
+  const letters = [...new Set(words.join('').split(''))]
+    .sort((a,b)=>NORDIC.indexOf(a)-NORDIC.indexOf(b));
+  const pool = codeType==='symbol'
+    ? [...CRYPTO_SYMBOLS]
+    : Array.from({length:29},(_,i)=>String(i+1));
+  for (let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  const map={};
+  letters.forEach((L,i)=>{ map[L]=pool[i]; });
+  // bokstavfrekvens i ordene – brukes til å velge hjelpebokstaver
+  const freq={};
+  words.join('').split('').forEach(ch=>{ freq[ch]=(freq[ch]||0)+1; });
+  return {letters, map, freq};
+}
+
+function cryptoRevealed(cr, diff){
+  if (diff==='easy') return new Set(cr.letters);
+  if (diff==='medium'){
+    const shuffled=[...cr.letters];
+    for (let i=shuffled.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+    }
+    return new Set(shuffled.slice(0, Math.ceil(cr.letters.length/2)));
+  }
+  // vanskelig: de 3 vanligste bokstavene som starthjelp
+  const top=[...cr.letters].sort((a,b)=>cr.freq[b]-cr.freq[a]).slice(0,3);
+  return new Set(top);
+}
+
+function renderCrypto(cr, words, revealed, title, meta, answer){
+  let inner = answer ? '<span class="ans-tag">🪙 Fasit</span>' : '';
+  const keyCells = cr.letters.map(L => {
+    const show = answer || revealed.has(L);
+    return `<div class="keycell">${
+      show ? `<div class="kl">${L}</div>` : '<div class="kl hidden"></div>'
+    }<div class="kc">${escapeHtml(cr.map[L])}</div></div>`;
+  }).join('');
+  inner += `<div class="keywrap"><h4>🔑 Kodenøkkel</h4><div class="keytab">${keyCells}</div></div>`;
+  const rows = words.map((w,i)=>`
+    <div class="crypto-row">
+      <span class="wnum">${i+1}.</span>
+      <div class="crypto-word">${w.split('').map(ch=>
+        `<div class="crypto-cell"><span class="code">${escapeHtml(cr.map[ch])}</span><span class="box">${answer?ch:''}</span></div>`).join('')}</div>
+    </div>`).join('');
+  inner += `<div class="crypto-words">${rows}</div>`;
+  if (!answer && revealed.size < cr.letters.length)
+    inner += '<p class="cloze-note">🕵️ Knekk koden: skriv bokstavene du finner inn i kodenøkkelen underveis.</p>';
+  return sheet(title,meta,inner);
+}
+
 /* ============ GENERATE ============ */
 function generate(){
   const title=$('title').value.trim();
@@ -1072,6 +1185,13 @@ function generate(){
     out.innerHTML=renderScramble(items,title,meta,false)
                  +renderScramble(items,title+' – fasit',meta,true);
     msg.innerHTML=`<div class="msg ok">🪙 Ordstokk laget med ${items.length} ord!</div>`;
+  } else if (puzzleType==='crypto'){
+    const words=pickedWords();
+    const cr=makeCrypto(words, $('cryptoCode').value);
+    const revealed=cryptoRevealed(cr, $('cryptoDiff').value);
+    out.innerHTML=renderCrypto(cr,words,revealed,title,meta,false)
+                 +renderCrypto(cr,words,revealed,title+' – fasit',meta,true);
+    msg.innerHTML=`<div class="msg ok">🪙 Kryptogram laget med ${words.length} ord!</div>`;
   } else {
     const cw=makeCrossword(pickedWords().map(w=>({word:w,clue:clues[w]||''})));
     out.innerHTML=renderCrossword(cw,title,meta,false)
