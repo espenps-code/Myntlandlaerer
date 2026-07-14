@@ -387,6 +387,17 @@
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
 
+  /* ---------- regnehjul ---------- */
+  .rh-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:10px 26px;
+    justify-items:center;
+  }
+  .rh-wheel {
+    width:100%; max-width:275px;
+    break-inside:avoid; page-break-inside:avoid;
+  }
+  .rh-wheel svg { width:100%; height:auto; display:block; }
+
   /* ---------- footer ---------- */
   footer {
     background: var(--white);
@@ -422,6 +433,8 @@
     .sheet:last-child { page-break-after:auto; }
     .sheet-head { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .mg-grid { grid-template-columns:1fr 1fr; }
+    .rh-grid { gap:4px 10mm; }
+    .rh-wheel { max-width:none; width:62mm; }
     @page { size:A4; margin:10mm 12mm; }
   }
 </style>
@@ -448,7 +461,7 @@
   <div class="hero-inner">
     <div class="hero-tag">For lærere · 1.–7. trinn</div>
     <h1>Regne<span class="accent">verkstedet</span></h1>
-    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss, monstergåter, tallinjer og telleark!</p>
+    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss, monstergåter, tallinjer, telleark og regnehjul!</p>
   </div>
 </section>
 
@@ -463,6 +476,7 @@
       <button data-type="monstergater">👾 Monstergåter</button>
       <button data-type="tallinjer">〰️ Tallinjer</button>
       <button data-type="telleark">🔢 Telleark</button>
+      <button data-type="regnehjul">🎡 Regnehjul</button>
     </div>
     <p class="seg-note">Flere oppgavetyper kommer etter hvert.</p>
   </div>
@@ -1190,6 +1204,132 @@ function renderTelleark(p, title, meta, answer){
   return sheet(title,meta,inner);
 }
 
+/* ============ REGNEHJUL-GENERATOR ============ */
+/* Ett hjul: tallet i midten (med regneart) regnes sammen med hvert av de
+   8 tallene i den innerste ringen - svaret skrives i den ytterste ringen.
+   På vanskelig er to sektorer snudd: svaret står ytterst, og eleven må
+   finne tallet i den indre ringen (omvendt regning). */
+function pickDistinct(lo, hi, n){
+  const pool=[];
+  for(let v=lo;v<=hi;v++) pool.push(v);
+  if(pool.length<n) return null;
+  return shuffle(pool).slice(0,n);
+}
+/* Ganging/deling trenger 8 ulike svar i gangetabellen (1-10),
+   så tallområdet må være minst 0-20. */
+function rhFeasibleOps(ops, hi){
+  return ops.filter(op=>{
+    if(op==='+'||op==='-') return hi>=9;
+    return Math.floor(hi/2)>=8;
+  });
+}
+function rhPickN(op, hi, difficulty){
+  if(op==='*'||op==='/'){
+    const nMax=Math.min(10, Math.floor(hi/8));
+    if(nMax<2) return null;
+    if(difficulty==='easy')   return rint(2, Math.min(5,nMax));
+    if(difficulty==='medium') return rint(Math.min(3,nMax), Math.min(7,nMax));
+    return rint(Math.min(6,nMax), nMax);
+  }
+  const nMax = op==='+' ? hi-8 : hi-7;
+  if(nMax<1) return null;
+  const third=Math.max(1, Math.round(nMax/3));
+  if(difficulty==='easy')   return rint(1, Math.min(third,nMax));
+  if(difficulty==='medium') return rint(Math.min(third,nMax), Math.min(third*2,nMax));
+  return rint(Math.min(third*2,nMax), nMax);
+}
+function genRegnehjul(op, hi, difficulty){
+  const n=rhPickN(op, hi, difficulty);
+  if(n===null) return null;
+  let inner, answers;
+  if(op==='+'){
+    inner=pickDistinct(1, hi-n, 8);
+    if(!inner) return null;
+    answers=inner.map(v=>v+n);
+  } else if(op==='-'){
+    inner=pickDistinct(n, hi, 8);
+    if(!inner) return null;
+    answers=inner.map(v=>v-n);
+  } else if(op==='*'){
+    const kMax=Math.min(10, Math.floor(hi/n));
+    const ks=pickDistinct(1, kMax, 8);
+    if(!ks) return null;
+    inner=ks; answers=ks.map(k=>k*n);
+  } else { // deling: indre tall er i n-gangen, svaret er "hvor mange ganger"
+    const kMax=Math.min(10, Math.floor(hi/n));
+    const ks=pickDistinct(1, kMax, 8);
+    if(!ks) return null;
+    inner=ks.map(k=>k*n); answers=ks;
+  }
+  const states=Array(8).fill('normal');
+  if(difficulty==='hard'){
+    shuffle([1,2,3,4,5,6,7]).slice(0,2).forEach(i=>{ states[i]='rev'; });
+  }
+  return {op, n, inner, answers, states};
+}
+
+/* ---------- regnehjul: render (SVG) ---------- */
+const RH_COLORS=[
+  {s:'#a8a23c', i:'#eeeaa5', o:'#f9f8e2'},  // gul
+  {s:'#57a05a', i:'#c9e6ca', o:'#eaf5ea'},  // grønn
+  {s:'#7b88cc', i:'#cdd2ee', o:'#eceefa'},  // blå
+  {s:'#c96a5e', i:'#f2c8c0', o:'#fbeae6'},  // korall
+  {s:'#c08b47', i:'#f0d6a6', o:'#fbf0da'},  // oransje
+  {s:'#a86fc9', i:'#e6c9f0', o:'#f7ecfb'}   // lilla
+];
+function rhPt(r, adeg){
+  const a=(adeg-90)*Math.PI/180;
+  return [100+r*Math.cos(a), 100+r*Math.sin(a)];
+}
+function rhSector(r1, r2, a0, a1, fill, stroke, sw){
+  const f=v=>v.toFixed(2);
+  const p0=rhPt(r2,a0), p1=rhPt(r2,a1), p2=rhPt(r1,a1), p3=rhPt(r1,a0);
+  return `<path d="M${f(p0[0])} ${f(p0[1])} A${r2} ${r2} 0 0 1 ${f(p1[0])} ${f(p1[1])} L${f(p2[0])} ${f(p2[1])} A${r1} ${r1} 0 0 0 ${f(p3[0])} ${f(p3[1])} Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw||1.4}"/>`;
+}
+function rhText(r, adeg, val, size, color){
+  const p=rhPt(r,adeg);
+  return `<text x="${p[0].toFixed(2)}" y="${p[1].toFixed(2)}" text-anchor="middle" dominant-baseline="central" font-family="Nunito, sans-serif" font-weight="800" font-size="${size}" fill="${color}">${val}</text>`;
+}
+function rhWheelSVG(w, pal, fasit, isExample){
+  const rC=27, rI=62, rO=95;
+  let sectors='', texts='';
+  for(let i=0;i<8;i++){
+    const a0=i*45-22.5, a1=i*45+22.5, mid=i*45;
+    sectors+=rhSector(rI,rO,a0,a1,pal.o,pal.s);
+    sectors+=rhSector(rC,rI,a0,a1,pal.i,pal.s);
+    const st=w.states[i];
+    const ex = isExample && i===0 && !fasit;
+    if(fasit){
+      texts+=rhText(44,mid,w.inner[i],13, st==='rev' ? 'var(--coral)' : 'var(--teal-dark)');
+      texts+=rhText(78,mid,w.answers[i],14,'var(--coral)');
+    } else if(ex){
+      texts+=rhText(44,mid,w.inner[i],13,'var(--teal-dark)');
+      texts+=rhText(78,mid,w.answers[i],14,'var(--amber-dark)');
+      sectors+=rhSector(rI,rO,a0,a1,'none','var(--amber-dark)',3);
+    } else if(st==='rev'){
+      texts+=rhText(78,mid,w.answers[i],14,'var(--teal-dark)');
+    } else {
+      texts+=rhText(44,mid,w.inner[i],13,'var(--teal-dark)');
+    }
+  }
+  const center=`<circle cx="100" cy="100" r="${rC}" fill="#fff" stroke="${pal.s}" stroke-width="1.6"/>`+
+    `<text x="100" y="100" text-anchor="middle" dominant-baseline="central" font-family="Fredoka One, cursive" font-size="17" fill="var(--teal-dark)">${OPCH[w.op]}${w.n}</text>`;
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Regnehjul">${sectors}${center}${texts}</svg>`;
+}
+function renderRegnehjul(wheels, title, meta, answer, difficulty, hasMulDiv){
+  let inner='';
+  if(answer){
+    inner+='<span class="ans-tag">🪙 Fasit</span>';
+  } else {
+    inner+=`<p class="instr">🎡 Regn med tallet i midten: ta hvert tall i den innerste ringen, og skriv svaret i den ytterste ringen. Det første svaret er fylt ut som eksempel!${
+      difficulty==='hard'?'<span class="oplegend">I noen felter står svaret allerede ytterst - da finner du tallet som mangler i den indre ringen.</span>':''}${
+      hasMulDiv?'<span class="oplegend">· betyr ganging &nbsp;·&nbsp; : betyr deling</span>':''}</p>`;
+  }
+  inner+='<div class="rh-grid">'+wheels.map((w,i)=>
+    `<div class="rh-wheel">${rhWheelSVG(w, RH_COLORS[i%RH_COLORS.length], answer, i===0)}</div>`).join('')+'</div>';
+  return sheet(title,meta,inner);
+}
+
 /* ============ UI ============ */
 document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   inp.addEventListener('change', ()=>{
@@ -1197,18 +1337,20 @@ document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   });
 });
 
-const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tallinjer:'Tallinjer', telleark:'Telleark' };
+const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tallinjer:'Tallinjer', telleark:'Telleark', regnehjul:'Regnehjul' };
 const TYPE_SUBS = {
   mattekryss:'Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.',
   monstergater:'Hvert monster gjemmer et hemmelig tall. Elevene finner monstrenes verdi linje for linje – og løser gåten til slutt. 4 gåter per ark.',
   tallinjer:'Noen tall på tallinja er gjemt bak et monster. Elevene finner tallet og skriver det i boksen under. 4 tallinjer per ark.',
-  telleark:'5 monstertyper er spredt utover hele arket. Elevene teller hvor mange det er av hvert monster, og skriver tallet i boksen. Ett telleark per side.'
+  telleark:'5 monstertyper er spredt utover hele arket. Elevene teller hvor mange det er av hvert monster, og skriver tallet i boksen. Ett telleark per side.',
+  regnehjul:'Tallet i midten regnes sammen med hvert tall i den innerste ringen – svaret skrives i den ytterste. 6 hjul per ark.'
 };
 const DIFF_LABELS = {
   mattekryss:{ easy:'🟢 Lett – bare svarene mangler', medium:'🟡 Middels – noen tall mangler også', hard:'🔴 Vanskelig – mange tall mangler' },
   monstergater:{ easy:'🟢 Lett – 2 monstre, pluss og minus', medium:'🟡 Middels – 3 monstre, pluss og minus', hard:'🔴 Vanskelig – 3 monstre + ganging til slutt' },
   tallinjer:{ easy:'🟢 Lett – teller med 1 og 1, få tall mangler', medium:'🟡 Middels – hoppetelling, flere tall mangler', hard:'🔴 Vanskelig – bare første, siste og tre tall vises' },
-  telleark:{ easy:'🟢 Lett – få monstre, god plass mellom dem', medium:'🟡 Middels – flere monstre, tettere spredt', hard:'🔴 Vanskelig – mange monstre, tett i tett' }
+  telleark:{ easy:'🟢 Lett – få monstre, god plass mellom dem', medium:'🟡 Middels – flere monstre, tettere spredt', hard:'🔴 Vanskelig – mange monstre, tett i tett' },
+  regnehjul:{ easy:'🟢 Lett – små tall i midten', medium:'🟡 Middels – større tall i midten', hard:'🔴 Vanskelig – noen felter er snudd (finn det indre tallet)' }
 };
 
 function applyTypeUI(){
@@ -1303,6 +1445,38 @@ function generate(){
     sheets.forEach((p,i)=>{ html+=renderTelleark(p, title+' – fasit', metaFor(i), true); });
     out.innerHTML=html;
     msg.innerHTML=`<div class="msg ok">🪙 ${count===1?'Telleark laget':count+' telleark laget'} – fasit ligger bakerst!</div>`;
+    $('printBar').style.display='flex';
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  /* ---------- regnehjul ---------- */
+  if(taskType==='regnehjul'){
+    const opsSel=[...document.querySelectorAll('#opgrid input:checked')].map(i=>i.value);
+    if(!opsSel.length){ msg.innerHTML='<div class="msg err">Velg minst én regneart.</div>'; return; }
+    const ops=rhFeasibleOps(opsSel, hi);
+    if(!ops.length){ msg.innerHTML='<div class="msg err">Ganging og deling trenger tallområde 0–20 eller større – velg et større tallområde eller en annen regneart.</div>'; return; }
+    const dropped = opsSel.length!==ops.length;
+    const hasMulDiv=ops.includes('*')||ops.includes('/');
+    const PER_SHEET=6;
+    const sheets=[];
+    for(let s=0;s<count;s++){
+      const wheelOps=shuffle(Array.from({length:PER_SHEET},(_,j)=>ops[j%ops.length]));
+      const sp=[];
+      for(let j=0;j<PER_SHEET;j++){
+        const w=genRegnehjul(wheelOps[j], hi, difficulty);
+        if(!w){ msg.innerHTML='<div class="msg err">Fikk ikke laget hjulene – prøv en gang til, eller velg et større tallområde.</div>'; return; }
+        if(j===0) w.states[0]='normal'; // eksempel-feltet skal alltid være vanlig
+        sp.push(w);
+      }
+      sheets.push(sp);
+    }
+    let html='';
+    sheets.forEach((sp,i)=>{ html+=renderRegnehjul(sp, title, metaFor(i), false, difficulty, hasMulDiv); });
+    sheets.forEach((sp,i)=>{ html+=renderRegnehjul(sp, title+' – fasit', metaFor(i), true, difficulty, hasMulDiv); });
+    out.innerHTML=html;
+    msg.innerHTML=`<div class="msg ok">🪙 ${count*PER_SHEET} regnehjul laget på ${count===1?'1 ark':count+' ark'} – fasit ligger bakerst!${
+      dropped?' (Ganging/deling ble utelatt – de trenger tallområde 0–20 eller større.)':''}</div>`;
     $('printBar').style.display='flex';
     out.scrollIntoView({behavior:'smooth',block:'start'});
     return;
