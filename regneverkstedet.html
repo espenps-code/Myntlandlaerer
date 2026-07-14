@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Regneverkstedet – Myntland</title>
+<meta name="theme-color" content="#1e0f52" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Myntland – Regneverkstedet" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<!-- Delt Myntland-styling (palett + fonter). Inline-stilene under bygger videre på denne. -->
+<link rel="stylesheet" href="myntland.css">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: var(--green-dark); }
+
+  /* ---------- topnav ---------- */
+  .topnav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.5rem;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topnav-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .topnav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem; color: var(--teal-dark);
+    text-decoration: none; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
+  .topnav-back {
+    font-size: 0.9rem; font-weight: 800; color: var(--green-dark);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .topnav-back:hover { color: var(--teal-dark); }
+
+  /* ---------- hero ---------- */
+  .hero {
+    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
+    color: #fff; padding: 3rem 1.5rem; position: relative; overflow: hidden;
+  }
+
+  /* Snurrende mynter i hero-bakgrunnen (bak innholdet) */
+  .hero { isolation: isolate; }
+  .hero-mynt {
+    position: absolute;
+    z-index: -1;
+    opacity: 0.13;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+    animation: myntspinn var(--fart, 16s) linear infinite;
+    animation-delay: var(--start, 0s);
+  }
+  @keyframes myntspinn {
+    from { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(0deg); }
+    to   { transform: perspective(700px) rotate(var(--tilt, 0deg)) rotateY(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hero-mynt { animation: none; } }
+
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(239,159,39,0.15) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(216,90,48,0.18) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 760px; margin: 0 auto; text-align: center;
+    position: relative; z-index: 2;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    line-height: 1.05; margin-bottom: 1rem;
+  }
+  .hero h1 .accent { color: var(--amber); }
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.1rem);
+    color: rgba(255,255,255,0.9);
+    max-width: 620px; margin: 0 auto; font-weight: 600;
+  }
+
+  /* ---------- layout ---------- */
+  main { max-width: 1040px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  /* ---------- panels ---------- */
+  .panel {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 1.75rem 1.85rem;
+    margin-bottom: 1.5rem;
+  }
+  .panel h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem; color: var(--teal-dark);
+    margin-bottom: 0.3rem; line-height: 1.15;
+    display:flex; align-items:center; gap:10px;
+  }
+  .panel h2 .badge {
+    background: var(--amber); color:#fff; width:34px; height:34px;
+    border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    font-size:1rem; font-family:'Fredoka One',cursive; flex-shrink:0;
+  }
+  .panel .sub { color:var(--muted); font-size:0.9rem; font-weight:600; margin-bottom:1.25rem; }
+
+  /* ---------- segmented ---------- */
+  .seg {
+    display:inline-flex; flex-wrap:wrap; background: var(--bg);
+    border:2px solid var(--border); border-radius:14px; padding:4px; gap:4px;
+  }
+  .seg button {
+    border:none; background:transparent; color:var(--muted);
+    font-family:'Nunito',sans-serif; font-size:0.95rem; font-weight:800;
+    padding:9px 20px; border-radius:10px; cursor:pointer; transition: all .15s;
+  }
+  .seg button.active { background:var(--white); color:var(--coral); box-shadow:0 2px 6px rgba(0,0,0,0.12); }
+  .seg button.disabled { opacity:.38; cursor:not-allowed; }
+  .seg-note { font-size:0.85rem; font-weight:700; color:var(--muted); margin-top:8px; }
+
+  label.fld { display:block; font-weight:800; margin-bottom:6px; font-size:0.9rem; color:var(--teal-dark); }
+
+  input[type=text], select {
+    width:100%; font-family:'Nunito',sans-serif; font-size:1rem; font-weight:600;
+    color:var(--teal-dark);
+    border:2px solid var(--border); border-radius:12px; background:var(--bg);
+    padding:0.7rem 0.85rem;
+  }
+  input:focus, select:focus {
+    outline:none; border-color:var(--green); background:var(--white);
+    box-shadow:0 0 0 3px rgba(29,158,117,0.18);
+  }
+
+  .row { display:flex; gap:16px; flex-wrap:wrap; }
+  .row > div { flex:1; min-width:160px; }
+
+  .btn {
+    font-family:'Fredoka One',cursive; font-size:1rem;
+    padding:0.8rem 1.5rem; border-radius:12px; cursor:pointer; border:none;
+    transition: transform .08s;
+  }
+  .btn:active { transform: translateY(2px); }
+  .btn-primary { background:var(--green); color:#fff; box-shadow:0 4px 0 var(--green-dark); }
+  .btn-gold { background:var(--amber); color:#fff; box-shadow:0 4px 0 var(--amber-dark); }
+  .btn-ghost { background:var(--white); color:var(--teal-dark); border:2px solid var(--border); box-shadow:0 4px 0 var(--border); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; transform:none; }
+
+  .toolbar { display:flex; gap:12px; flex-wrap:wrap; margin-top:1.25rem; }
+
+  /* ---------- regneart-velger ---------- */
+  .opgrid { display:flex; flex-wrap:wrap; gap:10px; }
+  .opchip {
+    display:inline-flex; align-items:center; gap:9px;
+    background:var(--bg); border:2px solid var(--border); border-radius:12px;
+    padding:9px 18px; cursor:pointer; user-select:none;
+    font-weight:800; font-size:0.98rem; color:var(--teal-dark);
+    transition: all .12s;
+  }
+  .opchip .sym {
+    font-family:'Fredoka One',cursive; font-size:1.15rem; color:var(--muted);
+    width:24px; text-align:center;
+  }
+  .opchip input { display:none; }
+  .opchip.on { background:var(--amber-light); border-color:var(--amber); }
+  .opchip.on .sym { color:var(--amber-dark); }
+
+  .msg { padding:0.75rem 1rem; border-radius:12px; font-size:0.9rem; margin-top:1rem; font-weight:700; border:2px solid; }
+  .msg.err { background:var(--coral-light); color:#a33f1c; border-color:#f0c3ad; }
+  .msg.ok  { background:var(--green-light); color:var(--green-dark); border-color:#bfdec6; }
+  .msg.info{ background:var(--teal-light); color:var(--teal); border-color:#c2d4e6; }
+
+  /* ---------- printed sheet ---------- */
+  .sheet {
+    background:var(--white); border:2px solid var(--border); border-radius:14px;
+    padding:34px 40px; margin-bottom:22px; box-shadow:0 8px 28px rgba(0,0,0,0.12);
+  }
+  .sheet-head {
+    display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(135deg, var(--green-dark), var(--green));
+    border-radius:10px; padding:14px 20px; margin-bottom:20px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .sheet-head .left { display:flex; align-items:center; gap:12px; }
+  .sheet-head .scoin {
+    width:44px; height:44px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f6c563, var(--amber) 65%, var(--amber-dark));
+    display:flex; align-items:center; justify-content:center; font-size:21px;
+    box-shadow:0 3px 0 var(--amber-dark);
+  }
+  .sheet-head h3 { font-family:'Fredoka One',cursive; font-size:1.5rem; color:var(--amber); line-height:1.1; }
+  .sheet-head .wm { font-size:0.7rem; color:rgba(255,255,255,0.8); font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+  .sheet-head .meta { font-size:0.8rem; color:rgba(255,255,255,0.85); text-align:right; font-weight:700; }
+  .name-line { display:flex; gap:22px; margin-bottom:20px; font-size:0.85rem; font-weight:700; color:var(--muted); }
+  .name-line span { flex:1; border-bottom:2px dotted var(--border); padding-bottom:3px; }
+
+  .instr {
+    font-size:0.95rem; font-weight:700; color:var(--teal-dark);
+    background:var(--amber-light); border:2px solid var(--amber);
+    border-radius:12px; padding:10px 16px; margin-bottom:18px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .instr .oplegend { display:block; font-size:0.85rem; color:var(--muted); font-weight:700; margin-top:2px; }
+
+  .ans-tag {
+    display:inline-block; background:var(--coral); color:#fff;
+    font-size:0.7rem; font-weight:800; padding:4px 14px; border-radius:20px;
+    letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px;
+  }
+
+  /* ---------- mattekryss-rutenett ---------- */
+  table.mk { border-collapse:separate; border-spacing:4px; margin:6px auto; }
+  table.mk td {
+    width:48px; height:48px; text-align:center; vertical-align:middle;
+    font-family:'Nunito',sans-serif; font-size:1.1rem; font-weight:800;
+    color:var(--teal-dark);
+  }
+  table.mk td.cell {
+    background:#fff; border:2px solid var(--green-dark); border-radius:8px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  table.mk td.sym {
+    background:var(--bg); border:2px solid var(--border); border-radius:8px;
+    font-family:'Fredoka One',cursive; font-size:1.15rem; color:var(--green-dark);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  table.mk td.void { background:transparent; border:none; font-size:24px; }
+  table.mk td.cell.ans {
+    color:var(--coral); background:var(--coral-light);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  footer a { color: var(--muted); margin: 0 0.5rem; }
+  footer a:hover { color: var(--green-dark); }
+
+  @media (max-width: 520px) {
+    main { padding: 1.75rem 1rem 3rem; }
+    .panel { padding: 1.4rem 1.2rem; }
+    .sheet { padding: 22px 18px; }
+    table.mk td { width:38px; height:38px; font-size:0.95rem; }
+  }
+
+  @media print {
+    body { background:#fff; }
+    .no-print, .topnav, .hero, footer { display:none !important; }
+    main { padding:0; max-width:none; }
+    .sheet { box-shadow:none; border:none; border-radius:0; padding:8mm 4mm; page-break-after:always; }
+    .sheet:last-child { page-break-after:auto; }
+    .sheet-head { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    @page { size:A4; margin:10mm 12mm; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav no-print">
+  <div class="topnav-inner">
+    <a href="index.html" class="topnav-logo">Myntland</a>
+    <a href="index.html" class="topnav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake til forsiden
+    </a>
+  </div>
+</nav>
+
+<section class="hero no-print">
+  <div aria-hidden="true">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:130px; top:-30px;  left:4%;   --tilt:-14deg; --fart:19s;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:70px;  top:55%;   left:14%;  --tilt:8deg;   --fart:24s; --start:-9s;  opacity:0.09;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:90px;  top:12%;   right:18%; --tilt:-6deg;  --fart:28s; --start:-15s; opacity:0.10;">
+    <img class="hero-mynt" src="mynt.webp" alt="" style="width:160px; bottom:-45px; right:4%; --tilt:12deg; --fart:22s; --start:-5s;">
+  </div>
+  <div class="hero-inner">
+    <div class="hero-tag">For lærere · 1.–7. trinn</div>
+    <h1>Regne<span class="accent">verkstedet</span></h1>
+    <p class="hero-sub">Velg regnearter og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Først ut: mattekryss!</p>
+  </div>
+</section>
+
+<main>
+
+  <!-- OPPGAVETYPE -->
+  <div class="panel no-print" id="panelType">
+    <h2><span class="badge">1</span> Velg oppgavetype</h2>
+    <p class="sub">Hva slags regneoppgave skal klassen få?</p>
+    <div class="seg" id="taskType">
+      <button data-type="mattekryss" class="active">➕ Mattekryss</button>
+    </div>
+    <p class="seg-note">Flere oppgavetyper kommer etter hvert – mattekryss er først ut.</p>
+  </div>
+
+  <!-- INNSTILLINGER -->
+  <div class="panel no-print" id="panelOpts">
+    <h2><span class="badge">2</span> Velg innstillinger</h2>
+    <p class="sub">Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.</p>
+
+    <div class="row" style="margin-bottom:16px;">
+      <div>
+        <label class="fld">Tittel på arket</label>
+        <input type="text" id="title" value="Mattekryss">
+      </div>
+      <div>
+        <label class="fld">Klasse / dato (valgfritt)</label>
+        <input type="text" id="meta" placeholder="4A – uke 38">
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label class="fld">Regnearter <span style="font-weight:600; color:var(--muted);">– velg én eller flere</span></label>
+      <div class="opgrid" id="opgrid">
+        <label class="opchip on"><input type="checkbox" value="+" checked><span class="sym">+</span> Pluss</label>
+        <label class="opchip on"><input type="checkbox" value="-" checked><span class="sym">−</span> Minus</label>
+        <label class="opchip"><input type="checkbox" value="*"><span class="sym">·</span> Ganging</label>
+        <label class="opchip"><input type="checkbox" value="/"><span class="sym">:</span> Deling</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <div style="flex:0 0 180px;">
+        <label class="fld">Tallområde</label>
+        <select id="range">
+          <option value="10">0–10</option>
+          <option value="20" selected>0–20</option>
+          <option value="100">0–100</option>
+        </select>
+      </div>
+      <div style="flex:0 0 300px;">
+        <label class="fld">Vanskegrad</label>
+        <select id="difficulty">
+          <option value="easy" selected>🟢 Lett – bare svarene mangler</option>
+          <option value="medium">🟡 Middels – noen tall mangler også</option>
+          <option value="hard">🔴 Vanskelig – mange tall mangler</option>
+        </select>
+      </div>
+      <div style="flex:0 0 170px;">
+        <label class="fld">Antall ark</label>
+        <select id="count">
+          <option value="1" selected>1 ark</option>
+          <option value="2">2 ark</option>
+          <option value="3">3 ark</option>
+          <option value="4">4 ark</option>
+          <option value="5">5 ark</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn-gold" id="generateBtn">🪙 Lag oppgaven</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <!-- PRINT BAR -->
+  <div class="toolbar no-print" id="printBar" style="display:none; justify-content:center; margin-bottom:22px;">
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Skriv ut / lagre PDF</button>
+    <button class="btn btn-ghost" id="regenBtn">↻ Lag ny variant</button>
+  </div>
+
+  <div id="output"></div>
+
+</main>
+
+<footer class="no-print">
+  <span>🪙 Myntland © 2026 · Regneverkstedet lagrer ingen data</span><br>
+  <a href="index.html">Forsiden</a> ·
+  <a href="ordverkstedet.html">Ordverkstedet</a> ·
+  <a href="for-skoler.html">For skoler</a> ·
+  <a href="laererveiledning.html">Lærerveiledning</a> ·
+  <a href="mailto:kontakt@myntland.no">Kontakt</a>
+</footer>
+
+<script>
+/* ============ HJELPERE ============ */
+const $ = id => document.getElementById(id);
+function rnd(n){ return Math.floor(Math.random()*n); }
+function rint(lo,hi){ if(hi<lo) return null; return lo + rnd(hi-lo+1); }
+function pick(arr){ return arr[rnd(arr.length)]; }
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function escapeHtml(s){ return s.replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+let taskType = 'mattekryss';
+
+/* ============ MATTEKRYSS-GENERATOR ============ */
+/* Lag ett regnestykke a op b = c innenfor [0, hi].
+   fixedSlot: 0 (a), 2 (b) eller 4 (c) kan være låst til fixedVal. */
+function genEq(op, hi, fixedSlot, fixedVal){
+  const maxFac = 10; // gangetabell-vennlige faktorer
+  for(let t=0;t<40;t++){
+    let a,b,c;
+    if(op==='+'){
+      if(fixedSlot===0){ a=fixedVal; if(a>hi) return null; b=rint(0,hi-a); }
+      else if(fixedSlot===2){ b=fixedVal; if(b>hi) return null; a=rint(0,hi-b); }
+      else if(fixedSlot===4){ c=fixedVal; if(c>hi) return null; a=rint(0,c); b=c-a; }
+      else { a=rint(0,hi); b=rint(0,hi-a); }
+      if(c===undefined) c=a+b;
+    } else if(op==='-'){
+      if(fixedSlot===0){ a=fixedVal; if(a>hi) return null; b=rint(0,a); }
+      else if(fixedSlot===2){ b=fixedVal; if(b>hi) return null; a=rint(b,hi); }
+      else if(fixedSlot===4){ c=fixedVal; if(c>hi) return null; b=rint(0,hi-c); a=c+b; }
+      else { a=rint(0,hi); b=rint(0,a); }
+      c=a-b;
+    } else if(op==='*'){
+      if(fixedSlot===0){
+        a=fixedVal;
+        if(a<0||a>hi) return null;
+        if(a===0){ b=rint(1,maxFac); }
+        else {
+          const bm=Math.min(maxFac, Math.floor(hi/a));
+          if(bm<1) return null;
+          b=rint(1,bm);
+        }
+      } else if(fixedSlot===2){
+        b=fixedVal;
+        if(b<0||b>hi) return null;
+        if(b===0){ a=rint(1,maxFac); }
+        else {
+          const am=Math.min(maxFac, Math.floor(hi/b));
+          if(am<1) return null;
+          a=rint(1,am);
+        }
+      } else if(fixedSlot===4){
+        c=fixedVal;
+        if(c<1||c>hi) return null;
+        const pairs=[];
+        for(let f=1;f<=maxFac;f++) if(c%f===0 && c/f<=maxFac) pairs.push([f,c/f]);
+        if(!pairs.length) return null;
+        const pr=pick(pairs); a=pr[0]; b=pr[1];
+      } else {
+        a=rint(2,Math.min(maxFac,hi));
+        const bm=Math.min(maxFac, Math.floor(hi/a));
+        if(bm<1) continue;
+        b=rint(1,bm);
+      }
+      c=a*b;
+    } else { // '/'  a : b = c
+      if(fixedSlot===0){
+        a=fixedVal;
+        if(a<1||a>hi) return null;
+        const divs=[];
+        for(let f=2;f<=maxFac;f++) if(a%f===0 && a/f>=1 && a/f<=maxFac) divs.push(f);
+        if(!divs.length) return null;
+        b=pick(divs); c=a/b;
+      } else if(fixedSlot===2){
+        b=fixedVal;
+        if(b<2||b>maxFac) return null;
+        const cm=Math.min(maxFac, Math.floor(hi/b));
+        if(cm<1) return null;
+        c=rint(1,cm); a=b*c;
+      } else if(fixedSlot===4){
+        c=fixedVal;
+        if(c<1||c>hi) return null;
+        const bm=Math.min(maxFac, Math.floor(hi/c));
+        if(bm<2) return null;
+        b=rint(2,bm); a=b*c;
+      } else {
+        b=rint(2,maxFac);
+        const cm=Math.min(maxFac, Math.floor(hi/b));
+        if(cm<1) continue;
+        c=rint(1,cm); a=b*c;
+      }
+    }
+    if(a===null||b===null||c===null||a===undefined||b===undefined||c===undefined) continue;
+    if(a<0||b<0||c<0||a>hi||b>hi||c>hi) continue;
+    // Unngå trivielle stykker (0+0, ·1 osv.) så lenge vi har forsøk igjen
+    if(a===0&&b===0) continue;
+    const dull =
+      (op==='+'||op==='-') ? (a===0||b===0||c===0) :
+      (op==='*') ? (a<=1||b<=1) :
+      (c<=1);
+    if(dull && t<30) continue;
+    return {a,b,c,op};
+  }
+  return null;
+}
+
+/* Bygg selve krysset: kryssende regnestykker i et rutenett. */
+function buildKryss(opts){
+  const hi=opts.hi, ops=opts.ops, rows=opts.rows, cols=opts.cols, targetEq=opts.targetEq;
+  let best=null;
+
+  for(let attempt=0; attempt<30; attempt++){
+    const grid=Array.from({length:rows},()=>Array(cols).fill(null));
+    const eqs=[];
+
+    const canPlace=(r,c,dir,eq)=>{
+      const dr=dir==='down'?1:0, dc=dir==='across'?1:0;
+      const vals=[eq.a, null, eq.b, null, eq.c];
+      const types=['num','op','num','eq','num'];
+      let shared=0;
+      for(let k=0;k<5;k++){
+        const rr=r+dr*k, cc=c+dc*k;
+        if(rr<0||cc<0||rr>=rows||cc>=cols) return false;
+        const cell=grid[rr][cc];
+        if(cell){
+          if(types[k]!=='num'||cell.type!=='num'||cell.val!==vals[k]) return false;
+          shared++;
+          if(shared>1) return false;
+        }
+      }
+      return true;
+    };
+    const place=(r,c,dir,eq)=>{
+      const dr=dir==='down'?1:0, dc=dir==='across'?1:0;
+      const id=eqs.length;
+      const vals=[eq.a, null, eq.b, null, eq.c];
+      const types=['num','op','num','eq','num'];
+      const numCells={};
+      for(let k=0;k<5;k++){
+        const rr=r+dr*k, cc=c+dc*k;
+        if(types[k]==='num'){
+          if(grid[rr][cc]) grid[rr][cc].eqSlots.push({id,slot:k});
+          else grid[rr][cc]={type:'num', val:vals[k], eqSlots:[{id,slot:k}]};
+          numCells[k]=[rr,cc];
+        } else if(types[k]==='op'){
+          grid[rr][cc]={type:'op', ch:eq.op};
+        } else {
+          grid[rr][cc]={type:'eq'};
+        }
+      }
+      eqs.push({a:eq.a, b:eq.b, c:eq.c, op:eq.op, row:r, col:c, dir, numCells});
+    };
+
+    // Første stykke: vannrett, litt tilfeldig plassert øverst
+    const e0=genEq(pick(ops), hi, null, null);
+    if(!e0) continue;
+    place(rint(0,2), rint(0,cols-5), 'across', e0);
+
+    // Voks utover fra delte tallruter
+    for(let iter=0; iter<900 && eqs.length<targetEq; iter++){
+      const base=pick(eqs);
+      const slot=pick([0,2,4]);
+      const cell0=base.numCells[slot];
+      const r0=cell0[0], c0=cell0[1];
+      const v=[base.a,base.b,base.c][slot/2];
+      const newDir=base.dir==='across'?'down':'across';
+      const dr=newDir==='down'?1:0, dc=newDir==='across'?1:0;
+      for(const ns of shuffle([0,2,4])){
+        const r=r0-dr*ns, c=c0-dc*ns;
+        let ok=false;
+        for(const op of shuffle(ops)){
+          const e=genEq(op, hi, ns, v);
+          if(e && canPlace(r,c,newDir,e)){ place(r,c,newDir,e); ok=true; break; }
+        }
+        if(ok) break;
+      }
+    }
+
+    if(!best || eqs.length>best.eqs.length) best={grid,eqs,rows,cols};
+    if(best.eqs.length>=targetEq) break;
+  }
+  return best;
+}
+
+/* Velg hvilke tallruter som skal stå tomme (vanskegrad) og sikre løsbarhet. */
+function blankKryss(kryss, difficulty){
+  const eqs=kryss.eqs;
+  const key=rc=>rc[0]+'_'+rc[1];
+  const blanks=new Set();
+
+  eqs.forEach(eq=>{ blanks.add(key(eq.numCells[4])); }); // svaret mangler alltid
+  if(difficulty==='medium'){
+    eqs.forEach(eq=>{ if(Math.random()<0.5) blanks.add(key(eq.numCells[pick([0,2])])); });
+  } else if(difficulty==='hard'){
+    eqs.forEach(eq=>{ blanks.add(key(eq.numCells[pick([0,2])])); });
+  }
+
+  const solvable=()=>{
+    const solved=new Set();
+    let changed=true;
+    while(changed){
+      changed=false;
+      for(const eq of eqs){
+        const unk=[0,2,4].filter(s=>{
+          const k=key(eq.numCells[s]);
+          return blanks.has(k) && !solved.has(k);
+        });
+        if(unk.length===1){ solved.add(key(eq.numCells[unk[0]])); changed=true; }
+      }
+    }
+    return [...blanks].every(k=>solved.has(k));
+  };
+
+  // Fjern operand-luker til krysset kan løses steg for steg
+  let guard=0;
+  while(!solvable() && guard++<60){
+    const results=new Set(eqs.map(eq=>key(eq.numCells[4])));
+    const operandBlanks=[...blanks].filter(k=>!results.has(k));
+    if(operandBlanks.length) blanks.delete(pick(operandBlanks));
+    else blanks.delete(pick([...blanks]));
+  }
+  return blanks;
+}
+
+const DECO=['🐢','🦊','🐸','🦉','🐙','🦀','🐧','🐳'];
+
+function makeMattekryss(opts){
+  const kryss=buildKryss(opts);
+  if(!kryss || kryss.eqs.length<4) return null;
+  const blanks=blankKryss(kryss, opts.difficulty);
+
+  // Beskjær til brukt område (med litt luft rundt til pynt)
+  let minR=kryss.rows, maxR=0, minC=kryss.cols, maxC=0;
+  for(let r=0;r<kryss.rows;r++) for(let c=0;c<kryss.cols;c++)
+    if(kryss.grid[r][c]){ minR=Math.min(minR,r); maxR=Math.max(maxR,r); minC=Math.min(minC,c); maxC=Math.max(maxC,c); }
+  minR=Math.max(0,minR-0); minC=Math.max(0,minC-0);
+
+  // Pynt: dyr i noen tomme ruter innenfor området
+  const empty=[];
+  for(let r=minR;r<=maxR;r++) for(let c=minC;c<=maxC;c++)
+    if(!kryss.grid[r][c]) empty.push([r,c]);
+  const deco={};
+  shuffle(empty).slice(0,3).forEach((rc,i)=>{ deco[rc[0]+'_'+rc[1]]=DECO[(rnd(DECO.length)+i)%DECO.length]; });
+
+  return {grid:kryss.grid, eqs:kryss.eqs, blanks:blanks, deco:deco, minR, maxR, minC, maxC};
+}
+
+/* ============ RENDER ============ */
+const OPCH={'+':'+','-':'−','*':'·','/':':'};
+
+function sheet(title,meta,body){
+  return `<div class="sheet">
+    <div class="sheet-head">
+      <div class="left">
+        <div class="scoin">🪙</div>
+        <div><h3>${escapeHtml(title)||'Oppgaveark'}</h3><div class="wm">MYNTLAND · REGNEVERKSTEDET</div></div>
+      </div>
+      <div class="meta">${escapeHtml(meta)||''}</div>
+    </div>
+    <div class="name-line"><span>Navn:</span><span>Klasse:</span><span>Dato:</span></div>
+    ${body}
+  </div>`;
+}
+
+function renderMattekryss(p, title, meta, answer, hasMulDiv){
+  let inner='';
+  if(answer){
+    inner+='<span class="ans-tag">🪙 Fasit</span>';
+  } else {
+    inner+=`<p class="instr">✏️ Fyll inn tallene som mangler. Alle regnestykkene skal stemme – både vannrett ➡️ og loddrett ⬇️!${
+      hasMulDiv?'<span class="oplegend">· betyr ganging &nbsp;·&nbsp; : betyr deling</span>':''}</p>`;
+  }
+  let html='<table class="mk"><tbody>';
+  for(let r=p.minR;r<=p.maxR;r++){
+    html+='<tr>';
+    for(let c=p.minC;c<=p.maxC;c++){
+      const cell=p.grid[r][c];
+      const k=r+'_'+c;
+      if(!cell){ html+=`<td class="void">${p.deco[k]||''}</td>`; continue; }
+      if(cell.type==='op'){ html+=`<td class="sym">${OPCH[cell.ch]}</td>`; continue; }
+      if(cell.type==='eq'){ html+='<td class="sym">=</td>'; continue; }
+      if(p.blanks.has(k)){
+        html+= answer ? `<td class="cell ans">${cell.val}</td>` : '<td class="cell"></td>';
+      } else {
+        html+=`<td class="cell">${cell.val}</td>`;
+      }
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  return sheet(title,meta,inner+html);
+}
+
+/* ============ UI ============ */
+document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
+  inp.addEventListener('change', ()=>{
+    inp.closest('.opchip').classList.toggle('on', inp.checked);
+  });
+});
+
+$('taskType').addEventListener('click', e=>{
+  if(e.target.tagName!=='BUTTON'||e.target.classList.contains('disabled')) return;
+  taskType=e.target.dataset.type;
+  document.querySelectorAll('#taskType button').forEach(b=>b.classList.toggle('active',b===e.target));
+});
+
+function generate(){
+  const title=$('title').value.trim();
+  const metaBase=$('meta').value.trim();
+  const out=$('output'), msg=$('msg');
+  msg.innerHTML='';
+
+  const ops=[...document.querySelectorAll('#opgrid input:checked')].map(i=>i.value);
+  if(!ops.length){ msg.innerHTML='<div class="msg err">Velg minst én regneart.</div>'; return; }
+
+  const hi=parseInt($('range').value);
+  const difficulty=$('difficulty').value;
+  const count=parseInt($('count').value);
+  const hasMulDiv=ops.includes('*')||ops.includes('/');
+
+  const puzzles=[];
+  for(let i=0;i<count;i++){
+    const p=makeMattekryss({hi, ops, rows:10, cols:7, targetEq:7, difficulty});
+    if(!p){ msg.innerHTML='<div class="msg err">Fikk ikke laget krysset – prøv en gang til, eller velg et større tallområde.</div>'; return; }
+    puzzles.push(p);
+  }
+
+  let html='';
+  puzzles.forEach((p,i)=>{
+    const meta=metaBase+(count>1 ? (metaBase?' · ':'')+'Ark '+(i+1)+' av '+count : '');
+    html+=renderMattekryss(p, title, meta, false, hasMulDiv);
+  });
+  puzzles.forEach((p,i)=>{
+    const meta=metaBase+(count>1 ? (metaBase?' · ':'')+'Ark '+(i+1)+' av '+count : '');
+    html+=renderMattekryss(p, title+' – fasit', meta, true, hasMulDiv);
+  });
+  out.innerHTML=html;
+
+  const totalEq=puzzles.reduce((s,p)=>s+p.eqs.length,0);
+  msg.innerHTML=`<div class="msg ok">🪙 ${count===1?'Mattekryss laget':count+' mattekryss laget'} med til sammen ${totalEq} regnestykker – fasit ligger bakerst!</div>`;
+  $('printBar').style.display='flex';
+  out.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+$('generateBtn').addEventListener('click', generate);
+$('regenBtn').addEventListener('click', generate);
+</script>
+<!-- Mynt-ikon: bytter 🪙-emojien til eget bilde overalt (også dynamisk innhold) -->
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
+<script>
+(function(){
+  var COIN='🪙'; // 🪙
+  function convert(node){
+    if(!node) return;
+    if(node.nodeType===3){
+      var v=node.nodeValue;
+      if(!v || v.indexOf(COIN)===-1) return;
+      var p=node.parentNode; if(!p) return;
+      var tag=p.nodeName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA') return;
+      var parts=v.split(COIN), frag=document.createDocumentFragment();
+      for(var i=0;i<parts.length;i++){
+        if(parts[i]) frag.appendChild(document.createTextNode(parts[i]));
+        if(i<parts.length-1){
+          var img=document.createElement('img');
+          img.className='myntico'; img.src='mynt.webp'; img.alt='mynt';
+          frag.appendChild(img);
+        }
+      }
+      p.replaceChild(frag,node);
+    } else if(node.nodeType===1){
+      var t=node.nodeName;
+      if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='INPUT') return;
+      var kids=Array.prototype.slice.call(node.childNodes);
+      for(var i=0;i<kids.length;i++) convert(kids[i]);
+    }
+  }
+  function run(){ try{ convert(document.body); }catch(e){} }
+  try{
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var m=muts[i];
+        if(m.type==='childList'){ for(var j=0;j<m.addedNodes.length;j++) convert(m.addedNodes[j]); }
+        else if(m.type==='characterData'){ convert(m.target); }
+      }
+    });
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
+})();
+</script>
+</body>
+</html>
