@@ -310,6 +310,53 @@
   }
   .mg-leg img.mgm { width:34px; height:34px; }
 
+  /* ---------- tallinjer ---------- */
+  .tl-list { display:flex; flex-direction:column; gap:20px; }
+  .tl-box {
+    background:var(--white); border:2px solid var(--green-dark); border-radius:14px;
+    padding:14px 18px 20px;
+    break-inside:avoid; page-break-inside:avoid;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .tl-title {
+    display:flex; align-items:center; gap:8px; margin-bottom:4px;
+    font-family:'Fredoka One',cursive; color:var(--teal-dark); font-size:1rem;
+  }
+  .tl-badge {
+    background:var(--green); color:#fff; width:26px; height:26px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:0.85rem; font-family:'Fredoka One',cursive; flex-shrink:0;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .tl-track {
+    position:relative; display:flex; justify-content:space-between;
+    margin:30px 4px 4px; padding:0 24px;
+  }
+  .tl-rail {
+    position:absolute; left:24px; right:24px; top:9px; height:3px;
+    background:var(--green-dark); border-radius:2px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .tl-pt {
+    position:relative; display:flex; flex-direction:column; align-items:center;
+    width:48px; flex:0 0 auto; z-index:1;
+  }
+  .tl-tick {
+    width:3px; height:18px; background:var(--green-dark); margin-bottom:6px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .tl-val { font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--teal-dark); }
+  .tl-monster {
+    width:32px; height:32px; object-fit:contain; margin-bottom:4px;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15));
+  }
+  .tl-ansbox {
+    display:inline-block; width:46px; height:34px;
+    background:#fff; border:2px solid var(--coral); border-radius:9px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .tl-ans { color:var(--coral); }
+
   /* ---------- footer ---------- */
   footer {
     background: var(--white);
@@ -331,6 +378,9 @@
     .mkmonster { width:30px; height:30px; }
     .mg-grid { grid-template-columns:1fr; }
     .mg-line img.mgm { width:34px; height:34px; }
+    .tl-pt { width:38px; }
+    .tl-monster { width:26px; height:26px; }
+    .tl-ansbox { width:38px; height:30px; }
   }
 
   @media print {
@@ -367,7 +417,7 @@
   <div class="hero-inner">
     <div class="hero-tag">For lærere · 1.–7. trinn</div>
     <h1>Regne<span class="accent">verkstedet</span></h1>
-    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss og monstergåter!</p>
+    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss, monstergåter og tallinjer!</p>
   </div>
 </section>
 
@@ -380,6 +430,7 @@
     <div class="seg" id="taskType">
       <button data-type="mattekryss" class="active">➕ Mattekryss</button>
       <button data-type="monstergater">👾 Monstergåter</button>
+      <button data-type="tallinjer">〰️ Tallinjer</button>
     </div>
     <p class="seg-note">Flere oppgavetyper kommer etter hvert.</p>
   </div>
@@ -845,6 +896,50 @@ function genMonsterPuzzle(hi, difficulty){
 }
 /* ===MG-GEN-END=== */
 
+/* ============ TALLINJE-GENERATOR ============ */
+/* Lag en tallinje med "antall" punkter, jevn avstand ("steg") mellom dem.
+   Noen tall gjemmes bak et monster med svarboks under.
+   Lett: teller med steg 1, kun 1-2 tall skjult.
+   Middels: hoppetelling (steg 2/5/10/20 avhengig av tallområdet), flere skjult.
+   Vanskelig: bare første og siste tall vises – eleven må selv finne steget. */
+function genTallinje(hi, difficulty){
+  for(let attempt=0; attempt<80; attempt++){
+    let stepPool;
+    if(difficulty==='easy'){
+      stepPool=[1];
+    } else {
+      if(hi<=10) stepPool=[1,2];
+      else if(hi<=20) stepPool=[1,2,5];
+      else stepPool=[2,5,10,20];
+      if(difficulty==='hard'){
+        const noOnes=stepPool.filter(s=>s!==1);
+        if(noOnes.length) stepPool=noOnes;
+      }
+    }
+    const steg=pick(stepPool);
+    const antall=rint(6,8);
+
+    const maxK=Math.floor((hi - steg*(antall-1))/steg);
+    if(maxK<0) continue;
+    const k=rint(0,maxK);
+    const start=steg*k;
+
+    const verdier=Array.from({length:antall},(_,i)=>start+i*steg);
+    if(verdier[verdier.length-1]>hi) continue;
+
+    const interior=[];
+    for(let i=1;i<antall-1;i++) interior.push(i);
+    let maskCount;
+    if(difficulty==='easy') maskCount=Math.min(2, interior.length);
+    else if(difficulty==='medium') maskCount=Math.max(1, interior.length - rint(1,2));
+    else maskCount=interior.length; // vanskelig: alt mellom første og siste skjules
+
+    const maskerte=new Set(shuffle(interior).slice(0,maskCount));
+    return {start, steg, antall, verdier, maskerte};
+  }
+  return null;
+}
+
 /* ============ RENDER ============ */
 const OPCH={'+':'+','-':'−','*':'·','/':':'};
 
@@ -938,6 +1033,45 @@ function renderMonstergater(puzzles, title, meta, answer, difficulty){
   return sheet(title,meta,inner);
 }
 
+/* ---------- tallinjer: render ---------- */
+function tlPoint(val, masked, imgSrc, showAnswer){
+  let inner='<div class="tl-tick"></div>';
+  if(masked){
+    if(showAnswer){
+      inner+=`<span class="tl-val tl-ans">${val}</span>`;
+    } else {
+      inner+=`<img class="tl-monster" src="${imgSrc}" alt="monster"><span class="tl-ansbox"></span>`;
+    }
+  } else {
+    inner+=`<span class="tl-val">${val}</span>`;
+  }
+  return `<div class="tl-pt">${inner}</div>`;
+}
+
+function renderTallinjeBox(p, idx, answer){
+  const imgs=shuffle(MONSTER_IMGS);
+  let pts='';
+  p.verdier.forEach((v,i)=>{
+    const masked=p.maskerte.has(i);
+    pts+=tlPoint(v, masked, imgs[i%imgs.length], answer);
+  });
+  return `<div class="tl-box"><div class="tl-title"><span class="tl-badge">${idx+1}</span> Tallinje ${idx+1}</div>
+    <div class="tl-track"><div class="tl-rail"></div>${pts}</div></div>`;
+}
+
+function renderTallinjer(puzzles, title, meta, answer, difficulty){
+  let inner='';
+  if(answer){
+    inner+='<span class="ans-tag">🪙 Fasit</span>';
+  } else if(difficulty==='hard'){
+    inner+='<p class="instr">🔍 Bare første og siste tall vises. Finn ut hvordan tallinja er bygget opp, og fyll inn tallene som mangler!</p>';
+  } else {
+    inner+='<p class="instr">✏️ Noen tall på tallinja gjemmer seg bak et monster. Finn tallet og skriv det i boksen under!</p>';
+  }
+  inner+=`<div class="tl-list">${puzzles.map((p,j)=>renderTallinjeBox(p,j,answer)).join('')}</div>`;
+  return sheet(title,meta,inner);
+}
+
 /* ============ UI ============ */
 document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   inp.addEventListener('change', ()=>{
@@ -945,25 +1079,27 @@ document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   });
 });
 
-const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter' };
+const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tallinjer:'Tallinjer' };
 const TYPE_SUBS = {
   mattekryss:'Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.',
-  monstergater:'Hvert monster gjemmer et hemmelig tall. Elevene finner monstrenes verdi linje for linje – og løser gåten til slutt. 4 gåter per ark.'
+  monstergater:'Hvert monster gjemmer et hemmelig tall. Elevene finner monstrenes verdi linje for linje – og løser gåten til slutt. 4 gåter per ark.',
+  tallinjer:'Noen tall på tallinja er gjemt bak et monster. Elevene finner tallet og skriver det i boksen under. 5 tallinjer per ark.'
 };
 const DIFF_LABELS = {
   mattekryss:{ easy:'🟢 Lett – bare svarene mangler', medium:'🟡 Middels – noen tall mangler også', hard:'🔴 Vanskelig – mange tall mangler' },
-  monstergater:{ easy:'🟢 Lett – 2 monstre, pluss og minus', medium:'🟡 Middels – 3 monstre, pluss og minus', hard:'🔴 Vanskelig – 3 monstre + ganging til slutt' }
+  monstergater:{ easy:'🟢 Lett – 2 monstre, pluss og minus', medium:'🟡 Middels – 3 monstre, pluss og minus', hard:'🔴 Vanskelig – 3 monstre + ganging til slutt' },
+  tallinjer:{ easy:'🟢 Lett – teller med 1 og 1, få tall mangler', medium:'🟡 Middels – hoppetelling, flere tall mangler', hard:'🔴 Vanskelig – bare første og siste tall vises' }
 };
 
 function applyTypeUI(){
-  $('opsBlock').style.display = taskType==='monstergater' ? 'none' : '';
+  $('opsBlock').style.display = (taskType==='monstergater'||taskType==='tallinjer') ? 'none' : '';
   $('optsSub').textContent = TYPE_SUBS[taskType];
   const labels=DIFF_LABELS[taskType];
   [...$('difficulty').options].forEach(o=>{ o.text=labels[o.value]; });
   // Bytt standardtittel hvis læreren ikke har skrevet egen
-  const other = taskType==='monstergater' ? TYPE_TITLES.mattekryss : TYPE_TITLES.monstergater;
+  const others=Object.keys(TYPE_TITLES).filter(t=>t!==taskType).map(t=>TYPE_TITLES[t]);
   const cur=$('title').value.trim();
-  if(cur===other||cur==='') $('title').value=TYPE_TITLES[taskType];
+  if(others.includes(cur)||cur==='') $('title').value=TYPE_TITLES[taskType];
 }
 
 $('taskType').addEventListener('click', e=>{
@@ -1006,6 +1142,29 @@ function generate(){
     sheets.forEach((sp,i)=>{ html+=renderMonstergater(sp, title+' – fasit', metaFor(i), true, difficulty); });
     out.innerHTML=html;
     msg.innerHTML=`<div class="msg ok">🪙 ${count*PER_SHEET} monstergåter laget på ${count===1?'1 ark':count+' ark'} – fasit ligger bakerst!</div>`;
+    $('printBar').style.display='flex';
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  /* ---------- tallinjer ---------- */
+  if(taskType==='tallinjer'){
+    const PER_SHEET=5;
+    const sheets=[];
+    for(let s=0;s<count;s++){
+      const sp=[];
+      for(let j=0;j<PER_SHEET;j++){
+        const p=genTallinje(hi, difficulty);
+        if(!p){ msg.innerHTML='<div class="msg err">Fikk ikke laget tallinjene – prøv en gang til, eller velg et større tallområde.</div>'; return; }
+        sp.push(p);
+      }
+      sheets.push(sp);
+    }
+    let html='';
+    sheets.forEach((sp,i)=>{ html+=renderTallinjer(sp, title, metaFor(i), false, difficulty); });
+    sheets.forEach((sp,i)=>{ html+=renderTallinjer(sp, title+' – fasit', metaFor(i), true, difficulty); });
+    out.innerHTML=html;
+    msg.innerHTML=`<div class="msg ok">🪙 ${count*PER_SHEET} tallinjer laget på ${count===1?'1 ark':count+' ark'} – fasit ligger bakerst!</div>`;
     $('printBar').style.display='flex';
     out.scrollIntoView({behavior:'smooth',block:'start'});
     return;
