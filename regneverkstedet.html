@@ -256,6 +256,60 @@
     filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
   }
 
+  /* ---------- monstergåter ---------- */
+  .mg-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:16px;
+  }
+  .mg-box {
+    background:var(--white); border:2px solid var(--green-dark); border-radius:14px;
+    padding:14px 16px 16px;
+    break-inside:avoid; page-break-inside:avoid;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .mg-title {
+    display:flex; align-items:center; gap:8px; margin-bottom:8px;
+    font-family:'Fredoka One',cursive; color:var(--teal-dark); font-size:1rem;
+  }
+  .mg-badge {
+    background:var(--green); color:#fff; width:26px; height:26px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:0.85rem; font-family:'Fredoka One',cursive; flex-shrink:0;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .mg-line {
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    margin:8px 0; min-height:46px;
+  }
+  .mg-line img.mgm {
+    width:42px; height:42px; object-fit:contain;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15));
+  }
+  .mg-sym {
+    font-family:'Fredoka One',cursive; font-size:1.3rem; color:var(--green-dark);
+    min-width:16px; text-align:center;
+  }
+  .mg-num { font-family:'Fredoka One',cursive; font-size:1.35rem; color:var(--teal-dark); }
+  .mg-line.q {
+    background:var(--amber-light); border:2px dashed var(--amber); border-radius:12px;
+    padding:5px 8px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .mg-ansbox {
+    display:inline-block; width:56px; height:40px;
+    background:#fff; border:2px solid var(--coral); border-radius:9px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .mg-ans { color:var(--coral); }
+  .mg-legend {
+    display:flex; flex-wrap:wrap; gap:8px 20px; justify-content:center;
+    margin:6px 0 4px; color:var(--teal-dark);
+  }
+  .mg-leg {
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'Fredoka One',cursive; font-size:1.1rem;
+  }
+  .mg-leg img.mgm { width:34px; height:34px; }
+
   /* ---------- footer ---------- */
   footer {
     background: var(--white);
@@ -275,6 +329,8 @@
     .sheet { padding: 22px 18px; }
     table.mk td { width:34px; height:34px; font-size:0.9rem; }
     .mkmonster { width:30px; height:30px; }
+    .mg-grid { grid-template-columns:1fr; }
+    .mg-line img.mgm { width:34px; height:34px; }
   }
 
   @media print {
@@ -284,6 +340,7 @@
     .sheet { box-shadow:none; border:none; border-radius:0; padding:8mm 4mm; page-break-after:always; }
     .sheet:last-child { page-break-after:auto; }
     .sheet-head { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .mg-grid { grid-template-columns:1fr 1fr; }
     @page { size:A4; margin:10mm 12mm; }
   }
 </style>
@@ -310,7 +367,7 @@
   <div class="hero-inner">
     <div class="hero-tag">For lærere · 1.–7. trinn</div>
     <h1>Regne<span class="accent">verkstedet</span></h1>
-    <p class="hero-sub">Velg regnearter og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Først ut: mattekryss!</p>
+    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss og monstergåter!</p>
   </div>
 </section>
 
@@ -322,14 +379,15 @@
     <p class="sub">Hva slags regneoppgave skal klassen få?</p>
     <div class="seg" id="taskType">
       <button data-type="mattekryss" class="active">➕ Mattekryss</button>
+      <button data-type="monstergater">👾 Monstergåter</button>
     </div>
-    <p class="seg-note">Flere oppgavetyper kommer etter hvert – mattekryss er først ut.</p>
+    <p class="seg-note">Flere oppgavetyper kommer etter hvert.</p>
   </div>
 
   <!-- INNSTILLINGER -->
   <div class="panel no-print" id="panelOpts">
     <h2><span class="badge">2</span> Velg innstillinger</h2>
-    <p class="sub">Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.</p>
+    <p class="sub" id="optsSub">Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.</p>
 
     <div class="row" style="margin-bottom:16px;">
       <div>
@@ -342,7 +400,7 @@
       </div>
     </div>
 
-    <div style="margin-bottom:16px;">
+    <div style="margin-bottom:16px;" id="opsBlock">
       <label class="fld">Regnearter <span style="font-weight:600; color:var(--muted);">– velg én eller flere</span></label>
       <div class="opgrid" id="opgrid">
         <label class="opchip on"><input type="checkbox" value="+" checked><span class="sym">+</span> Pluss</label>
@@ -534,10 +592,17 @@ function buildKryss(opts){
         const cell=grid[rr][cc];
         if(cell){
           if(types[k]!=='num'||cell.type!=='num'||cell.val!==vals[k]) return false;
+          // aldri del rute med et stykke i SAMME retning (hindrer 15·1=15+2=17-kjeder)
+          if(cell.eqSlots && cell.eqSlots.some(es=>eqs[es.id].dir===dir)) return false;
           shared++;
           if(shared>1) return false;
         }
       }
+      // rutene rett før og rett etter stykket må være tomme,
+      // så to stykker aldri kan leses som én sammenhengende likning
+      const br=r-dr, bc=c-dc, ar=r+dr*5, ac=c+dc*5;
+      if(br>=0&&bc>=0&&br<rows&&bc<cols&&grid[br][bc]) return false;
+      if(ar>=0&&ac>=0&&ar<rows&&ac<cols&&grid[ar][ac]) return false;
       return true;
     };
     const place=(r,c,dir,eq)=>{
@@ -678,6 +743,108 @@ function makeMattekryss(opts){
   return {grid:kryss.grid, eqs:kryss.eqs, blanks:blanks, deco:deco, minR, maxR, minC, maxC};
 }
 
+/* ============ MONSTERGÅTE-GENERATOR ============ */
+/* Hver gåte: 2–3 monstre med hemmelige verdier. Linje for linje kan
+   verdiene avsløres i rekkefølge, og siste (gule) linje er spørsmålet.
+   Alle linjeverdier holder seg innenfor [0, hi].
+   Tokens: 'M0'/'M1'/'M2' = monster, '+', '-', '*' = regnetegn. */
+/* ===MG-GEN-START=== */
+function genMonsterPuzzle(hi, difficulty){
+  const vmax = Math.max(4, Math.floor(hi/3));
+  const V = () => rint(1, vmax);
+  for(let t=0;t<600;t++){
+    if(difficulty==='easy'){
+      const a=V(), b=V();
+      if(a===b) continue;
+      const variant=rnd(3);
+      let lines;
+      if(variant===0){
+        lines=[
+          {tokens:['M0','+','M0'], val:2*a},
+          {tokens:['M0','+','M1'], val:a+b},
+          {tokens:['M1','+','M1','+','M0'], val:2*b+a, q:true}
+        ];
+      } else if(variant===1){
+        if(b<=a) continue;
+        lines=[
+          {tokens:['M1','+','M1'], val:2*b},
+          {tokens:['M1','-','M0'], val:b-a},
+          {tokens:['M0','+','M1'], val:a+b, q:true}
+        ];
+      } else {
+        if(b<=a) continue;
+        lines=[
+          {tokens:['M0','+','M0'], val:2*a},
+          {tokens:['M0','+','M1'], val:a+b},
+          {tokens:['M1','-','M0'], val:b-a, q:true}
+        ];
+      }
+      if(lines.every(l=>l.val>=0 && l.val<=hi)) return {lines, values:[a,b]};
+    } else {
+      const a=V(), b=V(), c=V();
+      if(a===b||b===c||a===c) continue;
+      let lines;
+      if(difficulty==='medium'){
+        const variant=rnd(3);
+        if(variant===0){
+          lines=[
+            {tokens:['M0','+','M0','+','M0'], val:3*a},
+            {tokens:['M0','+','M1','+','M1'], val:a+2*b},
+            {tokens:['M1','+','M2','+','M2'], val:b+2*c},
+            {tokens:['M0','+','M1','+','M2'], val:a+b+c, q:true}
+          ];
+        } else if(variant===1){
+          if(b<=a) continue;
+          lines=[
+            {tokens:['M0','+','M0'], val:2*a},
+            {tokens:['M1','-','M0'], val:b-a},
+            {tokens:['M1','+','M2'], val:b+c},
+            {tokens:['M0','+','M1','+','M2'], val:a+b+c, q:true}
+          ];
+        } else {
+          if(c<=b) continue;
+          lines=[
+            {tokens:['M0','+','M0','+','M0'], val:3*a},
+            {tokens:['M0','+','M1'], val:a+b},
+            {tokens:['M2','-','M1'], val:c-b},
+            {tokens:['M0','+','M2','-','M1'], val:a+c-b, q:true}
+          ];
+        }
+      } else { // hard – ganging og regnerekkefølge i siste linje
+        const variant=rnd(3);
+        if(variant===0){
+          if(b<2||c<2) continue;
+          lines=[
+            {tokens:['M0','+','M0','+','M0'], val:3*a},
+            {tokens:['M0','+','M1','+','M1'], val:a+2*b},
+            {tokens:['M1','+','M2','+','M2'], val:b+2*c},
+            {tokens:['M0','+','M1','*','M2'], val:a+b*c, q:true}
+          ];
+        } else if(variant===1){
+          if(a<2||b<2||c<=b) continue;
+          lines=[
+            {tokens:['M0','+','M0','+','M0'], val:3*a},
+            {tokens:['M0','*','M1','+','M1'], val:a*b+b},
+            {tokens:['M2','-','M1'], val:c-b},
+            {tokens:['M1','+','M2','*','M0'], val:b+c*a, q:true}
+          ];
+        } else {
+          if(a<2||b<2) continue;
+          lines=[
+            {tokens:['M0','+','M0'], val:2*a},
+            {tokens:['M0','*','M1'], val:a*b},
+            {tokens:['M1','+','M2','+','M2'], val:b+2*c},
+            {tokens:['M2','*','M0','-','M1'], val:c*a-b, q:true}
+          ];
+        }
+      }
+      if(lines.every(l=>l.val>=0 && l.val<=hi)) return {lines, values:[a,b,c]};
+    }
+  }
+  return null;
+}
+/* ===MG-GEN-END=== */
+
 /* ============ RENDER ============ */
 const OPCH={'+':'+','-':'−','*':'·','/':':'};
 
@@ -729,6 +896,48 @@ function renderMattekryss(p, title, meta, answer, hasMulDiv){
   return sheet(title,meta,inner+html);
 }
 
+/* ---------- monstergåter: render ---------- */
+function mgToken(tok, imgs){
+  if(tok==='+'||tok==='-'||tok==='*') return `<span class="mg-sym">${OPCH[tok]}</span>`;
+  return `<img class="mgm" src="${imgs[tok]}" alt="monster">`;
+}
+
+function mgLine(line, imgs, showAnswer){
+  let h=line.tokens.map(t=>mgToken(t,imgs)).join('');
+  h+='<span class="mg-sym">=</span>';
+  if(line.q){
+    h+= showAnswer ? `<span class="mg-num mg-ans">${line.val}</span>` : '<span class="mg-ansbox"></span>';
+  } else {
+    h+=`<span class="mg-num">${line.val}</span>`;
+  }
+  return `<div class="mg-line${line.q?' q':''}">${h}</div>`;
+}
+
+function mgBox(p, idx, answer){
+  let h=`<div class="mg-box"><div class="mg-title"><span class="mg-badge">${idx+1}</span> Gåte ${idx+1}</div>`;
+  if(answer){
+    h+=`<div class="mg-legend">${p.values.map((v,i)=>
+      `<span class="mg-leg"><img class="mgm" src="${p.imgs['M'+i]}" alt="monster"> = ${v}</span>`).join('')}</div>`;
+    h+=mgLine(p.lines[p.lines.length-1], p.imgs, true);
+  } else {
+    h+=p.lines.map(l=>mgLine(l,p.imgs,false)).join('');
+  }
+  h+='</div>';
+  return h;
+}
+
+function renderMonstergater(puzzles, title, meta, answer, difficulty){
+  let inner='';
+  if(answer){
+    inner+='<span class="ans-tag">🪙 Fasit</span>';
+  } else {
+    inner+=`<p class="instr">🕵️ Like monstre gjemmer det samme tallet. Finn ut hva hvert monster er verdt – og løs den gule linja til slutt!${
+      difficulty==='hard'?'<span class="oplegend">Husk regnerekkefølgen: ganging (·) regnes før pluss og minus!</span>':''}</p>`;
+  }
+  inner+=`<div class="mg-grid">${puzzles.map((p,j)=>mgBox(p,j,answer)).join('')}</div>`;
+  return sheet(title,meta,inner);
+}
+
 /* ============ UI ============ */
 document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   inp.addEventListener('change', ()=>{
@@ -736,11 +945,34 @@ document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   });
 });
 
+const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter' };
+const TYPE_SUBS = {
+  mattekryss:'Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.',
+  monstergater:'Hvert monster gjemmer et hemmelig tall. Elevene finner monstrenes verdi linje for linje – og løser gåten til slutt. 4 gåter per ark.'
+};
+const DIFF_LABELS = {
+  mattekryss:{ easy:'🟢 Lett – bare svarene mangler', medium:'🟡 Middels – noen tall mangler også', hard:'🔴 Vanskelig – mange tall mangler' },
+  monstergater:{ easy:'🟢 Lett – 2 monstre, pluss og minus', medium:'🟡 Middels – 3 monstre, pluss og minus', hard:'🔴 Vanskelig – 3 monstre + ganging til slutt' }
+};
+
+function applyTypeUI(){
+  $('opsBlock').style.display = taskType==='monstergater' ? 'none' : '';
+  $('optsSub').textContent = TYPE_SUBS[taskType];
+  const labels=DIFF_LABELS[taskType];
+  [...$('difficulty').options].forEach(o=>{ o.text=labels[o.value]; });
+  // Bytt standardtittel hvis læreren ikke har skrevet egen
+  const other = taskType==='monstergater' ? TYPE_TITLES.mattekryss : TYPE_TITLES.monstergater;
+  const cur=$('title').value.trim();
+  if(cur===other||cur==='') $('title').value=TYPE_TITLES[taskType];
+}
+
 $('taskType').addEventListener('click', e=>{
   if(e.target.tagName!=='BUTTON'||e.target.classList.contains('disabled')) return;
   taskType=e.target.dataset.type;
   document.querySelectorAll('#taskType button').forEach(b=>b.classList.toggle('active',b===e.target));
+  applyTypeUI();
 });
+applyTypeUI();
 
 function generate(){
   const title=$('title').value.trim();
@@ -748,12 +980,40 @@ function generate(){
   const out=$('output'), msg=$('msg');
   msg.innerHTML='';
 
-  const ops=[...document.querySelectorAll('#opgrid input:checked')].map(i=>i.value);
-  if(!ops.length){ msg.innerHTML='<div class="msg err">Velg minst én regneart.</div>'; return; }
-
   const hi=parseInt($('range').value);
   const difficulty=$('difficulty').value;
   const count=parseInt($('count').value);
+  const metaFor=i=>metaBase+(count>1 ? (metaBase?' · ':'')+'Ark '+(i+1)+' av '+count : '');
+
+  /* ---------- monstergåter ---------- */
+  if(taskType==='monstergater'){
+    const PER_SHEET=4;
+    const sheets=[];
+    for(let s=0;s<count;s++){
+      const imgsAll=shuffle(MONSTER_IMGS);
+      const sp=[];
+      for(let j=0;j<PER_SHEET;j++){
+        const p=genMonsterPuzzle(hi, difficulty);
+        if(!p){ msg.innerHTML='<div class="msg err">Fikk ikke laget gåtene – prøv en gang til, eller velg et større tallområde.</div>'; return; }
+        p.imgs={};
+        for(let m=0;m<p.values.length;m++) p.imgs['M'+m]=imgsAll[j*3+m];
+        sp.push(p);
+      }
+      sheets.push(sp);
+    }
+    let html='';
+    sheets.forEach((sp,i)=>{ html+=renderMonstergater(sp, title, metaFor(i), false, difficulty); });
+    sheets.forEach((sp,i)=>{ html+=renderMonstergater(sp, title+' – fasit', metaFor(i), true, difficulty); });
+    out.innerHTML=html;
+    msg.innerHTML=`<div class="msg ok">🪙 ${count*PER_SHEET} monstergåter laget på ${count===1?'1 ark':count+' ark'} – fasit ligger bakerst!</div>`;
+    $('printBar').style.display='flex';
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  /* ---------- mattekryss ---------- */
+  const ops=[...document.querySelectorAll('#opgrid input:checked')].map(i=>i.value);
+  if(!ops.length){ msg.innerHTML='<div class="msg err">Velg minst én regneart.</div>'; return; }
   const hasMulDiv=ops.includes('*')||ops.includes('/');
 
   const puzzles=[];
@@ -765,12 +1025,10 @@ function generate(){
 
   let html='';
   puzzles.forEach((p,i)=>{
-    const meta=metaBase+(count>1 ? (metaBase?' · ':'')+'Ark '+(i+1)+' av '+count : '');
-    html+=renderMattekryss(p, title, meta, false, hasMulDiv);
+    html+=renderMattekryss(p, title, metaFor(i), false, hasMulDiv);
   });
   puzzles.forEach((p,i)=>{
-    const meta=metaBase+(count>1 ? (metaBase?' · ':'')+'Ark '+(i+1)+' av '+count : '');
-    html+=renderMattekryss(p, title+' – fasit', meta, true, hasMulDiv);
+    html+=renderMattekryss(p, title+' – fasit', metaFor(i), true, hasMulDiv);
   });
   out.innerHTML=html;
 
