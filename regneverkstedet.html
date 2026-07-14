@@ -246,10 +246,14 @@
     font-family:'Fredoka One',cursive; font-size:1.15rem; color:var(--green-dark);
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
-  table.mk td.void { background:transparent; border:none; font-size:24px; }
+  table.mk td.void { background:transparent; border:none; }
   table.mk td.cell.ans {
     color:var(--coral); background:var(--coral-light);
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .mkmonster {
+    width:42px; height:42px; object-fit:contain; display:block; margin:0 auto;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
   }
 
   /* ---------- footer ---------- */
@@ -269,7 +273,8 @@
     main { padding: 1.75rem 1rem 3rem; }
     .panel { padding: 1.4rem 1.2rem; }
     .sheet { padding: 22px 18px; }
-    table.mk td { width:38px; height:38px; font-size:0.95rem; }
+    table.mk td { width:34px; height:34px; font-size:0.9rem; }
+    .mkmonster { width:30px; height:30px; }
   }
 
   @media print {
@@ -356,7 +361,7 @@
           <option value="100">0–100</option>
         </select>
       </div>
-      <div style="flex:0 0 300px;">
+      <div style="flex:1 1 340px; max-width:420px;">
         <label class="fld">Vanskegrad</label>
         <select id="difficulty">
           <option value="easy" selected>🟢 Lett – bare svarene mangler</option>
@@ -627,25 +632,48 @@ function blankKryss(kryss, difficulty){
   return blanks;
 }
 
-const DECO=['🐢','🦊','🐸','🦉','🐙','🦀','🐧','🐳'];
+/* Myntland-monstrene – samme bilder som leksegeneratoren bruker.
+   Bildene ligger på serveren og hentes per request; det holder fila slank. */
+const MONSTER_IMGS = [
+  "monsters/groennhaar.webp",  // Bjørk
+  "monsters/appelsin.webp",    // Glød
+  "monsters/rosa.webp",        // Rosa
+  "monsters/graa.webp",        // Måne
+  "monsters/moerkelilla.webp", // Skygge
+  "monsters/indigo.webp",      // Bølge
+  "monsters/marineblaa.webp",  // Natt
+  "monsters/vinroed.webp",     // Plomme
+  "monsters/ildkatt.webp",     // Drage
+  "monsters/gullgul.webp",     // Stjerne
+  "monsters/gressgroenn.webp", // Skog
+  "monsters/rustbrun.webp",    // Rust
+  "monsters/laksrosa.webp",    // Fersken
+  "monsters/mintgroenn.webp",  // Mynte
+  "monsters/solskinn.webp",    // Sol
+  "monsters/turkis.webp",      // Tang
+  "monsters/lilla.webp",       // Lilje
+  "monsters/himmelblaa.webp",  // Bamse
+  "monsters/beige.webp",       // Sand
+  "monsters/havblaa.webp"      // Plask
+];
 
 function makeMattekryss(opts){
   const kryss=buildKryss(opts);
   if(!kryss || kryss.eqs.length<4) return null;
   const blanks=blankKryss(kryss, opts.difficulty);
 
-  // Beskjær til brukt område (med litt luft rundt til pynt)
+  // Beskjær til brukt område
   let minR=kryss.rows, maxR=0, minC=kryss.cols, maxC=0;
   for(let r=0;r<kryss.rows;r++) for(let c=0;c<kryss.cols;c++)
     if(kryss.grid[r][c]){ minR=Math.min(minR,r); maxR=Math.max(maxR,r); minC=Math.min(minC,c); maxC=Math.max(maxC,c); }
-  minR=Math.max(0,minR-0); minC=Math.max(0,minC-0);
 
-  // Pynt: dyr i noen tomme ruter innenfor området
+  // Pynt: Myntland-monstre i tomme ruter innenfor området (ulike monstre per ark)
   const empty=[];
   for(let r=minR;r<=maxR;r++) for(let c=minC;c<=maxC;c++)
     if(!kryss.grid[r][c]) empty.push([r,c]);
   const deco={};
-  shuffle(empty).slice(0,3).forEach((rc,i)=>{ deco[rc[0]+'_'+rc[1]]=DECO[(rnd(DECO.length)+i)%DECO.length]; });
+  const imgs=shuffle(MONSTER_IMGS);
+  shuffle(empty).slice(0,6).forEach((rc,i)=>{ deco[rc[0]+'_'+rc[1]]=imgs[i%imgs.length]; });
 
   return {grid:kryss.grid, eqs:kryss.eqs, blanks:blanks, deco:deco, minR, maxR, minC, maxC};
 }
@@ -681,7 +709,12 @@ function renderMattekryss(p, title, meta, answer, hasMulDiv){
     for(let c=p.minC;c<=p.maxC;c++){
       const cell=p.grid[r][c];
       const k=r+'_'+c;
-      if(!cell){ html+=`<td class="void">${p.deco[k]||''}</td>`; continue; }
+      if(!cell){
+        html+= p.deco[k]
+          ? `<td class="void"><img class="mkmonster" src="${p.deco[k]}" alt=""></td>`
+          : '<td class="void"></td>';
+        continue;
+      }
       if(cell.type==='op'){ html+=`<td class="sym">${OPCH[cell.ch]}</td>`; continue; }
       if(cell.type==='eq'){ html+='<td class="sym">=</td>'; continue; }
       if(p.blanks.has(k)){
@@ -725,7 +758,7 @@ function generate(){
 
   const puzzles=[];
   for(let i=0;i<count;i++){
-    const p=makeMattekryss({hi, ops, rows:10, cols:7, targetEq:7, difficulty});
+    const p=makeMattekryss({hi, ops, rows:13, cols:9, targetEq:12, difficulty});
     if(!p){ msg.innerHTML='<div class="msg err">Fikk ikke laget krysset – prøv en gang til, eller velg et større tallområde.</div>'; return; }
     puzzles.push(p);
   }
