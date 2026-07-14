@@ -358,6 +358,35 @@
   .tl-ans { color:var(--coral); }
   .tl-faded { color:var(--muted); font-weight:600; }
 
+  /* ---------- telleark ---------- */
+  .ct-field {
+    position:relative; width:100%; height:440px;
+    background:var(--bg); border:2px dashed var(--border); border-radius:14px;
+    margin-bottom:20px; overflow:hidden;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .ct-m {
+    position:absolute; object-fit:contain;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
+  }
+  .ct-legend {
+    display:flex; flex-wrap:wrap; gap:14px; justify-content:center;
+  }
+  .ct-item {
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    background:var(--white); border:2px solid var(--green-dark); border-radius:12px;
+    padding:12px 16px; min-width:88px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .ct-item img { width:40px; height:40px; object-fit:contain; }
+  .ct-ansbox {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:54px; height:38px;
+    background:#fff; border:2px solid var(--coral); border-radius:9px;
+    font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--coral);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+
   /* ---------- footer ---------- */
   footer {
     background: var(--white);
@@ -382,6 +411,7 @@
     .tl-pt { width:34px; }
     .tl-monster { width:22px; height:22px; }
     .tl-ansbox { width:34px; height:26px; }
+    .ct-field { height:300px; }
   }
 
   @media print {
@@ -418,7 +448,7 @@
   <div class="hero-inner">
     <div class="hero-tag">For lærere · 1.–7. trinn</div>
     <h1>Regne<span class="accent">verkstedet</span></h1>
-    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss, monstergåter og tallinjer!</p>
+    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss, monstergåter, tallinjer og telleark!</p>
   </div>
 </section>
 
@@ -432,6 +462,7 @@
       <button data-type="mattekryss" class="active">➕ Mattekryss</button>
       <button data-type="monstergater">👾 Monstergåter</button>
       <button data-type="tallinjer">〰️ Tallinjer</button>
+      <button data-type="telleark">🔢 Telleark</button>
     </div>
     <p class="seg-note">Flere oppgavetyper kommer etter hvert.</p>
   </div>
@@ -957,6 +988,48 @@ function genTallinje(hi, difficulty){
   return null;
 }
 
+/* ============ TELLEARK-GENERATOR ============ */
+/* Velg 5 monstertyper og et tilfeldig antall av hver (avhengig av vanskegrad),
+   og finn en spredt, ikke-overlappende plassering til alle på arket.
+   Plasseringen bruker et usynlig rutenett: vi trekker ut like mange ruter som
+   det er monstre, i tilfeldig rekkefølge, og rister hvert monster litt inni
+   ruta si – det gir en naturlig, "strødd" følelse uten at monstrene ligger oppå hverandre. */
+function placeMonsters(order){
+  const total=order.length;
+  const cols=Math.max(6, Math.ceil(Math.sqrt(total*2.0)));
+  const rows=Math.max(4, Math.ceil((total*1.35)/cols));
+  const cellCount=cols*rows;
+  const cellIdxs=shuffle(Array.from({length:cellCount},(_,i)=>i)).slice(0,total);
+  const size = total>42?32 : total>28?38 : total>16?44 : 50;
+  return order.map((k,i)=>{
+    const cell=cellIdxs[i];
+    const cr=Math.floor(cell/cols), cc=cell%cols;
+    const cellW=100/cols, cellH=100/rows;
+    const jitterX=(Math.random()*0.5-0.25)*cellW;
+    const jitterY=(Math.random()*0.5-0.25)*cellH;
+    const left=Math.min(97,Math.max(3, cc*cellW+cellW/2+jitterX));
+    const top=Math.min(94,Math.max(6, cr*cellH+cellH/2+jitterY));
+    const rot=rint(-18,18);
+    return {k, left, top, rot, size};
+  });
+}
+
+function makeTelleark(hi, difficulty){
+  let lo, hiCount;
+  if(difficulty==='easy'){ lo=2; hiCount= hi<=10?5:6; }
+  else if(difficulty==='medium'){ lo=4; hiCount= hi<=10?7:9; }
+  else { lo=6; hiCount= hi<=10?9:13; }
+
+  const kinds=shuffle(MONSTER_IMGS).slice(0,5);
+  const counts=kinds.map(()=>rint(lo,hiCount));
+
+  const order=[];
+  counts.forEach((c,ki)=>{ for(let n=0;n<c;n++) order.push(ki); });
+  const placements=placeMonsters(shuffle(order));
+
+  return {kinds, counts, placements};
+}
+
 /* ============ RENDER ============ */
 const OPCH={'+':'+','-':'−','*':'·','/':':'};
 
@@ -1089,6 +1162,34 @@ function renderTallinjer(puzzles, title, meta, answer, difficulty){
   return sheet(title,meta,inner);
 }
 
+/* ---------- telleark: render ---------- */
+function renderTelleark(p, title, meta, answer){
+  let inner='';
+  if(answer){
+    inner+='<span class="ans-tag">🪙 Fasit</span>';
+  } else {
+    inner+='<p class="instr">🔍 Tell nøye! Hvor mange er det av hvert monster? Skriv tallet i boksen.</p>';
+  }
+
+  let field='<div class="ct-field">';
+  p.placements.forEach(pl=>{
+    field+=`<img class="ct-m" src="${p.kinds[pl.k]}" alt="" style="left:${pl.left}%; top:${pl.top}%; width:${pl.size}px; height:${pl.size}px; transform:translate(-50%,-50%) rotate(${pl.rot}deg);">`;
+  });
+  field+='</div>';
+  inner+=field;
+
+  let legend='<div class="ct-legend">';
+  p.kinds.forEach((img,ki)=>{
+    legend+=`<div class="ct-item"><img src="${img}" alt="monster">${
+      answer ? `<span class="ct-ansbox">${p.counts[ki]}</span>` : '<span class="ct-ansbox"></span>'
+    }</div>`;
+  });
+  legend+='</div>';
+  inner+=legend;
+
+  return sheet(title,meta,inner);
+}
+
 /* ============ UI ============ */
 document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   inp.addEventListener('change', ()=>{
@@ -1096,20 +1197,22 @@ document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   });
 });
 
-const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tallinjer:'Tallinjer' };
+const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tallinjer:'Tallinjer', telleark:'Telleark' };
 const TYPE_SUBS = {
   mattekryss:'Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.',
   monstergater:'Hvert monster gjemmer et hemmelig tall. Elevene finner monstrenes verdi linje for linje – og løser gåten til slutt. 4 gåter per ark.',
-  tallinjer:'Noen tall på tallinja er gjemt bak et monster. Elevene finner tallet og skriver det i boksen under. 4 tallinjer per ark.'
+  tallinjer:'Noen tall på tallinja er gjemt bak et monster. Elevene finner tallet og skriver det i boksen under. 4 tallinjer per ark.',
+  telleark:'5 monstertyper er spredt utover hele arket. Elevene teller hvor mange det er av hvert monster, og skriver tallet i boksen. Ett telleark per side.'
 };
 const DIFF_LABELS = {
   mattekryss:{ easy:'🟢 Lett – bare svarene mangler', medium:'🟡 Middels – noen tall mangler også', hard:'🔴 Vanskelig – mange tall mangler' },
   monstergater:{ easy:'🟢 Lett – 2 monstre, pluss og minus', medium:'🟡 Middels – 3 monstre, pluss og minus', hard:'🔴 Vanskelig – 3 monstre + ganging til slutt' },
-  tallinjer:{ easy:'🟢 Lett – teller med 1 og 1, få tall mangler', medium:'🟡 Middels – hoppetelling, flere tall mangler', hard:'🔴 Vanskelig – bare første, siste og tre tall vises' }
+  tallinjer:{ easy:'🟢 Lett – teller med 1 og 1, få tall mangler', medium:'🟡 Middels – hoppetelling, flere tall mangler', hard:'🔴 Vanskelig – bare første, siste og tre tall vises' },
+  telleark:{ easy:'🟢 Lett – få monstre, god plass mellom dem', medium:'🟡 Middels – flere monstre, tettere spredt', hard:'🔴 Vanskelig – mange monstre, tett i tett' }
 };
 
 function applyTypeUI(){
-  $('opsBlock').style.display = (taskType==='monstergater'||taskType==='tallinjer') ? 'none' : '';
+  $('opsBlock').style.display = (taskType==='monstergater'||taskType==='tallinjer'||taskType==='telleark') ? 'none' : '';
   $('optsSub').textContent = TYPE_SUBS[taskType];
   const labels=DIFF_LABELS[taskType];
   [...$('difficulty').options].forEach(o=>{ o.text=labels[o.value]; });
@@ -1182,6 +1285,24 @@ function generate(){
     sheets.forEach((sp,i)=>{ html+=renderTallinjer(sp, title+' – fasit', metaFor(i), true, difficulty); });
     out.innerHTML=html;
     msg.innerHTML=`<div class="msg ok">🪙 ${count*PER_SHEET} tallinjer laget på ${count===1?'1 ark':count+' ark'} – fasit ligger bakerst!</div>`;
+    $('printBar').style.display='flex';
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  /* ---------- telleark ---------- */
+  if(taskType==='telleark'){
+    const sheets=[];
+    for(let s=0;s<count;s++){
+      const p=makeTelleark(hi, difficulty);
+      if(!p){ msg.innerHTML='<div class="msg err">Fikk ikke laget tellearket – prøv en gang til.</div>'; return; }
+      sheets.push(p);
+    }
+    let html='';
+    sheets.forEach((p,i)=>{ html+=renderTelleark(p, title, metaFor(i), false); });
+    sheets.forEach((p,i)=>{ html+=renderTelleark(p, title+' – fasit', metaFor(i), true); });
+    out.innerHTML=html;
+    msg.innerHTML=`<div class="msg ok">🪙 ${count===1?'Telleark laget':count+' telleark laget'} – fasit ligger bakerst!</div>`;
     $('printBar').style.display='flex';
     out.scrollIntoView({behavior:'smooth',block:'start'});
     return;
