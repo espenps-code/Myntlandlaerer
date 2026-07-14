@@ -311,51 +311,52 @@
   .mg-leg img.mgm { width:34px; height:34px; }
 
   /* ---------- tallinjer ---------- */
-  .tl-list { display:flex; flex-direction:column; gap:20px; }
+  .tl-list { display:flex; flex-direction:column; gap:12px; }
   .tl-box {
-    background:var(--white); border:2px solid var(--green-dark); border-radius:14px;
-    padding:14px 18px 20px;
+    background:var(--white); border:2px solid var(--green-dark); border-radius:12px;
+    padding:10px 16px 12px;
     break-inside:avoid; page-break-inside:avoid;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
   .tl-title {
-    display:flex; align-items:center; gap:8px; margin-bottom:4px;
-    font-family:'Fredoka One',cursive; color:var(--teal-dark); font-size:1rem;
+    display:flex; align-items:center; gap:8px; margin-bottom:2px;
+    font-family:'Fredoka One',cursive; color:var(--teal-dark); font-size:0.92rem;
   }
   .tl-badge {
-    background:var(--green); color:#fff; width:26px; height:26px; border-radius:50%;
+    background:var(--green); color:#fff; width:22px; height:22px; border-radius:50%;
     display:inline-flex; align-items:center; justify-content:center;
-    font-size:0.85rem; font-family:'Fredoka One',cursive; flex-shrink:0;
+    font-size:0.78rem; font-family:'Fredoka One',cursive; flex-shrink:0;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
   .tl-track {
     position:relative; display:flex; justify-content:space-between;
-    margin:30px 4px 4px; padding:0 24px;
+    margin:20px 4px 2px; padding:0 22px;
   }
   .tl-rail {
-    position:absolute; left:24px; right:24px; top:9px; height:3px;
+    position:absolute; left:22px; right:22px; top:8px; height:3px;
     background:var(--green-dark); border-radius:2px;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
   .tl-pt {
     position:relative; display:flex; flex-direction:column; align-items:center;
-    width:48px; flex:0 0 auto; z-index:1;
+    width:44px; flex:0 0 auto; z-index:1;
   }
   .tl-tick {
-    width:3px; height:18px; background:var(--green-dark); margin-bottom:6px;
+    width:3px; height:16px; background:var(--green-dark); margin-bottom:5px;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
-  .tl-val { font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--teal-dark); }
+  .tl-val { font-family:'Fredoka One',cursive; font-size:1rem; color:var(--teal-dark); }
   .tl-monster {
-    width:32px; height:32px; object-fit:contain; margin-bottom:4px;
+    width:26px; height:26px; object-fit:contain; margin-bottom:3px;
     filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15));
   }
   .tl-ansbox {
-    display:inline-block; width:46px; height:34px;
-    background:#fff; border:2px solid var(--coral); border-radius:9px;
+    display:inline-block; width:42px; height:28px;
+    background:#fff; border:2px solid var(--coral); border-radius:8px;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
   .tl-ans { color:var(--coral); }
+  .tl-faded { color:var(--muted); font-weight:600; }
 
   /* ---------- footer ---------- */
   footer {
@@ -378,9 +379,9 @@
     .mkmonster { width:30px; height:30px; }
     .mg-grid { grid-template-columns:1fr; }
     .mg-line img.mgm { width:34px; height:34px; }
-    .tl-pt { width:38px; }
-    .tl-monster { width:26px; height:26px; }
-    .tl-ansbox { width:38px; height:30px; }
+    .tl-pt { width:34px; }
+    .tl-monster { width:22px; height:22px; }
+    .tl-ansbox { width:34px; height:26px; }
   }
 
   @media print {
@@ -896,12 +897,18 @@ function genMonsterPuzzle(hi, difficulty){
 }
 /* ===MG-GEN-END=== */
 
+
 /* ============ TALLINJE-GENERATOR ============ */
 /* Lag en tallinje med "antall" punkter, jevn avstand ("steg") mellom dem.
-   Noen tall gjemmes bak et monster med svarboks under.
-   Lett: teller med steg 1, kun 1-2 tall skjult.
+   Hvert punkt får en status:
+     'vis'   – tallet vises
+     'skjul' – gjemt bak et monster, med svarboks under
+     'blank' – tom prikk uten tall, ikke noe å fylle inn
+   Lett: teller med steg 1, kun 1-2 tall skjult, resten vises.
    Middels: hoppetelling (steg 2/5/10/20 avhengig av tallområdet), flere skjult.
-   Vanskelig: bare første og siste tall vises – eleven må selv finne steget. */
+   Vanskelig: bare første og siste tall vises. Eleven skal finne steget selv –
+   det holder å fylle inn tre av de mellomliggende tallene, resten er tomme
+   prikker som ikke krever svar. */
 function genTallinje(hi, difficulty){
   for(let attempt=0; attempt<80; attempt++){
     let stepPool;
@@ -929,13 +936,23 @@ function genTallinje(hi, difficulty){
 
     const interior=[];
     for(let i=1;i<antall-1;i++) interior.push(i);
-    let maskCount;
-    if(difficulty==='easy') maskCount=Math.min(2, interior.length);
-    else if(difficulty==='medium') maskCount=Math.max(1, interior.length - rint(1,2));
-    else maskCount=interior.length; // vanskelig: alt mellom første og siste skjules
 
-    const maskerte=new Set(shuffle(interior).slice(0,maskCount));
-    return {start, steg, antall, verdier, maskerte};
+    const states=Array(antall).fill('vis');
+    if(difficulty==='easy'){
+      const maskCount=Math.min(2, interior.length);
+      shuffle(interior).slice(0,maskCount).forEach(i=>{ states[i]='skjul'; });
+    } else if(difficulty==='medium'){
+      const maskCount=Math.max(1, interior.length - rint(1,2));
+      shuffle(interior).slice(0,maskCount).forEach(i=>{ states[i]='skjul'; });
+    } else {
+      // vanskelig: bare 3 av de mellomliggende tallene skal fylles inn –
+      // resten blir tomme prikker på linja, uten krav om svar.
+      const maskCount=Math.min(3, interior.length);
+      const chosen=new Set(shuffle(interior).slice(0,maskCount));
+      interior.forEach(i=>{ states[i]= chosen.has(i) ? 'skjul' : 'blank'; });
+    }
+
+    return {start, steg, antall, verdier, states};
   }
   return null;
 }
@@ -1034,14 +1051,15 @@ function renderMonstergater(puzzles, title, meta, answer, difficulty){
 }
 
 /* ---------- tallinjer: render ---------- */
-function tlPoint(val, masked, imgSrc, showAnswer){
+function tlPoint(val, state, imgSrc, showAnswer){
   let inner='<div class="tl-tick"></div>';
-  if(masked){
-    if(showAnswer){
-      inner+=`<span class="tl-val tl-ans">${val}</span>`;
-    } else {
-      inner+=`<img class="tl-monster" src="${imgSrc}" alt="monster"><span class="tl-ansbox"></span>`;
-    }
+  if(state==='skjul'){
+    inner+= showAnswer
+      ? `<span class="tl-val tl-ans">${val}</span>`
+      : `<img class="tl-monster" src="${imgSrc}" alt="monster"><span class="tl-ansbox"></span>`;
+  } else if(state==='blank'){
+    // tom prikk – ikke noe å fylle inn. På fasiten vises tallet nedtonet, som hjelp til læreren.
+    inner+= showAnswer ? `<span class="tl-val tl-faded">${val}</span>` : '';
   } else {
     inner+=`<span class="tl-val">${val}</span>`;
   }
@@ -1052,8 +1070,7 @@ function renderTallinjeBox(p, idx, answer){
   const imgs=shuffle(MONSTER_IMGS);
   let pts='';
   p.verdier.forEach((v,i)=>{
-    const masked=p.maskerte.has(i);
-    pts+=tlPoint(v, masked, imgs[i%imgs.length], answer);
+    pts+=tlPoint(v, p.states[i], imgs[i%imgs.length], answer);
   });
   return `<div class="tl-box"><div class="tl-title"><span class="tl-badge">${idx+1}</span> Tallinje ${idx+1}</div>
     <div class="tl-track"><div class="tl-rail"></div>${pts}</div></div>`;
@@ -1064,7 +1081,7 @@ function renderTallinjer(puzzles, title, meta, answer, difficulty){
   if(answer){
     inner+='<span class="ans-tag">🪙 Fasit</span>';
   } else if(difficulty==='hard'){
-    inner+='<p class="instr">🔍 Bare første og siste tall vises. Finn ut hvordan tallinja er bygget opp, og fyll inn tallene som mangler!</p>';
+    inner+='<p class="instr">🔍 Bare første og siste tall vises. Finn ut hvordan tallinja er bygget opp, og fyll inn de tre tallene som mangler – de tomme prikkene trenger du ikke fylle inn!</p>';
   } else {
     inner+='<p class="instr">✏️ Noen tall på tallinja gjemmer seg bak et monster. Finn tallet og skriv det i boksen under!</p>';
   }
@@ -1083,12 +1100,12 @@ const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tal
 const TYPE_SUBS = {
   mattekryss:'Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.',
   monstergater:'Hvert monster gjemmer et hemmelig tall. Elevene finner monstrenes verdi linje for linje – og løser gåten til slutt. 4 gåter per ark.',
-  tallinjer:'Noen tall på tallinja er gjemt bak et monster. Elevene finner tallet og skriver det i boksen under. 5 tallinjer per ark.'
+  tallinjer:'Noen tall på tallinja er gjemt bak et monster. Elevene finner tallet og skriver det i boksen under. 4 tallinjer per ark.'
 };
 const DIFF_LABELS = {
   mattekryss:{ easy:'🟢 Lett – bare svarene mangler', medium:'🟡 Middels – noen tall mangler også', hard:'🔴 Vanskelig – mange tall mangler' },
   monstergater:{ easy:'🟢 Lett – 2 monstre, pluss og minus', medium:'🟡 Middels – 3 monstre, pluss og minus', hard:'🔴 Vanskelig – 3 monstre + ganging til slutt' },
-  tallinjer:{ easy:'🟢 Lett – teller med 1 og 1, få tall mangler', medium:'🟡 Middels – hoppetelling, flere tall mangler', hard:'🔴 Vanskelig – bare første og siste tall vises' }
+  tallinjer:{ easy:'🟢 Lett – teller med 1 og 1, få tall mangler', medium:'🟡 Middels – hoppetelling, flere tall mangler', hard:'🔴 Vanskelig – bare første, siste og tre tall vises' }
 };
 
 function applyTypeUI(){
@@ -1149,7 +1166,7 @@ function generate(){
 
   /* ---------- tallinjer ---------- */
   if(taskType==='tallinjer'){
-    const PER_SHEET=5;
+    const PER_SHEET=4;
     const sheets=[];
     for(let s=0;s<count;s++){
       const sp=[];
