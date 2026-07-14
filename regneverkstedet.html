@@ -398,6 +398,97 @@
   }
   .rh-wheel svg { width:100%; height:auto; display:block; }
 
+  /* ---------- tallmaskiner ---------- */
+  .fm-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .fm-box {
+    background:var(--white); border:2px solid var(--green-dark); border-radius:14px;
+    padding:12px 14px;
+    break-inside:avoid; page-break-inside:avoid;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .fm-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .fm-head img {
+    width:44px; height:44px; object-fit:contain;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15));
+  }
+  .fm-name { font-family:'Fredoka One',cursive; color:var(--teal-dark); font-size:1rem; flex:1; }
+  .fm-rule {
+    font-family:'Fredoka One',cursive; font-size:1.1rem; color:#fff;
+    background:var(--amber); border-radius:10px; padding:4px 14px;
+    box-shadow:0 2px 0 var(--amber-dark);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .fm-rule.hidden { background:var(--teal-dark); box-shadow:0 2px 0 #0d0630; }
+  table.fm { width:100%; border-collapse:separate; border-spacing:4px; }
+  table.fm th {
+    font-size:0.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); padding:0 4px; text-align:center;
+  }
+  table.fm td {
+    width:50%; height:36px; text-align:center;
+    background:var(--bg); border:2px solid var(--border); border-radius:8px;
+    font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--teal-dark);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  table.fm td.blank { background:#fff; border-color:var(--coral); }
+  table.fm td.ans { color:var(--coral); }
+  .fm-ruleline {
+    margin-top:8px; font-weight:800; font-size:0.9rem; color:var(--teal-dark);
+    display:flex; align-items:center; gap:8px;
+  }
+  .fm-rulebox {
+    display:inline-block; width:90px; height:30px;
+    background:#fff; border:2px solid var(--coral); border-radius:8px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .fm-ruleans { font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--coral); }
+
+  /* ---------- balansevekter ---------- */
+  .bv-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px 22px; }
+  .bv-item { break-inside:avoid; page-break-inside:avoid; padding-top:2px; }
+  .bv-title {
+    display:flex; align-items:center; gap:8px; margin-bottom:8px;
+    font-family:'Fredoka One',cursive; color:var(--teal-dark); font-size:0.92rem;
+  }
+  .bv-pans { display:flex; justify-content:space-between; align-items:flex-end; padding:0 4px; }
+  .bv-pan {
+    flex:1; min-height:52px;
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px;
+    background:var(--teal-light); border:2px solid var(--green-dark);
+    border-radius:6px 6px 22px 22px; padding:7px 8px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .bv-eq {
+    align-self:center; font-family:'Fredoka One',cursive; font-size:1.4rem;
+    color:var(--muted); padding:0 7px; flex:0 0 auto;
+  }
+  .bv-beam {
+    height:5px; background:var(--green-dark); border-radius:3px; margin:6px 2px 0;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .bv-fulcrum {
+    width:0; height:0; margin:0 auto;
+    border-left:16px solid transparent; border-right:16px solid transparent;
+    border-bottom:22px solid var(--green-dark);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .bv-n { font-family:'Fredoka One',cursive; font-size:1.2rem; color:var(--teal-dark); }
+  .bv-o { font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--green-dark); }
+  .bv-ans { color:var(--coral); }
+  .bv-blank {
+    display:inline-block; width:34px; height:28px; vertical-align:middle;
+    background:#fff; border:2px solid var(--coral); border-radius:8px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .bv-m {
+    width:32px; height:32px; object-fit:contain;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15));
+  }
+  .bv-mline {
+    display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px;
+    font-family:'Fredoka One',cursive; font-size:1.15rem; color:var(--teal-dark);
+  }
+
   /* ---------- footer ---------- */
   footer {
     background: var(--white);
@@ -423,6 +514,7 @@
     .tl-monster { width:22px; height:22px; }
     .tl-ansbox { width:34px; height:26px; }
     .ct-field { height:300px; }
+    .fm-grid, .bv-grid { grid-template-columns:1fr; }
   }
 
   @media print {
@@ -461,7 +553,7 @@
   <div class="hero-inner">
     <div class="hero-tag">For lærere · 1.–7. trinn</div>
     <h1>Regne<span class="accent">verkstedet</span></h1>
-    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss, monstergåter, tallinjer, telleark og regnehjul!</p>
+    <p class="hero-sub">Velg oppgavetype og tallområde – få ferdige regneoppgaver til klassen, rett til utskrift på A4. Mattekryss, monstergåter, regnehjul, tallmaskiner, balansevekter og mer!</p>
   </div>
 </section>
 
@@ -477,6 +569,8 @@
       <button data-type="tallinjer">〰️ Tallinjer</button>
       <button data-type="telleark">🔢 Telleark</button>
       <button data-type="regnehjul">🎡 Regnehjul</button>
+      <button data-type="tallmaskiner">🤖 Tallmaskiner</button>
+      <button data-type="balansevekter">⚖️ Balansevekter</button>
     </div>
     <p class="seg-note">Flere oppgavetyper kommer etter hvert.</p>
   </div>
@@ -1066,8 +1160,7 @@ function renderMattekryss(p, title, meta, answer, hasMulDiv){
   if(answer){
     inner+='<span class="ans-tag">🪙 Fasit</span>';
   } else {
-    inner+=`<p class="instr">✏️ Fyll inn tallene som mangler. Alle regnestykkene skal stemme – både vannrett ➡️ og loddrett ⬇️!${
-      hasMulDiv?'<span class="oplegend">· betyr ganging &nbsp;·&nbsp; : betyr deling</span>':''}</p>`;
+    inner+=`<p class="instr">✏️ Fyll inn tallene som mangler. Alle regnestykkene skal stemme – både vannrett ➡️ og loddrett ⬇️!</p>`;
   }
   let html='<table class="mk"><tbody>';
   for(let r=p.minR;r<=p.maxR;r++){
@@ -1270,12 +1363,12 @@ function genRegnehjul(op, hi, difficulty){
 
 /* ---------- regnehjul: render (SVG) ---------- */
 const RH_COLORS=[
-  {s:'#a8a23c', i:'#eeeaa5', o:'#f9f8e2'},  // gul
-  {s:'#57a05a', i:'#c9e6ca', o:'#eaf5ea'},  // grønn
-  {s:'#7b88cc', i:'#cdd2ee', o:'#eceefa'},  // blå
-  {s:'#c96a5e', i:'#f2c8c0', o:'#fbeae6'},  // korall
-  {s:'#c08b47', i:'#f0d6a6', o:'#fbf0da'},  // oransje
-  {s:'#a86fc9', i:'#e6c9f0', o:'#f7ecfb'}   // lilla
+  {s:'#1D9E75', i:'#bfe8d8', o:'#e6f6f0'},  // grønn   (--green)
+  {s:'#EF9F27', i:'#fbe3b8', o:'#fdf3e0'},  // ravgul  (--amber)
+  {s:'#1a5fa5', i:'#c3d9ef', o:'#e7f0f9'},  // blå     (--blue)
+  {s:'#D85A30', i:'#f6cdbd', o:'#fbece6'},  // korall  (--coral)
+  {s:'#534AB7', i:'#d4d1f0', o:'#efeefa'},  // lilla   (--purple)
+  {s:'#1e0f52', i:'#d0cce4', o:'#edecf4'}   // indigo  (--teal-dark)
 ];
 function rhPt(r, adeg){
   const a=(adeg-90)*Math.PI/180;
@@ -1322,11 +1415,165 @@ function renderRegnehjul(wheels, title, meta, answer, difficulty, hasMulDiv){
     inner+='<span class="ans-tag">🪙 Fasit</span>';
   } else {
     inner+=`<p class="instr">🎡 Regn med tallet i midten: ta hvert tall i den innerste ringen, og skriv svaret i den ytterste ringen. Det første svaret er fylt ut som eksempel!${
-      difficulty==='hard'?'<span class="oplegend">I noen felter står svaret allerede ytterst - da finner du tallet som mangler i den indre ringen.</span>':''}${
-      hasMulDiv?'<span class="oplegend">· betyr ganging &nbsp;·&nbsp; : betyr deling</span>':''}</p>`;
+      difficulty==='hard'?'<span class="oplegend">I noen felter står svaret allerede ytterst - da finner du tallet som mangler i den indre ringen.</span>':''}</p>`;
   }
   inner+='<div class="rh-grid">'+wheels.map((w,i)=>
     `<div class="rh-wheel">${rhWheelSVG(w, RH_COLORS[i%RH_COLORS.length], answer, i===0)}</div>`).join('')+'</div>';
+  return sheet(title,meta,inner);
+}
+
+/* ============ TALLMASKIN-GENERATOR ============ */
+/* Hver maskin har en regel (regneart + tall). Tall inn -> regel -> tall ut.
+   Lett: finn ut-tallene. Middels: noen inn-tall mangler (baklengs).
+   Vanskelig: regelen er skjult - eleven finner den ut fra tre ferdige par. */
+function fmPickN(op, hi, difficulty){
+  if(op==='*'||op==='/'){
+    const nMax=Math.min(10, Math.floor(hi/5));
+    if(nMax<2) return null;
+    if(difficulty==='easy')   return rint(2, Math.min(4,nMax));
+    if(difficulty==='medium') return rint(Math.min(3,nMax), Math.min(7,nMax));
+    return rint(2, nMax);
+  }
+  const nMax = op==='+' ? hi-5 : hi-4;
+  if(nMax<1) return null;
+  const third=Math.max(1, Math.round(nMax/3));
+  if(difficulty==='easy')   return rint(1, Math.min(third,nMax));
+  if(difficulty==='medium') return rint(Math.min(third,nMax), Math.min(third*2,nMax));
+  return rint(1, Math.min(third*2,nMax)); // hemmelig regel skal kunne gjettes
+}
+function genTallmaskin(op, hi, difficulty){
+  const n=fmPickN(op, hi, difficulty);
+  if(n===null) return null;
+  let inns;
+  if(op==='+') inns=pickDistinct(1, hi-n, 5);
+  else if(op==='-') inns=pickDistinct(n, hi, 5);
+  else {
+    const kMax=Math.min(10, Math.floor(hi/n));
+    const ks=pickDistinct(1, kMax, 5);
+    if(!ks) return null;
+    inns = op==='*' ? ks : ks.map(k=>k*n);
+  }
+  if(!inns) return null;
+  const uts=inns.map(v=> op==='+'?v+n : op==='-'?v-n : op==='*'?v*n : v/n);
+  let blanks;
+  if(difficulty==='easy')        blanks=['ut','ut','ut','ut','ut'];
+  else if(difficulty==='medium') blanks=shuffle(['ut','ut','ut','inn','inn']);
+  else                           blanks=shuffle(['none','none','none','ut','inn']);
+  const rows=inns.map((v,i)=>({inn:v, ut:uts[i], blank:blanks[i]}));
+  return {op, n, rows, hideRule: difficulty==='hard'};
+}
+
+/* ---------- tallmaskiner: render ---------- */
+function fmRule(w){ return `${OPCH[w.op]} ${w.n}`; }
+function fmBox(w, idx, img, answer){
+  const chip = (w.hideRule && !answer)
+    ? '<div class="fm-rule hidden">?</div>'
+    : `<div class="fm-rule">${fmRule(w)}</div>`;
+  let rows='<tr><th>Inn ➜</th><th>➜ Ut</th></tr>';
+  w.rows.forEach(r=>{
+    const cell=(which,val)=>{
+      if(r.blank===which) return answer ? `<td class="blank ans">${val}</td>` : '<td class="blank"></td>';
+      return `<td>${val}</td>`;
+    };
+    rows+=`<tr>${cell('inn',r.inn)}${cell('ut',r.ut)}</tr>`;
+  });
+  let ruleline='';
+  if(w.hideRule){
+    ruleline = answer
+      ? `<div class="fm-ruleline">Regel: <span class="fm-ruleans">${fmRule(w)}</span></div>`
+      : '<div class="fm-ruleline">Regel: <span class="fm-rulebox"></span></div>';
+  }
+  return `<div class="fm-box"><div class="fm-head"><img src="${img}" alt="monster"><div class="fm-name">Maskin ${idx+1}</div>${chip}</div><table class="fm"><tbody>${rows}</tbody></table>${ruleline}</div>`;
+}
+function renderTallmaskiner(machines, imgs, title, meta, answer, difficulty){
+  let inner='';
+  if(answer){
+    inner+='<span class="ans-tag">🪙 Fasit</span>';
+  } else {
+    inner+=`<p class="instr">🤖 Hver maskin har sin egen regneregel. Tallet går inn, regelen virker – og et nytt tall kommer ut. Fyll inn tallene som mangler!${
+      difficulty==='hard'?'<span class="oplegend">Regelen er hemmelig! Se på tallene som er fylt ut, finn regelen og skriv den i ruta.</span>':''}</p>`;
+  }
+  inner+='<div class="fm-grid">'+machines.map((w,i)=>fmBox(w,i,imgs[i],answer)).join('')+'</div>';
+  return sheet(title,meta,inner);
+}
+
+/* ============ BALANSEVEKT-GENERATOR ============ */
+/* Vekta er i balanse: begge sider er like mye verdt. En luke skal fylles inn.
+   Lett: bare pluss. Middels: pluss og minus, luka kan stå hvor som helst.
+   Vanskelig: like monstre gjemmer det samme tallet. */
+function bvNum(v){ return {t:'n', v:v}; }
+function bvOp(ch){ return {t:'o', ch:ch}; }
+function bvPair(T, hi, allowMinus){
+  const ops=[];
+  if(T>=2) ops.push('+');
+  if(allowMinus && T<hi) ops.push('-');
+  if(!ops.length) return null;
+  const op=pick(ops);
+  if(op==='+'){ const a=rint(1,T-1); return [bvNum(a), bvOp('+'), bvNum(T-a)]; }
+  const y=rint(1, hi-T);
+  return [bvNum(T+y), bvOp('-'), bvNum(y)];
+}
+function genBalansevekt(hi, difficulty){
+  if(difficulty==='hard'){
+    for(let t=0;t<100;t++){
+      const variant=rnd(3);
+      const m=rint(2, Math.max(2, Math.floor((hi-1)/2)));
+      if(variant===0){
+        if(2*m>hi) continue;
+        return {left:[{t:'M'},bvOp('+'),{t:'M'}], right:[bvNum(2*m)], m:m};
+      }
+      const aMax=hi-2*m;
+      if(aMax<1) continue;
+      const a=rint(1,aMax);
+      if(variant===1) return {left:[{t:'M'},bvOp('+'),{t:'M'},bvOp('+'),bvNum(a)], right:[bvNum(2*m+a)], m:m};
+      if(m+a<=hi)     return {left:[{t:'M'},bvOp('+'),{t:'M'},bvOp('+'),bvNum(a)], right:[{t:'M'},bvOp('+'),bvNum(m+a)], m:m};
+    }
+    return null;
+  }
+  for(let t=0;t<100;t++){
+    const T=rint(4, hi);
+    const allowMinus = difficulty==='medium';
+    const left=bvPair(T, hi, allowMinus);
+    const right=(difficulty==='medium' && Math.random()<0.3) ? [bvNum(T)] : bvPair(T, hi, allowMinus);
+    if(!left||!right) continue;
+    const sig=s=>s.map(tok=>tok.t==='n'?tok.v:tok.ch).join(',');
+    if(sig(left)===sig(right)) continue;
+    const numsL=left.filter(tok=>tok.t==='n');
+    const numsR=right.filter(tok=>tok.t==='n');
+    const blankTok = difficulty==='easy' ? pick(numsR) : pick(numsL.concat(numsR));
+    blankTok.blank=true;
+    return {left:left, right:right, m:null};
+  }
+  return null;
+}
+
+/* ---------- balansevekter: render ---------- */
+function bvToken(tok, mImg, answer){
+  if(tok.t==='o') return `<span class="bv-o">${tok.ch==='-'?'−':'+'}</span>`;
+  if(tok.t==='M') return `<img class="bv-m" src="${mImg}" alt="monster">`;
+  if(tok.blank) return answer ? `<span class="bv-n bv-ans">${tok.v}</span>` : '<span class="bv-blank"></span>';
+  return `<span class="bv-n">${tok.v}</span>`;
+}
+function bvItem(p, idx, answer){
+  const pan=side=>`<div class="bv-pan">${side.map(t=>bvToken(t,p.mImg,answer)).join('')}</div>`;
+  let mline='';
+  if(p.m!==null){
+    mline=`<div class="bv-mline"><img class="bv-m" src="${p.mImg}" alt="monster"><span>=</span>${
+      answer ? `<span class="bv-n bv-ans">${p.m}</span>` : '<span class="bv-blank"></span>'}</div>`;
+  }
+  return `<div class="bv-item"><div class="bv-title"><span class="tl-badge">${idx+1}</span> Vekt ${idx+1}</div>
+    <div class="bv-pans">${pan(p.left)}<div class="bv-eq">=</div>${pan(p.right)}</div>
+    <div class="bv-beam"></div><div class="bv-fulcrum"></div>${mline}</div>`;
+}
+function renderBalansevekter(items, title, meta, answer, difficulty){
+  let inner='';
+  if(answer){
+    inner+='<span class="ans-tag">🪙 Fasit</span>';
+  } else {
+    inner+=`<p class="instr">⚖️ Vekta er i balanse – begge sider veier nøyaktig like mye. Finn tallet som mangler og skriv det i boksen!${
+      difficulty==='hard'?'<span class="oplegend">Like monstre veier det samme. Finn ut hvor mye monsteret veier!</span>':''}</p>`;
+  }
+  inner+='<div class="bv-grid">'+items.map((p,i)=>bvItem(p,i,answer)).join('')+'</div>';
   return sheet(title,meta,inner);
 }
 
@@ -1337,24 +1584,28 @@ document.querySelectorAll('#opgrid .opchip input').forEach(inp=>{
   });
 });
 
-const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tallinjer:'Tallinjer', telleark:'Telleark', regnehjul:'Regnehjul' };
+const TYPE_TITLES = { mattekryss:'Mattekryss', monstergater:'Monstergåter', tallinjer:'Tallinjer', telleark:'Telleark', regnehjul:'Regnehjul', tallmaskiner:'Tallmaskiner', balansevekter:'Balansevekter' };
 const TYPE_SUBS = {
   mattekryss:'Regnestykkene krysser hverandre som i et kryssord – tallene må stemme både vannrett og loddrett.',
   monstergater:'Hvert monster gjemmer et hemmelig tall. Elevene finner monstrenes verdi linje for linje – og løser gåten til slutt. 4 gåter per ark.',
   tallinjer:'Noen tall på tallinja er gjemt bak et monster. Elevene finner tallet og skriver det i boksen under. 4 tallinjer per ark.',
   telleark:'5 monstertyper er spredt utover hele arket. Elevene teller hvor mange det er av hvert monster, og skriver tallet i boksen. Ett telleark per side.',
-  regnehjul:'Tallet i midten regnes sammen med hvert tall i den innerste ringen – svaret skrives i den ytterste. 6 hjul per ark.'
+  regnehjul:'Tallet i midten regnes sammen med hvert tall i den innerste ringen – svaret skrives i den ytterste. 6 hjul per ark.',
+  tallmaskiner:'Hver maskin har en hemmelig regneregel: tall inn → regel → tall ut. Elevene fyller inn det som mangler. 4 maskiner per ark.',
+  balansevekter:'Begge sider av vekta er like mye verdt – elevene finner tallet som mangler. Trener forståelsen av likhetstegnet. 6 vekter per ark, pluss og minus.'
 };
 const DIFF_LABELS = {
   mattekryss:{ easy:'🟢 Lett – bare svarene mangler', medium:'🟡 Middels – noen tall mangler også', hard:'🔴 Vanskelig – mange tall mangler' },
   monstergater:{ easy:'🟢 Lett – 2 monstre, pluss og minus', medium:'🟡 Middels – 3 monstre, pluss og minus', hard:'🔴 Vanskelig – 3 monstre + ganging til slutt' },
   tallinjer:{ easy:'🟢 Lett – teller med 1 og 1, få tall mangler', medium:'🟡 Middels – hoppetelling, flere tall mangler', hard:'🔴 Vanskelig – bare første, siste og tre tall vises' },
   telleark:{ easy:'🟢 Lett – få monstre, god plass mellom dem', medium:'🟡 Middels – flere monstre, tettere spredt', hard:'🔴 Vanskelig – mange monstre, tett i tett' },
-  regnehjul:{ easy:'🟢 Lett – små tall i midten', medium:'🟡 Middels – større tall i midten', hard:'🔴 Vanskelig – noen felter er snudd (finn det indre tallet)' }
+  regnehjul:{ easy:'🟢 Lett – små tall i midten', medium:'🟡 Middels – større tall i midten', hard:'🔴 Vanskelig – noen felter er snudd (finn det indre tallet)' },
+  tallmaskiner:{ easy:'🟢 Lett – regelen vises, finn tallene som kommer ut', medium:'🟡 Middels – finn også tall som gikk inn (baklengs)', hard:'🔴 Vanskelig – regelen er hemmelig, finn den selv' },
+  balansevekter:{ easy:'🟢 Lett – ett tall mangler, bare pluss', medium:'🟡 Middels – pluss og minus, luka kan stå hvor som helst', hard:'🔴 Vanskelig – like monstre gjemmer samme tall' }
 };
 
 function applyTypeUI(){
-  $('opsBlock').style.display = (taskType==='monstergater'||taskType==='tallinjer'||taskType==='telleark') ? 'none' : '';
+  $('opsBlock').style.display = (taskType==='monstergater'||taskType==='tallinjer'||taskType==='telleark'||taskType==='balansevekter') ? 'none' : '';
   $('optsSub').textContent = TYPE_SUBS[taskType];
   const labels=DIFF_LABELS[taskType];
   [...$('difficulty').options].forEach(o=>{ o.text=labels[o.value]; });
@@ -1445,6 +1696,58 @@ function generate(){
     sheets.forEach((p,i)=>{ html+=renderTelleark(p, title+' – fasit', metaFor(i), true); });
     out.innerHTML=html;
     msg.innerHTML=`<div class="msg ok">🪙 ${count===1?'Telleark laget':count+' telleark laget'} – fasit ligger bakerst!</div>`;
+    $('printBar').style.display='flex';
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  /* ---------- tallmaskiner ---------- */
+  if(taskType==='tallmaskiner'){
+    const ops=[...document.querySelectorAll('#opgrid input:checked')].map(i=>i.value);
+    if(!ops.length){ msg.innerHTML='<div class="msg err">Velg minst én regneart.</div>'; return; }
+    const PER_SHEET=4;
+    const sheets=[];
+    for(let s=0;s<count;s++){
+      const machineOps=shuffle(Array.from({length:PER_SHEET},(_,j)=>ops[j%ops.length]));
+      const imgs=shuffle(MONSTER_IMGS).slice(0,PER_SHEET);
+      const sp=[];
+      for(let j=0;j<PER_SHEET;j++){
+        const w=genTallmaskin(machineOps[j], hi, difficulty);
+        if(!w){ msg.innerHTML='<div class="msg err">Fikk ikke laget maskinene – prøv en gang til, eller velg et større tallområde.</div>'; return; }
+        sp.push(w);
+      }
+      sheets.push({sp:sp, imgs:imgs});
+    }
+    let html='';
+    sheets.forEach((sh,i)=>{ html+=renderTallmaskiner(sh.sp, sh.imgs, title, metaFor(i), false, difficulty); });
+    sheets.forEach((sh,i)=>{ html+=renderTallmaskiner(sh.sp, sh.imgs, title+' – fasit', metaFor(i), true, difficulty); });
+    out.innerHTML=html;
+    msg.innerHTML=`<div class="msg ok">🪙 ${count*PER_SHEET} tallmaskiner laget på ${count===1?'1 ark':count+' ark'} – fasit ligger bakerst!</div>`;
+    $('printBar').style.display='flex';
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  /* ---------- balansevekter ---------- */
+  if(taskType==='balansevekter'){
+    const PER_SHEET=6;
+    const sheets=[];
+    for(let s=0;s<count;s++){
+      const imgs=shuffle(MONSTER_IMGS);
+      const sp=[];
+      for(let j=0;j<PER_SHEET;j++){
+        const p=genBalansevekt(hi, difficulty);
+        if(!p){ msg.innerHTML='<div class="msg err">Fikk ikke laget vektene – prøv en gang til, eller velg et større tallområde.</div>'; return; }
+        p.mImg=imgs[j];
+        sp.push(p);
+      }
+      sheets.push(sp);
+    }
+    let html='';
+    sheets.forEach((sp,i)=>{ html+=renderBalansevekter(sp, title, metaFor(i), false, difficulty); });
+    sheets.forEach((sp,i)=>{ html+=renderBalansevekter(sp, title+' – fasit', metaFor(i), true, difficulty); });
+    out.innerHTML=html;
+    msg.innerHTML=`<div class="msg ok">🪙 ${count*PER_SHEET} balansevekter laget på ${count===1?'1 ark':count+' ark'} – fasit ligger bakerst!</div>`;
     $('printBar').style.display='flex';
     out.scrollIntoView({behavior:'smooth',block:'start'});
     return;
