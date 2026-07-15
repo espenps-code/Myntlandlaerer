@@ -554,7 +554,12 @@
     .mg-grid { grid-template-columns:1fr 1fr; }
     .rh-grid { gap:4px 10mm; }
     .rh-wheel { max-width:none; width:62mm; }
-    .kl-grid { grid-template-columns:1fr 1fr; }
+    .kl-grid { grid-template-columns:1fr 1fr; gap:8px 10mm; }
+    .kl-item { padding:8px 10px 10px; }
+    .kl-title { margin-bottom:4px; }
+    .kl-clockwrap { max-width:40mm; }
+    .kl-timegiven { padding:4px 14px; margin-top:5px; }
+    .kl-timeblank { height:34px; margin-top:5px; }
     @page { size:A4; margin:10mm 12mm; }
   }
 </style>
@@ -630,6 +635,15 @@
       </div>
     </div>
 
+    <div style="margin-bottom:16px; display:none;" id="klRetningBlock">
+      <label class="fld">Retning</label>
+      <div class="seg" id="klRetning">
+        <button data-dir="digitalTilAnalog">🔢➜🕐 Digital til analog</button>
+        <button data-dir="analogTilDigital">🕐➜🔢 Analog til digital</button>
+        <button data-dir="blandet" class="active">🔀 Blandet</button>
+      </div>
+    </div>
+
     <div class="row">
       <div style="flex:0 0 180px;" id="rangeField">
         <label class="fld">Tallområde</label>
@@ -698,6 +712,7 @@ function shuffle(arr){
 function escapeHtml(s){ return s.replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
 let taskType = 'mattekryss';
+let klRetning = 'blandet';
 
 /* ============ MATTEKRYSS-GENERATOR ============ */
 /* Lag ett regnestykke a op b = c innenfor [0, hi].
@@ -1716,6 +1731,7 @@ const DIFF_LABELS = {
 function applyTypeUI(){
   $('opsBlock').style.display = (taskType==='monstergater'||taskType==='tallinjer'||taskType==='telleark'||taskType==='balansevekter'||taskType==='klokka') ? 'none' : '';
   $('rangeField').style.display = (taskType==='klokka') ? 'none' : '';
+  $('klRetningBlock').style.display = (taskType==='klokka') ? '' : 'none';
   $('optsSub').textContent = TYPE_SUBS[taskType];
   const labels=DIFF_LABELS[taskType];
   [...$('difficulty').options].forEach(o=>{ o.text=labels[o.value]; });
@@ -1730,6 +1746,11 @@ $('taskType').addEventListener('click', e=>{
   taskType=e.target.dataset.type;
   document.querySelectorAll('#taskType button').forEach(b=>b.classList.toggle('active',b===e.target));
   applyTypeUI();
+});
+$('klRetning').addEventListener('click', e=>{
+  if(e.target.tagName!=='BUTTON') return;
+  klRetning=e.target.dataset.dir;
+  document.querySelectorAll('#klRetning button').forEach(b=>b.classList.toggle('active',b===e.target));
 });
 applyTypeUI();
 
@@ -1901,7 +1922,9 @@ function generate(){
     const sheets=[];
     for(let s=0;s<count;s++){
       const brukt=new Set();
-      const dirs=shuffle(['toAnalog','toAnalog','toAnalog','toDigital','toDigital','toDigital']);
+      const dirs = klRetning==='digitalTilAnalog' ? Array(PER_SHEET).fill('toAnalog')
+                 : klRetning==='analogTilDigital' ? Array(PER_SHEET).fill('toDigital')
+                 : shuffle(['toAnalog','toAnalog','toAnalog','toDigital','toDigital','toDigital']);
       const sp=[];
       for(let j=0;j<PER_SHEET;j++){
         const t=genKlokkeTid(difficulty, brukt);
