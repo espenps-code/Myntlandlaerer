@@ -357,7 +357,7 @@ h1,h2,h3,.fredoka{font-family:'Fredoka','Atkinson Hyperlegible',sans-serif}
     <div id="romOppgave"></div>
     <button class="lytt" type="button" id="romOppgaveLytt">🔊 Les oppgaven høyt</button>
     <div class="svar-rad" style="margin-top:16px">
-      <input id="romSvar" type="text" inputmode="numeric" placeholder="Svar i mynter 🪙" autocomplete="off">
+      <input id="romSvar" type="text" inputmode="numeric" placeholder="Skriv svaret her" autocomplete="off">
       <button class="sjekk-knapp" id="romSjekk" type="button">Sjekk svaret</button>
     </div>
     <div class="melding" id="romMelding"></div>
@@ -454,20 +454,20 @@ const ROM = [
     fortelling:"Bamse veier blyanter på en gammel skålvekt og klør seg i pelsen. «Jeg husker sifferet mitt … men bare hvis noen hjelper meg å finne prisen på ÉN ting!»",
     oppgaver:{
       lett:{ tekst:`<strong>6 blyanter</strong> koster til sammen <strong>42 🪙</strong>.<br><br>Hva koster <strong>én blyant</strong>?`,
-        tale:"Seks blyanter koster til sammen førtito mynter. Hva koster én blyant?", svar:7,
+        tale:"Seks blyanter koster til sammen førtito mynter. Hva koster én blyant?", svar:7, enhet:"mynter 🪙",
         hint:"Del prisen på antallet: 42 delt på 6." },
       middels:{ tekst:`<strong>4 epler</strong> koster <strong>28 🪙</strong>.<br><br>Hva koster <strong>7 epler</strong> til samme stykkpris?`,
-        tale:"Fire epler koster tjueåtte mynter. Hva koster sju epler til samme stykkpris?", svar:49,
+        tale:"Fire epler koster tjueåtte mynter. Hva koster sju epler til samme stykkpris?", svar:49, enhet:"mynter 🪙",
         hint:"Finn først prisen på ett eple (28 delt på 4). Gang så med 7." },
       utfordring:{ tekst:`En <strong>pakke med 8 tusjer</strong> koster <strong>72 🪙</strong>. Kjøper du tusjene <strong>enkeltvis</strong>, koster én tusj <strong>11 🪙</strong>.<br><br>Hvor mange mynter <strong>sparer</strong> du <strong>per tusj</strong> ved å kjøpe pakke?`,
-        tale:"En pakke med åtte tusjer koster syttito mynter. Kjøper du tusjene enkeltvis, koster én tusj elleve mynter. Hvor mange mynter sparer du per tusj ved å kjøpe pakke?", svar:2,
+        tale:"En pakke med åtte tusjer koster syttito mynter. Kjøper du tusjene enkeltvis, koster én tusj elleve mynter. Hvor mange mynter sparer du per tusj ved å kjøpe pakke?", svar:2, enhet:"mynter 🪙",
         hint:"Finn pakkeprisen per tusj (72 delt på 8). Sammenlign med 11 mynter." }
     }},
   { id:"rosa", monster:"🌸", monsterNavn:"Rosa", navn:"Rosas tilbudshjørne", farge:"var(--rosa)",
     fortelling:"Rosa står ved et blinkende «TILBUD!»-skilt og myser lurt. «Er det egentlig et tilbud? Hjelp meg å sammenligne, så hvisker jeg sifferet mitt!»",
     oppgaver:{
       lett:{ tekst:`Et skilt roper <strong>«TILBUD! 3 for 30 🪙»</strong>. Vanlig pris er <strong>12 🪙</strong> stykket.<br><br>Hva koster <strong>én</strong> på tilbudet?`,
-        tale:"Et skilt roper: tilbud, tre for tretti mynter. Vanlig pris er tolv mynter stykket. Hva koster én på tilbudet?", svar:10,
+        tale:"Et skilt roper: tilbud, tre for tretti mynter. Vanlig pris er tolv mynter stykket. Hva koster én på tilbudet?", svar:10, enhet:"mynter 🪙",
         hint:"Del tilbudsprisen på antallet: 30 delt på 3." },
       middels:{ tekst:`To tilbud på saftposer:<br><br>
         <table class="fakta-tabell">
@@ -475,17 +475,17 @@ const ROM = [
         <tr><td>🅱️ 3 poser for</td><td>27 🪙</td></tr>
         </table>
         Hva koster <strong>én pose</strong> på det <strong>billigste</strong> tilbudet?`,
-        tale:"To tilbud på saftposer. Alternativ A: fem poser for førti mynter. Alternativ B: tre poser for tjuesju mynter. Hva koster én pose på det billigste tilbudet?", svar:8,
+        tale:"To tilbud på saftposer. Alternativ A: fem poser for førti mynter. Alternativ B: tre poser for tjuesju mynter. Hva koster én pose på det billigste tilbudet?", svar:8, enhet:"mynter 🪙",
         hint:"Regn ut stykkprisen i hvert tilbud (40 delt på 5, og 27 delt på 3). Velg den laveste." },
       utfordring:{ tekst:`Vanlig pris er <strong>10 🪙</strong> stykket. Et tilbud sier <strong>«4 for 32 🪙»</strong>.<br><br>Dere skal kjøpe <strong>12 stykk</strong>. Hvor mange mynter <strong>sparer</strong> dere på å bruke tilbudet i stedet for vanlig pris?`,
-        tale:"Vanlig pris er ti mynter stykket. Et tilbud sier fire for trettito mynter. Dere skal kjøpe tolv stykk. Hvor mange mynter sparer dere på å bruke tilbudet i stedet for vanlig pris?", svar:24,
+        tale:"Vanlig pris er ti mynter stykket. Et tilbud sier fire for trettito mynter. Dere skal kjøpe tolv stykk. Hvor mange mynter sparer dere på å bruke tilbudet i stedet for vanlig pris?", svar:24, enhet:"mynter 🪙",
         hint:"Vanlig: 12 ganger 10. Tilbud: 12 stykk er 3 pakker à 32. Trekk fra hverandre." }
     }},
   { id:"glod", monster:"🔥", monsterNavn:"Glød", navn:"Gløds handlekurv", farge:"var(--glod)",
     fortelling:"Glød har en handlekurv full av impulskjøp og ser litt skamfull ut. «Oi, ble det for mye? Hjelp meg å regne om budsjettet holder, så får dere sifferet mitt!»",
     oppgaver:{
       lett:{ tekst:`Glød har <strong>80 🪙</strong> og kjøper impulsivt en leke til <strong>45 🪙</strong> og en godteripose til <strong>22 🪙</strong>.<br><br>Hvor mange mynter har Glød <strong>igjen</strong>?`,
-        tale:"Glød har åtti mynter og kjøper impulsivt en leke til førtifem mynter og en godteripose til tjueto mynter. Hvor mange mynter har Glød igjen?", svar:13,
+        tale:"Glød har åtti mynter og kjøper impulsivt en leke til førtifem mynter og en godteripose til tjueto mynter. Hvor mange mynter har Glød igjen?", svar:13, enhet:"mynter 🪙",
         hint:"Legg sammen det Glød kjøper (45 + 22). Trekk det fra 80." },
       middels:{ tekst:`Glød har et budsjett på <strong>100 🪙</strong> og kjøper tre ting:<br><br>
         <table class="fakta-tabell">
@@ -494,7 +494,7 @@ const ROM = [
         <tr><td>✏️ Penn</td><td>19 🪙</td></tr>
         </table>
         Hvor mange mynter er <strong>igjen</strong> av budsjettet?`,
-        tale:"Glød har et budsjett på hundre mynter og kjøper tre ting: en leke til tjuefire mynter, sjokolade til trettiåtte mynter, og en penn til nitten mynter. Hvor mange mynter er igjen av budsjettet?", svar:19,
+        tale:"Glød har et budsjett på hundre mynter og kjøper tre ting: en leke til tjuefire mynter, sjokolade til trettiåtte mynter, og en penn til nitten mynter. Hvor mange mynter er igjen av budsjettet?", svar:19, enhet:"mynter 🪙",
         hint:"Legg sammen alle tre prisene. Trekk summen fra 100." },
       utfordring:{ tekst:`Glød har <strong>200 🪙</strong> og handler:<br><br>
         <table class="fakta-tabell">
@@ -502,20 +502,20 @@ const ROM = [
         <tr><td>🧃 2 brus à 17 🪙</td><td>?</td></tr>
         </table>
         Hvor mange mynter har Glød <strong>igjen</strong> etter handelen?`,
-        tale:"Glød har to hundre mynter og handler tre gaver til førtifem mynter hver, og to brus til sytten mynter hver. Hvor mange mynter har Glød igjen etter handelen?", svar:31,
+        tale:"Glød har to hundre mynter og handler tre gaver til førtifem mynter hver, og to brus til sytten mynter hver. Hvor mange mynter har Glød igjen etter handelen?", svar:31, enhet:"mynter 🪙",
         hint:"Regn ut hver del: 3 ganger 45, og 2 ganger 17. Legg sammen og trekk fra 200." }
     }},
   { id:"tang", monster:"🌿", monsterNavn:"Tang", navn:"Tangs planleggingsbord", farge:"var(--tang)",
     fortelling:"Tang sitter med en handleliste og en kuleramme og planlegger nøye. «Jeg vil bruke nøyaktig 100 mynter — verken mer eller mindre! Hjelp meg, så får dere sifferet mitt.»",
     oppgaver:{
       lett:{ tekst:`Tang vil handle for <strong>nøyaktig 100 🪙</strong>. I kurven ligger allerede <strong>brød (40 🪙)</strong> og <strong>melk (25 🪙)</strong>.<br><br>Hvor mange <strong>epler à 7 🪙</strong> må Tang kjøpe for å komme nøyaktig til 100?`,
-        tale:"Tang vil handle for nøyaktig hundre mynter. I kurven ligger allerede brød til førti mynter og melk til tjuefem mynter. Hvor mange epler til sju mynter stykket må Tang kjøpe for å komme nøyaktig til hundre?", svar:5,
+        tale:"Tang vil handle for nøyaktig hundre mynter. I kurven ligger allerede brød til førti mynter og melk til tjuefem mynter. Hvor mange epler til sju mynter stykket må Tang kjøpe for å komme nøyaktig til hundre?", svar:5, enhet:"epler 🍎",
         hint:"Brød + melk = 65. Hvor mye mangler til 100? Del det på 7." },
       middels:{ tekst:`Tang vil bruke <strong>nøyaktig 100 🪙</strong> og legger først i <strong>3 skriveboker à 14 🪙</strong> og <strong>1 viskelær (6 🪙)</strong>.<br><br>Resten skal være <strong>blyanter à 13 🪙</strong>. Hvor mange blyanter må Tang kjøpe?`,
-        tale:"Tang vil bruke nøyaktig hundre mynter og legger først i tre skriveboker til fjorten mynter hver, og ett viskelær til seks mynter. Resten skal være blyanter til tretten mynter hver. Hvor mange blyanter må Tang kjøpe?", svar:4,
+        tale:"Tang vil bruke nøyaktig hundre mynter og legger først i tre skriveboker til fjorten mynter hver, og ett viskelær til seks mynter. Resten skal være blyanter til tretten mynter hver. Hvor mange blyanter må Tang kjøpe?", svar:4, enhet:"blyanter ✏️",
         hint:"3 bøker = 42, pluss viskelær 6, blir 48. 100 minus 48 = 52. Del på 13." },
       utfordring:{ tekst:`Tang lager en overraskelsespose til <strong>nøyaktig 100 🪙</strong>. Først legger Tang oppi <strong>2 smågodt à 14 🪙</strong>.<br><br>Resten skal være <strong>klistremerker à 9 🪙</strong>. Hvor mange klistremerker får plass?`,
-        tale:"Tang lager en overraskelsespose til nøyaktig hundre mynter. Først legger Tang oppi to smågodt til fjorten mynter hver. Resten skal være klistremerker til ni mynter hver. Hvor mange klistremerker får plass?", svar:8,
+        tale:"Tang lager en overraskelsespose til nøyaktig hundre mynter. Først legger Tang oppi to smågodt til fjorten mynter hver. Resten skal være klistremerker til ni mynter hver. Hvor mange klistremerker får plass?", svar:8, enhet:"klistremerker ⭐",
         hint:"2 smågodt = 28. 100 minus 28 = 72. Del på 9." }
     }}
 ];
@@ -667,6 +667,7 @@ function aapneRom(i,stille){
   $("romOppgaveBoks").style.setProperty("--farge",r.farge);
   $("romMerkelapp").textContent="Oppgave · "+nivaNavn();
   $("romOppgave").innerHTML=o.tekst;
+  $("romSvar").placeholder="Svar i "+o.enhet;
   $("romHintTekst").textContent="💡 "+o.hint; $("romHintTekst").classList.remove("vis");
   $("romHintKnapp").classList.toggle("vis", forsoek[i]>=2 && funnet[i]===null);
   $("romMelding").className="melding";
@@ -684,12 +685,12 @@ $("romSjekk").addEventListener("click",sjekkSvar);
 
 function sjekkSvar(){
   const i=aktivtRom; if(funnet[i]!==null||spillSlutt) return;
-  const raatt=$("romSvar").value.replace(/\s/g,"").replace(",","."); const tall=Number(raatt); const m=$("romMelding");
-  if(raatt===""||Number.isNaN(tall)){ m.className="melding feil"; m.textContent="Skriv svaret som et tall i mynter 🪙"; return; }
   const o=ROM[i].oppgaver[niva];
+  const raatt=$("romSvar").value.replace(/\s/g,"").replace(",","."); const tall=Number(raatt); const m=$("romMelding");
+  if(raatt===""||Number.isNaN(tall)){ m.className="melding feil"; m.textContent="Skriv svaret som et tall i "+o.enhet; return; }
   if(tall===o.svar){
     const siffer=o.svar%10; funnet[i]=siffer; m.className="melding riktig";
-    m.innerHTML=`🎉 Riktig! Svaret er <strong>${o.svar} 🪙</strong>.<br>${ROM[i].monsterNavn} hvisker: «Sifferet mitt er det <strong>siste sifferet i svaret</strong> — altså <strong>${siffer}</strong>!»`;
+    m.innerHTML=`🎉 Riktig! Svaret er <strong>${o.svar} ${o.enhet}</strong>.<br>${ROM[i].monsterNavn} hvisker: «Sifferet mitt er det <strong>siste sifferet i svaret</strong> — altså <strong>${siffer}</strong>!»`;
     $("romSvar").disabled=true; $("romSjekk").disabled=true; $("romHintKnapp").classList.remove("vis");
     sfxMynt(); oppdaterSiffer(i); byggKart(); myntregn(14);
   } else {
