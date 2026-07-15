@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="nb"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sparegrisen har gått i vranglås! 🐷</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --natt-bg:#171A3E; --natt-dyp:#0F1130; --panel:#262A52; --panel-lys:#31366B;
+  --gull:#FFC83D; --gull-lys:#FFE9AE; --gull-dyp:#E0A82E;
+  --tekst:#F2F0FF; --tekst-demp:#A9ACD6;
+  --sand:#E8B96E; --nattm:#8A93E8; --bjork:#63D96E; --mynte:#7FE8C0; --plask:#5BC9F0;
+  --gris:#FF9DBB; --gris-dyp:#E8749B;
+  --gronn:#4FD08C; --rod:#FF5C7A; --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--natt-dyp)}
+html,body{height:100%}
+body{
+  font-family:'Atkinson Hyperlegible',system-ui,sans-serif;
+  background:
+    radial-gradient(1100px 520px at 50% -8%, #2E3370 0%, transparent 62%),
+    radial-gradient(900px 700px at 108% 104%, #202452 0%, transparent 55%),
+    linear-gradient(180deg, var(--natt-bg) 0%, var(--natt-dyp) 100%);
+  color:var(--tekst); min-height:100vh; line-height:1.5; overflow-x:hidden;
+}
+h1,h2,h3,.fredoka{font-family:'Fredoka','Atkinson Hyperlegible',sans-serif}
+.skjerm{display:none;max-width:880px;margin:0 auto;padding:24px 18px 60px;position:relative}
+.skjerm.aktiv{display:block;animation:inn .45s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes inn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}#himmel .svevemynt{display:none}}
+
+/* ===== Myntland-himmel ===== */
+#himmel{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.glod-bg{position:absolute;border-radius:50%;filter:blur(70px);animation:glodDrift 16s ease-in-out infinite alternate}
+.glod-bg.g1{width:48vw;height:48vw;left:-14vw;top:-16vw;background:radial-gradient(circle,rgba(255,200,61,.16),transparent 70%)}
+.glod-bg.g2{width:42vw;height:42vw;right:-15vw;top:10vh;background:radial-gradient(circle,rgba(255,157,187,.13),transparent 70%);animation-delay:-5s}
+.glod-bg.g3{width:52vw;height:52vw;left:22vw;bottom:-30vw;background:radial-gradient(circle,rgba(91,201,240,.12),transparent 70%);animation-delay:-9s}
+@keyframes glodDrift{to{transform:translate(5vw,4vh) scale(1.12)}}
+.stjernedryss{position:absolute;inset:0;opacity:.9;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, rgba(255,255,255,.7) 50%, transparent 55%),
+    radial-gradient(2px 2px at 28% 64%, rgba(255,255,255,.5) 50%, transparent 55%),
+    radial-gradient(1.5px 1.5px at 41% 32%, rgba(255,233,174,.8) 50%, transparent 55%),
+    radial-gradient(2px 2px at 57% 12%, rgba(255,255,255,.6) 50%, transparent 55%),
+    radial-gradient(1.5px 1.5px at 66% 78%, rgba(255,255,255,.45) 50%, transparent 55%),
+    radial-gradient(2px 2px at 78% 41%, rgba(255,233,174,.7) 50%, transparent 55%),
+    radial-gradient(1.5px 1.5px at 90% 22%, rgba(255,255,255,.6) 50%, transparent 55%),
+    radial-gradient(1.5px 1.5px at 8% 85%, rgba(255,255,255,.5) 50%, transparent 55%),
+    radial-gradient(2px 2px at 47% 88%, rgba(255,233,174,.55) 50%, transparent 55%),
+    radial-gradient(1.5px 1.5px at 84% 70%, rgba(255,255,255,.5) 50%, transparent 55%);
+  animation:blunk 5s ease-in-out infinite alternate}
+@keyframes blunk{to{opacity:.45}}
+.svevemynt{position:absolute;left:var(--x);bottom:-70px;width:var(--s);opacity:0;animation:stig var(--t) linear infinite;animation-delay:var(--dly)}
+.svevemynt img{width:var(--s);height:auto;display:block;filter:drop-shadow(0 2px 5px rgba(0,0,0,.45))}
+@keyframes stig{0%{transform:translateY(0) rotate(0);opacity:0}6%{opacity:var(--o)}88%{opacity:var(--o)}100%{transform:translateY(-118vh) rotate(360deg);opacity:0}}
+
+/* ===== Bilder ===== */
+.scenebilde{display:block;width:100%;max-width:640px;margin:0 auto 18px;border-radius:var(--radius);border:3px solid transparent;
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,linear-gradient(135deg, var(--gull-dyp), #3C4280 38%, #4A4F92 62%, var(--gull-dyp)) border-box;
+  box-shadow:0 14px 36px rgba(0,0,0,.5);aspect-ratio:4/3;object-fit:cover}
+.scenebilde.liten{max-width:480px}
+
+/* ===== Topplinje ===== */
+#topplinje{position:sticky;top:0;z-index:50;display:none;background:rgba(20,22,50,.88);backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,200,61,.28);box-shadow:0 10px 28px -14px rgba(0,0,0,.7);padding:10px 16px}
+#topplinje.vis{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#timer{display:flex;align-items:center;gap:8px;font-family:'Fredoka',sans-serif;font-size:1.5rem;font-weight:700;color:var(--gull);letter-spacing:.06em;min-width:120px;text-shadow:0 0 18px rgba(255,200,61,.35)}
+#timer::before{content:"";display:inline-block;width:18px;height:18px;vertical-align:-3px;background:url("../../../mynt.webp") center/contain no-repeat;filter:drop-shadow(0 0 6px rgba(255,200,61,.6))}
+#timer.haster{color:var(--rod);text-shadow:0 0 18px rgba(255,92,122,.5);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.45}}
+#gruppevisning{color:var(--tekst-demp);font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toppknapper{display:flex;gap:8px}
+.toppknapp{background:var(--panel-lys);border:1px solid #3F4486;color:var(--tekst);font-family:'Atkinson Hyperlegible',sans-serif;font-weight:700;padding:8px 14px;border-radius:12px;cursor:pointer;font-size:.9rem;transition:background .15s, transform .15s}
+.toppknapp:hover{background:#3C4280;transform:translateY(-1px)}
+.toppknapp:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--gull);outline-offset:2px}
+
+/* ===== Les høyt ===== */
+.lytt{display:inline-flex;align-items:center;gap:6px;background:var(--panel-lys);border:1px solid #3F4486;color:var(--tekst);font-family:'Atkinson Hyperlegible',sans-serif;font-weight:700;font-size:.9rem;padding:8px 16px;border-radius:999px;cursor:pointer;margin-top:10px;transition:background .15s, transform .15s}
+.lytt:hover{background:#3C4280;transform:translateY(-1px)}
+
+/* ===== Startskjerm ===== */
+#start{padding-top:36px;text-align:center}
+#start h1{font-size:clamp(2.1rem,6vw,3.4rem);line-height:1.12;margin-bottom:14px;
+  background:linear-gradient(100deg,var(--gull-lys) 0%,var(--gull) 26%,var(--gull-dyp) 42%,var(--gull-lys) 58%,var(--gull) 84%,var(--gull-lys) 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gullSkinn 5.5s linear infinite;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.4)) drop-shadow(0 0 26px rgba(255,200,61,.22))}
+@keyframes gullSkinn{to{background-position:-220% 0}}
+.plakat{position:relative;display:none;margin:0 0 18px}
+.plakat img{width:min(320px,72vw);aspect-ratio:4/3;object-fit:cover;border-radius:16px;border:5px solid #fff;box-shadow:0 18px 44px rgba(0,0,0,.55), 0 0 46px -12px rgba(255,200,61,.4);transform:rotate(-2deg)}
+.plakat .laas-merke{position:absolute;right:-14px;bottom:-6px;width:54px;height:54px;border-radius:50%;background:linear-gradient(180deg,var(--gull),var(--gull-dyp));display:grid;place-items:center;font-size:1.5rem;box-shadow:0 6px 16px rgba(0,0,0,.5);transform:rotate(8deg);border:3px solid #fff}
+.gris-ikon{font-size:4rem;margin-bottom:10px;display:inline-block;animation:dupp 3s ease-in-out infinite}
+.monsterrad{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:0 0 24px}
+.m-monster{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0;font-family:'Fredoka',sans-serif;font-weight:600;font-size:.95rem;color:var(--tekst);animation:dupp 3.2s ease-in-out infinite;animation-delay:calc(var(--i) * .45s)}
+.m-fjes{font-size:2.7rem;filter:drop-shadow(0 0 8px var(--c))}
+.m-bilde{width:84px;height:84px;object-fit:contain;background:#fff;border-radius:50%;padding:6px;border:3px solid var(--c);box-shadow:0 8px 18px -6px rgba(0,0,0,.55), 0 0 20px -2px var(--c)}
+.intro{background:linear-gradient(160deg,#2B2F60, var(--panel) 58%);border-radius:var(--radius);padding:20px 22px;text-align:left;margin:0 auto 26px;max-width:640px;border:2px solid var(--panel-lys);font-size:1.05rem;box-shadow:0 16px 38px -18px rgba(0,0,0,.7)}
+.intro p+p{margin-top:10px}
+.felt{max-width:640px;margin:0 auto 22px;text-align:left}
+.felt label{display:block;font-weight:700;margin-bottom:8px;color:var(--tekst-demp);text-transform:uppercase;font-size:.82rem;letter-spacing:.08em}
+#gruppenavn{width:100%;padding:14px 16px;border-radius:14px;border:2px solid var(--panel-lys);background:var(--panel);color:var(--tekst);font-size:1.1rem;font-family:'Atkinson Hyperlegible',sans-serif;transition:border-color .15s, box-shadow .15s}
+#gruppenavn:focus{border-color:var(--gull);box-shadow:0 0 0 4px rgba(255,200,61,.16);outline:none}
+#gruppenavn::placeholder{color:#7A7EB0}
+.vanskelig-rad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:0 auto}
+@media(max-width:560px){.vanskelig-rad{grid-template-columns:1fr}}
+.v-kort{background:var(--panel);border:3px solid var(--panel-lys);border-radius:var(--radius);padding:18px 14px;cursor:pointer;text-align:center;color:var(--tekst);font-family:'Atkinson Hyperlegible',sans-serif;transition:transform .15s, border-color .15s, box-shadow .15s}
+.v-kort:hover{transform:translateY(-4px);box-shadow:0 14px 26px -14px rgba(0,0,0,.75)}
+.v-kort.valgt{border-color:var(--gull);background:linear-gradient(160deg, rgba(255,200,61,.13), var(--panel-lys));box-shadow:0 0 0 3px rgba(255,200,61,.16), 0 12px 26px -14px rgba(0,0,0,.7)}
+.v-kort .emoji{font-size:2rem;display:block;margin-bottom:6px}
+.v-kort .navn{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.15rem;display:block}
+.v-kort .beskr{font-size:.85rem;color:var(--tekst-demp);display:block;margin-top:4px}
+.tid-rad{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:640px;margin:0 auto}
+.tid-chip{background:var(--panel);border:2px solid var(--panel-lys);color:var(--tekst);border-radius:999px;padding:9px 20px;cursor:pointer;font-weight:700;font-size:1rem;font-family:'Atkinson Hyperlegible',sans-serif;transition:transform .15s, background .15s, border-color .15s}
+.tid-chip:hover{transform:translateY(-2px)}
+.tid-chip.valgt{background:linear-gradient(180deg,var(--gull),var(--gull-dyp));border-color:var(--gull);color:#3A2B00;box-shadow:0 6px 16px -6px rgba(255,200,61,.5)}
+.storknapp{position:relative;overflow:hidden;display:inline-block;margin-top:30px;background:linear-gradient(180deg,var(--gull),var(--gull-dyp));color:#3A2B00;border:none;border-radius:999px;font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.3rem;padding:16px 44px;cursor:pointer;box-shadow:0 6px 0 #9C7314, 0 14px 30px -10px rgba(255,200,61,.45);transition:transform .1s}
+.storknapp::after{content:"";position:absolute;top:0;bottom:0;left:-80%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);animation:glimt 3.6s ease-in-out infinite}
+@keyframes glimt{0%,55%{left:-80%}85%,100%{left:170%}}
+.storknapp:active{transform:translateY(4px);box-shadow:0 2px 0 #9C7314}
+.storknapp:disabled{opacity:.45;cursor:not-allowed}
+.storknapp:disabled::after{display:none}
+.hvelvknapp-rad{text-align:center;margin-top:8px}
+
+/* ===== KART som sparegrisens hus ===== */
+.butikk{max-width:780px;margin:0 auto}
+.butikk-skilt{position:relative;text-align:center;max-width:560px;margin:0 auto;background:linear-gradient(180deg,var(--gris),var(--gris-dyp));color:#4A0E26;font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(1.2rem,3.8vw,1.7rem);letter-spacing:.02em;padding:12px 18px;border-radius:14px 14px 4px 4px;box-shadow:0 7px 0 #B34E72,0 18px 30px -14px rgba(0,0,0,.6)}
+.markise{height:20px;max-width:560px;margin:0 auto 14px;border-radius:0 0 12px 12px;background:repeating-linear-gradient(90deg,var(--gris-dyp) 0 26px,#FFE1EB 26px 52px);box-shadow:0 8px 18px -10px rgba(0,0,0,.6)}
+#kart .undertekst{text-align:center;color:var(--tekst-demp);margin-bottom:16px}
+.hyllerad{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+@media(max-width:560px){.hyllerad{grid-template-columns:1fr}}
+.hyllerad .plan-rom:last-child:nth-child(odd){grid-column:1/-1;max-width:372px;width:100%;margin:0 auto}
+.plan-rom{position:relative;cursor:pointer;text-align:center;color:var(--tekst);font-family:'Atkinson Hyperlegible',sans-serif;padding:0 0 14px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#2F3463,var(--panel));border:2px solid var(--panel-lys);box-shadow:0 12px 26px -16px rgba(0,0,0,.8);transition:transform .15s,box-shadow .15s,border-color .15s;display:block;font-size:1rem}
+.plan-rom:hover{transform:translateY(-4px);border-color:color-mix(in oklab,var(--farge) 60%,var(--panel-lys));box-shadow:0 18px 32px -16px rgba(0,0,0,.85)}
+.hylle-skilt{display:block;background:linear-gradient(180deg,color-mix(in oklab,var(--farge) 82%,#fff),var(--farge));color:#241a00;font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.02rem;padding:9px 8px;border-bottom:3px solid rgba(0,0,0,.18)}
+.hylle-krop{padding:14px 12px 0}
+.hylle-monster{font-size:3rem;display:block;filter:drop-shadow(0 4px 10px color-mix(in oklab,var(--farge) 60%,transparent))}
+.hylle-monster-bilde{width:84px;height:84px;object-fit:contain;display:block;margin:0 auto;background:#fff;border-radius:50%;padding:6px;border:3px solid color-mix(in oklab,var(--farge) 75%,#fff);box-shadow:0 5px 14px -4px rgba(0,0,0,.6), 0 0 16px -2px color-mix(in oklab,var(--farge) 60%,transparent)}
+.hylle-varer{display:flex;justify-content:center;gap:6px;margin:12px 0 6px}
+.hylle-varer span{width:18px;height:26px;border-radius:3px;background:var(--v,#888);box-shadow:inset 0 -5px 0 rgba(0,0,0,.2)}
+.hylle-plank{height:9px;margin:0 10px;border-radius:3px;background:linear-gradient(180deg,#9a6c3e,#6f4a2a);box-shadow:0 3px 6px -2px rgba(0,0,0,.5)}
+.hylle-status{display:inline-block;margin-top:12px;font-size:.82rem;font-weight:700;color:var(--tekst-demp);background:var(--natt-bg);border:1px solid var(--panel-lys);padding:5px 12px;border-radius:999px}
+.plan-rom.lost{border-color:var(--gronn)}
+.plan-rom.lost .hylle-status{color:var(--gronn);border-color:var(--gronn)}
+.plan-rom.lost::after{content:"✓";position:absolute;top:8px;right:10px;width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,var(--gronn),#2FA86B);color:#06351D;font-weight:900;display:grid;place-items:center;box-shadow:0 3px 8px rgba(0,0,0,.4);z-index:2}
+.kassedisk{position:relative;max-width:380px;margin:0 auto;text-align:center;background:linear-gradient(180deg,var(--gris),var(--gris-dyp));border-radius:16px;padding:14px 16px 18px;border:2px solid #FFB9CE;box-shadow:0 16px 30px -16px rgba(0,0,0,.85)}
+.kassedisk .merkelapp2{font-family:'Fredoka',sans-serif;font-weight:700;color:#4A0E26;letter-spacing:.22em;font-size:.78rem;margin-bottom:8px}
+.mini-kasse{display:inline-block;background:linear-gradient(180deg,#FFE1EB,#F4B9CC);border-radius:12px;padding:12px;box-shadow:inset 0 2px 6px rgba(0,0,0,.2),0 6px 14px -8px rgba(0,0,0,.6)}
+.mini-kasse .skjerm{background:#0c1308;border-radius:8px;padding:9px 11px;border:2px solid #2a3320}
+.mini-kasse .siffer-rad{margin:0;gap:7px}
+.siffer-rad{display:flex;gap:7px;justify-content:center}
+.siffer-boks{width:32px;height:44px;border-radius:9px;background:#0c1308;border:2px solid #1c2414;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.4rem;color:#2f6b48}
+.siffer-boks:not(.tom){border-color:#7CFFB0;color:#7CFFB0;text-shadow:0 0 10px rgba(124,255,176,.7);box-shadow:0 0 12px rgba(124,255,176,.3),inset 0 0 8px rgba(0,0,0,.6)}
+.siffer-boks.ny{animation:popp .5s ease}
+@keyframes popp{0%{transform:scale(.3) rotate(-20deg)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* ===== Sparegris-luke (overgang) ===== */
+#dorteppe{display:none;position:fixed;inset:0;z-index:150;background:radial-gradient(circle at 50% 50%, rgba(30,34,72,.9), rgba(8,9,24,.96))}
+#dorteppe.vis{display:block;animation:teppeInn .4s ease-out backwards}
+@keyframes teppeInn{from{opacity:0}}
+.butikkdor{position:absolute;inset:0;overflow:hidden}
+.butikkdor::before{content:"";position:absolute;left:50%;top:7%;transform:translateX(-50%);width:min(540px,90vw);height:86%;
+  border:9px solid var(--gris-dyp);border-radius:12px;box-shadow:0 0 44px rgba(255,157,187,.25), inset 0 0 0 3px #B34E72;background:rgba(10,14,30,.2)}
+.dor-skilt{position:absolute;left:50%;top:2.5%;transform:translateX(-50%);z-index:6;background:linear-gradient(180deg,var(--gull),var(--gull-dyp));
+  color:#3A2B00;font-family:'Fredoka',sans-serif;font-weight:700;padding:8px 18px;border-radius:10px;font-size:1.05rem;
+  box-shadow:0 6px 16px rgba(0,0,0,.5);max-width:80vw;text-align:center}
+.dor-sensor{position:absolute;left:50%;top:8.5%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;
+  background:#6BE0A0;box-shadow:0 0 12px #6BE0A0;z-index:6}
+.dorpanel{position:absolute;top:7%;height:86%;width:min(266px,45vw);z-index:4;
+  background:linear-gradient(115deg, rgba(255,178,203,.28), rgba(232,116,155,.14) 40%, rgba(255,215,229,.34) 60%, rgba(232,116,155,.14));
+  border:3px solid rgba(255,196,216,.6);box-shadow:inset 0 0 44px rgba(255,255,255,.12)}
+.dorpanel.venstre{left:calc(50% - min(266px,45vw));border-right:6px solid var(--gris-dyp)}
+.dorpanel.hoyre{left:50%;border-left:6px solid var(--gris-dyp)}
+.dorpanel .dor-stripe{position:absolute;top:0;bottom:0;left:32%;width:12%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent)}
+.dor-merke{position:absolute;left:50%;top:46%;transform:translateX(-50%);color:#7A1B41;font-family:'Fredoka',sans-serif;font-weight:700;
+  font-size:.78rem;letter-spacing:.14em;background:rgba(255,255,255,.7);padding:3px 9px;border-radius:6px;white-space:nowrap}
+.dor-matte{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);width:min(360px,62vw);height:18px;border-radius:6px;
+  background:repeating-linear-gradient(90deg,#3a3360 0 14px,#2b2750 14px 28px);box-shadow:0 6px 14px -6px rgba(0,0,0,.6);z-index:3}
+#dorteppe.aapner{animation:teppeUt 2.4s linear forwards}
+@keyframes teppeUt{0%,86%{opacity:1}100%{opacity:0}}
+#dorteppe.aapner .dorpanel.venstre{animation:skyvVenstre 2.4s cubic-bezier(.6,0,.2,1) forwards}
+#dorteppe.aapner .dorpanel.hoyre{animation:skyvHoyre 2.4s cubic-bezier(.6,0,.2,1) forwards}
+#dorteppe.aapner .dor-sensor{background:#FF5C7A;box-shadow:0 0 14px #FF5C7A}
+@keyframes skyvVenstre{0%,16%{transform:translateX(0)}72%,100%{transform:translateX(-106%)}}
+@keyframes skyvHoyre{0%,16%{transform:translateX(0)}72%,100%{transform:translateX(106%)}}
+@media (prefers-reduced-motion: reduce){#dorteppe{display:none!important}}
+
+/* ===== Romskjerm ===== */
+.rom-topp{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.rom-topp .monster{font-size:3rem;animation:dupp 2.6s ease-in-out infinite;filter:drop-shadow(0 0 14px rgba(255,255,255,.18))}
+.rom-monster-bilde{width:66px;height:66px;object-fit:contain;vertical-align:middle;background:#fff;border-radius:50%;padding:5px;border:3px solid rgba(255,255,255,.5);box-shadow:0 0 14px rgba(255,255,255,.18)}
+@keyframes dupp{50%{transform:translateY(-7px)}}
+.rom-topp h2{font-size:1.6rem;color:var(--farge,var(--gull))}
+.fortelling{background:var(--panel);border-radius:var(--radius);padding:16px 18px;border:2px solid var(--panel-lys);margin-bottom:16px;font-style:italic;color:var(--tekst-demp)}
+.oppgave{background:linear-gradient(150deg, color-mix(in oklab, var(--farge,var(--gull)) 9%, var(--panel)), var(--panel) 55%);border-radius:var(--radius);padding:20px;border:2px solid color-mix(in oklab, var(--farge,var(--gull)) 42%, var(--panel-lys));box-shadow:0 16px 34px -20px rgba(0,0,0,.8);font-size:1.12rem;margin-bottom:16px}
+.oppgave .merkelapp{display:inline-block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:color-mix(in oklab, var(--farge,var(--gull)) 22%, var(--panel-lys));color:var(--tekst);padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.fakta-tabell{width:100%;border-collapse:collapse;margin:12px 0;font-size:1.05rem}
+.fakta-tabell td{padding:7px 10px;border-bottom:1px solid var(--panel-lys)}
+.fakta-tabell td:last-child{text-align:right;font-weight:700;color:var(--gull)}
+.svar-rad{display:flex;gap:10px;flex-wrap:wrap}
+.svar-rad input{flex:1;min-width:140px;padding:14px 16px;border-radius:14px;font-size:1.3rem;border:2px solid var(--panel-lys);background:var(--natt-bg);color:var(--tekst);font-family:'Fredoka',sans-serif;font-weight:600;transition:border-color .15s, box-shadow .15s}
+.svar-rad input:focus{border-color:var(--gull);box-shadow:0 0 0 4px rgba(255,200,61,.16);outline:none}
+.sjekk-knapp{background:linear-gradient(180deg,var(--gull),var(--gull-dyp));color:#3A2B00;border:none;border-radius:14px;font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.1rem;padding:12px 26px;cursor:pointer;box-shadow:0 4px 0 #9C7314;transition:transform .1s}
+.sjekk-knapp:active{transform:translateY(3px);box-shadow:0 1px 0 #9C7314}
+.tilbake{background:none;border:2px solid var(--panel-lys);color:var(--tekst-demp);border-radius:12px;padding:9px 16px;cursor:pointer;font-weight:700;margin-bottom:18px;font-family:'Atkinson Hyperlegible',sans-serif;font-size:.95rem;transition:border-color .15s, color .15s}
+.tilbake:hover{border-color:var(--tekst-demp);color:var(--tekst)}
+.melding{margin-top:14px;padding:14px 16px;border-radius:14px;font-weight:700;display:none}
+.melding.feil{display:block;background:rgba(255,92,122,.14);border:2px solid var(--rod);color:#FFB3C2}
+.melding.riktig{display:block;background:rgba(79,208,140,.14);border:2px solid var(--gronn);color:#A9F0CC;font-size:1.15rem;box-shadow:0 0 24px -8px rgba(79,208,140,.4)}
+.hint-knapp{display:none;margin-top:12px;background:var(--panel-lys);border:1px solid #3F4486;color:var(--tekst);padding:10px 18px;border-radius:12px;cursor:pointer;font-weight:700;font-family:'Atkinson Hyperlegible',sans-serif;font-size:.95rem}
+.hint-knapp:hover{background:#3C4280}
+.hint-knapp.vis{display:inline-block}
+.hint-tekst{display:none;margin-top:12px;background:rgba(255,200,61,.1);border:2px dashed var(--gull);border-radius:14px;padding:14px 16px;color:#FFE3A0}
+.hint-tekst.vis{display:block}
+.skjelv{animation:skjelv .4s}
+@keyframes skjelv{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ===== Griselås-skjerm ===== */
+#hvelv{text-align:center;padding-top:24px}
+#hvelv h2{color:var(--gull);font-size:1.8rem;margin:8px 0 6px;text-shadow:0 0 22px rgba(255,200,61,.3)}
+#hvelv .undertekst{color:var(--tekst-demp);margin-bottom:18px}
+.kassaapparat{max-width:380px;margin:8px auto 0;background:linear-gradient(180deg,#FFC4D6,var(--gris));border-radius:26px;padding:16px;border:2px solid var(--gris-dyp);box-shadow:0 22px 46px -22px rgba(0,0,0,.85),inset 0 2px 0 rgba(255,255,255,.55)}
+.kasse-merke{font-family:'Fredoka',sans-serif;font-weight:700;color:#7A1B41;letter-spacing:.2em;font-size:.85rem;text-align:center;margin-bottom:10px}
+.kasse-display{background:#0c1308;border-radius:10px;padding:12px 10px;border:3px solid #2a3320;box-shadow:inset 0 3px 12px rgba(0,0,0,.75)}
+.kode-rad{display:flex;gap:8px;justify-content:center;margin:0}
+.kode-input{width:48px;height:66px;text-align:center;font-size:2rem;font-family:'Fredoka',sans-serif;font-weight:700;border-radius:8px;border:2px solid #1c2414;background:#0c1308;color:#7CFFB0;text-shadow:0 0 10px rgba(124,255,176,.7);box-shadow:inset 0 0 12px rgba(0,0,0,.85);caret-color:#7CFFB0}
+.kode-input:focus{border-color:#7CFFB0;outline:none;box-shadow:inset 0 0 12px rgba(0,0,0,.85),0 0 0 3px rgba(124,255,176,.25)}
+.kode-input.gronn{color:#7CFFB0;border-color:#7CFFB0;box-shadow:0 0 22px -2px rgba(124,255,176,.75),inset 0 0 12px rgba(0,0,0,.85)}
+@media(max-width:420px){.kode-input{width:40px;height:58px;font-size:1.6rem}}
+.kasse-tastatur{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+.tast{background:linear-gradient(180deg,#fff,#FFD3E0);border:1px solid var(--gris-dyp);border-radius:12px;font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.4rem;color:#4A0E26;padding:14px 0;cursor:pointer;box-shadow:0 3px 0 #B34E72;transition:transform .08s,box-shadow .08s}
+.tast:active{transform:translateY(3px);box-shadow:0 0 0 #B34E72}
+.tast.enter{background:linear-gradient(180deg,var(--gull),var(--gull-dyp));box-shadow:0 3px 0 #9C7314;color:#3A2B00}
+.tast.slett{background:linear-gradient(180deg,#FFC2CF,#FF93A8);color:#4a0014;box-shadow:0 3px 0 #b04a5e}
+.kasse-skuff{height:16px;margin:14px 6px 0;border-radius:0 0 10px 10px;background:linear-gradient(180deg,#F4A9C2,#D9779B);box-shadow:inset 0 2px 5px rgba(0,0,0,.35)}
+
+/* ===== Slutt/diplom ===== */
+#vunnet,#tapt{text-align:center;padding-top:30px}
+.diplom{position:relative;max-width:560px;margin:24px auto 0;background:linear-gradient(180deg,#FFFBEF,#FFF3D6);color:#3A2B00;border-radius:22px;padding:34px 28px;border:6px double var(--gull-dyp);box-shadow:0 18px 50px rgba(0,0,0,.55), 0 0 70px -20px rgba(255,200,61,.5)}
+.diplom::after{content:"";position:absolute;right:16px;bottom:12px;width:40px;height:40px;background:url("../../../mynt.webp") center/contain no-repeat;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+.diplom h2{font-size:1.9rem;color:#8A6200;margin-bottom:4px}
+.diplom .gnavn{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;margin:12px 0 4px}
+.diplom p{font-size:1.05rem}
+.diplom .stat{margin-top:14px;font-weight:700;color:#8A6200}
+.diplom .monstre{font-size:2rem;margin-top:14px;letter-spacing:.2em}
+#tapt h2{color:var(--rod);font-size:2rem;margin-bottom:10px}
+#tapt p{color:var(--tekst-demp);max-width:520px;margin:0 auto 8px}
+
+/* ===== Myntregn ===== */
+.mynt{position:fixed;top:-50px;width:32px;height:auto;z-index:100;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{0%{transform:translateY(0) translateX(0) rotate(0)}25%{transform:translateY(28vh) translateX(14px) rotate(180deg)}50%{transform:translateY(55vh) translateX(-10px) rotate(360deg)}75%{transform:translateY(83vh) translateX(12px) rotate(540deg)}100%{transform:translateY(112vh) translateX(0) rotate(720deg)}}
+
+/* ===== Pauseteppe ===== */
+#pauseteppe{display:none;position:fixed;inset:0;z-index:200;background:radial-gradient(circle at 50% 40%, rgba(38,42,82,.9), rgba(13,14,32,.97));align-items:center;justify-content:center;flex-direction:column;gap:18px;text-align:center;padding:20px}
+#pauseteppe.vis{display:flex}
+#pauseteppe h2{color:var(--gull);font-size:2.2rem;text-shadow:0 0 26px rgba(255,200,61,.35)}
+</style>
+</head>
+<body>
+
+<div id="himmel" aria-hidden="true">
+  <span class="glod-bg g1"></span><span class="glod-bg g2"></span><span class="glod-bg g3"></span>
+  <span class="stjernedryss"></span>
+  <span class="svevemynt" style="--x:6%;--t:15s;--s:1.5rem;--o:.4;--dly:0s"><img src="../../../mynt.webp" alt=""></span>
+  <span class="svevemynt" style="--x:17%;--t:19s;--s:2.4rem;--o:.28;--dly:-7s"><img src="../../../mynt.webp" alt=""></span>
+  <span class="svevemynt" style="--x:32%;--t:13s;--s:1.1rem;--o:.34;--dly:-3s"><img src="../../../mynt.webp" alt=""></span>
+  <span class="svevemynt" style="--x:54%;--t:21s;--s:2rem;--o:.24;--dly:-11s"><img src="../../../mynt.webp" alt=""></span>
+  <span class="svevemynt" style="--x:69%;--t:16s;--s:1.3rem;--o:.36;--dly:-9s"><img src="../../../mynt.webp" alt=""></span>
+  <span class="svevemynt" style="--x:83%;--t:18s;--s:2.1rem;--o:.28;--dly:-2s"><img src="../../../mynt.webp" alt=""></span>
+  <span class="svevemynt" style="--x:93%;--t:14s;--s:1.2rem;--o:.4;--dly:-5s"><img src="../../../mynt.webp" alt=""></span>
+</div>
+
+<div id="topplinje">
+  <div id="timer">45:00</div>
+  <div id="gruppevisning"></div>
+  <div class="toppknapper">
+    <button class="toppknapp" id="lydknapp" type="button" aria-label="Lyd av/på">🔊</button>
+    <button class="toppknapp" id="pauseknapp" type="button">⏸ Pause</button>
+    <button class="toppknapp" id="kartknapp" type="button">🐷 Huset</button>
+  </div>
+</div>
+
+<!-- ============ START ============ -->
+<section class="skjerm aktiv" id="start">
+  <div class="plakat" aria-hidden="true" id="plakat">
+    <img id="plakatBilde" alt="">
+    <span class="laas-merke">🔒</span>
+  </div>
+  <div class="gris-ikon" id="grisIkon" aria-hidden="true">🐷🔒</div>
+  <h1>Sparegrisen har gått i vranglås!</h1>
+  <div class="monsterrad" aria-hidden="true">
+    <figure class="m-monster" style="--c:var(--sand);--i:0"><img class="m-bilde" src="monstre/sand.webp" alt="Sand" onerror="this.outerHTML='&lt;span class=&quot;m-fjes&quot;&gt;🌾&lt;/span&gt;'"><figcaption>Sand</figcaption></figure>
+    <figure class="m-monster" style="--c:var(--nattm);--i:1"><img class="m-bilde" src="monstre/natt.webp" alt="Natt" onerror="this.outerHTML='&lt;span class=&quot;m-fjes&quot;&gt;🌙&lt;/span&gt;'"><figcaption>Natt</figcaption></figure>
+    <figure class="m-monster" style="--c:var(--bjork);--i:2"><img class="m-bilde" src="monstre/bjork.webp" alt="Bjørk" onerror="this.outerHTML='&lt;span class=&quot;m-fjes&quot;&gt;🌱&lt;/span&gt;'"><figcaption>Bjørk</figcaption></figure>
+    <figure class="m-monster" style="--c:var(--mynte);--i:3"><img class="m-bilde" src="monstre/mynte.webp" alt="Mynte" onerror="this.outerHTML='&lt;span class=&quot;m-fjes&quot;&gt;🍃&lt;/span&gt;'"><figcaption>Mynte</figcaption></figure>
+    <figure class="m-monster" style="--c:var(--plask);--i:4"><img class="m-bilde" src="monstre/plask.webp" alt="Plask" onerror="this.outerHTML='&lt;span class=&quot;m-fjes&quot;&gt;💦&lt;/span&gt;'"><figcaption>Plask</figcaption></figure>
+  </div>
+  <img class="scenebilde" id="bildeStart" alt="Myntlands store sparegris har gått i vranglås, med Sand, Natt, Bjørk, Mynte og Plask bekymret rundt den" onerror="this.style.display='none'">
+  <div class="intro">
+    <p>Krise i Myntland! Den store <strong>sparegrisen</strong> — der alle sparepengene bor — hørte noen si at <em>«sparing er bortkastet»</em>. Da ble den så lei seg at den gikk i <strong>vranglås</strong> med en hemmelig nødkode på <strong>5 siffer</strong>! 🐷🔒</p>
+    <p>Monstrene <strong>Sand</strong>, <strong>Natt</strong>, <strong>Bjørk</strong>, <strong>Mynte</strong> og <strong>Plask</strong> husker hvert sitt siffer — men bare hvis dere viser dem at dere kan sparekunsten.</p>
+    <p>Løs alle fem gåtene, finn koden og lås opp sparegrisen <strong>før vranglåsen setter seg for godt!</strong></p>
+    <button class="lytt" type="button" onclick="lesOpp('intro', TEKST.intro)">🔊 Hør historien</button>
+  </div>
+  <div class="felt">
+    <label for="gruppenavn">Gruppenavn</label>
+    <input id="gruppenavn" type="text" maxlength="30" placeholder="F.eks. Sparegjengen" autocomplete="off">
+  </div>
+  <div class="felt">
+    <label>Velg vanskelighetsgrad</label>
+    <div class="vanskelig-rad" id="vanskeligRad">
+      <button class="v-kort" type="button" data-niva="lett"><span class="emoji">🟢</span><span class="navn">Lett</span><span class="beskr">Ett regnesteg om gangen</span></button>
+      <button class="v-kort valgt" type="button" data-niva="middels"><span class="emoji">🟡</span><span class="navn">Middels</span><span class="beskr">To steg — tenk dere om</span></button>
+      <button class="v-kort" type="button" data-niva="utfordring"><span class="emoji">🔴</span><span class="navn">Utfordring</span><span class="beskr">Flere steg og sammenligning</span></button>
+    </div>
+  </div>
+  <div class="felt">
+    <label>Tid før vranglåsen setter seg</label>
+    <div class="tid-rad" id="tidRad">
+      <button class="tid-chip" type="button" data-min="30">30 min</button>
+      <button class="tid-chip valgt" type="button" data-min="45">45 min</button>
+      <button class="tid-chip" type="button" data-min="60">60 min</button>
+    </div>
+  </div>
+  <button class="storknapp" id="startknapp" type="button">Start oppdraget 🪙</button>
+</section>
+
+<!-- ============ KART (sparegrisens hus) ============ -->
+<section class="skjerm" id="kart" data-screen-label="Kart">
+  <div class="butikk">
+    <div class="butikk-skilt">🐷 SPAREGRISENS HUS</div>
+    <div class="markise" aria-hidden="true"></div>
+    <p class="undertekst">Besøk de fem sparekrokene, hjelp monstrene — sifrene dukker opp i griselåsen.</p>
+    <div class="hyllerad" id="romgrid"></div>
+    <div class="kassedisk">
+      <div class="merkelapp2">🔒 GRISELÅS</div>
+      <div class="mini-kasse">
+        <div class="skjerm">
+          <div class="siffer-rad" id="sifferRad">
+            <div class="siffer-boks tom">?</div><div class="siffer-boks tom">?</div>
+            <div class="siffer-boks tom">?</div><div class="siffer-boks tom">?</div>
+            <div class="siffer-boks tom">?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hvelvknapp-rad">
+      <button class="storknapp" id="tilHvelv" type="button" disabled="">Lås opp sparegrisen 🔓</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROM ============ -->
+<section class="skjerm" id="rom">
+  <button class="tilbake" id="romTilbake" type="button">← Tilbake til huset</button>
+  <div class="rom-topp">
+    <span class="monster" id="romMonster"></span>
+    <h2 id="romTittel">Rom</h2>
+  </div>
+  <img class="scenebilde" id="romBilde" alt="" onerror="this.style.display='none'">
+  <div class="fortelling">
+    <span id="romFortelling"></span>
+    <br><button class="lytt" type="button" id="romFortellingLytt">🔊 Les høyt</button>
+  </div>
+  <div class="oppgave" id="romOppgaveBoks">
+    <span class="merkelapp" id="romMerkelapp">Oppgave</span>
+    <div id="romOppgave"></div>
+    <button class="lytt" type="button" id="romOppgaveLytt">🔊 Les oppgaven høyt</button>
+    <div class="svar-rad" style="margin-top:16px">
+      <input id="romSvar" type="text" inputmode="numeric" placeholder="Skriv svaret her" autocomplete="off">
+      <button class="sjekk-knapp" id="romSjekk" type="button">Sjekk svaret</button>
+    </div>
+    <div class="melding" id="romMelding"></div>
+    <button class="hint-knapp" id="romHintKnapp" type="button">💡 Vis hint</button>
+    <div class="hint-tekst" id="romHintTekst"></div>
+  </div>
+</section>
+
+<!-- ============ GRISELÅSEN ============ -->
+<section class="skjerm" id="hvelv">
+  <button class="tilbake" id="hvelvTilbake" type="button">← Tilbake til huset</button>
+  <h2>Slå inn nødkoden</h2>
+  <p class="undertekst">Sifrene i rekkefølge — fra rom 1 til rom 5.</p>
+  <div class="kassaapparat">
+    <div class="kasse-merke">★ GRISELÅSEN ★</div>
+    <div class="kasse-display">
+      <div class="kode-rad" id="kodeRad">
+        <input class="kode-input" type="text" inputmode="numeric" maxlength="1" aria-label="Siffer 1" readonly>
+        <input class="kode-input" type="text" inputmode="numeric" maxlength="1" aria-label="Siffer 2" readonly>
+        <input class="kode-input" type="text" inputmode="numeric" maxlength="1" aria-label="Siffer 3" readonly>
+        <input class="kode-input" type="text" inputmode="numeric" maxlength="1" aria-label="Siffer 4" readonly>
+        <input class="kode-input" type="text" inputmode="numeric" maxlength="1" aria-label="Siffer 5" readonly>
+      </div>
+    </div>
+    <div class="kasse-tastatur" id="tastatur" aria-label="Talltastatur"></div>
+    <div class="kasse-skuff" aria-hidden="true"></div>
+  </div>
+  <button class="storknapp" id="aapneHvelv" type="button" style="margin-top:22px">Slå inn koden 🔓</button>
+  <div class="melding" id="hvelvMelding" style="max-width:380px;margin:16px auto 0"></div>
+</section>
+
+<!-- ============ VUNNET ============ -->
+<section class="skjerm" id="vunnet">
+  <div class="gris-ikon">🐷✨</div>
+  <img class="scenebilde" id="bildeVunnet" alt="Sparegrisen er åpen og smiler mens rentene drysser som konfetti og monstrene jubler" onerror="this.style.display='none'">
+  <div class="diplom">
+    <h2>🏆 Sparegrisen er vekket!</h2>
+    <p>Diplom tildeles</p>
+    <div class="gnavn" id="diplomNavn">Gruppen</div>
+    <p>som løste vranglåsen og viste at de mestrer rente, sparemål, felleskasse og tålmodighet!</p>
+    <div class="stat" id="diplomStat"></div>
+    <div class="monstre">🌾 🌙 🌱 🍃 💦</div>
+  </div>
+  <button class="storknapp" id="spillIgjen" type="button" style="margin-top:30px">Spill igjen 🔄</button>
+</section>
+
+<!-- ============ TAPT ============ -->
+<section class="skjerm" id="tapt">
+  <div class="gris-ikon">🐷💤</div>
+  <img class="scenebilde" id="bildeTapt" alt="Sparegrisen sover dypt med vranglåsen på, i et mørkt og stille Myntland" onerror="this.style.display='none'">
+  <h2>Vranglåsen satte seg!</h2>
+  <p>Tiden gikk ut, og sparegrisen sover videre. Men alt dere har lært om sparing er ikke borte — og grisen drømmer om å bli vekket.</p>
+  <p><strong>Snakk sammen:</strong> Hvilken gåte var vanskeligst? Hva ville dere gjort annerledes?</p>
+  <button class="storknapp" id="provIgjen" type="button" style="margin-top:26px">Prøv igjen 🔄</button>
+</section>
+
+<!-- ============ LUKE-OVERGANG ============ -->
+<div id="dorteppe" aria-hidden="true">
+  <div class="butikkdor">
+    <div class="dor-skilt" id="dorSkilt">Rom 1</div>
+    <div class="dor-sensor"></div>
+    <div class="dorpanel venstre"><span class="dor-stripe"></span><span class="dor-merke">⬤ SPAREKROK</span></div>
+    <div class="dorpanel hoyre"><span class="dor-stripe"></span></div>
+    <div class="dor-matte"></div>
+  </div>
+</div>
+
+<div id="pauseteppe">
+  <h2>⏸ Pause</h2>
+  <p style="color:var(--tekst-demp)">Klokka står stille. Trekk pusten, sparegrisen snorker trygt videre.</p>
+  <button class="storknapp" id="fortsett" type="button">Fortsett ▶</button>
+</div>
+
+<script>
+"use strict";
+
+/* ================= MEDIEMAPPER =================
+   Bildene i mappa  bilder/  og lyden i  lyd/  ved siden av denne fila.
+   Mangler en fil, gjemmes bildet / brukes nettleserens norske talesyntese. */
+const BILDER = {
+  start:  "bilder/start.webp",
+  sand:   "bilder/rom-sand.webp",
+  natt:   "bilder/rom-natt.webp",
+  bjork:  "bilder/rom-bjork.webp",
+  mynte:  "bilder/rom-mynte.webp",
+  plask:  "bilder/rom-plask.webp",
+  vunnet: "bilder/vunnet.webp",
+  tapt:   "bilder/tapt.webp"
+};
+const LYD_BASE = "lyd/";
+const THUMB = "../../thumbs/sparegrisen-i-vranglas-thumb.webp"; // reservebilde for startskjermen
+
+/* ================= OPPGAVEDATA =================
+   Regel: sifferet til griselåsen = SISTE siffer i svaret. */
+const ROM = [
+  { id:"sand", monster:"🌾", monsterNavn:"Sand", navn:"Sands ventekrok", farge:"var(--sand)",
+    fortelling:"Sand sitter søvnig ved rentekalenderen og gjesper. «Renter er magiske — de kommer mens du venter! Hjelp meg å regne, så husker jeg sifferet mitt.»",
+    oppgaver:{
+      lett:{ tekst:`Sand setter <strong>100 🪙</strong> inn på sparekontoen. Hver uke får Sand <strong>5 🪙</strong> i rente.<br><br>Hvor mange mynter har Sand etter <strong>3 uker</strong>?`,
+        tale:"Sand setter hundre mynter inn på sparekontoen. Hver uke får Sand fem mynter i rente. Hvor mange mynter har Sand etter tre uker?", svar:115, enhet:"mynter 🪙",
+        hint:"Renta på 3 uker er 3 ganger 5. Legg det til de 100." },
+      middels:{ tekst:`Sand setter inn <strong>200 🪙</strong>. Hver mandag får Sand <strong>2 %</strong> rente av de 200 myntene.<br><br>Hvor mange mynter har Sand etter <strong>6 mandager</strong>?`,
+        tale:"Sand setter inn to hundre mynter. Hver mandag får Sand to prosent rente av de to hundre myntene. Hvor mange mynter har Sand etter seks mandager?", svar:224, enhet:"mynter 🪙",
+        hint:"2 % av 200 er 4 mynter. Gang med 6 mandager, og legg til 200." },
+      utfordring:{ tekst:`To banker frister med rente:<br><br>
+        <table class="fakta-tabell">
+        <tr><td>🅰️ Bank A gir per uke</td><td>6 🪙</td></tr>
+        <tr><td>🅱️ Bank B gir per måned (4 uker)</td><td>30 🪙</td></tr>
+        </table>
+        Hvor mange <strong>flere</strong> mynter gir den beste banken enn den dårligste på <strong>8 uker</strong>?`,
+        tale:"To banker frister med rente. Bank A gir seks mynter per uke. Bank B gir tretti mynter per måned, og en måned er fire uker. Hvor mange flere mynter gir den beste banken enn den dårligste på åtte uker?", svar:12, enhet:"mynter 🪙",
+        hint:"Bank A: 6 ganger 8. Bank B: 8 uker er 2 måneder, altså 2 ganger 30. Trekk det minste fra det største." }
+    }},
+  { id:"natt", monster:"🌙", monsterNavn:"Natt", navn:"Natts stille sparehjørne", farge:"var(--nattm)",
+    fortelling:"Natt sparer i det stille og viser dere en liten notatbok full av tall. «Jeg sier ikke så mye … men jeg sparer hver eneste uke. Hjelp meg å regne på målet mitt, så hvisker jeg sifferet.»",
+    oppgaver:{
+      lett:{ tekst:`Natt legger <strong>8 🪙</strong> i sparegrisen <strong>hver uke</strong>.<br><br>Hvor mange mynter har Natt spart etter <strong>6 uker</strong>?`,
+        tale:"Natt legger åtte mynter i sparegrisen hver uke. Hvor mange mynter har Natt spart etter seks uker?", svar:48, enhet:"mynter 🪙",
+        hint:"Gang 8 med 6." },
+      middels:{ tekst:`Natt drømmer om hodetelefoner til <strong>90 🪙</strong> og har allerede <strong>18 🪙</strong>. Natt sparer <strong>12 🪙</strong> i uka.<br><br>Hvor mange <strong>uker</strong> tar det før Natt har nok?`,
+        tale:"Natt drømmer om hodetelefoner til nitti mynter og har allerede atten mynter. Natt sparer tolv mynter i uka. Hvor mange uker tar det før Natt har nok?", svar:6, enhet:"uker 📅",
+        hint:"Hvor mye mangler? 90 minus 18. Del det på 12." },
+      utfordring:{ tekst:`Natt har <strong>35 🪙</strong> og sparer <strong>15 🪙</strong> hver uke. Drømmeteleskopet koster <strong>140 🪙</strong>.<br><br>Etter hvor mange <strong>uker</strong> kan Natt kjøpe teleskopet?`,
+        tale:"Natt har trettifem mynter og sparer femten mynter hver uke. Drømmeteleskopet koster hundre og førti mynter. Etter hvor mange uker kan Natt kjøpe teleskopet?", svar:7, enhet:"uker 📅",
+        hint:"140 minus 35 er 105. Del på 15." }
+    }},
+  { id:"bjork", monster:"🌱", monsterNavn:"Bjørk", navn:"Bjørks felleskasse", farge:"var(--bjork)",
+    fortelling:"Bjørk står ved klassens felleskasse og teller ivrig. «Når alle sparer litt, blir det MYE til sammen! Hjelp meg med felleskassa, så får dere sifferet mitt.»",
+    oppgaver:{
+      lett:{ tekst:`Klassens sparemål er en <strong>filmkveld til 250 🪙</strong>. Felleskassa har <strong>187 🪙</strong>.<br><br>Hvor mange mynter <strong>mangler</strong>?`,
+        tale:"Klassens sparemål er en filmkveld til to hundre og femti mynter. Felleskassa har hundre og åttisju mynter. Hvor mange mynter mangler?", svar:63, enhet:"mynter 🪙",
+        hint:"Trekk 187 fra 250." },
+      middels:{ tekst:`Alle de <strong>24 elevene</strong> tjener <strong>30 🪙</strong> hver på fredag. <strong>20 %</strong> av lønna går som skatt til klassens sparemål.<br><br>Hvor mange mynter får sparemålet <strong>til sammen</strong> denne fredagen?`,
+        tale:"Alle de tjuefire elevene tjener tretti mynter hver på fredag. Tjue prosent av lønna går som skatt til klassens sparemål. Hvor mange mynter får sparemålet til sammen denne fredagen?", svar:144, enhet:"mynter 🪙",
+        hint:"20 % av 30 er 6 mynter per elev. Gang med 24 elever." },
+      utfordring:{ tekst:`Sparemålet trenger <strong>600 🪙</strong>. Klassen har <strong>240 🪙</strong> og legger inn <strong>45 🪙</strong> i uka.<br><br>Hvor mange <strong>uker</strong> tar det før målet er nådd?`,
+        tale:"Sparemålet trenger seks hundre mynter. Klassen har to hundre og førti mynter og legger inn førtifem mynter i uka. Hvor mange uker tar det før målet er nådd?", svar:8, enhet:"uker 📅",
+        hint:"600 minus 240 er 360. Del på 45." }
+    }},
+  { id:"mynte", monster:"🍃", monsterNavn:"Mynte", navn:"Myntes ønskehylle", farge:"var(--mynte)",
+    fortelling:"Mynte står drømmende foran ønskehylla med en liten gavelapp i hånden. «Jeg vil både gi og spare … går det an å få til begge deler? Hjelp meg å regne, så deler jeg sifferet mitt.»",
+    oppgaver:{
+      lett:{ tekst:`Mynte har <strong>70 🪙</strong> og kjøper en gave til <strong>24 🪙</strong>. Resten går rett i sparegrisen.<br><br>Hvor mange mynter <strong>sparer</strong> Mynte?`,
+        tale:"Mynte har sytti mynter og kjøper en gave til tjuefire mynter. Resten går rett i sparegrisen. Hvor mange mynter sparer Mynte?", svar:46, enhet:"mynter 🪙",
+        hint:"Trekk 24 fra 70." },
+      middels:{ tekst:`Mynte får <strong>50 🪙</strong> i uka og sparer <strong>halvparten</strong> hver uke.<br><br>Hvor mange mynter har Mynte spart etter <strong>5 uker</strong>?`,
+        tale:"Mynte får femti mynter i uka og sparer halvparten hver uke. Hvor mange mynter har Mynte spart etter fem uker?", svar:125, enhet:"mynter 🪙",
+        hint:"Halvparten av 50 er 25. Gang med 5 uker." },
+      utfordring:{ tekst:`Mynte sparer til en gave som koster <strong>96 🪙</strong>. Mynte har <strong>30 🪙</strong> fra før og sparer <strong>9 🪙</strong> i uka i <strong>8 uker</strong>.<br><br>Hvor mange mynter har Mynte <strong>igjen</strong> etter å ha kjøpt gaven?`,
+        tale:"Mynte sparer til en gave som koster nittiseks mynter. Mynte har tretti mynter fra før og sparer ni mynter i uka i åtte uker. Hvor mange mynter har Mynte igjen etter å ha kjøpt gaven?", svar:6, enhet:"mynter 🪙",
+        hint:"30 pluss 9 ganger 8 er 102. Trekk fra 96." }
+    }},
+  { id:"plask", monster:"💦", monsterNavn:"Plask", navn:"Plasks angrehjørne", farge:"var(--plask)",
+    fortelling:"Plask sitter i en haug med tomme godteposer og klistremerker og ser angrende ut. «Jeg brukte ALT på én dag … Kan dere hjelpe meg å forstå hvor pengene ble av? Da får dere sifferet mitt!»",
+    oppgaver:{
+      lett:{ tekst:`Plask brukte <strong>54 🪙</strong> på <strong>6 like</strong> klistremerkepakker — alt på én dag!<br><br>Hva kostet <strong>én</strong> pakke?`,
+        tale:"Plask brukte femtifire mynter på seks like klistremerkepakker, alt på én dag! Hva kostet én pakke?", svar:9, enhet:"mynter 🪙",
+        hint:"Del 54 på 6." },
+      middels:{ tekst:`Plask vil lære å spare som Natt: <strong>12 🪙</strong> hver uke i <strong>6 uker</strong>.<br><br>Hvor mange mynter blir det i sparegrisen?`,
+        tale:"Plask vil lære å spare som Natt: tolv mynter hver uke i seks uker. Hvor mange mynter blir det i sparegrisen?", svar:72, enhet:"mynter 🪙",
+        hint:"Gang 12 med 6." },
+      utfordring:{ tekst:`Plask kjøper brus til <strong>14 🪙</strong> hver skoledag (<strong>5 dager</strong> i uka).<br><br>Hvor mange mynter bruker Plask på <strong>4 uker</strong>?`,
+        tale:"Plask kjøper brus til fjorten mynter hver skoledag, altså fem dager i uka. Hvor mange mynter bruker Plask på fire uker?", svar:280, enhet:"mynter 🪙",
+        hint:"14 ganger 5 er 70 mynter i uka. Gang med 4 uker." }
+    }}
+];
+
+const TEKST = {
+  intro:"Krise i Myntland! Den store sparegrisen, der alle sparepengene bor, hørte noen si at sparing er bortkastet. Da ble den så lei seg at den gikk i vranglås med en hemmelig nødkode på fem siffer. Monstrene Sand, Natt, Bjørk, Mynte og Plask husker hvert sitt siffer, men bare hvis dere viser dem at dere kan sparekunsten. Løs alle fem gåtene, finn koden og lås opp sparegrisen før vranglåsen setter seg for godt!",
+  laas:"Slå inn nødkoden! Skriv de fem sifrene dere har funnet, i riktig rekkefølge, fra rom én til rom fem.",
+  vunnet:"Klikk! Sparegrisen våkner, smiler fra øre til øre, og rentene drysser som konfetti. Dere har vist at sparing aldri er bortkastet. Dere er ekte sparemestere!",
+  tapt:"Å nei! Vranglåsen satte seg, og sparegrisen sover videre. Men alt dere har lært om sparing er ikke borte, og grisen drømmer om å bli vekket. Prøv igjen!"
+};
+
+/* ================= TILSTAND ================= */
+const ANTALL=ROM.length;
+let niva="middels", totalSek=45*60, restSek=totalSek, timerId=null, pause=false;
+let funnet=Array(ANTALL).fill(null), forsoek=Array(ANTALL).fill(0), aktivtRom=0, spillSlutt=false, lydPaa=true;
+
+const $=id=>document.getElementById(id);
+const skjermer=["start","kart","rom","hvelv","vunnet","tapt"];
+const redusertBevegelse=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function visSkjerm(navn){ skjermer.forEach(s=>$(s).classList.toggle("aktiv", s===navn)); window.scrollTo({top:0}); }
+function kode(){ return ROM.map(r=>String(r.oppgaver[niva].svar%10)).join(""); }
+
+/* ================= OPPLEST TEKST ================= */
+let aktivLyd=null;
+function stoppOpplesing(){ if(aktivLyd){aktivLyd.pause();aktivLyd=null;} if("speechSynthesis" in window) speechSynthesis.cancel(); }
+function lesOpp(filnavn,tekst){
+  if(!lydPaa) return;
+  stoppOpplesing();
+  const audio=new Audio(LYD_BASE+filnavn+".mp3"); aktivLyd=audio; let startet=false;
+  audio.addEventListener("canplaythrough",()=>{startet=true;audio.play().catch(()=>talesyntese(tekst));},{once:true});
+  audio.addEventListener("error",()=>{ if(!startet) talesyntese(tekst); });
+  audio.load();
+  setTimeout(()=>{ if(!startet && audio.readyState<3){ aktivLyd=null; talesyntese(tekst); } },2500);
+}
+function talesyntese(tekst){
+  if(!lydPaa || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const y=new SpeechSynthesisUtterance(tekst.replace(/🪙/g," mynter "));
+  y.lang="nb-NO"; y.rate=0.95;
+  const stemme=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("nb"))
+            || speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("no"));
+  if(stemme) y.voice=stemme;
+  speechSynthesis.speak(y);
+}
+if("speechSynthesis" in window) speechSynthesis.getVoices();
+
+/* ================= LYDEFFEKTER (WebAudio) ================= */
+let ac=null;
+function ctx(){ if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==="suspended") ac.resume(); return ac; }
+function sfxKnirk(){ if(!lydPaa)return; try{const a=ctx(),t=a.currentTime;const osc=a.createOscillator(),lfo=a.createOscillator(),lfoG=a.createGain();
+  const filt=a.createBiquadFilter(),g=a.createGain();osc.type="sawtooth";osc.frequency.setValueAtTime(95,t);osc.frequency.linearRampToValueAtTime(62,t+1.0);
+  lfo.frequency.value=7;lfoG.gain.value=22;lfo.connect(lfoG);lfoG.connect(osc.frequency);filt.type="bandpass";filt.frequency.value=320;filt.Q.value=6;
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.16,t+0.12);g.gain.setValueAtTime(0.16,t+0.7);g.gain.exponentialRampToValueAtTime(0.0001,t+1.05);
+  osc.connect(filt);filt.connect(g);g.connect(a.destination);osc.start(t);lfo.start(t);osc.stop(t+1.1);lfo.stop(t+1.1);}catch(e){} }
+function sfxMynt(){ if(!lydPaa)return; try{const a=ctx(),t=a.currentTime;[[1568,0],[2093,0.09],[2637,0.18]].forEach(([f,d])=>{
+  const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(0.12,t+d);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.35);
+  o.connect(g);g.connect(a.destination);o.start(t+d);o.stop(t+d+0.4);});}catch(e){} }
+function sfxFeil(){ if(!lydPaa)return; try{const a=ctx(),t=a.currentTime;const o=a.createOscillator(),g=a.createGain(),f=a.createBiquadFilter();
+  o.type="square";o.frequency.setValueAtTime(140,t);o.frequency.linearRampToValueAtTime(95,t+0.22);f.type="lowpass";f.frequency.value=500;
+  g.gain.setValueAtTime(0.1,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);o.connect(f);f.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.3);}catch(e){} }
+function sfxKassa(){ if(!lydPaa)return; try{const a=ctx(),t=a.currentTime;for(let i=0;i<9;i++){const o=a.createOscillator(),g=a.createGain();
+  o.type="square";o.frequency.value=900+Math.random()*500;const start=t+i*0.09;g.gain.setValueAtTime(0.05,start);g.gain.exponentialRampToValueAtTime(0.0001,start+0.05);
+  o.connect(g);g.connect(a.destination);o.start(start);o.stop(start+0.06);}
+  const dunk=a.createOscillator(),dg=a.createGain();dunk.type="sine";dunk.frequency.setValueAtTime(70,t+0.95);dunk.frequency.exponentialRampToValueAtTime(38,t+1.4);
+  dg.gain.setValueAtTime(0.35,t+0.95);dg.gain.exponentialRampToValueAtTime(0.0001,t+1.5);dunk.connect(dg);dg.connect(a.destination);dunk.start(t+0.95);dunk.stop(t+1.55);}catch(e){} }
+function sfxTikk(){ if(!lydPaa)return; try{const a=ctx(),t=a.currentTime;const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.value=1100;
+  g.gain.setValueAtTime(0.07,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.06);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.07);}catch(e){} }
+function sfxKlikk(){ if(!lydPaa)return; try{const a=ctx(),t=a.currentTime;const o=a.createOscillator(),g=a.createGain();o.type="triangle";o.frequency.value=660;
+  g.gain.setValueAtTime(0.08,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.06);}catch(e){} }
+
+$("lydknapp").addEventListener("click",()=>{ lydPaa=!lydPaa; $("lydknapp").textContent=lydPaa?"🔊":"🔇"; if(!lydPaa) stoppOpplesing(); });
+
+/* ================= START ================= */
+function lastValgfrittBilde(img,url,reserve){ img.style.display="none"; const p=new Image();
+  p.onload=()=>{img.src=url;img.style.display="";};
+  if(reserve) p.onerror=()=>{ const r=new Image(); r.onload=()=>{img.src=reserve;img.style.display="";}; r.src=reserve; };
+  p.src=url; }
+lastValgfrittBilde($("bildeStart"), BILDER.start);
+(function lastPlakat(){ const p=new Image();
+  p.onload=()=>{ $("plakatBilde").src=THUMB; $("plakat").style.display="inline-block"; $("grisIkon").style.display="none"; };
+  p.src=THUMB; })();
+lastValgfrittBilde($("bildeVunnet"), BILDER.vunnet);
+lastValgfrittBilde($("bildeTapt"), BILDER.tapt);
+
+$("vanskeligRad").addEventListener("click",e=>{ const kort=e.target.closest(".v-kort"); if(!kort)return;
+  document.querySelectorAll(".v-kort").forEach(k=>k.classList.remove("valgt")); kort.classList.add("valgt"); niva=kort.dataset.niva; });
+$("tidRad").addEventListener("click",e=>{ const chip=e.target.closest(".tid-chip"); if(!chip)return;
+  document.querySelectorAll(".tid-chip").forEach(c=>c.classList.remove("valgt")); chip.classList.add("valgt"); totalSek=Number(chip.dataset.min)*60; });
+$("startknapp").addEventListener("click",()=>{
+  restSek=totalSek; funnet=Array(ANTALL).fill(null); forsoek=Array(ANTALL).fill(0); spillSlutt=false; stoppOpplesing();
+  const navn=$("gruppenavn").value.trim()||"Hemmelig gruppe";
+  $("gruppevisning").textContent=navn+" · "+nivaNavn();
+  $("topplinje").classList.add("vis"); byggKart(); oppdaterSiffer(); visSkjerm("kart"); startTimer();
+});
+function nivaNavn(){ return niva==="lett"?"🟢 Lett":niva==="middels"?"🟡 Middels":"🔴 Utfordring"; }
+
+/* ================= TIMER ================= */
+function startTimer(){ clearInterval(timerId); visTid();
+  timerId=setInterval(()=>{ if(pause||spillSlutt) return; restSek--; visTid();
+    if(restSek<=10&&restSek>0) sfxTikk();
+    if(restSek<=0){ spillSlutt=true; clearInterval(timerId); stoppOpplesing(); $("topplinje").classList.remove("vis"); visSkjerm("tapt"); lesOpp("tapt",TEKST.tapt); }
+  },1000); }
+function visTid(){ const m=Math.floor(Math.max(restSek,0)/60), s=Math.max(restSek,0)%60;
+  const t=$("timer"); t.textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); t.classList.toggle("haster",restSek<=300); }
+$("pauseknapp").addEventListener("click",()=>{ pause=true; stoppOpplesing(); $("pauseteppe").classList.add("vis"); });
+$("fortsett").addEventListener("click",()=>{ pause=false; $("pauseteppe").classList.remove("vis"); });
+$("kartknapp").addEventListener("click",()=>{ if(!spillSlutt){ stoppOpplesing(); visSkjerm("kart"); } });
+
+/* ================= KART ================= */
+function byggKart(){
+  const grid=$("romgrid"); grid.querySelectorAll(".plan-rom").forEach(el=>el.remove());
+  ROM.forEach((r,i)=>{
+    const b=document.createElement("button"); b.type="button";
+    b.className="plan-rom"+(funnet[i]!==null?" lost":""); b.style.setProperty("--farge",r.farge);
+    const varer=["#FF7BAC","#4FD08C","#FFC83D","#9B7BFF"].map(c=>`<span style="--v:${c}"></span>`).join("");
+    b.innerHTML=`<span class="hylle-skilt">${r.monster} ${r.navn}</span>
+      <div class="hylle-krop">
+        <img class="hylle-monster-bilde" src="monstre/${r.id}.webp" alt="${r.monsterNavn}" onerror="this.outerHTML='${r.monster}'">
+        <div class="hylle-varer">${varer}</div>
+      </div>
+      <div class="hylle-plank"></div>
+      <span class="hylle-status">${funnet[i]!==null?"🐷 Siffer: "+funnet[i]:"Gåten venter …"}</span>`;
+    b.addEventListener("click",()=>gaaTilRom(i)); grid.appendChild(b);
+  });
+  $("tilHvelv").disabled=funnet.some(f=>f===null);
+}
+function oppdaterSiffer(nyttIndex){
+  const bokser=$("sifferRad").children;
+  for(let i=0;i<ANTALL;i++){ bokser[i].textContent=funnet[i]!==null?funnet[i]:"?"; bokser[i].classList.toggle("tom",funnet[i]===null);
+    bokser[i].classList.remove("ny"); if(i===nyttIndex){ void bokser[i].offsetWidth; bokser[i].classList.add("ny"); } }
+}
+$("tilHvelv").addEventListener("click",()=>{
+  $("hvelvMelding").className="melding";
+  document.querySelectorAll(".kode-input").forEach(inp=>{inp.value="";inp.classList.remove("gronn");});
+  visSkjerm("hvelv"); lesOpp("laas",TEKST.laas);
+});
+
+/* ================= LUKE-OVERGANG ================= */
+function gaaTilRom(i){
+  stoppOpplesing(); sfxKnirk();
+  if(redusertBevegelse){ aapneRom(i); return; }
+  $("dorSkilt").textContent="Rom "+(i+1)+": "+ROM[i].navn;
+  const teppe=$("dorteppe"); teppe.classList.add("vis"); teppe.classList.remove("aapner"); void teppe.offsetWidth;
+  aapneRom(i,true); teppe.classList.add("aapner");
+  setTimeout(()=>{teppe.classList.remove("vis","aapner");},2450);
+}
+
+/* ================= ROM ================= */
+function aapneRom(i,stille){
+  aktivtRom=i; const r=ROM[i], o=r.oppgaver[niva];
+  $("romMonster").textContent=""; const mimg=document.createElement("img"); mimg.className="rom-monster-bilde"; mimg.src="monstre/"+r.id+".webp"; mimg.alt=r.monsterNavn; mimg.onerror=()=>{$("romMonster").textContent=r.monster;}; $("romMonster").appendChild(mimg);
+  $("romTittel").textContent="Rom "+(i+1)+": "+r.navn; $("romTittel").style.color=r.farge;
+  const bilde=$("romBilde"); bilde.alt=r.navn; lastValgfrittBilde(bilde, BILDER[r.id]);
+  $("romFortelling").textContent=r.fortelling;
+  $("romOppgaveBoks").style.setProperty("--farge",r.farge);
+  $("romMerkelapp").textContent="Oppgave · "+nivaNavn();
+  $("romOppgave").innerHTML=o.tekst;
+  $("romSvar").placeholder="Svar i "+o.enhet;
+  $("romHintTekst").textContent="💡 "+o.hint; $("romHintTekst").classList.remove("vis");
+  $("romHintKnapp").classList.toggle("vis", forsoek[i]>=2 && funnet[i]===null);
+  $("romMelding").className="melding";
+  $("romSvar").value=""; $("romSvar").disabled=funnet[i]!==null; $("romSjekk").disabled=funnet[i]!==null;
+  if(funnet[i]!==null){ const m=$("romMelding"); m.className="melding riktig"; m.innerHTML="✓ Allerede løst! Sifferet er <strong>"+funnet[i]+"</strong>."; }
+  $("romFortellingLytt").onclick=()=>lesOpp("fortelling-"+r.id,r.fortelling);
+  $("romOppgaveLytt").onclick=()=>lesOpp("oppgave-"+r.id+"-"+niva,o.tale);
+  visSkjerm("rom");
+  if(funnet[i]===null){ setTimeout(()=>lesOpp("fortelling-"+r.id,r.fortelling), redusertBevegelse?200:1100); $("romSvar").focus(); }
+}
+$("romTilbake").addEventListener("click",()=>{ stoppOpplesing(); visSkjerm("kart"); });
+$("romHintKnapp").addEventListener("click",()=>$("romHintTekst").classList.add("vis"));
+$("romSvar").addEventListener("keydown",e=>{ if(e.key==="Enter") sjekkSvar(); });
+$("romSjekk").addEventListener("click",sjekkSvar);
+
+function sjekkSvar(){
+  const i=aktivtRom; if(funnet[i]!==null||spillSlutt) return;
+  const o=ROM[i].oppgaver[niva];
+  const raatt=$("romSvar").value.replace(/\s/g,"").replace(",","."); const tall=Number(raatt); const m=$("romMelding");
+  if(raatt===""||Number.isNaN(tall)){ m.className="melding feil"; m.textContent="Skriv svaret som et tall i "+o.enhet; return; }
+  if(tall===o.svar){
+    const siffer=o.svar%10; funnet[i]=siffer; m.className="melding riktig";
+    m.innerHTML=`🎉 Riktig! Svaret er <strong>${o.svar} ${o.enhet}</strong>.<br>${ROM[i].monsterNavn} hvisker: «Sifferet mitt er det <strong>siste sifferet i svaret</strong> — altså <strong>${siffer}</strong>!»`;
+    $("romSvar").disabled=true; $("romSjekk").disabled=true; $("romHintKnapp").classList.remove("vis");
+    sfxMynt(); oppdaterSiffer(i); byggKart(); myntregn(14);
+  } else {
+    forsoek[i]++; sfxFeil(); m.className="melding feil";
+    m.textContent=forsoek[i]===1?"Ikke helt — les oppgaven en gang til og prøv på nytt!":"Fortsatt ikke riktig. Snakk sammen i gruppa — eller bruk hintet! 💡";
+    if(forsoek[i]>=2) $("romHintKnapp").classList.add("vis");
+    $("romOppgaveBoks").classList.remove("skjelv"); void $("romOppgaveBoks").offsetWidth; $("romOppgaveBoks").classList.add("skjelv");
+  }
+}
+
+/* ================= GRISELÅSEN ================= */
+$("hvelvTilbake").addEventListener("click",()=>{ stoppOpplesing(); visSkjerm("kart"); });
+document.querySelectorAll(".kode-input").forEach((inp,idx,alle)=>{
+  inp.addEventListener("keydown",e=>{ if(e.key==="Backspace"&&!inp.value&&idx>0) alle[idx-1].focus(); if(e.key==="Enter") $("aapneHvelv").click(); });
+});
+
+/* Talltastatur (griselåsen) */
+(function byggTastatur(){
+  const t=$("tastatur"); if(!t) return;
+  const lay=["1","2","3","4","5","6","7","8","9","⌫","0","✓"];
+  lay.forEach(tegn=>{
+    const b=document.createElement("button"); b.type="button"; b.className="tast"; b.textContent=tegn;
+    if(tegn==="✓") b.classList.add("enter"); if(tegn==="⌫") b.classList.add("slett");
+    b.addEventListener("click",()=>{
+      sfxKlikk();
+      const inputs=Array.from(document.querySelectorAll("#kodeRad .kode-input"));
+      let idx=inputs.findIndex(x=>x===document.activeElement);
+      if(tegn==="⌫"){
+        if(idx<0) idx=inputs.reduce((a,x,j)=>x.value?j:a,-1);
+        if(idx>=0 && inputs[idx].value){ inputs[idx].value=""; inputs[idx].focus(); }
+        else if(idx>0){ inputs[idx-1].value=""; inputs[idx-1].focus(); }
+      } else if(tegn==="✓"){
+        $("aapneHvelv").click();
+      } else {
+        if(idx<0){ idx=inputs.findIndex(x=>!x.value); if(idx<0) idx=inputs.length-1; }
+        inputs[idx].value=tegn;
+        if(idx<inputs.length-1) inputs[idx+1].focus(); else inputs[idx].blur();
+      }
+    });
+    t.appendChild(b);
+  });
+})();
+
+$("aapneHvelv").addEventListener("click",()=>{
+  if(spillSlutt) return;
+  const felter=Array.from(document.querySelectorAll(".kode-input")); const inns=felter.map(i=>i.value).join(""); const m=$("hvelvMelding");
+  if(inns.length<ANTALL){ m.className="melding feil"; m.textContent="Fyll inn alle fem sifrene."; return; }
+  if(inns===kode()){
+    spillSlutt=true; clearInterval(timerId); stoppOpplesing(); felter.forEach(f=>f.classList.add("gronn")); sfxKassa();
+    const brukt=totalSek-restSek, bm=Math.floor(brukt/60), bs=brukt%60;
+    $("diplomNavn").textContent=$("gruppenavn").value.trim()||"Hemmelig gruppe";
+    $("diplomStat").textContent="Nivå: "+nivaNavn()+" · Tid brukt: "+bm+" min "+bs+" sek";
+    setTimeout(()=>{ $("topplinje").classList.remove("vis"); visSkjerm("vunnet"); myntregn(60); lesOpp("vunnet",TEKST.vunnet); }, redusertBevegelse?300:1200);
+  } else {
+    sfxFeil(); m.className="melding feil"; m.textContent="Grisen rikker seg ikke … Sjekk sifrene og rekkefølgen (rom 1–5)!";
+    $("kodeRad").classList.remove("skjelv"); void $("kodeRad").offsetWidth; $("kodeRad").classList.add("skjelv");
+  }
+});
+
+/* ================= MYNTREGN ================= */
+function myntregn(antall){
+  if(redusertBevegelse) return;
+  for(let i=0;i<antall;i++){ const m=document.createElement("img"); m.className="mynt"; m.src="../../../mynt.webp"; m.alt="";
+    m.style.left=Math.random()*100+"vw"; m.style.animationDuration=(2+Math.random()*2.5)+"s"; m.style.animationDelay=(Math.random()*0.8)+"s";
+    document.body.appendChild(m); setTimeout(()=>m.remove(),6000); }
+}
+
+/* ================= OMSTART ================= */
+function omstart(){ stoppOpplesing(); $("topplinje").classList.remove("vis"); visSkjerm("start"); }
+$("spillIgjen").addEventListener("click",omstart);
+$("provIgjen").addEventListener("click",omstart);
+</script>
+
+</body></html>
