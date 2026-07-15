@@ -88,9 +88,6 @@ h1,h2,h3,.fredoka{font-family:'Fredoka','Atkinson Hyperlegible',sans-serif}
   background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gullSkinn 5.5s linear infinite;
   filter:drop-shadow(0 2px 0 rgba(0,0,0,.4)) drop-shadow(0 0 26px rgba(255,200,61,.22))}
 @keyframes gullSkinn{to{background-position:-220% 0}}
-.plakat{position:relative;display:none;margin:0 0 18px}
-.plakat img{width:min(320px,72vw);aspect-ratio:4/3;object-fit:cover;border-radius:16px;border:5px solid #fff;box-shadow:0 18px 44px rgba(0,0,0,.55), 0 0 46px -12px rgba(255,200,61,.4);transform:rotate(-2deg)}
-.plakat .laas-merke{position:absolute;right:-14px;bottom:-6px;width:54px;height:54px;border-radius:50%;background:linear-gradient(180deg,var(--gull),var(--gull-dyp));display:grid;place-items:center;font-size:1.5rem;box-shadow:0 6px 16px rgba(0,0,0,.5);transform:rotate(8deg);border:3px solid #fff}
 .gris-ikon{font-size:4rem;margin-bottom:10px;display:inline-block;animation:dupp 3s ease-in-out infinite}
 .monsterrad{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:0 0 24px}
 .m-monster{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0;font-family:'Fredoka',sans-serif;font-weight:600;font-size:.95rem;color:var(--tekst);animation:dupp 3.2s ease-in-out infinite;animation-delay:calc(var(--i) * .45s)}
@@ -283,11 +280,7 @@ h1,h2,h3,.fredoka{font-family:'Fredoka','Atkinson Hyperlegible',sans-serif}
 
 <!-- ============ START ============ -->
 <section class="skjerm aktiv" id="start">
-  <div class="plakat" aria-hidden="true" id="plakat">
-    <img id="plakatBilde" alt="">
-    <span class="laas-merke">🔒</span>
-  </div>
-  <div class="gris-ikon" id="grisIkon" aria-hidden="true">🐷🔒</div>
+  <div class="gris-ikon" aria-hidden="true">🐷🔒</div>
   <h1>Sparegrisen har gått i vranglås!</h1>
   <div class="monsterrad" aria-hidden="true">
     <figure class="m-monster" style="--c:var(--sand);--i:0"><img class="m-bilde" src="monstre/sand.webp" alt="Sand" onerror="this.outerHTML='&lt;span class=&quot;m-fjes&quot;&gt;🌾&lt;/span&gt;'"><figcaption>Sand</figcaption></figure>
@@ -459,7 +452,6 @@ const BILDER = {
   tapt:   "bilder/tapt.webp"
 };
 const LYD_BASE = "lyd/";
-const THUMB = "../thumbs/sparegrisen-i-vranglas-thumb.webp"; // reservebilde for startskjermen
 
 /* ================= OPPGAVEDATA =================
    Regel: sifferet til griselåsen = SISTE siffer i svaret. */
@@ -611,9 +603,6 @@ function lastValgfrittBilde(img,url,reserve){ img.style.display="none"; const p=
   if(reserve) p.onerror=()=>{ const r=new Image(); r.onload=()=>{img.src=reserve;img.style.display="";}; r.src=reserve; };
   p.src=url; }
 lastValgfrittBilde($("bildeStart"), BILDER.start);
-(function lastPlakat(){ const p=new Image();
-  p.onload=()=>{ $("plakatBilde").src=THUMB; $("plakat").style.display="inline-block"; $("grisIkon").style.display="none"; };
-  p.src=THUMB; })();
 lastValgfrittBilde($("bildeVunnet"), BILDER.vunnet);
 lastValgfrittBilde($("bildeTapt"), BILDER.tapt);
 
