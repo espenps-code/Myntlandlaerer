@@ -3226,7 +3226,7 @@ function printShopPDF() {
 
 
 // ════════════════════════════════════════════════════════════
-// AUTOMATISK UKENTLIG LØNN (mandager)
+// AUTOMATISK UKENTLIG LØNN (fredager — utbetales av natt-jobben i skyen / fallback i HTML-skallet)
 
 
 
@@ -3654,6 +3654,10 @@ function renderBudgetPage() {
   if (elIpad) elIpad.value = bs.rentIpad ?? 50;
   if (elWed)  elWed.checked = bs.wedEventsEnabled !== false;
 
+  // Ukelønn til alle (settings.weeklysalary — leses av natt-jobben i skyen)
+  const elSal = document.getElementById('bud-weekly-salary');
+  if (elSal) elSal.value = (window._settings && window._settings.weeklysalary) || 0;
+
   // Status
   const cnt = document.getElementById('bud-status-hend-count');
   if (cnt) cnt.textContent = (getHendelser() || []).length;
@@ -3666,6 +3670,10 @@ function renderBudgetPage() {
     }).catch(()=>{});
     window._get(window._ref(window._db, 'wedEventsLastApplied')).then(snap => {
       const el = document.getElementById('bud-status-last-wed');
+      if (el) el.textContent = snap.val() || 'aldri';
+    }).catch(()=>{});
+    window._get(window._ref(window._db, 'salaryLastPaid')).then(snap => {
+      const el = document.getElementById('bud-status-last-salary');
       if (el) el.textContent = snap.val() || 'aldri';
     }).catch(()=>{});
   }
@@ -3826,6 +3834,26 @@ async function saveBudgetSettings() {
     });
     alertEl.innerHTML = '<div class="alert alert-success">✅ Innstillinger lagret!</div>';
     setTimeout(() => alertEl.innerHTML = '', 2500);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Lagring feilet: ' + e.message + '</div>';
+  }
+}
+
+async function saveWeeklySalarySetting() {
+  const alertEl = document.getElementById('bud-salary-alert');
+  const amount = parseInt(document.getElementById('bud-weekly-salary').value);
+  if (isNaN(amount) || amount < 0 || amount > 9999) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Ukelønn må være et tall mellom 0 og 9999 (0 = av).</div>';
+    return;
+  }
+  try {
+    await window._update(window._ref(window._db, 'settings'), { weeklysalary: amount });
+    if (!window._settings) window._settings = {};
+    window._settings.weeklysalary = amount;
+    alertEl.innerHTML = '<div class="alert alert-success">' + (amount > 0
+      ? '✅ Lagret! Alle elever får 🪙 ' + amount + ' i ukelønn hver fredag (skatt trekkes automatisk).'
+      : '✅ Lagret. Ukelønn til alle er slått av.') + '</div>';
+    setTimeout(() => alertEl.innerHTML = '', 3500);
   } catch(e) {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Lagring feilet: ' + e.message + '</div>';
   }

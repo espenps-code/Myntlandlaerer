@@ -180,7 +180,7 @@
 
     // ── Automatisk fond-oppdatering ──────────────────────────────────────
     checkAndUpdateFund();
-    // ── Automatisk ukentlig lønn (mandag) ──────────────────────────────
+    // ── Automatisk ukentlig lønn (fredag) ──────────────────────────────
     checkAndPayWeeklySalary();
     // ── Automatisk fredagslønn for faste jobber ────────────────────────
     checkAndPayFridayJobSalaries();
@@ -225,11 +225,11 @@
   }
 
 
-  // ── Automatisk ukentlig lønn – mandager ────────────────────────────────────
+  // ── Automatisk ukentlig lønn – fredager ────────────────────────────────────
   async function checkAndPayWeeklySalary() {
     try {
       const now = new Date();
-      if (now.getDay() !== 1) return; // kun mandag
+      if (now.getDay() !== 5) return; // kun fredag
 
       const yr  = now.getFullYear();
       const mo  = String(now.getMonth() + 1).padStart(2, '0');
@@ -1324,7 +1324,7 @@
 <!-- ═══════ BUDSJETT ═══════ -->
 <div class="page" id="page-budsjett">
   <div class="page-title">📊 Budsjett</div>
-  <div class="page-subtitle">Faste utgifter (trekkes hver fredag) og automatiske onsdagshendelser</div>
+  <div class="page-subtitle">Ukelønn til alle, faste utgifter (trekkes hver fredag) og automatiske onsdagshendelser</div>
 
   <div class="grid-2" style="margin-bottom:1.5rem;">
     <!-- Faste utgifter -->
@@ -1377,12 +1377,27 @@
         <div>Antall hendelser i biblioteket: <span id="bud-status-hend-count">0</span></div>
         <div>Sist trukket fredag: <span id="bud-status-last-friday">aldri</span></div>
         <div>Sist trukket onsdag: <span id="bud-status-last-wed">aldri</span></div>
+        <div>Sist utbetalt ukelønn: <span id="bud-status-last-salary">aldri</span></div>
       </div>
 
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.85rem;">
         <button class="btn btn-amber" onclick="runWednesdayEventsNow()" title="Kjør én tilfeldig hendelse for alle elever nå">🎲 Kjør hendelser nå</button>
       </div>
     </div>
+  </div>
+
+  <!-- Ukelønn til alle -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">💰 Ukelønn til alle (utbetales fredag)</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Fast ukelønn som utbetales automatisk til <strong>alle elever</strong> hver fredag – uavhengig av jobber. Skatt trekkes automatisk og går til klassens sparemål. Sett 0 for å slå av.</p>
+    <div class="form-row" style="max-width:300px;">
+      <label>💰 Ukelønn per elev (🪙 per uke)</label>
+      <input type="number" id="bud-weekly-salary" min="0" max="9999" placeholder="0">
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+      <button class="btn btn-primary" onclick="saveWeeklySalarySetting()">💾 Lagre ukelønn</button>
+    </div>
+    <div id="bud-salary-alert" style="margin-top:.75rem;"></div>
   </div>
 
   <!-- Oversikt: faste jobber & lønn -->
