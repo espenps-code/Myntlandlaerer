@@ -6,26 +6,20 @@
 <title>Personvernerklæring – Myntland</title>
 <meta name="description" content="Myntland er bygget med personvern som utgangspunkt. Vi lagrer ikke elevenes fulle navn, og data lagres i Europa." />
 <meta name="theme-color" content="#1e0f52" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Myntland – Personvern" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
-
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
 
   :root {
     --teal: #1a5fa5;
-    --teal-light: #dbeafe;
     --teal-dark: #1e0f52;
     --green: #1D9E75;
     --green-light: #E1F5EE;
     --green-dark: #085041;
     --amber: #EF9F27;
-    --amber-dark: #d4890f;
     --amber-light: #FAEEDA;
-    --coral: #D85A30;
-    --coral-light: #FAECE7;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
     --bg: #F7F9F7;
     --white: #fff;
     --text: #1a2e1a;
@@ -35,17 +29,14 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
+  html, body {
     font-family: 'Nunito', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    line-height: 1.6;
+    line-height: 1.65;
   }
 
-  a { color: var(--green-dark); }
-
-  /* Topp-nav */
   .topnav {
     background: var(--white);
     border-bottom: 1px solid var(--border);
@@ -55,313 +46,202 @@
     z-index: 100;
   }
   .topnav-inner {
-    max-width: 1200px;
+    max-width: 860px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
   }
   .topnav-logo {
     font-family: 'Fredoka One', cursive;
     font-size: 1.3rem;
     color: var(--teal-dark);
     text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
   }
-  .topnav-logo::before { content: "🪙"; font-size: 1.4rem; }
-  .topnav-back {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: var(--green-dark);
+  .topnav a.tilbake {
+    color: var(--teal);
     text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .topnav-back:hover { color: var(--teal-dark); }
-
-  /* Hero */
-  .hero {
-    background: linear-gradient(160deg, var(--teal-dark), #1a6648, var(--green));
-    color: white;
-    padding: 4rem 1.5rem 4rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-image:
-      radial-gradient(circle at 20% 30%, rgba(239, 159, 39, 0.15) 0%, transparent 45%),
-      radial-gradient(circle at 80% 70%, rgba(29, 158, 117, 0.18) 0%, transparent 45%);
-    pointer-events: none;
-  }
-  .hero-inner {
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
-    position: relative;
-    z-index: 2;
-  }
-  .hero-tag {
-    display: inline-block;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.18);
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 1.25rem;
-  }
-  h1 {
-    font-family: 'Fredoka One', cursive;
-    font-size: clamp(2.2rem, 5vw, 3.5rem);
-    line-height: 1.05;
-    margin-bottom: 1rem;
-  }
-  h1 .accent { color: var(--amber); }
-  .hero-sub {
-    font-size: clamp(1rem, 1.4vw, 1.15rem);
-    color: rgba(255,255,255,0.9);
-    max-width: 640px;
-    margin: 0 auto;
-    font-weight: 600;
-  }
-  .hero-meta {
-    margin-top: 1.5rem;
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.7);
-  }
-
-  /* Layout */
-  main {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 3rem 1.5rem 2rem;
-  }
-
-  section { margin-bottom: 3rem; }
-
-  h2 {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.6rem;
-    color: var(--teal-dark);
-    margin-bottom: 1rem;
-    margin-top: 2rem;
-  }
-
-  h3 {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.2rem;
-    color: var(--teal-dark);
-    margin: 1.5rem 0 0.5rem;
-  }
-
-  p { margin-bottom: 0.85rem; }
-
-  ul {
-    margin: 0.5rem 0 1rem 1.5rem;
-  }
-  ul li {
-    margin-bottom: 0.4rem;
-  }
-
-  /* TL;DR-boks */
-  .tldr {
-    background: linear-gradient(135deg, var(--green-light), var(--amber-light));
-    border-left: 5px solid var(--green);
-    border-radius: 14px;
-    padding: 1.5rem 1.75rem;
-    margin: 2rem 0;
-  }
-  .tldr-title {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.2rem;
-    color: var(--green-dark);
-    margin-bottom: 0.75rem;
-  }
-  .tldr ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .tldr li {
-    padding-left: 1.5rem;
-    position: relative;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-  }
-  .tldr li::before {
-    content: "✓";
-    position: absolute;
-    left: 0;
-    color: var(--green-dark);
-    font-weight: 900;
-  }
-
-  /* Tabell */
-  .data-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin: 1rem 0 1.5rem;
-    background: var(--white);
-    border-radius: 14px;
-    overflow: hidden;
-    border: 2px solid var(--border);
-  }
-  .data-table th {
-    background: var(--teal-light);
-    color: var(--teal-dark);
-    text-align: left;
-    padding: 0.85rem 1rem;
-    font-weight: 800;
-    font-size: 0.9rem;
-  }
-  .data-table td {
-    padding: 0.85rem 1rem;
-    border-top: 1px solid var(--border);
+    font-weight: 700;
     font-size: 0.95rem;
   }
-  .data-table td:first-child {
-    font-weight: 700;
-    color: var(--teal-dark);
-    width: 40%;
+  .topnav a.tilbake:hover { text-decoration: underline; }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
   }
 
-  /* Kontaktboks */
-  .contact-box {
-    background: var(--white);
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-top: 1.5rem;
-  }
-
-  /* PDF download */
-  .pdf-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--teal-dark);
-    color: white;
-    padding: 0.75rem 1.25rem;
-    border-radius: 12px;
-    text-decoration: none;
+  .eyebrow {
+    display: inline-block;
+    background: var(--purple-light);
+    color: var(--purple);
     font-weight: 800;
-    margin-top: 1rem;
-    transition: all 0.2s ease;
-  }
-  .pdf-link:hover {
-    background: var(--teal);
-    transform: translateY(-2px);
+    font-size: 0.85rem;
+    padding: 0.25rem 0.9rem;
+    border-radius: 999px;
+    margin-bottom: 0.8rem;
   }
 
-  /* Footer */
-  footer.site-footer {
-    background: var(--teal-dark);
-    color: rgba(255,255,255,0.85);
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    color: var(--teal-dark);
+    line-height: 1.2;
+    margin-bottom: 0.6rem;
+  }
+
+  .ingress { font-size: 1.05rem; color: var(--muted); max-width: 46rem; }
+  .meta { font-size: 0.9rem; color: var(--muted); margin: 0.8rem 0 2rem; }
+
+  .kortboks {
+    background: var(--green-light);
+    border: 2px solid var(--green);
+    border-radius: 16px;
+    padding: 1.3rem 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .kortboks h2 {
+    font-size: 1.05rem;
+    color: var(--green-dark);
+    margin-bottom: 0.6rem;
+  }
+  .kortboks ul { list-style: none; }
+  .kortboks li { padding-left: 1.6rem; position: relative; margin-bottom: 0.3rem; }
+  .kortboks li::before { content: "✅"; position: absolute; left: 0; }
+
+  section { margin-bottom: 2.3rem; }
+
+  h2.seksjon {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--teal-dark);
+    margin-bottom: 0.7rem;
+    padding-top: 0.5rem;
+  }
+  h3 { font-size: 1.05rem; color: var(--green-dark); margin: 1.1rem 0 0.4rem; }
+
+  p { margin-bottom: 0.8rem; }
+  section ul { margin: 0.3rem 0 0.9rem 1.4rem; }
+  section li { margin-bottom: 0.35rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0 1rem;
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.95rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { background: var(--purple-light); color: var(--teal-dark); }
+  tr:last-child td { border-bottom: none; }
+
+  a { color: var(--teal); }
+
+  .kontaktboks {
+    background: var(--amber-light);
+    border: 2px solid var(--amber);
+    border-radius: 16px;
+    padding: 1.2rem 1.5rem;
+  }
+
+  footer {
     text-align: center;
-    padding: 2rem 1.5rem;
+    padding: 1.6rem 1rem 2.2rem;
+    color: var(--muted);
     font-size: 0.9rem;
-    margin-top: 3rem;
+    border-top: 1px solid var(--border);
+    background: var(--white);
   }
-  footer.site-footer a {
-    color: var(--amber);
-    text-decoration: none;
-    margin: 0 0.5rem;
-  }
-  footer.site-footer a:hover { text-decoration: underline; }
+  footer a { color: var(--teal); }
 </style>
 </head>
 <body>
 
 <nav class="topnav">
   <div class="topnav-inner">
-    <a href="index.html" class="topnav-logo">Myntland</a>
-    <a href="index.html" class="topnav-back">← Tilbake til forsiden</a>
+    <a class="topnav-logo" href="index.html">Myntland</a>
+    <a class="tilbake" href="index.html">← Tilbake til forsiden</a>
   </div>
 </nav>
 
-<header class="hero">
-  <div class="hero-inner">
-    <span class="hero-tag">Personvern</span>
-    <h1>Personvern­erklæring for <span class="accent">Myntland</span></h1>
-    <p class="hero-sub">Vi er opptatt av å samle inn så få opplysninger som mulig. Myntland er bygget ut fra et prinsipp om dataminimering og pseudonymisering.</p>
-    <p class="hero-meta">Sist oppdatert: [DATO] · Versjon 1.0</p>
-  </div>
-</header>
-
 <main>
+  <span class="eyebrow">Personvern</span>
+  <h1>Personvernerklæring for Myntland</h1>
+  <p class="ingress">Vi er opptatt av å samle inn så få opplysninger som mulig. Myntland er bygget ut fra et prinsipp om dataminimering og pseudonymisering: vi lagrer aldri elevenes fulle navn, og vi samler bare det som trengs for at elevene skal kunne logge inn og bruke tjenesten.</p>
+  <p class="meta">Sist oppdatert: 16. juli 2026 · Versjon 2.0</p>
 
-  <div class="tldr">
-    <div class="tldr-title">Det viktigste i ett blikk</div>
+  <div class="kortboks">
+    <h2>Det viktigste i ett blikk</h2>
     <ul>
       <li>Vi lagrer ikke elevenes fulle navn — kun kallenavn</li>
       <li>Ingen reklame, ingen sporing, ingen analyseverktøy</li>
       <li>Data lagres i Europa (Google Firebase, EU-region)</li>
       <li>Vi selger eller deler ikke data med noen</li>
+      <li>Foresatte logger inn med en kode — vi lagrer ingen opplysninger om dem</li>
       <li>Skoleeier er behandlingsansvarlig — Myntland er databehandler</li>
     </ul>
   </div>
 
   <section>
-    <h2>1. Hvem er ansvarlig for personopplysningene?</h2>
+    <h2 class="seksjon">1. Hvem er ansvarlig for personopplysningene?</h2>
     <p>Når Myntland brukes i undervisningssammenheng, har skoleeier og leverandøren ulike roller:</p>
     <p><strong>Behandlingsansvarlig:</strong> Skoleeier (kommunen, eller den enkelte private skolen) som tar i bruk Myntland. Skoleeier bestemmer formålet med behandlingen og hvilke elever som får tilgang.</p>
-    <p><strong>Databehandler:</strong> [SELSKAPSNAVN], heretter omtalt som «Myntland». Vi behandler personopplysninger på vegne av skoleeier, regulert i en databehandleravtale.</p>
-
-    <div class="contact-box">
-      <strong>Kontaktinformasjon for spørsmål om personvern:</strong><br>
-      E-post: <a href="mailto:kontakt@myntland.no">kontakt@myntland.no</a><br>
-      Postadresse: [POSTADRESSE]
-    </div>
+    <p><strong>Databehandler:</strong> [SELSKAPSNAVN] (org.nr. [ORG.NR]), heretter omtalt som «Myntland». Vi behandler personopplysninger på vegne av skoleeier, regulert i en databehandleravtale.</p>
+    <p><strong>Kontaktinformasjon for spørsmål om personvern:</strong><br>
+    E-post: <a href="mailto:kontakt@myntland.no">kontakt@myntland.no</a><br>
+    Postadresse: [POSTADRESSE]</p>
   </section>
 
   <section>
-    <h2>2. Hvilke personopplysninger behandler vi?</h2>
-    <p>Myntland samler bevisst inn et minimum av opplysninger. Vi lagrer ikke fullt navn, fødselsdato, adresse, e-post eller annen direkte identifiserende informasjon om elever. Tjenesten er utformet slik at dataene som lagres ikke kan identifisere en bestemt elev uten skolens egne lister over koblingen mellom kallenavn og elev.</p>
+    <h2 class="seksjon">2. Hvilke personopplysninger behandler vi?</h2>
+    <p>Myntland samler bevisst inn et minimum av opplysninger. Vi lagrer ikke fullt navn, fødselsdato, adresse, e-post eller annen direkte identifiserende informasjon om elever. Tjenesten er utformet slik at dataene som lagres ikke kan identifisere en bestemt elev uten skolens egne lister over koblingen mellom kallenavn og elev. Slike lister oppbevares lokalt hos læreren og lastes aldri opp til tjenesten.</p>
 
     <h3>Om elever</h3>
-    <table class="data-table">
-      <thead>
-        <tr><th>Opplysning</th><th>Forklaring</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Kallenavn</td><td>Et navn læreren eller eleven velger (f.eks. «MyntKongen» eller «Stjerneskudd»). Skal ikke være elevens reelle fulle navn.</td></tr>
-        <tr><td>Klassetilhørighet</td><td>Hvilken klasse/gruppe eleven tilhører i Myntland (f.eks. «5B»).</td></tr>
-        <tr><td>PIN-kode</td><td>En firesifret kode eleven bruker til å logge inn. Lagres aldri i klartekst.</td></tr>
-        <tr><td>Aktivitetsdata</td><td>Spillrelaterte data: myntsaldo, fullførte oppgaver, fondsbeholdning, hendelser eleven har deltatt i. Knyttet til kallenavnet, ikke til en identifiserbar person.</td></tr>
-      </tbody>
+    <table>
+      <tr><th>Opplysning</th><th>Forklaring</th></tr>
+      <tr><td>Kallenavn</td><td>Et fiktivt navn med tilhørende avatar (f.eks. «Stjerne» eller «Bølge»). Skal ikke være elevens reelle fulle navn.</td></tr>
+      <tr><td>Klassetilhørighet</td><td>Hvilken klasse/gruppe eleven tilhører i Myntland (f.eks. «5B»).</td></tr>
+      <tr><td>PIN-kode</td><td>En firesifret kode eleven bruker til å logge inn. Lagres aldri i klartekst.</td></tr>
+      <tr><td>Aktivitetsdata</td><td>Spillrelaterte data: myntsaldo, transaksjoner, jobber, fondsbeholdning, hendelser, merker, quizresultater og fremdrift i arbeidsplanen. Knyttet til kallenavnet, ikke til en identifiserbar person.</td></tr>
     </table>
 
     <h3>Om lærere</h3>
     <ul>
-      <li>Navn og e-postadresse (for innlogging via Firebase Authentication)</li>
-      <li>Klassenavn og klasselister (kallenavn) som læreren oppretter</li>
+      <li>Navn og e-postadresse (for innlogging via Firebase Authentication, eventuelt med Google-konto)</li>
+      <li>Klasser og klassedata (med elevenes kallenavn) som læreren oppretter</li>
+      <li>Tilbakemeldinger læreren selv sender inn via «Meld inn feil eller forslag» (meldingstekst, navn, klasse og hvilken side meldingen gjaldt)</li>
       <li>Tidspunkter for innlogging og bruk, til drifts- og sikkerhetsformål</li>
     </ul>
+
+    <h3>Om foresatte</h3>
+    <p>Foresatte som bruker foresatt-innsynet logger inn med en tilfeldig kode fra et brev skolen deler ut. Vi lagrer ingen navn, e-postadresser eller andre opplysninger om foresatte. Bekreftelser en foresatt gjør i barnets arbeidsplan registreres uten identitet.</p>
   </section>
 
   <section>
-    <h2>3. Hvorfor behandler vi opplysningene?</h2>
+    <h2 class="seksjon">3. Hvorfor behandler vi opplysningene?</h2>
     <p>Personopplysningene brukes utelukkende til å levere Myntland som pedagogisk tjeneste. Konkret:</p>
     <ul>
       <li>Gi elever sikker tilgang til sin egen profil med kallenavn og PIN</li>
-      <li>La lærere administrere klasser, oppgaver og hendelser</li>
+      <li>La lærere administrere klasser, oppgaver og hendelser — også sammen med inviterte medlærere</li>
       <li>Lagre elevens fremgang slik at den er tilgjengelig neste gang eleven logger inn</li>
-      <li>Drifte tjenesten teknisk, oppdage feil og sikre at den fungerer</li>
-      <li>Beskytte tjenesten mot misbruk og uautorisert tilgang</li>
+      <li>Kjøre tjenestens automatikk (lønn, renter, hendelser og fondskurser beregnes automatisk hver natt)</li>
+      <li>Følge opp feilmeldinger og forslag som lærere sender inn</li>
+      <li>Drifte tjenesten teknisk, oppdage feil og beskytte den mot misbruk</li>
     </ul>
     <p>Vi bruker ikke opplysningene til markedsføring, profilering, reklame eller salg til tredjepart. Aktivitetsdata brukes ikke til å rangere eller sammenligne enkeltelever på tvers av klasser eller skoler.</p>
   </section>
 
   <section>
-    <h2>4. Hva er det rettslige grunnlaget?</h2>
+    <h2 class="seksjon">4. Hva er det rettslige grunnlaget?</h2>
     <p>Behandlingen skjer på grunnlag av personvernforordningen (GDPR):</p>
     <ul>
       <li><strong>Artikkel 6 nr. 1 bokstav e</strong> (utførelse av oppgave i allmennhetens interesse) – grunnlaget for skoleeiers bruk av digitale læringsressurser i undervisningen, jf. opplæringsloven.</li>
@@ -371,24 +251,22 @@
   </section>
 
   <section>
-    <h2>5. Hvor og hvor lenge lagres opplysningene?</h2>
-
+    <h2 class="seksjon">5. Hvor og hvor lenge lagres opplysningene?</h2>
     <h3>Lagringssted</h3>
-    <p>Myntland bruker Google Firebase som teknisk plattform. Data lagres i Firebase-prosjektets database i regionen <strong>europe-west</strong>, det vil si innenfor EU/EØS. Elevdata overføres ikke til land utenfor EØS som ledd i den ordinære driften av tjenesten.</p>
+    <p>Myntland bruker Google Firebase som teknisk plattform. Data lagres i regionen <strong>europe-west</strong>, det vil si innenfor EU/EØS. Tjenestens automatiske jobber kjører i Google Cloud Functions i regionen europe-west1 (Belgia). Elevdata overføres ikke til land utenfor EØS som ledd i den ordinære driften av tjenesten.</p>
     <p>Google Ireland Ltd. og Google LLC, som leverer Firebase-tjenestene, er underdatabehandlere. Eventuell teknisk støttebehandling som måtte involvere Google LLC i USA er regulert av EU-kommisjonens standardkontrakter (SCC) og Google Cloud Data Processing Addendum.</p>
-
     <h3>Lagringstid</h3>
     <ul>
       <li>Elevdata (kallenavn, PIN, aktivitetsdata) lagres så lenge eleven er aktiv i en klasse på Myntland.</li>
       <li>Når en lærer fjerner en elev fra klassen, slettes elevdataene innen 30 dager.</li>
       <li>Inaktive kontoer (ingen pålogging på 12 måneder) slettes automatisk.</li>
-      <li>Når en skoleeier avslutter avtalen, slettes alle data fra primærdatabasen innen 30 dager. Eventuelle sikkerhetskopier overskrives senest 30 dager etter dette.</li>
+      <li>Når en skoleeier avslutter avtalen, slettes alle data fra primærdatabasen innen <strong>90 dager</strong>. Eventuelle sikkerhetskopier overskrives senest 30 dager etter dette.</li>
       <li>Tekniske logger (innloggingstidspunkter, feilmeldinger) lagres i opptil 12 måneder, til drifts- og sikkerhetsformål.</li>
     </ul>
   </section>
 
   <section>
-    <h2>6. Deler vi opplysningene med andre?</h2>
+    <h2 class="seksjon">6. Deler vi opplysningene med andre?</h2>
     <p>Vi selger eller utleverer ikke personopplysninger. Opplysningene deles kun med:</p>
     <ul>
       <li><strong>Underdatabehandlere</strong> som leverer den tekniske infrastrukturen (Google Firebase). En oppdatert liste finnes i databehandleravtalen.</li>
@@ -398,11 +276,11 @@
   </section>
 
   <section>
-    <h2>7. Hvordan sikres opplysningene?</h2>
+    <h2 class="seksjon">7. Hvordan sikres opplysningene?</h2>
     <p>Myntland bruker tekniske og organisatoriske tiltak for å beskytte opplysningene mot uautorisert tilgang, endring og sletting:</p>
     <ul>
       <li>All trafikk mellom enhet og server er kryptert med HTTPS/TLS.</li>
-      <li>Data lagres kryptert i hvile i Firebase, med tilgangsregler som hindrer at en bruker leser data utenfor sin egen klasse.</li>
+      <li>Data lagres kryptert i hvile i Firebase, med tilgangsregler som hindrer at en bruker leser data utenfor sin egen klasse. Hver klasse er teknisk adskilt fra andre klasser.</li>
       <li>PIN-koder lagres aldri i klartekst.</li>
       <li>Tilgang til administrative systemer hos leverandøren er begrenset og logges.</li>
       <li>Ved sikkerhetsbrudd som rammer personopplysninger, varsles behandlingsansvarlig uten ugrunnet opphold, og senest innen 24 timer etter at bruddet er oppdaget, slik at skoleeier kan oppfylle sin meldeplikt til Datatilsynet (innen 72 timer).</li>
@@ -410,51 +288,44 @@
   </section>
 
   <section>
-    <h2>8. Hvilke rettigheter har du?</h2>
+    <h2 class="seksjon">8. Hvilke rettigheter har du?</h2>
     <p>Elever og foresatte har rettigheter etter GDPR. Henvendelser om disse rettighetene rettes til skoleeier, som er behandlingsansvarlig:</p>
     <ul>
       <li><strong>Innsyn</strong> – få vite hvilke opplysninger som er registrert.</li>
       <li><strong>Retting</strong> – få korrigert feilaktige opplysninger.</li>
       <li><strong>Sletting</strong> – få opplysninger slettet når de ikke lenger er nødvendige.</li>
       <li><strong>Begrensning</strong> – be om at behandlingen begrenses i visse tilfeller.</li>
-      <li><strong>Klage</strong> – klage til <a href="https://www.datatilsynet.no" target="_blank" rel="noopener">Datatilsynet</a> hvis man mener behandlingen er i strid med personvernregelverket.</li>
+      <li><strong>Klage</strong> – klage til <a href="https://www.datatilsynet.no" rel="noopener">Datatilsynet</a> hvis man mener behandlingen er i strid med personvernregelverket.</li>
     </ul>
     <p>Skoleeier kontakter Myntland ved behov for å gjennomføre slike forespørsler i systemet.</p>
   </section>
 
   <section>
-    <h2>9. Informasjonskapsler og lokal lagring</h2>
-    <p>Myntland bruker ikke informasjonskapsler (cookies) for sporing eller markedsføring. Tjenesten kan bruke nettleserens lokale lagring for å huske eleven mellom økter på samme enhet, slik at innloggingen blir enklere. Denne informasjonen forlater aldri elevens enhet utover det som er nødvendig for å snakke med Firebase.</p>
-    <p>Vi bruker ikke analyseverktøy som Google Analytics eller lignende.</p>
+    <h2 class="seksjon">9. Informasjonskapsler og lokal lagring</h2>
+    <p>Myntland bruker ikke informasjonskapsler (cookies) for sporing eller markedsføring, og vi bruker ikke analyseverktøy som Google Analytics eller lignende.</p>
+    <p>Tjenesten bruker nettleserens lokale lagring til to formål: å huske innloggingen mellom økter på samme enhet, og å mellomlagre appens egne programfiler slik at elevappen åpner raskt (en såkalt service worker). Denne informasjonen forlater aldri enheten utover det som er nødvendig for å snakke med Firebase.</p>
+    <p>Nettsidene laster skrifttyper fra Google Fonts. Når en side åpnes, henter nettleseren skriftfilene fra Googles servere, og Google mottar da enhetens IP-adresse som en del av vanlig internett-trafikk. Det overføres ingen informasjon om hvem brukeren er eller hva som gjøres i tjenesten.</p>
   </section>
 
   <section>
-    <h2>10. Endringer i erklæringen</h2>
+    <h2 class="seksjon">10. Endringer i erklæringen</h2>
     <p>Denne personvernerklæringen kan oppdateres ved endringer i tjenesten eller regelverket. Vesentlige endringer varsles til skoleeiere som bruker Myntland, i god tid før endringen trer i kraft. Dato for siste oppdatering står øverst i dokumentet.</p>
   </section>
 
   <section>
-    <h2>11. Kontakt</h2>
-    <p>Spørsmål om personvern eller bruk av Myntland kan rettes til:</p>
-    <div class="contact-box">
+    <div class="kontaktboks">
+      <h2 class="seksjon" style="padding-top:0;">11. Kontakt</h2>
+      <p style="margin-bottom:0;">Spørsmål om personvern eller bruk av Myntland kan rettes til:<br><br>
       <strong>[SELSKAPSNAVN]</strong><br>
       E-post: <a href="mailto:kontakt@myntland.no">kontakt@myntland.no</a><br>
-      Postadresse: [POSTADRESSE]
+      Postadresse: [POSTADRESSE]</p>
     </div>
-
-    <a href="docs/Personvernerklaering_Myntland.pdf" class="pdf-link" download>
-      📄 Last ned som PDF
-    </a>
   </section>
-
 </main>
 
-<footer class="site-footer">
-  <a href="index.html">Forsiden</a> ·
-  <a href="for-skoler.html">For skoler</a> ·
-  <a href="vilkar.html">Vilkår</a> ·
-  <a href="mailto:kontakt@myntland.no">Kontakt</a>
-  <p style="margin-top: 1rem; opacity: 0.6;">© Myntland</p>
+<footer>
+  <a href="index.html">Forsiden</a> · <a href="for-skoler.html">For skoler</a> · <a href="vilkar.html">Vilkår</a> · <a href="mailto:kontakt@myntland.no">Kontakt</a><br>
+  © Myntland
 </footer>
 
 </body>
