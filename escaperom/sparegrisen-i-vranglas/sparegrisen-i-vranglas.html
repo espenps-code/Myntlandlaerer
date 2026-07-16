@@ -205,11 +205,6 @@ h1,h2,h3,.fredoka{font-family:'Fredoka','Atkinson Hyperlegible',sans-serif}
 .melding{margin-top:14px;padding:14px 16px;border-radius:14px;font-weight:700;display:none}
 .melding.feil{display:block;background:rgba(255,92,122,.14);border:2px solid var(--rod);color:#FFB3C2}
 .melding.riktig{display:block;background:rgba(79,208,140,.14);border:2px solid var(--gronn);color:#A9F0CC;font-size:1.15rem;box-shadow:0 0 24px -8px rgba(79,208,140,.4)}
-.hint-knapp{display:none;margin-top:12px;background:var(--panel-lys);border:1px solid #3F4486;color:var(--tekst);padding:10px 18px;border-radius:12px;cursor:pointer;font-weight:700;font-family:'Atkinson Hyperlegible',sans-serif;font-size:.95rem}
-.hint-knapp:hover{background:#3C4280}
-.hint-knapp.vis{display:inline-block}
-.hint-tekst{display:none;margin-top:12px;background:rgba(255,200,61,.1);border:2px dashed var(--gull);border-radius:14px;padding:14px 16px;color:#FFE3A0}
-.hint-tekst.vis{display:block}
 .skjelv{animation:skjelv .4s}
 @keyframes skjelv{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 
@@ -365,8 +360,6 @@ h1,h2,h3,.fredoka{font-family:'Fredoka','Atkinson Hyperlegible',sans-serif}
       <button class="sjekk-knapp" id="romSjekk" type="button">Sjekk svaret</button>
     </div>
     <div class="melding" id="romMelding"></div>
-    <button class="hint-knapp" id="romHintKnapp" type="button">💡 Vis hint</button>
-    <div class="hint-tekst" id="romHintTekst"></div>
   </div>
 </section>
 
@@ -459,72 +452,57 @@ const ROM = [
   { id:"sand", monster:"🌾", monsterNavn:"Sand", navn:"Sands ventekrok", farge:"var(--sand)",
     fortelling:"Sand sitter søvnig ved rentekalenderen og gjesper. «Renter er magiske — de kommer mens du venter! Hjelp meg å regne, så husker jeg sifferet mitt.»",
     oppgaver:{
-      lett:{ tekst:`Sand setter <strong>100 🪙</strong> inn på sparekontoen. Hver uke får Sand <strong>5 🪙</strong> i rente.<br><br>Hvor mange mynter har Sand etter <strong>3 uker</strong>?`,
-        tale:"Sand setter hundre mynter inn på sparekontoen. Hver uke får Sand fem mynter i rente. Hvor mange mynter har Sand etter tre uker?", svar:115, enhet:"mynter 🪙",
-        hint:"Renta på 3 uker er 3 ganger 5. Legg det til de 100." },
-      middels:{ tekst:`Sand setter inn <strong>200 🪙</strong>. Hver mandag får Sand <strong>2 %</strong> rente av de 200 myntene.<br><br>Hvor mange mynter har Sand etter <strong>6 mandager</strong>?`,
-        tale:"Sand setter inn to hundre mynter. Hver mandag får Sand to prosent rente av de to hundre myntene. Hvor mange mynter har Sand etter seks mandager?", svar:224, enhet:"mynter 🪙",
-        hint:"2 % av 200 er 4 mynter. Gang med 6 mandager, og legg til 200." },
+      lett:{ tekst:`Sparekontoen i Myntland gir <strong>5 %</strong> rente hver mandag. Sand har <strong>300 🪙</strong> på kontoen.<br><br>Hvor mange mynter får Sand <strong>i rente</strong> denne mandagen?`,
+        tale:"Sparekontoen i Myntland gir fem prosent rente hver mandag. Sand har tre hundre mynter på kontoen. Hvor mange mynter får Sand i rente denne mandagen?", svar:15, enhet:"mynter 🪙" },
+      middels:{ tekst:`Sand har <strong>480 🪙</strong> på sparekontoen. På mandag får Sand <strong>5 %</strong> rente.<br><br>Hvor mange mynter står på kontoen <strong>etter</strong> renteutbetalingen?`,
+        tale:"Sand har fire hundre og åtti mynter på sparekontoen. På mandag får Sand fem prosent rente. Hvor mange mynter står på kontoen etter renteutbetalingen?", svar:504, enhet:"mynter 🪙" },
       utfordring:{ tekst:`To banker frister med rente:<br><br>
         <table class="fakta-tabell">
         <tr><td>🅰️ Bank A gir per uke</td><td>6 🪙</td></tr>
         <tr><td>🅱️ Bank B gir per måned (4 uker)</td><td>30 🪙</td></tr>
         </table>
         Hvor mange <strong>flere</strong> mynter gir den beste banken enn den dårligste på <strong>8 uker</strong>?`,
-        tale:"To banker frister med rente. Bank A gir seks mynter per uke. Bank B gir tretti mynter per måned, og en måned er fire uker. Hvor mange flere mynter gir den beste banken enn den dårligste på åtte uker?", svar:12, enhet:"mynter 🪙",
-        hint:"Bank A: 6 ganger 8. Bank B: 8 uker er 2 måneder, altså 2 ganger 30. Trekk det minste fra det største." }
+        tale:"To banker frister med rente. Bank A gir seks mynter per uke. Bank B gir tretti mynter per måned, og en måned er fire uker. Hvor mange flere mynter gir den beste banken enn den dårligste på åtte uker?", svar:12, enhet:"mynter 🪙" }
     }},
   { id:"natt", monster:"🌙", monsterNavn:"Natt", navn:"Natts stille sparehjørne", farge:"var(--nattm)",
     fortelling:"Natt sparer i det stille og viser dere en liten notatbok full av tall. «Jeg sier ikke så mye … men jeg sparer hver eneste uke. Hjelp meg å regne på målet mitt, så hvisker jeg sifferet.»",
     oppgaver:{
       lett:{ tekst:`Natt legger <strong>8 🪙</strong> i sparegrisen <strong>hver uke</strong>.<br><br>Hvor mange mynter har Natt spart etter <strong>6 uker</strong>?`,
-        tale:"Natt legger åtte mynter i sparegrisen hver uke. Hvor mange mynter har Natt spart etter seks uker?", svar:48, enhet:"mynter 🪙",
-        hint:"Gang 8 med 6." },
+        tale:"Natt legger åtte mynter i sparegrisen hver uke. Hvor mange mynter har Natt spart etter seks uker?", svar:48, enhet:"mynter 🪙" },
       middels:{ tekst:`Natt drømmer om hodetelefoner til <strong>90 🪙</strong> og har allerede <strong>18 🪙</strong>. Natt sparer <strong>12 🪙</strong> i uka.<br><br>Hvor mange <strong>uker</strong> tar det før Natt har nok?`,
-        tale:"Natt drømmer om hodetelefoner til nitti mynter og har allerede atten mynter. Natt sparer tolv mynter i uka. Hvor mange uker tar det før Natt har nok?", svar:6, enhet:"uker 📅",
-        hint:"Hvor mye mangler? 90 minus 18. Del det på 12." },
+        tale:"Natt drømmer om hodetelefoner til nitti mynter og har allerede atten mynter. Natt sparer tolv mynter i uka. Hvor mange uker tar det før Natt har nok?", svar:6, enhet:"uker 📅" },
       utfordring:{ tekst:`Natt har <strong>35 🪙</strong> og sparer <strong>15 🪙</strong> hver uke. Drømmeteleskopet koster <strong>140 🪙</strong>.<br><br>Etter hvor mange <strong>uker</strong> kan Natt kjøpe teleskopet?`,
-        tale:"Natt har trettifem mynter og sparer femten mynter hver uke. Drømmeteleskopet koster hundre og førti mynter. Etter hvor mange uker kan Natt kjøpe teleskopet?", svar:7, enhet:"uker 📅",
-        hint:"140 minus 35 er 105. Del på 15." }
+        tale:"Natt har trettifem mynter og sparer femten mynter hver uke. Drømmeteleskopet koster hundre og førti mynter. Etter hvor mange uker kan Natt kjøpe teleskopet?", svar:7, enhet:"uker 📅" }
     }},
   { id:"bjork", monster:"🌱", monsterNavn:"Bjørk", navn:"Bjørks felleskasse", farge:"var(--bjork)",
     fortelling:"Bjørk står ved klassens felleskasse og teller ivrig. «Når alle sparer litt, blir det MYE til sammen! Hjelp meg med felleskassa, så får dere sifferet mitt.»",
     oppgaver:{
       lett:{ tekst:`Klassens sparemål er en <strong>filmkveld til 250 🪙</strong>. Felleskassa har <strong>187 🪙</strong>.<br><br>Hvor mange mynter <strong>mangler</strong>?`,
-        tale:"Klassens sparemål er en filmkveld til to hundre og femti mynter. Felleskassa har hundre og åttisju mynter. Hvor mange mynter mangler?", svar:63, enhet:"mynter 🪙",
-        hint:"Trekk 187 fra 250." },
+        tale:"Klassens sparemål er en filmkveld til to hundre og femti mynter. Felleskassa har hundre og åttisju mynter. Hvor mange mynter mangler?", svar:63, enhet:"mynter 🪙" },
       middels:{ tekst:`Alle de <strong>24 elevene</strong> tjener <strong>30 🪙</strong> hver på fredag. <strong>20 %</strong> av lønna går som skatt til klassens sparemål.<br><br>Hvor mange mynter får sparemålet <strong>til sammen</strong> denne fredagen?`,
-        tale:"Alle de tjuefire elevene tjener tretti mynter hver på fredag. Tjue prosent av lønna går som skatt til klassens sparemål. Hvor mange mynter får sparemålet til sammen denne fredagen?", svar:144, enhet:"mynter 🪙",
-        hint:"20 % av 30 er 6 mynter per elev. Gang med 24 elever." },
+        tale:"Alle de tjuefire elevene tjener tretti mynter hver på fredag. Tjue prosent av lønna går som skatt til klassens sparemål. Hvor mange mynter får sparemålet til sammen denne fredagen?", svar:144, enhet:"mynter 🪙" },
       utfordring:{ tekst:`Sparemålet trenger <strong>600 🪙</strong>. Klassen har <strong>240 🪙</strong> og legger inn <strong>45 🪙</strong> i uka.<br><br>Hvor mange <strong>uker</strong> tar det før målet er nådd?`,
-        tale:"Sparemålet trenger seks hundre mynter. Klassen har to hundre og førti mynter og legger inn førtifem mynter i uka. Hvor mange uker tar det før målet er nådd?", svar:8, enhet:"uker 📅",
-        hint:"600 minus 240 er 360. Del på 45." }
+        tale:"Sparemålet trenger seks hundre mynter. Klassen har to hundre og førti mynter og legger inn førtifem mynter i uka. Hvor mange uker tar det før målet er nådd?", svar:8, enhet:"uker 📅" }
     }},
   { id:"mynte", monster:"🍃", monsterNavn:"Mynte", navn:"Myntes ønskehylle", farge:"var(--mynte)",
     fortelling:"Mynte står drømmende foran ønskehylla med en liten gavelapp i hånden. «Jeg vil både gi og spare … går det an å få til begge deler? Hjelp meg å regne, så deler jeg sifferet mitt.»",
     oppgaver:{
       lett:{ tekst:`Mynte har <strong>70 🪙</strong> og kjøper en gave til <strong>24 🪙</strong>. Resten går rett i sparegrisen.<br><br>Hvor mange mynter <strong>sparer</strong> Mynte?`,
-        tale:"Mynte har sytti mynter og kjøper en gave til tjuefire mynter. Resten går rett i sparegrisen. Hvor mange mynter sparer Mynte?", svar:46, enhet:"mynter 🪙",
-        hint:"Trekk 24 fra 70." },
+        tale:"Mynte har sytti mynter og kjøper en gave til tjuefire mynter. Resten går rett i sparegrisen. Hvor mange mynter sparer Mynte?", svar:46, enhet:"mynter 🪙" },
       middels:{ tekst:`Mynte får <strong>50 🪙</strong> i uka og sparer <strong>halvparten</strong> hver uke.<br><br>Hvor mange mynter har Mynte spart etter <strong>5 uker</strong>?`,
-        tale:"Mynte får femti mynter i uka og sparer halvparten hver uke. Hvor mange mynter har Mynte spart etter fem uker?", svar:125, enhet:"mynter 🪙",
-        hint:"Halvparten av 50 er 25. Gang med 5 uker." },
+        tale:"Mynte får femti mynter i uka og sparer halvparten hver uke. Hvor mange mynter har Mynte spart etter fem uker?", svar:125, enhet:"mynter 🪙" },
       utfordring:{ tekst:`Mynte sparer til en gave som koster <strong>96 🪙</strong>. Mynte har <strong>30 🪙</strong> fra før og sparer <strong>9 🪙</strong> i uka i <strong>8 uker</strong>.<br><br>Hvor mange mynter har Mynte <strong>igjen</strong> etter å ha kjøpt gaven?`,
-        tale:"Mynte sparer til en gave som koster nittiseks mynter. Mynte har tretti mynter fra før og sparer ni mynter i uka i åtte uker. Hvor mange mynter har Mynte igjen etter å ha kjøpt gaven?", svar:6, enhet:"mynter 🪙",
-        hint:"30 pluss 9 ganger 8 er 102. Trekk fra 96." }
+        tale:"Mynte sparer til en gave som koster nittiseks mynter. Mynte har tretti mynter fra før og sparer ni mynter i uka i åtte uker. Hvor mange mynter har Mynte igjen etter å ha kjøpt gaven?", svar:6, enhet:"mynter 🪙" }
     }},
   { id:"plask", monster:"💦", monsterNavn:"Plask", navn:"Plasks angrehjørne", farge:"var(--plask)",
     fortelling:"Plask sitter i en haug med tomme godteposer og klistremerker og ser angrende ut. «Jeg brukte ALT på én dag … Kan dere hjelpe meg å forstå hvor pengene ble av? Da får dere sifferet mitt!»",
     oppgaver:{
       lett:{ tekst:`Plask brukte <strong>54 🪙</strong> på <strong>6 like</strong> klistremerkepakker — alt på én dag!<br><br>Hva kostet <strong>én</strong> pakke?`,
-        tale:"Plask brukte femtifire mynter på seks like klistremerkepakker, alt på én dag! Hva kostet én pakke?", svar:9, enhet:"mynter 🪙",
-        hint:"Del 54 på 6." },
+        tale:"Plask brukte femtifire mynter på seks like klistremerkepakker, alt på én dag! Hva kostet én pakke?", svar:9, enhet:"mynter 🪙" },
       middels:{ tekst:`Plask vil lære å spare som Natt: <strong>12 🪙</strong> hver uke i <strong>6 uker</strong>.<br><br>Hvor mange mynter blir det i sparegrisen?`,
-        tale:"Plask vil lære å spare som Natt: tolv mynter hver uke i seks uker. Hvor mange mynter blir det i sparegrisen?", svar:72, enhet:"mynter 🪙",
-        hint:"Gang 12 med 6." },
+        tale:"Plask vil lære å spare som Natt: tolv mynter hver uke i seks uker. Hvor mange mynter blir det i sparegrisen?", svar:72, enhet:"mynter 🪙" },
       utfordring:{ tekst:`Plask kjøper brus til <strong>14 🪙</strong> hver skoledag (<strong>5 dager</strong> i uka).<br><br>Hvor mange mynter bruker Plask på <strong>4 uker</strong>?`,
-        tale:"Plask kjøper brus til fjorten mynter hver skoledag, altså fem dager i uka. Hvor mange mynter bruker Plask på fire uker?", svar:280, enhet:"mynter 🪙",
-        hint:"14 ganger 5 er 70 mynter i uka. Gang med 4 uker." }
+        tale:"Plask kjøper brus til fjorten mynter hver skoledag, altså fem dager i uka. Hvor mange mynter bruker Plask på fire uker?", svar:280, enhet:"mynter 🪙" }
     }}
 ];
 
@@ -680,8 +658,6 @@ function aapneRom(i,stille){
   $("romMerkelapp").textContent="Oppgave · "+nivaNavn();
   $("romOppgave").innerHTML=o.tekst;
   $("romSvar").placeholder="Svar i "+o.enhet;
-  $("romHintTekst").textContent="💡 "+o.hint; $("romHintTekst").classList.remove("vis");
-  $("romHintKnapp").classList.toggle("vis", forsoek[i]>=2 && funnet[i]===null);
   $("romMelding").className="melding";
   $("romSvar").value=""; $("romSvar").disabled=funnet[i]!==null; $("romSjekk").disabled=funnet[i]!==null;
   if(funnet[i]!==null){ const m=$("romMelding"); m.className="melding riktig"; m.innerHTML="✓ Allerede løst! Sifferet er <strong>"+funnet[i]+"</strong>."; }
@@ -691,7 +667,6 @@ function aapneRom(i,stille){
   if(funnet[i]===null){ setTimeout(()=>lesOpp("fortelling-"+r.id,r.fortelling), redusertBevegelse?200:1100); $("romSvar").focus(); }
 }
 $("romTilbake").addEventListener("click",()=>{ stoppOpplesing(); visSkjerm("kart"); });
-$("romHintKnapp").addEventListener("click",()=>$("romHintTekst").classList.add("vis"));
 $("romSvar").addEventListener("keydown",e=>{ if(e.key==="Enter") sjekkSvar(); });
 $("romSjekk").addEventListener("click",sjekkSvar);
 
@@ -703,12 +678,11 @@ function sjekkSvar(){
   if(tall===o.svar){
     const siffer=o.svar%10; funnet[i]=siffer; m.className="melding riktig";
     m.innerHTML=`🎉 Riktig! Svaret er <strong>${o.svar} ${o.enhet}</strong>.<br>${ROM[i].monsterNavn} hvisker: «Sifferet mitt er det <strong>siste sifferet i svaret</strong> — altså <strong>${siffer}</strong>!»`;
-    $("romSvar").disabled=true; $("romSjekk").disabled=true; $("romHintKnapp").classList.remove("vis");
+    $("romSvar").disabled=true; $("romSjekk").disabled=true;
     sfxMynt(); oppdaterSiffer(i); byggKart(); myntregn(14);
   } else {
     forsoek[i]++; sfxFeil(); m.className="melding feil";
-    m.textContent=forsoek[i]===1?"Ikke helt — les oppgaven en gang til og prøv på nytt!":"Fortsatt ikke riktig. Snakk sammen i gruppa — eller bruk hintet! 💡";
-    if(forsoek[i]>=2) $("romHintKnapp").classList.add("vis");
+    m.textContent=forsoek[i]===1?"Ikke helt — les oppgaven en gang til og prøv på nytt!":"Fortsatt ikke riktig. Snakk sammen i gruppa og prøv en gang til!";
     $("romOppgaveBoks").classList.remove("skjelv"); void $("romOppgaveBoks").offsetWidth; $("romOppgaveBoks").classList.add("skjelv");
   }
 }
