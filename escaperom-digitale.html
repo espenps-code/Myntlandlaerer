@@ -363,6 +363,111 @@
     display: none;
   }
 
+  /* ===== Knapperad på kortene ===== */
+  .knapp-rad {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+  }
+  .kort-knapp {
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 0.7rem 0.6rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .kort-knapp:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+  .kort-knapp.primar {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: #fff;
+    flex: 1.5;
+  }
+  .kort-knapp.primar:hover {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: #fff;
+  }
+  .kort-knapp.sekundar { flex: 1; }
+  .kort-knapp:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ===== Del-modal ===== */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 8, 35, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  .modal.open { display: flex; }
+  .modal-innhold {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+  }
+  .modal-lukk {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--bg);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: var(--muted);
+    font-family: inherit;
+  }
+  .modal-lukk:hover { background: var(--border); color: var(--text); }
+  .modal-innhold h2 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal-dark);
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .modal-innhold p {
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+  .del-lenke-boks {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--teal-dark);
+    word-break: break-all;
+    margin-bottom: 0.75rem;
+  }
+  .modal-knapper { display: flex; gap: 0.6rem; }
+  .modal-knapper .kort-knapp { flex: 1; }
+
   footer {
     text-align: center;
     color: var(--muted);
@@ -414,6 +519,20 @@
   <div class="grid" id="grid"></div>
   <p class="tom-melding" id="tomMelding">Ingen escape rooms i denne kategorien ennå — men flere er på vei! 🔧</p>
 </main>
+
+<!-- Del-modal -->
+<div class="modal" id="delModal">
+  <div class="modal-innhold">
+    <button class="modal-lukk" id="delLukk" aria-label="Lukk">×</button>
+    <h2>🔗 Del med elev</h2>
+    <p>Send denne lenken til eleven via Myntland-portalen, e-post eller læringsplattformen din. Eleven kan spille escape rommet på egen hånd — hjemme eller på iPad.</p>
+    <div class="del-lenke-boks" id="delLenkeBoks"></div>
+    <div class="modal-knapper">
+      <button class="kort-knapp primar" id="delKopier" type="button">📋 Kopier lenke</button>
+      <button class="kort-knapp sekundar" id="delLukk2" type="button">Lukk</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   Myntland · Læringsverktøy for klasseromsøkonomi · <a href="index.html">myntland.no</a>
@@ -529,12 +648,27 @@ function byggGrid(){
 
   liste.forEach(r => {
     const spillbar = r.status === 'ready';
-    const el = document.createElement(spillbar ? 'a' : 'div');
+    const el = document.createElement('div');
     el.className = 'kort ' + (spillbar ? 'klikkbar' : 'kommer');
-    if (spillbar) el.href = r.gameFile;
 
     const nivaPrikker = (r.nivaer || []).map(n =>
       `<span class="niva-prikk ${n}" title="${NIVA_NAVN[n] || n}"></span>`).join('');
+
+    const knappRad = spillbar ? `
+        <div class="knapp-rad">
+          <a class="kort-knapp primar" href="${r.gameFile}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Spill nå
+          </a>
+          <button class="kort-knapp sekundar" type="button"
+                  onclick="apneDelModal('${r.id}', '${(r.title || '').replace(/'/g, "\\'")}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Del
+          </button>
+        </div>` : `
+        <div class="knapp-rad">
+          <button class="kort-knapp primar" type="button" disabled>Kommer snart</button>
+        </div>`;
 
     el.innerHTML = `
       <div class="kort-bilde">
@@ -556,10 +690,50 @@ function byggGrid(){
           <span>🚪 ${r.rom} rom</span>
           <span>Nivå: <span class="niva-prikker">${nivaPrikker}</span></span>
         </div>
+        ${knappRad}
       </div>`;
     grid.appendChild(el);
   });
 }
+
+/* ===== Del-modal ===== */
+const delModal = document.getElementById('delModal');
+const delLenkeBoks = document.getElementById('delLenkeBoks');
+let aktivDelUrl = '';
+
+function apneDelModal(id){
+  const rom = ESCAPE_ROOMS.find(r => r.id === id);
+  if (!rom) return;
+  const base = window.location.origin +
+    window.location.pathname.replace(/escaperom-digitale\.html$/, '');
+  aktivDelUrl = base + rom.gameFile;
+  delLenkeBoks.textContent = aktivDelUrl;
+  delModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function lukkDelModal(){
+  delModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.apneDelModal = apneDelModal;
+
+document.getElementById('delLukk').addEventListener('click', lukkDelModal);
+document.getElementById('delLukk2').addEventListener('click', lukkDelModal);
+delModal.addEventListener('click', e => { if (e.target === delModal) lukkDelModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && delModal.classList.contains('open')) lukkDelModal();
+});
+document.getElementById('delKopier').addEventListener('click', async () => {
+  const btn = document.getElementById('delKopier');
+  try {
+    await navigator.clipboard.writeText(aktivDelUrl);
+    const original = btn.textContent;
+    btn.textContent = '✓ Kopiert!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch {
+    alert('Kunne ikke kopiere automatisk. Kopier lenken manuelt fra boksen.');
+  }
+});
 
 byggFilter();
 byggGrid();
