@@ -156,10 +156,10 @@
 <body>
 <!-- LOADINGSCREEN: vises umiddelbart, skjules nar appen er klar -->
 <style id="ml-loader-style">
-#myntland-loader{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:linear-gradient(160deg,#1a5fa5,#0d3d6e);font-family:'Nunito','Segoe UI',system-ui,sans-serif;transition:opacity .5s ease}
+#myntland-loader{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:linear-gradient(180deg,#bfeaf2,#dcefc7);font-family:'Nunito','Segoe UI',system-ui,sans-serif;transition:opacity .5s ease}
 #myntland-loader.ml-hide{opacity:0;pointer-events:none}
-#myntland-loader .ml-coin{width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#FDD87A,#EF9F27);box-shadow:0 8px 22px rgba(0,0,0,.28),inset 0 -5px 9px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;color:#0d3d6e;font-family:'Arial Black','Nunito',sans-serif;font-weight:900;font-size:2.3rem;animation:ml-flip 1.25s cubic-bezier(.6,.05,.4,.95) infinite}
-#myntland-loader .ml-text{color:#fff;font-weight:800;font-size:1.1rem;letter-spacing:.3px;opacity:.92}
+#myntland-loader .ml-coin{width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#FDD87A,#EF9F27);box-shadow:0 8px 22px rgba(0,0,0,.28),inset 0 -5px 9px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;color:#2a1f3d;font-family:'Arial Black','Nunito',sans-serif;font-weight:900;font-size:2.3rem;animation:ml-flip 1.25s cubic-bezier(.6,.05,.4,.95) infinite}
+#myntland-loader .ml-text{color:#2a1f3d;font-weight:800;font-size:1.1rem;letter-spacing:.3px;opacity:.92}
 @keyframes ml-flip{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}
 @media (prefers-reduced-motion:reduce){#myntland-loader .ml-coin{animation:ml-pulse 1.4s ease-in-out infinite}@keyframes ml-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}}
 </style>
@@ -170,36 +170,36 @@
 
 
 <!-- SPLASH -->
-<div class="screen active" id="screen-splash">
+<div class="screen active" id="screen-splash"><div class="splash-scene" aria-hidden="true"><div class="sun"></div><svg class="tr t1" viewBox="0 0 120 150"><rect x="52" y="86" width="16" height="60" rx="6" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="5"></rect><circle cx="60" cy="56" r="44" fill="#6fae1f" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="38" cy="72" r="26" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="84" cy="70" r="24" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle></svg><svg class="tr t2" viewBox="0 0 80 100"><rect x="34" y="58" width="12" height="40" rx="5" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="4"></rect><circle cx="40" cy="38" r="30" fill="#6fae1f" stroke="#2a1f3d" stroke-width="4"></circle></svg><svg class="tr t3" viewBox="0 0 96 120"><rect x="42" y="68" width="14" height="48" rx="6" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="5"></rect><circle cx="48" cy="44" r="36" fill="#6fae1f" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="26" cy="58" r="20" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle></svg><div class="grass"></div></div>
   <img class="splash-coin" src="mynt.webp" alt="Myntland-mynt">
   <div class="splash-logo">Myntland</div>
-  <button class="big-splash-btn" onclick="selectRole()">🏦 Min nettbank</button>
-  <button class="big-splash-btn" onclick="showShopScreen()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🛒 Butikken</button>
-  <button class="big-splash-btn" onclick="openMyntspillMeny()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">🪙 Myntspill</button>
+  <button class="big-splash-btn" onclick="selectRole()">Min nettbank</button>
+  <button class="big-splash-btn" onclick="showShopScreen()">Butikken</button>
+  <button class="big-splash-btn" onclick="openMyntspillMeny()">Myntspill</button>
   <div id="myntspill-meny" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,12,45,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeMyntspillMeny()">
     <div style="background:#fff;border-radius:24px;max-width:420px;width:100%;padding:1.6rem 1.4rem;text-align:center;box-shadow:0 14px 40px rgba(30,15,82,.35);font-family:'Nunito',sans-serif;">
-      <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#1e0f52;">Velg spill 🎮</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#1e0f52;">Velg spill</div>
       <p style="color:#5a7a5a;font-weight:700;margin:.2rem 0 1.2rem;">Hvilket myntspill vil du spille?</p>
-      <button onclick="goToMyntjakten()" style="display:block;width:100%;border:none;cursor:pointer;background:#1D9E75;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:.8rem;">🧮 Myntjakten<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Regn fort i hodet og samle mynter</span></button>
-      <button onclick="goToMyntstigen()" style="display:block;width:100%;border:none;cursor:pointer;background:#1a5fa5;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:1rem;">🎲 Myntstigen<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Stigespill med terning, 2–4 spillere</span></button>
+      <button onclick="goToMyntjakten()" style="display:block;width:100%;border:none;cursor:pointer;background:#1D9E75;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:.8rem;">Myntjakten<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Regn fort i hodet og samle mynter</span></button>
+      <button onclick="goToMyntstigen()" style="display:block;width:100%;border:none;cursor:pointer;background:#1a5fa5;color:#fff;border-radius:18px;padding:1rem;font-size:1.25rem;font-weight:900;font-family:inherit;margin-bottom:1rem;">Myntstigen<br><span style="font-size:.85rem;font-weight:700;opacity:.9;">Stigespill med terning, 2–4 spillere</span></button>
       <button onclick="closeMyntspillMeny()" style="border:2px solid #c8dfc8;background:#fff;color:#1a5fa5;border-radius:999px;padding:.6rem 1.4rem;font-weight:800;font-family:inherit;cursor:pointer;">Lukk</button>
     </div>
   </div>
-  <button class="big-splash-btn" id="splash-arbeidsplan-btn" onclick="goToArbeidsplan()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">📋 Arbeidsplan</button>
-  <button class="big-splash-btn" id="splash-dag-btn" onclick="goToDag()" style="background:rgba(255,255,255,.13);color:white;border:2px solid rgba(255,255,255,.3);box-shadow:none;font-size:1.4rem">📅 Dagen i dag</button>
+  <button class="big-splash-btn" id="splash-arbeidsplan-btn" onclick="goToArbeidsplan()">Arbeidsplan</button>
+  <button class="big-splash-btn" id="splash-dag-btn" onclick="goToDag()">Dagen i dag</button>
 </div>
 
 <!-- BUTIKK – PIN LOGIN -->
-<div class="screen" id="screen-shop">
+<div class="screen" id="screen-shop"><div class="splash-scene" aria-hidden="true"><div class="sun"></div><svg class="tr t1" viewBox="0 0 120 150"><rect x="52" y="86" width="16" height="60" rx="6" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="5"></rect><circle cx="60" cy="56" r="44" fill="#6fae1f" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="38" cy="72" r="26" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="84" cy="70" r="24" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle></svg><svg class="tr t2" viewBox="0 0 80 100"><rect x="34" y="58" width="12" height="40" rx="5" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="4"></rect><circle cx="40" cy="38" r="30" fill="#6fae1f" stroke="#2a1f3d" stroke-width="4"></circle></svg><svg class="tr t3" viewBox="0 0 96 120"><rect x="42" y="68" width="14" height="48" rx="6" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="5"></rect><circle cx="48" cy="44" r="36" fill="#6fae1f" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="26" cy="58" r="20" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle></svg><div class="grass"></div></div>
   <div style="background:var(--teal-dark);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0">
     <button onclick="showScreen('screen-splash')" style="background:rgba(255,255,255,.13);border:none;color:white;border-radius:10px;padding:7px 12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:.82rem">← Tilbake</button>
-    <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);flex:1">🛒 Butikken</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--amber);flex:1">Butikken</div>
     <div id="shop-student-badge" style="font-size:.8rem;color:rgba(255,255,255,.8);font-weight:700;display:none"></div>
   </div>
 
   <!-- Shop card login -->
   <div id="shop-login-section" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem">
-    <div style="text-align:center;font-size:2rem;margin-bottom:.5rem">🛒</div>
+    <div style="text-align:center;font-size:2rem;margin-bottom:.5rem"></div>
     <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--teal-dark);margin-bottom:.3rem">Logg inn i butikken</div>
     <div id="shop-login-subtitle" style="color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Scan bankkortet ditt for å handle</div>
     <div id="shop-login-preselect" style="display:none;width:100%;background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:10px 14px;margin-bottom:12px;text-align:center;">
@@ -207,7 +207,7 @@
       <div id="shop-login-preselect-name" style="font-family:'Fredoka One',cursive;font-size:1.25rem;color:var(--teal-dark);line-height:1.1"></div>
       <button onclick="clearShopPreselected()" style="margin-top:4px;background:transparent;border:none;color:var(--muted);font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:underline">Ikke meg? Bytt kort</button>
     </div>
-    <button onclick="startScan('loginShop')" id="shop-login-scan-btn" style="width:100%;background:var(--amber);border:none;color:white;padding:14px;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 rgba(0,0,0,.08)">📷 Scan kortet mitt</button>
+    <button onclick="startScan('loginShop')" id="shop-login-scan-btn" style="width:100%;background:linear-gradient(180deg,#f2c34e,#e3a82a);border:3px solid #2a1f3d;color:#2a1f3d;padding:14px;border-radius:16px;font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 #c8901a">Scan kortet mitt</button>
     <div class="login-card" id="shop-login-card" style="width:100%;display:none">
       <div class="pin-dots">
         <div class="pin-dot" id="shop-dot-0"></div><div class="pin-dot" id="shop-dot-1"></div>
@@ -232,7 +232,7 @@
 
     <!-- Cart summary -->
     <div id="shop-cart-bar" style="display:none;background:var(--teal-dark);border-radius:12px;padding:.75rem 1rem;margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between">
-      <div style="color:white;font-size:.9rem;font-weight:700">🛒 Handlekurv: <span id="cart-total-display">0 🪙</span></div>
+      <div style="color:white;font-size:.9rem;font-weight:700">Handlekurv: <span id="cart-total-display">0 🪙</span></div>
       <button onclick="openShopCart()" style="background:var(--amber);border:none;color:var(--teal-dark);border-radius:8px;padding:6px 14px;font-family:'Fredoka One',cursive;font-size:.95rem;cursor:pointer">Se kurv</button>
     </div>
 
@@ -244,7 +244,7 @@
 <!-- HANDLEKURV OVERLAY -->
 <div class="pin-overlay" id="shop-cart-overlay" style="z-index:600">
   <div style="background:white;border-radius:20px;padding:1.5rem;width:100%;max-width:380px;max-height:70vh;overflow-y:auto">
-    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:1rem">🛒 Handlekurv</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);margin-bottom:1rem">Handlekurv</div>
     <div id="cart-items-list"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:1rem;border-top:2px solid var(--border)">
       <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--teal-dark)">Total: <span id="cart-total-big">0</span> 🪙</div>
@@ -266,17 +266,18 @@
 </div>
 
 <!-- LOGIN -->
-<div class="screen" id="screen-login">
-  <div style="text-align:center;margin:2.5rem 0 1rem;font-size:2.5rem">🏦</div>
+<div class="screen" id="screen-login"><div class="splash-scene" aria-hidden="true"><div class="sun"></div><svg class="tr t1" viewBox="0 0 120 150"><rect x="52" y="86" width="16" height="60" rx="6" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="5"></rect><circle cx="60" cy="56" r="44" fill="#6fae1f" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="38" cy="72" r="26" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="84" cy="70" r="24" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle></svg><svg class="tr t2" viewBox="0 0 80 100"><rect x="34" y="58" width="12" height="40" rx="5" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="4"></rect><circle cx="40" cy="38" r="30" fill="#6fae1f" stroke="#2a1f3d" stroke-width="4"></circle></svg><svg class="tr t3" viewBox="0 0 96 120"><rect x="42" y="68" width="14" height="48" rx="6" fill="#8a5a2b" stroke="#2a1f3d" stroke-width="5"></rect><circle cx="48" cy="44" r="36" fill="#6fae1f" stroke="#2a1f3d" stroke-width="5"></circle><circle cx="26" cy="58" r="20" fill="#7bc22a" stroke="#2a1f3d" stroke-width="5"></circle></svg><div class="grass"></div></div>
+  <div style="background:#2a1f3d;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;width:100%"><button onclick="goToSplash()" class="back-btn">← Tilbake</button><div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.3rem;color:#f2c34e;flex:1;text-align:center;padding-right:82px">Myntland</div></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:1.5rem 0">
   <div style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--teal-dark);margin-bottom:3px">Logg inn</div>
   <div id="login-subtitle" style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1.1rem;font-weight:700">Scan bankkortet ditt for å logge inn</div>
-  <div style="width:100%;padding:0 1.25rem;flex:1">
+  <div style="width:100%;max-width:430px;padding:0 1.25rem">
     <div id="login-preselect" style="display:none;background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:10px 14px;margin-bottom:12px;text-align:center;">
       <div style="font-size:.72rem;color:var(--teal-dark);font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px">Logger inn som</div>
       <div id="login-preselect-name" style="font-family:'Fredoka One',cursive;font-size:1.25rem;color:var(--teal-dark);line-height:1.1"></div>
       <button onclick="clearPreselected()" style="margin-top:4px;background:transparent;border:none;color:var(--muted);font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:underline">Ikke meg? Bytt kort</button>
     </div>
-    <button onclick="startScan('loginCard')" id="login-scan-btn" style="width:100%;background:var(--amber);border:none;color:white;padding:14px;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 rgba(0,0,0,.08)">📷 Scan kortet mitt</button>
+    <button onclick="startScan('loginCard')" id="login-scan-btn" style="width:100%;background:linear-gradient(180deg,#f2c34e,#e3a82a);border:3px solid #2a1f3d;color:#2a1f3d;padding:14px;border-radius:16px;font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 0 #c8901a">Scan kortet mitt</button>
     <div class="login-card" id="login-card" style="display:none">
       <div class="pin-dots">
         <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
@@ -290,7 +291,7 @@
         <div class="num-btn empty"></div><button class="num-btn" onclick="np('0')">0</button><button class="num-btn delete" onclick="np('DEL')">⌫</button>
       </div>
     </div>
-    <button onclick="goToSplash()" style="width:100%;margin-top:.85rem;background:transparent;border:2px solid var(--border);color:var(--muted);padding:11px;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer">← Tilbake</button>
+  </div>
   </div>
 </div>
 
@@ -298,7 +299,7 @@
 <div class="screen" id="screen-app">
   <div class="top-bar">
     <button class="back-btn" onclick="goToSplash()">← Ut</button>
-    <div style="text-align:center"><div class="top-bar-title">🪙 Myntland Nettbank</div><div class="top-bar-sub" id="greeting-sub"></div></div>
+    <div style="text-align:center"><div class="top-bar-title">Myntland Nettbank</div><div class="top-bar-sub" id="greeting-sub"></div></div>
     <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--amber)" id="top-total">–</div>
   </div>
 
@@ -311,12 +312,12 @@
         <div class="acc-sub">🪙 Mynter · koblet til bankkort</div>
       </div>
       <div class="account-card spare">
-        <div class="acc-label">💰 Sparekonto</div>
+        <div class="acc-label">Sparekonto</div>
         <div class="acc-val" id="bal-spare">0</div>
         <div class="acc-sub" id="spare-sub">5% ukentlig rente</div>
       </div>
       <div class="account-card fond">
-        <div class="acc-label">📊 Fondskonto</div>
+        <div class="acc-label">Fondskonto</div>
         <div class="acc-val" id="bal-fond">0</div>
         <div class="acc-sub" id="fond-sub">Lav + Høy risiko</div>
       </div>
@@ -325,25 +326,25 @@
     <!-- Quiz -->
     <div class="quiz-banner" id="quiz-banner">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
-        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#FAC775;position:relative;z-index:1">🧠 Ukas økonomiquiz</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#FAC775;position:relative;z-index:1">Ukas økonomiquiz</div>
         <div style="background:rgba(255,255,255,.15);padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;position:relative;z-index:1" id="quiz-badge">5 sp. · 20🪙 per svar</div>
       </div>
       <div id="quiz-card-body" style="position:relative;z-index:1">
         <div style="font-size:.8rem;opacity:.85;margin-bottom:.5rem">Test dine kunnskaper om økonomi!</div>
-        <button class="quiz-start-btn" onclick="startQuiz()">▶ Start quiz</button>
+        <button class="quiz-start-btn" onclick="startQuiz()">Start quiz</button>
       </div>
     </div>
 
     <!-- KLASSENS SPAREMÅL (visuell velger) -->
     <div class="class-goals-card" id="class-goals-card" style="display:none;">
       <div class="class-goals-header">
-        <div class="class-goals-title">🎯 Klassens sparemål</div>
+        <div class="class-goals-title">Klassens sparemål</div>
         <div class="class-goals-sub">Skatt fra belønninger går til ditt valgte mål</div>
       </div>
       <div id="class-goals-body"></div>
     </div>
 
-    <div class="section-title">📜 Siste transaksjoner</div>
+    <div class="section-title">Siste transaksjoner</div>
     <div id="transaction-list"><div class="empty-state"><div class="empty-icon">📜</div><div style="font-weight:700">Ingen transaksjoner ennå</div></div></div>
   </div>
 
@@ -351,43 +352,43 @@
   <div class="tab-content content" id="tab-spare">
     <!-- Pill-bryter: Sparekonto / Fond -->
     <div class="spare-segmented">
-      <button class="ss-pill active" id="ss-pill-konto" onclick="switchSpareSeg('konto',this)">💰 Sparekonto</button>
-      <button class="ss-pill" id="ss-pill-fond" onclick="switchSpareSeg('fond',this);renderFond()">📊 Fond</button>
+      <button class="ss-pill active" id="ss-pill-konto" onclick="switchSpareSeg('konto',this)">Sparekonto</button>
+      <button class="ss-pill" id="ss-pill-fond" onclick="switchSpareSeg('fond',this);renderFond()">Fond</button>
     </div>
 
     <!-- Sparekonto-seksjon -->
     <div id="spare-seg-konto" class="spare-seg-content active">
-      <div class="account-card spare" style="border-radius:14px;padding:1.1rem;margin-bottom:.85rem;color:white">
-        <div class="acc-label">💰 Sparekonto</div>
+      <div class="account-card spare" style="margin-bottom:.85rem">
+        <div class="acc-label">Sparekonto</div>
         <div class="acc-val" id="spare-main-val">0</div>
         <div class="acc-sub" id="spare-rate-sub">5% ukentlig rente · maks 2 uttak/uke</div>
       </div>
       <div class="info-box" id="spare-info-box">
-        💡 <strong>Visste du?</strong> Banken sjekker sparekontoen din <strong>hver dag</strong> og gir deg litt renter for hver dag pengene har ligget der. Hver mandag legger Myntland sammen alle dagene og betaler ut rentene. 📅
+        <strong>Visste du?</strong> Banken sjekker sparekontoen din <strong>hver dag</strong> og gir deg litt renter for hver dag pengene har ligget der. Hver mandag legger Myntland sammen alle dagene og betaler ut rentene.
         <div style="margin-top:.5rem;">
-          🚀 Innskudd <strong>mandag</strong> → pengene rekker 7 dager → mest renter!<br>
-          🐢 Innskudd <strong>søndag</strong> → pengene rekker bare 1 dag → veldig lite renter.
+          Innskudd <strong>mandag</strong> → pengene rekker 7 dager → mest renter!<br>
+          Innskudd <strong>søndag</strong> → pengene rekker bare 1 dag → veldig lite renter.
         </div>
         <div style="margin-top:.6rem;padding-top:.6rem;border-top:1.5px dashed #f0c060;">
-          🏦 <strong>I ekte banker</strong> fungerer det på samme måte: renter regnes hver dag, men legges på kontoen din én gang i året.
+          <strong>I ekte banker</strong> fungerer det på samme måte: renter regnes hver dag, men legges på kontoen din én gang i året.
         </div>
         <div style="margin-top:.5rem;font-weight:800;">Maks 2 uttak per uke.</div>
       </div>
-      <div id="spare-withdrawal-warn" style="display:none" class="warn-box">⚠️ Du har brukt alle uttakene dine denne uken!</div>
+      <div id="spare-withdrawal-warn" style="display:none" class="warn-box">Du har brukt alle uttakene dine denne uken!</div>
       <div class="acc-action-grid">
-        <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">➕ Sett inn fra brukskonto</button>
-        <button class="acc-action-btn aab-ghost" id="spare-withdraw-btn" onclick="openTransfer('spare-til-bruk')">➖ Ta ut til brukskonto</button>
+        <button class="acc-action-btn aab-blue" onclick="openTransfer('bruk-til-spare')">Sett inn fra brukskonto</button>
+        <button class="acc-action-btn aab-ghost" id="spare-withdraw-btn" onclick="openTransfer('spare-til-bruk')">Ta ut til brukskonto</button>
       </div>
-      <div class="section-title" style="margin-top:.5rem">📜 Sparehistorikk</div>
+      <div class="section-title" style="margin-top:.5rem">Sparehistorikk</div>
       <div id="spare-tx-list"><div class="empty-state"><div class="empty-icon">💰</div><div style="font-weight:700">Ingen sparehistorikk</div></div></div>
     </div>
 
     <!-- Fond-seksjon -->
     <div id="spare-seg-fond" class="spare-seg-content">
-      <div class="info-box">💡 Fondene oppdateres automatisk i løpet av natten. Gevinst beskattes med <span id="fond-tax-pct">10</span>% ved uttak. Kan sette inn når som helst.</div>
+      <div class="info-box">Fondene oppdateres automatisk i løpet av natten. Gevinst beskattes med <span id="fond-tax-pct">10</span>% ved uttak. Kan sette inn når som helst.</div>
       <div id="fond-cards"></div>
       <div class="chart-wrap">
-        <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);margin-bottom:.5rem">📈 Kursutvikling (siste 14 dager)</div>
+        <div style="font-weight:800;font-size:.88rem;color:var(--teal-dark);margin-bottom:.5rem">Kursutvikling (siste 14 dager)</div>
         <canvas id="fond-chart" height="140"></canvas>
       </div>
     </div>
@@ -400,20 +401,20 @@
 
   <!-- JOBBER TAB -->
   <div class="tab-content content" id="tab-oppdrag">
-    <div class="section-title">💼 Jobber</div>
-    <input type="text" id="jobs-search-input" placeholder="🔍 Søk i jobber…" oninput="filterJobs(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:.85rem;">
+    <div class="section-title">Jobber</div>
+    <input type="text" id="jobs-search-input" placeholder="Søk i jobber…" oninput="filterJobs(this.value)" style="width:100%;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);outline:none;margin-bottom:.85rem;">
 
     <!-- Faste jobber -->
     <div id="salary-jobs-section">
-      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">💰 Faste jobber (ukelønn fredag)</div>
-      <div class="info-box">💡 Søk på en jobb du vil ha. Læreren godkjenner. Du får ukelønn hver fredag (med skatt).</div>
+      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">Faste jobber (ukelønn fredag)</div>
+      <div class="info-box">Søk på en jobb du vil ha. Læreren godkjenner. Du får ukelønn hver fredag (med skatt).</div>
       <div id="salary-jobs-list-el"></div>
     </div>
 
     <!-- Engangsoppdrag -->
     <div id="task-jobs-section" style="margin-top:1.25rem;">
-      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">📌 Engangsoppdrag</div>
-      <div class="info-box">💡 Gjør oppdraget og be læreren godkjenne – eller scan QR-koden du får!</div>
+      <div style="font-weight:800;font-size:.95rem;color:var(--teal-dark);margin-bottom:.5rem;">Engangsoppdrag</div>
+      <div class="info-box">Gjør oppdraget og be læreren godkjenne – eller scan QR-koden du får!</div>
       <div id="jobs-list-el"><div class="empty-state"><div class="empty-icon">💼</div><div style="font-weight:700">Ingen oppdrag nå</div></div></div>
     </div>
   </div>
@@ -449,20 +450,20 @@
       </div>
       <button id="pin-toggle-btn-57" onclick="togglePinDisplay57()"
         style="background:var(--teal-light);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--teal-dark);cursor:pointer;">
-        👁 Vis PIN
+        Vis PIN
       </button>
     </div>
-    <button class="big-btn bb-teal" onclick="startScan('any')" style="margin-top:.25rem">📷 Scan betaling og belønning</button>
+    <button class="big-btn bb-teal" onclick="startScan('any')" style="margin-top:.25rem">Scan betaling og belønning</button>
   </div>
 
   <!-- BUDSJETT TAB -->
   <div class="tab-content content" id="tab-budsjett">
-    <div class="section-title">📊 Budsjett</div>
-    <div class="info-box">💡 Her ser du de faste utgiftene som trekkes hver fredag, og inntektene dine. Planlegg uka di!</div>
+    <div class="section-title">Budsjett</div>
+    <div class="info-box">Her ser du de faste utgiftene som trekkes hver fredag, og inntektene dine. Planlegg uka di!</div>
 
     <!-- Sammendrag -->
     <div id="bud-summary" class="card-block" style="background:linear-gradient(135deg,var(--teal-light),#fff);">
-      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.65rem;">📈 Estimat for uka</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.65rem;">Estimat for uka</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
         <div>
           <div style="font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Inn</div>
@@ -481,18 +482,18 @@
 
     <!-- Faste utgifter -->
     <div class="card-block">
-      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">💸 Faste utgifter (fredag)</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">Faste utgifter (fredag)</div>
       <div id="bud-expenses-list"></div>
       <div id="bud-next-friday" style="font-size:.74rem;color:var(--muted);font-weight:700;margin-top:.5rem;text-align:right;"></div>
     </div>
 
     <!-- Inntekter -->
     <div class="card-block">
-      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">💰 Inntekter</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:var(--teal-dark);margin-bottom:.5rem;">Inntekter</div>
       <div id="bud-salary-list"></div>
 
       <div style="margin-top:.85rem;padding-top:.85rem;border-top:1.5px dashed var(--border);">
-        <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.4rem;">✏️ Estimert ekstra inntekt per uke</div>
+        <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.4rem;">Estimert ekstra inntekt per uke</div>
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="number" id="bud-est-input" min="0" max="9999" placeholder="0" style="flex:1;font-family:'Nunito',sans-serif;font-size:.95rem;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);outline:none;">
           <span style="font-weight:800;color:var(--teal-dark);">🪙</span>
@@ -506,8 +507,8 @@
     <!-- Periode-velger -->
     <div class="card-block">
       <div style="display:flex;gap:6px;margin-bottom:.75rem;">
-        <button id="bud-period-1" class="bud-period-btn bud-period-active" onclick="switchBudgetPeriod(1)">📅 Siste uke</button>
-        <button id="bud-period-4" class="bud-period-btn" onclick="switchBudgetPeriod(4)">🗓️ Siste 4 uker</button>
+        <button id="bud-period-1" class="bud-period-btn bud-period-active" onclick="switchBudgetPeriod(1)">Siste uke</button>
+        <button id="bud-period-4" class="bud-period-btn" onclick="switchBudgetPeriod(4)">Siste 4 uker</button>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-bottom:.85rem;">
@@ -525,26 +526,26 @@
         <div id="bud-period-net" style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--teal-dark);">0 🪙</div>
       </div>
 
-      <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.5rem;">📜 Bevegelser</div>
+      <div style="font-weight:800;font-size:.85rem;color:var(--teal-dark);margin-bottom:.5rem;">Bevegelser</div>
       <div id="bud-period-list"></div>
     </div>
   </div>
 
   <!-- MERKER TAB -->
   <div class="tab-content content" id="tab-merker">
-    <div class="section-title">🏅 Mine merker</div>
-    <div class="info-box" id="merker-info-box">🎯 Samle merker ved å fullføre mål i Myntland! Hvert merke gir mynter som bonus.</div>
+    <div class="section-title">Mine merker</div>
+    <div class="info-box" id="merker-info-box">Samle merker ved å fullføre mål i Myntland! Hvert merke gir mynter som bonus.</div>
     <div id="merker-list"></div>
   </div>
 
   <div class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
-    <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
-    <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
-    <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Jobber</div></button>
-    <button class="nav-item"        onclick="switchTab('budsjett',this);renderBudgetTab()"><div class="nav-icon">📊</div><div class="nav-label">Budsjett</div></button>
-    <button class="nav-item"        onclick="switchTab('merker',this);renderMerker()"><div class="nav-icon">🏅</div><div class="nav-label">Merker</div></button>
-    <button class="nav-item"        onclick="switchTab('kort',this);document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));this.classList.add('active')"><div class="nav-icon">💳</div><div class="nav-label">Kort</div></button>
+    <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-label">Nettbank</div></button>
+    <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-label">Sparing</div></button>
+    <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-label">Lån</div></button>
+    <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-label">Jobber</div></button>
+    <button class="nav-item"        onclick="switchTab('budsjett',this);renderBudgetTab()"><div class="nav-label">Budsjett</div></button>
+    <button class="nav-item"        onclick="switchTab('merker',this);renderMerker()"><div class="nav-label">Merker</div></button>
+    <button class="nav-item"        onclick="switchTab('kort',this);document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));this.classList.add('active')"><div class="nav-label">Kort</div></button>
   </div>
 </div>
 
@@ -640,7 +641,7 @@
 <!-- VELG SPAREMÅL MODAL -->
 <div class="pin-overlay" id="choose-goal-modal">
   <div style="background:rgba(255,255,255,.97);max-width:400px;width:100%;border-radius:16px;padding:1.25rem;">
-    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);text-align:center;margin-bottom:.5rem;">⭐ Velg sparemål</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--teal-dark);text-align:center;margin-bottom:.5rem;">Velg sparemål</div>
     <div style="text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:1rem;font-weight:700;">Skatten din går til dette målet</div>
     <div id="choose-goal-list" style="max-height:60vh;overflow-y:auto;margin-bottom:1rem;"></div>
     <button onclick="closeChooseGoalModal()" style="width:100%;padding:14px;border-radius:12px;border:2px solid var(--border);background:white;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;">Lukk</button>
@@ -648,7 +649,7 @@
 </div>
 
 <div class="quiz-overlay" id="quiz-overlay">
-  <div class="quiz-hd"><div class="quiz-hd-title">🧠 Ukas økonomiquiz</div><button class="quiz-close-btn" onclick="closeQuiz()">✕</button></div>
+  <div class="quiz-hd"><div class="quiz-hd-title">Ukas økonomiquiz</div><button class="quiz-close-btn" onclick="closeQuiz()">✕</button></div>
   <div class="quiz-prog"><div class="quiz-prog-bar" id="quiz-prog-bar" style="width:0%"></div></div>
   <div class="quiz-body">
     <div class="quiz-q-num" id="quiz-q-num">Spørsmål 1 av 5</div>
@@ -773,7 +774,7 @@
   <div class="top-bar">
     <button class="back-btn" onclick="goSplashFromDag()">← Ut</button>
     <div style="text-align:center">
-      <div class="top-bar-title">📅 Dagen i dag</div>
+      <div class="top-bar-title">Dagen i dag</div>
       <div class="top-bar-sub" id="dag-class"></div>
     </div>
     <div style="width:54px"></div>
