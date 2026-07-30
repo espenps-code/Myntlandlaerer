@@ -721,6 +721,14 @@ h1.sticker{
 .dt-figpop .dt-figx{ background:#ffd9d2; }
 .dt-figpop .md{ background:var(--paper); font-size:13px; height:36px; padding:0 10px; }
 .dt-figpop .md.on{ background:var(--gold); }
+/* brok skrives loddrett: teller over brokstrek over nevner */
+.dt-figpop .dt-frac{ display:flex; flex-direction:column; align-items:stretch; gap:5px; }
+.dt-figpop .dt-frow{ flex-direction:row; align-items:center; gap:7px; }
+.dt-figpop .dt-flab{ min-width:52px; text-align:right; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); }
+.dt-figpop .dt-fbar{ height:3px; width:calc(100% - 46px); align-self:flex-end; border-radius:2px; background:var(--ink); }
+.dt-figpop .dt-fop{ align-self:center; }
+.dt-figpop .dt-bare .dt-fbar{ width:100%; }
+.dt-figpop .dt-fside{ align-self:center; }
 
 
 /* ===================== INNSTILLINGER + SKJUL MONSTRE ===================== */
@@ -1071,6 +1079,7 @@ h1.sticker{
       <button id="tbTimer" title="Timer">&#9201;&#65039;</button>
       <button id="tbPlan" title="Planlegg uke">&#128197;</button>
       <button id="tbWheel" title="Lykkehjul">&#127905;</button>
+      <button id="tbGames" title="Tavlespill">&#127918;</button>
       <button id="tbFs" title="Fullskjerm">&#9974;</button>
       <button id="tbSettings" title="Innstillinger">&#9881;&#65039;</button>
     </div>
@@ -1206,11 +1215,11 @@ h1.sticker{
   <svg id="dtFigSvg" xmlns="http://www.w3.org/2000/svg"></svg>
   <div class="dt-figpop" id="figPop">
     <span class="dt-pg" id="pgNl"><label>Fra<input type="number" id="popMin"></label><label>Til<input type="number" id="popMax"></label><label>Steg<input type="number" id="popStep" step="any"></label><button class="mk" id="popMark">+ merke</button></span>
-    <span class="dt-pg" id="pgFrac"><label>Teller<input type="number" id="popNum" min="0"></label><label>Nevner<input type="number" id="popDen" min="1"></label></span>
+    <span class="dt-pg" id="pgFrac"><span class="dt-frac"><label class="dt-frow"><span class="dt-flab">Teller</span><input type="number" id="popNum" min="0"></label><span class="dt-fbar"></span><label class="dt-frow"><span class="dt-flab">Nevner</span><input type="number" id="popDen" min="1"></label></span></span>
     <span class="dt-pg" id="pgSet"><button class="md" data-m="length">Lengde</button><button class="md" data-m="area">Areal</button><button class="md" data-m="region">Region</button><button class="md" data-m="set">Mengde</button></span>
-    <span class="dt-pg" id="pgEquiv"><label>Teller<input type="number" id="eqN" min="0"></label><label>Nevner<input type="number" id="eqD" min="1"></label><label>Faktor<input type="number" id="eqK" min="1"></label></span>
-    <span class="dt-pg" id="pgAdd"><label>Teller 1<input type="number" id="adA" min="0"></label><button class="mk" id="adOp">+</button><label>Teller 2<input type="number" id="adB" min="0"></label><label>Nevner<input type="number" id="adD" min="1"></label></span>
-    <span class="dt-pg" id="pgMul"><label>T1<input type="number" id="mN1" min="0"></label><label>N1<input type="number" id="mD1" min="1"></label><button class="mk" id="mOp">×</button><label>T2<input type="number" id="mN2" min="0"></label><label>N2<input type="number" id="mD2" min="1"></label></span>
+    <span class="dt-pg" id="pgEquiv"><span class="dt-frac"><label class="dt-frow"><span class="dt-flab">Teller</span><input type="number" id="eqN" min="0"></label><span class="dt-fbar"></span><label class="dt-frow"><span class="dt-flab">Nevner</span><input type="number" id="eqD" min="1"></label></span><label class="dt-fside">Faktor<input type="number" id="eqK" min="1"></label></span>
+    <span class="dt-pg" id="pgAdd"><span class="dt-frac"><label class="dt-frow"><span class="dt-flab">Teller</span><input type="number" id="adA" min="0"></label><span class="dt-fbar"></span><label class="dt-frow"><span class="dt-flab">Nevner</span><input type="number" id="adD" min="1"></label></span><button class="mk dt-fop" id="adOp">+</button><span class="dt-frac dt-bare"><label class="dt-frow"><input type="number" id="adB" min="0"></label><span class="dt-fbar"></span><label class="dt-frow"><input type="number" id="adD2" min="1"></label></span></span>
+    <span class="dt-pg" id="pgMul"><span class="dt-frac"><label class="dt-frow"><span class="dt-flab">Teller</span><input type="number" id="mN1" min="0"></label><span class="dt-fbar"></span><label class="dt-frow"><span class="dt-flab">Nevner</span><input type="number" id="mD1" min="1"></label></span><button class="mk dt-fop" id="mOp">×</button><span class="dt-frac dt-bare"><label class="dt-frow"><input type="number" id="mN2" min="0"></label><span class="dt-fbar"></span><label class="dt-frow"><input type="number" id="mD2" min="1"></label></span></span>
     <button class="dt-figx" id="popDel">Slett</button>
   </div>
   <!-- venstre dokk: verktøy -->
@@ -3015,7 +3024,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   var popMin=document.getElementById('popMin'),popMax=document.getElementById('popMax'),popStep=document.getElementById('popStep');
   var popNum=document.getElementById('popNum'),popDen=document.getElementById('popDen');
   var eqN=document.getElementById('eqN'),eqD=document.getElementById('eqD'),eqK=document.getElementById('eqK');
-  var adA=document.getElementById('adA'),adB=document.getElementById('adB'),adD=document.getElementById('adD'),adOp=document.getElementById('adOp');
+  var adA=document.getElementById('adA'),adB=document.getElementById('adB'),adD=document.getElementById('adD'),adD2=document.getElementById('adD2'),adOp=document.getElementById('adOp');
   var mN1=document.getElementById('mN1'),mD1=document.getElementById('mD1'),mN2=document.getElementById('mN2'),mD2=document.getElementById('mD2'),mOp=document.getElementById('mOp');
   var mdBtns=figPop.querySelectorAll('#pgSet .md');
   function setPg(id,on){var e=document.getElementById(id);if(e)e.style.display=on?'flex':'none';}
@@ -3028,7 +3037,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if(t==='fcircle'||t==='fbar'||t==='fnl'||t==='fset'){popNum.value=o.p.n;popDen.value=o.p.d;}
     if(t==='fset'){var mm=o.p.model||'set';mdBtns.forEach(function(b){b.classList.toggle('on',b.dataset.m===mm);});}
     if(t==='equiv'){eqN.value=o.p.n;eqD.value=o.p.d;eqK.value=o.p.k;}
-    if(t==='addsub'){adA.value=o.p.a;adB.value=o.p.b;adD.value=o.p.d;adOp.textContent=o.p.op;}
+    if(t==='addsub'){adA.value=o.p.a;adB.value=o.p.b;adD.value=o.p.d;adD2.value=o.p.d;adOp.textContent=o.p.op;}
     if(t==='muldiv'){mN1.value=o.p.n1;mD1.value=o.p.d1;mN2.value=o.p.n2;mD2.value=o.p.d2;mOp.textContent=o.p.op;}
     figPop.style.left=Math.max(10,Math.min(o.x,window.innerWidth-380))+'px';
     figPop.style.top=Math.max(70,o.y+o.h+14)+'px';}
@@ -3041,8 +3050,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   document.getElementById('popDel').onclick=function(){var o=figById(selShape);if(!o)return;pushUndo();shapes=shapes.filter(function(z){return z.id!==o.id;});selShape=null;figRender();figHidePop();save();};
   function eqchg(){var o=figById(selShape);if(!o||o.type!=='equiv')return;var n=clampInt(eqN.value,0),d=clampInt(eqD.value,1);if(n>d)n=d;o.p.n=n;o.p.d=d;o.p.k=clampInt(eqK.value,1);eqN.value=n;figRender();save();}
   [eqN,eqD,eqK].forEach(function(i){i.addEventListener('change',eqchg);i.addEventListener('input',eqchg);});
-  function adchg(){var o=figById(selShape);if(!o||o.type!=='addsub')return;var d=clampInt(adD.value,1),a=clampInt(adA.value,0),b=clampInt(adB.value,0);if(a>d)a=d;if(b>d)b=d;o.p.a=a;o.p.b=b;o.p.d=d;adA.value=a;adB.value=b;figRender();save();}
-  [adA,adB,adD].forEach(function(i){i.addEventListener('change',adchg);i.addEventListener('input',adchg);});
+  function adchg(){var o=figById(selShape);if(!o||o.type!=='addsub')return;var d=clampInt(adD.value,1),a=clampInt(adA.value,0),b=clampInt(adB.value,0);if(a>d)a=d;if(b>d)b=d;o.p.a=a;o.p.b=b;o.p.d=d;adA.value=a;adB.value=b;adD2.value=d;figRender();save();}
+  [adA,adB,adD].forEach(function(i){i.addEventListener('change',adchg);i.addEventListener('input',adchg);});['change','input'].forEach(function(ev){adD2.addEventListener(ev,function(){adD.value=adD2.value;adchg();});});
   adOp.onclick=function(){var o=figById(selShape);if(!o||o.type!=='addsub')return;pushUndo();o.p.op=(o.p.op==='+'?'-':'+');figRender();figPositionPop();save();};
   function mchg(){var o=figById(selShape);if(!o||o.type!=='muldiv')return;var d1=clampInt(mD1.value,1),n1=clampInt(mN1.value,0),d2=clampInt(mD2.value,1),n2=clampInt(mN2.value,0);if(n1>d1)n1=d1;if(n2>d2)n2=d2;o.p.n1=n1;o.p.d1=d1;o.p.n2=n2;o.p.d2=d2;mN1.value=n1;mN2.value=n2;figRender();save();}
   [mN1,mD1,mN2,mD2].forEach(function(i){i.addEventListener('change',mchg);i.addEventListener('input',mchg);});
@@ -4038,6 +4047,161 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   window._onPortalStudents = function(){
     if (ovl.classList.contains('open') && state.mode === 'elever') rebuild();
   };
+})();
+</script>
+
+<!-- ====== TAVLESPILL (spillvelger + spillramme) ====== -->
+<style>
+.gm-intro{ font-size:16px; color:var(--ink-soft); line-height:1.45; margin:0; }
+.gm-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; }
+.gm-card{ position:relative; display:flex; flex-direction:column; gap:10px; text-align:left;
+  background:var(--paper); border:4px solid var(--ink); border-radius:22px; padding:18px 18px 16px;
+  font-family:var(--font); color:var(--ink); cursor:pointer;
+  box-shadow:0 7px 0 rgba(42,31,61,.22); transition:transform .12s, box-shadow .12s; }
+.gm-card:hover{ transform:translateY(-3px); box-shadow:0 10px 0 rgba(42,31,61,.22); }
+.gm-card:active{ transform:translateY(4px); box-shadow:0 2px 0 rgba(42,31,61,.22); }
+.gm-card:focus-visible{ outline:4px solid var(--teal); outline-offset:3px; }
+.gm-emoji{ width:62px; height:62px; border-radius:18px; border:3px solid var(--ink);
+  display:grid; place-items:center; font-size:32px; line-height:1; }
+.gm-title{ font-size:23px; font-weight:700; line-height:1.15; }
+.gm-meta{ display:flex; flex-wrap:wrap; gap:6px; }
+.gm-chip{ font-size:13px; font-weight:600; padding:3px 10px; border-radius:30px;
+  background:var(--cream-2); border:2px solid var(--ink); color:var(--ink-soft); }
+.gm-desc{ font-size:15px; line-height:1.42; color:var(--ink-soft); }
+.gm-go{ margin-top:auto; align-self:flex-start; font-size:16px; font-weight:700; color:var(--gold-deep); }
+.gm-play-card{ width:min(97vw,1280px); max-height:96vh; padding:0; overflow:hidden;
+  display:flex; flex-direction:column; }
+.gm-play-head{ gap:12px; }
+.gm-play-head h3{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gm-back{ width:auto; padding:0 16px; background:var(--teal); box-shadow:0 4px 0 #1c8a99;
+  font-size:16px; font-weight:700; white-space:nowrap; }
+.gm-frame{ border:0; display:block; width:100%; aspect-ratio:16/9;
+  max-height:calc(96vh - 78px); background:#bfeaf2; }
+@media(max-width:560px){ .gm-back{ padding:0 10px; font-size:14px; } .gm-play-head h3{ font-size:22px; } }
+</style>
+
+<div class="ovl" id="gamesOverlay">
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#127918; Tavlespill</h3><button class="ovl-x" id="gamesClose">&times;</button></div>
+    <div class="ovl-body">
+      <p class="gm-intro">Velg et spill for storskjermen. Spillet &aring;pner seg her i portalen &ndash; lukk med &times; for &aring; komme tilbake til &laquo;Dagen i dag&raquo;.</p>
+      <div class="gm-grid" id="gmGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="ovl" id="gamePlayOverlay">
+  <div class="ovl-card gm-play-card">
+    <div class="ovl-head gm-play-head">
+      <h3 id="gmPlayTitle">Tavlespill</h3>
+      <button class="ovl-x gm-back" id="gmBack" title="Tilbake til spillvalg">&#8592; Spill</button>
+      <button class="ovl-x" id="gmPlayClose" title="Lukk spillet">&times;</button>
+    </div>
+    <iframe class="gm-frame" id="gmFrame" title="Tavlespill" allow="fullscreen" allowfullscreen></iframe>
+  </div>
+</div>
+
+<script>
+/* ===== TAVLESPILL =====
+   Legge til et nytt spill: kopier ett objekt i lista under og fyll ut.
+   'fil' er filnavnet spillet ligger i (m&aring; publiseres til serveren sammen
+   med klasseportalen). Ingenting annet trenger &aring; endres. */
+(function(){
+  var TAVLESPILL = [
+    {
+      id: 'buekonkurransen',
+      tittel: 'Buekonkurransen',
+      fil: 'buekonkurransen.html',
+      emoji: '🏹',
+      farge: '#cdeede',
+      meta: ['2–4 spillere', '1.–7. trinn', 'Touch eller mus'],
+      beskriv: 'Dra bakover og slipp som en sprettert. Treff myntene før tiden er ute – vanlig mynt gir 1 poeng, gullmynt gir 5. Spillerne bruker kallenavn.'
+    }
+  ];
+
+  var pickOvl = document.getElementById('gamesOverlay');
+  var playOvl = document.getElementById('gamePlayOverlay');
+  var grid    = document.getElementById('gmGrid');
+  var frame   = document.getElementById('gmFrame');
+  var titleEl = document.getElementById('gmPlayTitle');
+  var tbBtn   = document.getElementById('tbGames');
+  if(!pickOvl || !playOvl || !grid || !frame) return;
+
+  function lukkSpill(){
+    playOvl.classList.remove('open');
+    frame.src = 'about:blank';
+  }
+
+  function startSpill(spill){
+    titleEl.textContent = spill.emoji + ' ' + spill.tittel;
+    frame.src = spill.fil;
+    pickOvl.classList.remove('open');
+    playOvl.classList.add('open');
+  }
+
+  function byggListe(){
+    grid.innerHTML = '';
+    TAVLESPILL.forEach(function(spill){
+      var kort = document.createElement('button');
+      kort.type = 'button';
+      kort.className = 'gm-card';
+
+      var ikon = document.createElement('span');
+      ikon.className = 'gm-emoji';
+      ikon.style.background = spill.farge || 'var(--cream-2)';
+      ikon.textContent = spill.emoji || '🎮';
+      kort.appendChild(ikon);
+
+      var tittel = document.createElement('span');
+      tittel.className = 'gm-title';
+      tittel.textContent = spill.tittel;
+      kort.appendChild(tittel);
+
+      if(spill.meta && spill.meta.length){
+        var metaRad = document.createElement('span');
+        metaRad.className = 'gm-meta';
+        spill.meta.forEach(function(m){
+          var chip = document.createElement('span');
+          chip.className = 'gm-chip';
+          chip.textContent = m;
+          metaRad.appendChild(chip);
+        });
+        kort.appendChild(metaRad);
+      }
+
+      if(spill.beskriv){
+        var tekst = document.createElement('span');
+        tekst.className = 'gm-desc';
+        tekst.textContent = spill.beskriv;
+        kort.appendChild(tekst);
+      }
+
+      var go = document.createElement('span');
+      go.className = 'gm-go';
+      go.textContent = 'Start spillet →';
+      kort.appendChild(go);
+
+      kort.setAttribute('aria-label', 'Start ' + spill.tittel);
+      kort.onclick = function(){ startSpill(spill); };
+      grid.appendChild(kort);
+    });
+  }
+
+  if(tbBtn) tbBtn.onclick = function(){
+    byggListe();
+    pickOvl.classList.add('open');
+  };
+
+  document.getElementById('gamesClose').onclick = function(){ pickOvl.classList.remove('open'); };
+  pickOvl.addEventListener('click', function(e){ if(e.target === pickOvl) pickOvl.classList.remove('open'); });
+
+  document.getElementById('gmPlayClose').onclick = lukkSpill;
+  document.getElementById('gmBack').onclick = function(){
+    lukkSpill();
+    byggListe();
+    pickOvl.classList.add('open');
+  };
+  playOvl.addEventListener('click', function(e){ if(e.target === playOvl) lukkSpill(); });
 })();
 </script>
 
