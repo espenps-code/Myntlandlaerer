@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Ordkafeen — Myntland</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ORDKAFEEN — samarbeidsspill for interaktiv klasseromstavle
+   Myntland (myntland.no). Én selvstendig fil, ingen biblioteker.
+   ============================================================ */
+
+:root{
+  --teal:#0d9488; --teal-mork:#0f5d57; --teal-dyp:#0b3b38;
+  --gul:#fbbf24; --gull:#f59e0b; --krem:#fef6e4;
+  --tre:#8b5a2b; --tre-lys:#b07d43;
+  --stal:#cbd5e1; --stal-mork:#94a3b8;
+  --hvit:#ffffff; --tekst:#12312e;
+  --gronn-ok:#16a34a; --rod-hjerte:#ef4444;
+  --skygge:0 .6vmin 1.6vmin rgba(0,0,0,.28);
+  --rund:1.4vmin;
+  --f-tittel:'Fredoka One', 'Nunito', system-ui, sans-serif;
+  --f-brod:'Nunito', system-ui, -apple-system, sans-serif;
+}
+html[data-skrift="dysleksi"]{
+  --f-tittel:'Atkinson Hyperlegible', system-ui, sans-serif;
+  --f-brod:'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%; overflow:hidden;}
+body{
+  font-family:var(--f-brod); color:var(--tekst);
+  background:var(--teal-dyp);
+  user-select:none; -webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  overscroll-behavior:none;
+}
+button{font:inherit; color:inherit; border:0; background:none; cursor:pointer;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent;}
+
+/* ---------- Skjermbytte ---------- */
+.skjerm{position:fixed; inset:0; display:none; flex-direction:column;}
+.skjerm.aktiv{display:flex;}
+
+/* ============================================================
+   STARTSKJERM
+   ============================================================ */
+#start{
+  background:
+    radial-gradient(circle at 20% 15%, rgba(251,191,36,.20), transparent 45%),
+    radial-gradient(circle at 82% 78%, rgba(13,148,136,.35), transparent 50%),
+    linear-gradient(165deg,#0b3b38,#124f49 55%,#0d9488);
+  overflow-y:auto; align-items:center; padding:3vmin;
+}
+.start-inner{width:min(150vh,96vw); margin:auto; padding:1vmin 0 3vmin;}
+.start-tittel{
+  font-family:var(--f-tittel); color:var(--gul);
+  font-size:clamp(30px,7.4vmin,86px); text-align:center; line-height:1.05;
+  text-shadow:0 .6vmin 0 rgba(0,0,0,.28);
+}
+.start-under{
+  text-align:center; color:var(--krem); font-size:clamp(13px,2.3vmin,24px);
+  margin:.8vmin 0 3vmin; font-weight:700;
+}
+.valgrad{margin-bottom:2.4vmin;}
+.valgrad h2{
+  font-family:var(--f-tittel); color:var(--krem);
+  font-size:clamp(15px,2.7vmin,28px); margin-bottom:1vmin; letter-spacing:.02em;
+}
+.knapperad{display:flex; flex-wrap:wrap; gap:1.2vmin;}
+.valg{
+  flex:1 1 auto; min-width:12vmin; min-height:8.4vmin;
+  padding:1.4vmin 2.2vmin; border-radius:var(--rund);
+  background:rgba(255,255,255,.13); color:var(--hvit);
+  border:.42vmin solid rgba(255,255,255,.3);
+  font-weight:900; font-size:clamp(14px,2.5vmin,26px);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:.3vmin; transition:transform .12s, background .12s;
+}
+.valg small{font-weight:700; font-size:.62em; opacity:.85;}
+.valg[aria-pressed="true"]{
+  background:var(--gul); color:var(--teal-dyp); border-color:var(--hvit);
+  box-shadow:var(--skygge);
+}
+.valg:active{transform:scale(.97);}
+
+.navnefelt{display:flex; flex-wrap:wrap; gap:1.2vmin;}
+.navnefelt input{
+  flex:1 1 20vmin; min-width:16vmin; min-height:7.4vmin;
+  padding:1vmin 1.6vmin; border-radius:var(--rund);
+  border:.42vmin solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.94); color:var(--tekst);
+  font-family:var(--f-brod); font-weight:900;
+  font-size:clamp(14px,2.4vmin,25px); text-align:center;
+}
+.navnefelt input:focus{outline:.5vmin solid var(--gul);}
+
+.startknapper{display:flex; gap:1.6vmin; flex-wrap:wrap; margin-top:1vmin;}
+.hovedknapp{
+  flex:2 1 40vmin; min-height:11vmin; border-radius:2vmin;
+  background:linear-gradient(180deg,var(--gul),var(--gull));
+  color:#4a2c00; font-family:var(--f-tittel);
+  font-size:clamp(19px,4.4vmin,46px); box-shadow:var(--skygge);
+  display:flex; align-items:center; justify-content:center; gap:1.4vmin;
+}
+.hovedknapp:active{transform:translateY(.5vmin);}
+.bileknapp{
+  flex:1 1 22vmin; min-height:11vmin; border-radius:2vmin;
+  background:rgba(255,255,255,.16); color:var(--krem);
+  border:.42vmin solid rgba(255,255,255,.34);
+  font-weight:900; font-size:clamp(15px,2.9vmin,30px);
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* ---------- Regelside ---------- */
+#regler{
+  background:linear-gradient(165deg,#0b3b38,#0d9488);
+  align-items:center; justify-content:center; padding:4vmin;
+}
+.regelkort{
+  width:min(150vh,94vw); background:var(--krem);
+  border-radius:2.4vmin; padding:4vmin 5vmin; box-shadow:var(--skygge);
+}
+.regelkort h2{
+  font-family:var(--f-tittel); color:var(--teal-mork);
+  font-size:clamp(24px,6vmin,64px); text-align:center; margin-bottom:2.4vmin;
+}
+.regelkort ol{list-style:none; counter-reset:r;}
+.regelkort li{
+  counter-increment:r; display:flex; align-items:center; gap:2vmin;
+  font-size:clamp(15px,3.1vmin,34px); font-weight:700;
+  padding:1.5vmin 0; border-bottom:.3vmin dashed rgba(15,93,87,.28);
+}
+.regelkort li:last-child{border-bottom:0;}
+.regelkort li::before{
+  content:counter(r); flex:none;
+  width:6.4vmin; height:6.4vmin; min-width:34px; min-height:34px;
+  border-radius:50%; background:var(--teal); color:var(--hvit);
+  font-family:var(--f-tittel); display:flex; align-items:center; justify-content:center;
+  font-size:clamp(15px,3vmin,32px);
+}
+
+
+/* ============================================================
+   SPILLFLATE
+   ============================================================ */
+#spill{
+  background:
+    linear-gradient(180deg,#1d5f58 0%,#17514c 38%,#0f3d39 100%);
+  display:none; grid-template-rows:auto 1fr auto auto minmax(0,1.35fr);
+  height:100%;
+}
+#spill.aktiv{display:grid;}
+
+/* ---------- Topplinje ---------- */
+.topp{
+  display:flex; align-items:center; gap:2.4vmin;
+  padding:.9vmin 2vmin; background:rgba(0,0,0,.28);
+  border-bottom:.4vmin solid rgba(251,191,36,.5);
+}
+.topp .merke{
+  font-family:var(--f-tittel); color:var(--gul);
+  font-size:clamp(15px,3.3vmin,34px); letter-spacing:.02em;
+}
+.topp .felt{
+  display:flex; align-items:center; gap:.8vmin;
+  font-weight:900; color:var(--krem); font-size:clamp(14px,2.9vmin,30px);
+}
+.topp .hoyre{margin-left:auto; display:flex; align-items:center; gap:1.6vmin;}
+.hjerter{display:flex; gap:.5vmin;}
+.hjerte{width:3.4vmin; height:3.4vmin; min-width:18px; min-height:18px;}
+.hjerte.borte{opacity:.22;}
+.ikonknapp{
+  width:6vmin; height:6vmin; min-width:34px; min-height:34px;
+  border-radius:1vmin; background:rgba(255,255,255,.16);
+  display:flex; align-items:center; justify-content:center;
+  border:.3vmin solid rgba(255,255,255,.3);
+}
+.ikonknapp svg{width:60%; height:60%; fill:var(--krem);}
+.klokke.knapp-tid{
+  font-variant-numeric:tabular-nums; letter-spacing:.04em;
+}
+.klokke.lite-tid{color:#fca5a5;}
+
+/* ---------- Gjestesone ---------- */
+.gjestesone{
+  position:relative; display:flex; align-items:flex-end; justify-content:center;
+  gap:2.6vmin; padding:1.4vmin 2vmin 0; min-height:0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 2vmin, transparent 2vmin 4.4vmin);
+}
+/* lyslenke over disken */
+.lyslenke{
+  position:absolute; top:.4vmin; left:0; right:0; height:3vmin;
+  display:flex; justify-content:space-around; align-items:flex-start;
+  pointer-events:none; opacity:.9;
+}
+.paere{
+  width:1.5vmin; height:2.1vmin; min-width:8px; min-height:11px;
+  border-radius:0 0 50% 50%; background:var(--gul);
+  box-shadow:0 0 1.6vmin rgba(251,191,36,.8);
+  animation:blafre 3.4s ease-in-out infinite;
+}
+@keyframes blafre{0%,100%{opacity:.55;}50%{opacity:1;}}
+
+.gjest{
+  flex:0 1 26vmin; max-width:30vmin; min-width:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  height:100%; position:relative;
+}
+.gjest.tom{visibility:hidden;}
+.boble{
+  position:relative; background:var(--krem); border-radius:1.8vmin;
+  padding:1.1vmin 1.4vmin; box-shadow:var(--skygge);
+  border:.42vmin solid rgba(0,0,0,.12);
+  display:flex; gap:1vmin; align-items:center; justify-content:center;
+  flex-wrap:wrap; max-width:100%;
+}
+.boble::after{
+  content:""; position:absolute; bottom:-1.5vmin; left:50%; translate:-50% 0;
+  border:1.6vmin solid transparent; border-top-color:var(--krem);
+}
+.boble.trykkbar:active{transform:scale(.97);}
+.onske{display:flex; align-items:center; gap:.4vmin;}
+.onske img{
+  width:6vmin; height:6vmin; min-width:32px; min-height:32px; object-fit:contain;
+}
+.onske .ant{
+  font-family:var(--f-tittel); color:var(--teal-mork);
+  font-size:clamp(15px,3.2vmin,34px);
+}
+.onske.dekket .ant{color:var(--gronn-ok);}
+.onske.dekket img{filter:drop-shadow(0 0 .8vmin rgba(22,163,74,.85));}
+
+.monsterboks{
+  flex:1; min-height:0; display:flex; align-items:flex-end; justify-content:center;
+  margin-top:.8vmin; width:100%;
+}
+.monsterboks img{
+  height:100%; max-height:22vmin; width:auto; max-width:100%; object-fit:contain;
+  filter:drop-shadow(0 1vmin 1.4vmin rgba(0,0,0,.4));
+  animation:pust 3.2s ease-in-out infinite;
+}
+@keyframes pust{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-.7vmin) scale(1.02);}}
+.gjest.jubler .monsterboks img{animation:jubel .6s ease;}
+@keyframes jubel{
+  0%,100%{transform:translateY(0) rotate(0);}
+  30%{transform:translateY(-3vmin) rotate(-6deg);}
+  60%{transform:translateY(-1.2vmin) rotate(5deg);}
+}
+.gjest.drar{animation:vinkfarvel .9s ease forwards;}
+@keyframes vinkfarvel{to{opacity:0; transform:translateY(2vmin) scale(.86);}}
+.gjest.kommer{animation:komInn .55s ease;}
+@keyframes komInn{from{opacity:0; transform:translateY(4vmin) scale(.9);}}
+
+.gjestnavn{
+  font-family:var(--f-tittel); color:var(--krem);
+  font-size:clamp(12px,2.3vmin,24px); margin-top:.3vmin;
+  text-shadow:0 .3vmin .6vmin rgba(0,0,0,.5);
+}
+.talmod{
+  width:80%; height:1.7vmin; min-height:9px; margin-top:.5vmin;
+  background:rgba(0,0,0,.42); border-radius:1vmin; overflow:hidden;
+  border:.24vmin solid rgba(255,255,255,.3);
+}
+.talmod i{
+  display:block; height:100%; width:100%;
+  background:linear-gradient(90deg,#4ade80,#22c55e);
+  transform-origin:left center; transition:transform .3s linear, background .4s;
+}
+.talmod.middels i{background:linear-gradient(90deg,#fcd34d,#f59e0b);}
+.talmod.lav i{background:linear-gradient(90deg,#fca5a5,#f87171);}
+
+/* ---------- Disken ---------- */
+.disk{
+  height:3.4vmin; min-height:16px;
+  background:linear-gradient(180deg,#f1f5f9 0%,var(--stal) 42%,var(--stal-mork) 100%);
+  border-top:.42vmin solid #ffffff;
+  box-shadow:0 .8vmin 1.8vmin rgba(0,0,0,.45), inset 0 .5vmin .8vmin rgba(255,255,255,.7);
+  position:relative; z-index:3;
+}
+
+/* ---------- Lagerlinja ---------- */
+.lager{
+  display:grid; grid-template-columns:auto repeat(6,1fr);
+  align-items:center; gap:1vmin; padding:.9vmin 2vmin;
+  background:linear-gradient(180deg,#6b4423,#53331a);
+  border-bottom:.42vmin solid rgba(0,0,0,.45);
+  box-shadow:inset 0 .6vmin 1.2vmin rgba(0,0,0,.35);
+}
+.lager .stikk{
+  font-family:var(--f-tittel); color:var(--gul);
+  font-size:clamp(12px,2.4vmin,26px); letter-spacing:.06em; padding-right:1vmin;
+}
+.lagercelle{
+  display:flex; align-items:center; justify-content:center; gap:.8vmin;
+  background:rgba(0,0,0,.3); border-radius:1.2vmin;
+  padding:.5vmin 1vmin; border:.3vmin solid rgba(255,255,255,.14);
+  min-height:6.4vmin;
+}
+.lagercelle img{
+  width:5.4vmin; height:5.4vmin; min-width:30px; min-height:30px; object-fit:contain;
+}
+.lagercelle .tall{
+  font-family:var(--f-tittel); color:var(--hvit);
+  font-size:clamp(17px,3.8vmin,42px); font-variant-numeric:tabular-nums;
+  min-width:1.4em; text-align:center;
+}
+.lagercelle.opp{animation:lagerOpp .5s ease;}
+@keyframes lagerOpp{
+  0%{transform:scale(1);}
+  40%{transform:scale(1.16); background:rgba(34,197,94,.5);}
+  100%{transform:scale(1);}
+}
+.lagercelle.ned{animation:lagerNed .5s ease;}
+@keyframes lagerNed{
+  0%{transform:scale(1);} 40%{transform:scale(.9); background:rgba(251,191,36,.4);}
+  100%{transform:scale(1);}
+}
+.lagercelle.tomt .tall{color:rgba(255,255,255,.42);}
+
+
+/* ---------- Elevstasjonene ---------- */
+.stasjoner{
+  display:grid; gap:1vmin; padding:1vmin 1.4vmin 1.4vmin;
+  min-height:0; background:rgba(0,0,0,.16);
+}
+.stasjon{
+  display:flex; flex-direction:column; gap:.7vmin; min-height:0; min-width:0;
+  background:rgba(255,255,255,.07); border-radius:1.6vmin;
+  border:.5vmin solid var(--sf,#94a3b8);
+  padding:.8vmin .9vmin; position:relative; overflow:hidden;
+}
+.stasjonshode{
+  display:flex; align-items:center; gap:.8vmin; flex:none;
+}
+.spillermerke{
+  width:3.2vmin; height:3.2vmin; min-width:17px; min-height:17px;
+  border-radius:50%; background:var(--sf); flex:none;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--f-tittel); color:#08201e;
+  font-size:clamp(10px,1.9vmin,20px);
+}
+.spillernavn{
+  font-family:var(--f-tittel); color:var(--krem);
+  font-size:clamp(13px,2.5vmin,27px); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.stasjonshode .teller{
+  margin-left:auto; font-weight:900; color:rgba(254,246,228,.75);
+  font-size:clamp(10px,1.9vmin,20px); white-space:nowrap;
+}
+
+/* Rettvelger 3x2 */
+.rettvelger{
+  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr);
+  gap:.5vmin; flex:none;
+}
+.rettknapp{
+  position:relative; border-radius:1vmin; padding:.35vmin;
+  background:rgba(0,0,0,.26); border:.4vmin solid transparent;
+  display:flex; align-items:center; justify-content:center;
+  aspect-ratio:1.5; min-height:0;
+}
+.rettknapp img{width:100%; height:100%; object-fit:contain; pointer-events:none;}
+.rettknapp[aria-pressed="true"]{
+  border-color:var(--sf); background:rgba(255,255,255,.24);
+  box-shadow:0 0 1.4vmin var(--sf);
+}
+.rettknapp[aria-pressed="true"]::after{
+  content:"✓"; position:absolute; top:-.4vmin; right:.2vmin;
+  color:var(--sf); font-family:var(--f-tittel);
+  font-size:clamp(11px,2.1vmin,22px); text-shadow:0 0 .6vmin #000;
+}
+.rettknapp:active{transform:scale(.95);}
+
+/* Bokstavrutenett 4x3 */
+.rutenettboks{flex:1; min-height:0; display:flex; justify-content:center;}
+.rutenett{
+  height:100%; aspect-ratio:4/3; max-width:100%;
+  display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(3,1fr);
+  gap:.6vmin;
+}
+.rute{
+  border-radius:1.1vmin; background:linear-gradient(180deg,#fffdf7,#f2e6cd);
+  border:.42vmin solid #d8c49a;
+  box-shadow:0 .5vmin 0 #bfa87d, var(--skygge);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--f-tittel); color:var(--teal-dyp);
+  font-size:min(6.2vmin, 62px); line-height:1;
+  transition:transform .1s, background .15s;
+}
+.rute:active{transform:translateY(.3vmin);}
+.rute.valgt{
+  background:linear-gradient(180deg,var(--sf),var(--sf));
+  color:#08201e; border-color:#ffffff;
+  box-shadow:0 .5vmin 0 rgba(0,0,0,.3), 0 0 2vmin var(--sf);
+  transform:translateY(.3vmin) scale(.96);
+}
+.rute.ny{animation:nyBokstav .45s ease;}
+@keyframes nyBokstav{
+  from{transform:translateY(-2.4vmin) scale(.7); opacity:0;}
+  to{transform:none; opacity:1;}
+}
+
+/* Ordfelt */
+.ordrad{display:flex; align-items:center; gap:.7vmin; flex:none; min-height:0;}
+.ordfelt{
+  flex:1; min-width:0; min-height:6.4vmin;
+  display:flex; align-items:center; justify-content:center; gap:.15em;
+  background:rgba(0,0,0,.34); border-radius:1.1vmin;
+  border:.42vmin solid rgba(255,255,255,.2);
+  font-family:var(--f-tittel); color:var(--krem);
+  font-size:clamp(15px,3.6vmin,38px); letter-spacing:.06em;
+  padding:.3vmin .8vmin; overflow:hidden; white-space:nowrap;
+}
+.ordfelt.gyldig{
+  background:rgba(22,163,74,.4); border-color:#4ade80; color:#ffffff;
+}
+.ordfelt .tom-strek{opacity:.4;}
+.utbytte{
+  flex:none; font-family:var(--f-tittel); color:var(--gul);
+  font-size:clamp(13px,2.7vmin,29px); min-width:2.6em; text-align:center;
+}
+.utbytte.av{opacity:.32;}
+
+.knapp{
+  flex:none; min-height:6.4vmin; padding:0 1.4vmin; border-radius:1.1vmin;
+  font-family:var(--f-tittel); font-size:clamp(12px,2.4vmin,26px);
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.16); color:var(--krem);
+  border:.4vmin solid rgba(255,255,255,.26);
+}
+.knapp:active{transform:scale(.96);}
+.knapp.lag{
+  background:linear-gradient(180deg,#94a3b8,#64748b); color:#e2e8f0;
+  border-color:rgba(255,255,255,.3);
+}
+.knapp.lag.klar{
+  background:linear-gradient(180deg,#4ade80,#16a34a); color:#052e16;
+  border-color:#ffffff; box-shadow:0 0 2vmin rgba(74,222,128,.75);
+  animation:lagPuls 1.5s ease-in-out infinite;
+}
+@keyframes lagPuls{0%,100%{box-shadow:0 0 1.2vmin rgba(74,222,128,.6);}
+  50%{box-shadow:0 0 2.8vmin rgba(74,222,128,.95);}}
+.knapp[disabled]{opacity:.4;}
+.smaaknapper{display:flex; gap:.5vmin; flex:none;}
+.smaaknapper .knapp{
+  flex:1; min-height:5vmin; font-size:clamp(10px,1.95vmin,21px); padding:0 .6vmin;
+}
+.knapp .ned{font-size:.8em; opacity:.8;}
+
+/* Melding på stasjonen */
+.stasjonsmelding{
+  position:absolute; left:50%; top:42%; translate:-50% -50%;
+  background:var(--krem); color:var(--teal-dyp);
+  padding:1.4vmin 2vmin; border-radius:1.4vmin; box-shadow:var(--skygge);
+  font-weight:900; font-size:clamp(13px,2.5vmin,27px); text-align:center;
+  max-width:92%; opacity:0; pointer-events:none; z-index:5;
+  transition:opacity .25s, transform .25s;
+}
+.stasjonsmelding.vis{opacity:1; transform:translate(-50%,-50%) scale(1.02);}
+.stasjonsmelding.god{background:#dcfce7; color:#14532d;}
+
+/* Porsjon som flyr til disken */
+.flyver{
+  position:fixed; z-index:60; pointer-events:none;
+  width:8vmin; height:8vmin; min-width:40px; min-height:40px;
+  transition:transform .72s cubic-bezier(.4,-.25,.5,1), opacity .72s;
+}
+.flyver img{width:100%; height:100%; object-fit:contain;
+  filter:drop-shadow(0 0 1.2vmin rgba(251,191,36,.9));}
+
+/* Bokstav som sendes til medspiller */
+.sendtbokstav{
+  position:fixed; z-index:60; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+  width:7vmin; height:7vmin; min-width:34px; min-height:34px;
+  border-radius:1.1vmin; background:linear-gradient(180deg,#fffdf7,#f2e6cd);
+  border:.42vmin solid #d8c49a; box-shadow:var(--skygge);
+  font-family:var(--f-tittel); color:var(--teal-dyp);
+  font-size:clamp(15px,3.4vmin,36px);
+  transition:transform .7s cubic-bezier(.3,-.2,.4,1), opacity .7s;
+}
+
+/* ---------- Serveringsdialog ---------- */
+/* Overlayet blokkerer ikke stasjonene — bare selve kortet tar trykk. */
+.dialoglag{
+  position:fixed; inset:0; z-index:80; display:none;
+  align-items:center; justify-content:center; pointer-events:none;
+}
+.dialoglag.vis{display:flex;}
+.dialog{
+  pointer-events:auto; background:var(--krem); border-radius:2.4vmin;
+  padding:2.6vmin 3vmin; box-shadow:0 2vmin 5vmin rgba(0,0,0,.55);
+  border:.6vmin solid var(--teal); width:min(94vmin,92vw);
+  animation:dialogInn .22s ease;
+}
+@keyframes dialogInn{from{opacity:0; transform:scale(.92);}}
+.dialog h3{
+  font-family:var(--f-tittel); color:var(--teal-mork);
+  font-size:clamp(18px,4vmin,42px); text-align:center; margin-bottom:1.4vmin;
+}
+.dialoglinjer{display:flex; flex-direction:column; gap:.8vmin; margin-bottom:2vmin;}
+.dlinje{
+  display:flex; align-items:center; gap:1.4vmin;
+  background:rgba(13,148,136,.12); border-radius:1.2vmin; padding:.8vmin 1.4vmin;
+  font-weight:900; font-size:clamp(14px,2.9vmin,30px);
+}
+.dlinje img{width:7vmin; height:7vmin; min-width:36px; min-height:36px; object-fit:contain;}
+.dlinje .navn{flex:1;}
+.dlinje .status{font-family:var(--f-tittel);}
+.dlinje.ok .status{color:var(--gronn-ok);}
+.dlinje.mangler{background:rgba(251,191,36,.22);}
+.dlinje.mangler .status{color:#b45309;}
+.dialogknapper{display:flex; gap:1.4vmin;}
+.dialogknapper .knapp{
+  flex:1; min-height:9vmin; font-size:clamp(16px,3.4vmin,36px);
+  background:rgba(15,93,87,.14); color:var(--teal-dyp);
+  border-color:rgba(15,93,87,.3);
+}
+.dialogknapper .knapp.server{
+  background:linear-gradient(180deg,#4ade80,#16a34a); color:#052e16;
+  border-color:#166534;
+}
+.dialogknapper .knapp.server[disabled]{
+  background:rgba(15,93,87,.14); color:rgba(11,59,56,.5);
+}
+
+/* Beskjed midt på tavla */
+.toast{
+  position:fixed; left:50%; top:12%; translate:-50% 0; z-index:90;
+  background:var(--krem); color:var(--teal-dyp);
+  padding:1.6vmin 3vmin; border-radius:1.6vmin; box-shadow:var(--skygge);
+  font-family:var(--f-tittel); font-size:clamp(15px,3.2vmin,34px);
+  opacity:0; pointer-events:none; transition:opacity .3s, transform .3s;
+  max-width:86vw; text-align:center;
+}
+.toast.vis{opacity:1; transform:translate(-50%,1.4vmin);}
+.toast.god{background:#dcfce7; color:#14532d;}
+.toast.hjerte{background:#fee2e2; color:#7f1d1d;}
+
+
+/* ============================================================
+   SLUTTSKJERM
+   ============================================================ */
+#slutt{
+  background:linear-gradient(165deg,#0b3b38,#124f49 55%,#0d9488);
+  overflow-y:auto; padding:2.4vmin;
+}
+.slutt-inner{width:min(160vh,96vw); margin:0 auto;}
+.slutt-tittel{
+  font-family:var(--f-tittel); color:var(--gul); text-align:center;
+  font-size:clamp(24px,6vmin,64px); margin-bottom:.6vmin;
+}
+.slutt-skryt{
+  text-align:center; color:var(--krem); font-weight:900;
+  font-size:clamp(15px,3.2vmin,34px); margin-bottom:2.4vmin;
+}
+.talkort{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(20vmin,1fr));
+  gap:1.4vmin; margin-bottom:2.4vmin;
+}
+.talkort > div{
+  background:rgba(255,255,255,.12); border-radius:1.6vmin;
+  padding:1.6vmin; text-align:center; border:.4vmin solid rgba(255,255,255,.22);
+}
+.talkort .tall{
+  font-family:var(--f-tittel); color:var(--gul); display:block;
+  font-size:clamp(24px,5.4vmin,58px); line-height:1.1;
+}
+.talkort .merkelapp{
+  color:var(--krem); font-weight:700; font-size:clamp(12px,2.2vmin,23px);
+}
+.produksjon{
+  display:grid; grid-template-columns:repeat(6,1fr); gap:1vmin; margin-bottom:2.4vmin;
+}
+.produksjon > div{
+  background:rgba(0,0,0,.26); border-radius:1.2vmin; padding:1vmin;
+  text-align:center; border:.35vmin solid rgba(255,255,255,.16);
+}
+.produksjon img{width:7vmin; height:7vmin; min-width:36px; min-height:36px; object-fit:contain;}
+.produksjon .tall{
+  display:block; font-family:var(--f-tittel); color:var(--hvit);
+  font-size:clamp(16px,3.4vmin,36px);
+}
+.produksjon .merkelapp{color:rgba(254,246,228,.8); font-size:clamp(10px,1.8vmin,19px); font-weight:700;}
+
+.besteord{
+  background:rgba(251,191,36,.2); border:.5vmin solid var(--gul);
+  border-radius:1.6vmin; padding:1.6vmin; text-align:center; margin-bottom:2.4vmin;
+}
+.besteord .merkelapp{color:var(--krem); font-weight:700; font-size:clamp(12px,2.2vmin,23px);}
+.besteord .ordet{
+  display:block; font-family:var(--f-tittel); color:var(--gul);
+  font-size:clamp(22px,5vmin,54px); letter-spacing:.08em;
+}
+
+.ordkolonner{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(28vmin,1fr));
+  gap:1.4vmin; margin-bottom:2.4vmin;
+}
+.ordkolonne{
+  background:rgba(255,255,255,.1); border-radius:1.6vmin; padding:1.4vmin;
+  border-top:.8vmin solid var(--sf,#94a3b8);
+}
+.ordkolonne h3{
+  font-family:var(--f-tittel); color:var(--krem);
+  font-size:clamp(14px,2.7vmin,29px); margin-bottom:.8vmin;
+}
+.ordkolonne .ordsky{display:flex; flex-wrap:wrap; gap:.5vmin;}
+.ordkolonne .ordsky span{
+  background:rgba(0,0,0,.3); color:var(--krem); border-radius:.8vmin;
+  padding:.3vmin .8vmin; font-weight:700; font-size:clamp(11px,2vmin,21px);
+  letter-spacing:.04em;
+}
+.ordkolonne .ingen{color:rgba(254,246,228,.6); font-style:italic; font-weight:700;}
+
+/* ============================================================
+   UTSKRIFT — rent oppsett for lærerens etterarbeid
+   ============================================================ */
+@media print{
+  html,body{overflow:visible; height:auto; background:#fff;}
+  .skjerm{position:static; display:none;}
+  .skjerm.aktiv{display:block;}
+  #start,#regler,#spill,.dialoglag,.toast,.startknapper,.hovedknapp,.bileknapp{display:none !important;}
+  #slutt{background:#fff; padding:0;}
+  .slutt-inner{width:100%;}
+  .slutt-tittel,.slutt-skryt{color:#000;}
+  .slutt-tittel{font-size:22pt;}
+  .slutt-skryt{font-size:12pt; margin-bottom:10pt;}
+  .talkort > div,.produksjon > div,.besteord,.ordkolonne{
+    background:#fff; border:1pt solid #333; color:#000;
+  }
+  .talkort .tall,.produksjon .tall,.besteord .ordet{color:#000;}
+  .talkort .merkelapp,.produksjon .merkelapp,.ordkolonne h3,.besteord .merkelapp{color:#000;}
+  .ordkolonne .ordsky span{background:#fff; border:.5pt solid #999; color:#000; font-size:10pt;}
+  .ordkolonner{grid-template-columns:repeat(2,1fr);}
+  .utskriftsfot{display:block !important; margin-top:12pt; font-size:9pt; color:#555;}
+}
+.utskriftsfot{display:none;}
+
+/* ============================================================
+   TILGJENGELIGHET
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     STARTSKJERM — lærerinnstillinger
+     ============================================================ -->
+<section class="skjerm aktiv" id="start">
+  <div class="start-inner">
+    <h1 class="start-tittel">ORDKAFEEN</h1>
+    <p class="start-under">Dere driver kafeen sammen. Bygg ord, lag mat, server monstrene.</p>
+
+    <div class="valgrad">
+      <h2>Hvor mange elever?</h2>
+      <div class="knapperad" id="velgAntall"></div>
+    </div>
+
+    <div class="valgrad">
+      <h2>Navn på stasjonene</h2>
+      <div class="navnefelt" id="navnefelt"></div>
+    </div>
+
+    <div class="valgrad">
+      <h2>Nivå</h2>
+      <div class="knapperad" id="velgNiva"></div>
+    </div>
+
+    <div class="valgrad">
+      <h2>Lengde på vakta</h2>
+      <div class="knapperad" id="velgVarighet"></div>
+    </div>
+
+    <div class="valgrad">
+      <h2>Tidspress</h2>
+      <div class="knapperad" id="velgTidspress"></div>
+    </div>
+
+    <div class="valgrad">
+      <h2>Lyd</h2>
+      <div class="knapperad" id="velgLyd"></div>
+    </div>
+
+    <div class="valgrad">
+      <h2>Skrifttype</h2>
+      <div class="knapperad" id="velgSkrift"></div>
+    </div>
+
+    <div class="startknapper">
+      <button class="hovedknapp" id="knappAapne">Åpne restauranten</button>
+      <button class="bileknapp" id="knappRegler">Vis reglene</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     REGELSIDE — vises på tavla mens elevene setter seg
+     ============================================================ -->
+<section class="skjerm" id="regler">
+  <div class="regelkort">
+    <h2>Slik driver vi Ordkafeen</h2>
+    <ol>
+      <li>Monstrene bestiller mat. Bestillingen henger over hodet på dem.</li>
+      <li>Velg en rett på din stasjon. Trykk deretter bokstaver og lag et ekte norsk ord.</li>
+      <li>Ordet kan være hva som helst — det er jobben du gjør på kjøkkenet.</li>
+      <li>Trykk LAG. Retten havner i lageret på disken, som er felles for hele laget.</li>
+      <li>Når lageret har nok, trykker én av dere på bestillingen og serverer.</li>
+    </ol>
+    <div class="startknapper" style="margin-top:2.4vmin;">
+      <button class="hovedknapp" id="knappTilbakeStart">Tilbake</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SPILLFLATE
+     ============================================================ -->
+<section class="skjerm" id="spill">
+
+  <div class="topp">
+    <span class="merke">ORDKAFEEN</span>
+    <span class="felt"><span id="myntikon"></span><span id="visMynter">0</span></span>
+    <span class="felt hjerter" id="visHjerter"></span>
+    <span class="felt"><span id="visGjester">0 / 12</span> gjester</span>
+    <span class="hoyre">
+      <span class="felt klokke knapp-tid" id="visTid">—</span>
+      <button class="ikonknapp" id="knappFullskjerm" title="Fullskjerm" aria-label="Fullskjerm">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 0h2v5h-5v-2h3v-3z"/></svg>
+      </button>
+      <button class="ikonknapp" id="knappAvslutt" title="Avslutt vakta" aria-label="Avslutt vakta">
+        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6V6zm3.5 6 8.5 6V6l-8.5 6z"/></svg>
+      </button>
+    </span>
+  </div>
+
+  <div class="gjestesone" id="gjestesone">
+    <div class="lyslenke" id="lyslenke"></div>
+  </div>
+
+  <div class="disk"></div>
+
+  <div class="lager" id="lagerlinje">
+    <span class="stikk">LAGER</span>
+  </div>
+
+  <div class="stasjoner" id="stasjoner"></div>
+</section>
+
+<!-- ============================================================
+     SLUTTSKJERM
+     ============================================================ -->
+<section class="skjerm" id="slutt">
+  <div class="slutt-inner">
+    <h2 class="slutt-tittel" id="sluttTittel">Vakta er over!</h2>
+    <p class="slutt-skryt" id="sluttSkryt"></p>
+
+    <div class="talkort" id="sluttTall"></div>
+    <div class="produksjon" id="sluttProduksjon"></div>
+
+    <div class="besteord">
+      <span class="merkelapp">Dagens beste ord</span>
+      <span class="ordet" id="sluttBesteOrd">—</span>
+    </div>
+
+    <div class="ordkolonner" id="sluttOrd"></div>
+
+    <div class="startknapper">
+      <button class="hovedknapp" id="knappNyVakt">Ny vakt</button>
+      <button class="bileknapp" id="knappSkrivUt">Skriv ut ordlista</button>
+    </div>
+
+    <p class="utskriftsfot">Ordkafeen — myntland.no</p>
+  </div>
+</section>
+
+<div class="dialoglag" id="dialoglag">
+  <div class="dialog" id="dialog"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   RETTENE — seks retter. Bytt gjerne bilde eller navn her.
+   ============================================================ */
+const RETTER = [
+  { id:"suppe", navn:"Tomatsuppe",    bilde:"Bilder/Retter/suppe.png" },
+  { id:"pizza", navn:"Pizzastykke",   bilde:"Bilder/Retter/pizza.png" },
+  { id:"kake",  navn:"Bringebærkake", bilde:"Bilder/Retter/kake.png"  },
+  { id:"salat", navn:"Salatbolle",    bilde:"Bilder/Retter/salat.png" },
+  { id:"fisk",  navn:"Fiskepinner",   bilde:"Bilder/Retter/fisk.png"  },
+  { id:"saft",  navn:"Appelsinsaft",  bilde:"Bilder/Retter/saft.png"  },
+];
+
+/* ============================================================
+   MONSTRENE — gjestene i kafeen.
+   Navnene er NAVN, ikke artsbeskrivelser: Drage er ikke en drage,
+   Bamse er ikke en bjørn. Bildene ligger i Myntlands monstermappe.
+   ============================================================ */
+const MONSTERMAPPE = "Bilder/Monstre/webp/u6653418946_cute_fluffy_monster_avatar_";
+const MONSTERHALE  = "-ezgif.com-png-to-webp-converter.webp";
+const MONSTRE = [
+  { navn:"Bølge",   fil:"deep_indigo_blue_fur_r_95029739-aae3-49ee-aa05-15098eece28b_3" },
+  { navn:"Bamse",   fil:"vibrant_sky_blue_fur_c_4a2b70b2-a24e-420a-93aa-b0373edbcaba_0" },
+  { navn:"Drage",   fil:"fiery_red_fur_chubby_b_d4842cbe-411d-4db6-80ce-01412f312360_3" },
+  { navn:"Stjerne", fil:"golden_yellow_fur_shor_786d7b40-74cb-452e-9e6b-66ad21c74ee9_3" },
+  { navn:"Måne",    fil:"cool_grey_fur_tall_bod_3b591817-8754-46df-9d14-0f3d19d2b828_3" },
+  { navn:"Fersken", fil:"salmon_pink-orange_fur_7d190a1d-3529-41b1-96f6-e40f1e22a1a5_3" },
+  { navn:"Sand",    fil:"warm_beige_fur_chubby__286760e8-b2de-4252-a61b-e667110420b9_0" },
+  { navn:"Rosa",    fil:"bubblegum_pink_fur_sho_0d8f5862-c791-4bfe-ac59-24cb889a3fb3_0" },
+  { navn:"Plonne",  fil:"deep_wine_red_fur_chub_3aca6e1e-c1ab-494a-9d81-ef3a3db0b527_0" },
+  { navn:"Mynte",   fil:"soft_mint_green_fur_sh_b8f1705c-727a-4cc3-81e6-7041235ecfd3_1" },
+  { navn:"Skog",    fil:"grass_green_fur_round__058ba960-86e6-439d-b857-6227e96d6f7d_1" },
+  { navn:"Glød",    fil:"bright_orange_fur_roun_8d0b4b15-e2fc-48c6-a379-b22dd2817a0a_1" },
+  { navn:"Tang",    fil:"teal_turquoise_fur_tal_55afc766-dde0-4eb5-9684-83d84eb321db_0" },
+].map(m => ({ navn:m.navn, bilde: MONSTERMAPPE + m.fil + MONSTERHALE }));
+
+/* Spillerfargene. Farge brukes ALDRI alene — navn og symbol følger alltid med. */
+const SPILLERFARGER = [
+  { farge:"#fbbf24", symbol:"A" },
+  { farge:"#38bdf8", symbol:"B" },
+  { farge:"#f472b6", symbol:"C" },
+  { farge:"#a3e635", symbol:"D" },
+];
+const STANDARDNAVN = ["Stasjon 1","Stasjon 2","Stasjon 3","Stasjon 4"];
+
+/* ============================================================
+   NIVÅER
+   ============================================================ */
+const NIVAAER = {
+  1:{ minLengde:3, maxRetter:1, maxAntall:1, hint:"gratis", talmodBase:150, myntPer:12 },
+  2:{ minLengde:4, maxRetter:2, maxAntall:2, hint:"koster", talmodBase:120, myntPer:15 },
+  3:{ minLengde:4, maxRetter:3, maxAntall:3, hint:"ingen",  talmodBase:95,  myntPer:18 },
+};
+const HINTPRIS = 25;
+const BYTTE_NEDKJOLING = 10000; // ms
+const MAX_SENDTE = 3;
+
+/* ============================================================
+   BOKSTAVBANKEN — norsk bokstavfrekvens. C, Q, W, X og Z er ute.
+   ============================================================ */
+const VOKALER = "AEIOUYÆØÅ";
+const BOKSTAWVEKT = [
+  ["E",16],["R",9],["N",8],["S",8],["T",7],["A",7],["L",6],["O",5],["I",5],
+  ["K",5],["D",5],["G",4],["M",4],["V",3],["U",3],["F",2],["H",2],["P",2],
+  ["B",2],["Å",2],["Ø",2],["J",1],["Y",1],["Æ",1],
+];
+const BOKSTAVPOSE = BOKSTAWVEKT.flatMap(([b,v]) => Array(v).fill(b));
+const BANKSTORRELSE = 12;
+const MIN_VOKALER = 3;
+
+/* ============================================================
+   ORDLISTE — godkjente norske ord, 3–8 bokstaver.
+   Rediger og utvid fritt: ordene er skilt med komma.
+   ============================================================ */
+const ORDLISTE = "AGURK,AGURKEN,AGURKENE,AGURKER,AKE,ALBUE,ALBUEN,ALBUENE,ALBUER,ALDRI,ALENE,ALLE,ALLTID,ALT,ALTFOR,ALTSÅ,AND,ANDA,ANDEN,ANDRE,ANKERET,ANKOMST,ANKRE,ANKRENE,ANNEN,ANSIKT,ANSIKTET,ANSVAR,ANSVARET,APE,APPELSIN,APRIL,ARBEID,ARBEIDET,ARK,ARKENE,ARKET,ARM,ARMEN,ARMENE,ARMER,ARTIST,ARTISTEN,ARTISTER,ATTEN,AUGUST,AVGANG,AVGANGEN,AVGANGER,AVL,AVTALE,AVTALEN,AVTALENE,AVTALER,BAD,BADE,BADENE,BADER,BADET,BAK,BAKE,BAKER,BAKERE,BAKEREN,BAKERNE,BAKET,BAL,BALKONG,BALL,BALLEN,BALLENE,BALLER,BALLONG,BAMSE,BAMSEN,BAMSENE,BAMSER,BANAN,BANANEN,BANANENE,BANANER,BANE,BANEN,BANENE,BANER,BANK,BANKE,BANKEN,BANKENE,BANKER,BANKET,BAR,BARE,BARK,BARKEN,BARKENE,BARKER,BARN,BARNA,BARNENE,BARNET,BATTERI,BED,BEDRE,BEDT,BEGGE,BEIN,BEINA,BEINENE,BEINET,BEKK,BEKKEN,BEKKENE,BEKKER,BELTE,BELTENE,BELTER,BELTET,BELØP,BELØPENE,BELØPET,BEN,BENK,BENKEN,BENKENE,BENKER,BER,BEST,BETALE,BETALER,BETALET,BIL,BILDE,BILDENE,BILDER,BILDET,BILEN,BILENE,BILER,BILLETT,BILLIG,BILLIGE,BIT,BITEN,BITENE,BITER,BJØRN,BJØRNEN,BJØRNENE,BJØRNER,BLAD,BLADENE,BLADET,BLANDE,BLANDER,BLANDET,BLE,BLI,BLIKK,BLIKKENE,BLIKKET,BLIR,BLITT,BLOMST,BLOMSTEN,BLOMSTER,BLUNKE,BLUNKER,BLUNKET,BLY,BLYANT,BLYANTEN,BLYANTER,BLYEN,BLYENE,BLYER,BLÅ,BLÅE,BLÅTT,BOD,BODD,BODDE,BODEN,BODENE,BODER,BOK,BOKA,BOKEN,BOKS,BOKSEN,BOKSENE,BOKSER,BOLLE,BOLLEN,BOLLENE,BOLLER,BOLT,BOLTEN,BOLTENE,BOLTER,BONDE,BONDEN,BONDENE,BONDER,BOR,BORD,BORDENE,BORDET,BORT,BORTE,BRANN,BRANNEN,BRANNENE,BRANNER,BRED,BREDE,BREDT,BREMSE,BREMSEN,BREMSENE,BREMSER,BREMST,BREMSTE,BRETT,BRETTE,BRETTENE,BRETTER,BRETTET,BREV,BREVENE,BREVET,BRIKKE,BRIKKEN,BRIKKENE,BRIKKER,BRO,BROEN,BROENE,BROER,BROR,BROREN,BRORENE,BRORER,BRU,BRUKE,BRUKER,BRUKT,BRUKTE,BRUN,BRUNE,BRUNT,BRUS,BRUSEN,BRUSENE,BRUSER,BRY,BRYGGE,BRYGGEN,BRYGGENE,BRYGGER,BRYTERE,BRYTEREN,BRYTERNE,BRÅ,BRØD,BRØDENE,BRØDET,BRØDRE,BRØDRENE,BRØLE,BRØLER,BRØLET,BUD,BUDSJETT,BUE,BUK,BUKSE,BUKSEN,BUKSENE,BUKSER,BUKT,BUKTEN,BUKTENE,BUKTER,BUNAD,BUNADEN,BUNADENE,BUNADER,BUR,BUREN,BURENE,BURER,BURSDAG,BUSK,BUSKEN,BUSKENE,BUSKER,BUSS,BUSSEN,BUSSENE,BUSSER,BUTIKK,BUTIKKEN,BUTIKKER,BYGD,BYGDE,BYGDEN,BYGDENE,BYGDER,BYGGE,BYGGER,BYTTE,BYTTER,BYTTET,BÅL,BÅLEN,BÅLENE,BÅLER,BÅRET,BÅT,BÅTEN,BÅTENE,BÅTER,BÆRE,BÆRER,BØKENE,BØKER,BØNDENE,BØNDER,BØNN,BØNNE,BØNNEN,BØNNENE,BØNNER,BØRSTE,BØRSTER,BØRSTET,BØTTE,BØTTEN,BØTTENE,BØTTER,DAG,DAGEN,DAGENE,DAGER,DAL,DALEN,DALENE,DALER,DAM,DAME,DAMEN,DAMENE,DAMER,DAMP,DAMPEN,DAMPENE,DAMPER,DANS,DANSE,DANSEN,DANSENE,DANSER,DANSERE,DANSEREN,DANSERNE,DANSET,DATTER,DATTERA,DEG,DEILIG,DEILIGE,DEKKE,DEKKER,DEKKET,DEL,DELE,DELEN,DELENE,DELER,DELFIN,DELFINEN,DELFINER,DELT,DELTE,DEM,DEN,DENNE,DER,DERE,DESEMBER,DET,DETTE,DIAMANT,DIN,DINE,DISSE,DIT,DITT,DOMMERE,DOMMEREN,DOMMERNE,DRAKK,DRAKT,DRAKTEN,DRAKTENE,DRAKTER,DRIKKE,DRIKKER,DRONNING,DRUE,DRUEN,DRUENE,DRUER,DRUKKET,DUE,DUKKE,DUKKEN,DUKKENE,DUKKER,DUM,DUME,DUMT,DUN,DUNKE,DUNKER,DUNKET,DUPPE,DUPPER,DUPPET,DUR,DUSJE,DUSJER,DUSJET,DYKKE,DYKKER,DYKKET,DYNE,DYNEN,DYNENE,DYNER,DYP,DYPE,DYPT,DYR,DYRENE,DYRET,DYTTE,DYTTER,DYTTET,DÅD,DØGN,DØGNENE,DØGNET,DØMME,DØMMER,DØMMT,DØMMTE,DØR,DØREN,DØRENE,DØRER,DØTRE,DØTRENE,EDDIK,EDDIKEN,EDDIKENE,EDDIKER,EGG,EGGENE,EGGET,EIERE,EIEREN,EIERNE,EIK,EKKEL,EKKELT,EKLE,ELDRE,ELDST,ELEV,ELEVEN,ELEVENE,ELEVER,ELG,ELGEN,ELGENE,ELGER,ELLER,ELLEVE,ELSKD,ELSKDE,ELSKE,ELSKER,ELV,ELVEN,ELVENE,ELVER,ENDA,ENDENE,ENDER,ENG,ENNÅ,EPLE,EPLENE,EPLER,EPLET,ERTE,ERTEN,ERTENE,ERTER,ETE,ETTER,EVENTYR,FALLE,FALLER,FALT,FANT,FAR,FAREN,FARENE,FARER,FARGE,FARGEN,FARGENE,FARGER,FARGET,FAT,FATENE,FATET,FATTIG,FATTIGE,FATTIGT,FEBRUAR,FEDRE,FEDRENE,FELE,FELEN,FELENE,FELER,FELT,FELTEN,FELTENE,FELTER,FEM,FEMTEN,FEMTI,FERIE,FERIEN,FERIENE,FERIER,FERSKEN,FEST,FESTE,FESTEN,FESTENE,FESTER,FESTT,FESTTE,FET,FIKK,FIKSE,FIKSER,FIKSET,FIL,FILM,FILMEN,FILMENE,FILMER,FILTERET,FILTRE,FILTRENE,FIN,FINE,FINGER,FINGEREN,FINGERER,FINGRE,FINGRER,FINNE,FINNER,FINT,FIOLIN,FIOLINEN,FIOLINER,FIRE,FIRKANT,FIRMA,FIRMAENE,FIRMAET,FISK,FISKEN,FISKENE,FISKER,FISKERE,FISKEREN,FISKERNE,FJELL,FJELLENE,FJELLET,FJORD,FJORDEN,FJORDENE,FJORDER,FJORTEN,FLASKE,FLASKEN,FLASKENE,FLASKER,FLATE,FLATEN,FLATENE,FLATER,FLEKK,FLEKKEN,FLEKKENE,FLEKKER,FLERE,FLEST,FLUE,FLUEN,FLUENE,FLUER,FLY,FLYENE,FLYET,FLYPLASS,FLØTE,FLØTEN,FLØTENE,FLØTER,FORAN,FORDI,FORRIGE,FORSLAG,FOSS,FOSSEN,FOSSENE,FOSSER,FOT,FOTEN,FOTENE,FOTER,FRAKK,FRAKKEN,FRAKKENE,FRAKKER,FRAM,FREDAG,FRI,FRIMERKE,FRISK,FRISKE,FRISKT,FRIST,FRISTE,FRISTEN,FRISTENE,FRISTER,FRISTT,FRISTTE,FROSK,FROSKEN,FROSKENE,FROSKER,FROST,FROSTEN,FRU,FRUKT,FRUKTEN,FRUKTENE,FRUKTER,FRYKT,FRYKTEN,FRYKTENE,FRYKTER,FRØ,FUGL,FUGLEN,FUGLENE,FUGLER,FULL,FULLE,FULLT,FUNNET,FYLLE,FYLLER,FYLLET,FYLLT,FYLLTE,FYR,FYREN,FYRENE,FYRER,FYRSTIKK,FÅR,FÅTT,FØL,FØLE,FØLER,FØLT,FØLTE,FØR,FØRE,FØRER,FØRST,FØRT,FØRTE,FØRTI,FØTTENE,FØTTER,GAMLE,GAMMEL,GAMMELT,GANG,GANGEN,GANGENE,GANGER,GANSKE,GAP,GARASJE,GARASJEN,GARASJER,GARDIN,GARDINET,GARN,GARNEN,GARNENE,GARNER,GARTNERE,GATE,GATEN,GATENE,GATER,GAV,GEIT,GEITEN,GEITENE,GEITER,GENSERE,GENSEREN,GENSERNE,GIKK,GIR,GIREN,GIRENE,GIRER,GITAR,GITAREN,GITARENE,GITARER,GITT,GJEMME,GJEMMER,GJEMMET,GJENNOM,GJERDE,GJERDEN,GJERDENE,GJERDER,GJESPE,GJESPER,GJESPET,GJESS,GJESSENE,GJEST,GJESTEN,GJESTENE,GJESTER,GJORDE,GJORT,GJØR,GJØRE,GLAD,GLADE,GLADT,GLANS,GLANSEN,GLANSENE,GLANSER,GLASS,GLASSENE,GLASSET,GLEDE,GLEDEN,GLEDENE,GLEDER,GLEMME,GLEMMER,GLEMMT,GLEMMTE,GLITRE,GLITRER,GLITRET,GLO,GNI,GOD,GODE,GODT,GRAD,GRADEN,GRADENE,GRADER,GRAVE,GRAVER,GRAVET,GREN,GREND,GRENDEN,GRENDENE,GRENDER,GRENEN,GRENENE,GRENER,GRENSE,GRENSEN,GRENSENE,GRENSER,GREP,GREPET,GRESS,GRESSENE,GRESSET,GRIPE,GRIPER,GRIS,GRISEN,GRISENE,GRISER,GRO,GROTTE,GROTTEN,GROTTENE,GROTTER,GRU,GRUNN,GRUNNE,GRUNT,GRUPPE,GRUPPEN,GRUPPENE,GRUPPER,GRUS,GRUSEN,GRUSENE,GRUSER,GRY,GRÅ,GRÅT,GRÅTE,GRÅTER,GRÅTT,GRØNN,GRØNNE,GRØNNSAK,GRØNT,GUL,GULE,GULL,GULLEN,GULLENE,GULLER,GULT,GULV,GULVENE,GULVET,GUTT,GUTTEN,GUTTENE,GUTTER,GYNGE,GYNGER,GYNGET,GÅR,GÅRD,GÅRDEN,GÅRDENE,GÅRDER,GÅS,GÅSA,GÅSEN,GÅTE,GÅTEN,GÅTENE,GÅTER,GÅTT,GØY,HADDE,HAGE,HAGEN,HAGENE,HAGER,HAGL,HAGLET,HAI,HAIEN,HAIENE,HAIER,HAKE,HAKEN,HAKENE,HAKER,HALE,HALEN,HALENE,HALER,HALM,HALMEN,HALMENE,HALMER,HALS,HALSEN,HALSENE,HALSER,HALV,HALVE,HAM,HAMMEREN,HAMRE,HAMRENE,HAMRER,HAN,HANE,HANEN,HANENE,HANER,HANK,HANKEN,HANKENE,HANKER,HANSKE,HANSKEN,HANSKENE,HANSKER,HAR,HARD,HARDE,HARDT,HASTIG,HASTIGE,HAT,HATT,HATTEN,HATTENE,HATTER,HAV,HAVRE,HAVREN,HAVRENE,HAVRER,HEI,HEL,HELLE,HELLER,HELLET,HELT,HELTEN,HELTENE,HELTER,HEN,HENDENE,HENDER,HENTE,HENTER,HENTET,HER,HERLIG,HERLIGE,HEST,HESTEN,HESTENE,HESTER,HET,HILSE,HILSER,HILST,HILSTE,HIMLER,HIMMEL,HIMMELEN,HIT,HIV,HJELM,HJELMEN,HJELMENE,HJELMER,HJEM,HJEMME,HJERTE,HJERTENE,HJERTER,HJERTET,HJUL,HJULENE,HJULET,HODE,HODENE,HODER,HODET,HOLDE,HOLDER,HOLDT,HOLME,HOLMEN,HOLMENE,HOLMER,HOPP,HOPPE,HOPPENE,HOPPER,HOPPET,HOS,HOSTE,HOSTER,HOSTET,HOV,HUD,HUL,HULE,HULEN,HULENE,HULER,HUMLE,HUMLEN,HUMLENE,HUMLER,HUN,HUND,HUNDEN,HUNDENE,HUNDER,HUNDRE,HUS,HUSENE,HUSET,HUSKE,HUSKER,HUSKET,HVA,HVEM,HVER,HVERT,HVIS,HVISKE,HVISKER,HVISKET,HVIT,HVITE,HVITT,HVOR,HVORDAN,HVORFOR,HYGGELIG,HYL,HYLE,HYLER,HYLLE,HYLLEN,HYLLENE,HYLLER,HYLT,HYLTE,HYTTE,HYTTEN,HYTTENE,HYTTER,HÅND,HÅNDA,HÅNDEN,HÅPE,HÅPER,HÅPET,HÅR,HÆR,HØK,HØNE,HØNEN,HØNENE,HØNER,HØRE,HØRER,HØRT,HØRTE,HØST,HØSTEN,HØY,HØYE,HØYT,IDE,IGJEN,IKKE,ILD,ILE,INGEN,INN,ISEN,JAKKE,JAKKEN,JAKKENE,JAKKER,JANUAR,JEG,JEGERE,JEGEREN,JEGERNE,JENTA,JENTE,JENTEN,JENTENE,JENTER,JERN,JERNEN,JERNENE,JERNER,JOBB,JOBBEN,JOBBENE,JOBBER,JUL,JULA,JULEN,JULI,JUNI,JUR,KABELEN,KABLENE,KABLER,KAFFE,KAFFEN,KAFFENE,KAFFER,KAI,KAIEN,KAIENE,KAIER,KAKAO,KAKAOEN,KAKAOENE,KAKAOER,KAKE,KAKEN,KAKENE,KAKER,KALD,KALDE,KALDT,KALL,KALLENE,KALLET,KAM,KAMEN,KAMENE,KAMER,KAMERA,KAMERAET,KAMERAT,KAMP,KAMPEN,KAMPENE,KAMPER,KANEL,KANELEN,KANELENE,KANELER,KANIN,KANINEN,KANINENE,KANINER,KANNE,KANNEN,KANNENE,KANNER,KANSKJE,KANT,KANTEN,KANTENE,KANTER,KAPPE,KAPPEN,KAPPENE,KAPPER,KAR,KARAKTER,KART,KARTENE,KARTET,KAST,KASTE,KASTENE,KASTER,KASTET,KATT,KATTEN,KATTENE,KATTER,KAVRING,KILDE,KILDEN,KILDENE,KILDER,KILE,KILEN,KILENE,KILER,KILET,KILO,KILOEN,KILOENE,KILOER,KIME,KIMER,KIMET,KINO,KINOEN,KINOENE,KINOER,KIOSK,KIOSKEN,KIOSKENE,KIOSKER,KIRKE,KIRKEN,KIRKENE,KIRKER,KISTE,KISTEN,KISTENE,KISTER,KJEDELIG,KJEKS,KJEKSEN,KJEKSENE,KJEKSER,KJELKE,KJELKEN,KJELKENE,KJELKER,KJELLERE,KJØKKEN,KJØPE,KJØPER,KJØPT,KJØPTE,KJØRE,KJØRER,KJØRT,KJØRTE,KJØTT,KJØTTENE,KJØTTET,KLAPPE,KLAPPER,KLAPPET,KLASSE,KLASSEN,KLASSENE,KLASSER,KLATRE,KLATRER,KLATRET,KLE,KLEMME,KLEMMER,KLEMMET,KLIPPE,KLIPPER,KLIPPET,KLO,KLODE,KLODEN,KLODENE,KLODER,KLOEN,KLOENE,KLOER,KLOK,KLOKE,KLOKKE,KLOKKEN,KLOKKENE,KLOKKER,KLOKT,KLOVN,KLOVNEN,KLOVNENE,KLOVNER,KLUBB,KLUBBEN,KLUBBENE,KLUBBER,KLYPE,KLYPEN,KLYPENE,KLYPER,KLØ,KNAPP,KNAPPEN,KNAPPENE,KNAPPER,KNE,KNEET,KNENE,KNER,KNET,KNIV,KNIVEN,KNIVENE,KNIVER,KNOLL,KNOLLEN,KNOLLENE,KNOLLER,KNOPP,KNOPPEN,KNOPPENE,KNOPPER,KNURRE,KNURRER,KNURRET,KNÆR,KNÆRNE,KOBLE,KOBLER,KOBLET,KODE,KODEN,KODENE,KODER,KOFFERT,KOK,KOKE,KOKER,KOKK,KOKKEN,KOKKENE,KOKKER,KOKT,KOKTE,KOM,KOMME,KOMMER,KOMMET,KOMPASS,KONE,KONEN,KONENE,KONER,KONGE,KONGEN,KONGENE,KONGER,KONGLE,KONGLEN,KONGLENE,KONGLER,KONTAKT,KONTOR,KONTORET,KONTRAKT,KOPP,KOPPEN,KOPPENE,KOPPER,KOR,KORN,KORNEN,KORNENE,KORNER,KORNET,KORT,KORTE,KORTENE,KORTET,KORTT,KOS,KOSE,KOSELIG,KOSELIGE,KOSER,KOSET,KRABBE,KRABBEN,KRABBENE,KRABBER,KRAFTIG,KRAFTIGE,KRAKK,KRAKKEN,KRAKKENE,KRAKKER,KRAN,KRANEN,KRANENE,KRANER,KREVD,KREVDE,KREVE,KREVER,KRO,KRONE,KRONEN,KRONENE,KRONER,KROPP,KROPPEN,KROPPENE,KROPPER,KRUS,KRUSENE,KRUSET,KRYSS,KRYSSE,KRYSSENE,KRYSSER,KRYSSET,KUA,KUEN,KUENE,KUER,KUL,KULE,KULEN,KULENE,KULER,KUNDE,KUNDEN,KUNDENE,KUNDER,KUR,KURV,KURVE,KURVEN,KURVENE,KURVER,KUSINE,KUSINEN,KUSINENE,KUSINER,KVARTER,KVELD,KVELDEN,KVELDENE,KVELDER,KVINNE,KVINNEN,KVINNENE,KVINNER,KVIST,KVISTEN,KVISTENE,KVISTER,KVITRE,KVITRER,KVITRET,KYR,KYRNE,KYSSE,KYSSER,KYSST,KYSSTE,KÅL,LADE,LADER,LADET,LAG,LAGE,LAGENE,LAGER,LAGERENE,LAGERET,LAGET,LAGT,LAKEN,LAKENENE,LAKENET,LAKS,LAKSEN,LAKSENE,LAKSER,LAM,LAMPE,LAMPEN,LAMPENE,LAMPER,LAND,LANDENE,LANDET,LANDSBY,LANG,LANGE,LANGT,LAT,LAV,LAVE,LAVEN,LAVENE,LAVER,LAVT,LEDD,LEGE,LEGEN,LEGENE,LEGER,LEGGE,LEGGER,LEI,LEIRE,LEIREN,LEIRENE,LEIRER,LEK,LEKE,LEKEN,LEKENE,LEKER,LEKT,LEKTE,LEM,LEPPE,LEPPEN,LEPPENE,LEPPER,LER,LES,LESE,LESER,LEST,LESTE,LETE,LETER,LETET,LETT,LETTE,LEVD,LEVDE,LEVE,LEVER,LIGGE,LIGGER,LIGGET,LIGNE,LIGNER,LIGNET,LIK,LIKNE,LIKNER,LIKNET,LILLA,LILLE,LIM,LIME,LIMER,LIMET,LIN,LINJE,LINJEN,LINJENE,LINJER,LIST,LISTEN,LISTENE,LISTER,LITE,LITEN,LITEREN,LITERNE,LITT,LIV,LOFT,LOFTENE,LOFTET,LOMME,LOMMEBOK,LOMMEN,LOMMENE,LOMMER,LOPPE,LOPPEN,LOPPENE,LOPPER,LOV,LUE,LUEN,LUENE,LUER,LUK,LUKE,LUKER,LUKET,LUKTE,LUKTER,LUKTET,LUN,LUPE,LUPEN,LUPENE,LUPER,LUR,LUS,LUT,LYD,LYDEN,LYDENE,LYDER,LYKKE,LYKKEN,LYKKENE,LYKKER,LYKT,LYKTEN,LYKTENE,LYKTER,LYN,LYNET,LYS,LYSE,LYSENE,LYSER,LYSET,LYST,LYSTE,LÅN,LÅNE,LÅNER,LÅNET,LÅR,LÅRENE,LÅRET,LÅS,LÆR,LÆRE,LÆRER,LÆRERE,LÆREREN,LÆRERNE,LÆRT,LÆRTE,LØFTE,LØFTER,LØFTET,LØK,LØKEN,LØKENE,LØKER,LØNN,LØNNEN,LØNNENE,LØNNER,LØP,LØPE,LØPER,LØPT,LØS,LØYPE,LØYPEN,LØYPENE,LØYPER,MAGE,MAGEN,MAGENE,MAGER,MAI,MAL,MALE,MALER,MALERE,MALEREN,MALERI,MALERIET,MALERNE,MALT,MALTE,MANDAG,MANDELEN,MANDLENE,MANDLER,MANET,MANETEN,MANETENE,MANETER,MANGE,MANN,MANNEN,MAPPE,MAPPEN,MAPPENE,MAPPER,MARKED,MARKEDEN,MARKEDER,MARS,MAS,MASKE,MASKEN,MASKENE,MASKER,MAST,MASTEN,MASTENE,MASTER,MAT,MATPAKKE,MAUR,MAUREN,MAURENE,MAURER,MEG,MEL,MELENE,MELET,MELLOM,MELON,MELONEN,MELONENE,MELONER,MEN,MENE,MENER,MENN,MENNENE,MENS,MENT,MENTE,MERKE,MERKENE,MERKER,MERKET,METEREN,METERNE,MIL,MILLIARD,MILLION,MIN,MINE,MINNE,MINNENE,MINNER,MINNET,MINUTT,MINUTTET,MITT,MODIG,MODIGE,MODIGT,MOLTE,MOLTEN,MOLTENE,MOLTER,MOR,MORA,MOREN,MORGEN,MORGENEN,MORGENER,MORSOM,MORSOMME,MORSOMT,MOS,MOSE,MOSEN,MOSENE,MOSER,MOT,MOTENE,MOTET,MOTOR,MOTOREN,MOTORENE,MOTORER,MUGGE,MUGGEN,MUGGENE,MUGGER,MULIG,MULIGE,MUNN,MUNNEN,MUNNENE,MUNNER,MUR,MUREN,MURENE,MURER,MUS,MUSEN,MUSENE,MUSER,MUSIKERE,MUSKELEN,MUSKLENE,MUSKLER,MYE,MYGG,MYGGEN,MYGGENE,MYGGER,MYK,MYKE,MYKT,MYNT,MYNTEN,MYNTENE,MYNTER,MYR,MÅL,MÅNE,MÅNED,MÅNEDEN,MÅNEDENE,MÅNEDER,MÅNEN,MÅNER,MØDRE,MØDRENE,MØRK,MØRKE,MØRKT,MØTE,MØTER,MØTT,MØTTE,NABO,NABOEN,NABOENE,NABOER,NAKKE,NAKKEN,NAKKENE,NAKKER,NATT,NATTA,NATTEN,NAVN,NAVNENE,NAVNET,NED,NEGL,NEGLEN,NEGLENE,NEGLER,NEI,NES,NESE,NESEN,NESENE,NESER,NESTE,NETTENE,NETTER,NIESE,NIESEN,NIESENE,NIESER,NIKKE,NIKKER,NIKKET,NITTEN,NITTI,NOE,NOEN,NOK,NORSK,NORSKE,NOTERE,NOTERER,NOTERET,NOVEMBER,NULL,NYE,NYNNE,NYNNER,NYNNET,NYRE,NYREN,NYRENE,NYRER,NYSE,NYSER,NYSET,NYTT,NYTTIG,NYTTIGE,NÅL,NÅLEN,NÅLENE,NÅLER,NÅR,NØD,NØKKELEN,NØKLENE,NØKLER,ODD,ODDE,ODDEN,ODDENE,ODDER,ODE,OFTE,OGSÅ,OKS,OKTOBER,OMGANG,OMGANGEN,OMGANGER,ONKELEN,ONKLENE,ONKLER,ONSDAG,OPP,OPPDRAG,ORD,ORDENE,ORDET,ORDNE,ORDNER,ORDNET,ORM,ORMEN,ORMENE,ORMER,OSS,OST,OSTEN,OSTENE,OSTER,OVER,OVN,OVNEN,OVNENE,OVNER,PADDE,PADDEN,PADDENE,PADDER,PADLE,PADLER,PADLET,PAKKE,PAKKER,PAKKET,PANEL,PANELENE,PANELET,PAPIR,PAPIREN,PAPIRENE,PAPIRER,PAR,PARENE,PARET,PARK,PARKEN,PARKENE,PARKER,PAUSE,PAUSEN,PAUSENE,PAUSER,PEDAL,PEDALEN,PEDALENE,PEDALER,PEKE,PEKER,PEKT,PEKTE,PELS,PELSEN,PELSENE,PELSER,PENN,PENNAL,PENNALEN,PENNALER,PENNEN,PENNENE,PENNER,PEPPEREN,PERLE,PERLEN,PERLENE,PERLER,PERRON,PERRONEN,PERRONER,PIL,PILOT,PILOTEN,PILOTENE,PILOTER,PINNE,PINNEN,PINNENE,PINNER,PINSA,PINSE,PINSEN,PIP,PIPEN,PIPENE,PIPER,PLAN,PLANEN,PLANENE,PLANER,PLANET,PLANETEN,PLANETER,PLANTE,PLANTER,PLANTET,PLASS,PLASSEN,PLASSENE,PLASSER,PLAST,PLASTEN,PLASTENE,PLASTER,PLATE,PLATEN,PLATENE,PLATER,PLEN,PLENEN,PLENENE,PLENER,PLIKT,PLIKTEN,PLIKTENE,PLIKTER,PLOMME,PLOMMEN,PLOMMENE,PLOMMER,PLUGG,PLUGGEN,PLUGGENE,PLUGGER,PLUKKE,PLUKKER,PLUKKET,PLYSTRE,PLYSTRER,PLYSTRET,POENG,POENGEN,POENGENE,POENGER,POL,PORT,PORTEN,PORTENE,PORTER,POSE,POSEN,POSENE,POSER,POTET,POTETEN,POTETENE,POTETER,PRATE,PRATER,PRATET,PRIKK,PRIKKEN,PRIKKENE,PRIKKER,PRINS,PRINSEN,PRINSENE,PRINSER,PRIS,PRISEN,PRISENE,PRISER,PROBLEM,PROPP,PROPPEN,PROPPENE,PROPPER,PRØVD,PRØVDE,PRØVE,PRØVEN,PRØVENE,PRØVER,PUGGE,PUGGER,PUGGET,PULK,PULKEN,PULKENE,PULKER,PULS,PULSEN,PULSENE,PULSER,PUMPE,PUMPEN,PUMPENE,PUMPER,PURRE,PURREN,PURRENE,PURRER,PUS,PUSSE,PUSSER,PUSSET,PUTE,PUTEN,PUTENE,PUTER,PYNTE,PYNTER,PYNTET,PÅSKA,PÅSKE,PÅSKEN,PÆRE,PÆREN,PÆRENE,PÆRER,PØLSE,PØLSEN,PØLSENE,PØLSER,RABATT,RABATTEN,RABATTER,RAD,RADEN,RADENE,RADER,RAKE,RAKER,RAKET,RAN,RAP,RAR,RARE,RART,RAS,RASK,RASKE,RASKT,RAV,REDD,REDDE,REDE,REDEN,REDENE,REDER,REGN,REGNE,REGNER,REGNET,REISE,REISEN,REISENE,REISER,REKE,REKEN,REKENE,REKER,REKKE,REKKEN,REKKENE,REKKER,REM,REMEN,REMENE,REMER,REN,RENE,RENSE,RENSER,RENST,RENSTE,RENT,RENTE,RENTEN,RENTENE,RENTER,REP,REPARERE,REPARERT,REST,RESTEN,RESTENE,RESTER,REV,REVEN,REVENE,REVER,RIK,RIKE,RIKT,RIKTIG,RIKTIGE,RIM,RING,RINGEN,RINGENE,RINGER,RIS,RISENE,RISET,RISIKO,RISIKOEN,RISIKOER,RISTE,RISTER,RISTET,RIV,RIVE,RIVEN,RIVENE,RIVER,ROLIG,ROLIGE,ROM,ROMENE,ROMET,ROP,ROPE,ROPENE,ROPER,ROPET,ROR,ROREN,RORENE,RORER,ROS,ROSA,ROT,ROTEN,ROTENE,ROTER,ROV,RUG,RUGEN,RUGENE,RUGER,RULLE,RULLER,RULLET,RUND,RUNDE,RUNDEN,RUNDENE,RUNDER,RUNDT,RUS,RUSLE,RUSLER,RUSLET,RUTE,RUTEN,RUTENE,RUTER,RYDDE,RYDDER,RYDDET,RYGG,RYGGEN,RYGGENE,RYGGER,RYGGSEKK,RYTME,RYTMEN,RYTMENE,RYTMER,RÅD,RØD,RØDE,RØDT,RØK,RØR,RØRE,RØRER,RØRET,SAFT,SAFTEN,SAFTENE,SAFTER,SAFTIG,SAFTIGE,SAG,SAGEN,SAGENE,SAGER,SAGT,SAK,SAKS,SAKSEN,SAKSENE,SAKSER,SAL,SALG,SALGEN,SALGENE,SALGER,SAMLE,SAMLER,SAMLET,SAMME,SAMMEN,SAND,SANDAL,SANDALEN,SANDALER,SANDEN,SANDENE,SANDER,SANG,SANGEN,SANGENE,SANGER,SANGERE,SANGEREN,SANGERNE,SAPE,SAPEN,SAPENE,SAPER,SATT,SATTE,SAU,SAUEN,SAUENE,SAUER,SEDDELEN,SEDLENE,SEDLER,SEG,SEI,SEIEREN,SEIL,SEILEN,SEILENE,SEILER,SEIRE,SEIRENE,SEKK,SEKKEN,SEKKENE,SEKKER,SEKS,SEKSTEN,SEKSTI,SEKUND,SEKUNDET,SEL,SELEN,SELENE,SELER,SELGE,SELGERE,SELGEREN,SELGERNE,SELV,SEN,SENDE,SENDER,SENDT,SENDTE,SENE,SENG,SENGEN,SENGENE,SENGER,SENKE,SENKER,SENKT,SENKTE,SENT,SER,SERVERE,SERVERER,SERVERT,SERVERTE,SETE,SETEN,SETENE,SETER,SETT,SETTE,SETTENE,SETTER,SETTET,SIDE,SIDEN,SIDENE,SIDER,SIER,SIGNAL,SIGNALET,SIL,SILD,SILDEN,SILDENE,SILDER,SILEN,SILENE,SILER,SILKE,SILKEN,SILKENE,SILKER,SIN,SINE,SINN,SINNENE,SINNET,SIRKELEN,SIRKLENE,SIRKLER,SIRKUS,SIRKUSEN,SIRKUSER,SIST,SITRON,SITRONEN,SITRONER,SITT,SITTE,SITTER,SITTET,SIV,SJANSE,SJANSEN,SJANSENE,SJANSER,SJEF,SJEFEN,SJEFENE,SJEFER,SJELDEN,SJU,SJØ,SJØEN,SJØENE,SJØER,SKAP,SKAPENE,SKAPET,SKAR,SKAREN,SKARENE,SKARER,SKARP,SKARPE,SKARPT,SKATT,SKATTEN,SKATTENE,SKATTER,SKI,SKIEN,SKIENE,SKIER,SKIKK,SKIKKEN,SKIKKENE,SKIKKER,SKINN,SKINNE,SKINNEN,SKINNENE,SKINNER,SKINNET,SKIP,SKIPENE,SKIPET,SKITNE,SKITTEN,SKITTENT,SKIVE,SKIVEN,SKIVENE,SKIVER,SKJERM,SKJERMEN,SKJERMER,SKJORTE,SKJORTEN,SKJORTER,SKJÆR,SKJÆRE,SKJÆREN,SKJÆRENE,SKJÆRER,SKO,SKOEN,SKOENE,SKOER,SKOG,SKOGEN,SKOGENE,SKOGER,SKOLE,SKOLEN,SKOLENE,SKOLER,SKRAPE,SKRAPER,SKRAPET,SKREV,SKREVET,SKRIK,SKRIKENE,SKRIKET,SKRIVE,SKRIVER,SKRUBBE,SKRUBBER,SKRUBBET,SKRUE,SKRUEN,SKRUENE,SKRUER,SKUFF,SKUFFEN,SKUFFENE,SKUFFER,SKULDER,SKULDRE,SKULDRER,SKUM,SKUMENE,SKUMET,SKVETTE,SKVETTER,SKVETTET,SKY,SKYEN,SKYENE,SKYER,SKYGGE,SKYGGEN,SKYGGENE,SKYGGER,SKYNDE,SKYNDER,SKYNDT,SKYNDTE,SKYVE,SKYVER,SKYVET,SKÅRET,SKØYTE,SKØYTEN,SKØYTENE,SKØYTER,SLANGE,SLANGEN,SLANGENE,SLANGER,SLEDE,SLEDEN,SLEDENE,SLEDER,SLEM,SLEME,SLEMT,SLUDD,SLUDDET,SLUK,SLUKEN,SLUKENE,SLUKER,SLÅ,SLØYFE,SLØYFEN,SLØYFENE,SLØYFER,SMAKE,SMAKER,SMAKT,SMAKTE,SMAL,SMALE,SMALT,SMART,SMARTE,SMARTT,SMERTE,SMERTEN,SMERTENE,SMERTER,SMIL,SMILE,SMILENE,SMILER,SMILET,SMYKKE,SMYKKENE,SMYKKER,SMYKKET,SMÅ,SMØR,SMØRE,SMØRENE,SMØRER,SMØRET,SMØRT,SMØRTE,SNAKKE,SNAKKER,SNAKKET,SNART,SNEGL,SNEGLEN,SNEGLENE,SNEGLER,SNEKKERE,SNILL,SNILLE,SNILLT,SNODIG,SNODIGE,SNOR,SNOREN,SNORENE,SNORER,SNU,SNUDD,SNUDDE,SNUR,SNUTE,SNUTEN,SNUTENE,SNUTER,SNØ,SNØEN,SNØER,SOFA,SOFAEN,SOFAENE,SOFAER,SOKK,SOKKEN,SOKKENE,SOKKER,SOL,SOLDAT,SOLDATEN,SOLDATER,SOLEN,SOLENE,SOLER,SOLGT,SOLGTE,SOMMER,SOMMEREN,SOMRE,SONE,SONEN,SONENE,SONER,SOPP,SOPPEN,SOPPENE,SOPPER,SORG,SORGEN,SORGENE,SORGER,SORTERE,SORTERER,SORTERET,SOT,SOV,SOVE,SOVER,SOVEROM,SOVET,SPA,SPADE,SPADEN,SPADENE,SPADER,SPANN,SPANNEN,SPANNENE,SPANNER,SPARE,SPARER,SPARET,SPARK,SPARKENE,SPARKET,SPASERE,SPASERER,SPASERET,SPEIL,SPEILENE,SPEILET,SPENNE,SPENNEN,SPENNENE,SPENNER,SPIKEREN,SPIKRE,SPIKRER,SPILL,SPILLE,SPILLENE,SPILLER,SPILLET,SPILLT,SPILLTE,SPIRE,SPIREN,SPIRENE,SPIRER,SPISE,SPISER,SPIST,SPISTE,SPOR,SPOREN,SPORENE,SPORER,SPORET,SPRANG,SPRANGET,SPRETTE,SPRETTER,SPRETTET,SPRINGE,SPRINGER,SPRUNGET,SPY,STABLE,STABLER,STABLET,STADION,STALL,STALLEN,STALLENE,STALLER,STAMME,STAMMEN,STAMMENE,STAMMER,STASJON,STATUE,STATUEN,STATUENE,STATUER,STAV,STAVEN,STAVENE,STAVER,STEIN,STEINEN,STEINENE,STEINER,STEKE,STEKER,STEKT,STEKTE,STEMME,STEMMEN,STEMMENE,STEMMER,STEMPEL,STEMPLE,STEMPLER,STEMPLET,STERK,STERKE,STERKT,STI,STIEN,STIENE,STIER,STIGE,STIGEN,STIGENE,STIGER,STIKK,STIKKEN,STIKKENE,STIKKER,STILLE,STILLER,STILLT,STILLTE,STJERNA,STJERNE,STJERNEN,STJERNER,STOD,STOFF,STOFFENE,STOFFET,STOKK,STOKKEN,STOKKENE,STOKKER,STOL,STOLEN,STOLENE,STOLER,STOPPE,STOPPER,STOPPET,STOR,STORE,STORM,STORMEN,STORMENE,STORMER,STORT,STRAKS,STRAND,STRANDA,STRANDEN,STREK,STREKEN,STREKENE,STREKER,STRENDER,STRIPE,STRIPEN,STRIPENE,STRIPER,STROFE,STROFEN,STROFENE,STROFER,STUBBE,STUBBEN,STUBBENE,STUBBER,STUDERE,STUDERER,STUDERT,STUDERTE,STUE,STUEN,STUENE,STUER,STYGG,STYGGE,STYGT,STYKKE,STYKKENE,STYKKER,STYKKET,STYRE,STYRER,STYRT,STYRTE,STÅ,STÅL,STÅLEN,STÅLENE,STÅLER,STÅR,STÅTT,STØVELEN,STØVLENE,STØVLER,SUG,SUK,SUKK,SUKKENE,SUKKET,SULTEN,SULTENT,SULTNE,SUM,SUNGET,SUNN,SUNNE,SUNT,SUR,SURE,SURT,SUS,SVAK,SVAKE,SVAKT,SVAMP,SVAMPEN,SVAMPENE,SVAMPER,SVAR,SVARENE,SVARET,SVART,SVARTE,SVELGE,SVELGER,SVELGET,SVINGE,SVINGER,SVINGET,SYD,SYDD,SYDDE,SYK,SYKKEL,SYKKELEN,SYKLE,SYKLENE,SYKLER,SYKLET,SYL,SYN,SYNGE,SYNGER,SYR,SYTTI,SÅR,SØKE,SØKER,SØKT,SØKTE,SØLV,SØLVEN,SØLVENE,SØLVER,SØSTER,SØSTERA,SØSTEREN,SØSTRE,SØSTRENE,SØYLE,SØYLEN,SØYLENE,SØYLER,TAK,TAKENE,TAKET,TAKK,TAKKE,TAKKEN,TAKKENE,TAKKER,TAKKET,TAKT,TAKTEN,TAKTENE,TAKTER,TALE,TALEN,TALENE,TALER,TALL,TALLEN,TALLENE,TALLER,TALLET,TALT,TALTE,TAM,TANG,TANGEN,TANGENE,TANGER,TANN,TANNEN,TANNENE,TANNER,TANNLEGE,TANTE,TANTEN,TANTENE,TANTER,TAP,TAPENE,TAPET,TAR,TAST,TASTEN,TASTENE,TASTER,TATT,TAU,TEGN,TEGNE,TEGNENE,TEGNER,TEGNET,TELLE,TELLER,TELLET,TELT,TELTEN,TELTENE,TELTER,TEMPEL,TEMPELET,TENKE,TENKER,TENKT,TENKTE,TENNE,TENNENE,TENNER,TENNT,TENNTE,TEPPE,TEPPENE,TEPPER,TEPPET,TERNING,TETT,TETTE,TID,TIGEREN,TIGRE,TIGRENE,TIGRER,TIKKE,TIKKER,TIKKET,TIL,TILBAKE,TILLEGG,TIME,TIMEN,TIMENE,TIMER,TIND,TINDEN,TINDENE,TINDER,TINN,TINNEN,TINNENE,TINNER,TIRSDAG,TIS,TJENE,TJENER,TJENET,TJUE,TOG,TOGEN,TOGENE,TOGER,TOGET,TOK,TOLV,TOM,TOMAT,TOMATEN,TOMATENE,TOMATER,TOMME,TOMT,TONE,TONEN,TONENE,TONER,TONN,TONNEN,TONNENE,TONNER,TORDEN,TORDENEN,TORG,TORGEN,TORGENE,TORGER,TORSDAG,TORSK,TORSKEN,TORSKENE,TORSKER,TORV,TORVEN,TORVENE,TORVER,TRAKK,TRAKT,TRAKTEN,TRAKTENE,TRAKTER,TRANG,TRANGE,TRANGT,TRAPP,TRAPPEN,TRAPPENE,TRAPPER,TRAVE,TRAVEL,TRAVELT,TRAVER,TRAVET,TRAVLE,TRE,TREET,TREKK,TREKKE,TREKKEN,TREKKENE,TREKKER,TRENE,TRENER,TRENT,TRENTE,TRETTEN,TRETTI,TRILLE,TRILLER,TRILLET,TRO,TRODD,TRODDE,TROMME,TROMMEN,TROMMENE,TROMMER,TROMPET,TROR,TRUKKET,TRYGG,TRYGGE,TRYGT,TRÅ,TRÅD,TRÅDEN,TRÅDENE,TRÅDER,TRÆR,TRØTT,TRØTTE,TUE,TULIPAN,TUNG,TUNGE,TUNGT,TUNNEL,TUNNELEN,TUNNELER,TUR,TUREN,TURENE,TURER,TUSEN,TUT,TUTEN,TUTENE,TUTER,TYDELIG,TYDELIGE,TYGGE,TYGGER,TYGGET,TYKK,TYKKE,TYKKT,TYNN,TYNNE,TYNT,TYR,TÅKA,TÅKE,TÅKEN,TÅL,TÅR,TÆR,TØFF,TØFFE,TØFT,TØM,TØMME,TØMMER,TØMMT,TØMMTE,TØR,TØRR,TØRRE,TØRRT,TØRST,TØRSTE,TØY,UGLE,UGLEN,UGLENE,UGLER,UKA,UKE,UKEN,UKENE,UKER,ULL,ULV,ULVEN,ULVENE,ULVER,UMULIG,UMULIGE,UNDER,UNG,URO,URT,UTE,UTSTYR,UTSTYRET,UVANLIG,UVANLIGE,VAKT,VAKTEN,VAKTENE,VAKTER,VALG,VALGENE,VALGET,VALGT,VALGTE,VANDRE,VANDRER,VANDRET,VANE,VANEN,VANENE,VANER,VANLIG,VANLIGE,VANN,VANNE,VANNENE,VANNER,VANNET,VANT,VAR,VARDE,VARDEN,VARDENE,VARDER,VARM,VARME,VARMT,VARSEL,VARSELET,VASK,VASKE,VASKEN,VASKENE,VASKER,VASKET,VED,VEG,VEGG,VEGGEN,VEGGENE,VEGGER,VEI,VEIEN,VEIENE,VEIER,VEL,VELDIG,VELGE,VELGER,VENDE,VENDER,VENDT,VENDTE,VENN,VENNEN,VENNENE,VENNER,VENNINNE,VENNLIG,VENNLIGE,VENTE,VENTER,VENTET,VENTIL,VENTILEN,VENTILER,VEPS,VEPSEN,VEPSENE,VEPSER,VERANDA,VERKSTED,VERRE,VERS,VERSEN,VERSENE,VERSER,VERST,VERT,VERTEN,VERTENE,VERTER,VET,VETT,VETTENE,VETTET,VIA,VID,VIDE,VIDT,VIFTE,VIFTEN,VIFTENE,VIFTER,VIK,VIKEN,VIKENE,VIKER,VIKTIG,VIKTIGE,VIL,VIN,VIND,VINDEN,VINDENE,VINDER,VINDU,VINDUENE,VINDUET,VINGE,VINGEN,VINGENE,VINGER,VINKE,VINKEL,VINKELEN,VINKELER,VINKER,VINKET,VINNE,VINNER,VINTER,VINTEREN,VINTRE,VINTRER,VIPPE,VIPPER,VIPPET,VIS,VISKELÆR,VISST,VOGN,VOGNEN,VOGNENE,VOGNER,VOM,VOND,VONDE,VONDT,VOTT,VOTTEN,VOTTENE,VOTTER,VRI,VUNNET,VÅR,VÅRE,VÅREN,VÅT,VÅTE,VÅTT,VÆRE,VÆRT,YRKE,YRKENE,YRKER,YRKET,YTE,ÅND,ÅTTE,ÅTTI,ÆRLIG,ÆRLIGE,ØDE,ØKE,ØKS,ØNSKE,ØNSKER,ØNSKET,ØRE,ØRENE,ØRER,ØRET,ØRN,ØRNEN,ØRNENE,ØRNER,ØSE,ØST,ØVE,ØVER,ØVET,ØYE,ØYET,ØYNE,ØYNENE".split(",");
+const ORDSETT = new Set(ORDLISTE);
+
+
+/* ============================================================
+   TILSTAND
+   ============================================================ */
+const oppsett = {
+  antallSpillere:3, niva:2, varighetMin:10, brukTid:true,
+  tidspress:true, lyd:true, dysleksi:false,
+  navn:[...STANDARDNAVN],
+};
+
+let S = null;              // aktiv spilltilstand
+let loop = null;           // requestAnimationFrame-id
+let sisteTikk = 0;
+
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const rettById = id => RETTER.find(r => r.id === id);
+const tilfeldig = arr => arr[Math.floor(Math.random() * arr.length)];
+const heltall = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+
+/* ============================================================
+   LYD — enkle toner via Web Audio, ingen lydfiler
+   ============================================================ */
+let lydkontekst = null;
+function tone(frekvens, lengde = 0.12, type = "sine", volum = 0.16) {
+  if (!oppsett.lyd) return;
+  try {
+    if (!lydkontekst) lydkontekst = new (window.AudioContext || window.webkitAudioContext)();
+    if (lydkontekst.state === "suspended") lydkontekst.resume();
+    const o = lydkontekst.createOscillator();
+    const g = lydkontekst.createGain();
+    o.type = type; o.frequency.value = frekvens;
+    g.gain.setValueAtTime(volum, lydkontekst.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, lydkontekst.currentTime + lengde);
+    o.connect(g); g.connect(lydkontekst.destination);
+    o.start(); o.stop(lydkontekst.currentTime + lengde);
+  } catch (e) { /* lyd er alltid valgfritt */ }
+}
+const lydTrykk    = () => tone(520, 0.06, "triangle", 0.10);
+const lydGyldig   = () => { tone(660, 0.09); setTimeout(() => tone(880, 0.11), 70); };
+const lydProduser = () => { tone(523, 0.09); setTimeout(() => tone(784, 0.14), 80); };
+const lydServert  = () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.14), i * 85)); };
+/* Ingen sur lyd ved feil — bare en nøytral, vennlig tone. */
+const lydNoytral  = () => tone(392, 0.13, "sine", 0.10);
+const lydGjestGar = () => { tone(392, 0.16); setTimeout(() => tone(330, 0.2), 120); };
+
+/* ============================================================
+   BOKSTAVBANK
+   ============================================================ */
+const erVokal = b => VOKALER.includes(b);
+
+function trekkBokstav() { return tilfeldig(BOKSTAVPOSE); }
+
+/* Teller opp bokstavene i en samling. */
+function tellBokstaver(bokstaver) {
+  const t = Object.create(null);
+  for (const b of bokstaver) t[b] = (t[b] || 0) + 1;
+  return t;
+}
+
+/* Kan ordet bygges av disse bokstavene? */
+function kanBygges(ord, tellinger) {
+  const brukt = Object.create(null);
+  for (const b of ord) {
+    brukt[b] = (brukt[b] || 0) + 1;
+    if (brukt[b] > (tellinger[b] || 0)) return false;
+  }
+  return true;
+}
+
+/* Finner ett gyldig ord banken faktisk kan lage — eller null. */
+function finnMuligOrd(bokstaver, minLengde) {
+  const t = tellBokstaver(bokstaver);
+  const treff = [];
+  for (const ord of ORDLISTE) {
+    if (ord.length < minLengde) continue;
+    if (kanBygges(ord, t)) {
+      treff.push(ord);
+      if (treff.length >= 40) break;   // nok til å velge et hyggelig hint
+    }
+  }
+  if (!treff.length) return null;
+  // Foretrekk et ord som ikke er det aller korteste, så hintet føles verdt noe
+  treff.sort((a, b) => b.length - a.length);
+  return treff[Math.floor(Math.random() * Math.min(treff.length, 8))];
+}
+
+/* Sørger for minst MIN_VOKALER vokaler i banken. */
+function sikreVokaler(bank) {
+  let vokaler = bank.filter(erVokal).length;
+  let vakt = 0;
+  while (vokaler < MIN_VOKALER && vakt++ < 60) {
+    const i = bank.findIndex(b => !erVokal(b));
+    if (i === -1) break;
+    let ny = trekkBokstav(), forsok = 0;
+    while (!erVokal(ny) && forsok++ < 40) ny = trekkBokstav();
+    if (!erVokal(ny)) ny = tilfeldig([...VOKALER].slice(0, 5));
+    bank[i] = ny;
+    vokaler++;
+  }
+  return bank;
+}
+
+/* Lager en bank som garantert kan bygge minst ett gyldig ord. */
+function lagBank(minLengde) {
+  for (let forsok = 0; forsok < 80; forsok++) {
+    const bank = sikreVokaler(Array.from({ length: BANKSTORRELSE }, trekkBokstav));
+    if (finnMuligOrd(bank, minLengde)) return bank;
+  }
+  // Nødløsning: bygg banken rundt et ord fra lista, og fyll opp resten.
+  const frø = tilfeldig(ORDLISTE.filter(o => o.length >= minLengde && o.length <= 6))
+            || ORDLISTE[0];
+  const bank = [...frø];
+  while (bank.length < BANKSTORRELSE) bank.push(trekkBokstav());
+  return sikreVokaler(bank.slice(0, BANKSTORRELSE));
+}
+
+/* Bytter ut bokstaver hos én elev til banken igjen har et gyldig ord. */
+function vareleveranse(sp) {
+  const minL = NIVAAER[S.niva].minLengde;
+  for (let runde = 0; runde < 40; runde++) {
+    // bytt de tre minst nyttige (ikke-valgte) rutene
+    const kandidater = sp.bank.map((b, i) => i).filter(i => !sp.valgt.includes(i));
+    for (let k = 0; k < 3 && kandidater.length; k++) {
+      const i = kandidater.splice(Math.floor(Math.random() * kandidater.length), 1)[0];
+      sp.bank[i] = trekkBokstav();
+      sp.ferske.add(i);
+    }
+    sikreVokaler(sp.bank);
+    if (finnMuligOrd(sp.bank, minL)) return true;
+  }
+  // Siste utvei: helt ny bank
+  sp.bank = lagBank(minL);
+  sp.valgt = [];
+  for (let i = 0; i < BANKSTORRELSE; i++) sp.ferske.add(i);
+  return true;
+}
+
+/* Sjekker alle elever og sender vareleveranse til dem som står fast. */
+function sjekkBlindvei(varsle = true) {
+  const minL = NIVAAER[S.niva].minLengde;
+  S.spillere.forEach((sp, i) => {
+    if (finnMuligOrd(sp.bank, minL)) return;
+    vareleveranse(sp);
+    tegnStasjon(i);
+    if (varsle) visStasjonsmelding(i, "Vareleveranse! Nye bokstaver til deg.", true);
+  });
+}
+
+/* ============================================================
+   ORD OG UTBYTTE
+   ============================================================ */
+function ordAv(sp) { return sp.valgt.map(i => sp.bank[i]).join(""); }
+
+function utbytteFor(lengde) {
+  if (lengde >= 7) return 3;
+  if (lengde >= 5) return 2;
+  if (lengde >= 3) return 1;
+  return 0;
+}
+
+function ordErGyldig(sp) {
+  const ord = ordAv(sp);
+  return ord.length >= NIVAAER[S.niva].minLengde && ORDSETT.has(ord);
+}
+
+
+/* ============================================================
+   STASJONENE — én per elev, helt uavhengige av hverandre.
+   Alle trykk går via pointerdown, aldri click/mousedown.
+   ============================================================ */
+
+function byggStasjoner() {
+  const boks = $("#stasjoner");
+  boks.innerHTML = "";
+  boks.style.gridTemplateColumns = `repeat(${S.spillere.length}, minmax(0,1fr))`;
+
+  S.spillere.forEach((sp, i) => {
+    const el = document.createElement("div");
+    el.className = "stasjon";
+    el.style.setProperty("--sf", sp.farge);
+    el.dataset.spiller = i;
+    el.innerHTML = `
+      <div class="stasjonshode">
+        <span class="spillermerke">${sp.symbol}</span>
+        <span class="spillernavn"></span>
+        <span class="teller"></span>
+      </div>
+      <div class="rettvelger" data-rolle="rettvelger"></div>
+      <div class="rutenettboks"><div class="rutenett" data-rolle="rutenett"></div></div>
+      <div class="ordrad">
+        <div class="ordfelt" data-rolle="ordfelt"></div>
+        <span class="utbytte" data-rolle="utbytte">—</span>
+        <button class="knapp lag" data-rolle="lag">LAG</button>
+      </div>
+      <div class="smaaknapper">
+        <button class="knapp" data-rolle="tom">Tøm</button>
+        <button class="knapp" data-rolle="bytt">Bytt bokstav</button>
+        <button class="knapp" data-rolle="send">Send bokstav</button>
+        <button class="knapp" data-rolle="hint">Hint</button>
+      </div>
+      <div class="stasjonsmelding" data-rolle="melding"></div>`;
+
+    // Rettvelger
+    const rv = el.querySelector('[data-rolle="rettvelger"]');
+    RETTER.forEach(r => {
+      const b = document.createElement("button");
+      b.className = "rettknapp";
+      b.dataset.rett = r.id;
+      b.setAttribute("aria-pressed", "false");
+      b.setAttribute("aria-label", r.navn);
+      b.title = r.navn;
+      b.innerHTML = `<img src="${r.bilde}" alt="${r.navn}">`;
+      rv.appendChild(b);
+    });
+
+    // Bokstavrutenett
+    const rn = el.querySelector('[data-rolle="rutenett"]');
+    for (let k = 0; k < BANKSTORRELSE; k++) {
+      const b = document.createElement("button");
+      b.className = "rute";
+      b.dataset.rute = k;
+      rn.appendChild(b);
+    }
+
+    boks.appendChild(el);
+  });
+
+  // Én felles lytter for hele stasjonsområdet — pointerdown gir ekte multitouch.
+  boks.addEventListener("pointerdown", haandterTrykk, { passive:true });
+
+  S.spillere.forEach((_, i) => tegnStasjon(i));
+}
+
+function stasjonEl(i) { return $(`.stasjon[data-spiller="${i}"]`); }
+
+function haandterTrykk(ev) {
+  const stasjon = ev.target.closest(".stasjon");
+  if (!stasjon) return;
+  const i = Number(stasjon.dataset.spiller);
+  const sp = S.spillere[i];
+  if (!sp || S.ferdig) return;
+
+  const rute = ev.target.closest(".rute");
+  if (rute) { trykkBokstav(i, Number(rute.dataset.rute)); return; }
+
+  const rett = ev.target.closest(".rettknapp");
+  if (rett) { velgRett(i, rett.dataset.rett); return; }
+
+  const knapp = ev.target.closest("[data-rolle]");
+  if (!knapp) return;
+  switch (knapp.dataset.rolle) {
+    case "lag":  produser(i); break;
+    case "tom":  tomOrd(i); break;
+    case "bytt": byttBokstav(i); break;
+    case "send": sendBokstav(i); break;
+    case "hint": visHint(i); break;
+  }
+}
+
+/* ---------- Handlinger ---------- */
+
+function trykkBokstav(i, rute) {
+  const sp = S.spillere[i];
+  const alt = sp.valgt.indexOf(rute);
+  if (alt !== -1) {
+    // Trykk på en markert rute igjen fjerner bokstaven fra ordet.
+    sp.valgt.splice(alt, 1);
+  } else {
+    if (sp.valgt.length >= 8) { visStasjonsmelding(i, "Ordet kan være opptil 8 bokstaver."); return; }
+    sp.valgt.push(rute);
+  }
+  lydTrykk();
+  const varGyldig = sp.sistGyldig;
+  tegnStasjon(i);
+  if (!varGyldig && sp.sistGyldig) lydGyldig();
+}
+
+function velgRett(i, rettId) {
+  const sp = S.spillere[i];
+  sp.valgtRett = sp.valgtRett === rettId ? null : rettId;
+  lydTrykk();
+  tegnStasjon(i);
+}
+
+function tomOrd(i) {
+  const sp = S.spillere[i];
+  if (!sp.valgt.length) return;
+  sp.valgt = [];
+  lydTrykk();
+  tegnStasjon(i);
+}
+
+function byttBokstav(i) {
+  const sp = S.spillere[i];
+  const naa = performance.now();
+  if (naa < sp.byttKlar) {
+    const igjen = Math.ceil((sp.byttKlar - naa) / 1000);
+    visStasjonsmelding(i, `Bytt er klar om ${igjen} sekund${igjen === 1 ? "" : "er"}.`);
+    return;
+  }
+  if (sp.valgt.length !== 1) {
+    visStasjonsmelding(i, "Trykk på én bokstav først, så byttes den.");
+    return;
+  }
+  const rute = sp.valgt[0];
+  sp.bank[rute] = trekkBokstav();
+  sikreVokaler(sp.bank);
+  sp.ferske.add(rute);
+  sp.valgt = [];
+  sp.byttKlar = naa + BYTTE_NEDKJOLING;
+  lydTrykk();
+  tegnStasjon(i);
+  sjekkBlindvei();
+}
+
+/* Skyver én bokstav over til neste medspiller. */
+function sendBokstav(i) {
+  const sp = S.spillere[i];
+  if (S.spillere.length < 2) return;
+  if (sp.sendteIgjen <= 0) { visStasjonsmelding(i, "Du har sendt tre bokstaver i dag."); return; }
+  if (sp.valgt.length !== 1) { visStasjonsmelding(i, "Trykk på én bokstav først, så sendes den."); return; }
+
+  const rute = sp.valgt[0];
+  const bokstav = sp.bank[rute];
+  const mottakerNr = (i + 1) % S.spillere.length;
+  const mottaker = S.spillere[mottakerNr];
+
+  // Mottakeren får bokstaven i en rute som ikke er i bruk akkurat nå.
+  const ledige = mottaker.bank.map((_, k) => k).filter(k => !mottaker.valgt.includes(k));
+  const maal = ledige.length ? tilfeldig(ledige) : heltall(0, BANKSTORRELSE - 1);
+
+  animerSendtBokstav(i, mottakerNr, rute, maal, bokstav);
+
+  mottaker.bank[maal] = bokstav;
+  mottaker.ferske.add(maal);
+  sp.bank[rute] = trekkBokstav();
+  sp.ferske.add(rute);
+  sp.valgt = [];
+  sp.sendteIgjen--;
+
+  sikreVokaler(sp.bank);
+  sikreVokaler(mottaker.bank);
+  tone(700, 0.09); setTimeout(() => tone(900, 0.11), 80);
+
+  tegnStasjon(i);
+  tegnStasjon(mottakerNr);
+  visStasjonsmelding(mottakerNr, `${bokstav} kom fra ${sp.navn}!`, true);
+  sjekkBlindvei();
+}
+
+function visHint(i) {
+  const sp = S.spillere[i];
+  const modus = NIVAAER[S.niva].hint;
+  if (modus === "ingen") { visStasjonsmelding(i, "På dette nivået klarer dere dere uten hint."); return; }
+  if (modus === "koster") {
+    if (S.mynter < HINTPRIS) { visStasjonsmelding(i, `Hint koster ${HINTPRIS} mynter. Laget har ikke nok ennå.`); return; }
+    S.mynter -= HINTPRIS;
+    tegnTopp();
+  }
+  const ord = finnMuligOrd(sp.bank, NIVAAER[S.niva].minLengde);
+  visStasjonsmelding(i, ord ? `Du kan for eksempel lage ${ord}` : "Ny leveranse er på vei!", true);
+  if (!ord) { vareleveranse(sp); tegnStasjon(i); }
+}
+
+/* ---------- Produksjon ---------- */
+function produser(i) {
+  const sp = S.spillere[i];
+  if (!sp.valgtRett) { visStasjonsmelding(i, "Velg først hvilken rett du lager."); return; }
+
+  const ord = ordAv(sp);
+  const minL = NIVAAER[S.niva].minLengde;
+
+  if (ord.length < minL) {
+    visStasjonsmelding(i, `Ordet må ha minst ${minL} bokstaver.`);
+    lydNoytral();
+    return;
+  }
+  if (!ORDSETT.has(ord)) {
+    visStasjonsmelding(i, "Det ordet kjenner vi ikke igjen. Prøv et annet!");
+    lydNoytral();
+    return;
+  }
+
+  const antall = utbytteFor(ord.length);
+  S.lager[sp.valgtRett] += antall;
+  S.produsert[sp.valgtRett] += antall;
+  sp.ord.push(ord);
+  S.alleOrd.push(ord);
+
+  animerTilDisken(i, sp.valgtRett, antall);
+  lydProduser();
+
+  // Brukte bokstaver erstattes med nye, som glir inn i de samme rutene.
+  const brukte = [...sp.valgt];
+  brukte.forEach(r => { sp.bank[r] = trekkBokstav(); sp.ferske.add(r); });
+  sp.valgt = [];
+  sikreVokaler(sp.bank);
+
+  visStasjonsmelding(i, `${ord} — ${antall} porsjon${antall === 1 ? "" : "er"}!`, true);
+  tegnStasjon(i);
+  tegnLager();
+  tegnGjester();
+  sjekkBlindvei();
+}
+
+/* ---------- Tegning ---------- */
+function tegnStasjon(i) {
+  const sp = S.spillere[i];
+  const el = stasjonEl(i);
+  if (!el) return;
+
+  el.querySelector(".spillernavn").textContent = sp.navn;
+  el.querySelector(".teller").textContent =
+    `${sp.ord.length} ord · ${sp.sendteIgjen} sendinger`;
+
+  // Rettvelger
+  el.querySelectorAll(".rettknapp").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.rett === sp.valgtRett));
+  });
+
+  // Rutenett
+  el.querySelectorAll(".rute").forEach((b, k) => {
+    b.textContent = sp.bank[k];
+    const plass = sp.valgt.indexOf(k);
+    b.classList.toggle("valgt", plass !== -1);
+    b.setAttribute("aria-label",
+      plass === -1 ? `Bokstav ${sp.bank[k]}` : `Bokstav ${sp.bank[k]}, valgt som nummer ${plass + 1}`);
+    if (sp.ferske.has(k)) {
+      b.classList.remove("ny"); void b.offsetWidth; b.classList.add("ny");
+    }
+  });
+  sp.ferske.clear();
+
+  // Ordfelt
+  const ord = ordAv(sp);
+  const felt = el.querySelector('[data-rolle="ordfelt"]');
+  felt.textContent = ord || "—";
+  if (!ord) felt.classList.add("tom-strek"); else felt.classList.remove("tom-strek");
+
+  const gyldig = ordErGyldig(sp);
+  sp.sistGyldig = gyldig;
+  felt.classList.toggle("gyldig", gyldig);
+
+  // Utbytte
+  const utb = el.querySelector('[data-rolle="utbytte"]');
+  const antall = ord.length >= NIVAAER[S.niva].minLengde ? utbytteFor(ord.length) : 0;
+  utb.textContent = antall ? `+${antall}` : "—";
+  utb.classList.toggle("av", !antall);
+
+  // Lag-knapp
+  const lag = el.querySelector('[data-rolle="lag"]');
+  const klar = gyldig && !!sp.valgtRett;
+  lag.classList.toggle("klar", klar);
+  lag.disabled = !sp.valgtRett;
+
+  // Hint-knapp følger nivået
+  const hint = el.querySelector('[data-rolle="hint"]');
+  hint.style.display = NIVAAER[S.niva].hint === "ingen" ? "none" : "";
+  hint.textContent = NIVAAER[S.niva].hint === "koster" ? `Hint (${HINTPRIS})` : "Hint";
+}
+
+let meldingsTimere = {};
+function visStasjonsmelding(i, tekst, god = false) {
+  const el = stasjonEl(i);
+  if (!el) return;
+  const m = el.querySelector('[data-rolle="melding"]');
+  m.textContent = tekst;
+  m.classList.toggle("god", god);
+  m.classList.add("vis");
+  clearTimeout(meldingsTimere[i]);
+  meldingsTimere[i] = setTimeout(() => m.classList.remove("vis"), 2200);
+}
+
+/* ---------- Animasjoner ---------- */
+function animerTilDisken(i, rettId, antall) {
+  const el = stasjonEl(i);
+  const celle = $(`.lagercelle[data-rett="${rettId}"]`);
+  if (!el || !celle) return;
+  const fra = el.getBoundingClientRect();
+  const til = celle.getBoundingClientRect();
+  const rett = rettById(rettId);
+
+  for (let k = 0; k < antall; k++) {
+    const f = document.createElement("div");
+    f.className = "flyver";
+    f.innerHTML = `<img src="${rett.bilde}" alt="">`;
+    f.style.left = (fra.left + fra.width / 2) + "px";
+    f.style.top  = (fra.top + fra.height * 0.35) + "px";
+    f.style.transform = "translate(-50%,-50%) scale(.6)";
+    document.body.appendChild(f);
+    const dx = (til.left + til.width / 2) - (fra.left + fra.width / 2);
+    const dy = (til.top + til.height / 2) - (fra.top + fra.height * 0.35);
+    requestAnimationFrame(() => {
+      f.style.transitionDelay = (k * 110) + "ms";
+      f.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.05)`;
+      f.style.opacity = "0";
+    });
+    setTimeout(() => f.remove(), 900 + k * 110);
+  }
+}
+
+function animerSendtBokstav(fraNr, tilNr, fraRute, tilRute, bokstav) {
+  const a = stasjonEl(fraNr)?.querySelector(`.rute[data-rute="${fraRute}"]`);
+  const b = stasjonEl(tilNr)?.querySelector(`.rute[data-rute="${tilRute}"]`);
+  if (!a || !b) return;
+  const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+  const el = document.createElement("div");
+  el.className = "sendtbokstav";
+  el.textContent = bokstav;
+  el.style.left = ra.left + "px";
+  el.style.top  = ra.top + "px";
+  document.body.appendChild(el);
+  requestAnimationFrame(() => {
+    el.style.transform = `translate(${rb.left - ra.left}px, ${rb.top - ra.top}px) scale(1.1)`;
+  });
+  setTimeout(() => el.remove(), 780);
+}
+
+
+/* ============================================================
+   GJESTENE
+   ============================================================ */
+function maxGjester() { return S.spillere.length <= 2 ? 3 : 4; }
+
+function lagBestilling() {
+  const n = NIVAAER[S.niva];
+  const antallRetter = heltall(1, n.maxRetter);
+  const valgte = [...RETTER].sort(() => Math.random() - 0.5).slice(0, antallRetter);
+  return valgte.map(r => ({ rett:r.id, antall: heltall(1, n.maxAntall) }));
+}
+
+function nyGjest() {
+  if (S.gjester.filter(g => g).length >= maxGjester()) return;
+  if (S.ankomne >= S.malGjester) return;
+
+  const brukte = S.gjester.filter(g => g).map(g => g.monster.navn);
+  const ledige = MONSTRE.filter(m => !brukte.includes(m.navn));
+  const monster = tilfeldig(ledige.length ? ledige : MONSTRE);
+  const onsker = lagBestilling();
+  const totalt = onsker.reduce((s, o) => s + o.antall, 0);
+  const talmod = NIVAAER[S.niva].talmodBase + totalt * 22;
+
+  const plass = S.gjester.findIndex(g => !g);
+  const gjest = {
+    id: ++S.gjestTeller, monster, onsker,
+    talmod, maxTalmod: talmod, tilstand:"venter",
+  };
+  if (plass === -1) S.gjester.push(gjest); else S.gjester[plass] = gjest;
+
+  S.ankomne++;
+  tone(660, 0.1); setTimeout(() => tone(880, 0.1), 90);
+  tegnGjester(gjest.id);
+}
+
+function gjestGaar(gjest, fornoyd) {
+  const i = S.gjester.indexOf(gjest);
+  if (i === -1) return;
+  const el = $(`.gjest[data-gjest="${gjest.id}"]`);
+  if (el) {
+    if (fornoyd) el.classList.add("jubler");
+    setTimeout(() => el.classList.add("drar"), fornoyd ? 500 : 0);
+  }
+  gjest.tilstand = "drar";
+  setTimeout(() => {
+    const k = S.gjester.indexOf(gjest);
+    if (k !== -1) S.gjester[k] = null;
+    tegnGjester();
+    if (!S.ferdig) setTimeout(nyGjest, heltall(600, 1800));
+  }, fornoyd ? 1400 : 900);
+}
+
+/* Hvor mye av bestillingen dekker lageret akkurat nå? */
+function dekning(gjest) {
+  return gjest.onsker.map(o => ({
+    ...o, har: Math.min(S.lager[o.rett], o.antall), nok: S.lager[o.rett] >= o.antall,
+  }));
+}
+const kanServere = gjest => dekning(gjest).every(d => d.nok);
+
+function tegnGjester(nyId = null) {
+  const sone = $("#gjestesone");
+  const plasser = maxGjester();
+  while (S.gjester.length < plasser) S.gjester.push(null);
+
+  // Fjern kort som ikke lenger hører til
+  [...sone.querySelectorAll(".gjest")].forEach(el => {
+    const id = Number(el.dataset.gjest);
+    if (!S.gjester.some(g => g && g.id === id)) el.remove();
+  });
+
+  S.gjester.forEach(gjest => {
+    if (!gjest) return;
+    let el = sone.querySelector(`.gjest[data-gjest="${gjest.id}"]`);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "gjest" + (gjest.id === nyId ? " kommer" : "");
+      el.dataset.gjest = gjest.id;
+      el.innerHTML = `
+        <div class="boble trykkbar" data-rolle="boble"></div>
+        <div class="monsterboks"><img src="${gjest.monster.bilde}" alt="${gjest.monster.navn}"></div>
+        <div class="gjestnavn">${gjest.monster.navn}</div>
+        <div class="talmod"><i></i></div>`;
+      sone.appendChild(el);
+    }
+
+    // Bestillingsboble
+    const boble = el.querySelector('[data-rolle="boble"]');
+    const d = dekning(gjest);
+    boble.innerHTML = d.map(o => {
+      const r = rettById(o.rett);
+      return `<span class="onske ${o.nok ? "dekket" : ""}">
+        <span class="ant">${o.antall}×</span><img src="${r.bilde}" alt="${r.navn}"></span>`;
+    }).join("");
+    boble.setAttribute("aria-label",
+      `Bestilling fra ${gjest.monster.navn}: ` +
+      d.map(o => `${o.antall} ${rettById(o.rett).navn}`).join(", "));
+
+    // Tålmodighet
+    const stolpe = el.querySelector(".talmod");
+    const fyll = el.querySelector(".talmod i");
+    if (S.tidspress) {
+      stolpe.style.display = "";
+      const del = Math.max(0, gjest.talmod / gjest.maxTalmod);
+      fyll.style.transform = `scaleX(${del})`;
+      stolpe.classList.toggle("middels", del <= 0.55 && del > 0.28);
+      stolpe.classList.toggle("lav", del <= 0.28);
+    } else {
+      stolpe.style.display = "none";
+    }
+  });
+
+  // Fyll ut med usynlige plassholdere så gjestene ikke hopper sidelengs
+  const synlige = sone.querySelectorAll(".gjest:not(.plass)").length;
+  sone.querySelectorAll(".gjest.plass").forEach(e => e.remove());
+  for (let k = synlige; k < plasser; k++) {
+    const p = document.createElement("div");
+    p.className = "gjest plass tom";
+    sone.appendChild(p);
+  }
+}
+
+/* ============================================================
+   SERVERING — hvem som helst kan servere
+   ============================================================ */
+let aapenGjestId = null;
+
+function aapneServering(gjestId) {
+  const gjest = S.gjester.find(g => g && g.id === gjestId);
+  if (!gjest || gjest.tilstand !== "venter") return;
+  aapenGjestId = gjestId;
+  const d = dekning(gjest);
+  const klar = d.every(x => x.nok);
+
+  $("#dialog").innerHTML = `
+    <h3>${gjest.monster.navn} har bestilt</h3>
+    <div class="dialoglinjer">
+      ${d.map(o => {
+        const r = rettById(o.rett);
+        return `<div class="dlinje ${o.nok ? "ok" : "mangler"}">
+          <img src="${r.bilde}" alt="">
+          <span class="navn">${o.antall} × ${r.navn}</span>
+          <span class="status">${o.nok ? `lageret har ${S.lager[o.rett]} ✓`
+                                       : `mangler ${o.antall - S.lager[o.rett]}`}</span>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="dialogknapper">
+      <button class="knapp" data-dialog="avbryt">Avbryt</button>
+      <button class="knapp server" data-dialog="server" ${klar ? "" : "disabled"}>Server</button>
+    </div>`;
+  $("#dialoglag").classList.add("vis");
+}
+
+function lukkServering() {
+  $("#dialoglag").classList.remove("vis");
+  aapenGjestId = null;
+}
+
+function utforServering() {
+  const gjest = S.gjester.find(g => g && g.id === aapenGjestId);
+  if (!gjest) { lukkServering(); return; }
+
+  const d = dekning(gjest);
+  const mangler = d.find(x => !x.nok);
+  if (mangler) {
+    // Ingen straff — bare en rolig beskjed.
+    const r = rettById(mangler.rett);
+    visToast(`Vi mangler ${mangler.antall - S.lager[mangler.rett]} × ${r.navn}. Prøv igjen!`);
+    lydNoytral();
+    lukkServering();
+    return;
+  }
+
+  // Trekk fra lageret
+  gjest.onsker.forEach(o => { S.lager[o.rett] -= o.antall; });
+  const porsjoner = gjest.onsker.reduce((s, o) => s + o.antall, 0);
+  const mynter = porsjoner * NIVAAER[S.niva].myntPer;
+  S.mynter += mynter;
+  S.servert++;
+
+  // De andre gjestene puster litt lettet ut
+  S.gjester.forEach(g => {
+    if (g && g !== gjest && g.tilstand === "venter") {
+      g.talmod = Math.min(g.maxTalmod, g.talmod + g.maxTalmod * 0.16);
+    }
+  });
+
+  lydServert();
+  visToast(`${gjest.monster.navn} er fornøyd! +${mynter} mynter`, "god");
+  lukkServering();
+  gjestGaar(gjest, true);
+  tegnLager();
+  tegnTopp();
+  sjekkMilepael();
+  if (S.servert >= S.malGjester) setTimeout(() => avsluttVakt("mal"), 1500);
+}
+
+function sjekkMilepael() {
+  const milepaeler = [5, 10, 15, 20, 25];
+  if (milepaeler.includes(S.servert)) {
+    visToast(`⭐ ${S.servert} gjester servert — dere er et godt lag!`, "god");
+  }
+}
+
+/* ============================================================
+   LAGER OG TOPPLINJE
+   ============================================================ */
+function byggLager() {
+  const rad = $("#lagerlinje");
+  rad.querySelectorAll(".lagercelle").forEach(e => e.remove());
+  RETTER.forEach(r => {
+    const c = document.createElement("div");
+    c.className = "lagercelle";
+    c.dataset.rett = r.id;
+    c.innerHTML = `<img src="${r.bilde}" alt="${r.navn}" title="${r.navn}">
+                   <span class="tall">0</span>`;
+    rad.appendChild(c);
+  });
+}
+
+function tegnLager() {
+  RETTER.forEach(r => {
+    const c = $(`.lagercelle[data-rett="${r.id}"]`);
+    if (!c) return;
+    const tall = c.querySelector(".tall");
+    const gammelt = Number(tall.textContent);
+    const nytt = S.lager[r.id];
+    if (nytt !== gammelt) {
+      tall.textContent = nytt;
+      c.classList.remove("opp", "ned"); void c.offsetWidth;
+      c.classList.add(nytt > gammelt ? "opp" : "ned");
+    }
+    c.classList.toggle("tomt", nytt === 0);
+    c.setAttribute("aria-label", `${r.navn}: ${nytt} på lager`);
+  });
+}
+
+function tegnTopp() {
+  $("#visMynter").textContent = S.mynter;
+  $("#visGjester").textContent = `${S.servert} / ${S.malGjester}`;
+
+  const h = $("#visHjerter");
+  if (S.tidspress) {
+    h.style.display = "";
+    h.innerHTML = [0, 1, 2].map(k => `
+      <svg class="hjerte ${k < S.hjerter ? "" : "borte"}" viewBox="0 0 24 24"
+           aria-hidden="true"><path fill="#ef4444"
+        d="M12 21s-7.5-4.9-9.5-9A5.3 5.3 0 0 1 12 6.5 5.3 5.3 0 0 1 21.5 12c-2 4.1-9.5 9-9.5 9z"/></svg>`).join("");
+    h.setAttribute("aria-label", `${S.hjerter} av 3 hjerter igjen`);
+  } else {
+    h.style.display = "none";
+  }
+
+  const tid = $("#visTid");
+  if (S.brukTid) {
+    const s = Math.max(0, Math.ceil(S.tidIgjen));
+    tid.textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    tid.classList.toggle("lite-tid", s <= 60);
+  } else {
+    tid.textContent = `${S.ankomne} gjester inne`;
+  }
+}
+
+let toastTimer = null;
+function visToast(tekst, type = "") {
+  const t = $("#toast");
+  t.textContent = tekst;
+  t.className = "toast vis " + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("vis"), 2600);
+}
+
+
+/* ============================================================
+   VAKTA — start, løkke og slutt
+   ============================================================ */
+function startVakt() {
+  const antall = oppsett.antallSpillere;
+  const minL = NIVAAER[oppsett.niva].minLengde;
+
+  S = {
+    niva: oppsett.niva,
+    tidspress: oppsett.tidspress,
+    brukTid: oppsett.brukTid,
+    tidIgjen: oppsett.varighetMin * 60,
+    malGjester: oppsett.brukTid ? 99 : oppsett.varighetMin,
+    mynter: 0, hjerter: 3, servert: 0, ankomne: 0, gjestTeller: 0,
+    lager: Object.fromEntries(RETTER.map(r => [r.id, 0])),
+    produsert: Object.fromEntries(RETTER.map(r => [r.id, 0])),
+    gjester: [], alleOrd: [], ferdig: false,
+    spillere: Array.from({ length: antall }, (_, i) => ({
+      navn: (oppsett.navn[i] || "").trim() || STANDARDNAVN[i],
+      farge: SPILLERFARGER[i].farge,
+      symbol: SPILLERFARGER[i].symbol,
+      bank: lagBank(minL),
+      valgt: [], valgtRett: null, ord: [],
+      sendteIgjen: MAX_SENDTE, byttKlar: 0,
+      ferske: new Set(), sistGyldig: false,
+    })),
+  };
+  if (S.brukTid) S.malGjester = 12;
+
+  visSkjerm("spill");
+  byggLyslenke();
+  byggLager();
+  byggStasjoner();
+  tegnLager();
+  tegnTopp();
+  S.gjester = [];
+  tegnGjester();
+
+  // Første gjester kommer inn med litt mellomrom
+  nyGjest();
+  setTimeout(nyGjest, 2600);
+  setTimeout(nyGjest, 5600);
+
+  sisteTikk = performance.now();
+  cancelAnimationFrame(loop);
+  loop = requestAnimationFrame(tikk);
+}
+
+function byggLyslenke() {
+  $("#lyslenke").innerHTML = Array.from({ length: 14 }, (_, i) =>
+    `<span class="paere" style="animation-delay:${(i * 0.24).toFixed(2)}s"></span>`).join("");
+}
+
+function tikk(naa) {
+  if (!S || S.ferdig) return;
+  const dt = Math.min(0.25, (naa - sisteTikk) / 1000);
+  sisteTikk = naa;
+
+  if (S.brukTid) {
+    S.tidIgjen -= dt;
+    if (S.tidIgjen <= 0) { avsluttVakt("tid"); return; }
+  }
+
+  if (S.tidspress) {
+    let endret = false;
+    S.gjester.forEach(g => {
+      if (!g || g.tilstand !== "venter") return;
+      g.talmod -= dt;
+      endret = true;
+      if (g.talmod <= 0) {
+        g.tilstand = "gikk";
+        S.hjerter--;
+        lydGjestGar();
+        visToast(`${g.monster.navn} måtte dessverre gå. Vi tar den neste sammen!`, "hjerte");
+        tegnTopp();
+        gjestGaar(g, false);
+        if (S.hjerter <= 0) { setTimeout(() => avsluttVakt("hjerter"), 1200); }
+      }
+    });
+    if (endret) tegnTalmod();
+  }
+
+  tegnTopp();
+  loop = requestAnimationFrame(tikk);
+}
+
+/* Egen, lett oppdatering av bare tålmodighetsstolpene. */
+function tegnTalmod() {
+  S.gjester.forEach(g => {
+    if (!g) return;
+    const el = $(`.gjest[data-gjest="${g.id}"] .talmod`);
+    if (!el) return;
+    const del = Math.max(0, g.talmod / g.maxTalmod);
+    el.querySelector("i").style.transform = `scaleX(${del})`;
+    el.classList.toggle("middels", del <= 0.55 && del > 0.28);
+    el.classList.toggle("lav", del <= 0.28);
+  });
+}
+
+function avsluttVakt(grunn) {
+  if (S.ferdig) return;
+  S.ferdig = true;
+  cancelAnimationFrame(loop);
+  lukkServering();
+  visSluttskjerm(grunn);
+}
+
+/* ============================================================
+   SLUTTSKJERM
+   ============================================================ */
+function visSluttskjerm(grunn) {
+  const antallOrd = S.alleOrd.length;
+  const beste = S.alleOrd.slice().sort((a, b) => b.length - a.length)[0] || "—";
+  const totaltProdusert = Object.values(S.produsert).reduce((a, b) => a + b, 0);
+
+  $("#sluttTittel").textContent =
+    grunn === "hjerter" ? "Kafeen stenger for i dag" :
+    grunn === "mal"     ? "Dere klarte hele vakta!" : "Vakta er over!";
+
+  $("#sluttSkryt").textContent =
+    `Dere klarte ${S.servert} gjest${S.servert === 1 ? "" : "er"} sammen, ` +
+    `og lagde ${antallOrd} ord på kjøkkenet.`;
+
+  $("#sluttTall").innerHTML = `
+    <div><span class="tall">${S.servert}</span><span class="merkelapp">gjester servert</span></div>
+    <div><span class="tall">${S.mynter}</span><span class="merkelapp">mynter i felles pott</span></div>
+    <div><span class="tall">${totaltProdusert}</span><span class="merkelapp">porsjoner laget</span></div>
+    <div><span class="tall">${antallOrd}</span><span class="merkelapp">ord bygget</span></div>`;
+
+  $("#sluttProduksjon").innerHTML = RETTER.map(r => `
+    <div><img src="${r.bilde}" alt="">
+      <span class="tall">${S.produsert[r.id]}</span>
+      <span class="merkelapp">${r.navn}</span></div>`).join("");
+
+  $("#sluttBesteOrd").textContent = beste;
+
+  $("#sluttOrd").innerHTML = S.spillere.map(sp => `
+    <div class="ordkolonne" style="--sf:${sp.farge}">
+      <h3>${sp.symbol} · ${sp.navn} — ${sp.ord.length} ord</h3>
+      <div class="ordsky">${
+        sp.ord.length ? sp.ord.map(o => `<span>${o}</span>`).join("")
+                      : '<span class="ingen">Ingen ord denne vakta.</span>'}</div>
+    </div>`).join("");
+
+  visSkjerm("slutt");
+  if (grunn !== "hjerter") [523, 659, 784, 1047, 1319].forEach((f, i) =>
+    setTimeout(() => tone(f, 0.18), i * 130));
+}
+
+/* ============================================================
+   STARTSKJERM — lærerinnstillinger
+   ============================================================ */
+function lagValg(container, valg, aktivTest, velg) {
+  const c = $(container);
+  c.innerHTML = "";
+  valg.forEach(v => {
+    const b = document.createElement("button");
+    b.className = "valg";
+    b.innerHTML = v.under ? `${v.merke}<small>${v.under}</small>` : v.merke;
+    b.setAttribute("aria-pressed", String(aktivTest(v)));
+    b.addEventListener("pointerdown", () => {
+      velg(v);
+      tegnStartskjerm();
+      tone(600, 0.05, "triangle", 0.09);
+    }, { passive:true });
+    c.appendChild(b);
+  });
+}
+
+function tegnStartskjerm() {
+  lagValg("#velgAntall",
+    [2, 3, 4].map(n => ({ merke:String(n), under:"elever", n })),
+    v => oppsett.antallSpillere === v.n,
+    v => oppsett.antallSpillere = v.n);
+
+  lagValg("#velgNiva", [
+    { merke:"1", under:"1.–2. trinn", n:1 },
+    { merke:"2", under:"3.–4. trinn", n:2 },
+    { merke:"3", under:"5.–7. trinn", n:3 },
+  ], v => oppsett.niva === v.n, v => {
+    oppsett.niva = v.n;
+    if (v.n === 1) oppsett.tidspress = false;
+  });
+
+  lagValg("#velgVarighet", [
+    { merke:"5", under:"minutter", tid:true, verdi:5 },
+    { merke:"10", under:"minutter", tid:true, verdi:10 },
+    { merke:"15", under:"minutter", tid:true, verdi:15 },
+    { merke:"12", under:"gjester", tid:false, verdi:12 },
+  ], v => oppsett.brukTid === v.tid && oppsett.varighetMin === v.verdi,
+     v => { oppsett.brukTid = v.tid; oppsett.varighetMin = v.verdi; });
+
+  lagValg("#velgTidspress", [
+    { merke:"På", under:"stolpe og hjerter", av:true },
+    { merke:"Av", under:"monstrene venter", av:false },
+  ], v => oppsett.tidspress === v.av, v => oppsett.tidspress = v.av);
+
+  lagValg("#velgLyd", [
+    { merke:"På", av:true }, { merke:"Av", av:false },
+  ], v => oppsett.lyd === v.av, v => oppsett.lyd = v.av);
+
+  lagValg("#velgSkrift", [
+    { merke:"Vanlig", under:"Fredoka og Nunito", d:false },
+    { merke:"Dysleksivennlig", under:"Atkinson Hyperlegible", d:true },
+  ], v => oppsett.dysleksi === v.d, v => {
+    oppsett.dysleksi = v.d;
+    document.documentElement.dataset.skrift = v.d ? "dysleksi" : "vanlig";
+  });
+
+  // Navnefelt — ett per stasjon
+  const nf = $("#navnefelt");
+  const har = nf.querySelectorAll("input").length;
+  if (har !== oppsett.antallSpillere) {
+    nf.innerHTML = "";
+    for (let i = 0; i < oppsett.antallSpillere; i++) {
+      const inp = document.createElement("input");
+      inp.type = "text"; inp.maxLength = 14;
+      inp.placeholder = STANDARDNAVN[i];
+      inp.value = oppsett.navn[i] && oppsett.navn[i] !== STANDARDNAVN[i] ? oppsett.navn[i] : "";
+      inp.setAttribute("aria-label", `Navn på stasjon ${i + 1}`);
+      inp.addEventListener("input", () => { oppsett.navn[i] = inp.value; });
+      nf.appendChild(inp);
+    }
+  }
+}
+
+function visSkjerm(id) {
+  $$(".skjerm").forEach(s => s.classList.toggle("aktiv", s.id === id));
+}
+
+/* ============================================================
+   KOBLINGER
+   ============================================================ */
+function koble(id, fn) {
+  $(id).addEventListener("pointerdown", fn, { passive:true });
+}
+
+koble("#knappAapne", () => { tone(660, 0.12); startVakt(); });
+koble("#knappRegler", () => visSkjerm("regler"));
+koble("#knappTilbakeStart", () => visSkjerm("start"));
+koble("#knappNyVakt", () => { visSkjerm("start"); tegnStartskjerm(); });
+koble("#knappSkrivUt", () => window.print());
+koble("#knappAvslutt", () => { if (S && !S.ferdig) avsluttVakt("stopp"); });
+
+koble("#knappFullskjerm", () => {
+  const d = document.documentElement;
+  if (!document.fullscreenElement) (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d);
+  else (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+});
+
+// Trykk på en bestillingsboble åpner serveringen
+$("#gjestesone").addEventListener("pointerdown", ev => {
+  const boble = ev.target.closest('[data-rolle="boble"]');
+  if (!boble) return;
+  const kort = boble.closest(".gjest");
+  if (kort) aapneServering(Number(kort.dataset.gjest));
+}, { passive:true });
+
+// Dialogknappene
+$("#dialoglag").addEventListener("pointerdown", ev => {
+  const k = ev.target.closest("[data-dialog]");
+  if (!k) return;
+  if (k.dataset.dialog === "server") utforServering(); else lukkServering();
+}, { passive:true });
+
+// Hindre utilsiktet zoom og kontekstmeny på tavla
+document.addEventListener("gesturestart", e => e.preventDefault());
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("dblclick", e => e.preventDefault());
+
+tegnStartskjerm();
+
+</script>
+</body>
+</html>
