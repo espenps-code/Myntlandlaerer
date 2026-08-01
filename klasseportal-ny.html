@@ -3212,6 +3212,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function fmt(n){ return Math.round(n || 0).toLocaleString('nb-NO'); }
 
+  // Sparemaal ligger paa hver sin node etter trinn: 1.-4. bruker classGoals14,
+  // 5.-7. bruker classGoals. Begge er scopet til classes/<id>/data/ av classScope().
+  function goalNode(){ return (link && link.trinn === '14') ? 'classGoals14' : 'classGoals'; }
+
   onValue(ref(db, 'settings'), s => { settings = s.val() || {}; });
 
   /* ---------- klassens sparemål ---------- */
@@ -3286,7 +3290,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function startData(){
     if (goalsUnsub){ goalsUnsub(); goalsUnsub = null; }
     if (fundUnsub){ fundUnsub();  fundUnsub  = null; }
-    goalsUnsub = onValue(ref(db, 'classGoals'), s => renderGoals(s.val()));
+    goalsUnsub = onValue(ref(db, goalNode()), s => renderGoals(s.val()));
     if (link && link.trinn === '57'){
       fundUnsub = onValue(ref(db, 'fundHistory'), s => renderFund(s.val()));
     } else {
@@ -3324,7 +3328,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (id === window._CLASS_ID){ cOvl.classList.remove('open'); return; }
     // Full omlasting med ny ?class=. Da bygges ALT på nytt for den nye klassen -
     // beskjeder, timeplan, hjelpere, tavle, musikk, sparemål. Ingenting følger med.
-    location.href = 'klasseportal.html?class=' + encodeURIComponent(id);
+    // Vi bruker sidas eget filnavn, sa vi aldri havner i en annen utgave av
+    // klasseportalen enn den vi allerede star i.
+    const selv = location.pathname.split('/').pop() || 'klasseportal-ny.html';
+    location.href = selv + '?class=' + encodeURIComponent(id);
   }
 
   function openConnect(){
@@ -3561,7 +3568,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function txNode(){ return 'transactions' + (link ? link.trinn : '57'); }
   async function distributeTax(taxAmt){
     if (!taxAmt) return;
-    const snap = await get(ref(db, 'classGoals'));
+    const gNode = goalNode();
+    const snap = await get(ref(db, gNode));
     const obj = snap.val() || {};
     let goals = Object.keys(obj).map(function(k){ return Object.assign({}, obj[k], { fbKey: k }); });
     // classGoals ligger allerede under classes/<id>/data/, sa alle malene her
@@ -3571,7 +3579,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const per = Math.floor(taxAmt / active.length);
     if (per <= 0) return;
     const upd = {};
-    active.forEach(function(g){ const ns = (g.saved || 0) + per; upd['classGoals/' + g.fbKey + '/saved'] = ns; if (ns >= g.target) upd['classGoals/' + g.fbKey + '/completed'] = true; });
+    active.forEach(function(g){ const ns = (g.saved || 0) + per; upd[gNode + '/' + g.fbKey + '/saved'] = ns; if (ns >= g.target) upd[gNode + '/' + g.fbKey + '/completed'] = true; });
     await update(ref(db, '/'), upd);
   }
   async function payOne(fbKey){
