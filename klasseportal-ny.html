@@ -4,7 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dagen i dag &middot; Klasseportal</title>
-<script>window._CLASS_ID = (new URLSearchParams(location.search).get("class") || "");<\/script>
+<script>
+/* Klasseportalen er laast til EN klasse. Klasse-ID-en kommer fra ?class= i
+   adressen og styrer bade Firebase-stiene (classes/<id>/data/...) og alle
+   lokale nokler (beskjeder, timeplan, hjelpere, musikk, tavle).
+   Uten ID sender vi brukeren til Min side i stedet for a falle tilbake til den
+   gamle felles rota - det var det som gjorde at innhold fulgte med fra klasse
+   til klasse. Denne blokka ma lukkes med et helt vanlig script-slutt-tag. */
+window._CLASS_ID = (new URLSearchParams(location.search).get("class") || "");
+window._NO_CLASS = !window._CLASS_ID;
+if (window._NO_CLASS) {
+  /* Blindvei-ID: kan aldri kollidere med en ekte klasse mens vi navigerer bort. */
+  window._CLASS_ID = "__ingen_klasse__";
+  location.replace("konto.html");
+}
+</script>
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3144,7 +3158,9 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   window._CLASS_ID = window._CLASS_ID || (new URLSearchParams(location.search).get('class') || '');
   const CLASS_ROOTS = new Set(['students57','students14','transactions57','transactions14','classGoals','classGoals14','fundHistory','settings','customRewards57','customRewards14','groceries','hendelser','hendelser14','savings14','ordensSalary','workspaceSettings','teachers','teachers57']);
   function classScope(pth){
-    if(!window._CLASS_ID) return pth;
+    // Uten klasse-ID skal INGEN klassedata leses eller skrives. Vi sender da
+    // stien til en dod blindvei-node i stedet for til den gamle felles rota.
+    if(!window._CLASS_ID || window._NO_CLASS) return 'classes/__ingen_klasse__/data/' + String(pth).replace(/^\/+/,'');
     const clean = String(pth).replace(/^\/+/,'');
     if(clean==='') return pth;
     if(CLASS_ROOTS.has(clean.split('/')[0])) return 'classes/'+window._CLASS_ID+'/data/'+clean;
@@ -3161,23 +3177,28 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   };
   window._db = db; window._ref = ref; window._update = update;
 
-  /* ---------- kobling (huskes lokalt) ---------- */
-  const LINK_KEY = 'myntland-portal-link-v1';
+  /* ---------- kobling: alltid laast til klassen i ?class= ---------- */
+  // Nokkelen er scopet til klassen, slik at et lagret klassenavn eller laerernavn
+  // aldri kan lekke over i en annen klasse pa samme enhet.
+  const LINK_KEY = 'myntland-portal-link-v1-' + window._CLASS_ID;
   function loadLink(){ try { return JSON.parse(localStorage.getItem(LINK_KEY) || 'null'); } catch(e){ return null; } }
-  function saveLink(v){ localStorage.setItem(LINK_KEY, JSON.stringify(v)); }
-  function clearLink(){ localStorage.removeItem(LINK_KEY); }
+  function saveLink(v){ try { localStorage.setItem(LINK_KEY, JSON.stringify(v)); } catch(e){} }
+  function clearLink(){ try { localStorage.removeItem(LINK_KEY); } catch(e){} }
+  // Rydd bort den gamle globale nokkelen, sa den ikke kan plukkes opp igjen.
+  try { localStorage.removeItem('myntland-portal-link-v1'); } catch(e){}
 
-  // Inngang: krever innlogget konto + valgt klasse. Bygger link fra klassen.
+  // Inngang: krever innlogget konto + valgt klasse. Bygger link fra klassen selv,
+  // aldri fra det som ligger igjen i nettleseren.
   let link = await (async () => {
     const cid = window._CLASS_ID;
-    if (!cid) { return loadLink(); }
+    if (!cid || window._NO_CLASS) { return null; }
     const user = await new Promise(res => onAuthStateChanged(auth, u => res(u)));
     if (!user) { location.replace('konto.html'); return null; }
     let meta = {};
     try { const cs = await get(_ref0(db, 'classes/' + cid)); meta = cs.val() || {}; } catch(e){}
     const lk = { classId: cid, workspaceId: cid, trinn: meta.trinn || '57',
                  className: meta.name || '', teacherName: (user.displayName || user.email || ''), role: 'admin' };
-    try { saveLink(lk); } catch(e){}
+    saveLink(lk);
     return lk;
   })();
   let settings = {};
@@ -3190,7 +3211,6 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function fmt(n){ return Math.round(n || 0).toLocaleString('nb-NO'); }
-  function wsFilterEnabled(){ return !settings.workspaceFilteringDisabled; }
 
   onValue(ref(db, 'settings'), s => { settings = s.val() || {}; });
 
@@ -3223,12 +3243,9 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       goalList.innerHTML = '<div class="goal-empty">Trykk på &#127974;-knappen nede til høyre for å koble tavla til klassen din.</div>';
       return;
     }
-    const all = goalsObj ? Object.entries(goalsObj).map(([k,v]) => ({...v, fbKey:k})) : [];
-    const ws  = link.workspaceId || 'main';
-    let goals = all;
-    if (link.role !== 'admin' && wsFilterEnabled()){
-      goals = all.filter(g => ((g && g.workspaceId) || 'main') === ws);
-    }
+    // classGoals leses fra classes/<klasse-ID>/data/, sa alle mal her tilhorer
+    // allerede denne klassen. Det gamle workspaceId-filteret er fjernet.
+    const goals = goalsObj ? Object.entries(goalsObj).map(([k,v]) => ({...v, fbKey:k})) : [];
     const active = goals.filter(g => !g.completed);
     const done   = goals.filter(g =>  g.completed);
     goalsCache = [...active, ...done];
@@ -3288,14 +3305,27 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (studentsUnsub){ studentsUnsub(); studentsUnsub = null; }
   }
 
-  /* ---------- koble til-flyt ---------- */
+  /* ---------- koble til-flyt: klassene fra kontoen din ---------- */
+  // Tidligere listet denne listerærerprofiler med PIN fra den gamle felles rota,
+  // og satte bare en workspaceId - aldri en klasse-ID. Da kunne navnet oppe på
+  // skjermen peke på én klasse mens dataene kom fra en annen.
   const cOvl   = document.getElementById('connectOverlay');
   const cBody  = document.getElementById('connectBody');
-  let cTeachers = [];
+  let cClasses = [];
 
   document.getElementById('tbConnect').onclick = openConnect;
   document.getElementById('connectClose').onclick = () => cOvl.classList.remove('open');
   cOvl.addEventListener('click', e => { if (e.target === cOvl) cOvl.classList.remove('open'); });
+
+  function safeColor(c){ return /^#[0-9a-fA-F]{3,8}$/.test(String(c || '')) ? c : '#888888'; }
+
+  function gotoClass(id){
+    if (!id) return;
+    if (id === window._CLASS_ID){ cOvl.classList.remove('open'); return; }
+    // Full omlasting med ny ?class=. Da bygges ALT på nytt for den nye klassen -
+    // beskjeder, timeplan, hjelpere, tavle, musikk, sparemål. Ingenting følger med.
+    location.href = 'klasseportal.html?class=' + encodeURIComponent(id);
+  }
 
   function openConnect(){
     cOvl.classList.add('open');
@@ -3303,80 +3333,56 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       cBody.innerHTML = `<div class="c-status">Tavla viser nå: <b>${esc(link.className || link.teacherName)}</b>
         (${link.trinn === '14' ? '1.–4.' : '5.–7.'} trinn)</div>
         <div class="c-row">
-          <button class="btn-big ghost" id="cDisc">Koble fra</button>
+          <button class="btn-big ghost" id="cDisc">Til Min side</button>
           <button class="btn-big save"  id="cSwitch">Bytt klasse</button>
         </div>`;
-      document.getElementById('cDisc').onclick = () => {
-        clearLink(); link = null; stopData(); fundPanel.style.display = 'none';
-        renderGoals(); updateConnectLabel(); cOvl.classList.remove('open');
-      };
-      document.getElementById('cSwitch').onclick = loadAndShowProfiles;
+      document.getElementById('cDisc').onclick = () => { location.href = 'konto.html'; };
+      document.getElementById('cSwitch').onclick = loadAndShowClasses;
       return;
     }
-    loadAndShowProfiles();
+    loadAndShowClasses();
   }
 
-  async function loadAndShowProfiles(){
-    cBody.innerHTML = '<div class="c-loading">Henter lærerprofiler …</div>';
+  async function loadAndShowClasses(){
+    cBody.innerHTML = '<div class="c-loading">Henter klassene dine …</div>';
     try {
-      const [t14, t57] = await Promise.all([ get(ref(db, 'teachers')), get(ref(db, 'teachers57')) ]);
+      const user = auth.currentUser || await new Promise(res => onAuthStateChanged(auth, u => res(u)));
+      if (!user){ location.replace('konto.html'); return; }
+      const ms  = await get(_ref0(db, 'users/' + user.uid + '/memberships'));
+      const ids = Object.keys(ms.val() || {});
       const list = [];
-      const add = (snap, trinn) => { const v = snap.val() || {}; Object.entries(v).forEach(([k,p]) => list.push({...p, fbKey:k, trinn})); };
-      add(t14, '14'); add(t57, '57');
-      cTeachers = list;
-      renderProfiles();
+      for (const id of ids){
+        try {
+          const cs = await get(_ref0(db, 'classes/' + id));
+          if (cs.exists()){
+            const v = cs.val() || {};
+            list.push({ id: id, name: v.name || 'Klasse', trinn: v.trinn || '57', color: v.color || '' });
+          }
+        } catch(e){}
+      }
+      list.sort((a,b) => (a.name || '').localeCompare(b.name || '', 'no'));
+      cClasses = list;
+      renderClasses();
     } catch(e){
-      cBody.innerHTML = '<div class="c-loading">Kunne ikke hente profiler. Sjekk nettet og prøv igjen.</div>';
+      cBody.innerHTML = '<div class="c-loading">Kunne ikke hente klassene. Sjekk nettet og prøv igjen.</div>';
     }
   }
 
-  function renderProfiles(){
-    if (!cTeachers.length){ cBody.innerHTML = '<div class="c-loading">Ingen lærerprofiler funnet.</div>'; return; }
-    cBody.innerHTML = `<p class="c-hint">Velg profilen din, så husker tavla klassen. Du trenger bare gjøre dette én gang per enhet.</p>
-      <div class="c-profiles">` + cTeachers.map((t,i) => `
+  function renderClasses(){
+    if (!cClasses.length){
+      cBody.innerHTML = '<div class="c-loading">Fant ingen klasser på kontoen din. Opprett en klasse på <a href="konto.html">Min side</a>.</div>';
+      return;
+    }
+    cBody.innerHTML = `<p class="c-hint">Velg klassen tavla skal vise. Alt på skjermen – beskjeder, timeplan, hjelpere og tavle – hører til klassen du velger.</p>
+      <div class="c-profiles">` + cClasses.map((c,i) => `
         <button class="c-profile" data-i="${i}">
-          <span class="c-ava" style="background:${(t.color || '#888')}22;color:${t.color || '#444'}">${esc((t.name || '?')[0].toUpperCase())}</span>
+          <span class="c-ava" style="background:${safeColor(c.color)}22;color:${safeColor(c.color)}">${esc((c.name || '?')[0].toUpperCase())}</span>
           <span class="c-meta">
-            <span class="c-name">${esc(t.name || 'Lærer')}</span>
-            <span class="c-role">${t.role === 'admin' ? 'Administrator' : 'Lærer'}${t.class ? ' · ' + esc(t.class) : ''} · ${t.trinn === '14' ? '1.–4.' : '5.–7.'} trinn</span>
+            <span class="c-name">${esc(c.name)}</span>
+            <span class="c-role">${c.trinn === '14' ? '1.–4.' : '5.–7.'} trinn${c.id === window._CLASS_ID ? ' · vises nå' : ''}</span>
           </span>
         </button>`).join('') + `</div>`;
-    cBody.querySelectorAll('.c-profile').forEach(b => b.onclick = () => selectProfile(+b.dataset.i));
-  }
-
-  function selectProfile(i){
-    const t = cTeachers[i];
-    cBody.innerHTML = `<p class="c-hint">Tast PIN for <b>${esc(t.name)}</b></p>
-      <input id="cPin" class="c-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••">
-      <div class="c-err" id="cErr"></div>
-      <div class="c-row">
-        <button class="btn-big ghost" id="cBack">Tilbake</button>
-        <button class="btn-big save"  id="cOk">Koble til</button>
-      </div>`;
-    const pin = document.getElementById('cPin'); pin.focus();
-    document.getElementById('cBack').onclick = renderProfiles;
-    const tryIt = () => {
-      if (String(pin.value) === String(t.pin)){
-        link = {
-          workspaceId: t.workspaceId || 'main',
-          trinn: t.trinn,
-          className: t.class || '',
-          teacherName: t.name || '',
-          role: t.role || 'teacher'
-        };
-        saveLink(link);
-        cOvl.classList.remove('open');
-        updateConnectLabel();
-        startData();
-        renderGoals();
-      } else {
-        document.getElementById('cErr').textContent = '❌ Feil PIN – prøv igjen';
-        pin.value = ''; pin.focus();
-      }
-    };
-    document.getElementById('cOk').onclick = tryIt;
-    pin.addEventListener('keydown', e => { if (e.key === 'Enter') tryIt(); });
-    pin.addEventListener('input', () => { if (pin.value.length === 4) tryIt(); });
+    cBody.querySelectorAll('.c-profile').forEach(b => b.onclick = () => gotoClass(cClasses[+b.dataset.i].id));
   }
 
   function updateConnectLabel(){
@@ -3558,8 +3564,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const snap = await get(ref(db, 'classGoals'));
     const obj = snap.val() || {};
     let goals = Object.keys(obj).map(function(k){ return Object.assign({}, obj[k], { fbKey: k }); });
-    const ws = link.workspaceId || 'main';
-    if (link.role !== 'admin' && wsFilterEnabled()) goals = goals.filter(function(g){ return ((g && g.workspaceId) || 'main') === ws; });
+    // classGoals ligger allerede under classes/<id>/data/, sa alle malene her
+    // tilhorer denne klassen. Det gamle workspaceId-filteret er fjernet.
     const active = goals.filter(function(g){ return !g.completed; });
     if (!active.length) return;
     const per = Math.floor(taxAmt / active.length);
@@ -3650,7 +3656,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var sig = _sigOf(payload);
     if (sig === _daySig) return;
     _daySig = sig;
-    try { set(ref(db, 'dayboard/' + (link.workspaceId || 'main')), payload); } catch(e){}
+    if (!window._CLASS_ID || window._NO_CLASS) return;
+    // Samme nokkel som lesingen under: dayboard/<klasse-ID>. For var dette
+    // workspaceId (ofte 'main'), sa alle klasser delte samme sky-node.
+    try { set(_ref0(db, 'dayboard/' + window._CLASS_ID), payload); } catch(e){}
   }
   window._onPortalSave = function(){ clearTimeout(_dayT); _dayT = setTimeout(pushDayboard, 1500); };
 
