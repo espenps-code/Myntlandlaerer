@@ -4241,5 +4241,130 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 })();
 </script>
 
+<!-- ====== STOR VISNING (smarttavle) ======
+     Mange smarttavle-nettlesere blokkerer ekte fullskjerm (Fullscreen API), og da
+     blir popup-vinduene i portalen alt for sma. Denne knappen blaser i stedet opp
+     vinduet med ren CSS, slik at det fyller hele nettleserflaten - det virker
+     overalt. I tillegg ber den om ekte fullskjerm i det stille: far vi lov (PC),
+     blir det enda storre; blir vi nektet (smarttavle), skjer ingenting.
+     Valget huskes i localStorage, sa laereren slipper a trykke hver gang. -->
+<style>
+/* plass til den nye knappen i alle popup-hoder */
+.ovl-head{ gap:12px; }
+.ovl-head > h3{ flex:1 1 auto; min-width:0; }
+
+.ovl.stor{ padding:0; align-items:stretch; overflow:hidden; }
+.ovl.stor .ovl-card{
+  width:100%!important; max-width:none!important;
+  height:100vh; height:100dvh; max-height:100dvh!important;
+  border-radius:0; border-width:0; box-shadow:none;
+  display:flex; flex-direction:column; overflow:hidden; }
+.ovl.stor .ovl-head{ flex:0 0 auto; }
+.ovl.stor .ovl-body{ flex:1 1 auto; min-height:0; overflow:auto; }
+.ovl.stor iframe{
+  flex:1 1 0; min-height:0;
+  width:100%!important; height:auto!important;
+  max-height:none!important; aspect-ratio:auto!important; }
+
+.ovl-stor-btn{ width:auto!important; padding:0 14px; background:var(--teal); color:#fff;
+  box-shadow:0 4px 0 #1c8a99; font-size:16px; font-weight:700; white-space:nowrap; }
+.ovl.stor .ovl-stor-btn{ background:var(--gold); color:var(--ink);
+  box-shadow:0 4px 0 rgba(42,31,61,.25); }
+
+/* musikk-/videodokka */
+.music-dock.stor{ left:0; top:0; right:0; bottom:0; width:100%; transform:none;
+  border-radius:0; border-width:0; z-index:90; background:#000; }
+.music-dock.on.stor{ display:flex; flex-direction:column; }
+.music-dock.stor .dock-media{ flex:1 1 0; min-height:0; display:flex;
+  align-items:center; justify-content:center; }
+.music-dock.stor .dock-media iframe,.music-dock.stor .dock-media #ytMount{
+  width:100%!important; height:100%!important; aspect-ratio:auto!important; }
+.music-dock.stor .dock-bar{ flex:0 0 auto; background:var(--cream); }
+
+@media(max-width:560px){ .ovl-stor-btn{ padding:0 9px; font-size:14px; } }
+</style>
+<script>
+(function(){
+  'use strict';
+  var KEY = 'myntland-storvisning';
+  function qa(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function pref(){ try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; } }
+  function setPref(v){ try{ localStorage.setItem(KEY, v ? '1' : '0'); }catch(e){} }
+
+  /* Ber om ekte fullskjerm - men bryr seg ikke om vi blir nektet. */
+  function proveFullskjerm(on){
+    try{
+      if(on){
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if(req && !document.fullscreenElement && !document.webkitFullscreenElement){
+          var p = req.call(el); if(p && p['catch']) p['catch'](function(){});
+        }
+      }else{
+        if(document.fullscreenElement || document.webkitFullscreenElement){
+          var ex = document.exitFullscreen || document.webkitExitFullscreen;
+          if(ex){ var q = ex.call(document); if(q && q['catch']) q['catch'](function(){}); }
+        }
+      }
+    }catch(e){}
+  }
+
+  function merkKnapp(btn, on){
+    btn.innerHTML = on ? '&#10530; Vanlig' : '&#9974; Stor visning';
+    btn.title = on ? 'Tilbake til vanlig størrelse' : 'Fyll hele skjermen';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+
+  function synk(){
+    var on = pref();
+    qa('.ovl').forEach(function(o){
+      o.classList.toggle('stor', on && o.classList.contains('open'));
+    });
+    qa('.ovl-stor-btn').forEach(function(b){ merkKnapp(b, on); });
+  }
+
+  function bytt(){
+    var on = !pref();
+    setPref(on);
+    proveFullskjerm(on);
+    synk();
+  }
+
+  qa('.ovl').forEach(function(ovl){
+    var head = ovl.querySelector('.ovl-head');
+    if(!head || head.querySelector('.ovl-stor-btn')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ovl-x ovl-stor-btn';
+    merkKnapp(btn, pref());
+    btn.addEventListener('click', function(e){ e.stopPropagation(); bytt(); });
+    var x = head.querySelector('.ovl-x');
+    if(x){ head.insertBefore(btn, x); } else { head.appendChild(btn); }
+
+    /* Overlays apnes fra mange steder i koden - hold .stor i takt med .open */
+    try{
+      new MutationObserver(function(){
+        ovl.classList.toggle('stor', pref() && ovl.classList.contains('open'));
+      }).observe(ovl, { attributes:true, attributeFilter:['class'] });
+    }catch(e){}
+  });
+
+  synk();
+
+  /* ---- musikk-/videodokka har sin egen lille knapp ---- */
+  var dock = document.getElementById('musicDock');
+  var fsBtn = document.getElementById('btnFsV');
+  if(dock && fsBtn){
+    fsBtn.onclick = function(){
+      var on = !dock.classList.contains('stor');
+      dock.classList.toggle('stor', on);
+      fsBtn.classList.toggle('active', on);
+      fsBtn.title = on ? 'Tilbake til liten video' : 'Stor video';
+      proveFullskjerm(on);
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
