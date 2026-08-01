@@ -25,7 +25,9 @@ function openKlasseportal() {
     alert('Ingen klasse valgt. Aapne laererportalen fra \u00abMin side\u00bb, saa foelger klassen med til klasseportalen.');
     return;
   }
-  window.open('klasseportal.html?class=' + encodeURIComponent(cid), '_blank');
+  // NB: klasseportal-ny.html er den gjeldende klasseportalen.
+  //     klasseportal.html er den gamle utgaven og skal ikke brukes.
+  window.open('klasseportal-ny.html?class=' + encodeURIComponent(cid), '_blank');
 }
 
 // ── Klasse-lås: vanlig lærer skal kun se sin egen klasse i opprett-dropdowns
