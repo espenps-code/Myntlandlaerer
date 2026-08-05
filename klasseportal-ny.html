@@ -1110,11 +1110,13 @@ h1.sticker{
     <div class="ovl-head"><h3>&#9881;&#65039; Innstillinger</h3><button class="ovl-x" id="settingsClose">&times;</button></div>
     <div class="ovl-body">
       <div class="set-tabs">
-        <button class="set-tab-btn active" data-tab="tavla">Tavla</button>
-        <button class="set-tab-btn" data-tab="orden">Ordenselever</button>
+        <button class="set-tab-btn active" data-tab="bakgrunn">Bakgrunn</button>
+        <button class="set-tab-btn" data-tab="vaer">Vær</button>
+        <button class="set-tab-btn" data-tab="timeplan">Timeplan</button>
+        <button class="set-tab-btn" data-tab="ord">Ukas ord</button>
         <button class="set-tab-btn" data-tab="app">Elevapp</button>
       </div>
-      <div class="set-panel active" id="set-panel-tavla">
+      <div class="set-panel active" id="set-panel-bakgrunn">
         <div class="set-heading">Bakgrunn</div>
         <div class="set-row">
           <div class="set-label">Landskap etter årstid<span class="set-sub">Standard viser sommerlandskapet hele året. Auto bytter mellom vår, sommer, høst, vinter og jul etter måneden.</span></div>
@@ -1123,7 +1125,8 @@ h1.sticker{
             <button type="button" class="seg-btn" data-bg="auto">Auto etter måned</button>
           </div>
         </div>
-        <div class="set-divider"></div>
+      </div>
+      <div class="set-panel" id="set-panel-vaer">
         <div class="set-heading">Vær</div>
         <div class="set-row">
           <div class="set-label">Automatisk vær<span class="set-sub">Henter og oppdaterer været hver halvtime.</span></div>
@@ -1138,13 +1141,15 @@ h1.sticker{
         </div>
         <div class="sal-list" id="setWeatherResults" style="max-height:none"></div>
         <div class="set-status" id="setWeatherStatus"></div>
-        <div class="set-divider"></div>
+      </div>
+      <div class="set-panel" id="set-panel-timeplan">
         <div class="set-heading">Timeplan</div>
         <div class="set-row">
           <div class="set-label">Aktiv time: vis prosent<span class="set-sub">Av = minutter igjen. På = prosent av timen gjort.</span></div>
           <label class="set-switch"><input type="checkbox" id="setProgressPercent"><span class="set-slider"></span></label>
         </div>
-        <div class="set-divider"></div>
+      </div>
+      <div class="set-panel" id="set-panel-ord">
         <div class="set-heading">Ukas ord</div>
         <div class="set-row">
           <div class="set-label">Bytt ord automatisk hver uke<span class="set-sub">Ordbanken roterer ett ord per uke. Slå av for å velge selv.</span></div>
@@ -1157,22 +1162,6 @@ h1.sticker{
         <div class="set-heading2">Ordbank (<span id="wordBankCount">20</span>)</div>
         <div class="set-tasks" id="setWordBank"></div>
         <button class="set-addtask" id="setAddWord">+ Legg til ord</button>
-      </div>
-      <div class="set-panel" id="set-panel-orden">
-        <div class="set-heading">Ukas hjelpere</div>
-        <div class="set-row">
-          <div class="set-label">Antall ordenselever<span class="set-sub">Velg hvor mange som vises på tavla (1–4).</span></div>
-          <div class="seg" id="helperCountSeg">
-            <button type="button" class="seg-btn" data-n="1">1</button>
-            <button type="button" class="seg-btn" data-n="2">2</button>
-            <button type="button" class="seg-btn" data-n="3">3</button>
-            <button type="button" class="seg-btn" data-n="4">4</button>
-          </div>
-        </div>
-        <div class="set-names" id="helperFields" style="flex-direction:column"></div>
-        <div class="set-heading2">Oppgaver</div>
-        <div class="set-tasks" id="setTasks"></div>
-        <button class="set-addtask" id="setAddTask">+ Legg til oppgave</button>
       </div>
       <div class="set-panel" id="set-panel-app">
         <div class="set-heading">Dagen i dag (elevappen)</div>
@@ -1352,6 +1341,7 @@ h1.sticker{
         <button class="plan-tab-btn active" data-ptab="timeplan">Timeplan</button>
         <button class="plan-tab-btn" data-ptab="beskjeder">Beskjeder</button>
         <button class="plan-tab-btn" data-ptab="bursdager">Bursdager</button>
+        <button class="plan-tab-btn" data-ptab="orden">Ordenselever</button>
       </div>
       <div class="plan-panel" id="planPanel-timeplan">
         <div class="daytabs" id="dayTabs"></div>
@@ -1367,6 +1357,22 @@ h1.sticker{
         <p class="ovl-hint">Bursdager gjelder denne uka og dukker opp p&aring; riktig dag.</p>
         <div id="bdayRows" class="bday-rows"></div>
         <button class="add-slot" id="addBday">+ Legg til bursdag</button>
+      </div>
+      <div class="plan-panel" id="planPanel-orden" style="display:none">
+        <div class="set-heading">Ukas hjelpere</div>
+        <div class="set-row">
+          <div class="set-label">Antall ordenselever<span class="set-sub">Velg hvor mange som vises på tavla (1–4).</span></div>
+          <div class="seg" id="helperCountSeg">
+            <button type="button" class="seg-btn" data-n="1">1</button>
+            <button type="button" class="seg-btn" data-n="2">2</button>
+            <button type="button" class="seg-btn" data-n="3">3</button>
+            <button type="button" class="seg-btn" data-n="4">4</button>
+          </div>
+        </div>
+        <div class="set-names" id="helperFields" style="flex-direction:column"></div>
+        <div class="set-heading2">Oppgaver</div>
+        <div class="set-tasks" id="setTasks"></div>
+        <button class="set-addtask" id="setAddTask">+ Legg til oppgave</button>
       </div>
     </div>
     <div class="plan-foot">
@@ -2108,7 +2114,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   function setPlanTab(name){
     var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.plan-tab-btn').forEach(function(x){ x.classList.toggle('active', x.dataset.ptab===name); });
-    ['timeplan','beskjeder','bursdager'].forEach(function(t){ var p=document.getElementById('planPanel-'+t); if(p) p.style.display=(t===name)?'flex':'none'; });
+    ['timeplan','beskjeder','bursdager','orden'].forEach(function(t){ var p=document.getElementById('planPanel-'+t); if(p) p.style.display=(t===name)?'flex':'none'; });
   }
   function bdayRow(b,i){
     var row=el('div','bday-row');
@@ -2127,7 +2133,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var wrap=document.getElementById('bdayRows'); if(!wrap) return; wrap.innerHTML='';
     (data.birthdays||[]).forEach(function(b,i){ wrap.appendChild(bdayRow(b,i)); });
   }
-  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); buildBdayRows(); setPlanTab('timeplan'); }
+  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); buildBdayRows(); try{ syncHelperSeg(); renderHelperFields(); renderTaskEditor(); }catch(e){} setPlanTab('timeplan'); }
   function closePlanner(){ planOvl.classList.remove('open'); }
 
   function buildDayTabs(){
@@ -2376,10 +2382,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var _sb = (data.seasonBg === 'auto') ? 'auto' : 'standard';
     document.querySelectorAll('#seasonBgSeg .seg-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bg === _sb); });
   }
+  function resetSetTab(){ var bs = document.querySelectorAll('#settingsOverlay .set-tab-btn'); var ps = document.querySelectorAll('#settingsOverlay .set-panel'); bs.forEach(function(x,i){ x.classList.toggle('active', i===0); }); ps.forEach(function(x,i){ x.classList.toggle('active', i===0); }); }
   (function initSettings(){
     const ovl = document.getElementById('settingsOverlay');
     const btn = document.getElementById('tbSettings');
-    if (btn) btn.onclick = function(){ syncSettings(); if (ovl) ovl.classList.add('open'); };
+    if (btn) btn.onclick = function(){ syncSettings(); resetSetTab(); if (ovl) ovl.classList.add('open'); };
     const x = document.getElementById('settingsClose'); if (x) x.onclick = function(){ ovl.classList.remove('open'); };
     if (ovl) ovl.addEventListener('click', function(e){ if (e.target === ovl) ovl.classList.remove('open'); });
     const a = document.getElementById('setWeatherAuto');
@@ -2420,7 +2427,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (swd) swd.addEventListener('input', function(){ data.worddef = swd.value; save(); renderWord(); });
     const aw = document.getElementById('setAddWord');
     if (aw) aw.onclick = function(){ data.wordBank = (data.wordBank && data.wordBank.length) ? data.wordBank : JSON.parse(JSON.stringify(DEFAULTS.wordBank)); data.wordBank.push({ w: 'nytt ord', d: 'forklaring' }); save(); renderWord(); renderWordBankEditor(); };
-    document.querySelectorAll('.set-tab-btn').forEach(function(b){ b.onclick = function(){ document.querySelectorAll('.set-tab-btn').forEach(function(x){x.classList.remove('active');}); document.querySelectorAll('.set-panel').forEach(function(x){x.classList.remove('active');}); b.classList.add('active'); var p = document.getElementById('set-panel-' + b.dataset.tab); if (p) p.classList.add('active'); }; });
+    document.querySelectorAll('#settingsOverlay .set-tab-btn').forEach(function(b){ b.onclick = function(){ document.querySelectorAll('#settingsOverlay .set-tab-btn').forEach(function(x){x.classList.remove('active');}); document.querySelectorAll('#settingsOverlay .set-panel').forEach(function(x){x.classList.remove('active');}); b.classList.add('active'); var p = document.getElementById('set-panel-' + b.dataset.tab); if (p) p.classList.add('active'); }; });
     var _de = document.getElementById('setDayEnabled');
     if (_de) _de.onchange = function(){ data.dayEnabled = _de.checked; save(); };
     document.querySelectorAll('#seasonBgSeg .seg-btn').forEach(function(b){
@@ -3305,6 +3312,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       <div class="fund-line"><span class="fund-rate">${Math.round(rate)}</span><span class="fund-chg ${cls}">${arrow} ${chg || '–'}</span></div>
     </div>`;
   }
+  function fmtFundDate(iso){
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    return m ? m[3] + '.' + m[2] + '.' + m[1] : (iso || '');
+  }
   function renderFund(histObj){
     if (!link || link.trinn !== '57'){ fundPanel.style.display = 'none'; return; }
     fundPanel.style.display = '';
@@ -3313,7 +3324,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if (!days.length){ fundCards.innerHTML = '<div class="goal-empty">Ingen fondkurs ennå.</div>'; fundDate.textContent = ''; return; }
     const today = hist[days[days.length - 1]] || { low:100, high:100 };
     const prev  = days.length > 1 ? hist[days[days.length - 2]] : null;
-    fundDate.textContent = days[days.length - 1];
+    fundDate.textContent = fmtFundDate(days[days.length - 1]);
     fundCards.innerHTML = fundCard('Lav risiko',  today.low  || 100, prev ? prev.low  : null)
                         + fundCard('Høy risiko',  today.high || 100, prev ? prev.high : null);
   }
@@ -3466,7 +3477,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function setSalStatus(t){ if (salStatusEl) salStatusEl.textContent = t || ''; }
 
   function buildSalaryUI(){
-    const body = document.getElementById('set-panel-orden') || document.querySelector('#settingsOverlay .ovl-body');
+    const body = document.getElementById('planPanel-orden') || document.querySelector('#planOverlay .ovl-body');
     if (!body || document.getElementById('salSection')) return;
     const wrap = document.createElement('div'); wrap.id = 'salSection';
     wrap.innerHTML =
