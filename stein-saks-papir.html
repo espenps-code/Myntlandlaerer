@@ -74,8 +74,11 @@ img{display:block;max-width:100%}
 .screen.on{display:flex}
 
 /* ---------- MENY ---------- */
-#menu,#done{align-items:center;justify-content:center;text-align:center;overflow-y:auto}
-.menu-inner{width:min(880px,94vw);padding:2vh 0}
+/* NB: sentrer med margin:auto pa innholdet - IKKE justify-content:center.
+   Med justify-content:center blir toppen av innholdet kuttet bort og
+   umulig a scrolle til nar skjermen (eller popup-ramma) er lav. */
+#menu,#done{align-items:center;justify-content:flex-start;text-align:center;overflow-y:auto}
+.menu-inner{width:min(880px,94vw);padding:2vh 0;margin:auto 0;flex:none}
 .eyebrow{
   display:inline-block;background:var(--ink);color:var(--cream);
   padding:.35em 1.1em;border-radius:999px;font-weight:600;

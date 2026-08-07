@@ -71,8 +71,11 @@ img{display:block;max-width:100%}
 .screen.on{display:flex}
 
 /* ---------- MENY ---------- */
-#menu{align-items:center;justify-content:center;text-align:center;overflow-y:auto}
-.menu-inner{width:min(1100px,94vw);padding:2vh 0}
+/* NB: sentrer med margin:auto pa innholdet - IKKE justify-content:center.
+   Med justify-content:center blir toppen av innholdet kuttet bort og
+   umulig a scrolle til nar skjermen (eller popup-ramma) er lav. */
+#menu{align-items:center;justify-content:flex-start;text-align:center;overflow-y:auto}
+.menu-inner{width:min(1100px,94vw);padding:2vh 0;margin:auto 0;flex:none}
 .eyebrow{
   display:inline-block;background:var(--ink);color:var(--cream);
   padding:.35em 1.1em;border-radius:999px;font-weight:600;
@@ -174,8 +177,8 @@ a.card{text-decoration:none;color:inherit}
 .veil b{font-size:clamp(24px,4.6vh,44px)}
 
 /* ---------- FERDIG ---------- */
-#done{align-items:center;justify-content:center;text-align:center}
-.done-inner{width:min(760px,92vw)}
+#done{align-items:center;justify-content:flex-start;text-align:center;overflow-y:auto}
+.done-inner{width:min(760px,92vw);margin:auto 0;flex:none}
 .done-badge{
   width:min(32vh,42vw);aspect-ratio:1;margin:0 auto 1em;border-radius:50%;
   background:var(--cream-2);border:var(--border);overflow:hidden;display:grid;place-items:center;
