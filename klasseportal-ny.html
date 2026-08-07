@@ -1321,13 +1321,149 @@ h1.sticker{
   </div>
 </div>
 
-<!-- ====== BRAIN BREAK-OVERLAY (brainbreak.html i ramme) ====== -->
+<!-- ====== BRAIN BREAKS (pausevelger + pauseramme) – samme oppsett som Tavlespill ====== -->
 <div class="ovl" id="breakOverlay">
-  <div class="ovl-card" style="width:min(97vw,1280px);max-height:96vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
-    <div class="ovl-head"><h3>&#129496; Brain break</h3><button class="ovl-x" id="breakClose">&times;</button></div>
-    <iframe id="breakFrame" title="Brain breaks" allow="fullscreen" allowfullscreen style="border:0;display:block;width:100%;aspect-ratio:16/9;max-height:calc(96vh - 70px);background:#fbf2d6;"></iframe>
+  <div class="ovl-card">
+    <div class="ovl-head"><h3>&#129496; Brain breaks</h3><button class="ovl-x" id="breakClose">&times;</button></div>
+    <div class="ovl-body">
+      <p class="gm-intro">Korte pauser som roer ned og samler klassen igjen. Pausen &aring;pner seg her i portalen &ndash; lukk med &times; for &aring; komme tilbake til &laquo;Dagen i dag&raquo;.</p>
+      <div class="gm-grid" id="bbGrid"></div>
+    </div>
   </div>
 </div>
+
+<div class="ovl" id="breakPlayOverlay">
+  <div class="ovl-card gm-play-card">
+    <div class="ovl-head gm-play-head">
+      <h3 id="bbPlayTitle">Brain break</h3>
+      <button class="ovl-x gm-back" id="bbBack" title="Tilbake til pausevalg">&#8592; Pauser</button>
+      <button class="ovl-x" id="bbPlayClose" title="Lukk pausen">&times;</button>
+    </div>
+    <iframe class="gm-frame" id="breakFrame" title="Brain break" allow="fullscreen" allowfullscreen style="background:#fbf2d6;"></iframe>
+  </div>
+</div>
+
+<script>
+/* ===== BRAIN BREAKS =====
+   Legge til en ny pause: kopier ett objekt i lista under og fyll ut.
+   'fil' er filnavnet pausen ligger i (må publiseres til serveren sammen
+   med klasseportalen). Ingenting annet trenger å endres.
+   Samme oppsett som Tavlespill: kortvelger → ramme med tilbakeknapp. */
+(function(){
+  var BRAINBREAKS = [
+    {
+      id: 'monsteryoga',
+      tittel: 'Monsteryoga',
+      fil: 'brainbreak.html?akt=yoga',
+      emoji: '🧘',
+      farge: '#cdeede',
+      meta: ['8 positurer', '4-7-8-pust', 'Full eller kort økt'],
+      beskriv: 'Rolige positurer med pust på storskjerm: inn på 4, hold på 7, ut på 8. Velg full økt (ca. 6 min) eller kort økt (ca. 3 min).'
+    },
+    {
+      id: 'stein-saks-papir',
+      tittel: 'Stein, saks, papir',
+      fil: 'stein-saks-papir.html',
+      emoji: '✋',
+      farge: '#ffc9a3',
+      meta: ['Hele klassen', '16 øvelser', '5, 10 eller 15 runder'],
+      beskriv: 'Alle spiller mot tavlemonsteret, hver for seg. Taper du runden, gjør du en kjapp bevegelsesøvelse før neste runde.'
+    }
+  ];
+
+  var pickOvl = document.getElementById('breakOverlay');
+  var playOvl = document.getElementById('breakPlayOverlay');
+  var grid    = document.getElementById('bbGrid');
+  var frame   = document.getElementById('breakFrame');
+  var titleEl = document.getElementById('bbPlayTitle');
+  var tbBtn   = document.getElementById('tbBreak');
+  if(!pickOvl || !playOvl || !grid || !frame) return;
+
+  function lukkPause(){
+    playOvl.classList.remove('open');
+    frame.src = 'about:blank';
+  }
+
+  function startPause(pause){
+    titleEl.textContent = pause.emoji + ' ' + pause.tittel;
+    frame.src = pause.fil;
+    pickOvl.classList.remove('open');
+    playOvl.classList.add('open');
+  }
+
+  function byggListe(){
+    grid.innerHTML = '';
+    BRAINBREAKS.forEach(function(pause){
+      var kort = document.createElement('button');
+      kort.type = 'button';
+      kort.className = 'gm-card';
+
+      var ikon = document.createElement('span');
+      ikon.className = 'gm-emoji';
+      ikon.style.background = pause.farge || 'var(--cream-2)';
+      ikon.textContent = pause.emoji || '🧘';
+      kort.appendChild(ikon);
+
+      var tittel = document.createElement('span');
+      tittel.className = 'gm-title';
+      tittel.textContent = pause.tittel;
+      kort.appendChild(tittel);
+
+      if(pause.meta && pause.meta.length){
+        var metaRad = document.createElement('span');
+        metaRad.className = 'gm-meta';
+        pause.meta.forEach(function(m){
+          var chip = document.createElement('span');
+          chip.className = 'gm-chip';
+          chip.textContent = m;
+          metaRad.appendChild(chip);
+        });
+        kort.appendChild(metaRad);
+      }
+
+      if(pause.beskriv){
+        var tekst = document.createElement('span');
+        tekst.className = 'gm-desc';
+        tekst.textContent = pause.beskriv;
+        kort.appendChild(tekst);
+      }
+
+      var go = document.createElement('span');
+      go.className = 'gm-go';
+      go.textContent = 'Start pausen →';
+      kort.appendChild(go);
+
+      kort.setAttribute('aria-label', 'Start ' + pause.tittel);
+      kort.onclick = function(){ startPause(pause); };
+      grid.appendChild(kort);
+    });
+  }
+
+  function tilVelger(){
+    lukkPause();
+    byggListe();
+    pickOvl.classList.add('open');
+  }
+
+  if(tbBtn) tbBtn.onclick = function(){
+    byggListe();
+    pickOvl.classList.add('open');
+  };
+
+  document.getElementById('breakClose').onclick = function(){ pickOvl.classList.remove('open'); };
+  pickOvl.addEventListener('click', function(e){ if(e.target === pickOvl) pickOvl.classList.remove('open'); });
+
+  document.getElementById('bbPlayClose').onclick = lukkPause;
+  document.getElementById('bbBack').onclick = tilVelger;
+  playOvl.addEventListener('click', function(e){ if(e.target === playOvl) lukkPause(); });
+
+  /* pausene inne i ramma kan be om å komme tilbake til pausevalget */
+  window.addEventListener('message', function(e){
+    var d = e && e.data;
+    if(d && d.myntland === 'brainbreak-tilbake') tilVelger();
+  });
+})();
+</script>
 
 <div class="ovl" id="musicOverlay">
   <div class="ovl-card">
@@ -3165,14 +3301,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       tOvl.addEventListener('click', function(e){ if(e.target===tOvl){ tOvl.classList.remove('open'); tFrame.src='about:blank'; } });
     }
   })();
-  (function(){
-    var bOvl=document.getElementById('breakOverlay'), bBtn=document.getElementById('tbBreak'), bFrame=document.getElementById('breakFrame');
-    if(bOvl&&bBtn&&bFrame){
-      bBtn.onclick=function(){ bFrame.src='brainbreak.html'; bOvl.classList.add('open'); };
-      document.getElementById('breakClose').onclick=function(){ bOvl.classList.remove('open'); bFrame.src='about:blank'; };
-      bOvl.addEventListener('click', function(e){ if(e.target===bOvl){ bOvl.classList.remove('open'); bFrame.src='about:blank'; } });
-    }
-  })();
+  /* Brain breaks styres nå av sitt eget skript (pausevelger + ramme), som Tavlespill. */
   document.getElementById('rwCustom').addEventListener('keydown', function(e){ if(e.key==='Enter') makeReward(e.target.value); });
 })();
 </script>

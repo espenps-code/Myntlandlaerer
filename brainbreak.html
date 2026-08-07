@@ -183,6 +183,13 @@ a.card{text-decoration:none;color:inherit}
 }
 .done-badge img{width:88%;height:88%;object-fit:contain}
 
+/* ---------- SOLO: pausen apnes rett fra klasseportalen ---------- */
+body.solo #menu .eyebrow,
+body.solo #menu .menu-foot{display:none}
+body.solo .cards{grid-template-columns:minmax(0,1fr);max-width:min(620px,94vw);margin:0 auto}
+body.solo .cards > *:not(.solo-vis){display:none}
+body.solo h1{margin-top:0}
+
 @media (prefers-reduced-motion: reduce){
   .ring{transition:none}
   .card.live:hover{transform:none}
@@ -203,7 +210,7 @@ a.card{text-decoration:none;color:inherit}
     <p class="lede">Korte pauser som roer ned og samler klassen igjen. Kjør den på storskjerm &ndash; alle blir med.</p>
 
     <div class="cards">
-      <div class="card">
+      <div class="card solo-vis" id="cardYoga">
         <div class="card-top">
           <div class="card-thumb"><img src="monsteryoga/yoga-5.webp" alt=""></div>
           <h2>Monsteryoga</h2>
@@ -340,6 +347,22 @@ a.card{text-decoration:none;color:inherit}
     TOTAL_SEC = STEPS.reduce(function(a,s){ return a + s.sec; }, 0);
   }
   prepare(BREATHS_LANG);
+
+  /* ---------- solo-modus: apnet som eget kort fra klasseportalen ---------- */
+  var SOLO  = location.search.indexOf('akt=yoga') > -1;
+  var EMBED = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
+  if (SOLO){
+    document.body.classList.add('solo');
+    var h1El = document.querySelector('#menu h1');
+    if (h1El) h1El.textContent = 'Monsteryoga';
+    var ledeEl = document.querySelector('#menu .lede');
+    if (ledeEl) ledeEl.textContent = '\u00c5tte positurer med rolig pust: inn p\u00e5 4, hold p\u00e5 7, ut p\u00e5 8. Velg hvor lenge dere har tid til.';
+  }
+  function tilbakeTilPortal(){
+    if (!(SOLO && EMBED)) return false;
+    try { parent.postMessage({ myntland:'brainbreak-tilbake' }, '*'); } catch(e){}
+    return true;
+  }
 
   var $ = function(id){ return document.getElementById(id); };
   var scMenu=$('menu'), scSess=$('session'), scDone=$('done');
@@ -489,7 +512,7 @@ a.card{text-decoration:none;color:inherit}
     setTimeout(function(){ ping(783.99,1.4); },340);
   }
   function show(sec){ [scMenu,scSess,scDone].forEach(function(s){ s.classList.toggle('on', s===sec); }); }
-  function toMenu(){ stop(); show(scMenu); }
+  function toMenu(){ stop(); if (tilbakeTilPortal()) return; show(scMenu); }
 
   $('startLang').addEventListener('click', function(){ startSession(BREATHS_LANG); });
   $('startKort').addEventListener('click', function(){ startSession(BREATHS_KORT); });

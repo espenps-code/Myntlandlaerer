@@ -207,7 +207,7 @@ h1{font-size:clamp(30px,5.2vw,62px);font-weight:700;line-height:1.05;margin:.4em
 
     <p class="menu-foot">
       Slik gjør dere det: knytt neven, følg monsteret på <b>stein &ndash; saks &ndash; papir</b>, og vis hånda di på <b>3</b>.<br>
-      <a href="brainbreak.html">← Tilbake til brain breaks</a>
+      <a href="brainbreak.html" id="lenkeTilbake">← Tilbake til brain breaks</a>
     </p>
   </div>
 </section>
@@ -543,6 +543,19 @@ h1{font-size:clamp(30px,5.2vw,62px);font-weight:700;line-height:1.05;margin:.4em
   });
 
   preload();
+})();
+</script>
+<script>
+/* Apnes pausen inne i klasseportalen, skal «Tilbake til brain breaks» ga til
+   pausevelgeren i portalen i stedet for a laste brainbreak.html i ramma. */
+(function(){
+  var EMBED = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
+  var lenke = document.getElementById('lenkeTilbake');
+  if (!EMBED || !lenke) return;
+  lenke.addEventListener('click', function(e){
+    e.preventDefault();
+    try { parent.postMessage({ myntland:'brainbreak-tilbake' }, '*'); } catch(err){}
+  });
 })();
 </script>
 </body>
