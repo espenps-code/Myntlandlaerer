@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Brain breaks · Myntland</title>
+<meta name="description" content="Korte pauser for klasserommet. Monsteryoga med 4-7-8-pusteteknikk.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#fbf2d6;
+  --cream-2:#f6e8bf;
+  --ink:#2a1f3d;
+  --ink-soft:#4a3c63;
+  --gold:#e3a82a;
+  --green:#7bb026;
+  --teal:#27b3c6;
+  --paper:#fffaf0;
+  --border:4px solid var(--ink);
+  --radius:26px;
+  --shadow:0 8px 0 rgba(42,31,61,.16), 0 14px 28px rgba(42,31,61,.14);
+  --font:'Fredoka', system-ui, -apple-system, sans-serif;
+  --phase:var(--green);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  color:var(--ink);
+  background:var(--cream);
+  background-image:radial-gradient(circle at 12% 18%, rgba(255,255,255,.7) 0 26%, transparent 27%),
+                   radial-gradient(circle at 88% 82%, rgba(255,255,255,.55) 0 22%, transparent 23%);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+img{display:block;max-width:100%}
+
+/* ---------- knapper ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:.5em;justify-content:center;
+  font-weight:600;font-size:clamp(15px,1.5vw,20px);
+  padding:.72em 1.25em;border-radius:999px;border:var(--border);
+  background:var(--paper);color:var(--ink);
+  box-shadow:0 5px 0 rgba(42,31,61,.22);
+  transition:transform .08s ease, box-shadow .08s ease, background .15s ease;
+  line-height:1.1;
+}
+.btn:hover{background:#fff}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(42,31,61,.22)}
+.btn.primary{background:var(--gold)}
+.btn.primary:hover{background:#f0b73c}
+.btn.ghost{background:transparent;box-shadow:none;border-width:3px}
+.btn.ghost:hover{background:rgba(255,255,255,.55)}
+.btn:focus-visible{outline:4px solid var(--teal);outline-offset:3px}
+.icon-btn{
+  width:clamp(42px,4.4vw,54px);height:clamp(42px,4.4vw,54px);
+  border-radius:50%;border:3px solid var(--ink);background:var(--paper);
+  display:grid;place-items:center;font-size:clamp(17px,1.8vw,22px);
+  box-shadow:0 4px 0 rgba(42,31,61,.2);
+}
+.icon-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(42,31,61,.2)}
+.icon-btn:focus-visible{outline:4px solid var(--teal);outline-offset:3px}
+.icon-btn.off{opacity:.45}
+
+/* ---------- skjermer ---------- */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding:clamp(12px,2vh,26px)}
+.screen.on{display:flex}
+
+/* ---------- MENY ---------- */
+#menu{align-items:center;justify-content:center;text-align:center;overflow-y:auto}
+.menu-inner{width:min(1100px,94vw);padding:2vh 0}
+.eyebrow{
+  display:inline-block;background:var(--ink);color:var(--cream);
+  padding:.35em 1.1em;border-radius:999px;font-weight:600;
+  font-size:clamp(12px,1.15vw,16px);letter-spacing:.09em;text-transform:uppercase;
+}
+h1{font-size:clamp(30px,5.2vw,62px);font-weight:700;line-height:1.05;margin:.4em 0 .18em}
+.lede{font-size:clamp(15px,1.7vw,22px);color:var(--ink-soft);max-width:56ch;margin:0 auto 1.6em}
+.cards{display:grid;gap:clamp(14px,2vw,24px);grid-template-columns:repeat(auto-fit,minmax(260px,1fr));text-align:left}
+.card{
+  background:var(--paper);border:var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:clamp(16px,1.8vw,24px);
+  display:flex;flex-direction:column;gap:.7em;
+  transition:transform .12s ease, box-shadow .12s ease;
+  text-align:left;width:100%;
+}
+.card.live:hover{transform:translateY(-5px);box-shadow:0 13px 0 rgba(42,31,61,.16), 0 20px 34px rgba(42,31,61,.16)}
+.card.live:focus-visible{outline:4px solid var(--teal);outline-offset:4px}
+.card-top{display:flex;align-items:center;gap:14px}
+.card-thumb{
+  width:clamp(74px,7vw,104px);aspect-ratio:1;border-radius:50%;
+  background:var(--cream-2);border:3px solid var(--ink);flex:none;overflow:hidden;
+  display:grid;place-items:center;
+}
+.card-thumb img{width:92%;height:92%;object-fit:contain}
+.card h2{font-size:clamp(20px,2.1vw,28px);font-weight:700;line-height:1.15}
+.card p{font-size:clamp(14px,1.35vw,17px);color:var(--ink-soft);line-height:1.5}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.tag{
+  background:var(--cream-2);border:2px solid var(--ink);border-radius:999px;
+  padding:.28em .8em;font-size:clamp(12px,1.15vw,15px);font-weight:600;
+}
+.choose{display:flex;flex-wrap:wrap;gap:10px;margin-top:.35em}
+.choose .btn{font-size:clamp(14px,1.35vw,17px);padding:.6em 1.05em}
+.choose .btn small{display:block;font-weight:500;font-size:.82em;opacity:.72;line-height:1.2}
+.card.soon{opacity:.62;border-style:dashed;box-shadow:none;justify-content:center}
+.card.soon h2{font-size:clamp(17px,1.7vw,21px)}
+.menu-foot{margin-top:1.6em;font-size:clamp(13px,1.2vw,16px);color:var(--ink-soft)}
+
+/* ---------- ØKT ---------- */
+.top{display:flex;align-items:center;gap:clamp(8px,1.2vw,16px);flex:none}
+.step-label{font-weight:600;font-size:clamp(14px,1.5vw,20px);white-space:nowrap}
+.dots{display:flex;gap:7px;margin-left:2px}
+.dot{width:clamp(9px,.95vw,13px);height:clamp(9px,.95vw,13px);border-radius:50%;border:2.5px solid var(--ink);background:transparent;transition:background .25s}
+.dot.done{background:var(--ink)}
+.top-spacer{flex:1}
+.bar{height:9px;border-radius:999px;background:rgba(42,31,61,.13);overflow:hidden;flex:none;margin:9px 0 0}
+.bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:999px;transition:width .3s linear}
+
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(6px,1.4vh,18px);position:relative;min-height:0;padding:clamp(4px,1vh,14px) 0}
+
+/* ringen og monsteret */
+.ring-wrap{position:relative;display:grid;place-items:center;flex:0 1 auto;
+  width:min(56vh,88vw);height:min(56vh,88vw);max-width:100%}
+.ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:clamp(6px,.9vh,12px) solid var(--phase);
+  opacity:.85;will-change:transform;transition:border-color .5s ease;
+}
+.ring.halo{opacity:.2;border-width:clamp(15px,2.2vh,30px)}
+.pose-img{
+  position:relative;z-index:2;
+  width:64%;height:64%;object-fit:contain;
+  filter:drop-shadow(0 8px 14px rgba(42,31,61,.18));
+}
+
+/* pusteteksten – egen rad OVER bildet, aldri oppå */
+.breath{
+  display:flex;flex-direction:row;align-items:center;justify-content:center;
+  gap:clamp(8px,1.2vw,16px);flex:none;pointer-events:none;
+}
+.breath-label{
+  background:var(--paper);
+  border:3px solid var(--ink);border-radius:999px;
+  padding:.14em .9em;
+  font-size:clamp(20px,4.4vh,48px);font-weight:700;line-height:1.12;
+  white-space:nowrap;
+  box-shadow:0 5px 0 rgba(42,31,61,.16);
+}
+.breath-count{
+  min-width:1.9em;text-align:center;
+  background:var(--phase);color:#fff;
+  border:3px solid var(--ink);border-radius:999px;
+  font-size:clamp(20px,4.2vh,46px);font-weight:700;line-height:1;
+  padding:.16em .38em;box-shadow:0 5px 0 rgba(42,31,61,.2);
+  font-variant-numeric:tabular-nums;transition:background .5s ease;
+}
+
+.pose-name{text-align:center;font-size:clamp(18px,2.7vh,30px);font-weight:700;flex:none}
+.pose-tip{text-align:center;font-size:clamp(13px,1.9vh,19px);color:var(--ink-soft);margin-top:.15em;max-width:62ch;margin-left:auto;margin-right:auto;line-height:1.45;flex:none}
+.controls{display:flex;gap:clamp(8px,1.1vw,14px);justify-content:center;align-items:center;flex-wrap:wrap;flex:none;margin-top:clamp(8px,1.3vh,16px)}
+
+.veil{
+  position:absolute;inset:0;display:none;place-items:center;z-index:6;
+  background:rgba(251,242,214,.9);backdrop-filter:blur(3px);border-radius:var(--radius);
+}
+.veil.on{display:grid}
+.veil b{font-size:clamp(24px,4.6vh,44px)}
+
+/* ---------- FERDIG ---------- */
+#done{align-items:center;justify-content:center;text-align:center}
+.done-inner{width:min(760px,92vw)}
+.done-badge{
+  width:min(32vh,42vw);aspect-ratio:1;margin:0 auto 1em;border-radius:50%;
+  background:var(--cream-2);border:var(--border);overflow:hidden;display:grid;place-items:center;
+  box-shadow:var(--shadow);
+}
+.done-badge img{width:88%;height:88%;object-fit:contain}
+
+@media (prefers-reduced-motion: reduce){
+  .ring{transition:none}
+  .card.live:hover{transform:none}
+}
+@media (max-width:700px){
+  .top{flex-wrap:wrap}
+  .ring-wrap{width:min(48vh,92vw);height:min(48vh,92vw)}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== MENY ==================== -->
+<section class="screen on" id="menu">
+  <div class="menu-inner">
+    <span class="eyebrow">Klasseportalen</span>
+    <h1>Brain breaks</h1>
+    <p class="lede">Korte pauser som roer ned og samler klassen igjen. Kjør den på storskjerm &ndash; alle blir med.</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-top">
+          <div class="card-thumb"><img src="monsteryoga/yoga-5.webp" alt=""></div>
+          <h2>Monsteryoga</h2>
+        </div>
+        <p>Åtte positurer med rolig pust. Klassen puster inn på 4, holder på 7 og puster ut på 8. Velg hvor lenge dere har tid til.</p>
+        <div class="meta">
+          <span class="tag">🧘 8 positurer</span>
+          <span class="tag">🫁 4-7-8</span>
+        </div>
+        <div class="choose">
+          <button class="btn primary" id="startLang">🧘 Full økt<small>2 pust per positur &middot; ca. 6 min</small></button>
+          <button class="btn" id="startKort">⏱️ Kort økt<small>1 pust per positur &middot; ca. 3 min</small></button>
+        </div>
+      </div>
+
+      <div class="card soon">
+        <h2>Flere brain breaks kommer</h2>
+        <p>Her får du etter hvert flere korte pauser &ndash; ristelek, klappeserier og øyepause.</p>
+      </div>
+    </div>
+
+    <p class="menu-foot">Tips: skru på lyden, så får dere en myk tone ved hvert skifte.</p>
+  </div>
+</section>
+
+<!-- ==================== ØKT ==================== -->
+<section class="screen" id="session">
+  <div class="top">
+    <span class="step-label" id="stepLabel">Positur 1 av 8</span>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <span class="top-spacer"></span>
+    <button class="icon-btn" id="btnSound" title="Lyd av/på" aria-label="Lyd av eller på">🔊</button>
+    <button class="icon-btn" id="btnFs" title="Fullskjerm" aria-label="Fullskjerm">⛶</button>
+    <button class="icon-btn" id="btnQuit" title="Avslutt" aria-label="Avslutt">✕</button>
+  </div>
+  <div class="bar"><i id="barFill"></i></div>
+
+  <div class="stage">
+    <div class="veil" id="veil"><b>⏸️ Pause</b></div>
+    <div class="breath">
+      <div class="breath-label" id="phaseTxt" aria-live="polite">Finn positur</div>
+      <div class="breath-count" id="count">5</div>
+    </div>
+    <div class="ring-wrap">
+      <div class="ring halo" id="ringHalo"></div>
+      <div class="ring" id="ring"></div>
+      <img class="pose-img" id="poseImg" src="monsteryoga/yoga-1.webp" alt="">
+    </div>
+  </div>
+
+  <p class="pose-name" id="poseName">Sovende katt</p>
+  <p class="pose-tip" id="poseTip">Bøy deg rolig framover og la hodet og armene henge helt tungt.</p>
+
+  <div class="controls">
+    <button class="btn" id="btnPause">⏸️ Pause</button>
+    <button class="btn ghost" id="btnSkip">⏭️ Neste positur</button>
+  </div>
+</section>
+
+<!-- ==================== FERDIG ==================== -->
+<section class="screen" id="done">
+  <div class="done-inner">
+    <div class="done-badge"><img src="monsteryoga/yoga-5.webp" alt=""></div>
+    <h1>Godt jobba!</h1>
+    <p class="lede" id="doneText">Åtte positurer og seksten rolige pust. Nå er dere klare igjen.</p>
+    <div class="controls">
+      <button class="btn primary" id="btnAgain">🔁 Kjør på nytt</button>
+      <button class="btn" id="btnMenu">← Tilbake til brain breaks</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============================================================
+     POSITURER – rekkefølgen følger nummereringen på bildene.
+     Bildene ligger i mappa monsteryoga/ ved siden av denne fila.
+     ============================================================ */
+  var POSES = [
+    {img:'yoga-1.webp', name:'Sovende katt', tip:'Bøy deg rolig framover og la hodet og armene henge helt tungt.'},
+    {img:'yoga-2.webp', name:'Stjerna',      tip:'Bein bredt fra hverandre og armene rett ut til sidene. Bli lang og bred.'},
+    {img:'yoga-3.webp', name:'Halvmånen',    tip:'Strekk én arm høyt opp mot taket og len deg mykt til siden.'},
+    {img:'yoga-4.webp', name:'Vinden',       tip:'Sett ett bein fram og strekk armen opp og over hodet. Kjenn strekket i siden.'},
+    {img:'yoga-5.webp', name:'Treet',        tip:'Stå på ett bein med hendene høyt over hodet. Finn et punkt å se på.'},
+    {img:'yoga-6.webp', name:'Krigeren',     tip:'Bred stå, rak rygg og hendene samlet foran brystet.'},
+    {img:'yoga-7.webp', name:'Frosken',      tip:'Huk deg ned med bred stå. Hendene samlet foran brystet.'},
+    {img:'yoga-8.webp', name:'Fjellet',      tip:'Stå støtt med hendene foran brystet. Kjenn at pusten er rolig.'}
+  ];
+
+  var IMG_BASE  = 'monsteryoga/';
+  var BREATHS_LANG = 2;   // antall 4-7-8-pust per positur, full økt
+  var BREATHS_KORT = 1;   // antall 4-7-8-pust per positur, kort økt
+  var breaths      = BREATHS_LANG;
+  var READY_SEC = 5;   // sekunder til å finne positur
+  var PHASES = [
+    {key:'in',   sec:4, label:'Pust inn',      color:'#7bb026', tone:523.25},
+    {key:'hold', sec:7, label:'Hold pusten',   color:'#e3a82a', tone:659.25},
+    {key:'out',  sec:8, label:'Pust rolig ut', color:'#27b3c6', tone:392.00}
+  ];
+
+  function buildSteps(){
+    var s = [];
+    for (var p=0; p<POSES.length; p++){
+      s.push({type:'ready', pose:p, sec:READY_SEC});
+      for (var b=0; b<breaths; b++){
+        for (var f=0; f<PHASES.length; f++){
+          s.push({type:'breath', pose:p, breath:b, phase:f, sec:PHASES[f].sec});
+        }
+      }
+    }
+    return s;
+  }
+  var STEPS = [], TOTAL_SEC = 0;
+  function prepare(n){
+    breaths = n;
+    STEPS = buildSteps();
+    TOTAL_SEC = STEPS.reduce(function(a,s){ return a + s.sec; }, 0);
+  }
+  prepare(BREATHS_LANG);
+
+  var $ = function(id){ return document.getElementById(id); };
+  var scMenu=$('menu'), scSess=$('session'), scDone=$('done');
+  var elStep=$('stepLabel'), elDots=$('dots'), elBar=$('barFill');
+  var elRing=$('ring'), elHalo=$('ringHalo'), elCount=$('count');
+  var elImg=$('poseImg'), elPhase=$('phaseTxt'), elName=$('poseName'), elTip=$('poseTip');
+  var elVeil=$('veil'), btnPause=$('btnPause'), btnSkip=$('btnSkip');
+  var btnSound=$('btnSound'), btnQuit=$('btnQuit'), btnFs=$('btnFs');
+
+  var idx=0, stepStart=0, paused=false, pauseAt=0, running=false, raf=null;
+  var soundOn=true, ac=null, elapsedBefore=0, lastPose=-1, lastPhaseKey='';
+
+  /* ---------- lyd ---------- */
+  function ensureAudio(){
+    if (ac) return;
+    try { var C = window.AudioContext || window.webkitAudioContext; if (C) ac = new C(); }
+    catch(e){ ac = null; }
+  }
+  function ping(freq, dur, vol){
+    if (!soundOn || !ac) return;
+    if (ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+    try {
+      var t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol||0.16, t+0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+(dur||0.9));
+      o.connect(g); g.connect(ac.destination);
+      o.start(t); o.stop(t+(dur||0.9)+0.05);
+    } catch(e){}
+  }
+
+  function preload(){ POSES.forEach(function(p){ var i=new Image(); i.src = IMG_BASE + p.img; }); }
+  function setPhaseColor(hex){ document.documentElement.style.setProperty('--phase', hex); }
+  function renderDots(done){
+    var html='';
+    for (var i=0;i<breaths;i++) html += '<span class="dot'+(i<done?' done':'')+'"></span>';
+    elDots.innerHTML = html;
+  }
+
+  function showStep(){
+    var st = STEPS[idx];
+    if (st.pose !== lastPose){
+      lastPose = st.pose;
+      var p = POSES[st.pose];
+      elImg.src = IMG_BASE + p.img;
+      elImg.alt = 'Monster i positur: ' + p.name;
+      elName.textContent = p.name;
+      elTip.textContent = p.tip;
+      elStep.textContent = 'Positur ' + (st.pose+1) + ' av ' + POSES.length;
+    }
+    if (st.type === 'ready'){
+      renderDots(0);
+      setPhaseColor('#4a3c63');
+      elPhase.textContent = 'Finn positur';
+      elRing.style.transform = 'scale('+MIN+')';
+      elHalo.style.transform = 'scale('+MIN+')';
+      lastPhaseKey = '';
+      ping(330, .5, .10);
+    } else {
+      renderDots(st.breath);
+      var ph = PHASES[st.phase];
+      setPhaseColor(ph.color);
+      elPhase.textContent = ph.label;
+      if (ph.key !== lastPhaseKey){ ping(ph.tone, ph.key==='hold'?.6:.9); lastPhaseKey = ph.key; }
+    }
+  }
+
+  var MIN=0.72, MAX=1.0;
+  function ease(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+
+  function frame(now){
+    if (!running) return;
+    raf = requestAnimationFrame(frame);
+    if (paused) return;
+
+    var st = STEPS[idx];
+    var el = (now - stepStart)/1000;
+    if (el < 0) el = 0;
+
+    var left = Math.ceil(st.sec - el);
+    if (left < 1) left = 1;
+    if (elCount.textContent !== String(left)) elCount.textContent = left;
+
+    var t = Math.min(1, el/st.sec), sc = MIN;
+    if (st.type === 'breath'){
+      var k = PHASES[st.phase].key;
+      if (k === 'in')        sc = MIN + (MAX-MIN)*ease(t);
+      else if (k === 'hold') sc = MAX;
+      else                   sc = MAX - (MAX-MIN)*ease(t);
+    }
+    elRing.style.transform = 'scale('+sc.toFixed(4)+')';
+    elHalo.style.transform = 'scale('+(sc*1.03).toFixed(4)+')';
+
+    elBar.style.width = (((elapsedBefore + Math.min(el, st.sec)) / TOTAL_SEC) * 100).toFixed(2) + '%';
+
+    if (el >= st.sec) nextStep();
+  }
+
+  function nextStep(){
+    elapsedBefore += STEPS[idx].sec;
+    idx++;
+    if (idx >= STEPS.length){ finish(); return; }
+    stepStart = performance.now();
+    showStep();
+  }
+
+  function startSession(n){
+    if (typeof n === 'number') prepare(n);
+    ensureAudio();
+    if (ac && ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+    idx=0; elapsedBefore=0; lastPose=-1; lastPhaseKey=''; paused=false;
+    setVeil(false); btnPause.innerHTML = '⏸️ Pause';
+    show(scSess);
+    stepStart = performance.now();
+    showStep();
+    running = true;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(frame);
+  }
+  function togglePause(){
+    if (!running) return;
+    paused = !paused;
+    if (paused) pauseAt = performance.now();
+    else stepStart += (performance.now() - pauseAt);
+    setVeil(paused);
+    btnPause.innerHTML = paused ? '▶️ Fortsett' : '⏸️ Pause';
+  }
+  function setVeil(on){ elVeil.classList.toggle('on', on); }
+  function skipPose(){
+    if (!running) return;
+    var cur = STEPS[idx].pose;
+    while (idx < STEPS.length && STEPS[idx].pose === cur){ elapsedBefore += STEPS[idx].sec; idx++; }
+    if (idx >= STEPS.length){ finish(); return; }
+    stepStart = performance.now();
+    if (paused) togglePause();
+    showStep();
+  }
+  function stop(){ running=false; paused=false; cancelAnimationFrame(raf); setVeil(false); }
+  function finish(){
+    stop(); show(scDone);
+    var dt = $('doneText');
+    if (dt) dt.textContent = 'Åtte positurer og ' + (POSES.length * breaths) +
+      ' rolige pust. Nå er dere klare igjen.';
+    ping(523.25,1.1);
+    setTimeout(function(){ ping(659.25,1.1); },170);
+    setTimeout(function(){ ping(783.99,1.4); },340);
+  }
+  function show(sec){ [scMenu,scSess,scDone].forEach(function(s){ s.classList.toggle('on', s===sec); }); }
+  function toMenu(){ stop(); show(scMenu); }
+
+  $('startLang').addEventListener('click', function(){ startSession(BREATHS_LANG); });
+  $('startKort').addEventListener('click', function(){ startSession(BREATHS_KORT); });
+  btnPause.addEventListener('click', togglePause);
+  btnSkip .addEventListener('click', skipPose);
+  btnQuit .addEventListener('click', toMenu);
+  $('btnAgain').addEventListener('click', function(){ startSession(breaths); });
+  $('btnMenu') .addEventListener('click', toMenu);
+
+  btnSound.addEventListener('click', function(){
+    soundOn = !soundOn;
+    btnSound.textContent = soundOn ? '🔊' : '🔇';
+    btnSound.classList.toggle('off', !soundOn);
+    if (soundOn){ ensureAudio(); ping(523.25,.4,.12); }
+  });
+
+  btnFs.addEventListener('click', function(){
+    var d = document.documentElement;
+    if (!document.fullscreenElement){ (d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d); }
+    else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (!scSess.classList.contains('on')) return;
+    if (e.code === 'Space'){ e.preventDefault(); togglePause(); }
+    else if (e.key === 'Escape'){ toMenu(); }
+    else if (e.key === 'ArrowRight'){ skipPose(); }
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden && running && !paused) togglePause();
+  });
+
+  renderDots(0);
+  preload();
+})();
+</script>
+</body>
+</html>

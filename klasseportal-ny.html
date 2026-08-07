@@ -1092,6 +1092,7 @@ h1.sticker{
       <button id="tbReward" title="Belønning">&#127873;</button>
       <button id="tbMusic" title="Musikk">&#127925;</button>
       <button id="tbTimer" title="Timer">&#9201;&#65039;</button>
+      <button id="tbBreak" title="Brain break">&#129496;</button>
       <button id="tbPlan" title="Planlegg uke">&#128197;</button>
       <button id="tbWheel" title="Lykkehjul">&#127905;</button>
       <button id="tbGames" title="Tavlespill">&#127918;</button>
@@ -1317,6 +1318,14 @@ h1.sticker{
   <div class="ovl-card" style="width:min(97vw,1280px);max-height:96vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
     <div class="ovl-head"><h3>&#9201;&#65039; Timer</h3><button class="ovl-x" id="timerClose">&times;</button></div>
     <iframe id="timerFrame" title="Klassetimer" style="border:0;display:block;width:100%;aspect-ratio:16/9;max-height:calc(96vh - 70px);background:#cdeede;"></iframe>
+  </div>
+</div>
+
+<!-- ====== BRAIN BREAK-OVERLAY (brainbreak.html i ramme) ====== -->
+<div class="ovl" id="breakOverlay">
+  <div class="ovl-card" style="width:min(97vw,1280px);max-height:96vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="ovl-head"><h3>&#129496; Brain break</h3><button class="ovl-x" id="breakClose">&times;</button></div>
+    <iframe id="breakFrame" title="Brain breaks" allow="fullscreen" allowfullscreen style="border:0;display:block;width:100%;aspect-ratio:16/9;max-height:calc(96vh - 70px);background:#fbf2d6;"></iframe>
   </div>
 </div>
 
@@ -3154,6 +3163,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       tBtn.onclick=function(){ tFrame.src='klassetimer.html'; tOvl.classList.add('open'); };
       document.getElementById('timerClose').onclick=function(){ tOvl.classList.remove('open'); tFrame.src='about:blank'; };
       tOvl.addEventListener('click', function(e){ if(e.target===tOvl){ tOvl.classList.remove('open'); tFrame.src='about:blank'; } });
+    }
+  })();
+  (function(){
+    var bOvl=document.getElementById('breakOverlay'), bBtn=document.getElementById('tbBreak'), bFrame=document.getElementById('breakFrame');
+    if(bOvl&&bBtn&&bFrame){
+      bBtn.onclick=function(){ bFrame.src='brainbreak.html'; bOvl.classList.add('open'); };
+      document.getElementById('breakClose').onclick=function(){ bOvl.classList.remove('open'); bFrame.src='about:blank'; };
+      bOvl.addEventListener('click', function(e){ if(e.target===bOvl){ bOvl.classList.remove('open'); bFrame.src='about:blank'; } });
     }
   })();
   document.getElementById('rwCustom').addEventListener('keydown', function(e){ if(e.key==='Enter') makeReward(e.target.value); });
