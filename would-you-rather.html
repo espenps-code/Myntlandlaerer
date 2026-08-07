@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Would you rather · Myntland</title>
+<meta name="description" content="Brain break for klasserommet: tre valg, tre yogapositurer. Elevene viser valget sitt med kroppen.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#fbf2d6;
+  --cream-2:#f6e8bf;
+  --ink:#2a1f3d;
+  --ink-soft:#4a3c63;
+  --gold:#e3a82a;
+  --green:#7bb026;
+  --teal:#27b3c6;
+  --paper:#fffaf0;
+  --border:4px solid var(--ink);
+  --radius:26px;
+  --shadow:0 8px 0 rgba(42,31,61,.16), 0 14px 28px rgba(42,31,61,.14);
+  --font:'Fredoka', system-ui, -apple-system, sans-serif;
+  --accent:var(--teal);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  color:var(--ink);
+  background:var(--cream);
+  background-image:radial-gradient(circle at 12% 18%, rgba(255,255,255,.7) 0 26%, transparent 27%),
+                   radial-gradient(circle at 88% 82%, rgba(255,255,255,.55) 0 22%, transparent 23%);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+img{display:block;max-width:100%}
+a{color:inherit}
+
+/* ---------- knapper ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:.5em;justify-content:center;
+  font-weight:600;font-size:clamp(15px,1.5vw,20px);
+  padding:.72em 1.25em;border-radius:999px;border:var(--border);
+  background:var(--paper);color:var(--ink);
+  box-shadow:0 5px 0 rgba(42,31,61,.22);
+  transition:transform .08s ease, box-shadow .08s ease, background .15s ease;
+  line-height:1.1;
+}
+.btn:hover{background:#fff}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(42,31,61,.22)}
+.btn.primary{background:var(--gold)}
+.btn.primary:hover{background:#f0b73c}
+.btn.ghost{background:transparent;box-shadow:none;border-width:3px}
+.btn.ghost:hover{background:rgba(255,255,255,.55)}
+.btn:focus-visible{outline:4px solid var(--teal);outline-offset:3px}
+.btn small{display:block;font-weight:500;font-size:.82em;opacity:.72;line-height:1.2}
+.icon-btn{
+  width:clamp(42px,4.4vw,54px);height:clamp(42px,4.4vw,54px);
+  border-radius:50%;border:3px solid var(--ink);background:var(--paper);
+  display:grid;place-items:center;font-size:clamp(17px,1.8vw,22px);
+  box-shadow:0 4px 0 rgba(42,31,61,.2);
+}
+.icon-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(42,31,61,.2)}
+.icon-btn:focus-visible{outline:4px solid var(--teal);outline-offset:3px}
+.icon-btn.off{opacity:.45}
+
+/* ---------- skjermer ---------- */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding:clamp(12px,2vh,26px)}
+.screen.on{display:flex}
+
+/* ---------- MENY ---------- */
+#menu,#done{align-items:center;justify-content:center;text-align:center;overflow-y:auto}
+.menu-inner{width:min(1100px,94vw);padding:2vh 0}
+.eyebrow{
+  display:inline-block;background:var(--ink);color:var(--cream);
+  padding:.35em 1.1em;border-radius:999px;font-weight:600;
+  font-size:clamp(12px,1.15vw,16px);letter-spacing:.09em;text-transform:uppercase;
+}
+h1{font-size:clamp(30px,5.2vw,62px);font-weight:700;line-height:1.05;margin:.4em 0 .18em}
+.lede{font-size:clamp(15px,1.7vw,22px);color:var(--ink-soft);max-width:60ch;margin:0 auto 1.3em}
+.how{
+  background:var(--paper);border:3px solid var(--ink);border-radius:var(--radius);
+  padding:clamp(12px,1.4vw,18px) clamp(14px,1.8vw,24px);margin:0 auto 1.5em;
+  max-width:min(760px,94vw);font-size:clamp(14px,1.4vw,18px);line-height:1.55;
+  color:var(--ink-soft);box-shadow:0 5px 0 rgba(42,31,61,.14);
+}
+.how b{color:var(--ink)}
+.cards{display:grid;gap:clamp(14px,2vw,22px);grid-template-columns:repeat(auto-fit,minmax(240px,1fr));text-align:left}
+.card{
+  background:var(--paper);border:var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:clamp(16px,1.8vw,24px);
+  display:flex;flex-direction:column;gap:.6em;text-align:left;width:100%;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.card:hover{transform:translateY(-5px);box-shadow:0 13px 0 rgba(42,31,61,.16), 0 20px 34px rgba(42,31,61,.16)}
+.card-top{display:flex;align-items:center;gap:14px}
+.card-emoji{
+  width:clamp(58px,5.4vw,74px);aspect-ratio:1;border-radius:50%;
+  border:3px solid var(--ink);flex:none;display:grid;place-items:center;
+  font-size:clamp(26px,2.8vw,36px);
+}
+.card h2{font-size:clamp(19px,2vw,26px);font-weight:700;line-height:1.15}
+.card p{font-size:clamp(14px,1.3vw,17px);color:var(--ink-soft);line-height:1.5;flex:1}
+.card .btn{margin-top:.2em;align-self:flex-start}
+.menu-foot{margin-top:1.5em;font-size:clamp(13px,1.2vw,16px);color:var(--ink-soft);line-height:1.7}
+
+/* ---------- RUNDE ---------- */
+.top{display:flex;align-items:center;gap:clamp(8px,1.2vw,16px);flex:none}
+.step-label{font-weight:600;font-size:clamp(14px,1.5vw,20px);white-space:nowrap}
+.theme-chip{
+  border:3px solid var(--ink);border-radius:999px;background:var(--accent);
+  padding:.2em .8em;font-weight:600;font-size:clamp(12px,1.2vw,16px);white-space:nowrap;
+}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dot{width:clamp(8px,.85vw,12px);height:clamp(8px,.85vw,12px);border-radius:50%;border:2.5px solid var(--ink);background:transparent;transition:background .25s}
+.dot.done{background:var(--ink)}
+.top-spacer{flex:1}
+.bar{height:9px;border-radius:999px;background:rgba(42,31,61,.13);overflow:hidden;flex:none;margin:9px 0 0}
+.bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:999px;transition:width .3s linear}
+
+.stage{flex:1;display:flex;flex-direction:column;min-height:0;gap:clamp(6px,1.2vh,16px);
+  padding:clamp(6px,1.4vh,16px) 0;position:relative}
+
+.qrow{display:flex;align-items:center;justify-content:center;gap:clamp(10px,1.4vw,20px);flex:none;flex-wrap:wrap}
+.qtext{
+  background:var(--paper);border:4px solid var(--ink);border-radius:999px;
+  padding:.18em 1.1em;font-size:clamp(19px,3.6vh,40px);font-weight:700;line-height:1.2;
+  box-shadow:0 6px 0 rgba(42,31,61,.16);text-align:center;
+}
+.count{
+  min-width:2.1em;text-align:center;
+  background:var(--accent);color:#fff;
+  border:4px solid var(--ink);border-radius:999px;
+  font-size:clamp(19px,3.4vh,38px);font-weight:700;line-height:1;
+  padding:.2em .4em;box-shadow:0 6px 0 rgba(42,31,61,.2);
+  font-variant-numeric:tabular-nums;
+}
+.phase{
+  text-align:center;font-size:clamp(15px,2.2vh,24px);font-weight:600;color:var(--ink-soft);flex:none;
+}
+
+.opts{
+  flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);
+  gap:clamp(8px,1.2vw,18px);align-items:stretch;
+}
+.opt{
+  background:var(--paper);border:4px solid var(--ink);border-radius:var(--radius);
+  box-shadow:0 7px 0 rgba(42,31,61,.16);
+  padding:clamp(8px,1.2vh,16px) clamp(8px,1vw,16px);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:clamp(4px,.8vh,10px);min-height:0;position:relative;overflow:hidden;
+  transition:box-shadow .2s ease, transform .2s ease, background .2s ease;
+}
+.opt-num{
+  position:absolute;top:clamp(6px,.9vh,12px);left:clamp(6px,.7vw,12px);
+  width:clamp(26px,3.4vh,40px);height:clamp(26px,3.4vh,40px);border-radius:50%;
+  border:3px solid var(--ink);background:var(--cream-2);
+  display:grid;place-items:center;font-weight:700;font-size:clamp(14px,2vh,22px);
+}
+.opt-pose{
+  flex:1;min-height:0;width:100%;display:grid;place-items:center;
+}
+.opt-pose img{height:100%;width:100%;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(42,31,61,.18))}
+.opt-text{
+  font-size:clamp(15px,2.6vh,30px);font-weight:700;line-height:1.2;text-align:center;flex:none;
+}
+.opt-pose-name{
+  background:var(--cream-2);border:2px solid var(--ink);border-radius:999px;
+  padding:.2em .8em;font-size:clamp(11px,1.6vh,16px);font-weight:600;flex:none;
+  color:var(--ink-soft);text-align:center;
+}
+/* «vis valget»-fasen: kortene våkner */
+.opts.show .opt{background:#fff;transform:translateY(-4px);box-shadow:0 11px 0 rgba(42,31,61,.18)}
+.opts.show .opt-pose img{animation:bob 1.6s ease-in-out infinite}
+.opt:nth-child(2) .opt-pose img{animation-delay:.2s}
+.opt:nth-child(3) .opt-pose img{animation-delay:.4s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+.controls{display:flex;gap:clamp(8px,1.1vw,14px);justify-content:center;align-items:center;flex-wrap:wrap;flex:none;margin-top:clamp(6px,1.1vh,14px)}
+
+.veil{
+  position:absolute;inset:0;display:none;place-items:center;z-index:6;
+  background:rgba(251,242,214,.92);backdrop-filter:blur(3px);border-radius:var(--radius);
+}
+.veil.on{display:grid}
+.veil b{font-size:clamp(24px,4.6vh,44px)}
+
+/* ---------- FERDIG ---------- */
+.done-badge{
+  width:min(26vh,36vw);aspect-ratio:1;margin:0 auto 1em;border-radius:50%;
+  background:var(--cream-2);border:var(--border);overflow:hidden;display:grid;place-items:center;
+  box-shadow:var(--shadow);
+}
+.done-badge img{width:86%;height:86%;object-fit:contain}
+
+@media (prefers-reduced-motion: reduce){
+  .card:hover{transform:none}
+  .opts.show .opt-pose img{animation:none}
+  .opts.show .opt{transform:none}
+}
+@media (max-width:820px){
+  .opts{grid-template-columns:1fr;gap:8px}
+  .opt{flex-direction:row;justify-content:flex-start;gap:12px;padding-left:clamp(38px,9vw,56px)}
+  .opt-pose{flex:0 0 22vw;height:100%}
+  .opt-text{text-align:left;flex:1}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== MENY ==================== -->
+<section class="screen on" id="menu">
+  <div class="menu-inner">
+    <span class="eyebrow">Brain break</span>
+    <h1>Would you rather?</h1>
+    <p class="lede">Tre valg, tre yogapositurer. Elevene svarer med kroppen &ndash; ingen håndsopprekking, ingen prating.</p>
+
+    <div class="how">
+      <b>Slik gjør dere det:</b> Skjermen viser tre valg, og hvert valg har sin egen yogapositur.
+      Alle leser først, og når det står <b>«Vis valget ditt!»</b> gjør hele klassen positurbevegelsen
+      til det de velger. Ti spørsmål &ndash; ca. to minutter.
+    </div>
+
+    <div class="cards" id="themeCards"><!-- fylles av skriptet --></div>
+
+    <p class="menu-foot">
+      <button class="btn ghost" id="btnMix">🎲 Bland alle temaene</button><br>
+      <a href="brainbreak.html" id="lenkeTilbake">← Tilbake til brain breaks</a>
+    </p>
+  </div>
+</section>
+
+<!-- ==================== RUNDE ==================== -->
+<section class="screen" id="round">
+  <div class="top">
+    <span class="theme-chip" id="themeChip">Helg</span>
+    <span class="step-label" id="stepLabel">Spørsmål 1 av 10</span>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <span class="top-spacer"></span>
+    <button class="icon-btn" id="btnSound" title="Lyd av/på" aria-label="Lyd av eller på">🔊</button>
+    <button class="icon-btn" id="btnFs" title="Fullskjerm" aria-label="Fullskjerm">⛶</button>
+    <button class="icon-btn" id="btnQuit" title="Avslutt" aria-label="Avslutt">✕</button>
+  </div>
+  <div class="bar"><i id="barFill"></i></div>
+
+  <div class="stage">
+    <div class="veil" id="veil"><b>⏸️ Pause</b></div>
+    <div class="qrow">
+      <div class="qtext" id="qText">Hva velger du?</div>
+      <div class="count" id="count">5</div>
+    </div>
+    <p class="phase" id="phaseTxt" aria-live="polite">Les valgene …</p>
+    <div class="opts" id="opts">
+      <div class="opt"><span class="opt-num">1</span><div class="opt-pose"><img id="img0" src="monsteryoga/yoga-1.webp" alt=""></div><p class="opt-text" id="txt0">–</p><span class="opt-pose-name" id="pose0">–</span></div>
+      <div class="opt"><span class="opt-num">2</span><div class="opt-pose"><img id="img1" src="monsteryoga/yoga-2.webp" alt=""></div><p class="opt-text" id="txt1">–</p><span class="opt-pose-name" id="pose1">–</span></div>
+      <div class="opt"><span class="opt-num">3</span><div class="opt-pose"><img id="img2" src="monsteryoga/yoga-3.webp" alt=""></div><p class="opt-text" id="txt2">–</p><span class="opt-pose-name" id="pose2">–</span></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="btnPause">⏸️ Pause</button>
+    <button class="btn ghost" id="btnSkip">⏭️ Neste spørsmål</button>
+  </div>
+</section>
+
+<!-- ==================== FERDIG ==================== -->
+<section class="screen" id="done">
+  <div class="menu-inner">
+    <div class="done-badge"><img src="monsteryoga/yoga-5.webp" alt=""></div>
+    <h1>Godt jobba!</h1>
+    <p class="lede" id="doneText">Ti valg og ti positurer. Nå er kroppen våken og klassen samlet igjen.</p>
+    <div class="controls">
+      <button class="btn primary" id="btnAgain">🔁 Ny runde, nye spørsmål</button>
+      <button class="btn" id="btnMenu">← Velg nytt tema</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============================================================
+     1) POSITURER – samme bilder som monsteryoga bruker.
+        Ligger i mappa monsteryoga/ ved siden av denne fila.
+     ============================================================ */
+  var POSES = [
+    {img:'yoga-1.webp', name:'Sovende katt', tip:'bøy deg framover, la armene henge'},
+    {img:'yoga-2.webp', name:'Stjerna',      tip:'bein bredt, armene rett ut'},
+    {img:'yoga-3.webp', name:'Halvmånen',    tip:'én arm høyt opp, len deg til siden'},
+    {img:'yoga-4.webp', name:'Vinden',       tip:'ett bein fram, armen opp over hodet'},
+    {img:'yoga-5.webp', name:'Treet',        tip:'stå på ett bein, hendene over hodet'},
+    {img:'yoga-6.webp', name:'Krigeren',     tip:'bred stå, hendene samlet foran brystet'},
+    {img:'yoga-7.webp', name:'Frosken',      tip:'huk deg ned med bred stå'},
+    {img:'yoga-8.webp', name:'Fjellet',      tip:'stå støtt, hendene foran brystet'}
+  ];
+  var IMG_BASE = 'monsteryoga/';
+
+  /* ============================================================
+     2) TEMA OG SPØRSMÅL
+        ---------------------------------------------------------
+        VIL DU LEGGE TIL ET NYTT TEMA? Kopier en hel blokk under,
+        gi den ny id, tittel, emoji og farge, og bytt ut spørsmålene.
+        Hvert spørsmål er:  {q:'ledetekst', v:['valg 1','valg 2','valg 3']}
+        Ha gjerne flere enn 10 spørsmål – spillet trekker
+        PER_ROUND tilfeldige hver runde, så det blir nytt hver gang.
+        Hold valgene korte (1–4 ord) så de er lette å lese fra bakerste rad.
+     ============================================================ */
+  var PER_ROUND = 10;
+
+  var THEMES = [
+    {
+      id:'skolestart',
+      tittel:'Back to school',
+      emoji:'🎒',
+      farge:'#7bb026',
+      beskriv:'Ny sekk, nye bøker og nytt skoleår. Fin oppvarming de første ukene.',
+      sporsmal:[
+        {q:'Hva gleder du deg mest til?',      v:['Ny sekk','Nytt pennal','Nye sko']},
+        {q:'Hvor vil du sitte?',              v:['Helt foran','Midt i rommet','Bakerst']},
+        {q:'Første time etter ferien?',       v:['Matte','Lesing','Gym']},
+        {q:'Hvordan kommer du på skolen?',    v:['Går','Sykler','Blir kjørt']},
+        {q:'Pennalet skal være fullt av …',   v:['Tusjer','Blyanter','Klistremerker']},
+        {q:'Best i matpakka?',                v:['Brødskiver','Rester fra middagen','Knekkebrød']},
+        {q:'I friminuttet?',                  v:['Fotball','Hoppe strikk','Prate med venner']},
+        {q:'Hvordan skal en lærer være?',     v:['Morsom','Rolig','Superflink']},
+        {q:'Hva skriver du helst med?',       v:['Blyant','Penn','Tastatur']},
+        {q:'Sekken din skal være …',          v:['Full av lommer','Superlett','I kule farger']},
+        {q:'Lekser – hva velger du?',         v:['10 min hver dag','Halvtime to dager','Én time én dag']},
+        {q:'Skolearbeid – helst …',           v:['Alene','Med én venn','I stor gruppe']},
+        {q:'Klasserommet trenger …',          v:['Sofakrok','Klassedyr','Kjempeskjerm']},
+        {q:'Første skoledag skal du …',       v:['Fortelle om ferien','Tegne deg selv','Si en vits']},
+        {q:'Nytt skoleår gir deg …',          v:['Nytt klasserom','Ny pult','Plass ved vinduet']},
+        {q:'Beste skolebok er full av …',     v:['Bilder','Oppgaver','Historier']},
+        {q:'I gymtimen?',                     v:['Ballspill','Hinderløype','Dans']},
+        {q:'Skoledagen skal starte …',        v:['Klokka 8','Klokka 9','Klokka 10']},
+        {q:'Skolen skulle hatt …',            v:['Lengre friminutt','Gratis frukt','Basseng']},
+        {q:'Hva er best på skolen?',          v:['Å lære nye ting','Å være med venner','Turdager']}
+      ]
+    },
+    {
+      id:'middag',
+      tittel:'Middag',
+      emoji:'🍽️',
+      farge:'#e3a82a',
+      beskriv:'Taco eller pizza? Trygt tema som alle har en mening om – god latter garantert.',
+      sporsmal:[
+        {q:'Hva vil du ha til middag?',       v:['Taco','Pizza','Pasta']},
+        {q:'Hva velger du?',                  v:['Fiskepinner','Kjøttkaker','Pølser']},
+        {q:'Ved siden av?',                   v:['Potetstappe','Pommes frites','Ris']},
+        {q:'Hva har du på?',                  v:['Ketchup','Majones','Brun saus']},
+        {q:'Dessert!',                        v:['Is','Kake','Frukt']},
+        {q:'Din jobb på kjøkkenet?',          v:['Lage maten','Dekke bordet','Vaske opp']},
+        {q:'Hvor spiser dere i dag?',         v:['Ute i hagen','Foran filmen','Ved bordet']},
+        {q:'Skål eller kjele?',               v:['Suppe','Grøt','Gryte']},
+        {q:'Grønnsak på tallerkenen?',        v:['Gulrot','Brokkoli','Mais']},
+        {q:'Pizza med …',                     v:['Skinke','Bare ost','Mye grønt']},
+        {q:'Å drikke?',                       v:['Melk','Vann','Saft']},
+        {q:'Middag hos …',                    v:['Besteforeldre','Bestevennen','På restaurant']},
+        {q:'Hva biter du i?',                 v:['Burger','Pølse i brød','Kebab']},
+        {q:'Pasta betyr …',                   v:['Spagetti','Lasagne','Makaroni']},
+        {q:'Hva står på fatet?',              v:['Kylling','Laks','Vegetar']},
+        {q:'Rart til middag – ja takk!',      v:['Vafler','Pannekaker','Grøt']},
+        {q:'Hvor lages maten?',               v:['På grillen','I ovnen','I panna']},
+        {q:'Hvilken smak vinner?',            v:['Søtt','Salt','Sterkt']},
+        {q:'Dagen etter?',                    v:['Rester','Helt ny middag','Rester i matboksen']},
+        {q:'Hvem bestemmer middagen?',        v:['Du','Familien sammen','Terningen']}
+      ]
+    },
+    {
+      id:'helg',
+      tittel:'Helg',
+      emoji:'🛌',
+      farge:'#27b3c6',
+      beskriv:'Fredagskos, tur eller sofa? Passer fint på en fredag før dere går hjem.',
+      sporsmal:[
+        {q:'Lørdag morgen?',                  v:['Sove lenge','Opp tidlig','Sove i telt']},
+        {q:'Hvor drar dere?',                 v:['Kino','Bowling','Svømmehall']},
+        {q:'Lørdagsgodt?',                    v:['Sjokolade','Potetgull','Gelé']},
+        {q:'Hvor er du helst?',               v:['Ute hele dagen','Inne og koser deg','Litt av begge']},
+        {q:'Kveldens plan?',                  v:['Overnatte hos venn','Ha venn på besøk','Film hjemme']},
+        {q:'Tur i dag!',                      v:['Sykkeltur','Skogtur','Tur til byen']},
+        {q:'Hva spiller du?',                 v:['Brettspill','Dataspill','Fotball']},
+        {q:'God historie?',                   v:['Lese bok','Se film','Høre lydbok']},
+        {q:'Hva lager du?',                   v:['Boller','Pizza','Smoothie']},
+        {q:'Når rydder du rommet?',           v:['Lørdag','Søndag','Litt hver dag']},
+        {q:'Hvilket vær vil du ha?',          v:['Regn og film','Sol og aktiviteter','Snø og aking']},
+        {q:'Hvor drar familien?',             v:['Til besteforeldre','På fotballkamp','På loppemarked']},
+        {q:'Hva bygger du?',                  v:['Hytte','Lego','Snøhule']},
+        {q:'Full musikk!',                    v:['Danse i stua','Synge karaoke','Spille instrument']},
+        {q:'Hva lager du med hendene?',       v:['Tegner','Perler','Syr']},
+        {q:'Ut på eventyr?',                  v:['Fisketur','Bærtur','Fjelltur']},
+        {q:'Hva skal være ekstra langt?',     v:['Frokosten','Middagen','Kveldskosen']},
+        {q:'En helg uten …',                  v:['Skjerm','Godteri','Å gå ut']},
+        {q:'Drømmedagen?',                    v:['Tivoli','Dyrepark','Vannland']},
+        {q:'Når tar du leksene?',             v:['Fredag','Lørdag','Søndag kveld']}
+      ]
+    }
+    /* ,{ id:'…', tittel:'…', emoji:'…', farge:'#…', beskriv:'…', sporsmal:[ … ] } */
+  ];
+
+  /* ============================================================
+     3) TEMPO
+     ============================================================ */
+  var SEC_READ = 5;   // sekunder til å lese valgene
+  var SEC_SHOW = 7;   // sekunder til å vise positur
+
+  /* ============================================================
+     4) MOTOR
+     ============================================================ */
+  var $ = function(id){ return document.getElementById(id); };
+  var scMenu=$('menu'), scRound=$('round'), scDone=$('done');
+  var elChip=$('themeChip'), elStep=$('stepLabel'), elDots=$('dots'), elBar=$('barFill');
+  var elQ=$('qText'), elCount=$('count'), elPhase=$('phaseTxt'), elOpts=$('opts');
+  var elVeil=$('veil'), btnPause=$('btnPause'), btnSkip=$('btnSkip');
+  var btnSound=$('btnSound'), btnQuit=$('btnQuit'), btnFs=$('btnFs');
+  var elImg=[$('img0'),$('img1'),$('img2')];
+  var elTxt=[$('txt0'),$('txt1'),$('txt2')];
+  var elPose=[$('pose0'),$('pose1'),$('pose2')];
+
+  var ROUND = [];             // {q, v:[3], p:[3 positur-indekser]}
+  var STEPS = [], TOTAL_SEC = 0;
+  var idx=0, stepStart=0, paused=false, pauseAt=0, running=false, raf=null;
+  var soundOn=true, ac=null, elapsedBefore=0, lastQ=-1, lastPhase='';
+  var currentTheme = null;
+
+  function shuffle(a){
+    for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
+  function poseIdxList(){
+    var a=[]; for (var i=0;i<POSES.length;i++) a.push(i); return a;
+  }
+  /* tre ulike positurer per spørsmål, og maks én lik som forrige spørsmål */
+  function drawPoses(prev){
+    var pick=null;
+    for (var t=0;t<25;t++){
+      pick = shuffle(poseIdxList()).slice(0,3);
+      if (!prev) break;
+      var overlap=0;
+      for (var i=0;i<3;i++) if (prev.indexOf(pick[i]) > -1) overlap++;
+      if (overlap <= 1) break;
+    }
+    return pick;
+  }
+
+  function buildRound(theme){
+    currentTheme = theme;
+    var pool;
+    if (theme.id === '__mix'){
+      pool = [];
+      THEMES.forEach(function(t){
+        t.sporsmal.forEach(function(s){ pool.push(s); });
+      });
+    } else {
+      pool = theme.sporsmal.slice();
+    }
+    var picked = shuffle(pool.slice()).slice(0, Math.min(PER_ROUND, pool.length));
+    ROUND = [];
+    var prev = null;
+    picked.forEach(function(s){
+      var p = drawPoses(prev);
+      prev = p;
+      ROUND.push({ q: s.q || 'Hva velger du?', v: s.v, p: p });
+    });
+
+    STEPS = [];
+    for (var i=0;i<ROUND.length;i++){
+      STEPS.push({q:i, kind:'read', sec:SEC_READ});
+      STEPS.push({q:i, kind:'show', sec:SEC_SHOW});
+    }
+    TOTAL_SEC = STEPS.reduce(function(a,s){ return a+s.sec; }, 0);
+
+    document.documentElement.style.setProperty('--accent', theme.farge);
+    elChip.textContent = theme.emoji + ' ' + theme.tittel;
+    renderDots(0);
+  }
+
+  function renderDots(done){
+    var html='';
+    for (var i=0;i<ROUND.length;i++) html += '<span class="dot'+(i<done?' done':'')+'"></span>';
+    elDots.innerHTML = html;
+  }
+
+  /* ---------- lyd ---------- */
+  function ensureAudio(){
+    if (ac) return;
+    try { var C = window.AudioContext || window.webkitAudioContext; if (C) ac = new C(); }
+    catch(e){ ac = null; }
+  }
+  function ping(freq, dur, vol){
+    if (!soundOn || !ac) return;
+    if (ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+    try {
+      var t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol||0.16, t+0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+(dur||0.8));
+      o.connect(g); g.connect(ac.destination);
+      o.start(t); o.stop(t+(dur||0.8)+0.05);
+    } catch(e){}
+  }
+  function preload(){ POSES.forEach(function(p){ var i=new Image(); i.src = IMG_BASE + p.img; }); }
+
+  function showStep(){
+    var st = STEPS[idx], item = ROUND[st.q];
+    if (st.q !== lastQ){
+      lastQ = st.q;
+      elQ.textContent = item.q;
+      elStep.textContent = 'Spørsmål ' + (st.q+1) + ' av ' + ROUND.length;
+      renderDots(st.q);
+      for (var i=0;i<3;i++){
+        var po = POSES[item.p[i]];
+        elImg[i].src = IMG_BASE + po.img;
+        elImg[i].alt = 'Monster i positur: ' + po.name;
+        elTxt[i].textContent = item.v[i];
+        elPose[i].textContent = '🧘 ' + po.name + ' – ' + po.tip;
+      }
+    }
+    if (st.kind === 'read'){
+      elOpts.classList.remove('show');
+      elPhase.textContent = 'Les valgene …';
+      if (lastPhase !== 'read') ping(392.00, .5, .10);
+    } else {
+      elOpts.classList.add('show');
+      elPhase.textContent = '🧘 Vis valget ditt!';
+      if (lastPhase !== 'show') ping(659.25, .7);
+    }
+    lastPhase = st.kind;
+  }
+
+  function frame(now){
+    if (!running) return;
+    raf = requestAnimationFrame(frame);
+    if (paused) return;
+    var st = STEPS[idx];
+    var el = (now - stepStart)/1000;
+    if (el < 0) el = 0;
+    var left = Math.ceil(st.sec - el);
+    if (left < 1) left = 1;
+    if (elCount.textContent !== String(left)) elCount.textContent = left;
+    elBar.style.width = (((elapsedBefore + Math.min(el, st.sec)) / TOTAL_SEC) * 100).toFixed(2) + '%';
+    if (el >= st.sec) nextStep();
+  }
+  function nextStep(){
+    elapsedBefore += STEPS[idx].sec;
+    idx++;
+    if (idx >= STEPS.length){ finish(); return; }
+    stepStart = performance.now();
+    showStep();
+  }
+  function startRound(theme){
+    buildRound(theme);
+    ensureAudio();
+    if (ac && ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+    idx=0; elapsedBefore=0; lastQ=-1; lastPhase=''; paused=false;
+    setVeil(false); btnPause.innerHTML = '⏸️ Pause';
+    show(scRound);
+    stepStart = performance.now();
+    showStep();
+    running = true;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(frame);
+  }
+  function togglePause(){
+    if (!running) return;
+    paused = !paused;
+    if (paused) pauseAt = performance.now();
+    else stepStart += (performance.now() - pauseAt);
+    setVeil(paused);
+    btnPause.innerHTML = paused ? '▶️ Fortsett' : '⏸️ Pause';
+  }
+  function setVeil(on){ elVeil.classList.toggle('on', on); }
+  function skipQuestion(){
+    if (!running) return;
+    var cur = STEPS[idx].q;
+    while (idx < STEPS.length && STEPS[idx].q === cur){ elapsedBefore += STEPS[idx].sec; idx++; }
+    if (idx >= STEPS.length){ finish(); return; }
+    stepStart = performance.now();
+    if (paused) togglePause();
+    showStep();
+  }
+  function stop(){ running=false; paused=false; cancelAnimationFrame(raf); setVeil(false); }
+  function finish(){
+    stop();
+    elOpts.classList.remove('show');
+    var dt = $('doneText');
+    if (dt) dt.textContent = ROUND.length + ' valg og ' + ROUND.length +
+      ' positurer. Nå er kroppen våken og klassen samlet igjen.';
+    show(scDone);
+    ping(523.25,1.0);
+    setTimeout(function(){ ping(659.25,1.0); },170);
+    setTimeout(function(){ ping(783.99,1.3); },340);
+  }
+  function show(sec){ [scMenu,scRound,scDone].forEach(function(s){ s.classList.toggle('on', s===sec); }); }
+  function toMenu(){ stop(); show(scMenu); }
+
+  /* ---------- temakort ---------- */
+  (function buildMenu(){
+    var wrap = $('themeCards'), html = '';
+    THEMES.forEach(function(t, i){
+      html += '<div class="card">' +
+        '<div class="card-top">' +
+          '<div class="card-emoji" style="background:'+t.farge+'">'+t.emoji+'</div>' +
+          '<h2>'+t.tittel+'</h2>' +
+        '</div>' +
+        '<p>'+t.beskriv+'</p>' +
+        '<button class="btn primary" data-theme="'+i+'">▶️ Start<small>'+PER_ROUND+' spørsmål · ca. 2 min</small></button>' +
+      '</div>';
+    });
+    wrap.innerHTML = html;
+    wrap.addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('[data-theme]') : null;
+      if (!b) return;
+      startRound(THEMES[+b.getAttribute('data-theme')]);
+    });
+  })();
+
+  $('btnMix').addEventListener('click', function(){
+    startRound({ id:'__mix', tittel:'Blandet', emoji:'🎲', farge:'#b58ce0' });
+  });
+  btnPause.addEventListener('click', togglePause);
+  btnSkip .addEventListener('click', skipQuestion);
+  btnQuit .addEventListener('click', toMenu);
+  $('btnAgain').addEventListener('click', function(){ startRound(currentTheme); });
+  $('btnMenu') .addEventListener('click', toMenu);
+
+  btnSound.addEventListener('click', function(){
+    soundOn = !soundOn;
+    btnSound.textContent = soundOn ? '🔊' : '🔇';
+    btnSound.classList.toggle('off', !soundOn);
+    if (soundOn){ ensureAudio(); ping(523.25,.4,.12); }
+  });
+  btnFs.addEventListener('click', function(){
+    var d = document.documentElement;
+    if (!document.fullscreenElement){ (d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d); }
+    else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }
+  });
+  document.addEventListener('keydown', function(e){
+    if (!scRound.classList.contains('on')) return;
+    if (e.code === 'Space'){ e.preventDefault(); togglePause(); }
+    else if (e.key === 'Escape'){ toMenu(); }
+    else if (e.key === 'ArrowRight'){ skipQuestion(); }
+  });
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden && running && !paused) togglePause();
+  });
+
+  preload();
+})();
+
+/* Apnes pausen inne i klasseportalen, skal «Tilbake til brain breaks» ga til
+   pausevelgeren i portalen i stedet for a laste brainbreak.html i ramma. */
+(function(){
+  var EMBED = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
+  var lenke = document.getElementById('lenkeTilbake');
+  if (!EMBED || !lenke) return;
+  lenke.addEventListener('click', function(e){
+    e.preventDefault();
+    try { parent.postMessage({ myntland:'brainbreak-tilbake' }, '*'); } catch(err){}
+  });
+})();
+</script>
+</body>
+</html>
