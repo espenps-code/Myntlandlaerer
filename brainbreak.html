@@ -109,6 +109,18 @@ a.card{text-decoration:none;color:inherit}
   padding:.28em .8em;font-size:clamp(12px,1.15vw,15px);font-weight:600;
 }
 .choose{display:flex;flex-wrap:wrap;gap:10px;margin-top:.35em}
+.musikk{display:flex;align-items:center;gap:10px;margin-top:.2em}
+.musikk-btn{font-size:clamp(13px,1.25vw,16px);padding:.5em 1em;border-width:3px;gap:.6em}
+.musikk-btn .sw{
+  width:36px;height:19px;border-radius:999px;border:2.5px solid var(--ink);
+  background:rgba(42,31,61,.14);position:relative;flex:none;transition:background .18s ease;
+}
+.musikk-btn .sw::after{
+  content:'';position:absolute;top:50%;left:2px;width:12px;height:12px;border-radius:50%;
+  background:var(--ink);transform:translateY(-50%);transition:left .18s ease;
+}
+.musikk-btn.on .sw{background:var(--green)}
+.musikk-btn.on .sw::after{left:17px}
 .choose .btn{font-size:clamp(14px,1.35vw,17px);padding:.6em 1.05em}
 .choose .btn small{display:block;font-weight:500;font-size:.82em;opacity:.72;line-height:1.2}
 .card.soon{opacity:.62;border-style:dashed;box-shadow:none;justify-content:center}
@@ -223,6 +235,11 @@ body.solo h1{margin-top:0}
           <span class="tag">🧘 8 positurer</span>
           <span class="tag">🫁 4-7-8</span>
         </div>
+        <div class="musikk">
+          <button class="btn ghost musikk-btn on" id="btnMusikk" role="switch" aria-checked="true" aria-label="Rolig bakgrunnsmusikk av eller p&aring;">
+            <span class="sw" aria-hidden="true"></span><span id="musikkTxt">&#127925; Musikk p&aring;</span>
+          </button>
+        </div>
         <div class="choose">
           <button class="btn primary" id="startLang">🧘 Full økt<small>2 pust per positur &middot; ca. 6 min</small></button>
           <button class="btn" id="startKort">⏱️ Kort økt<small>1 pust per positur &middot; ca. 3 min</small></button>
@@ -265,7 +282,7 @@ body.solo h1{margin-top:0}
       </div>
     </div>
 
-    <p class="menu-foot">Tips: skru på lyden, så får dere en myk tone ved hvert skifte.</p>
+    <p class="menu-foot">Tips: skru på lyden, så får dere en myk tone ved hvert skifte &ndash; og rolig musikk under hele økta.</p>
   </div>
 </section>
 
@@ -275,7 +292,8 @@ body.solo h1{margin-top:0}
     <span class="step-label" id="stepLabel">Positur 1 av 8</span>
     <div class="dots" id="dots" aria-hidden="true"></div>
     <span class="top-spacer"></span>
-    <button class="icon-btn" id="btnSound" title="Lyd av/på" aria-label="Lyd av eller på">🔊</button>
+    <button class="icon-btn" id="btnSound" title="Pusteton av/på" aria-label="Pusteton av eller på">🔊</button>
+    <button class="icon-btn" id="btnMusic" title="Musikk av/på" aria-label="Musikk av eller på">🎵</button>
     <button class="icon-btn" id="btnFs" title="Fullskjerm" aria-label="Fullskjerm">⛶</button>
     <button class="icon-btn" id="btnQuit" title="Avslutt" aria-label="Avslutt">✕</button>
   </div>
@@ -393,6 +411,66 @@ body.solo h1{margin-top:0}
   var idx=0, stepStart=0, paused=false, pauseAt=0, running=false, raf=null;
   var soundOn=true, ac=null, elapsedBefore=0, lastPose=-1, lastPhaseKey='';
 
+  /* ---------- rolig bakgrunnsmusikk ----------
+     Fila lastes forst nar okta starter, sa ingen laster ned 8 MB i unodig.
+     Musikken looper, fader inn ved start og ut ved slutt/avslutt. */
+  var MUSIC_SRC = IMG_BASE + 'yoga-musikk.mp3';
+  var MUSIC_VOL = 0.30;
+  var MUSIC_KEY = 'myntland-yoga-musikk';
+  var musicOn = true, mus = null, fadeT = null;
+
+  try { if (localStorage.getItem(MUSIC_KEY) === 'av') musicOn = false; } catch(e){}
+
+  function ensureMusic(){
+    if (mus) return mus;
+    try {
+      mus = new Audio();
+      mus.src = MUSIC_SRC;
+      mus.loop = true;
+      mus.preload = 'auto';
+      mus.volume = 0;
+    } catch(e){ mus = null; }
+    return mus;
+  }
+  function fadeTo(target, ms, done){
+    if (!mus) return;
+    clearInterval(fadeT);
+    var from = mus.volume, steps = Math.max(1, Math.round(ms/60)), i = 0;
+    fadeT = setInterval(function(){
+      i++;
+      var v = from + (target-from) * (i/steps);
+      try { mus.volume = Math.min(1, Math.max(0, v)); } catch(e){}
+      if (i >= steps){ clearInterval(fadeT); if (done) done(); }
+    }, 60);
+  }
+  function musicPlay(fadeMs){
+    if (!musicOn) return;
+    var a = ensureMusic(); if (!a) return;
+    try { var pr = a.play(); if (pr && pr.catch) pr.catch(function(){}); } catch(e){ return; }
+    fadeTo(MUSIC_VOL, fadeMs || 1800);
+  }
+  function musicHold(){                       /* pause, behold posisjon */
+    if (!mus || mus.paused) return;
+    fadeTo(0, 500, function(){ try { mus.pause(); } catch(e){} });
+  }
+  function musicStop(){                       /* slutt: fade ut og nullstill */
+    if (!mus || mus.paused) return;
+    fadeTo(0, 1200, function(){ try { mus.pause(); mus.currentTime = 0; } catch(e){} });
+  }
+  function paintMusicBtns(){
+    var mb = $('btnMusikk'), mt = $('musikkTxt'), ib = $('btnMusic');
+    if (mb){ mb.classList.toggle('on', musicOn); mb.setAttribute('aria-checked', musicOn ? 'true' : 'false'); }
+    if (mt){ mt.innerHTML = musicOn ? '\uD83C\uDFB5 Musikk p\u00e5' : '\uD83D\uDD07 Musikk av'; }
+    if (ib){ ib.textContent = musicOn ? '\uD83C\uDFB5' : '\uD83D\uDD07'; ib.classList.toggle('off', !musicOn); }
+  }
+  function setMusicOn(on){
+    musicOn = !!on;
+    try { localStorage.setItem(MUSIC_KEY, musicOn ? 'pa' : 'av'); } catch(e){}
+    paintMusicBtns();
+    if (!musicOn) musicHold();
+    else if (running && !paused) musicPlay(900);
+  }
+
   /* ---------- lyd ---------- */
   function ensureAudio(){
     if (ac) return;
@@ -498,6 +576,7 @@ body.solo h1{margin-top:0}
     stepStart = performance.now();
     showStep();
     running = true;
+    musicPlay(2200);
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);
   }
@@ -507,6 +586,7 @@ body.solo h1{margin-top:0}
     if (paused) pauseAt = performance.now();
     else stepStart += (performance.now() - pauseAt);
     setVeil(paused);
+    if (paused) musicHold(); else musicPlay(700);
     btnPause.innerHTML = paused ? '▶️ Fortsett' : '⏸️ Pause';
   }
   function setVeil(on){ elVeil.classList.toggle('on', on); }
@@ -519,7 +599,7 @@ body.solo h1{margin-top:0}
     if (paused) togglePause();
     showStep();
   }
-  function stop(){ running=false; paused=false; cancelAnimationFrame(raf); setVeil(false); }
+  function stop(){ running=false; paused=false; cancelAnimationFrame(raf); setVeil(false); musicStop(); }
   function finish(){
     stop(); show(scDone);
     var dt = $('doneText');
@@ -540,6 +620,9 @@ body.solo h1{margin-top:0}
   $('btnAgain').addEventListener('click', function(){ startSession(breaths); });
   $('btnMenu') .addEventListener('click', toMenu);
 
+  $('btnMusikk').addEventListener('click', function(){ setMusicOn(!musicOn); });
+  $('btnMusic') .addEventListener('click', function(){ setMusicOn(!musicOn); });
+
   btnSound.addEventListener('click', function(){
     soundOn = !soundOn;
     btnSound.textContent = soundOn ? '🔊' : '🔇';
@@ -558,6 +641,7 @@ body.solo h1{margin-top:0}
     if (e.code === 'Space'){ e.preventDefault(); togglePause(); }
     else if (e.key === 'Escape'){ toMenu(); }
     else if (e.key === 'ArrowRight'){ skipPose(); }
+    else if (e.key === 'm' || e.key === 'M'){ setMusicOn(!musicOn); }
   });
 
   document.addEventListener('visibilitychange', function(){
@@ -565,6 +649,7 @@ body.solo h1{margin-top:0}
   });
 
   renderDots(0);
+  paintMusicBtns();
   preload();
 })();
 </script>
