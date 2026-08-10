@@ -168,19 +168,19 @@ function goToMyntstigen(){window.location.href='stigespill.html?from=elevapp14&c
 function openMyntspillMeny(){var m=document.getElementById('myntspill-meny');if(m)m.style.display='flex';}
 function closeMyntspillMeny(){var m=document.getElementById('myntspill-meny');if(m)m.style.display='none';}
 
-// ── Login mode (settings/loginMode14) ─────────────────────────────────────
-// 'pin'   = elev taster bare PIN-kode (PIN søkes opp blant alle elever).
-// 'qrpin' = elev scanner QR-kode på bankkortet → PIN bekrefter for nettopp
-//           den eleven (PIN må matche eksakt for det forhåndsvalgte kortet).
+// ── Innlogging: alltid QR + PIN ───────────────────────────────────────────
+// Eleven scanner QR-koden på bankkortet sitt og bekrefter med PIN. PIN-en må
+// matche akkurat det forhåndsvalgte kortet. Modusen «Bare PIN» er fjernet —
+// læreren styrer i stedet om PIN-koden trykkes på kortet ved utskrift.
+// Funksjonen beholdes for bakoverkompatibilitet med eldre kall.
 function getLoginMode() {
-  return (window._settings?.loginMode14 === 'qrpin') ? 'qrpin' : 'pin';
+  return 'qrpin';
 }
 
 window._preselectedStudent = null;
 
 function applyLoginMode() {
-  // Setter opp innloggingsskjermen i henhold til valgt modus
-  const mode = getLoginMode();
+  // Setter opp innloggingsskjermen: scan kort → bekreft med PIN
   const subtitle = document.getElementById('login-subtitle');
   const scanBtn  = document.getElementById('login-scan-btn');
   const card     = document.getElementById('login-card');
@@ -191,16 +191,10 @@ function applyLoginMode() {
   if (preEl) preEl.style.display = 'none';
   window._preselectedStudent = null;
 
-  if (mode === 'qrpin') {
-    if (subtitle) subtitle.textContent = 'Scan bankkortet ditt for å logge inn';
-    if (scanBtn)  scanBtn.style.display = 'block';
-    if (card)     card.style.display = 'none';
-    recallLoginCard();
-  } else {
-    if (subtitle) subtitle.textContent = 'Tast inn din 4-sifrede PIN-kode';
-    if (scanBtn)  scanBtn.style.display = 'none';
-    if (card)     card.style.display = 'block';
-  }
+  if (subtitle) subtitle.textContent = 'Scan bankkortet ditt for å logge inn';
+  if (scanBtn)  scanBtn.style.display = 'block';
+  if (card)     card.style.display = 'none';
+  recallLoginCard();
 }
 
 function resetLoginScreen() {
@@ -287,24 +281,18 @@ function updatePinDots() {
   }
 }
 function tryLogin() {
-  const mode = getLoginMode();
   let s = null;
 
-  if (mode === 'qrpin') {
-    // QR + PIN: elev må ha scannet kortet først, og PIN må matche akkurat dén eleven.
-    if (!window._preselectedStudent) {
-      document.getElementById('login-error').textContent = '❌ Scan kortet først';
-      currentPin = '';
-      updatePinDots();
-      return;
-    }
-    const pre = window._preselectedStudent;
-    const fresh = (window._allStudents || []).find(x => x.fbKey === pre.fbKey) || pre;
-    if (String(fresh.pin) === String(currentPin)) s = fresh;
-  } else {
-    // Bare PIN: finn elev med matchende PIN i hele klassen
-    s = window._allStudents.find(x => String(x.pin) === String(currentPin));
+  // QR + PIN: eleven må ha scannet kortet først, og PIN må matche akkurat dén eleven.
+  if (!window._preselectedStudent) {
+    document.getElementById('login-error').textContent = '❌ Scan kortet først';
+    currentPin = '';
+    updatePinDots();
+    return;
   }
+  const pre = window._preselectedStudent;
+  const fresh = (window._allStudents || []).find(x => x.fbKey === pre.fbKey) || pre;
+  if (String(fresh.pin) === String(currentPin)) s = fresh;
 
   if (s) {
     window._currentStudent = s;

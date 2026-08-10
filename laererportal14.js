@@ -255,7 +255,6 @@ function showPage(page) {
     if (typeof renderMerkerPage       === 'function') renderMerkerPage();
     if (typeof syncMyntjakten14Form   === 'function') syncMyntjakten14Form();
   }
-  if (page === 'elever' && typeof syncLoginModeToggle === 'function') syncLoginModeToggle();
   // Close mobile nav after selection
   const nav = document.querySelector('header nav');
   const btn = document.getElementById('hamburger-btn');
@@ -2326,6 +2325,7 @@ function openCardSelect(){
      </div>
      <div style="max-height:380px;overflow-y:auto;">${groupsHTML}</div>`;
   document.getElementById('modal-card-select').classList.add('open');
+  cardShowPinRestore();
 }
 function cardSelectAll(check){
   document.querySelectorAll('#modal-card-select-body .cs-cb').forEach(cb=>{ cb.checked=!!check; });
@@ -2352,10 +2352,8 @@ function generateCardPDF() {
     alert('Velg minst én elev å skrive ut kort for.');
     return;
   }
-  // Innloggingsmodus: 'qrpin' = bare QR + PIN (PIN ikke trykket på kortet)
-  // 'pin' (default) = PIN trykket på kortet
-  const loginMode = (window._settings?.loginMode14 === 'qrpin') ? 'qrpin' : 'pin';
-  const showPin = loginMode === 'pin';
+  // Læreren huker av i utskriftsmodalen om PIN-koden skal trykkes på kortet.
+  const showPin = cardShowPinChecked();
 
   // På utskriften bruker vi en ren vektor-Myntland-mynt som portrett i stedet
   // for elevens monster-avatar (.webp). Grunnen: 8 monstre per A4 × mange ark
@@ -2375,36 +2373,32 @@ function generateCardPDF() {
 }
 
 // ══════════════════════════════════════════════════════════
-// LOGIN MODE TOGGLE (settings/loginMode14)
+// PIN PÅ BANKKORT VED UTSKRIFT (huskes lokalt i nettleseren)
 // ══════════════════════════════════════════════════════════
-// 'pin'   = elever logger inn ved å taste 4-sifret PIN (PIN trykkes på kortet)
-// 'qrpin' = elever scanner kortets QR-kode + bekrefter med PIN (PIN ikke på kortet)
-async function setLoginMode14(mode) {
-  if (mode !== 'pin' && mode !== 'qrpin') return;
-  if (!window._db || !window._update || !window._ref) return;
-  await window._update(window._ref(window._db, 'settings'), { loginMode14: mode });
-  if (!window._settings) window._settings = {};
-  window._settings.loginMode14 = mode;
-  syncLoginModeToggle();
+// Innlogging i elevappen er alltid QR + PIN. Det eneste valget læreren har,
+// er om PIN-koden skal trykkes på selve kortet — praktisk for de yngste som
+// ikke husker koden ennå. Valget hører til læreren og maskinen, ikke klassen,
+// og lagres derfor i localStorage — ikke i Firebase.
+var _CARD_SHOW_PIN_KEY = 'myntland_cardShowPin_14';
+
+function cardShowPinChecked() {
+  var cb = document.getElementById('card-show-pin');
+  return cb ? !!cb.checked : false;
 }
 
-function syncLoginModeToggle() {
-  const mode = (window._settings?.loginMode14 === 'qrpin') ? 'qrpin' : 'pin';
-  const btnPin = document.getElementById('login-mode-pin');
-  const btnQr  = document.getElementById('login-mode-qrpin');
-  const hint   = document.getElementById('login-mode-hint');
-  if (!btnPin || !btnQr) return;
-  // Aktiv knapp får primær-stil
-  btnPin.className = mode === 'pin'   ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  btnQr.className  = mode === 'qrpin' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  btnPin.style.flex = '1'; btnPin.style.minWidth = '140px';
-  btnQr.style.flex  = '1'; btnQr.style.minWidth  = '140px';
-  if (hint) {
-    hint.textContent = mode === 'qrpin'
-      ? '📷 Eleven scanner kortet sitt og bekrefter med PIN. PIN-koden vises ikke på kortet.'
-      : '🔢 Eleven taster bare PIN-koden for å logge inn. PIN-koden vises på kortet (kortene har likevel QR-kode for fleksibilitet).';
-  }
+function cardShowPinRemember() {
+  try { localStorage.setItem(_CARD_SHOW_PIN_KEY, cardShowPinChecked() ? '1' : '0'); } catch (e) {}
 }
+
+function cardShowPinRestore() {
+  var cb = document.getElementById('card-show-pin');
+  if (!cb) return;
+  var saved = null;
+  try { saved = localStorage.getItem(_CARD_SHOW_PIN_KEY); } catch (e) {}
+  cb.checked = (saved === '1');
+  cb.onchange = cardShowPinRemember;
+}
+
 
 // ══════════════════════════════════════════════════════════
 // REAL VS PRETEND PAYMENTS TOGGLE (settings/realPayments14)

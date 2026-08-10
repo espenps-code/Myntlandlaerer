@@ -846,6 +846,12 @@
     <div class="card">
       <div class="card-title">💳 Skriv ut bankkort</div>
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Genererer kredittkort-formede kort med navn, klasse og QR-kode – 8 per A4-side. Du velger hvilke elever du vil skrive ut for.</p>
+
+      <div style="margin-bottom:1.25rem;background:var(--teal-light);border-radius:10px;padding:.85rem 1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;line-height:1.55;">
+        📷 Elevene logger inn ved å scanne QR-koden på bankkortet og bekrefte med PIN.<br>
+        Når du skriver ut, kan du velge om PIN-koden skal stå på kortet.
+      </div>
+
       <button class="btn btn-amber" onclick="openCardSelect()">💳 Velg elever og skriv ut</button>
       <div style="margin-top:1.5rem;background:var(--teal-light);border-radius:10px;padding:1rem;font-size:.82rem;color:var(--teal-dark);font-weight:700;">🔒 Kun fiktive navn lagres i Firebase – ingen persondata.</div>
     </div>
@@ -1615,6 +1621,16 @@
       en hel klasse, eller alle. Det blir 8 kort per A4-side.
     </p>
     <div id="modal-card-select-body"></div>
+    <div class="form-row" style="margin-top:1rem;">
+      <label for="card-show-pin" style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-weight:800;">
+        <input type="checkbox" id="card-show-pin" style="width:1.1rem;height:1.1rem;cursor:pointer;flex:none;">
+        🔢 Vis PIN-koden på kortet
+      </label>
+      <div style="margin-top:.4rem;font-size:.78rem;color:var(--muted);font-weight:600;line-height:1.5;">
+        Av: PIN-feltet står tomt (– – – –). På: PIN-koden trykkes på kortet.
+        Elevene logger inn med QR + PIN uansett – dette gjelder bare utskriften.
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-card-select')">Lukk</button>
       <button class="btn btn-amber" id="card-select-print-btn" onclick="generateCardPDF();closeModal('modal-card-select');">💳 Skriv ut valgte bankkort</button>

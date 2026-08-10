@@ -2119,6 +2119,7 @@ function openCardSelect(){
      </div>
      <div style="max-height:380px;overflow-y:auto;">${groupsHTML}</div>`;
   document.getElementById('modal-card-select').classList.add('open');
+  cardShowPinRestore();
 }
 function cardSelectAll(check){
   document.querySelectorAll('#modal-card-select-body .cs-cb').forEach(cb=>{ cb.checked=!!check; });
@@ -2137,6 +2138,33 @@ function cardSelectUpdateCount(){
   const btn=document.getElementById('card-select-print-btn');
   if(btn) btn.disabled=n===0;
 }
+// ══════════════════════════════════════════════════════════
+// PIN PÅ BANKKORT VED UTSKRIFT (huskes lokalt i nettleseren)
+// ══════════════════════════════════════════════════════════
+// Innlogging i elevappen er alltid QR + PIN. Det eneste valget læreren har,
+// er om PIN-koden skal trykkes på selve kortet — praktisk for de yngste som
+// ikke husker koden ennå. Valget hører til læreren og maskinen, ikke klassen,
+// og lagres derfor i localStorage — ikke i Firebase.
+var _CARD_SHOW_PIN_KEY = 'myntland_cardShowPin_57';
+
+function cardShowPinChecked() {
+  var cb = document.getElementById('card-show-pin');
+  return cb ? !!cb.checked : false;
+}
+
+function cardShowPinRemember() {
+  try { localStorage.setItem(_CARD_SHOW_PIN_KEY, cardShowPinChecked() ? '1' : '0'); } catch (e) {}
+}
+
+function cardShowPinRestore() {
+  var cb = document.getElementById('card-show-pin');
+  if (!cb) return;
+  var saved = null;
+  try { saved = localStorage.getItem(_CARD_SHOW_PIN_KEY); } catch (e) {}
+  cb.checked = (saved === '1');
+  cb.onchange = cardShowPinRemember;
+}
+
 function generateCardPDF() {
   const checked=new Set(Array.from(document.querySelectorAll('#modal-card-select-body .cs-cb:checked'))
     .map(cb=>cb.dataset.fbkey));
@@ -2145,8 +2173,8 @@ function generateCardPDF() {
     alert('Velg minst én elev å skrive ut kort for.');
     return;
   }
-  // Skriv ut bankkort med samme design som "Bankkort - Myntland" — uten PIN på 5–7
-  const html = window.buildMyntlandBankCardsHTML(printStudents, { showPin: false, title: 'Myntland · Bankkort' });
+  // Læreren huker av i utskriftsmodalen om PIN-koden skal trykkes på kortet.
+  const html = window.buildMyntlandBankCardsHTML(printStudents, { showPin: cardShowPinChecked(), title: 'Myntland · Bankkort' });
   const win = window.open('', '_blank', 'width=900,height=900');
   win.document.write(html);
   win.document.close();
