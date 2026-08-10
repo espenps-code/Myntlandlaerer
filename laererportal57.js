@@ -2283,6 +2283,12 @@ const WP_SUBJECT_ICON={ 'norsk':'book','lesing':'book','matematikk':'math','matt
   'svømming':'svomming','mat og helse':'mathelse','data og digitalt':'digital','digitalt':'digital','data':'digital',
   'klassens time':'sosial','arbeidstime':'arbeid','valgfag':'valgfag' };
 function wpFagName(icon){ return WP_FAG_NAME[icon]||''; }
+// Visningsnavn for en plan: bare faget, eller «Fag – Tema» hvis læreren har gitt planen et tema.
+function wpPlanLabel(p){
+  const t=String((p&&p.theme)||'').trim();
+  const s=String((p&&p.subject)||'');
+  return t ? (s+' – '+t) : s;
+}
 function wpIconForSubject(subject){
   const s=String(subject||'').toLowerCase().trim();
   if(WP_SUBJECT_ICON[s]) return WP_SUBJECT_ICON[s];
@@ -2312,6 +2318,7 @@ function openPlanEditor(planKey){
     const p=(window._workPlans||[]).find(x=>x.fbKey===planKey)||{};
     document.getElementById('wp-editor-title').textContent='✏️ Rediger periodeplan';
     document.getElementById('wp-fag').value=wpPlanIcon(p);
+    const thEd=document.getElementById('wp-theme'); if(thEd) thEd.value=p.theme||'';
     if(p.class) clsSel.value=p.class;
     document.getElementById('wp-approval').value=
       (p.approval||(p.steps&&p.steps[0]&&p.steps[0].approval)||'teacher')==='both'?'both':'teacher';
@@ -2322,6 +2329,7 @@ function openPlanEditor(planKey){
   } else {
     document.getElementById('wp-editor-title').textContent='➕ Ny periodeplan';
     document.getElementById('wp-fag').value='book';
+    const thNy=document.getElementById('wp-theme'); if(thNy) thNy.value='';
     document.getElementById('wp-approval').value='teacher';
     _wpEditSteps=[wpBlankStep()];
     _wpActiveStep=0;
@@ -2473,6 +2481,8 @@ async function savePlan(publish){
   const icon=document.getElementById('wp-fag').value||'book';
   const subject=wpFagName(icon)||'Fag';
   const cls=document.getElementById('wp-class').value;
+  const thEl=document.getElementById('wp-theme');
+  const theme=String(thEl?thEl.value:'').trim().slice(0,60);
   // Godkjenningsvalg gjelder hele periodeplanen – kopieres inn på hvert trinn.
   const approval=document.getElementById('wp-approval').value==='both'?'both':'teacher';
   if(!subject){ wpEdAlert('Skriv inn hvilket fag periodeplanen gjelder.','error'); return; }
@@ -2492,10 +2502,10 @@ async function savePlan(publish){
   const willActive = publish ? true : (_wpEditKey ? (ex.active!==false) : false);
   if(_wpEditKey){
     await window._update(fbRef('workPlans/'+_wpEditKey),
-      { icon, subject, class:cls, approval, steps, active:willActive });
+      { icon, subject, theme: theme||null, class:cls, approval, steps, active:willActive });
   } else {
     await window._set(window._push(fbRef('workPlans')),
-      { icon, subject, class:cls, approval, steps, active:willActive,
+      { icon, subject, theme: theme||null, class:cls, approval, steps, active:willActive,
         workspaceId: currentWorkspaceId() || 'main', created:Date.now() });
   }
   closePlanEditor();
@@ -2512,7 +2522,7 @@ async function togglePlanActive(planKey){
 }
 async function deletePlan(planKey){
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey);
-  if(!confirm(`Slette periodeplanen «${p?.subject||''}»?\nElevenes framgang i denne planen slettes også.`)) return;
+  if(!confirm(`Slette periodeplanen «${p?wpPlanLabel(p):''}»?\nElevenes framgang i denne planen slettes også.`)) return;
   await window._remove(fbRef('workPlans/'+planKey));
   const upd={};
   Object.keys(window._wpProgress||{}).forEach(sk=>{
@@ -2618,11 +2628,16 @@ function wpPlanCardHTML(p){
   const assignText = isSubset
     ? '👥 '+students.length+' av '+allInClass.length+' elever'
     : '👥 Hele klassen';
+  const themeTxt = String(p.theme||'').trim();
+  const themeLine = themeTxt
+    ? `<div style="font-weight:700;font-size:.9rem;color:var(--muted);margin-top:1px;">${wpEscAttr(themeTxt)}</div>`
+    : '';
   return `<div class="wp-plan-card${active?'':' inactive'}">
     <div class="wp-plan-head">
       <div class="wp-plan-emoji">${wpFagIconHtml(p,38)}</div>
       <div style="flex:1;min-width:140px;">
         <div style="font-weight:800;font-size:1.05rem;color:var(--teal-dark);">${wpEscAttr(p.subject)}</div>
+        ${themeLine}
         <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:2px;">
           <span class="class-badge">${p.class}</span> · ${nSteps} trinn · ${students.length} elever · ${done} fullført
         </div>
@@ -2679,7 +2694,7 @@ function openPlanAssignModal(planKey){
       <div style="padding:1rem 1.2rem;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:.6rem;">
         <div style="font-size:1.4rem;">👥</div>
         <div style="flex:1;">
-          <div style="font-weight:800;color:var(--teal-dark);">Tildel «${wpEscAttr(p.subject||'')}»</div>
+          <div style="font-weight:800;color:var(--teal-dark);">Tildel «${wpEscAttr(wpPlanLabel(p))}»</div>
           <div style="font-size:.82rem;color:var(--muted);font-weight:700;">Klasse ${wpEscAttr(p.class||'')} · velg hvem som skal se planen</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="closePlanAssignModal()" title="Lukk">✕</button>
@@ -2750,7 +2765,7 @@ function refreshApproveModal(){
   if(!modal || !modal.classList.contains('open') || !_wpApproveKey) return;
   const p=(window._workPlans||[]).find(x=>x.fbKey===_wpApproveKey);
   if(!p){ closeModal('modal-wp-approve'); return; }
-  document.getElementById('modal-wp-approve-title').innerHTML='<span style="display:inline-flex;align-items:center;gap:8px">'+wpFagIconHtml(p,26)+wpEscAttr(p.subject)+'</span>';
+  document.getElementById('modal-wp-approve-title').innerHTML='<span style="display:inline-flex;align-items:center;gap:8px">'+wpFagIconHtml(p,26)+wpEscAttr(wpPlanLabel(p))+'</span>';
   document.getElementById('modal-wp-approve-sub').textContent=
     p.class+' · '+(p.steps||[]).length+' trinn. Godkjenn trinnet eleven står på. Bonus på trinn som venter på hjemmet kan frigis her.';
   const students=wpAssignedStudents(p);

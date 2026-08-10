@@ -401,6 +401,7 @@ function apRenderLanding(){
       +'style="--ctop:'+col[0]+';--cbot:'+col[1]+'" onclick="apOpenPlan(\''+p.fbKey+'\')">'
       +'<div class="ap2-card-head"><span class="ap2-card-ikon"><img src="fagikoner/ikon-'+icon+'.webp" alt="" '
       +'onerror="this.parentNode.style.display=\'none\'"></span><span class="ap2-card-title">'+apEsc(p.subject)+'</span></div>'
+      +(String(p.theme||'').trim()?'<div class="ap2-card-theme">'+apEsc(p.theme)+'</div>':'')
       +'<div class="ap2-prog">godkjent <span class="pill">'+cur+' / '+N+'</span></div>'
       +'<div class="ap2-stairs">'+bars+'<div class="ap2-mon"><img src="'+avatar+'" alt=""></div></div>'
       +'<div class="ap2-open">Åpne arbeidsplan <span class="go">'+AP_CHEV+'</span></div>'
@@ -467,6 +468,12 @@ function apRenderPlan(){
   const ik=document.getElementById('ap-fagikon');
   if(ik) ik.innerHTML='<img src="fagikoner/ikon-'+apSubjectIcon(plan)+'.webp" alt="" onerror="this.parentNode.style.display=\'none\'">';
   const ttl=document.getElementById('ap-plan-title'); if(ttl) ttl.textContent=plan.subject;
+  const thm=document.getElementById('ap-plan-theme');
+  if(thm){
+    const tv=String(plan.theme||'').trim();
+    thm.textContent=tv;
+    thm.style.display=tv?'block':'none';
+  }
 
   const steps=plan.steps||[]; const N=steps.length;
   const pr=apProgress(_apPlanKey); const cur=pr.current||0;

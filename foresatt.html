@@ -174,6 +174,8 @@
   .fg-fagikon{width:26px;height:26px;flex:none;border-radius:8px;border:2.5px solid var(--ink);background:var(--paper);display:grid;place-items:center;overflow:hidden;}
   .fg-fagikon img{width:80%;height:80%;object-fit:contain;display:block;}
   .fg-subj-btn:active{transform:translateY(2px);box-shadow:none;}
+  .fg-subj-txt{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;}
+  .fg-subj-theme{font-size:.78rem;font-weight:700;opacity:.72;}
 
   .section-title{font-family:var(--font);font-weight:700;font-size:1.15rem;color:var(--ink);margin:.4rem 0 .8rem;}
   .fg-intro{background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:.9rem 1.1rem;
@@ -355,6 +357,7 @@ function fgMonsterImg(planKey,stepIdx,done){
 // Fag -> ikon + farge (samme sett som elevappen; bakoverkompatibelt med eldre planer)
 const FG_FAG_ICON={ 'norsk':'book','lesing':'book','matematikk':'math','matte':'math','engelsk':'engelsk','naturfag':'nature','natur':'nature','samfunnsfag':'samfunn','samfunn':'samfunn','krle':'krle','kunst og h\u00e5ndverk':'art','kunst':'art','h\u00e5ndverk':'art','musikk':'music','kropps\u00f8ving':'gym','gym':'gym','sv\u00f8mming':'svomming','mat og helse':'mathelse','data og digitalt':'digital','digitalt':'digital','data':'digital','klassens time':'sosial','arbeidstime':'arbeid','valgfag':'valgfag' };
 const FG_FAG_COLOR={ book:'#5aa9b4', math:'#dc7264', engelsk:'#8fb35a', nature:'#6c9bd1', samfunn:'#d59a3c', krle:'#9b7cc4', art:'#e0788f', music:'#7ba0d6', gym:'#d98c4a', mathelse:'#7cb88f', digital:'#5b9bb0', svomming:'#4fa3c7', sosial:'#caa14e', arbeid:'#9a8fb5', valgfag:'#c98aa0', annet:'#7fa0b3' };
+function fgPlanLabel(p){ const t=String((p&&p.theme)||'').trim(); const s=String((p&&p.subject)||''); return t?(s+' – '+t):s; }
 function fgSubjectIcon(p){ if(p&&p.icon) return p.icon; const s=String(p&&p.subject||'').toLowerCase().trim(); if(FG_FAG_ICON[s]) return FG_FAG_ICON[s]; for(const k in FG_FAG_ICON){ if(s.indexOf(k)>=0) return FG_FAG_ICON[k]; } return 'annet'; }
 function fgFagColor(p){ return FG_FAG_COLOR[fgSubjectIcon(p)]||'#5aa9b4'; }
 function fgShow(which){
@@ -526,7 +529,7 @@ function fgRender(){
   if(!plans.some(p=>p.fbKey===_fgPlanKey)) _fgPlanKey=plans[0].fbKey;
   subjEl.innerHTML=plans.map(p=>
     `<button class="fg-subj-btn${p.fbKey===_fgPlanKey?' active':''}" style="--fag:${fgFagColor(p)}" onclick="fgSelectSubject('${p.fbKey}')">`
-    +`<span class="fg-fagikon"><img src="fagikoner/ikon-${fgSubjectIcon(p)}.webp" alt="" onerror="this.parentNode.style.display='none'"></span>${fgEsc(p.subject)}</button>`).join('');
+    +`<span class="fg-fagikon"><img src="fagikoner/ikon-${fgSubjectIcon(p)}.webp" alt="" onerror="this.parentNode.style.display='none'"></span><span class="fg-subj-txt">${fgEsc(p.subject)}${String(p.theme||'').trim()?`<span class="fg-subj-theme">${fgEsc(p.theme)}</span>`:''}</span></button>`).join('');
   if(_fgView==='step') fgRenderStep();
   else fgRenderTrapp();
 }
@@ -543,7 +546,7 @@ function fgRenderTrapp(){
   const allDone=cur>=steps.length;
   const fn=fgEsc(_student?.firstname||'eleven');
   let html='';
-  html+='<div class="fg-intro">🪜 Her ser du hvordan det går med '+fn+' i '+fgEsc(plan.subject)
+  html+='<div class="fg-intro">🪜 Her ser du hvordan det går med '+fn+' i '+fgEsc(fgPlanLabel(plan))
        +'. Trykk på et trinn for å se detaljene. På trinn som er merket «venter på deg» '
        +'bekrefter du at du har sett framgangen.</div>';
   if(allDone){
