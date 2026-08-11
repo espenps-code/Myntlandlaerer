@@ -633,28 +633,131 @@
     }).join('');
   }
 
-  // Levende lytter: fyller lista når medlemskap-dataene kommer, uansett timing,
-  // og oppdaterer seg selv når klasser lages/slettes.
-  let _classesUnsub=null;
-  function watchClasses(uid){
-    if(_classesUnsub){ try{ _classesUnsub(); }catch(e){} _classesUnsub=null; }
-    _classesUnsub=onValue(ref(db,'users/'+uid+'/memberships'), async (msnap)=>{
-      const m=msnap.val()||{};
-      const ids=Object.keys(m);
-      if(!ids.length){ renderClassList([]); return; }
-      const out=[];
-      for(const classId of ids){
-        try{ const csnap=await get(ref(db,'classes/'+classId)); if(csnap.exists()) out.push({classId, role:m[classId], ...csnap.val()}); }catch(e){ console.warn(e); }
-      }
-      out.sort((a,b)=>(a.created||0)-(b.created||0));
-      renderClassList(out);
-    }, (err)=>{ console.warn('medlemskap-lytter:', err); });
+  // ── Klasseliste: robust datalytter ─────────────────────────────────
+  // Bakgrunn: iPad/Safari fryser WebSocket-forbindelsen når fana ligger i
+  // bakgrunnen. Tidligere koblet vi lytteren FRA og PÅ igjen hver gang sida ble
+  // synlig — da kaster Firebase den mellomlagrede kopien, og hvis forbindelsen
+  // ikke var oppe igjen kom det aldri noe svar. Resultat: innlogget, men tom
+  // klasseliste helt til brukeren logget ut og inn.
+  //
+  // Nå: lytteren settes opp én gang per bruker og får stå. Når sida vises igjen
+  // henter vi i stedet en fersk kopi (engangslesing) uten å røre lytteren, og en
+  // tom liste vises bare når den er bekreftet tom.
+
+  let _classesUnsub=null;   // avmeldingsfunksjon for den aktive lytteren
+  let _watchedUid=null;     // hvilken bruker lytteren gjelder
+  let _lastGood=null;       // siste vellykkede klasseliste (kan være tom)
+  let _retryTimer=null;
+  let _loadTimer=null;
+  let _retries=0;
+  let _refreshing=false;
+
+  // Slår medlemskapene opp mot klassedataene. Returnerer null hvis alt feilet,
+  // slik at kalleren kan la lista stå som den er i stedet for å tømme den.
+  async function buildClassList(uid, memberships){
+    const ids=Object.keys(memberships||{});
+    if(!ids.length) return [];
+    const out=[]; let failed=0;
+    for(const classId of ids){
+      try{
+        const csnap=await get(ref(db,'classes/'+classId));
+        if(csnap.exists()) out.push({classId, role:memberships[classId], ...csnap.val()});
+      }catch(e){ failed++; console.warn('klasseoppslag:', classId, e); }
+    }
+    if(!out.length && failed) return null;
+    out.sort((a,b)=>(a.created||0)-(b.created||0));
+    return out;
   }
 
-  // Idempotent: kobler på lytteren én gang per bruker. Trygt å kalle flere ganger.
+  function showClasses(list){
+    if(!list) return;              // ukjent tilstand: behold det som allerede står
+    clearTimeout(_loadTimer);
+    _lastGood=list;
+    renderClassList(list);
+  }
+
+  // En tom liste er tvetydig: enten har brukeren ingen klasser, eller så svarte
+  // ikke serveren skikkelig. Har vi vist klasser tidligere, dobbeltsjekker vi med
+  // en direkte lesing før vi tømmer skjermen.
+  async function handleMemberships(uid, memberships){
+    const list=await buildClassList(uid, memberships);
+    if(list && !list.length && _lastGood && _lastGood.length){
+      try{
+        const snap=await get(ref(db,'users/'+uid+'/memberships'));
+        showClasses(await buildClassList(uid, snap.val()||{}));
+      }catch(e){ console.warn('bekreftelse av tom liste:', e); }
+      return;
+    }
+    showClasses(list);
+  }
+
+  function stopWatching(){
+    if(_classesUnsub){ try{ _classesUnsub(); }catch(e){} }
+    _classesUnsub=null; _watchedUid=null;
+    clearTimeout(_retryTimer);
+  }
+
+  // Idempotent på ordentlig: står lytteren allerede for denne brukeren, gjør vi
+  // ingenting. Aldri riv ned en fungerende lytter.
+  function watchClasses(uid){
+    if(_classesUnsub && _watchedUid===uid) return;
+    stopWatching();
+    _watchedUid=uid;
+    _classesUnsub=onValue(ref(db,'users/'+uid+'/memberships'),
+      (msnap)=>{ _retries=0; handleMemberships(uid, msnap.val()||{}); },
+      (err)=>{
+        console.warn('medlemskap-lytter:', err);
+        // Død lytter (utløpt token e.l.): meld av, frisk opp tokenet, prøv igjen
+        // med økende pause i stedet for å bli liggende stille.
+        stopWatching();
+        const wait=Math.min(30000, 2000*Math.pow(2,_retries++));
+        _retryTimer=setTimeout(async ()=>{
+          const u=auth.currentUser; if(!u) return;
+          try{ await u.getIdToken(true); }catch(e){}
+          watchClasses(u.uid);
+          refreshClasses();
+        }, wait);
+      });
+  }
+
+  // Engangs oppfriskning — brukes når sida blir synlig igjen eller nettet er
+  // tilbake. Rører ikke lytteren, så vi kan ikke miste den underveis.
+  async function refreshClasses(){
+    const u=auth.currentUser; if(!u || _refreshing) return;
+    _refreshing=true;
+    try{
+      watchClasses(u.uid);
+      const snap=await get(ref(db,'users/'+u.uid+'/memberships'));
+      showClasses(await buildClassList(u.uid, snap.val()||{}));
+    }catch(e){
+      console.warn('oppfriskning av klasser:', e);
+      try{ await auth.currentUser.getIdToken(true); }catch(e2){}
+    }finally{ _refreshing=false; }
+  }
+
+  // Sikkerhetsnett: blir «Laster …» stående, tilby en knapp i stedet for
+  // en side som ser evig tom ut.
+  function armLoadTimeout(){
+    clearTimeout(_loadTimer);
+    _loadTimer=setTimeout(()=>{
+      if(_lastGood) return;
+      const wrap=document.getElementById('class-list');
+      if(wrap) wrap.innerHTML='<div class="empty">Fikk ikke kontakt med serveren.<br><button class="btn btn-ghost" style="margin-top:10px;" onclick="retryClasses()">Prøv igjen</button></div>';
+    }, 12000);
+  }
+
+  window.retryClasses=function(){
+    const wrap=document.getElementById('class-list');
+    if(wrap) wrap.innerHTML='<div class="empty">Laster …</div>';
+    _retries=0; stopWatching(); renderClasses();
+  };
+
   function renderClasses(){
     const u=auth.currentUser; if(!u) return;
-    window.__watchUid=u.uid; watchClasses(u.uid);
+    window.__watchUid=u.uid;
+    armLoadTimeout();
+    watchClasses(u.uid);
+    refreshClasses();
   }
 
   onAuthStateChanged(auth, async user=>{
@@ -663,20 +766,27 @@
       document.getElementById('view-auth').classList.add('hide');
       document.getElementById('view-app').classList.remove('hide');
       document.getElementById('who').textContent=user.displayName||user.email;
-      await ensureProfile(user);
-      renderClasses();
+      renderClasses();            // start datahentinga først — den skal ikke
+      await ensureProfile(user);  // vente på profilskrivinga
       if(inviteToken) await processInvite(inviteToken);
     }else{
+      stopWatching(); _lastGood=null; clearTimeout(_loadTimer);
       document.getElementById('view-app').classList.add('hide');
       document.getElementById('view-auth').classList.remove('hide');
       if(inviteToken) alertBox('login-alert','info','Du er invitert til en klasse — logg inn eller lag konto for å bli med.');
     }
   });
 
-  // Når sida vises igjen (tilbake-knapp / bfcache / fanebytte): koble data-
-  // lytteren på nytt. Ellers kan en død lytter gjøre at klassene ikke dukker opp.
-  window.addEventListener('pageshow', ()=>{ if(auth.currentUser) renderClasses(); });
-  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && auth.currentUser) renderClasses(); });
+  // Når sida vises igjen (tilbake-knapp / bfcache / fanebytte): hent ferske data.
+  // Merk: her skal vi IKKE koble lytteren av og på — det var nettopp det som
+  // gjorde at klassene forsvant på iPad.
+  window.addEventListener('pageshow', ()=>{ refreshClasses(); });
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') refreshClasses(); });
+  window.addEventListener('online', ()=>{ refreshClasses(); });
+  window.addEventListener('focus', ()=>{ refreshClasses(); });
+
+  // Firebase sier selv fra når forbindelsen er tilbake etter en søvnpause.
+  onValue(ref(db,'.info/connected'), s=>{ if(s.val()===true) refreshClasses(); });
 
   window.MyntData=MyntData;
 </script>
