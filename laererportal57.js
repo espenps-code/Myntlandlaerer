@@ -3403,7 +3403,65 @@ async function deleteHendelse(fbKey) {
 async function clearAllHendelser() {
   if (!confirm('Slett ALLE hendelser? Dette kan ikke angres.')) return;
   await window._remove(fbRef('hendelser'));
+  // Marker som «vurdert», ellers ville auto-innlastingen fylt lista på nytt
+  // neste gang portalen åpnes.
+  try { await window._set(fbRef('settings/hendelserSeeded'), true); } catch(e) {}
 }
+// ── Automatisk innlasting av standardhendelser i nye klasser ────────────────
+// Nye lærere visste ikke at de måtte trykke «🎲 Last inn 30 standard», og satt
+// derfor med et tomt hendelsesbibliotek. Her fylles det stille inn første gang
+// en HELT NY klasse åpnes (ingen hendelser OG ingen elever ennå).
+//
+// Flagget settings/hendelserSeeded settes så snart vi har vurdert klassen én
+// gang. Da kommer hendelsene aldri tilbake av seg selv for en lærer som
+// bevisst har slettet dem — flagget settes også ved manuell innlasting og ved
+// «Slett alle hendelser».
+let _autoSeedHendelserDone = false;
+
+async function autoSeedHendelserOnce() {
+  if (_autoSeedHendelserDone) return;
+  if (!ready() || !window._currentTeacher) return;
+  _autoSeedHendelserDone = true;
+  try {
+    const flagSnap = await window._get(fbRef('settings/hendelserSeeded'));
+    if (flagSnap && flagSnap.val()) return;
+
+    const hendSnap = await window._get(fbRef('hendelser'));
+    const harHendelser = !!(hendSnap && hendSnap.exists() && hendSnap.val()
+      && Object.keys(hendSnap.val()).length);
+
+    // Elever i klassen = klassen er allerede i drift. Da rører vi ingenting,
+    // vi bare setter flagget så vi ikke sjekker igjen.
+    const studSnap = await window._get(fbRef('students57'));
+    const harElever = !!(studSnap && studSnap.exists() && studSnap.val()
+      && Object.keys(studSnap.val()).length);
+
+    if (!harHendelser && !harElever) {
+      await Promise.all(DEFAULT_HENDELSER.map(function(h) {
+        return window._set(window._push(fbRef('hendelser')),
+          Object.assign({}, h, { workspaceId: currentWorkspaceId() || 'main', created: Date.now() }));
+      }));
+      console.log('✅ 30 standardhendelser lagt inn automatisk i ny klasse');
+    }
+    await window._set(fbRef('settings/hendelserSeeded'), true);
+  } catch (err) {
+    // La det få en ny sjanse ved neste innlogging framfor å feile stille.
+    _autoSeedHendelserDone = false;
+    console.warn('Auto-innlasting av hendelser feilet:', err && err.message);
+  }
+}
+
+// Innlogging skjer asynkront i HTML-skallet (onAuthStateChanged), så vi venter
+// til Firebase er klar og læreren er satt. Maks 60 sekunder, så gir vi opp.
+(function ventPaaAuthOgSeed() {
+  let forsok = 0;
+  const t = setInterval(function() {
+    if (_autoSeedHendelserDone || ++forsok > 120) { clearInterval(t); return; }
+    if (ready() && window._currentTeacher) { clearInterval(t); autoSeedHendelserOnce(); }
+  }, 500);
+})();
+
+
 
 async function seedDefaultHendelser() {
   if (!ready()) return;
@@ -3419,6 +3477,7 @@ async function seedDefaultHendelser() {
     await Promise.all(DEFAULT_HENDELSER.map(function(h) {
       return window._set(window._push(fbRef('hendelser')), Object.assign({}, h, { workspaceId: currentWorkspaceId() || 'main', created: Date.now() }));
     }));
+    try { await window._set(fbRef('settings/hendelserSeeded'), true); } catch(e) {}
     if (alertEl) {
       alertEl.innerHTML = '<div class="alert alert-success">✅ 30 standard hendelser lagt til!</div>';
       setTimeout(function() { alertEl.innerHTML = ''; }, 3000);
