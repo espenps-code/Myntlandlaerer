@@ -93,7 +93,7 @@ function getStudents()  { return filterByWorkspace(window._students || []); }
 // Main/admin leser fra root-paths (uendret). Andre workspaces leser fra
 // workspaceSettings/{wsId}/... — fallback til main, så hardkodet default.
 const DEFAULT_BUDGET_57 = { rentDesk:300, powerMin:50, powerMax:150, rentIpad:50, wedEventsEnabled:true };
-const DEFAULT_MYNTJAKT_57 = { enabled:false, dailyMax:0, activeLevels:[true,true,true,true,true] };
+const DEFAULT_MYNTJAKT_57 = { enabled:true, dailyMax:0, activeLevels:[true,true,true,true,true] };
 
 function _wsSettingsFor(wsId) {
   return (window._workspaceSettingsByWs || {})[wsId] || {};
