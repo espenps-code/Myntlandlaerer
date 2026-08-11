@@ -141,6 +141,26 @@
   .modal-actions{display:flex;gap:10px;margin-top:18px;}
   .modal-actions .btn{margin-top:0;}
   .btn-coral{background:var(--coral);color:#fff;}
+  /* Inviter laerer-popup */
+  .mb-invite{max-width:470px;}
+  .mb-invite .inv-icon{width:52px;height:52px;border-radius:15px;background:var(--green-light);
+    display:grid;place-items:center;font-size:1.6rem;margin-bottom:12px;}
+  .mb-invite h2{color:var(--green-dark);}
+  .inv-linkbox{display:flex;gap:8px;align-items:center;background:var(--bg);border:1px dashed var(--border);
+    border-radius:11px;padding:7px 7px 7px 12px;}
+  .inv-linkbox code{flex:1;min-width:0;font-size:.8rem;color:var(--blue-dark);overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;}
+  .inv-copy{border:none;background:var(--blue);color:#fff;border-radius:9px;padding:9px 14px;
+    font-family:'Nunito';font-weight:800;font-size:.8rem;cursor:pointer;flex:0 0 auto;}
+  .inv-copy:hover{background:var(--blue-dark);}
+  .inv-ok{font-size:.78rem;font-weight:800;color:var(--green);margin:8px 0 0;}
+  .inv-steps{list-style:none;padding:0;margin:16px 0 0;}
+  .inv-steps li{display:flex;gap:10px;align-items:flex-start;font-size:.86rem;font-weight:600;
+    color:var(--text);margin-bottom:9px;line-height:1.45;}
+  .inv-steps li span{flex:0 0 auto;width:21px;height:21px;border-radius:50%;background:var(--green-light);
+    color:var(--green-dark);font-weight:800;font-size:.72rem;display:grid;place-items:center;margin-top:1px;}
+  .inv-warn{background:var(--amber-light);border-radius:11px;padding:10px 12px;font-size:.8rem;
+    font-weight:600;color:#6b4a08;margin:14px 0 0;line-height:1.45;}
   .btn-coral:disabled{background:#e7bdae;cursor:not-allowed;}
 </style>
 </head>
@@ -255,6 +275,29 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeDeleteModal()">Avbryt</button>
       <button class="btn btn-coral" id="mdc-confirm" onclick="confirmDeleteClass()" disabled>Slett klasse</button>
+    </div>
+  </div>
+</div>
+
+<!-- Inviter laerer: viser invitasjonslenka -->
+<div class="modal-overlay" id="modal-invite" onclick="if(event.target===this)closeInviteModal()">
+  <div class="modal-box mb-invite">
+    <div class="inv-icon">🤝</div>
+    <h2>Invitasjonslenka er klar!</h2>
+    <p class="mtext">Del lenka med læreren du vil ha inn i <strong id="minv-class">klassen</strong>.</p>
+    <div class="inv-linkbox">
+      <code id="minv-link"></code>
+      <button class="inv-copy" id="minv-copy" onclick="copyInviteLink(this)">Kopier</button>
+    </div>
+    <p class="inv-ok" id="minv-copied">✓ Lenka er kopiert til utklippstavla</p>
+    <ul class="inv-steps">
+      <li><span>1</span> Send lenka på e-post, Teams eller melding</li>
+      <li><span>2</span> Læreren åpner lenka og logger inn — eller lager en konto</li>
+      <li><span>3</span> Klassen dukker opp på «Min side» hos læreren</li>
+    </ul>
+    <p class="inv-warn">⏳ Lenka varer i <strong>7 dager</strong>. Alle som har lenka kan bli lærer i klassen — så ikke del den offentlig.</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeInviteModal()">Ferdig</button>
     </div>
   </div>
 </div>
@@ -491,9 +534,26 @@
       const uid=auth.currentUser.uid;
       await set(ref(db,'invites/'+token), { classId, className:name, role:'teacher', createdBy:uid, createdAt:Date.now(), expiresAt:Date.now()+7*24*60*60*1000, used:false });
       const link='https://myntland.no/konto.html?invite='+token;
-      try{ await navigator.clipboard.writeText(link); }catch(e){}
-      alert('Invitasjonslenke laget og kopiert! ✓\n\n'+link+'\n\nDel den med læreren du vil ha inn i «'+name+'». Lenken varer i 7 dager.');
+      let copied=false;
+      try{ await navigator.clipboard.writeText(link); copied=true; }catch(e){}
+      document.getElementById('minv-class').textContent='«'+name+'»';
+      document.getElementById('minv-link').textContent=link;
+      document.getElementById('minv-copied').style.display = copied ? 'block' : 'none';
+      document.getElementById('minv-copy').textContent = copied ? 'Kopier igjen' : 'Kopier';
+      document.getElementById('modal-invite').classList.add('open');
     }catch(e){ alert('Kunne ikke lage invitasjon: '+friendlyErr(e)); }
+  };
+
+  window.closeInviteModal=function(){
+    document.getElementById('modal-invite').classList.remove('open');
+  };
+  window.copyInviteLink=function(btn){
+    const link=document.getElementById('minv-link').textContent;
+    if(!navigator.clipboard) return;
+    navigator.clipboard.writeText(link).then(()=>{
+      btn.textContent='Kopiert! ✓';
+      setTimeout(()=>{ btn.textContent='Kopier igjen'; },1600);
+    });
   };
 
   async function processInvite(token){
