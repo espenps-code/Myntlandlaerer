@@ -310,12 +310,16 @@
         <div class="acc-val" id="bal-bruk">0</div>
         <div class="acc-sub">🪙 Mynter · koblet til bankkort</div>
       </div>
-      <div class="account-card spare">
+      <div class="account-card spare clickable" role="button" tabindex="0"
+           aria-label="Åpne sparekontoen"
+           onclick="openSpareFrom('konto')" onkeydown="cardKey(event,'konto')">
         <div class="acc-label">💰 Sparekonto</div>
         <div class="acc-val" id="bal-spare">0</div>
         <div class="acc-sub" id="spare-sub">5% ukentlig rente</div>
       </div>
-      <div class="account-card fond">
+      <div class="account-card fond clickable" role="button" tabindex="0"
+           aria-label="Åpne fondskontoen"
+           onclick="openSpareFrom('fond')" onkeydown="cardKey(event,'fond')">
         <div class="acc-label">📊 Fondskonto</div>
         <div class="acc-val" id="bal-fond">0</div>
         <div class="acc-sub" id="fond-sub">Lav + Høy risiko</div>
@@ -539,7 +543,7 @@
 
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchTab('bank',this)"><div class="nav-icon">🏦</div><div class="nav-label">Nettbank</div></button>
-    <button class="nav-item"        onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
+    <button class="nav-item" id="nav-spare" onclick="switchTab('spare',this);renderSpareTab();renderFond()"><div class="nav-icon">💰</div><div class="nav-label">Sparing</div></button>
     <button class="nav-item"        onclick="switchTab('laan',this);renderLoan();checkLoanExpiry()"><div class="nav-icon">📋</div><div class="nav-label">Lån</div></button>
     <button class="nav-item"        onclick="switchTab('oppdrag',this);renderJobs()"><div class="nav-icon">💼</div><div class="nav-label">Jobber</div></button>
     <button class="nav-item"        onclick="switchTab('budsjett',this);renderBudgetTab()"><div class="nav-icon">📊</div><div class="nav-label">Budsjett</div></button>

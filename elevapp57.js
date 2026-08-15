@@ -923,6 +923,30 @@ async function selectGoal(fbKey){
 }
 
 // ── PILL-BRYTER: Sparekonto / Fond ─────────────────────────────────────────
+// ── SNARVEI FRA FORSIDEKORTENE TIL SPARING-FANEN ─────────────────────
+// Kortene "Sparekonto" og "Fondskonto" på nettbank-forsiden åpner
+// Sparing-fanen og velger riktig del (sparekonto eller fond).
+function openSpareFrom(seg){
+  const navBtn = document.getElementById('nav-spare');
+  switchTab('spare', navBtn);
+  if (typeof renderSpareTab === 'function') renderSpareTab();
+  if (typeof renderFond === 'function') renderFond();
+  const pill = document.getElementById(seg === 'fond' ? 'ss-pill-fond' : 'ss-pill-konto');
+  switchSpareSeg(seg === 'fond' ? 'fond' : 'konto', pill);
+  window.scrollTo({top:0,behavior:'smooth'});
+  const sc = document.getElementById('tab-spare');
+  if (sc) sc.scrollTop = 0;
+}
+// Tastatur: Enter eller mellomrom åpner kortet (samme som klikk).
+function cardKey(e, seg){
+  if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+    e.preventDefault();
+    openSpareFrom(seg);
+  }
+}
+window.openSpareFrom = openSpareFrom;
+window.cardKey = cardKey;
+
 function switchSpareSeg(seg,btn){
   document.querySelectorAll('.spare-seg-content').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.ss-pill').forEach(b=>b.classList.remove('active'));

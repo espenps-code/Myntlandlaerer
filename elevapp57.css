@@ -55,6 +55,13 @@
   .acc-label{font-size:.7rem;opacity:.8;font-weight:700;margin-bottom:2px;position:relative;z-index:1;}
   .acc-val{font-family:'Fredoka One',cursive;font-size:1.65rem;color:var(--amber);line-height:1;position:relative;z-index:1;}
   .acc-sub{font-size:.65rem;opacity:.7;font-weight:700;position:relative;z-index:1;}
+  /* Klikkbare kontokort (sparekonto + fond) – åpner Sparing-fanen */
+  .account-card.clickable{cursor:pointer;padding-right:2rem;transition:transform .12s ease,box-shadow .12s ease;-webkit-tap-highlight-color:transparent;}
+  .account-card.clickable::after{content:'›';position:absolute;top:50%;right:.85rem;transform:translateY(-50%);font-size:1.5rem;line-height:1;opacity:.65;z-index:1;}
+  .account-card.clickable:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(15,81,50,.22);}
+  .account-card.clickable:active{transform:translateY(0) scale(.985);}
+  .account-card.clickable:focus-visible{outline:3px solid var(--amber);outline-offset:3px;}
+  @media (prefers-reduced-motion:reduce){.account-card.clickable{transition:none;}.account-card.clickable:hover{transform:none;}}
 
   /* TRANSACTIONS */
   .tx-item{display:flex;align-items:center;gap:10px;padding:13px 12px;background:white;border-radius:12px;margin-bottom:8px;border:1px solid var(--border);}
