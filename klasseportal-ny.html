@@ -2362,6 +2362,13 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   /* ---------- forhandsvisning: slik ser dagen ut pa storskjermen ---------- */
   function pvMin(t){ var m=String(t==null?'':t).match(/(\d{1,2})\s*[:.](\d{2})/); return m ? (+m[1])*60+(+m[2]) : null; }
+  function pvVarighet(mins){
+    mins=Math.round(mins||0);
+    var t=Math.floor(mins/60), m=mins%60;
+    if(t && m) return t+' t '+m+' min';
+    if(t) return t+(t===1?' time':' timer');
+    return m+' min';
+  }
   var pvWeekMode=false;
   var DAYSHORT={1:'Man',2:'Tir',3:'Ons',4:'Tor',5:'Fre'};
   function renderPreview(){
@@ -2414,8 +2421,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var sum=document.getElementById('pvSum'); if(!sum) return;
     var deler=[];
     if(antTimer) deler.push(antTimer+(antTimer===1?' time':' timer'));
-    if(undervisMin) deler.push((Math.round(undervisMin/6)/10).toString().replace('.',',')+' t undervisning');
-    if(pauseMin) deler.push(pauseMin+' min pause');
+    if(undervisMin) deler.push(pvVarighet(undervisMin)+' undervisning');
+    if(pauseMin) deler.push(pvVarighet(pauseMin)+' pause');
     var adv='';
     if(utenTid) adv+='<span>&#9888;&#65039; '+utenTid+(utenTid===1?' rad mangler':' rader mangler')+' klokkeslett</span>';
     if(kollisjon) adv+='<span>&#9888;&#65039; To rader overlapper i tid</span>';
@@ -2462,7 +2469,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var sum=document.getElementById('pvSum'); if(!sum) return;
     var deler=[];
     if(totTimer) deler.push(totTimer+(totTimer===1?' time':' timer')+' i uka');
-    if(totMin) deler.push((Math.round(totMin/6)/10).toString().replace('.',',')+' t undervisning');
+    if(totMin) deler.push(pvVarighet(totMin)+' undervisning');
     var adv = advDager.length
       ? '<div class="pv-warn"><span>&#9888;&#65039; Sjekk '+esc(advDager.join(', '))+' &ndash; manglende eller overlappende klokkeslett</span></div>'
       : '';
