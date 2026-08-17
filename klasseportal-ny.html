@@ -531,6 +531,7 @@ h1.sticker{
 .pv-lesson .pv-time .pv-end{display:block;font-size:11px;font-weight:600;color:var(--ink-soft)}
 .pv-lesson .pv-icon{width:28px;height:28px;border-radius:9px;flex:none;display:grid;place-items:center;border:2px solid var(--ink)}
 .pv-lesson .pv-icon svg{width:17px;height:17px}
+.pv-lesson .pv-icon img{width:24px;height:24px;object-fit:contain;display:block}
 .pv-lesson .pv-name{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pv-break{display:flex;align-items:center;gap:8px;align-self:center;width:94%;
   background:linear-gradient(90deg,#eafad0,#dff3c0);border:2px dashed var(--green-deep);border-radius:30px;padding:5px 12px}
@@ -550,7 +551,10 @@ h1.sticker{
   border-radius:9px;padding:3px 2px;background:#fff;color:var(--ink);cursor:pointer}
 .pv-colhead.active{background:var(--gold)}
 .pv-mini{border:2px solid var(--ink);border-radius:9px;padding:4px 5px;font-size:12px;font-weight:600;line-height:1.25;min-width:0}
-.pv-mini .pv-mt{display:block;font-size:10px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.pv-mini .pv-mt{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.pv-mini .pv-mi{width:15px;height:15px;flex:none;display:block}
+.pv-mini .pv-mi img{width:15px;height:15px;object-fit:contain;display:block}
+.pv-mini .pv-mi svg{width:15px;height:15px}
 .pv-mini .pv-mn{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pv-mini.brk{background:linear-gradient(90deg,#eafad0,#dff3c0);border-style:dashed;border-color:var(--green-deep);
   color:var(--green-deep);border-radius:20px;text-align:center;font-size:11px}
@@ -2445,7 +2449,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
           m=el('div','pv-mini brk','<span class="pv-mn">'+(it.big?'Storefri':'Friminutt')+'</span>');
         } else {
           totTimer++; if(gyldig) totMin+=en-st;
-          m=el('div','pv-mini','<span class="pv-mt">'+(esc(r[0]||'')||'&ndash;')+'</span>'+
+          var ic=(portal.ICONS||{})[it.icon]||'';
+          m=el('div','pv-mini','<span class="pv-mt">'+(ic?'<span class="pv-mi">'+ic+'</span>':'')+(esc(r[0]||'')||'&ndash;')+'</span>'+
             '<span class="pv-mn">'+(esc(it.name||'')||'Uten navn')+'</span>');
           m.style.background=it.color||'#ffe0cf';
         }
