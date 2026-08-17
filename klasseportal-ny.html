@@ -540,7 +540,23 @@ h1.sticker{
 .pv-empty{font-size:15px;color:var(--ink-soft);text-align:center;padding:18px 8px;border:2px dashed var(--ink);border-radius:12px;line-height:1.4}
 .pv-sum{margin-top:10px;font-size:14px;color:var(--ink-soft);font-weight:600;line-height:1.5}
 .pv-warn{margin-top:6px;display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:600;color:var(--red)}
+.pv-toggle{margin-left:auto;font-family:var(--font);font-size:13px;font-weight:700;border:2px solid var(--ink);
+  background:#fff;color:var(--ink);border-radius:30px;padding:4px 12px;cursor:pointer;box-shadow:0 2px 0 rgba(42,31,61,.2)}
+.pv-toggle:active{transform:translateY(2px);box-shadow:none}
+.plan-split.week .plan-prev{flex:0 0 620px}
+.pv-week{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-height:52vh;overflow:auto}
+.pv-col{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pv-colhead{font-family:var(--font);font-size:13px;font-weight:700;text-align:center;border:2px solid var(--ink);
+  border-radius:9px;padding:3px 2px;background:#fff;color:var(--ink);cursor:pointer}
+.pv-colhead.active{background:var(--gold)}
+.pv-mini{border:2px solid var(--ink);border-radius:9px;padding:4px 5px;font-size:12px;font-weight:600;line-height:1.25;min-width:0}
+.pv-mini .pv-mt{display:block;font-size:10px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.pv-mini .pv-mn{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-mini.brk{background:linear-gradient(90deg,#eafad0,#dff3c0);border-style:dashed;border-color:var(--green-deep);
+  color:var(--green-deep);border-radius:20px;text-align:center;font-size:11px}
+.pv-colempty{font-size:11px;color:var(--ink-soft);text-align:center;padding:8px 2px;border:2px dashed var(--ink);border-radius:9px}
 @media(max-width:900px){.plan-split{flex-direction:column}.plan-prev{flex:1 1 auto;width:100%;position:static}.pv-list{max-height:none}}
+@media(max-width:900px){.plan-split.week .plan-prev{flex:1 1 auto}.pv-week{max-height:none}}
 .week-msgs{display:flex;flex-direction:column;gap:10px}
 .week-msg{display:flex;align-items:center;gap:10px}
 .week-msg .wm-day{width:92px;flex:none;font-weight:700;font-size:15px}
@@ -1530,8 +1546,9 @@ h1.sticker{
             <p class="ovl-hint">Hver ukedag har sin egen timeplan. Velg <b>start</b> og <b>slutt</b> fra nedtrekksmenyene &ndash; sluttiden fylles ut automatisk, og en ny rad starter der forrige sluttet.</p>
           </div>
           <aside class="plan-prev">
-            <div class="pv-head">&#128065;&#65039; Slik ser dagen ut <span class="pv-day" id="pvDay"></span></div>
+            <div class="pv-head"><span id="pvTitle">&#128065;&#65039; Slik ser dagen ut</span> <span class="pv-day" id="pvDay"></span><button type="button" class="pv-toggle" id="pvToggle">Se hele uka</button></div>
             <ol class="pv-list" id="pvList" aria-live="polite"></ol>
+            <div class="pv-week" id="pvWeek" style="display:none" aria-live="polite"></div>
             <div class="pv-sum" id="pvSum"></div>
           </aside>
         </div>
@@ -2341,9 +2358,23 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 
   /* ---------- forhandsvisning: slik ser dagen ut pa storskjermen ---------- */
   function pvMin(t){ var m=String(t==null?'':t).match(/(\d{1,2})\s*[:.](\d{2})/); return m ? (+m[1])*60+(+m[2]) : null; }
+  var pvWeekMode=false;
+  var DAYSHORT={1:'Man',2:'Tir',3:'Ons',4:'Tor',5:'Fre'};
   function renderPreview(){
+    var list=document.getElementById('pvList'), wk=document.getElementById('pvWeek');
+    var ttl=document.getElementById('pvTitle'), tgl=document.getElementById('pvToggle');
+    var split=document.querySelector('.plan-split');
+    if(split) split.classList.toggle('week', pvWeekMode);
+    if(ttl) ttl.innerHTML = pvWeekMode ? '&#128065;&#65039; Slik ser uka ut' : '&#128065;&#65039; Slik ser dagen ut';
+    if(tgl) tgl.textContent = pvWeekMode ? 'Se bare dagen' : 'Se hele uka';
+    var dayEl=document.getElementById('pvDay');
+    if(dayEl){ dayEl.textContent = pvWeekMode ? '' : (DAYNAMES[editDay]||''); dayEl.style.display = pvWeekMode ? 'none' : ''; }
+    if(list) list.style.display = pvWeekMode ? 'none' : '';
+    if(wk) wk.style.display = pvWeekMode ? 'grid' : 'none';
+    if(pvWeekMode) renderPreviewWeek(); else renderPreviewDay();
+  }
+  function renderPreviewDay(){
     var list=document.getElementById('pvList'); if(!list) return;
-    var dayEl=document.getElementById('pvDay'); if(dayEl) dayEl.textContent=DAYNAMES[editDay]||'';
     var arr=(portal.data.week && portal.data.week[editDay]) || [];
     var I=portal.ICONS||{};
     list.innerHTML='';
@@ -2387,6 +2418,52 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     sum.innerHTML=(deler.length?'<div>'+deler.join(' &middot; ')+'</div>':'')+
       (adv?'<div class="pv-warn">'+adv+'</div>':'');
   }
+
+  /* ---------- hele uka side om side ---------- */
+  function renderPreviewWeek(){
+    var wk=document.getElementById('pvWeek'); if(!wk) return;
+    wk.innerHTML='';
+    var totTimer=0, totMin=0, advDager=[];
+    Object.keys(DAYNAMES).forEach(function(dk){
+      var d=+dk;
+      var col=el('div','pv-col');
+      var h=el('button','pv-colhead'+(d===editDay?' active':''), esc(DAYSHORT[d]));
+      h.type='button'; h.title='Rediger '+DAYNAMES[d];
+      h.onclick=function(){ harvestPlan(); editDay=d; buildDayTabs(); buildPlanRows(); };
+      col.appendChild(h);
+      var arr=(portal.data.week && portal.data.week[d]) || [];
+      if(!arr.length) col.appendChild(el('div','pv-colempty','Fri'));
+      var feil=false, forrigeSlutt=null;
+      arr.forEach(function(it){
+        var r=parseRange(it.time), st=pvMin(r[0]), en=pvMin(r[1]);
+        var gyldig=(st!=null && en!=null && en>st);
+        if(!gyldig) feil=true;
+        if(st!=null && forrigeSlutt!=null && st<forrigeSlutt) feil=true;
+        if(en!=null) forrigeSlutt=en;
+        var m;
+        if(it.type==='break'){
+          m=el('div','pv-mini brk','<span class="pv-mn">'+(it.big?'Storefri':'Friminutt')+'</span>');
+        } else {
+          totTimer++; if(gyldig) totMin+=en-st;
+          m=el('div','pv-mini','<span class="pv-mt">'+(esc(r[0]||'')||'&ndash;')+'</span>'+
+            '<span class="pv-mn">'+(esc(it.name||'')||'Uten navn')+'</span>');
+          m.style.background=it.color||'#ffe0cf';
+        }
+        col.appendChild(m);
+      });
+      if(feil) advDager.push(DAYNAMES[d]);
+      wk.appendChild(col);
+    });
+    var sum=document.getElementById('pvSum'); if(!sum) return;
+    var deler=[];
+    if(totTimer) deler.push(totTimer+(totTimer===1?' time':' timer')+' i uka');
+    if(totMin) deler.push((Math.round(totMin/6)/10).toString().replace('.',',')+' t undervisning');
+    var adv = advDager.length
+      ? '<div class="pv-warn"><span>&#9888;&#65039; Sjekk '+esc(advDager.join(', '))+' &ndash; manglende eller overlappende klokkeslett</span></div>'
+      : '';
+    sum.innerHTML=(deler.length?'<div>'+deler.join(' &middot; ')+'</div>':'')+adv;
+  }
+  (function(){ var t=document.getElementById('pvToggle'); if(t) t.onclick=function(){ pvWeekMode=!pvWeekMode; renderPreview(); }; })();
 
   function timeOpts(sel){ var out=''; for(var h=6;h<=18;h++){ for(var m=0;m<60;m+=5){ if(h===18&&m>0) break; var v=(h<10?'0'+h:h)+':'+(m<10?'0'+m:m); out+='<option value="'+v+'"'+(v===sel?' selected':'')+'>'+v+'</option>'; } } return out; }
   function parseRange(t){ t=String(t||''); var p=t.split(/[–-]/); return [(p[0]||'').trim(),(p[1]||'').trim()]; }
