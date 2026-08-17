@@ -517,6 +517,30 @@ h1.sticker{
 .plan-tab-btn{font-family:inherit;font-size:17px;font-weight:700;color:var(--ink-soft);background:transparent;border:none;border-bottom:4px solid transparent;padding:8px 14px;cursor:pointer;margin-bottom:-3px}
 .plan-tab-btn.active{color:var(--ink);border-bottom-color:var(--gold)}
 .plan-panel{display:flex;flex-direction:column;gap:14px}
+#planOverlay .ovl-card{max-width:1180px}
+.plan-split{display:flex;gap:18px;align-items:flex-start}
+.plan-edit{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:14px}
+.plan-prev{flex:0 0 330px;position:sticky;top:0;background:var(--cream);border:3px solid var(--ink);
+  border-radius:16px;padding:12px 12px 14px;box-shadow:0 4px 0 rgba(42,31,61,.18)}
+.pv-head{font-weight:700;font-size:16px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pv-head .pv-day{background:var(--gold);border:2px solid var(--ink);border-radius:30px;padding:2px 10px;font-size:14px}
+.pv-list{list-style:none;display:flex;flex-direction:column;gap:7px;margin:0;padding:0;max-height:52vh;overflow:auto}
+.pv-lesson{display:flex;align-items:center;gap:9px;background:var(--paper);border:2px solid var(--ink);
+  border-radius:12px;padding:6px 9px;box-shadow:0 3px 0 rgba(42,31,61,.12)}
+.pv-lesson .pv-time{font-size:14px;font-weight:700;width:48px;flex:none;line-height:1.1;font-variant-numeric:tabular-nums}
+.pv-lesson .pv-time .pv-end{display:block;font-size:11px;font-weight:600;color:var(--ink-soft)}
+.pv-lesson .pv-icon{width:28px;height:28px;border-radius:9px;flex:none;display:grid;place-items:center;border:2px solid var(--ink)}
+.pv-lesson .pv-icon svg{width:17px;height:17px}
+.pv-lesson .pv-name{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-break{display:flex;align-items:center;gap:8px;align-self:center;width:94%;
+  background:linear-gradient(90deg,#eafad0,#dff3c0);border:2px dashed var(--green-deep);border-radius:30px;padding:5px 12px}
+.pv-break .pv-blabel{font-size:13px;font-weight:700;color:var(--green-deep);text-transform:uppercase;letter-spacing:.5px}
+.pv-break .pv-btime{font-size:13px;font-weight:600;color:var(--ink-soft)}
+.pv-break .pv-bnote{margin-left:auto;font-size:13px;font-style:italic;color:var(--green-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-empty{font-size:15px;color:var(--ink-soft);text-align:center;padding:18px 8px;border:2px dashed var(--ink);border-radius:12px;line-height:1.4}
+.pv-sum{margin-top:10px;font-size:14px;color:var(--ink-soft);font-weight:600;line-height:1.5}
+.pv-warn{margin-top:6px;display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:600;color:var(--red)}
+@media(max-width:900px){.plan-split{flex-direction:column}.plan-prev{flex:1 1 auto;width:100%;position:static}.pv-list{max-height:none}}
 .week-msgs{display:flex;flex-direction:column;gap:10px}
 .week-msg{display:flex;align-items:center;gap:10px}
 .week-msg .wm-day{width:92px;flex:none;font-weight:700;font-size:15px}
@@ -1499,9 +1523,18 @@ h1.sticker{
       </div>
       <div class="plan-panel" id="planPanel-timeplan">
         <div class="daytabs" id="dayTabs"></div>
-        <div class="plan-rows" id="planRows"></div>
-        <button class="add-slot" id="addPlanRow">+ Legg til time eller friminutt</button>
-        <p class="ovl-hint">Hver ukedag har sin egen timeplan. Velg <b>start</b> og <b>slutt</b> fra nedtrekksmenyene &ndash; sluttiden fylles ut automatisk, og en ny rad starter der forrige sluttet.</p>
+        <div class="plan-split">
+          <div class="plan-edit">
+            <div class="plan-rows" id="planRows"></div>
+            <button class="add-slot" id="addPlanRow">+ Legg til time eller friminutt</button>
+            <p class="ovl-hint">Hver ukedag har sin egen timeplan. Velg <b>start</b> og <b>slutt</b> fra nedtrekksmenyene &ndash; sluttiden fylles ut automatisk, og en ny rad starter der forrige sluttet.</p>
+          </div>
+          <aside class="plan-prev">
+            <div class="pv-head">&#128065;&#65039; Slik ser dagen ut <span class="pv-day" id="pvDay"></span></div>
+            <ol class="pv-list" id="pvList" aria-live="polite"></ol>
+            <div class="pv-sum" id="pvSum"></div>
+          </aside>
+        </div>
       </div>
       <div class="plan-panel" id="planPanel-beskjeder" style="display:none">
         <p class="ovl-hint">Faste beskjeder vises hver uke p&aring; dagen du legger dem. Du kan ogs&aring; legge til spontane beskjeder direkte p&aring; &laquo;Fra l&aelig;reren&raquo;.</p>
@@ -2303,6 +2336,56 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var wrap=document.getElementById('planRows'); wrap.innerHTML='';
     var arr=portal.data.week[editDay] || (portal.data.week[editDay]=[]);
     arr.forEach(function(it,i){ wrap.appendChild(planRow(it,i,arr.length)); });
+    renderPreview();
+  }
+
+  /* ---------- forhandsvisning: slik ser dagen ut pa storskjermen ---------- */
+  function pvMin(t){ var m=String(t==null?'':t).match(/(\d{1,2})\s*[:.](\d{2})/); return m ? (+m[1])*60+(+m[2]) : null; }
+  function renderPreview(){
+    var list=document.getElementById('pvList'); if(!list) return;
+    var dayEl=document.getElementById('pvDay'); if(dayEl) dayEl.textContent=DAYNAMES[editDay]||'';
+    var arr=(portal.data.week && portal.data.week[editDay]) || [];
+    var I=portal.ICONS||{};
+    list.innerHTML='';
+    if(!arr.length){
+      list.innerHTML='<li class="pv-empty">Ingen timer lagt inn enn&aring;.<br>Storskjermen vil vise &laquo;Ingen timer i dag &#127880; Fri!&raquo;</li>';
+    }
+    var antTimer=0, undervisMin=0, pauseMin=0, utenTid=0, kollisjon=false, forrigeSlutt=null;
+    arr.forEach(function(it){
+      var r=parseRange(it.time), st=pvMin(r[0]), en=pvMin(r[1]);
+      var gyldig = (st!=null && en!=null && en>st);
+      if(!gyldig) utenTid++;
+      if(st!=null && forrigeSlutt!=null && st<forrigeSlutt) kollisjon=true;
+      if(en!=null) forrigeSlutt=en;
+      var li=document.createElement('li');
+      if(it.type==='break'){
+        if(gyldig) pauseMin+=en-st;
+        li.className='pv-break';
+        li.innerHTML='<span class="pv-blabel">'+(it.big?'Storefri':'Friminutt')+'</span>'+
+          '<span class="pv-btime">'+esc(it.time||'')+'</span>'+
+          '<span class="pv-bnote">'+esc(it.note||'')+'</span>';
+      } else {
+        antTimer++;
+        if(gyldig) undervisMin+=en-st;
+        var tid = r[0] ? esc(r[0])+(r[1]?'<span class="pv-end">'+esc(r[1])+'</span>':'') : '&ndash;';
+        var navn = esc(it.name||'') || '<span style="opacity:.45">Uten navn</span>';
+        li.className='pv-lesson';
+        li.innerHTML='<span class="pv-time">'+tid+'</span>'+
+          '<span class="pv-icon" style="background:'+esc(it.color||'#ffe0cf')+'">'+(I[it.icon]||'')+'</span>'+
+          '<span class="pv-name">'+navn+'</span>';
+      }
+      list.appendChild(li);
+    });
+    var sum=document.getElementById('pvSum'); if(!sum) return;
+    var deler=[];
+    if(antTimer) deler.push(antTimer+(antTimer===1?' time':' timer'));
+    if(undervisMin) deler.push((Math.round(undervisMin/6)/10).toString().replace('.',',')+' t undervisning');
+    if(pauseMin) deler.push(pauseMin+' min pause');
+    var adv='';
+    if(utenTid) adv+='<span>&#9888;&#65039; '+utenTid+(utenTid===1?' rad mangler':' rader mangler')+' klokkeslett</span>';
+    if(kollisjon) adv+='<span>&#9888;&#65039; To rader overlapper i tid</span>';
+    sum.innerHTML=(deler.length?'<div>'+deler.join(' &middot; ')+'</div>':'')+
+      (adv?'<div class="pv-warn">'+adv+'</div>':'');
   }
 
   function timeOpts(sel){ var out=''; for(var h=6;h<=18;h++){ for(var m=0;m<60;m+=5){ if(h===18&&m>0) break; var v=(h<10?'0'+h:h)+':'+(m<10?'0'+m:m); out+='<option value="'+v+'"'+(v===sel?' selected':'')+'>'+v+'</option>'; } } return out; }
@@ -2330,7 +2413,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var psEl=row.querySelector('.pstart'); var peEl=row.querySelector('.pend');
     if(psEl) psEl.onchange=function(){ harvestPlan(); var a=portal.data.week[editDay]; var st=this.value; var dur=durOf(a[i]); a[i].time = st ? (st+'–'+addMin(st,dur)) : ''; if(st && i+1<a.length){ var nst=addMin(st,dur); a[i+1].time = nst+'–'+addMin(nst,durOf(a[i+1])); } buildPlanRows(); };
     if(peEl) peEl.onchange=function(){ harvestPlan(); var a=portal.data.week[editDay]; var rng=parseRange(a[i].time); var en=this.value; a[i].time = (rng[0]||'')+'–'+en; if(en && i+1<a.length){ a[i+1].time = en+'–'+addMin(en,durOf(a[i+1])); } buildPlanRows(); };
-    row.querySelectorAll('.sw').forEach(function(s){ s.onclick=function(){ row.querySelectorAll('.sw').forEach(function(x){x.classList.remove('sel');}); s.classList.add('sel'); }; });
+    row.querySelectorAll('.sw').forEach(function(s){ s.onclick=function(){ row.querySelectorAll('.sw').forEach(function(x){x.classList.remove('sel');}); s.classList.add('sel'); harvestPlan(); renderPreview(); }; });
+    var pnEl=row.querySelector('.pname'); if(pnEl) pnEl.oninput=function(){ harvestPlan(); renderPreview(); };
+    var piEl=row.querySelector('.picon'); if(piEl) piEl.onchange=function(){ harvestPlan(); renderPreview(); };
+    var pbEl=row.querySelector('.pbig'); if(pbEl) pbEl.onchange=function(){ harvestPlan(); renderPreview(); };
     row.querySelector('.del').onclick=function(){ harvestPlan(); portal.data.week[editDay].splice(i,1); buildPlanRows(); };
     row.querySelector('.pup').onclick=function(){ harvestPlan(); var a=portal.data.week[editDay]; if(i>0){ var tmp=a[i-1]; a[i-1]=a[i]; a[i]=tmp; } buildPlanRows(); };
     row.querySelector('.pdn').onclick=function(){ harvestPlan(); var a=portal.data.week[editDay]; if(i<a.length-1){ var tmp=a[i+1]; a[i+1]=a[i]; a[i]=tmp; } buildPlanRows(); };
