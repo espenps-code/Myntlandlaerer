@@ -21,14 +21,13 @@
   // ── Hvilken portal? ────────────────────────────────────────────────────────
   var IS57 = !!document.getElementById('nav-oppdrag');
   var KEY = 'myntland_omvisning_' + (IS57 ? '57' : '14') + '_v1';
-  var GUIDE_SEED = 11;
 
-  function guideName() {
-    try {
-      if (typeof window.getAnimalName === 'function') return window.getAnimalName(GUIDE_SEED);
-    } catch (e) {}
-    return 'Mynt';
-  }
+  // Guiden heter Bølge. Seed 94 treffer «Havblå» i monsterbiblioteket, så
+  // figuren ser lik ut hver gang og passer til navnet.
+  var GUIDE_SEED = 94;
+  var GUIDE_NAVN = 'Bølge';
+
+  function guideName() { return GUIDE_NAVN; }
 
   // ── Småhjelpere ────────────────────────────────────────────────────────────
   function q(sel) { try { return document.querySelector(sel); } catch (e) { return null; } }
@@ -171,7 +170,7 @@
       d: 'Trykk her for å melde inn en feil eller et forslag. Meldingen kommer rett fram med riktig klasse og side, og du ser svaret under «Mine meldinger».' },
 
     { t: 'Det var runden! 🎉',
-      d: 'Neste steg er å opprette klassen, lage et sparemål og skrive ut bankkortene — så er dere i gang.<br><br>Full veiledning: <a href="laererveiledning.html" target="_blank" rel="noopener" style="color:#185FA5;font-weight:800;">myntland.no/laererveiledning</a>' }
+      d: 'Neste steg er å opprette klassen, lage et sparemål og skrive ut bankkortene — så er dere i gang.<br><br>Full veiledning: <a href="laererveiledning.html" target="_blank" rel="noopener" style="color:#185FA5;font-weight:800;">myntland.no/laererveiledning</a><br><br><i>Lykke til! — Bølge</i>' }
   ];
 
   var STEG_14 = [
@@ -229,7 +228,7 @@
       d: 'Trykk her for å melde inn en feil eller et forslag. Meldingen kommer rett fram med riktig klasse og side, og du ser svaret under «Mine meldinger».' },
 
     { t: 'Det var runden! 🎉',
-      d: 'Neste steg er å opprette klassen, lage et sparemål og skrive ut bankkortene — så er dere i gang.<br><br>Full veiledning: <a href="laererveiledning.html" target="_blank" rel="noopener" style="color:#185FA5;font-weight:800;">myntland.no/laererveiledning</a>' }
+      d: 'Neste steg er å opprette klassen, lage et sparemål og skrive ut bankkortene — så er dere i gang.<br><br>Full veiledning: <a href="laererveiledning.html" target="_blank" rel="noopener" style="color:#185FA5;font-weight:800;">myntland.no/laererveiledning</a><br><br><i>Lykke til! — Bølge</i>' }
   ];
 
   var STEG = IS57 ? STEG_57 : STEG_14;
