@@ -1158,3 +1158,46 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+
+  /* Felles innloggingslinje under laererkortene paa forsida.
+     Kortene selv lenker til laererveiledningen; innlogging bor i hero + her. */
+  .teacher-login-line {
+    margin: -0.35rem 0 1.75rem;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .teacher-login-line a {
+    color: var(--amber-dark);
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .teacher-login-line a:hover { text-decoration: none; }
+
+  /* ===== Kort som ikke er lenket ennå (kommer snart) ===== */
+  .card-begynner { background: #E1F5EE; border-color: #E1F5EE; }
+  .card-begynner .portal-card-tag { background: #fff; color: #085041; }
+  .card-begynner .portal-card-monster { background: #fff; }
+
+  .card-tavlespill { background: #FDE9DE; border-color: #FDE9DE; }
+  .card-tavlespill .portal-card-tag { background: #fff; color: #b3431f; }
+  .card-tavlespill .portal-card-monster { background: #fff; }
+
+  .portal-card.card-soon { cursor: default; }
+  .portal-card.card-soon:hover { transform: none; box-shadow: none; }
+  .portal-card.card-soon:hover .portal-card-monster { transform: none; }
+  .card-soon .portal-card-monster img { filter: grayscale(0.3); opacity: 0.9; }
+  .card-soon .portal-card-arrow {
+    align-self: flex-start;
+    margin-top: auto;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: var(--amber-light);
+    color: #8a5a14;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
