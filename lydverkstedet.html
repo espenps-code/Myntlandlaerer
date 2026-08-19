@@ -469,7 +469,7 @@ const GLYPHS = {
 };
 
 /* ============================================================
-   ORDBANKEN – 60 ord for 1. trinn
+   ORDBANKEN – 58 ord for 1. trinn
    ------------------------------------------------------------
    f = bokstaven til FØRSTE lyd   s = bokstaven til SISTE lyd
    m = VOKALEN i midten (bare ord med tydelig midtvokal)
@@ -515,12 +515,10 @@ const ORD = [
   { ord:"is", fil:"is", f:"I", s:"S", m:null },
   { ord:"ost", fil:"ost", f:"O", s:"T", m:null },
   { ord:"egg", fil:"egg", f:"E", s:"G", m:null },
-  { ord:"maur", fil:"maur", f:"M", s:"R", m:null },
   { ord:"ku", fil:"ku", f:"K", s:"U", m:null },
   { ord:"stol", fil:"stol", f:"S", s:"L", m:null },
   { ord:"sko", fil:"sko", f:"S", s:"O", m:null },
   { ord:"gris", fil:"gris", f:"G", s:"S", m:null },
-  { ord:"and", fil:"and", f:"A", s:null, m:null },
   { ord:"hund", fil:"hund", f:"H", s:null, m:null },
   { ord:"fugl", fil:"fugl", f:"F", s:null, m:null },
   { ord:"blomst", fil:"blomst", f:"B", s:"T", m:null },
@@ -1863,15 +1861,15 @@ function turFerdigOrd(){
     konfetti(r.left + r.width/2, r.top + r.height/2, 30, 0.8);
     const igjen = app.runder - app.rep;
     heier._boble.textContent = igjen === 1 ? "Ett ord til!" : `${igjen} ord igjen!`;
-    si("riktig", "bokstaven", bokstavFil(flate.svar));
-    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 1500);
+    si("riktig", bokstavFil(flate.svar));
+    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 1900);
     return;
   }
 
   lydFerdig();
   konfetti(r.left + r.width/2, r.top + r.height/2, 80, 1.1);
   heier._boble.textContent = tilfeldig(JUBELROP);
-  si("riktig", "bokstaven", bokstavFil(flate.svar));
+  si("riktig", bokstavFil(flate.svar));
   app.tur++; app.rep = 0;
 
   if (app.tur < app.antall){
@@ -1888,10 +1886,10 @@ function turFerdigOrd(){
         merkAktivElev();
         lagTurFlate();
       }, 1600);
-    }, 1200);
+    }, 1800);
   } else {
     merkAktivElev();
-    senere(alleFerdige, 1300);
+    senere(alleFerdige, 1800);
   }
 }
 
