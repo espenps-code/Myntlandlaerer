@@ -1872,9 +1872,14 @@ function turFerdigOrd(){
   si("riktig", bokstavFil(flate.svar));
   app.tur++; app.rep = 0;
 
+  /* Talen skal alltid rekke å bli ferdig før neste replikk starter – si()
+     avbryter den forrige. Målte lengder: «riktig»+bokstav ca. 1,3 s,
+     «neste elev» 2,0 s, oppgavereplikk+ord ca. 3,0 s. Pausene under har
+     litt margin oppå dette. Leser du inn nye mp3-er som er lengre, må
+     tallene opp tilsvarende. */
   if (app.tur < app.antall){
     senere(()=>{
-      visJubel("NESTE ELEV!", LAG[app.tur].farge, null, 1600);
+      visJubel("NESTE ELEV!", LAG[app.tur].farge, null, 2400);
       si("neste-elev");
       senere(()=>{
         const nyttLag = LAG[app.tur];
@@ -1885,7 +1890,7 @@ function turFerdigOrd(){
         tomTeller(app._teller, n => forsokFarge(app.tur, n));
         merkAktivElev();
         lagTurFlate();
-      }, 1600);
+      }, 2400);
     }, 1800);
   } else {
     merkAktivElev();
