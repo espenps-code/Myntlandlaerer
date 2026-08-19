@@ -1981,6 +1981,13 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const bw = document.getElementById('bigWord'); if (bw) bw.textContent = cw.w;
     const wd = document.getElementById('wordDef'); if (wd) wd.textContent = cw.d;
   }
+  function renderQuote(){
+    const els = document.querySelectorAll('[data-edit][data-key="quote"]');
+    for (let i = 0; i < els.length; i++){
+      if (document.activeElement === els[i]) continue;
+      els[i].textContent = data.quote || '';
+    }
+  }
   bindEdit(document);
   renderWord();
 
@@ -2134,6 +2141,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     renderHelpers: renderHelpers,
     renderChecklist: renderChecklist,
     renderWord: renderWord,
+    renderQuote: renderQuote,
     renderWeather: renderWeather,
     W: W,
     weekNo: weekNo,
@@ -2695,6 +2703,17 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       lab.appendChild(sp); lab.appendChild(inp); box.appendChild(lab);
     }
   }
+  function syncWordSettings(){
+    var ae = document.activeElement;
+    var wAuto = document.getElementById('setWordAuto'); if (wAuto && ae !== wAuto) wAuto.checked = !!data.wordAuto;
+    var wMan = document.getElementById('setWordManual'); if (wMan) wMan.style.display = data.wordAuto ? 'none' : 'flex';
+    var sw = document.getElementById('setWord'); if (sw && ae !== sw) sw.value = data.word || '';
+    var swd = document.getElementById('setWordDef'); if (swd && ae !== swd) swd.value = data.worddef || '';
+    var ovl = document.getElementById('settingsOverlay');
+    var inBank = !!(ae && ae.closest && ae.closest('#setWordBank'));
+    if (ovl && ovl.classList.contains('open') && !inBank) renderWordBankEditor();
+  }
+  try { window.portal.syncWordSettings = syncWordSettings; } catch(e){}
   function syncSettings(){
     const a = document.getElementById('setWeatherAuto'); if (a) a.checked = !!data.weatherAuto;
     const wp = document.getElementById('setWeatherPlace'); if (wp) wp.value = data.weatherPlace || '';
@@ -4013,7 +4032,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   /* ---------- publiser dagens plan + beskjeder til skyen (dayboard) ---------- */
   var _daySig = '', _dayT = null, _cloudLoaded = false;
   function _sigOf(p){
-    return JSON.stringify({ w: p.week, n: p.notes, dm: p.dayMsg, bd: p.birthdays, h: p.helpers, hc: p.helperCount, bn: p.bdname, ba: p.bdage, wt: p.weather, wa: p.weatherAuto, wp: p.weatherPlace, pp: p.progressPercent, mu: p.music, k: p.klasse, nv: p.navn, e: p.enabled });
+    return JSON.stringify({ w: p.week, n: p.notes, dm: p.dayMsg, bd: p.birthdays, h: p.helpers, hc: p.helperCount, bn: p.bdname, ba: p.bdage, wt: p.weather, wa: p.weatherAuto, wp: p.weatherPlace, pp: p.progressPercent, mu: p.music, k: p.klasse, nv: p.navn, e: p.enabled,
+      wo: p.word, wod: p.worddef, wau: p.wordAuto, wb: p.wordBank, q: p.quote });
   }
   function _payloadOf(d){
     var mus = (window._music && Array.isArray(window._music.bank)) ? window._music.bank : [];
@@ -4025,6 +4045,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       weather: d.weather || 0, weatherAuto: !!d.weatherAuto, weatherPlace: d.weatherPlace || '',
       weatherLat: (d.weatherLat == null ? null : d.weatherLat), weatherLon: (d.weatherLon == null ? null : d.weatherLon),
       progressPercent: !!d.progressPercent, seasonBg: d.seasonBg || 'standard', music: mus,
+      word: d.word || '', worddef: d.worddef || '', wordAuto: (d.wordAuto !== false),
+      wordBank: Array.isArray(d.wordBank) ? d.wordBank : [], quote: d.quote || '',
       klasse: d.klasse || '', navn: (link && link.className) || d.klasse || '', enabled: (d.dayEnabled !== false), ts: Date.now()
     };
   }
@@ -4069,6 +4091,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       if (b.progressPercent != null) d.progressPercent = b.progressPercent;
       if (b.seasonBg != null) { d.seasonBg = b.seasonBg; if (window._applySeason) window._applySeason(); }
       if (b.klasse) d.klasse = b.klasse;
+      if (b.word != null) d.word = b.word;
+      if (b.worddef != null) d.worddef = b.worddef;
+      if (b.wordAuto != null) d.wordAuto = (b.wordAuto !== false);
+      if (Array.isArray(b.wordBank)) d.wordBank = b.wordBank;
+      if (b.quote != null) d.quote = b.quote;
       if (b.enabled != null) d.dayEnabled = (b.enabled !== false);
       if (Array.isArray(b.music) && window._applyMusicFromCloud) window._applyMusicFromCloud(b.music);
       _daySig = _sigOf(_payloadOf(d));
@@ -4079,6 +4106,9 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       try { window.portal.renderHelpers && window.portal.renderHelpers(); } catch(e){}
       try { window.portal.renderChecklist && window.portal.renderChecklist(); } catch(e){}
       try { window.portal.renderWeather && window.portal.renderWeather(); } catch(e){}
+      try { window.portal.renderWord && window.portal.renderWord(); } catch(e){}
+      try { window.portal.renderQuote && window.portal.renderQuote(); } catch(e){}
+      try { window.portal.syncWordSettings && window.portal.syncWordSettings(); } catch(e){}
       if (window._renderSalaryUI) { try { window._renderSalaryUI(); } catch(e){} }
     });
   }
