@@ -413,7 +413,7 @@ const GLYPHS = {
   "Q": { w:108, s:["M54,10 A32,40 0 0 0 54,90 A32,40 0 0 0 54,10", "M62,68 L86,96"] },
   "R": { w:100, s:["M28,10 L28,90", "M28,10 L58,10 C80,10 80,50 58,50 L28,50", "M50,50 L78,90"] },
   "S": { w:100, s:["M76,26 C68,8 28,6 26,28 C24,48 74,46 74,68 C74,92 30,94 24,72"] },
-  "T": { w:100, s:["M22,10 L78,10", "M50,10 L50,90"] },
+  "T": { w:100, s:["M50,10 L50,90", "M22,10 L78,10"] },
   "U": { w:104, s:["M24,10 L24,60 C24,88 80,88 80,60 L80,10"] },
   "V": { w:100, s:["M24,10 L50,90 L76,10"] },
   "W": { w:132, s:["M18,10 L38,90 L66,32 L94,90 L114,10"] },
@@ -476,6 +476,8 @@ const GLYPHS = {
    null betyr at ordet ikke passer til den oppgaven. Ord med
    stum d/g (hund, fugl, and) og ng-lyd (ring, ballong) har
    derfor s:null – der stemmer ikke siste bokstav med siste lyd.
+   Ord der vokalen skrives med én bokstav, men høres som en annen,
+   har m:null – f.eks. tog, som skrives med O men uttales med å-lyd.
    Bilder ligger i bilder/lyd/<fil>.webp, innlest ord i lyd/ord-<fil>.mp3.
    ============================================================ */
 const ORD = [
@@ -483,7 +485,7 @@ const ORD = [
   { ord:"mus", fil:"mus", f:"M", s:"S", m:"U" },
   { ord:"bil", fil:"bil", f:"B", s:"L", m:"I" },
   { ord:"hus", fil:"hus", f:"H", s:"S", m:"U" },
-  { ord:"tog", fil:"tog", f:"T", s:"G", m:"O" },
+  { ord:"tog", fil:"tog", f:"T", s:"G", m:null },
   { ord:"rev", fil:"rev", f:"R", s:"V", m:"E" },
   { ord:"sag", fil:"sag", f:"S", s:"G", m:"A" },
   { ord:"lys", fil:"lys", f:"L", s:"S", m:"Y" },
