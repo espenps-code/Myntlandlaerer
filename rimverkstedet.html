@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Rimverkstedet – Myntland</title>
+<meta name="description" content="Eleven hører et ord og finner bildet som rimer. Tre oppgavetyper: finn rimordet, rimer/rimer ikke, og rimpar-memory. For interaktiv tavle og iPad – opptil fire elever samtidig.">
+<meta name="theme-color" content="#232a3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rimverkstedet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<!-- Delt Myntland-styling (palett + fonter). Inline-stilene under bygger videre på denne. -->
+<link rel="stylesheet" href="myntland.css">
+
+<style>
+:root{
+  --navy:#232a3f; --navy-soft:#3b4560;
+  --krem:#fbf1d6; --krem-dyp:#f3e2b9; --krem-lys:#fffaeb;
+  --amber:#efae2a; --amber-dyp:#c4841a;
+  --raud:#e8473f; --gronn:#74c043; --gronn-dyp:#4f8f28; --teal:#2bb3c0;
+  --himmel-1:#a6dff0; --himmel-2:#d8f2f8; --bakke:#8cc63f;
+  --text:#232a3f; --muted:#6b7690; --border:var(--navy);
+  --f1:#E23B2E; --f2:#1F7AE0; --f3:#17A05C; --f4:#EF9F27;
+  --skygge:0 4px 0 rgba(35,42,63,.9);
+  --skygge-mjuk:0 4px 0 rgba(35,42,63,.18);
+}
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; overflow:hidden; }
+body{
+  font-family:'Nunito',system-ui,sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,var(--himmel-1) 0%,var(--himmel-2) 55%,#e9f7ea 78%,var(--bakke) 100%);
+  display:flex; flex-direction:column;
+  height:100dvh;
+  user-select:none; -webkit-user-select:none;
+}
+
+/* ---------- topnav ---------- */
+.topnav{ background:var(--navy); padding:.45rem 1rem; flex:0 0 auto; }
+.topnav-inner{ max-width:1600px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.topnav-logo{
+  font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--krem); text-decoration:none;
+  display:flex; align-items:center; gap:.45rem; letter-spacing:.02em;
+}
+.topnav-logo::before{ content:"🪙"; }
+.topnav-logo span{ font-family:'Nunito',sans-serif; font-weight:800; font-size:.75rem; color:var(--amber); text-transform:uppercase; letter-spacing:.12em; }
+.topnav-back{
+  font-size:.75rem; font-weight:900; color:var(--navy); text-decoration:none; text-transform:uppercase; letter-spacing:.08em;
+  background:var(--amber); border:2px solid var(--navy); border-radius:999px; padding:.25rem .8rem;
+}
+
+/* ---------- lærerlinje ---------- */
+.laererlinje{
+  background:var(--krem); border:4px solid var(--navy); border-radius:20px;
+  box-shadow:var(--skygge); margin:.55rem .6rem .2rem;
+  padding:.55rem .8rem .65rem; flex:0 0 auto;
+  display:flex; flex-direction:column; gap:.5rem; align-items:center;
+}
+.rad{ display:flex; gap:.4rem; align-items:center; justify-content:center; flex-wrap:wrap; }
+.seg{ display:flex; background:var(--krem-dyp); border:3px solid var(--navy); border-radius:999px; padding:3px; gap:3px; }
+.seg button{
+  border:0; background:transparent; font-family:inherit; font-weight:900; font-size:.78rem;
+  padding:.3rem .75rem; border-radius:999px; color:var(--navy); cursor:pointer; opacity:.65;
+}
+.seg button[aria-pressed="true"]{ background:var(--navy); color:var(--krem); opacity:1; }
+.seg.skjult{ display:none; }
+.knapp{
+  border:3px solid var(--navy); background:var(--krem-lys); border-radius:999px;
+  font-family:inherit; font-weight:900; font-size:.78rem; padding:.28rem .7rem; cursor:pointer; color:var(--navy);
+  display:inline-flex; align-items:center; gap:.35rem; box-shadow:0 3px 0 var(--navy);
+  transition:transform .08s, box-shadow .08s;
+}
+.knapp:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.knapp:hover{ background:#fff; }
+.knapp.primary{ background:var(--amber); color:var(--navy); }
+.knapp.av{ opacity:.4; }
+.knapp.skjult{ display:none; }
+
+/* rimfamilier i spill */
+.familielinje{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; justify-content:center; }
+.ftittel{ font-weight:900; font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:var(--navy); }
+.minik{
+  font-family:inherit; font-weight:900; font-size:.72rem; color:var(--navy); cursor:pointer;
+  background:var(--krem-lys); border:2px solid var(--navy); border-radius:999px;
+  padding:.15rem .65rem; box-shadow:0 2px 0 var(--navy);
+}
+.minik:hover{ background:#fff; }
+.ordtall{ font-weight:900; font-size:.75rem; color:var(--muted); }
+.ordtall.tom{ color:var(--amber-dyp); }
+
+.familierad{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; max-width:1500px; }
+.ftast{
+  position:relative; padding:.2rem .6rem .2rem .55rem; cursor:pointer; min-width:3.4rem;
+  border:3px solid var(--navy); background:var(--krem-lys); border-radius:.7rem;
+  font-family:'Fredoka One',cursive; font-size:.9rem; line-height:1.25; color:var(--navy);
+  display:inline-flex; align-items:center; justify-content:center; gap:.25rem; box-shadow:0 2px 0 var(--navy);
+  transition:opacity .15s, background .15s;
+}
+.ftast:hover{ background:#fff; }
+.ftast[aria-pressed="true"]{ background:var(--amber); }
+.ftast[aria-pressed="false"]{ opacity:.4; }
+.ftast .ant{
+  font-family:'Nunito',sans-serif; font-weight:900; font-size:.6rem;
+  background:var(--navy); color:var(--krem); border-radius:999px; padding:0 4px; min-width:1rem; text-align:center;
+}
+.ftast[aria-pressed="false"] .ant{ background:var(--muted); }
+
+/* ---------- scene ---------- */
+.scene{ flex:1 1 auto; min-height:0; position:relative; padding:.6rem; }
+
+/* tur for tur */
+.tur{ height:100%; display:flex; flex-direction:column; gap:.5rem; }
+.topplinje{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.8rem,4vw,3rem); flex-wrap:wrap;
+  background:var(--krem); border:4px solid var(--navy); border-radius:18px; box-shadow:var(--skygge-mjuk);
+  padding:.35rem .9rem;
+}
+.oppdrag{
+  font-family:'Fredoka One',cursive; font-size:clamp(.95rem,2vw,1.45rem); color:var(--navy);
+  text-align:center; line-height:1.15;
+}
+.oppdrag em{ font-style:normal; color:var(--amber-dyp); }
+
+.elevstripe{ display:flex; gap:.45rem; align-items:center; }
+.elevmerke{
+  width:46px; height:46px; border-radius:50%; background:var(--krem-lys);
+  border:3px solid var(--navy); display:flex; align-items:center; justify-content:center;
+  position:relative; opacity:.4; transition:transform .2s, opacity .2s;
+}
+.elevmerke img{ width:82%; height:82%; object-fit:contain; }
+.elevmerke.aktiv{ opacity:1; transform:scale(1.18); box-shadow:0 3px 0 var(--navy); }
+.elevmerke.ferdig{ opacity:1; }
+.elevmerke.ferdig::after{ content:"✅"; position:absolute; right:-4px; bottom:-4px; font-size:1rem; }
+.elevmerke .poeng{
+  position:absolute; right:-8px; top:-6px; font-family:'Nunito',sans-serif; font-weight:900; font-size:.65rem;
+  background:var(--navy); color:var(--krem); border-radius:999px; padding:0 5px; min-width:1.05rem; text-align:center;
+}
+
+/* teller 1-2-3 */
+.teller{ display:flex; gap:.4rem; align-items:center; }
+.tellerboks{
+  width:34px; height:34px; border-radius:10px; background:var(--krem-lys);
+  border:3px dashed var(--navy); display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden; opacity:.75;
+}
+.tellerboks.full{ border-style:solid; opacity:1; box-shadow:0 2px 0 var(--navy); }
+.tellerboks .tallet{ font-family:'Fredoka One',cursive; font-size:1rem; color:var(--muted); }
+.tellerboks .hake{ font-size:1.1rem; color:#fff; font-weight:900; text-shadow:0 1px 0 rgba(0,0,0,.3); }
+
+.arena{
+  flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,3vw,2.5rem);
+  background:var(--krem); border:5px solid var(--navy); border-radius:26px; padding:.7rem;
+  box-shadow:var(--skygge); position:relative;
+}
+.arena .heier{ position:absolute; left:1.5%; top:50%; transform:translateY(-50%); z-index:2;
+  width:min(15vw,150px); display:flex; flex-direction:column; align-items:center; gap:.35rem; }
+.arena .felt{ width:100%; height:100%; min-width:0; padding-left:min(17vw,168px); padding-right:.6rem;
+  display:flex; align-items:center; justify-content:center; }
+
+/* monster */
+.monster{ width:100%; max-width:150px; filter:drop-shadow(0 6px 8px rgba(35,42,63,.22)); animation:bob 2.6s ease-in-out infinite; }
+.monster.heia{ animation:heia .45s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-7px) } }
+@keyframes heia{ 0%,100%{ transform:translateY(0) rotate(-4deg) } 50%{ transform:translateY(-12px) rotate(4deg) } }
+.boble{
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:16px; color:var(--navy);
+  padding:.32rem .75rem; font-weight:900; font-size:clamp(.8rem,1.5vw,1.05rem); text-align:center;
+  position:relative; max-width:100%; box-shadow:0 3px 0 var(--navy);
+}
+.boble::after{ content:""; position:absolute; bottom:-11px; left:50%; transform:translateX(-50%);
+  border:8px solid transparent; border-top-color:var(--navy); }
+.navn{
+  font-family:'Fredoka One',cursive; font-size:clamp(.85rem,1.6vw,1.15rem); color:var(--navy)!important;
+  background:var(--amber); border:3px solid var(--navy); border-radius:999px; padding:.05rem .7rem;
+}
+
+/* flere samtidig */
+.grid4{ height:100%; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:1fr; gap:.6rem; }
+.celle{
+  background:var(--krem); border:4px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  display:flex; flex-direction:column; align-items:center; gap:.3rem;
+  padding:.5rem; min-height:0; min-width:0; position:relative; overflow:hidden;
+}
+.celle .heier{ flex:0 0 auto; width:100%; max-width:none;
+  display:flex; flex-direction:row; align-items:center; justify-content:center; gap:.4rem; }
+.celle .monster{ width:auto; max-width:none; height:clamp(38px,7vh,68px); }
+.celle .navn{ font-size:clamp(.7rem,1.1vw,.9rem); border-width:2px; }
+.celle .boble{ font-size:clamp(.68rem,1.05vw,.85rem); padding:.22rem .5rem; box-shadow:0 2px 0 var(--navy); }
+.celle .boble::after{ bottom:auto; top:50%; left:auto; right:-11px;
+  transform:translateY(-50%); border-top-color:transparent; border-left-color:var(--navy); }
+.celle .felt{ flex:1 1 auto; width:100%; min-height:0; min-width:0; padding:.15rem .2rem .3rem; display:flex; align-items:center; justify-content:center; }
+.celle.ferdig{ background:var(--krem-lys); }
+.celle .elevnr{
+  font-weight:900; font-size:clamp(.62rem,.95vw,.78rem); color:var(--navy)!important; text-transform:uppercase; letter-spacing:.08em;
+  background:var(--krem-dyp); border:2px solid var(--navy); border-radius:999px; padding:.05rem .5rem;
+}
+.celle .teller{ flex:0 0 auto; }
+.celle .tellerboks{ width:24px; height:24px; border-width:2px; border-radius:8px; }
+.celle .tellerboks .tallet{ font-size:.78rem; }
+.cellejubel{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-family:'Fredoka One',cursive; color:#fff; font-size:clamp(1rem,2.2vw,1.8rem);
+  padding:.5rem 1.1rem; border-radius:18px; z-index:5; text-align:center;
+  border:4px solid var(--navy);
+  animation:sprett .45s cubic-bezier(.2,1.6,.4,1); box-shadow:0 5px 0 var(--navy);
+}
+
+/* ---------- oppgaveflate ---------- */
+.oppgave{ width:100%; height:100%; min-height:0; display:flex; gap:clamp(.4rem,2vw,1.6rem); align-items:center; justify-content:center; }
+.celle .oppgave{ flex-direction:column; gap:.4rem; justify-content:center; }
+
+/* bildekort – brukes både til målordet og til svaralternativene */
+.bildeboks{
+  flex:0 0 auto; position:relative;
+  background:#f9f0d5; border:5px solid var(--navy); border-radius:22px;
+  box-shadow:var(--skygge); overflow:hidden;
+  aspect-ratio:1/1;
+  display:flex; align-items:center; justify-content:center;
+}
+.bildeboks img{ width:100%; height:100%; object-fit:contain; display:block; }
+.bildeboks .ordlyd{
+  position:absolute; right:5px; bottom:5px; z-index:3;
+  width:2.2rem; height:2.2rem; border-radius:50%; cursor:pointer;
+  border:3px solid var(--navy); background:var(--amber); color:var(--navy);
+  font-size:1.05rem; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 3px 0 var(--navy); padding:0;
+}
+.celle .bildeboks .ordlyd{ width:1.5rem; height:1.5rem; font-size:.75rem; border-width:2px; box-shadow:0 2px 0 var(--navy); right:3px; bottom:3px; }
+.bildeboks .ordlyd:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.bildeboks .ordtekst{
+  position:absolute; left:0; right:0; bottom:0; z-index:2; text-align:center;
+  font-weight:900; font-size:clamp(.7rem,1.3vw,1rem); letter-spacing:.05em;
+  background:rgba(35,42,63,.82); color:var(--krem); padding:.12rem 0;
+}
+
+/* målordet i «Finn rimordet» */
+.maalboks{ display:flex; flex-direction:column; align-items:center; gap:.35rem; flex:0 0 auto; }
+.maalboks .merkelapp{
+  font-weight:900; font-size:clamp(.65rem,1.1vw,.85rem); text-transform:uppercase; letter-spacing:.08em;
+  color:var(--navy); background:var(--krem-dyp); border:2px solid var(--navy); border-radius:999px; padding:.1rem .7rem;
+}
+.maalboks .bildeboks{ height:auto; width:min(30vw,34vh); }
+.celle .maalboks .bildeboks{ width:min(90%,17vh); border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy); }
+.celle .maalboks .merkelapp{ font-size:.6rem; padding:.05rem .45rem; }
+
+/* Svaralternativene ligger i et rutenett. Antall kolonner og rader settes
+   fra JS-en (--kols / --rader), slik at kortene alltid får plass både i
+   bredden og i høyden – også når fire elever deler skjermen. */
+.kortrad{
+  --kols:2; --rader:2;
+  flex:1 1 auto; min-width:0; min-height:0; display:grid;
+  grid-template-columns:repeat(var(--kols),auto);
+  gap:clamp(.3rem,1.2vw,.9rem); place-content:center; place-items:center;
+}
+.celle .kortrad{ width:100%; gap:.25rem; }
+.kort{
+  padding:0; border:0; background:transparent; cursor:pointer; font-family:inherit;
+  transition:transform .1s;
+}
+.kort .bildeboks{ height:auto; width:min( calc(42vw / var(--kols)), calc(42vh / var(--rader)) ); }
+.celle .kort .bildeboks{
+  width:min( calc(20vw / var(--kols)), calc(34vh / var(--rader)) );
+  border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy);
+}
+.kort:hover .bildeboks{ background:#fffdf5; }
+.kort.rett .bildeboks{ border-color:var(--gronn-dyp); background:#e9f8dd; box-shadow:0 4px 0 var(--gronn-dyp); }
+.kort.feil .bildeboks{ border-color:var(--raud); opacity:.4; animation:rist .35s; }
+.kort.dempet{ opacity:.35; pointer-events:none; }
+.kortrad.laast .kort{ pointer-events:none; }
+@keyframes rist{ 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-6px) } 75%{ transform:translateX(6px) } }
+
+.merke-rett, .merke-feil{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0);
+  font-size:clamp(1.6rem,4vw,3rem); z-index:4; pointer-events:none;
+  animation:sprett .35s cubic-bezier(.2,1.6,.4,1) forwards;
+}
+
+/* «Rimer / rimer ikke» */
+.parvis{ width:100%; height:100%; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(.6rem,2vw,1.4rem); }
+.parvis .paret{ display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,2.5vw,2rem); flex:0 1 auto; min-height:0; }
+.parvis .paret .bildeboks{ height:auto; width:min(32vw,40vh); }
+.celle .parvis{ gap:.35rem; }
+.celle .parvis .paret{ flex-direction:column; gap:.25rem; }
+.celle .parvis .paret .bildeboks{ width:min(80%,20vh); border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy); }
+/* Mellom de to bildene står et av de fire undrende monstrene og lurer.
+   Rekker ikke bildet fram (før du har lastet det opp), faller feltet
+   tilbake til 🤔-emojien – da ser det fortsatt riktig ut. */
+.parvis .imellom{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+.parvis .imellom img{
+  width:min(13vw,18vh); height:auto; display:block;
+  filter:drop-shadow(0 6px 8px rgba(35,42,63,.22));
+  animation:bob 2.6s ease-in-out infinite;
+}
+.parvis .imellom.emoji{ font-family:'Fredoka One',cursive; font-size:clamp(1.2rem,3vw,2.4rem); color:var(--amber-dyp); }
+.celle .parvis .imellom img{ width:min(52%,9vh); }
+.jaNei{ flex:0 0 auto; display:flex; gap:clamp(.5rem,2vw,1.4rem); justify-content:center; flex-wrap:wrap; }
+.jaNei button{
+  font-family:'Fredoka One',cursive; cursor:pointer; color:var(--navy);
+  border:4px solid var(--navy); border-radius:999px; box-shadow:0 5px 0 var(--navy);
+  font-size:clamp(.9rem,2.2vw,1.6rem); padding:.35rem clamp(.8rem,2.5vw,1.8rem);
+  display:inline-flex; align-items:center; gap:.4rem;
+  transition:transform .08s, box-shadow .08s;
+}
+.jaNei button:active{ transform:translateY(5px); box-shadow:0 0 0 var(--navy); }
+.jaNei .ja{ background:var(--gronn); color:#fff; }
+.jaNei .nei{ background:var(--raud); color:#fff; }
+.celle .jaNei button{ font-size:clamp(.7rem,1.3vw,1rem); padding:.2rem .7rem; border-width:3px; box-shadow:0 3px 0 var(--navy); }
+.jaNei.laast button{ pointer-events:none; opacity:.5; }
+.jaNei button.valgt{ opacity:1; outline:4px solid var(--amber); outline-offset:3px; }
+
+/* ---------- rimpar-memory ----------
+   Brettet er et rutenett med faste 1fr-spor i begge retninger. Kortene har
+   derfor INGEN aspect-ratio – de fyller sporet sitt. Med aspect-ratio ville
+   kortbredden bestemt høyden, og et bredt brett hadde vokst ut av skjermen. */
+.memory{ height:100%; min-height:0; display:flex; flex-direction:column; gap:.5rem; }
+.memorybrett{
+  flex:1 1 auto; min-height:0; display:grid; gap:clamp(.3rem,1.2vw,.8rem);
+  background:var(--krem); border:5px solid var(--navy); border-radius:26px;
+  box-shadow:var(--skygge); padding:clamp(.4rem,1.4vw,.9rem);
+}
+.mkort{
+  position:relative; padding:0; border:0; background:transparent; cursor:pointer;
+  min-width:0; min-height:0; perspective:800px;
+}
+.mkort .innside{
+  position:absolute; inset:0; transform-style:preserve-3d; transition:transform .38s;
+  border-radius:16px;
+}
+.mkort.snudd .innside, .mkort.funnet .innside{ transform:rotateY(180deg); }
+.mkort .side{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border:4px solid var(--navy); border-radius:16px; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+}
+.mkort .bak{ background:var(--navy); }
+.mkort .bak .mynt{
+  height:min(46%,90px); aspect-ratio:1/1; border-radius:50%;
+  background:var(--amber); border:3px solid #b9821c;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Fredoka One',cursive; font-size:clamp(.9rem,2.4vw,1.8rem); color:var(--navy);
+}
+.mkort .front{ transform:rotateY(180deg); background:#f9f0d5; flex-direction:column; }
+.mkort .front img{ width:100%; height:100%; object-fit:contain; }
+.mkort .front .ordtekst{
+  position:absolute; left:0; right:0; bottom:0; text-align:center;
+  font-weight:900; font-size:clamp(.6rem,1.1vw,.9rem); letter-spacing:.04em;
+  background:rgba(35,42,63,.82); color:var(--krem); padding:.1rem 0;
+}
+.mkort.funnet .front{ border-color:var(--gronn-dyp); background:#e9f8dd; }
+.mkort.funnet{ animation:sprett .4s cubic-bezier(.2,1.6,.4,1); }
+.mkort.bom .front{ border-color:var(--raud); animation:rist .35s; }
+.memorybrett.laast .mkort{ pointer-events:none; }
+.mkort.funnet{ pointer-events:none; }
+
+.poengrad{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,2.5vw,2rem); flex-wrap:wrap;
+  background:var(--krem); border:4px solid var(--navy); border-radius:18px; box-shadow:var(--skygge-mjuk);
+  padding:.3rem .9rem;
+}
+.poengspiller{
+  display:flex; align-items:center; gap:.35rem; opacity:.45; transition:opacity .2s, transform .2s;
+  border:3px solid transparent; border-radius:999px; padding:.1rem .5rem .1rem .1rem;
+}
+.poengspiller.aktiv{ opacity:1; transform:scale(1.06); background:var(--krem-lys); }
+.poengspiller img{ width:38px; height:38px; object-fit:contain; }
+.poengspiller .navn{ font-size:clamp(.7rem,1.3vw,1rem); border-width:2px; padding:.02rem .55rem; }
+.poengspiller .tall{ font-family:'Fredoka One',cursive; font-size:clamp(1rem,2vw,1.5rem); color:var(--navy); min-width:1.2rem; text-align:center; }
+
+/* ---------- overlay / jubel ---------- */
+.jubel{
+  position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+  flex-direction:column; gap:.9rem; z-index:40; pointer-events:none;
+}
+.jubel.vis{ display:flex; }
+.jubel .tekst{
+  font-family:'Fredoka One',cursive; color:var(--amber); text-align:center; line-height:1.1;
+  font-size:clamp(2rem,7vw,5.5rem);
+  padding:.35rem 1.6rem; border-radius:26px; background:var(--navy); border:5px solid var(--navy);
+  box-shadow:0 8px 0 rgba(35,42,63,.35);
+  animation:sprett .5s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes sprett{ from{ transform:scale(.4); opacity:0 } to{ transform:scale(1); opacity:1 } }
+.jubel .valg{ display:flex; gap:.6rem; pointer-events:auto; flex-wrap:wrap; justify-content:center; }
+.jubel .valg button{
+  font-family:'Fredoka One',cursive; font-size:clamp(1rem,2.4vw,1.6rem);
+  border:4px solid var(--navy); border-radius:999px; padding:.5rem 1.6rem; cursor:pointer;
+  background:var(--amber); color:var(--navy); box-shadow:0 5px 0 var(--navy);
+}
+.jubel .valg button:active{ transform:translateY(5px); box-shadow:0 0 0 var(--navy); }
+.jubel .valg button.sek{ background:var(--krem-lys); color:var(--navy); }
+#konfetti{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+
+/* skjult lærerlinje */
+body.rent .topnav, body.rent .laererlinje{ display:none; }
+.flytknapp{
+  position:fixed; top:8px; right:8px; z-index:50; display:none;
+  border:3px solid var(--navy); background:var(--krem); border-radius:999px; padding:.35rem .8rem;
+  font-family:inherit; font-weight:900; color:var(--navy); cursor:pointer; box-shadow:0 3px 0 var(--navy);
+}
+body.rent .flytknapp{ display:block; }
+
+@media (max-width:900px){
+  .oppgave{ flex-direction:column; gap:.4rem; }
+  .arena .heier{ width:20vw; }
+  .arena .felt{ padding-left:min(22vw,150px); }
+  .maalboks .bildeboks{ height:auto; width:min(100%,26vh); max-width:none; }
+  .kort .bildeboks{ width:min(26vw,16vh); }
+  .parvis .paret .bildeboks{ height:auto; width:min(38vw,24vh); max-width:none; }
+}
+@media (prefers-reduced-motion:reduce){
+  .monster,.monster.heia,.jubel .tekst,.mkort.funnet,.mkort .innside,.parvis .imellom img{ animation:none !important; transition:none !important; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-logo" href="begynneropplaering.html">Rimverkstedet <span>· Myntland</span></a>
+    <a class="topnav-back" href="begynneropplaering.html">← Tilbake</a>
+  </div>
+</nav>
+
+<div class="laererlinje">
+  <div class="rad">
+    <div class="seg" id="oppgavevelger">
+      <button data-oppgave="finn" aria-pressed="true">🧩 Finn rimordet</button>
+      <button data-oppgave="parvis" aria-pressed="false">👍 Rimer / rimer ikke</button>
+      <button data-oppgave="memory" aria-pressed="false">🃏 Rimpar-memory</button>
+    </div>
+    <div class="seg" id="modusvelger">
+      <button data-modus="tur" aria-pressed="true">🙋 Tur for tur</button>
+      <button data-modus="flere" aria-pressed="false">👥 Flere samtidig</button>
+    </div>
+    <button class="knapp" id="antallKnapp" title="Hvor mange elever som er med">👥 4 elever</button>
+    <button class="knapp" id="runderKnapp" title="Hvor mange oppgaver hver elev får">🔁 3 oppgaver</button>
+    <button class="knapp" id="valgKnapp" title="Hvor mange bilder eleven velger mellom">🖼 4 valg</button>
+    <button class="knapp" id="brettKnapp" title="Hvor mange kort det er på memorybrettet">🃏 12 kort</button>
+    <button class="knapp" id="ordKnapp" title="Vis ordet skrevet under bildet – fint til lesetrening etterpå">📝 Ord av</button>
+    <button class="knapp" id="visKnapp">👀 Vis meg</button>
+    <button class="knapp" id="nullstillKnapp">↺ Start på nytt</button>
+    <button class="knapp primary" id="nesteKnapp">Neste oppgave →</button>
+    <button class="knapp" id="lydKnapp" title="Lyd og stemme">🔊</button>
+    <button class="knapp" id="fullKnapp" title="Fullskjerm">⛶</button>
+    <button class="knapp" id="rentKnapp" title="Skjul menyene">⬆ Skjul meny</button>
+  </div>
+  <div class="familielinje">
+    <span class="ftittel">Rimfamilier i spill</span>
+    <button class="minik" type="button" id="alleFamilier">Alle</button>
+    <button class="minik" type="button" id="ingenFamilier">Ingen</button>
+    <button class="minik" type="button" id="lettFamilier" title="De 12 familiene med de mest kjente ordene">Enkle</button>
+    <span class="ordtall" id="ordtall"></span>
+  </div>
+  <div class="familierad" id="familierad"></div>
+</div>
+
+<button class="flytknapp" id="visMenyKnapp">⬇ Vis meny</button>
+
+<main class="scene" id="scene"></main>
+<canvas id="konfetti"></canvas>
+
+<script>
+/* ============================================================
+   RIMVERKSTEDET – Myntland
+   ------------------------------------------------------------
+   Tre oppgavetyper som alle handler om å høre rim:
+     1) Finn rimordet   – ett målbilde, 3–5 bilder å velge mellom
+     2) Rimer / rimer ikke – to bilder, tommel opp eller ned
+     3) Rimpar-memory   – snu to kort og finn to som rimer
+
+   Bildene ligger i bilder/lyd/<fil>.webp og de innleste ordene i
+   lyd/ord-<fil>.mp3 – nøyaktig samme filer som Lydverkstedet bruker.
+   Nye ord i denne ordbanken er merket ny:true, og de er lista opp i
+   rimverkstedet-innlesing.html.
+   ============================================================ */
+
+/* ============================================================
+   ORDBANKEN – 61 ord i 28 rimfamilier
+   ------------------------------------------------------------
+   rim = rimfamilien. To ord «rimer» i dette verktøyet når de har
+   samme rim-nøkkel. Nøkkelen følger LYDEN, ikke skrivemåten:
+   derfor ligger «ost» og «kost» sammen (begge med o-lyd), mens
+   «post» (å-lyd) ikke er med i det hele tatt. Av samme grunn
+   mangler «tog» – det uttales med å-lyd og rimer ikke på «skog».
+
+   ny:true = ordet finnes ikke i Lydverkstedet fra før, og trenger
+   både nytt bilde (bilder/lyd/<fil>.webp) og ny innlesing
+   (lyd/ord-<fil>.mp3).
+   ============================================================ */
+const ORD = [
+  { ord:"sol",    fil:"sol",    rim:"ol" },
+  { ord:"stol",   fil:"stol",   rim:"ol" },
+
+  { ord:"mus",    fil:"mus",    rim:"us" },
+  { ord:"hus",    fil:"hus",    rim:"us" },
+  { ord:"brus",   fil:"brus",   rim:"us",    ny:true },
+
+  { ord:"bål",    fil:"baal",   rim:"ål" },
+  { ord:"ål",     fil:"aal",    rim:"ål" },
+  { ord:"nål",    fil:"naal",   rim:"ål",    ny:true },
+  { ord:"mål",    fil:"maal",   rim:"ål",    ny:true },
+
+  { ord:"katt",   fil:"katt",   rim:"att" },
+  { ord:"hatt",   fil:"hatt",   rim:"att" },
+
+  { ord:"bok",    fil:"bok",    rim:"ok" },
+  { ord:"krok",   fil:"krok",   rim:"ok",    ny:true },
+
+  { ord:"bil",    fil:"bil",    rim:"il" },
+  { ord:"pil",    fil:"pil",    rim:"il",    ny:true },
+
+  { ord:"tre",    fil:"tre",    rim:"e" },
+  { ord:"kne",    fil:"kne",    rim:"e",     ny:true },
+
+  { ord:"sko",    fil:"sko",    rim:"o" },
+  { ord:"bro",    fil:"bro",    rim:"o",     ny:true },
+
+  { ord:"is",     fil:"is",     rim:"is" },
+  { ord:"gris",   fil:"gris",   rim:"is" },
+  { ord:"ris",    fil:"ris",    rim:"is",    ny:true },
+
+  { ord:"egg",    fil:"egg",    rim:"egg" },
+  { ord:"vegg",   fil:"vegg",   rim:"egg",   ny:true },
+
+  { ord:"ost",    fil:"ost",    rim:"ost" },
+  { ord:"kost",   fil:"kost",   rim:"ost",   ny:true },
+
+  { ord:"sekk",   fil:"sekk",   rim:"ekk" },
+  { ord:"dekk",   fil:"dekk",   rim:"ekk",   ny:true },
+
+  { ord:"saks",   fil:"saks",   rim:"aks" },
+  { ord:"laks",   fil:"laks",   rim:"aks",   ny:true },
+
+  { ord:"lue",    fil:"lue",    rim:"ue" },
+  { ord:"due",    fil:"due",    rim:"ue" },
+
+  { ord:"kake",   fil:"kake",   rim:"ake" },
+  { ord:"rake",   fil:"rake",   rim:"ake",   ny:true },
+
+  { ord:"tann",   fil:"tann",   rim:"ann" },
+  { ord:"mann",   fil:"mann",   rim:"ann",   ny:true },
+  { ord:"vann",   fil:"vann",   rim:"ann",   ny:true },
+
+  { ord:"kam",    fil:"kam",    rim:"am" },
+  { ord:"lam",    fil:"lam",    rim:"am",    ny:true },
+
+  { ord:"penn",   fil:"penn",   rim:"enn" },
+  { ord:"venn",   fil:"venn",   rim:"enn",   ny:true },
+
+  { ord:"rev",    fil:"rev",    rim:"ev" },
+  { ord:"brev",   fil:"brev",   rim:"ev",    ny:true },
+
+  { ord:"gås",    fil:"gaas",   rim:"ås" },
+  { ord:"lås",    fil:"laas",   rim:"ås",    ny:true },
+
+  { ord:"bær",    fil:"baer",   rim:"ær" },
+  { ord:"tær",    fil:"taer",   rim:"ær",    ny:true },
+
+  { ord:"dør",    fil:"door",   rim:"ør" },
+  { ord:"smør",   fil:"smoer",  rim:"ør",    ny:true },
+
+  { ord:"vaffel", fil:"vaffel", rim:"affel" },
+  { ord:"gaffel", fil:"gaffel", rim:"affel", ny:true },
+
+  { ord:"pose",   fil:"pose",   rim:"ose" },
+  { ord:"rose",   fil:"rose",   rim:"ose",   ny:true },
+
+  { ord:"jakke",  fil:"jakke",  rim:"akke" },
+  { ord:"bakke",  fil:"bakke",  rim:"akke",  ny:true },
+
+  { ord:"sopp",   fil:"sopp",   rim:"opp",   ny:true },
+  { ord:"kopp",   fil:"kopp",   rim:"opp",   ny:true },
+
+  { ord:"hest",   fil:"hest",   rim:"est",   ny:true },
+  { ord:"vest",   fil:"vest",   rim:"est",   ny:true },
+
+  { ord:"bein",   fil:"bein",   rim:"ein",   ny:true },
+  { ord:"stein",  fil:"stein",  rim:"ein",   ny:true }
+];
+
+/* Familiene i den rekkefølgen de skal stå i lærerlinja.
+   «lett» = familier med de mest kjente ordene – knappen «Enkle»
+   slår på nøyaktig disse, fint til første økt på 1. trinn. */
+const FAMILIER = [
+  { key:"ol",    lett:true  },
+  { key:"us",    lett:true  },
+  { key:"ål",    lett:true  },
+  { key:"att",   lett:true  },
+  { key:"il",    lett:true  },
+  { key:"is",    lett:true  },
+  { key:"ann",   lett:true  },
+  { key:"am",    lett:true  },
+  { key:"enn",   lett:true  },
+  { key:"ake",   lett:true  },
+  { key:"akke",  lett:true  },
+  { key:"opp",   lett:true  },
+  { key:"ok",    lett:false },
+  { key:"e",     lett:false },
+  { key:"o",     lett:false },
+  { key:"egg",   lett:false },
+  { key:"ost",   lett:false },
+  { key:"ekk",   lett:false },
+  { key:"aks",   lett:false },
+  { key:"ue",    lett:false },
+  { key:"ev",    lett:false },
+  { key:"ås",    lett:false },
+  { key:"ær",    lett:false },
+  { key:"ør",    lett:false },
+  { key:"affel", lett:false },
+  { key:"ose",   lett:false },
+  { key:"est",   lett:false },
+  { key:"ein",   lett:false }
+];
+
+/* oppslag: familienøkkel -> ordene i familien */
+const ORD_I = {};
+ORD.forEach(o => { (ORD_I[o.rim] = ORD_I[o.rim] || []).push(o); });
+FAMILIER.forEach(f => { f.ord = ORD_I[f.key] || []; });
+
+/* ---------- Elevfarger og monstre ---------- */
+const LAG = [
+  { navn:"Drage",   fil:"ildkatt",     farge:"#E23B2E", morkt:"#9c1f16" },
+  { navn:"Bølge",   fil:"indigo",      farge:"#1F7AE0", morkt:"#0e4585" },
+  { navn:"Skog",    fil:"gressgroenn", farge:"#17A05C", morkt:"#0a5b34" },
+  { navn:"Stjerne", fil:"gullgul",     farge:"#EF9F27", morkt:"#a06a10" }
+];
+const FARGER = ["#E23B2E","#1F7AE0","#17A05C","#EF9F27","#7B4BD8","#0E9C9C","#D63F86","#C2571A"];
+const forsokFarge = (plass, forsok) => FARGER[((plass * 5 + forsok) % FARGER.length + FARGER.length) % FARGER.length];
+
+const HEIAROP  = ["Lytt godt!","Hva rimer?","Si ordene høyt!","Hører du det?","Bra!","Kjenn etter!","Så flink!","Rolig og fint!"];
+const JUBELROP = ["Kjempebra!","Perfekt!","Så fint!","Supert!","Bra jobba!"];
+const BOMROP   = ["Nesten! Prøv en gang til.","Si ordene sakte en gang til.","Hør en gang til!"];
+
+const OPPGAVER = {
+  finn:   { tittel:"Hvilket bilde <em>rimer</em>?",      lyd:"hvilket-rimer" },
+  parvis: { tittel:"<em>Rimer</em> disse to ordene?",    lyd:"rimer-de" },
+  memory: { tittel:"Snu to kort og finn to som <em>rimer</em>", lyd:"finn-rimpar" }
+};
+
+/* ---------- Tilstand ---------- */
+const app = {
+  oppgave:"finn", modus:"tur",
+  antall:4, runder:3, valg:4, brett:12, visOrd:false,
+  aktive:null, tur:0, rep:0, ferdigeSett:0,
+  flater:[], famko:[]
+};
+
+/* ---------- Små hjelpere ---------- */
+const $ = s => document.querySelector(s);
+const tilfeldig = a => a[Math.floor(Math.random()*a.length)];
+const bland = a => { const b = a.slice(); for (let i=b.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [b[i],b[j]] = [b[j],b[i]]; } return b; };
+const bildeUrl = o => "bilder/lyd/" + o.fil + ".webp";
+const bildeReserve = o => "https://myntland.no/bilder/lyd/" + o.fil + ".webp";
+const monsterUrl = fil => "bilder/lyd/monster-" + fil + ".webp";
+const monsterReserve = fil => "https://myntland.no/monsters/" + fil + ".webp";
+const stor = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* ---------- Lyd ---------- */
+let lydPaa = true, ac = null;
+function lydKontekst(){
+  if (!ac) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); }
+  if (ac && ac.state === "suspended") ac.resume();
+  return ac;
+}
+function tone(freq, tid=0.12, type="sine", vol=0.15, forsink=0){
+  if (!lydPaa) return;
+  const k = lydKontekst(); if (!k) return;
+  const o = k.createOscillator(), g = k.createGain();
+  o.type = type; o.frequency.value = freq;
+  const t0 = k.currentTime + forsink;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + tid);
+  o.connect(g); g.connect(k.destination); o.start(t0); o.stop(t0 + tid + 0.05);
+}
+const lydSnu    = () => tone(660, 0.09, "triangle", 0.10);
+const lydRunde  = () => [660,880].forEach((f,i)=>tone(f,0.14,"triangle",0.13,i*0.09));
+const lydFerdig = () => [523,659,784,1047].forEach((f,i)=>tone(f,0.18,"triangle",0.14,i*0.09));
+const lydFanfare= () => [523,659,784,1047,1319,1047,1319].forEach((f,i)=>tone(f,0.24,"triangle",0.15,i*0.11));
+const lydFeil   = () => [330,247].forEach((f,i)=>tone(f,0.16,"sine",0.10,i*0.10));
+
+/* ---------- Innlest tale (mp3) ----------
+   Ligger i /lyd/ ved siden av denne sida, akkurat som for Lydverkstedet.
+   Ordene heter ord-<fil>.mp3, og æ/ø/å er skrevet ae/oe/aa i filnavnet. */
+const LYDSTI = "lyd/";
+const REPLIKKER = [
+  "hvilket-rimer","rimer-de","finn-rimpar",   /* nye – leses inn */
+  "rimer-ja","rimer-nei","rimpar",            /* nye – leses inn */
+  "riktig","proev-igjen",                     /* fins alt i /lyd/ */
+  "din-tur","neste-elev","alle-sammen"        /* fins alt i /lyd/ */
+];
+
+const lydLager = new Map();
+let taleNr = 0, spillerNaa = null;
+
+function hentLyd(navn){
+  let a = lydLager.get(navn);
+  if (!a){ a = new Audio(LYDSTI + navn + ".mp3"); a.preload = "auto"; lydLager.set(navn, a); }
+  return a;
+}
+function forbered(...navn){ navn.forEach(n => { try { hentLyd(n).load(); } catch(e){} }); }
+function stoppTale(){
+  taleNr++;
+  if (spillerNaa){ try { spillerNaa.pause(); spillerNaa.currentTime = 0; } catch(e){} spillerNaa = null; }
+}
+/* si("hvilket-rimer","ord-sol") spiller filene etter hverandre.
+   Ny si() avbryter den forrige, og en fil som mangler hopper vi bare over. */
+function si(...navn){
+  if (!lydPaa || !navn.length) return;
+  stoppTale();
+  const mitt = taleNr;
+  const kjoer = i => {
+    if (i >= navn.length || mitt !== taleNr) return;
+    const a = hentLyd(navn[i]);
+    let brukt = false;
+    const videre = () => {
+      if (brukt) return;
+      brukt = true;
+      a.removeEventListener("ended", videre);
+      a.removeEventListener("error", videre);
+      if (mitt === taleNr) kjoer(i + 1);
+    };
+    a.addEventListener("ended", videre);
+    a.addEventListener("error", videre);
+    try { a.currentTime = 0; } catch(e){}
+    spillerNaa = a;
+    const p = a.play();
+    if (p && p.catch) p.catch(videre);
+  };
+  kjoer(0);
+}
+const siOrd = o => si("ord-" + o.fil);
+
+/* ---------- Tidsutløsere som hører til runden ---------- */
+let rundeTimere = [];
+function senere(fn, ms){ const t = setTimeout(() => { rundeTimere = rundeTimere.filter(x => x !== t); fn(); }, ms); rundeTimere.push(t); return t; }
+function stoppTimere(){ rundeTimere.forEach(clearTimeout); rundeTimere = []; }
+
+/* ---------- Konfetti ---------- */
+const kanvas = $("#konfetti"), ktx = kanvas.getContext("2d");
+let biter = [], konfettiKjorer = false;
+function skalerKanvas(){
+  const d = window.devicePixelRatio || 1;
+  kanvas.width = innerWidth * d; kanvas.height = innerHeight * d;
+  kanvas.style.width = innerWidth + "px"; kanvas.style.height = innerHeight + "px";
+  ktx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener("resize", skalerKanvas); skalerKanvas();
+const KONFETTIFARGER = ["#E23B2E","#1F7AE0","#17A05C","#EF9F27","#534AB7","#D85A30","#ff6fb5","#25c7c7"];
+function konfetti(x, y, antall=90, fart=1){
+  for (let i=0;i<antall;i++){
+    const v = (Math.random()*7+3)*fart, a = Math.random()*Math.PI*2;
+    biter.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 4,
+      st:Math.random()*8+5, f:tilfeldig(KONFETTIFARGER),
+      r:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, liv:1 });
+  }
+  if (!konfettiKjorer){ konfettiKjorer = true; requestAnimationFrame(tegnKonfetti); }
+}
+function storKonfetti(){
+  const b = innerWidth, h = innerHeight;
+  konfetti(b*0.2, h*0.45, 110, 1.3); konfetti(b*0.8, h*0.45, 110, 1.3);
+  konfetti(b*0.5, h*0.35, 140, 1.5);
+  setTimeout(()=>{ konfetti(b*0.35,h*0.5,90,1.2); konfetti(b*0.65,h*0.5,90,1.2); }, 260);
+}
+function tegnKonfetti(){
+  ktx.clearRect(0,0,innerWidth,innerHeight);
+  biter = biter.filter(p => p.liv > 0 && p.y < innerHeight + 60);
+  for (const p of biter){
+    p.vy += 0.22; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.r += p.vr; p.liv -= 0.004;
+    ktx.save(); ktx.translate(p.x, p.y); ktx.rotate(p.r); ktx.globalAlpha = Math.max(0, Math.min(1, p.liv*1.6));
+    ktx.fillStyle = p.f; ktx.fillRect(-p.st/2, -p.st/2, p.st, p.st*0.6); ktx.restore();
+  }
+  if (biter.length){ requestAnimationFrame(tegnKonfetti); }
+  else { konfettiKjorer = false; ktx.clearRect(0,0,innerWidth,innerHeight); }
+}
+
+/* ============================================================
+   UTVALG AV RIMFAMILIER
+   ------------------------------------------------------------
+   Læreren slår familier av og på. En familie må ha minst to ord
+   for å kunne brukes – det har alle familiene her, men sjekken
+   står likevel så ordbanken trygt kan utvides senere.
+   ============================================================ */
+function aktiveFamilier(){
+  const liste = FAMILIER.filter(f => app.aktive.has(f.key) && f.ord.length >= 2);
+  return liste.length ? liste : FAMILIER.filter(f => f.ord.length >= 2);
+}
+function aktiveOrd(){
+  const nokler = new Set(aktiveFamilier().map(f => f.key));
+  return ORD.filter(o => nokler.has(o.rim));
+}
+
+/* Køen sørger for at alle familiene kommer opp før noen gjentas. */
+function fyllFamiliekoe(){ app.famko = bland(aktiveFamilier()); }
+function nesteFamilie(unnta){
+  if (!app.famko.length) fyllFamiliekoe();
+  let f = app.famko.shift();
+  if (unnta && unnta.length && unnta.includes(f.key) && app.famko.length){
+    const bytt = app.famko.findIndex(x => !unnta.includes(x.key));
+    if (bytt >= 0){ app.famko.push(f); f = app.famko.splice(bytt,1)[0]; }
+  }
+  return f;
+}
+
+/* Distraktorer: ord som IKKE rimer på målordet.
+   Ett av dem får gjerne samme førstelyd som målordet («sol» → «saks»).
+   Det er selve poenget med rimtrening: eleven må høre slutten av ordet,
+   ikke begynnelsen. Finnes ingen slik, tar vi bare tilfeldige. */
+function velgDistraktorer(maal, famKey, antall){
+  const bassen = aktiveOrd().filter(o => o.rim !== famKey);
+  const nok = bassen.length >= antall ? bassen : ORD.filter(o => o.rim !== famKey);
+  const valgt = [];
+  const like = bland(nok.filter(o => o.ord[0] === maal.ord[0]));
+  if (like.length) valgt.push(like[0]);
+  for (const o of bland(nok)){
+    if (valgt.length >= antall) break;
+    if (valgt.includes(o)) continue;
+    if (valgt.some(v => v.rim === o.rim)) continue;   /* to distraktorer skal ikke rime på hverandre */
+    valgt.push(o);
+  }
+  return valgt.slice(0, antall);
+}
+
+function lagFinnData(unnta){
+  const fam = nesteFamilie(unnta);
+  const to = bland(fam.ord).slice(0, 2);
+  const maal = to[0], fasit = to[1];
+  const kort = bland([fasit, ...velgDistraktorer(maal, fam.key, app.valg - 1)]);
+  return { fam, maal, fasit, kort };
+}
+
+function lagParvisData(unnta){
+  const rimer = Math.random() < 0.5;
+  const fam = nesteFamilie(unnta);
+  if (rimer){
+    const to = bland(fam.ord).slice(0, 2);
+    return { fam, a:to[0], b:to[1], rimer:true };
+  }
+  const andre = aktiveFamilier().filter(f => f.key !== fam.key);
+  const fam2 = andre.length ? tilfeldig(andre) : fam;
+  return { fam, a:tilfeldig(fam.ord), b:tilfeldig(fam2.ord), rimer:fam2.key === fam.key };
+}
+
+/* Memory: hver familie som er med, bidrar med nøyaktig to kort.
+   To kort er et par når de har samme rim-nøkkel. */
+function lagMemoryData(){
+  const famer = bland(aktiveFamilier());
+  const par = Math.min(Math.floor(app.brett / 2), famer.length);
+  const kort = [];
+  for (let i=0;i<par;i++) bland(famer[i].ord).slice(0,2).forEach(o => kort.push(o));
+  return { kort:bland(kort), par };
+}
+
+/* ============================================================
+   BILDEKORT
+   ============================================================ */
+function lagBildeboks(o, medLyd){
+  const boks = document.createElement("div");
+  boks.className = "bildeboks";
+  const img = document.createElement("img");
+  img.src = bildeUrl(o); img.alt = o.ord; img.draggable = false;
+  img.onerror = () => { img.onerror = null; img.src = bildeReserve(o); };
+  boks.appendChild(img);
+
+  const tekst = document.createElement("div");
+  tekst.className = "ordtekst"; tekst.textContent = o.ord.toUpperCase();
+  tekst.style.display = app.visOrd ? "" : "none";
+  boks.appendChild(tekst);
+
+  if (medLyd){
+    const hoer = document.createElement("button");
+    hoer.className = "ordlyd"; hoer.type = "button"; hoer.textContent = "🔊";
+    hoer.title = "Hør ordet";
+    hoer.addEventListener("click", e => { e.stopPropagation(); siOrd(o); });
+    boks.appendChild(hoer);
+  }
+  boks._tekst = tekst;
+  return boks;
+}
+
+/* De fire undrende monstrene fra «Ulike uttrykk». De bytter på plass i
+   midten av «Rimer / rimer ikke», ett per oppgave, så det ikke blir det
+   samme monsteret hver gang. */
+const UNDRENDE = ["undrende-groenn","undrende-oransje","undrende-lilla","undrende-blaa"];
+let undrendeNr = 0;
+
+function undrendeMonster(){
+  const d = document.createElement("div");
+  d.className = "imellom";
+  const img = document.createElement("img");
+  img.src = "bilder/lyd/" + UNDRENDE[undrendeNr++ % UNDRENDE.length] + ".webp";
+  img.alt = "Et monster som lurer";
+  img.draggable = false;
+  img.onerror = () => { img.remove(); d.textContent = "🤔"; d.classList.add("emoji"); };
+  d.appendChild(img);
+  return d;
+}
+
+function merke(vert, tegn){
+  const d = document.createElement("div");
+  d.className = tegn === "✓" ? "merke-rett" : "merke-feil";
+  d.textContent = tegn;
+  vert.appendChild(d);
+  setTimeout(()=>d.remove(), 1400);
+}
+
+/* ============================================================
+   OPPGAVE 1 – FINN RIMORDET
+   ============================================================ */
+function lagFinnFlate(vert, farge, valg, unnta){
+  const data = lagFinnData(unnta);
+  const rot = document.createElement("div");
+  rot.className = "oppgave";
+
+  /* målordet */
+  const maalboks = document.createElement("div");
+  maalboks.className = "maalboks";
+  const lapp = document.createElement("div");
+  lapp.className = "merkelapp"; lapp.textContent = "Hva rimer på …";
+  const maalBilde = lagBildeboks(data.maal, true);
+  maalBilde.style.borderColor = farge;
+  maalboks.appendChild(lapp); maalboks.appendChild(maalBilde);
+
+  /* Svaralternativene. Antall kolonner velges slik at rutenettet blir så
+     nær kvadratisk som mulig – 2 og 3 kort på én rad, 4 som 2×2, 5 som 3+2. */
+  const rad = document.createElement("div");
+  rad.className = "kortrad";
+  const kols = data.kort.length <= 3 ? data.kort.length : data.kort.length === 4 ? 2 : 3;
+  rad.style.setProperty("--kols", kols);
+  rad.style.setProperty("--rader", Math.ceil(data.kort.length / kols));
+  const tekster = [maalBilde._tekst];
+  const kortEl = [];
+
+  data.kort.forEach(o => {
+    const kn = document.createElement("button");
+    kn.className = "kort"; kn.type = "button";
+    const boks = lagBildeboks(o, true);
+    kn.appendChild(boks);
+    tekster.push(boks._tekst);
+    kn._ord = o; kn._boks = boks;
+    kn.addEventListener("click", () => svar(kn, o));
+    rad.appendChild(kn);
+    kortEl.push(kn);
+  });
+
+  rot.appendChild(maalboks); rot.appendChild(rad);
+  vert.appendChild(rot);
+
+  let ferdig = false;
+  function svar(kn, o){
+    if (ferdig) return;
+    if (o.rim === data.fasit.rim){
+      ferdig = true;
+      rad.classList.add("laast");
+      kn.classList.add("rett");
+      merke(kn._boks, "✓");
+      valg.paaRiktig && valg.paaRiktig();
+      si("riktig", "ord-" + data.maal.fil, "ord-" + o.fil);
+      valg.paaFerdig && senere(valg.paaFerdig, 700);
+    } else {
+      kn.classList.add("feil");
+      lydFeil();
+      merke(kn._boks, "✕");
+      setTimeout(()=>{ kn.classList.remove("feil"); kn.classList.add("dempet"); }, 380);
+      valg.paaBom && valg.paaBom();
+      si("proev-igjen");
+    }
+  }
+
+  return {
+    fasit: data.fasit,
+    maal: data.maal,
+    famKey: data.fam.key,
+    settOrdtekst: paa => tekster.forEach(t => { t.style.display = paa ? "" : "none"; }),
+    visMeg: () => {
+      const treff = kortEl.find(k => k._ord.rim === data.fasit.rim);
+      if (!treff) return;
+      treff.classList.add("rett");
+      si("ord-" + data.maal.fil, "ord-" + data.fasit.fil);
+      setTimeout(()=>{ if (!ferdig) treff.classList.remove("rett"); }, 1600);
+    },
+    sporsmaal: () => si("hvilket-rimer", "ord-" + data.maal.fil)
+  };
+}
+
+/* ============================================================
+   OPPGAVE 2 – RIMER / RIMER IKKE
+   ============================================================ */
+function lagParvisFlate(vert, farge, valg, unnta){
+  const data = lagParvisData(unnta);
+  const rot = document.createElement("div");
+  rot.className = "parvis";
+
+  const paret = document.createElement("div");
+  paret.className = "paret";
+  const a = lagBildeboks(data.a, true), b = lagBildeboks(data.b, true);
+  a.style.borderColor = farge; b.style.borderColor = farge;
+  paret.appendChild(a); paret.appendChild(undrendeMonster()); paret.appendChild(b);
+
+  const knapper = document.createElement("div");
+  knapper.className = "jaNei";
+  const ja = document.createElement("button");
+  ja.type = "button"; ja.className = "ja"; ja.textContent = "👍 Rimer";
+  const nei = document.createElement("button");
+  nei.type = "button"; nei.className = "nei"; nei.textContent = "👎 Rimer ikke";
+  knapper.appendChild(ja); knapper.appendChild(nei);
+
+  rot.appendChild(paret); rot.appendChild(knapper);
+  vert.appendChild(rot);
+
+  let ferdig = false;
+  function svar(sagtRimer, kn){
+    if (ferdig) return;
+    if (sagtRimer === data.rimer){
+      ferdig = true;
+      knapper.classList.add("laast");
+      kn.classList.add("valgt");
+      merke(paret, "✓");
+      valg.paaRiktig && valg.paaRiktig();
+      si("riktig", data.rimer ? "rimer-ja" : "rimer-nei");
+      valg.paaFerdig && senere(valg.paaFerdig, 800);
+    } else {
+      lydFeil();
+      kn.animate?.([{transform:"translateX(0)"},{transform:"translateX(-8px)"},{transform:"translateX(8px)"},{transform:"translateX(0)"}], 320);
+      valg.paaBom && valg.paaBom();
+      si("proev-igjen");
+    }
+  }
+  ja.addEventListener("click", () => svar(true, ja));
+  nei.addEventListener("click", () => svar(false, nei));
+
+  return {
+    fasit: data.b,
+    maal: data.a,
+    famKey: data.fam.key,
+    settOrdtekst: paa => [a._tekst, b._tekst].forEach(t => { t.style.display = paa ? "" : "none"; }),
+    visMeg: () => {
+      const kn = data.rimer ? ja : nei;
+      kn.classList.add("valgt");
+      si(data.rimer ? "rimer-ja" : "rimer-nei");
+      setTimeout(()=>{ if (!ferdig) kn.classList.remove("valgt"); }, 1600);
+    },
+    sporsmaal: () => si("rimer-de", "ord-" + data.a.fil, "ord-" + data.b.fil)
+  };
+}
+
+function lagOppgave(vert, farge, valg, unnta){
+  return app.oppgave === "parvis"
+    ? lagParvisFlate(vert, farge, valg, unnta)
+    : lagFinnFlate(vert, farge, valg, unnta);
+}
+
+/* ============================================================
+   FELLESDELER – monster, teller, jubel
+   ============================================================ */
+function monsterBoks(lag, ropTekst){
+  const d = document.createElement("div");
+  d.className = "heier"; d.style.color = lag.farge;
+  const img = document.createElement("img");
+  img.className = "monster"; img.alt = "Monsteret " + lag.navn;
+  img.src = monsterUrl(lag.fil);
+  img.onerror = () => { img.onerror = null; img.src = monsterReserve(lag.fil); };
+  const navn = document.createElement("div");
+  navn.className = "navn"; navn.style.color = lag.morkt; navn.textContent = lag.navn;
+  const boble = document.createElement("div");
+  boble.className = "boble"; boble.textContent = ropTekst || tilfeldig(HEIAROP);
+  d.appendChild(boble); d.appendChild(img); d.appendChild(navn);
+  d._boble = boble; d._img = img;
+  return d;
+}
+
+function lagTeller(fargeFn){
+  const t = document.createElement("div");
+  t.className = "teller";
+  for (let i=1;i<=app.runder;i++){
+    const b = document.createElement("div");
+    b.className = "tellerboks"; b.dataset.n = i;
+    b.style.borderColor = fargeFn(i-1);
+    b.innerHTML = '<span class="tallet">' + i + '</span>';
+    t.appendChild(b);
+  }
+  return t;
+}
+function fyllTeller(teller, n, farge){
+  const b = teller && teller.querySelector('.tellerboks[data-n="' + n + '"]');
+  if (!b) return;
+  b.classList.add("full");
+  b.innerHTML = '<span class="hake">✓</span>';
+  b.style.background = farge;
+}
+function tomTeller(teller, fargeFn){
+  teller && teller.querySelectorAll(".tellerboks").forEach(b => {
+    b.className = "tellerboks"; b.style.background = ""; b.style.borderColor = fargeFn(+b.dataset.n - 1);
+    b.innerHTML = '<span class="tallet">' + b.dataset.n + '</span>';
+  });
+}
+
+function visJubel(tekst, farge, knapper, tid){
+  skjulJubel();
+  const j = document.createElement("div");
+  j.className = "jubel vis"; j.id = "jubel";
+  const t = document.createElement("div"); t.className = "tekst"; t.textContent = tekst;
+  if (farge) t.style.background = farge;
+  j.appendChild(t);
+  if (knapper){
+    const v = document.createElement("div"); v.className = "valg";
+    knapper.forEach(k => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = k.tekst;
+      if (k.sek) b.className = "sek";
+      b.addEventListener("click", () => { skjulJubel(); k.gjor(); });
+      v.appendChild(b);
+    });
+    j.appendChild(v);
+  }
+  $("#scene").appendChild(j);
+  if (tid) setTimeout(skjulJubel, tid);
+}
+function skjulJubel(){ const j = $("#jubel"); if (j) j.remove(); }
+function visCelleJubel(celle, farge, tekst){
+  const d = document.createElement("div");
+  d.className = "cellejubel"; d.textContent = tekst;
+  d.style.background = farge;
+  celle.appendChild(d);
+  setTimeout(()=>d.remove(), 1800);
+}
+
+/* ============================================================
+   SCENE
+   ============================================================ */
+function nyRunde(){
+  stoppTimere();
+  app.tur = 0; app.rep = 0; app.flater = []; app.ferdigeSett = 0;
+  skjulJubel();
+  fyllFamiliekoe();
+  const scene = $("#scene"); scene.innerHTML = "";
+  if (app.oppgave === "memory") byggMemory(scene);
+  else if (app.modus === "tur") byggTur(scene);
+  else byggFlere(scene);
+}
+
+/* ---------- MODUS: TUR FOR TUR ---------- */
+function byggTur(scene){
+  const rot = document.createElement("div"); rot.className = "tur";
+
+  const topp = document.createElement("div"); topp.className = "topplinje";
+  const stripe = document.createElement("div"); stripe.className = "elevstripe";
+  for (let i=0;i<app.antall;i++){
+    const m = document.createElement("div"); m.className = "elevmerke"; m.dataset.i = i;
+    m.style.borderColor = LAG[i].farge;
+    const img = document.createElement("img");
+    img.src = monsterUrl(LAG[i].fil); img.alt = LAG[i].navn;
+    img.onerror = () => { img.onerror = null; img.src = monsterReserve(LAG[i].fil); };
+    m.appendChild(img);
+    stripe.appendChild(m);
+  }
+  const oppdrag = document.createElement("div");
+  oppdrag.className = "oppdrag";
+  oppdrag.innerHTML = OPPGAVER[app.oppgave].tittel;
+  const teller = lagTeller(n => forsokFarge(0, n));
+  topp.appendChild(stripe); topp.appendChild(oppdrag); topp.appendChild(teller);
+
+  const arena = document.createElement("div"); arena.className = "arena";
+  arena.style.borderColor = forsokFarge(0, 0);
+  const heier = monsterBoks(LAG[0]);
+  const felt = document.createElement("div"); felt.className = "felt";
+  arena.appendChild(heier); arena.appendChild(felt);
+
+  rot.appendChild(topp); rot.appendChild(arena); scene.appendChild(rot);
+
+  app._teller = teller; app._arena = arena; app._felt = felt;
+  app._stripe = stripe; app._heier = heier; app._oppdrag = oppdrag;
+  merkAktivElev();
+  lagTurFlate();
+}
+
+function merkAktivElev(){
+  app._stripe && app._stripe.querySelectorAll(".elevmerke").forEach(m => {
+    const i = +m.dataset.i;
+    m.classList.toggle("aktiv", i === app.tur);
+    m.classList.toggle("ferdig", i < app.tur);
+  });
+}
+
+function lagTurFlate(){
+  const heier = app._heier;
+  const farge = forsokFarge(app.tur, app.rep);
+  app._felt.innerHTML = "";
+  app._arena.style.borderColor = farge;
+  app.flater = [ lagOppgave(app._felt, farge, {
+    paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
+    paaBom:    () => { heier._boble.textContent = tilfeldig(BOMROP); },
+    paaFerdig: () => turFerdigOppgave()
+  }) ];
+  app.flater[0].sporsmaal();
+}
+
+function turFerdigOppgave(){
+  const heier = app._heier;
+  const farge = forsokFarge(app.tur, app.rep);
+  app.rep++;
+  fyllTeller(app._teller, app.rep, farge);
+  heier._img.classList.add("heia");
+  const r = app._arena.getBoundingClientRect();
+
+  if (app.rep < app.runder){
+    lydRunde();
+    konfetti(r.left + r.width/2, r.top + r.height/2, 30, 0.8);
+    const igjen = app.runder - app.rep;
+    heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
+    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 2100);
+    return;
+  }
+
+  lydFerdig();
+  konfetti(r.left + r.width/2, r.top + r.height/2, 80, 1.1);
+  heier._boble.textContent = tilfeldig(JUBELROP);
+  app.tur++; app.rep = 0;
+
+  /* Talen skal rekke å bli ferdig før neste replikk starter – si() avbryter
+     den forrige. «riktig»+to ord er ca. 2,2 s, «neste elev» ca. 2,0 s, og
+     spørsmålet med ord ca. 3,0 s. Pausene under har litt margin oppå det.
+     Leser du inn lengre mp3-er, må tallene opp tilsvarende. */
+  if (app.tur < app.antall){
+    senere(()=>{
+      visJubel("NESTE ELEV!", LAG[app.tur].farge, null, 2400);
+      si("neste-elev");
+      senere(()=>{
+        const nyttLag = LAG[app.tur];
+        app._arena.style.borderColor = nyttLag.farge;
+        const nyHeier = monsterBoks(nyttLag);
+        app._arena.replaceChild(nyHeier, app._heier);
+        app._heier = nyHeier;
+        tomTeller(app._teller, n => forsokFarge(app.tur, n));
+        merkAktivElev();
+        lagTurFlate();
+      }, 2400);
+    }, 2200);
+  } else {
+    merkAktivElev();
+    senere(alleFerdige, 2200);
+  }
+}
+
+/* ---------- MODUS: FLERE SAMTIDIG ---------- */
+function byggFlere(scene){
+  const rot = document.createElement("div"); rot.className = "grid4";
+  rot.style.gridTemplateColumns = "repeat(" + app.antall + ",1fr)";
+  rot.style.gridTemplateRows = "1fr";
+  scene.appendChild(rot);
+  app.flater = [];
+  app._celler = [];
+
+  for (let i=0;i<app.antall;i++){
+    const lag = LAG[i];
+    const celle = document.createElement("div"); celle.className = "celle";
+    celle.style.borderColor = lag.farge;
+    const heier = monsterBoks(lag);
+    const merket = document.createElement("div");
+    merket.className = "elevnr"; merket.style.color = lag.morkt; merket.textContent = "Elev 1";
+    heier.appendChild(merket);
+    const teller = lagTeller(n => forsokFarge(i, n));
+    const felt = document.createElement("div"); felt.className = "felt";
+    celle.appendChild(heier); celle.appendChild(teller); celle.appendChild(felt);
+    rot.appendChild(celle);
+
+    const st = { i, rep:0, elev:1, plass:i, lag, celle, heier, teller, felt, merket:merket };
+    st.bygg = () => {
+      felt.innerHTML = "";
+      const brukte = app._celler.map(c => c.flate && c.flate.famKey).filter(Boolean);
+      st.flate = lagOppgave(felt, forsokFarge(st.plass, st.rep), {
+        paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
+        paaBom:    () => { heier._boble.textContent = tilfeldig(BOMROP); },
+        paaFerdig: () => celleFerdigOppgave(st)
+      }, brukte);
+      app.flater[i] = st.flate;
+    };
+    app._celler.push(st);
+    st.bygg();
+  }
+}
+
+function celleFerdigOppgave(st){
+  const farge = forsokFarge(st.plass, st.rep);
+  st.rep++;
+  fyllTeller(st.teller, st.rep, farge);
+  st.heier._img.classList.add("heia");
+  const r = st.celle.getBoundingClientRect();
+
+  if (st.rep < app.runder){
+    lydRunde();
+    konfetti(r.left + r.width/2, r.top + r.height/2, 25, 0.8);
+    const igjen = app.runder - st.rep;
+    st.heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
+    senere(()=>{ st.heier._img.classList.remove("heia"); st.bygg(); }, 1200);
+    return;
+  }
+
+  lydFerdig();
+  konfetti(r.left + r.width/2, r.top + r.height/2, 70, 1);
+  st.celle.classList.add("ferdig");
+  st.heier._boble.textContent = tilfeldig(JUBELROP);
+  visCelleJubel(st.celle, st.lag.farge, "NESTE ELEV!");
+  app.ferdigeSett++;
+  const alleRundt = app.ferdigeSett % app.antall === 0;
+
+  senere(()=>{
+    st.rep = 0; st.elev++;
+    st.plass += app.antall;
+    st.merket.textContent = "Elev " + st.elev;
+    st.celle.classList.remove("ferdig");
+    st.heier._img.classList.remove("heia");
+    st.heier._boble.textContent = "Din tur!";
+    if (!alleRundt) si("din-tur");
+    tomTeller(st.teller, n => forsokFarge(st.plass, n));
+    st.bygg();
+  }, 2000);
+
+  if (alleRundt){
+    senere(()=>{
+      lydFanfare(); storKonfetti(); si("alle-sammen");
+      visJubel("🎉 SUPERT! 🎉", null, null, 1700);
+    }, 350);
+  }
+}
+
+function alleFerdige(){
+  lydFanfare(); storKonfetti();
+  si("alle-sammen");
+  visJubel("🎉 SUPERT! 🎉", null, [
+    { tekst:"Nye ord →", gjor:nyRunde },
+    { tekst:"Samme oppgave ↺", sek:true, gjor:nyRunde }
+  ]);
+}
+
+/* ============================================================
+   OPPGAVE 3 – RIMPAR-MEMORY
+   ------------------------------------------------------------
+   Ett felles brett for hele gruppa. Eleven snur to kort: rimer de,
+   blir de liggende åpne og eleven får turen en gang til – rimer de
+   ikke, snus de tilbake og turen går videre. Klassisk memory-regel,
+   men det som avgjør er LYDEN, ikke like bilder.
+   ============================================================ */
+/* Velg det oppsettet som gir kortene form nærmest kvadratet, gitt hvor bred
+   og høy plassen faktisk er. Bare oppsett som fyller alle radene helt er
+   med, så brettet aldri får en halvtom siste rad. */
+function besteKolonner(n){
+  const scene = $("#scene");
+  const B = Math.max(scene.clientWidth  - 40, 200);
+  const H = Math.max(scene.clientHeight - 90, 160);
+  let best = n, poeng = Infinity;
+  for (let k = 1; k <= n; k++){
+    if (n % k) continue;
+    const r = n / k;
+    const avvik = Math.abs(Math.log((B / k) / (H / r)));
+    if (avvik < poeng){ poeng = avvik; best = k; }
+  }
+  return best;
+}
+
+function byggMemory(scene){
+  const data = lagMemoryData();
+  const rot = document.createElement("div"); rot.className = "memory";
+
+  /* poengrad med ett felt per spiller */
+  const poeng = document.createElement("div"); poeng.className = "poengrad";
+  const spillere = [];
+  for (let i=0;i<app.antall;i++){
+    const lag = LAG[i];
+    const d = document.createElement("div"); d.className = "poengspiller"; d.dataset.i = i;
+    const img = document.createElement("img");
+    img.src = monsterUrl(lag.fil); img.alt = lag.navn;
+    img.onerror = () => { img.onerror = null; img.src = monsterReserve(lag.fil); };
+    const navn = document.createElement("span");
+    navn.className = "navn"; navn.style.color = lag.morkt; navn.textContent = lag.navn;
+    const tall = document.createElement("span");
+    tall.className = "tall"; tall.textContent = "0";
+    d.appendChild(img); d.appendChild(navn); d.appendChild(tall);
+    poeng.appendChild(d);
+    spillere.push({ lag, el:d, tall, poeng:0 });
+  }
+
+  /* brettet */
+  const brett = document.createElement("div"); brett.className = "memorybrett";
+  const kolonner = besteKolonner(data.kort.length);
+  brett.style.gridTemplateColumns = "repeat(" + kolonner + ",minmax(0,1fr))";
+  brett.style.gridTemplateRows = "repeat(" + Math.ceil(data.kort.length / kolonner) + ",minmax(0,1fr))";
+
+  const kortEl = [];
+  data.kort.forEach(o => {
+    const kn = document.createElement("button");
+    kn.className = "mkort"; kn.type = "button";
+    const inn = document.createElement("div"); inn.className = "innside";
+    const bak = document.createElement("div"); bak.className = "side bak";
+    bak.innerHTML = '<div class="mynt">?</div>';
+    const front = document.createElement("div"); front.className = "side front";
+    const img = document.createElement("img");
+    img.src = bildeUrl(o); img.alt = o.ord; img.draggable = false;
+    img.onerror = () => { img.onerror = null; img.src = bildeReserve(o); };
+    const tekst = document.createElement("div");
+    tekst.className = "ordtekst"; tekst.textContent = o.ord.toUpperCase();
+    tekst.style.display = app.visOrd ? "" : "none";
+    front.appendChild(img); front.appendChild(tekst);
+    inn.appendChild(bak); inn.appendChild(front);
+    kn.appendChild(inn);
+    kn._ord = o; kn._tekst = tekst;
+    kn.addEventListener("click", () => snu(kn));
+    brett.appendChild(kn);
+    kortEl.push(kn);
+  });
+
+  rot.appendChild(poeng); rot.appendChild(brett);
+  scene.appendChild(rot);
+
+  let aapne = [], funnet = 0, spiller = 0, laast = false;
+  function merkSpiller(){
+    spillere.forEach((s,i) => s.el.classList.toggle("aktiv", i === spiller));
+  }
+  merkSpiller();
+  si("finn-rimpar");
+
+  function snu(kn){
+    if (laast || kn.classList.contains("snudd") || kn.classList.contains("funnet")) return;
+    kn.classList.add("snudd");
+    lydSnu();
+    siOrd(kn._ord);
+    aapne.push(kn);
+    if (aapne.length < 2) return;
+
+    laast = true;
+    const [a, b] = aapne;
+    if (a._ord.rim === b._ord.rim){
+      senere(()=>{
+        a.classList.add("funnet"); b.classList.add("funnet");
+        funnet++;
+        spillere[spiller].poeng++;
+        spillere[spiller].tall.textContent = spillere[spiller].poeng;
+        lydRunde();
+        const r = b.getBoundingClientRect();
+        konfetti(r.left + r.width/2, r.top + r.height/2, 35, 0.9);
+        si("rimpar", "ord-" + a._ord.fil, "ord-" + b._ord.fil);
+        aapne = []; laast = false;
+        if (funnet >= data.par) senere(memoryFerdig, 1500);
+      }, 900);
+    } else {
+      senere(()=>{
+        a.classList.add("bom"); b.classList.add("bom");
+        lydFeil();
+        senere(()=>{
+          a.classList.remove("snudd","bom"); b.classList.remove("snudd","bom");
+          aapne = []; laast = false;
+          spiller = (spiller + 1) % app.antall;
+          merkSpiller();
+          if (app.antall > 1) si("din-tur");
+        }, 900);
+      }, 900);
+    }
+  }
+
+  function memoryFerdig(){
+    lydFanfare(); storKonfetti(); si("alle-sammen");
+    const best = Math.max(...spillere.map(s => s.poeng));
+    const vinnere = spillere.filter(s => s.poeng === best);
+    const tekst = app.antall === 1 ? "🎉 ALLE PAR FUNNET! 🎉"
+      : vinnere.length > 1 ? "🎉 UAVGJORT! 🎉"
+      : "🎉 " + vinnere[0].lag.navn.toUpperCase() + " VANT! 🎉";
+    visJubel(tekst, null, [
+      { tekst:"Nytt brett →", gjor:nyRunde },
+      { tekst:"Se kortene ↺", sek:true, gjor:()=>{} }
+    ]);
+  }
+
+  app._memory = {
+    settOrdtekst: paa => kortEl.forEach(k => { k._tekst.style.display = paa ? "" : "none"; }),
+    visMeg: () => {
+      if (laast) return;
+      laast = true;
+      const skjulte = kortEl.filter(k => !k.classList.contains("snudd") && !k.classList.contains("funnet"));
+      skjulte.forEach(k => k.classList.add("snudd"));
+      senere(()=>{ skjulte.forEach(k => k.classList.remove("snudd")); laast = false; }, 1400);
+    }
+  };
+  app.flater = [];
+}
+
+/* ---------- neste oppgave uten å telle den som ferdig ----------
+   Trykker læreren «Neste» rett etter at eleven svarte riktig, ligger det
+   fortsatt en utløser og venter på å telle svaret ferdig. Den må dø her –
+   ellers teller den på oppgaven som nettopp ble bygd i stedet. */
+function hoppTilNeste(){
+  stoppTimere();
+  if (app.oppgave === "memory"){ nyRunde(); return; }
+  if (app.modus === "tur"){
+    lagTurFlate();
+  } else {
+    app._celler.forEach(st => st.bygg());
+    si(OPPGAVER[app.oppgave].lyd);
+  }
+}
+
+/* ============================================================
+   RIMFAMILIER I SPILL
+   ------------------------------------------------------------
+   Læreren slår familier av og på, og ordbanken følger etter. Jobber
+   klassen med -att og -us denne uka, står bare de to på. Valget
+   huskes på denne maskina til neste gang.
+   ============================================================ */
+const FAMILIE_NOKKEL = "myntland-rimverkstedet-familier-v1";
+const ALLE_NOKLER = FAMILIER.map(f => f.key);
+
+function lastFamilier(){
+  try {
+    const a = JSON.parse(localStorage.getItem(FAMILIE_NOKKEL));
+    if (Array.isArray(a) && a.length) return new Set(a.filter(k => ALLE_NOKLER.includes(k)));
+  } catch(e){}
+  return new Set(ALLE_NOKLER);
+}
+function lagreFamilier(){
+  try { localStorage.setItem(FAMILIE_NOKKEL, JSON.stringify([...app.aktive])); } catch(e){}
+}
+
+function byggFamilier(){
+  const boks = $("#familierad"); boks.innerHTML = "";
+  FAMILIER.forEach(f => {
+    const kn = document.createElement("button");
+    kn.type = "button";
+    kn.className = "ftast";
+    kn.dataset.k = f.key;
+    kn.innerHTML = '<span class="fam">-' + f.key + '</span><span class="ant">' + f.ord.length + '</span>';
+    kn.setAttribute("aria-pressed", app.aktive.has(f.key) ? "true" : "false");
+    kn.title = f.ord.map(o => o.ord).join(", ");
+    kn.addEventListener("click", () => vekslFamilie(f.key));
+    boks.appendChild(kn);
+  });
+  oppdaterOrdtall();
+}
+
+function oppdaterOrdtall(){
+  const famer = FAMILIER.filter(f => app.aktive.has(f.key) && f.ord.length >= 2);
+  const felt = $("#ordtall");
+  if (!famer.length){
+    felt.textContent = "ingen familier valgt – bruker alle";
+    felt.classList.add("tom");
+    return;
+  }
+  const ord = famer.reduce((n,f) => n + f.ord.length, 0);
+  felt.textContent = famer.length + " familier · " + ord + " ord";
+  felt.classList.remove("tom");
+  if (app.oppgave === "memory" && famer.length < app.brett/2)
+    felt.textContent += " · brettet får " + (famer.length*2) + " kort";
+}
+
+function tegnFamilieknapper(){
+  document.querySelectorAll(".ftast").forEach(kn => {
+    kn.setAttribute("aria-pressed", app.aktive.has(kn.dataset.k) ? "true" : "false");
+  });
+}
+
+/* Å skru en familie av og på skal ikke rive scenen fra eleven som holder
+   på – vi bytter bare ut køen, så slår det inn fra neste oppgave.
+   Memory er unntaket: der bygges hele brettet på nytt. */
+function vekslFamilie(k){
+  if (app.aktive.has(k)) app.aktive.delete(k); else app.aktive.add(k);
+  lagreFamilier(); tegnFamilieknapper(); oppdaterOrdtall(); fyllFamiliekoe();
+}
+function settFamilier(nokler){
+  app.aktive = new Set(nokler);
+  lagreFamilier(); tegnFamilieknapper(); oppdaterOrdtall(); fyllFamiliekoe();
+}
+
+/* ============================================================
+   LÆRERLINJA
+   ============================================================ */
+function oppdaterKnapper(){
+  const memory = app.oppgave === "memory";
+  $("#modusvelger").classList.toggle("skjult", memory);
+  $("#antallKnapp").classList.toggle("skjult", !memory && app.modus !== "flere");
+  $("#runderKnapp").classList.toggle("skjult", memory);
+  $("#valgKnapp").classList.toggle("skjult", memory || app.oppgave !== "finn");
+  $("#brettKnapp").classList.toggle("skjult", !memory);
+  $("#antallKnapp").textContent = "👥 " + app.antall + (memory ? " spillere" : " elever");
+  $("#runderKnapp").textContent = "🔁 " + app.runder + (app.runder === 1 ? " oppgave" : " oppgaver");
+  $("#valgKnapp").textContent = "🖼 " + app.valg + " valg";
+  $("#brettKnapp").textContent = "🃏 " + app.brett + " kort";
+  $("#nesteKnapp").textContent = memory ? "Nytt brett →" : "Neste oppgave →";
+  $("#ordKnapp").textContent = app.visOrd ? "📝 Ord på" : "📝 Ord av";
+  $("#ordKnapp").classList.toggle("av", !app.visOrd);
+}
+
+$("#oppgavevelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.oppgave = b.dataset.oppgave;
+  document.querySelectorAll("#oppgavevelger button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true":"false"));
+  oppdaterKnapper(); oppdaterOrdtall(); nyRunde();
+});
+$("#modusvelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.modus = b.dataset.modus;
+  document.querySelectorAll("#modusvelger button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true":"false"));
+  oppdaterKnapper(); nyRunde();
+});
+$("#alleFamilier").addEventListener("click", () => { settFamilier(ALLE_NOKLER); if (app.oppgave === "memory") nyRunde(); });
+$("#ingenFamilier").addEventListener("click", () => { settFamilier([]); if (app.oppgave === "memory") nyRunde(); });
+$("#lettFamilier").addEventListener("click", () => { settFamilier(FAMILIER.filter(f => f.lett).map(f => f.key)); if (app.oppgave === "memory") nyRunde(); });
+$("#antallKnapp").addEventListener("click", () => {
+  app.antall = app.antall >= 4 ? (app.oppgave === "memory" ? 1 : 2) : app.antall + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#runderKnapp").addEventListener("click", () => {
+  app.runder = app.runder >= 5 ? 1 : app.runder + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#valgKnapp").addEventListener("click", () => {
+  app.valg = app.valg >= 5 ? 2 : app.valg + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#brettKnapp").addEventListener("click", () => {
+  app.brett = app.brett >= 20 ? 8 : app.brett + 4;
+  oppdaterKnapper(); oppdaterOrdtall(); nyRunde();
+});
+$("#ordKnapp").addEventListener("click", () => {
+  app.visOrd = !app.visOrd;
+  oppdaterKnapper();
+  app.flater.forEach(f => f && f.settOrdtekst && f.settOrdtekst(app.visOrd));
+  if (app._memory && app.oppgave === "memory") app._memory.settOrdtekst(app.visOrd);
+});
+$("#visKnapp").addEventListener("click", () => {
+  if (app.oppgave === "memory"){ app._memory && app._memory.visMeg(); return; }
+  app.flater.forEach(f => f && f.visMeg());
+});
+$("#nesteKnapp").addEventListener("click", hoppTilNeste);
+$("#nullstillKnapp").addEventListener("click", nyRunde);
+
+/* Første berøring låser opp lyd i nettleseren – da henter vi replikkene samtidig */
+let lydVarmet = false;
+["pointerdown","keydown"].forEach(h => addEventListener(h, () => {
+  if (lydVarmet) return;
+  lydVarmet = true;
+  lydKontekst();
+  forbered(...REPLIKKER);
+}, { once:false, passive:true }));
+
+$("#lydKnapp").addEventListener("click", () => {
+  lydPaa = !lydPaa;
+  $("#lydKnapp").textContent = lydPaa ? "🔊" : "🔇";
+  $("#lydKnapp").classList.toggle("av", !lydPaa);
+  if (lydPaa) lydKontekst();
+  else stoppTale();
+});
+$("#fullKnapp").addEventListener("click", () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  else document.exitFullscreen && document.exitFullscreen();
+});
+$("#rentKnapp").addEventListener("click", () => document.body.classList.add("rent"));
+$("#visMenyKnapp").addEventListener("click", () => document.body.classList.remove("rent"));
+
+/* --- tastatur for læreren --- */
+addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight"){ hoppTilNeste(); return; }
+  if (e.key === " "){ e.preventDefault(); nyRunde(); return; }
+  if (e.key === "Enter"){ $("#visKnapp").click(); return; }
+});
+
+/* --- start --- */
+app.aktive = lastFamilier();
+byggFamilier();
+oppdaterKnapper();
+nyRunde();
+</script>
+</body>
+</html>
