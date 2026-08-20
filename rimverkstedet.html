@@ -732,6 +732,11 @@ function si(...navn){
   kjoer(0);
 }
 const siOrd = o => si("ord-" + o.fil);
+/* Høyttalerknappene på bildekortene er bare med når én elev holder på om
+   gangen. I «Flere samtidig» sitter elevene ved hver sin flate på samme
+   skjerm, og fire ord som spilles av samtidig blir bare kakofoni. Memory har
+   ett felles brett og går tur for tur, så der beholder vi lyden. */
+const lydknappPaa = () => app.oppgave === "memory" || app.modus !== "flere";
 
 /* ---------- Tidsutløsere som hører til runden ---------- */
 let rundeTimere = [];
@@ -869,7 +874,7 @@ function lagBildeboks(o, medLyd){
   tekst.style.display = app.visOrd ? "" : "none";
   boks.appendChild(tekst);
 
-  if (medLyd){
+  if (medLyd && lydknappPaa()){
     const hoer = document.createElement("button");
     hoer.className = "ordlyd"; hoer.type = "button"; hoer.textContent = "🔊";
     hoer.title = "Hør ordet";

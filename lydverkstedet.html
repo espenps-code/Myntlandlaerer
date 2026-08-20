@@ -1196,6 +1196,10 @@ function si(...navn){
 }
 const bokstavFil = ch => FILNAVN[ch] || ch;
 const siOrd      = o  => si("ord-" + o.fil);
+/* Høyttalerknappen på bildekortet er bare med når én elev holder på om
+   gangen. I «Flere samtidig» sitter elevene ved hver sin flate på samme
+   skjerm, og fire ord som spilles av samtidig blir bare kakofoni. */
+const lydknappPaa = () => app.modus !== "flere";
 const siOppgave  = o  => si(OPPGAVER[app.oppgave].lyd, "ord-" + o.fil);
 const siBokstav  = ch => si("bokstaven", bokstavFil(ch));
 
@@ -1681,12 +1685,14 @@ function lagOppgave(vert, ord, farge, valg){
   img.onerror = () => { img.onerror = null; img.src = bildeReserve(ord); };
   bilde.appendChild(img);
 
-  const hoer = document.createElement("button");
-  hoer.className = "ordlyd"; hoer.type = "button"; hoer.textContent = "🔊";
-  hoer.title = "Hør ordet en gang til";
-  hoer.setAttribute("aria-label", "Hør ordet en gang til");
-  hoer.addEventListener("click", e => { e.stopPropagation(); siOrd(ord); });
-  bilde.appendChild(hoer);
+  if (lydknappPaa()){
+    const hoer = document.createElement("button");
+    hoer.className = "ordlyd"; hoer.type = "button"; hoer.textContent = "🔊";
+    hoer.title = "Hør ordet en gang til";
+    hoer.setAttribute("aria-label", "Hør ordet en gang til");
+    hoer.addEventListener("click", e => { e.stopPropagation(); siOrd(ord); });
+    bilde.appendChild(hoer);
+  }
 
   const tekst = document.createElement("div");
   tekst.className = "ordtekst"; tekst.textContent = ord.ord;
