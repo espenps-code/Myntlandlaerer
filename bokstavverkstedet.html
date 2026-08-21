@@ -104,6 +104,7 @@ body{
   background:var(--navy); color:var(--krem); border-radius:999px; padding:0 4px; min-width:1rem;
 }
 .btast.tynn .ant{ background:var(--amber-dyp); color:#fff; }
+.btast.inni .ant{ background:var(--teal); color:#fff; }
 .btast.tom .ant{ background:var(--muted); }
 
 /* ---------- scene ---------- */
@@ -185,6 +186,10 @@ body{
   font-size:min(22vh,9rem); letter-spacing:.02em;
 }
 .bokstavboks .par .liten{ color:var(--amber); }
+/* Egentegnet bokstav (se EGEN_GLYF i skriptet) – samme høyde som fontbokstavene. */
+.bokstavboks .par svg.egenglyf{ height:1.05em; width:auto; display:block; }
+.egenglyf .gstor{ fill:var(--krem); }
+.egenglyf .gliten{ fill:var(--amber); }
 .bokstavboks .horknapp{
   position:absolute; bottom:-14px; left:50%; transform:translateX(-50%);
   border:3px solid var(--navy); background:var(--amber); color:var(--navy); border-radius:999px;
@@ -196,6 +201,14 @@ body{
 .ordvegg{ display:grid; grid-template-columns:repeat(3,1fr); gap:.55rem; align-content:center; width:min(44vw,600px); }
 .ordvegg .bildeboks{ width:100%; height:auto; border-width:4px; border-radius:16px; box-shadow:0 3px 0 var(--navy); cursor:pointer; }
 .ordvegg .ordlyd{ width:1.5rem; height:1.5rem; font-size:.75rem; border-width:2px; box-shadow:0 2px 0 var(--navy); }
+/* Ett stort bilde om gangen – bildene i trinn 4 skal være en overraskelse */
+.ordvegg.enkelt{ grid-template-columns:1fr; width:min(40vw,52vh); justify-items:center; gap:.4rem; }
+.ordvegg.enkelt .bildeboks{ border-width:5px; border-radius:22px; box-shadow:var(--skygge); }
+.ordvegg.enkelt .ordlyd{ width:2.2rem; height:2.2rem; font-size:1.05rem; border-width:3px; box-shadow:0 3px 0 var(--navy); }
+.ordvegg.enkelt .ordtekst{ font-size:clamp(1rem,2.2vw,1.7rem); padding:.2rem 0; letter-spacing:.06em; }
+.ordteller{
+  font-weight:900; font-size:clamp(.7rem,1.1vw,.9rem); color:var(--navy); opacity:.7; letter-spacing:.04em;
+}
 
 .lydtips{
   flex:0 0 auto; max-width:min(26vw,270px); background:var(--krem-lys); border:3px solid var(--navy);
@@ -212,12 +225,14 @@ body{
 .skriveflate .hjelpelinje.stiplet{ stroke-dasharray:5 5; }
 .skriveflate .hjelpelinje.grunn{ opacity:.6; stroke-width:1.8; }
 .skriveflate .modell{ fill:none; stroke:#e6dcc0; stroke-width:15; stroke-linecap:round; stroke-linejoin:round; }
+.skriveflate .modell.aktiv{ stroke:#d8c79a; }
+.skriveflate.ferdigflate .modell{ opacity:.25; }
 .skriveflate .fasit{ fill:none; stroke:#b7a473; stroke-width:15; stroke-linecap:round; stroke-linejoin:round; }
 .skriveflate .blekk{ fill:none; stroke-width:14; stroke-linecap:round; stroke-linejoin:round; }
 .skriveflate .startmerke circle{ fill:var(--amber); stroke:var(--navy); stroke-width:3; }
 .skriveflate .startmerke text{ font-family:'Fredoka One',cursive; font-size:13px; fill:var(--navy); text-anchor:middle; dominant-baseline:central; }
 .skriveflate .startpil{ fill:var(--navy); }
-.skriveflate .puls{ fill:none; stroke:var(--amber-dyp); stroke-width:2.5;
+.skriveflate .startmerke circle.puls{ fill:none; stroke:var(--amber-dyp); stroke-width:2.5;
   transform-box:fill-box; transform-origin:center; animation:startpuls 1.7s ease-out infinite; }
 @keyframes startpuls{ 0%{ transform:scale(1); opacity:.55 } 100%{ transform:scale(2.4); opacity:0 } }
 
@@ -349,12 +364,16 @@ body{
 .ruter{ position:absolute; inset:0; z-index:4; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); }
 .rute{
   border:2px solid var(--krem); background:var(--navy); cursor:pointer; padding:0;
-  font-family:'Fredoka One',cursive; font-size:clamp(.9rem,2vw,1.5rem); color:rgba(251,241,214,.45);
-  display:flex; align-items:center; justify-content:center;
+  font-family:'Fredoka One',cursive; font-size:clamp(1.1rem,2.6vw,2rem); color:var(--krem);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.22em;
   transition:opacity .35s ease, transform .35s ease;
 }
 .rute:nth-child(2n){ background:#2e3752; }
+.rutetall{ line-height:1; text-shadow:0 2px 0 rgba(0,0,0,.35); }
+.prikker{ display:grid; grid-template-columns:repeat(3,.3em); grid-template-rows:repeat(3,.3em); gap:.13em; justify-content:center; }
+.prikker i{ display:block; width:.3em; height:.3em; border-radius:50%; background:var(--amber); }
 .rute:hover{ background:var(--amber-dyp); color:var(--krem); }
+.rute:hover .prikker i{ background:var(--krem); }
 .rute.borte{ opacity:0; transform:scale(.35) rotate(-14deg); pointer-events:none; }
 .gjettord{
   flex:0 0 auto; font-family:'Fredoka One',cursive; font-size:clamp(.85rem,1.6vw,1.2rem); letter-spacing:.06em;
@@ -431,7 +450,7 @@ body.rent .flytknapp{ display:block; }
   .panel{ height:auto; min-height:100%; }
 }
 @media (prefers-reduced-motion:reduce){
-  .monster,.monster.heia,.jubel .tekst,.skriveflate .puls,.vknapp.ok.klar{ animation:none !important; }
+  .monster,.monster.heia,.jubel .tekst,.skriveflate .startmerke circle.puls,.vknapp.ok.klar{ animation:none !important; }
 }
 </style>
 </head>
@@ -471,7 +490,7 @@ body.rent .flytknapp{ display:block; }
   <div class="rad" id="trinnverktoy">
     <span id="verktoyT1" class="rad">
       <button class="knapp" id="ordKnapp">📝 Ord av</button>
-      <button class="knapp" id="flereOrd">🔄 Andre ord</button>
+      <button class="knapp" id="flereOrd">➡️ Neste ord</button>
     </span>
     <span id="verktoyT2" class="rad">
       <button class="knapp primary" id="visMegKnapp">👀 Vis meg</button>
@@ -499,7 +518,7 @@ body.rent .flytknapp{ display:block; }
   <!-- ================= TRINN 1 ================= -->
   <section class="panel aktiv" id="panel1">
     <div class="topplinje">
-      <div class="oppdrag">Hvilken lyd hører du <em>først</em> i ordet?</div>
+      <div class="oppdrag" id="t1Oppdrag">Hvilken lyd hører du <em>først</em> i ordet?</div>
     </div>
     <div class="arena">
       <div class="heier" id="heier1">
@@ -524,7 +543,7 @@ body.rent .flytknapp{ display:block; }
   <!-- ================= TRINN 2 ================= -->
   <section class="panel" id="panel2">
     <div class="topplinje">
-      <div class="oppdrag">Slik skriver vi <em id="t2Bokstav">A</em></div>
+      <div class="oppdrag">Start på prikken og følg sporet: <em id="t2Bokstav">A</em></div>
       <div class="maaler">
         <div class="maalerspor"><div id="maalefyll"></div></div>
         <span class="maalertall" id="maalertall">0 %</span>
@@ -596,7 +615,7 @@ body.rent .flytknapp{ display:block; }
   <!-- ================= TRINN 4 ================= -->
   <section class="panel" id="panel4">
     <div class="topplinje">
-      <div class="oppdrag">Hvilket ord gjemmer seg? Alle begynner med <em id="t4Bokstav">A</em></div>
+      <div class="oppdrag" id="t4Oppdrag">Hvilket ord gjemmer seg? Alle begynner med <em>A</em></div>
     </div>
     <div class="gjettrad" id="gjettrad"></div>
   </section>
@@ -712,10 +731,10 @@ const ORDBANK = [
   { o:"bakke", f:"bakke" }, { o:"ballong", f:"ballong" }, { o:"banan", f:"banan" },
   { o:"bein", f:"bein" }, { o:"bil", f:"bil" }, { o:"blomst", f:"blomst", kl:1 },
   { o:"bok", f:"bok" }, { o:"brev", f:"brev", kl:1 }, { o:"bro", f:"bro", kl:1 },
-  { o:"brus", f:"brus", kl:1 }, { o:"buss", f:"buss" }, { o:"bål", f:"baal" }, { o:"bær", f:"baer" },
+  { o:"brus", f:"brus", kl:1 }, { o:"buss", f:"buss" }, { o:"bål", f:"baal" }, { o:"bær", f:"baer", inni:"Æ" },
   { o:"dekk", f:"dekk" }, { o:"due", f:"due" }, { o:"dør", f:"door" },
-  { o:"egg", f:"egg" }, { o:"elg", f:"elg" }, { o:"elv", f:"elv" }, { o:"eple", f:"eple" },
-  { o:"fisk", f:"fisk" }, { o:"frosk", f:"frosk", kl:1 }, { o:"fugl", f:"fugl" },
+  { o:"egg", f:"egg" }, { o:"elg", f:"elg" }, { o:"elv", f:"elv" }, { o:"eple", f:"eple" }, { o:"ert", f:"ert" },
+  { o:"fisk", f:"fisk" }, { o:"fly", f:"fly", inni:"Y" }, { o:"frosk", f:"frosk", kl:1 }, { o:"fugl", f:"fugl" },
   { o:"gaffel", f:"gaffel" }, { o:"gris", f:"gris", kl:1 }, { o:"gutt", f:"gutt" }, { o:"gås", f:"gaas" },
   { o:"hatt", f:"hatt" }, { o:"hest", f:"hest" }, { o:"hund", f:"hund" }, { o:"hus", f:"hus" },
   { o:"igloo", f:"igloo" }, { o:"ild", f:"ild" }, { o:"is", f:"is" }, { o:"isbjørn", f:"isbjoern" },
@@ -723,26 +742,26 @@ const ORDBANK = [
   { o:"kake", f:"kake" }, { o:"kam", f:"kam" }, { o:"katt", f:"katt" }, { o:"klokke", f:"klokke", kl:1 },
   { o:"kne", f:"kne", kl:1 }, { o:"kopp", f:"kopp" }, { o:"kost", f:"kost" }, { o:"krok", f:"krok", kl:1 },
   { o:"ku", f:"ku" },
-  { o:"laks", f:"laks" }, { o:"lam", f:"lam" }, { o:"lue", f:"lue" }, { o:"lys", f:"lys" },
+  { o:"laks", f:"laks" }, { o:"lam", f:"lam" }, { o:"lue", f:"lue" }, { o:"lyn", f:"lyn", inni:"Y" },
+  { o:"lys", f:"lys", inni:"Y" },
   { o:"lås", f:"laas" }, { o:"løve", f:"loeve" },
   { o:"mann", f:"mann" }, { o:"mus", f:"mus" }, { o:"mål", f:"maal" }, { o:"måne", f:"maane" },
   { o:"nese", f:"nese" }, { o:"nål", f:"naal" }, { o:"nøtt", f:"noett" },
-  { o:"okse", f:"okse" }, { o:"orm", f:"orm" }, { o:"ost", f:"ost" }, { o:"ovn", f:"ovn" },
+  { o:"okse", f:"okse" }, { o:"orm", f:"orm" }, { o:"ost", f:"ost" },
   { o:"quiz", f:"quiz" },
   { o:"penn", f:"penn" }, { o:"pil", f:"pil" }, { o:"pose", f:"pose" },
   { o:"rake", f:"rake" }, { o:"rev", f:"rev" }, { o:"ring", f:"ring" }, { o:"ris", f:"ris" }, { o:"rose", f:"rose" },
   { o:"sag", f:"sag" }, { o:"saks", f:"saks" }, { o:"sekk", f:"sekk" }, { o:"sitron", f:"sitron" },
   { o:"sko", f:"sko", kl:1 }, { o:"smør", f:"smoer", kl:1 }, { o:"sol", f:"sol" }, { o:"sopp", f:"sopp" },
-  { o:"stein", f:"stein", kl:1 }, { o:"stol", f:"stol", kl:1 },
-  { o:"tann", f:"tann" }, { o:"tog", f:"tog" }, { o:"tre", f:"tre" }, { o:"tær", f:"taer" },
+  { o:"stein", f:"stein", kl:1 }, { o:"stol", f:"stol", kl:1 }, { o:"sykkel", f:"sykkel", inni:"Y" },
+  { o:"tann", f:"tann" }, { o:"tog", f:"tog" }, { o:"tre", f:"tre" }, { o:"tær", f:"taer", inni:"Æ" },
   { o:"ubåt", f:"ubaat" }, { o:"ugle", f:"ugle" }, { o:"ull", f:"ull" }, { o:"ulv", f:"ulv" },
   { o:"vaffel", f:"vaffel" }, { o:"vann", f:"vann" }, { o:"vegg", f:"vegg" }, { o:"venn", f:"venn" },
   { o:"veps", f:"veps" }, { o:"vest", f:"vest" },
   { o:"walkie", f:"walkie" }, { o:"wc", f:"wc" }, { o:"wok", f:"wok" },
   { o:"xylofon", f:"xylofon" },
-  { o:"yatzy", f:"yatzy" }, { o:"yoga", f:"yoga" }, { o:"yoghurt", f:"yoghurt" },
   { o:"zebra", f:"zebra" }, { o:"zoo", f:"zoo" },
-  { o:"ærfugl", f:"aerfugl" }, { o:"ært", f:"aert" },
+  { o:"ærfugl", f:"aerfugl" },
   { o:"øks", f:"oeks" }, { o:"øre", f:"oere" }, { o:"ørn", f:"oern" }, { o:"øy", f:"oey" }, { o:"øye", f:"oeye" },
   { o:"åker", f:"aaker" }, { o:"ål", f:"aal" }, { o:"åre", f:"aare" }
 ];
@@ -789,6 +808,7 @@ const LAG = [
   { navn:"Stjerne", fil:"gullgul",     farge:"#EF9F27" }
 ];
 const HEIAROP_LYD  = ["Hva hører du?","Lytt godt!","Si ordet sakte!","Hvilken lyd først?","Kjenn etter!"];
+const HEIAROP_INNI = ["Hvor er den?","Lytt godt!","Si ordet sakte!","Hører du den inni?","Kjenn etter!"];
 const HEIAROP_FORM = ["Start på prikken!","Følg pilen!","Rolig og fint!","Du klarer det!","Så flink!"];
 const JUBELROP     = ["Kjempebra!","Perfekt!","Så fint!","Supert!","Bra jobba!"];
 
@@ -808,7 +828,9 @@ const S = {
   visModell: true,
   farge: FARGER[0],
   t1Ord: [],
+  t1Idx: 0,
   t4Ord: [],
+  modus: "forst",
   navn: [],
   plassert: { forst:[], inni:[], sist:[] },
   valgtNavn: null,
@@ -868,6 +890,23 @@ function ordForBokstav(b){
   const l = b.toLowerCase();
   return ORDBANK.filter(x => x.o.charAt(0).toLowerCase() === l);
 }
+
+/* Ord som er merket med bokstaven INNI seg (inni:"Y"). Lista er kuratert,
+   ikke automatisk: «øy» inneholder y, men der er y en del av diftongen /øy/
+   og ikke vokalen /y/. Derfor må hvert ord merkes for hånd. */
+function ordMedInni(b){
+  return ORDBANK.filter(x => x.inni === b);
+}
+
+/* Noen bokstaver starter nesten ingen norske ord — Y og Æ særlig.
+   Da bytter verktøyet til «inni ordet»-modus i stedet for førstelyd. */
+function ordUtvalg(b){
+  const start = ordForBokstav(b);
+  if(start.length >= 3) return { modus:"forst", ord:start };
+  const inni = ordMedInni(b);
+  if(inni.length === 0) return { modus:"forst", ord:start };
+  return { modus:"inni", ord:start.concat(inni.filter(x => start.indexOf(x) === -1)) };
+}
 function stokk(arr){
   const a = arr.slice();
   for(let i = a.length - 1; i > 0; i--){
@@ -882,6 +921,20 @@ function sorterForLytting(liste){
 }
 function uthevForste(ord){
   return '<span class="f">' + ord.charAt(0) + "</span>" + ord.slice(1);
+}
+/* Fredoka One tegner store B med nesten firkantede buer – den leses lett som
+   «13» av de yngste. Den bokstaven tegner vi derfor selv, med tydelig stamme
+   og to runde buer, slik elevene møter den i trinn 2. */
+const EGEN_GLYF = {
+  "B": '<svg class="egenglyf" viewBox="0 0 200 150" role="img" aria-label="Stor B og liten b">'
+     + '<path class="gstor" fill-rule="evenodd" d="M14,20 H64 A24,24 0 0 1 64,68 H68 A26,26 0 0 1 68,120 H14 Z M42,34 H62 A12,12 0 0 1 62,58 H42 Z M42,82 H66 A13,13 0 0 1 66,108 H42 Z"/>'
+     + '<rect class="gliten" x="112" y="20" width="27" height="100" rx="5"/>'
+     + '<path class="gliten" fill-rule="evenodd" d="M153,62 a29,29 0 1 1 -0.1,0 Z M153,77 a14,14 0 1 1 -0.1,0 Z"/>'
+     + '</svg>'
+};
+function parInnhold(b){
+  if(EGEN_GLYF[b]) return EGEN_GLYF[b];
+  return b + '<span class="liten">' + b.toLowerCase() + "</span>";
 }
 function monsterFor(b){
   return LAG[ALFABET.indexOf(b) % LAG.length];
@@ -901,7 +954,8 @@ function byggBokstavrad(){
     kn.setAttribute("aria-pressed", b === S.bokstav ? "true" : "false");
     kn.appendChild(document.createTextNode(b));
 
-    const antall = ordForBokstav(b).length;
+    const utvalg = ordUtvalg(b);
+    const antall = utvalg.ord.length;
     const merke = document.createElement("span");
     merke.className = "ant";
     merke.textContent = antall;
@@ -909,6 +963,9 @@ function byggBokstavrad(){
     if(antall === 0){
       kn.classList.add("tom");
       kn.title = "Ingen bilder til " + b + " ennå – trinn 1 og 4 er tomme";
+    } else if(utvalg.modus === "inni"){
+      kn.classList.add("inni");
+      kn.title = b + " starter nesten ingen norske ord – her øver klassen på " + b + " inni ordet";
     } else if(antall < 3){
       kn.classList.add("tynn");
       kn.title = "Bare " + antall + " bilde" + (antall === 1 ? "" : "r") + " til " + b;
@@ -950,22 +1007,28 @@ function tegnAlt(){
    ============================================================ */
 function byggTrinn1(){
   const b = S.bokstav;
-  $("#bokstavPar").innerHTML = b + '<span class="liten">' + b.toLowerCase() + "</span>";
+  $("#bokstavPar").innerHTML = parInnhold(b);
   $("#lydtipsTekst").innerHTML = LYDHINT[b] || "";
 
   const lag = monsterFor(b);
   settMonster($("#monster1"), lag.fil);
   $("#monster1").alt = "Monsteret " + lag.navn;
   $("#mnavn1").textContent = lag.navn;
-  $("#boble1").textContent = tilfeldig(HEIAROP_LYD);
-
-  S.t1Ord = sorterForLytting(ordForBokstav(b)).slice(0, 6);
+  const utvalg = ordUtvalg(b);
+  S.modus = utvalg.modus;
+  $("#t1Oppdrag").innerHTML = (S.modus === "inni")
+    ? "<em>Hvor</em> hører du " + b + " i ordet?"
+    : "Hvilken lyd hører du <em>først</em> i ordet?";
+  $("#boble1").textContent = tilfeldig(S.modus === "inni" ? HEIAROP_INNI : HEIAROP_LYD);
+  S.t1Ord = (S.modus === "inni" ? stokk(utvalg.ord) : sorterForLytting(utvalg.ord)).slice(0, 6);
+  S.t1Idx = 0;
   visTrinn1Ord();
 }
 
 function visTrinn1Ord(){
   const vegg = $("#ordvegg");
   vegg.innerHTML = "";
+  vegg.classList.remove("enkelt");
   if(S.t1Ord.length === 0){
     const d = document.createElement("div");
     d.className = "tommelding";
@@ -974,46 +1037,65 @@ function visTrinn1Ord(){
     vegg.style.gridTemplateColumns = "1fr";
     return;
   }
-  vegg.style.gridTemplateColumns = "repeat(" + Math.min(3, S.t1Ord.length) + ",1fr)";
-  S.t1Ord.forEach(x => {
-    const boks = document.createElement("div");
-    boks.className = "bildeboks";
-    boks.title = "Trykk for å høre ordet";
+  /* Bare ETT bilde om gangen – da er bildene fortsatt en overraskelse i trinn 4. */
+  if(S.t1Idx >= S.t1Ord.length || S.t1Idx < 0) S.t1Idx = 0;
+  const x = S.t1Ord[S.t1Idx];
+  vegg.classList.add("enkelt");
+  vegg.style.gridTemplateColumns = "1fr";
 
-    const img = document.createElement("img");
-    img.alt = "Bilde av " + x.o;
-    img.loading = "lazy";
-    boks.appendChild(img);
+  const boks = document.createElement("div");
+  boks.className = "bildeboks";
+  boks.title = "Trykk for å høre ordet";
 
-    const tekst = document.createElement("div");
-    tekst.className = "ordtekst" + (S.visOrd ? "" : " skjult");
-    tekst.innerHTML = uthevForste(x.o);
-    boks.appendChild(tekst);
+  const img = document.createElement("img");
+  img.alt = "Bilde av " + x.o;
+  boks.appendChild(img);
 
-    const lyd = document.createElement("button");
-    lyd.className = "ordlyd";
-    lyd.type = "button";
-    lyd.textContent = "🔊";
-    lyd.title = "Hør ordet";
-    boks.appendChild(lyd);
+  const tekst = document.createElement("div");
+  tekst.className = "ordtekst" + (S.visOrd ? "" : " skjult");
+  tekst.innerHTML = (S.modus === "inni") ? uthev(x.o, S.bokstav) : uthevForste(x.o);
+  boks.appendChild(tekst);
 
-    boks.addEventListener("click", () => spill(ordLyd(x.f)));
-    vegg.appendChild(boks);
-    settBilde(img, ordBilde(x.f), "🔤");
-  });
+  const lyd = document.createElement("button");
+  lyd.className = "ordlyd";
+  lyd.type = "button";
+  lyd.textContent = "🔊";
+  lyd.title = "Hør ordet";
+  boks.appendChild(lyd);
+
+  boks.addEventListener("click", () => spill(ordLyd(x.f)));
+  vegg.appendChild(boks);
+
+  const teller = document.createElement("div");
+  teller.className = "ordteller";
+  teller.textContent = "Ord " + (S.t1Idx + 1) + " av " + S.t1Ord.length;
+  vegg.appendChild(teller);
+
+  settBilde(img, ordBilde(x.f), "🔤");
 }
 
 /* ============================================================
    TRINN 2 – BOKSTAVFORM (animasjon + sporing)
    ============================================================ */
 const NS = "http://www.w3.org/2000/svg";
+/* Sporingsmotoren er den samme som i Skriveverkstedet: eleven setter fingeren
+   på startprikken og følger sporet, én strek av gangen. Blekket kommer bare
+   der fingeren faktisk har vært, og streken godkjennes når den er fulgt ut. */
+const TOL       = 17;   // hvor langt utenfor sporet fingeren kan være
+const STARTTOL  = 22;   // hvor nær startprikken fingeren må settes ned
+const SLUTTMONN = 0.93; // hvor stor del av streken som holder for godkjenning
+
 const T2 = {
-  strek: [],        // <path class="modell">
-  maal: [],         // {x,y,truffet}
-  mine: [],
-  aktiv: null,
-  punkter: [],
+  guider: [],    // grå spor (<path class="modell">)
+  blekk: [],     // elevens strek, avdekkes langs sporet
+  punkter: [],   // tett punktliste per strek
+  lengder: [],
+  markorer: null,
+  strek: 0,      // hvilken strek eleven holder på med
+  idx: 0,        // hvor langt ut i streken eleven har kommet
   tegner: false,
+  pekerId: null,
+  laast: false,
   anim: null
 };
 
@@ -1022,6 +1104,28 @@ function svgEl(navn, attr){
   for(const k in attr) e.setAttribute(k, attr[k]);
   return e;
 }
+
+/* Små lydsignaler – samme som i Skriveverkstedet. */
+let lydKtx = null;
+function tone(freq, tid, type, vol){
+  if(!S.lydPaa) return;
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    if(!lydKtx) lydKtx = new AC();
+    if(lydKtx.state === "suspended") lydKtx.resume();
+    const o = lydKtx.createOscillator(), g = lydKtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    const t0 = lydKtx.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + tid);
+    o.connect(g); g.connect(lydKtx.destination);
+    o.start(t0); o.stop(t0 + tid + 0.03);
+  }catch(e){}
+}
+const lydStrek = () => tone(880, 0.12, "triangle", 0.12);
+const lydFeil  = () => tone(220, 0.10, "sine", 0.07);
 
 function byggTrinn2(){
   const flate = $("#flate");
@@ -1046,6 +1150,7 @@ function byggTrinn2(){
 
   stoppAnimasjon();
   flate.innerHTML = "";
+  flate.classList.remove("ferdigflate");
   const w = g.w, h = 140, pad = 20;
   flate.setAttribute("viewBox", (-pad) + " " + (-pad) + " " + (w + pad*2) + " " + (h + pad*2));
 
@@ -1055,71 +1160,74 @@ function byggTrinn2(){
       .forEach(par => flate.appendChild(svgEl("line", { class:par[0], x1:x0, y1:par[1], x2:x1, y2:par[1] })));
   }
 
-  /* Grå modellbokstav – også når den er skjult, for vi måler på den. */
-  const modellag = svgEl("g", {});
-  T2.strek = [];
-  g.s.forEach(d => {
-    const p = svgEl("path", { class:"modell", d:d });
+  /* Sporet – den grå bokstaven eleven følger. */
+  const sporlag = svgEl("g", {});
+  T2.guider = [];
+  g.s.forEach((d, i) => {
+    const p = svgEl("path", { class:"modell" + (i === 0 ? " aktiv" : ""), d:d });
     if(!S.visModell) p.setAttribute("opacity", "0");
-    modellag.appendChild(p);
-    T2.strek.push(p);
+    sporlag.appendChild(p);
+    T2.guider.push(p);
   });
-  flate.appendChild(modellag);
+  flate.appendChild(sporlag);
 
   const viseLag = svgEl("g", {}); viseLag.id = "viseLag"; flate.appendChild(viseLag);
+
+  /* Elevens blekk ligger oppå sporet og avdekkes etter hvert som hen sporer. */
   const blekkLag = svgEl("g", {}); blekkLag.id = "blekkLag"; flate.appendChild(blekkLag);
-
-  /* Startprikker med nummer og retningspil */
-  const merker = svgEl("g", { class:"startmerke" });
-  const brukte = [];
-  T2.strek.forEach((p, i) => {
-    const raa  = p.getPointAtLength(0);
-    const litt = p.getPointAtLength(Math.min(14, p.getTotalLength()));
-    /* Flere streker kan starte i samme punkt (B, E). Flytt prikken litt. */
-    const pos = { x:raa.x, y:raa.y };
-    while(brukte.some(q => Math.hypot(q.x - pos.x, q.y - pos.y) < 15)){ pos.x -= 11; pos.y -= 7; }
-    brukte.push({ x:pos.x, y:pos.y });
-
-    if(i === 0) merkelappPuls(merker, pos);
-    merkelappPrikk(merker, pos, i + 1);
-
-    const vx = litt.x - raa.x, vy = litt.y - raa.y;
-    const len = Math.hypot(vx, vy) || 1;
-    const ux = vx/len, uy = vy/len;
-    const bx = raa.x + ux*18, by = raa.y + uy*18;
-    const px = -uy, py = ux;
-    merker.appendChild(svgEl("polygon", {
-      class:"startpil",
-      points: (bx + ux*8) + "," + (by + uy*8) + " " +
-              (bx + px*5) + "," + (by + py*5) + " " +
-              (bx - px*5) + "," + (by - py*5)
-    }));
+  T2.blekk = []; T2.punkter = []; T2.lengder = [];
+  g.s.forEach(d => {
+    const b = svgEl("path", { class:"blekk", d:d });
+    b.style.stroke = S.farge;
+    blekkLag.appendChild(b);
+    T2.blekk.push(b);
   });
-  flate.appendChild(merker);
-
-  lagMaalpunkter();
-  T2.mine = [];
-  oppdaterDekning();
-}
-function merkelappPrikk(g, pos, nr){
-  g.appendChild(svgEl("circle", { cx:pos.x, cy:pos.y, r:9 }));
-  const t = svgEl("text", { x:pos.x, y:pos.y });
-  t.textContent = String(nr);
-  g.appendChild(t);
-}
-function merkelappPuls(g, pos){
-  g.appendChild(svgEl("circle", { class:"puls", cx:pos.x, cy:pos.y, r:9 }));
-}
-
-function lagMaalpunkter(){
-  T2.maal = [];
-  T2.strek.forEach(p => {
-    const L = p.getTotalLength();
-    for(let d = 0; d <= L; d += 3){
-      const pt = p.getPointAtLength(d);
-      T2.maal.push({ x:pt.x, y:pt.y, truffet:false });
+  T2.blekk.forEach(b => {
+    const len = Math.max(b.getTotalLength(), 1);
+    T2.lengder.push(len);
+    const antall = Math.max(14, Math.round(len / 2));
+    const pts = [];
+    for(let j = 0; j <= antall; j++){
+      const pt = b.getPointAtLength(len * j / antall);
+      pts.push({ x:pt.x, y:pt.y });
     }
+    T2.punkter.push(pts);
+    b.style.strokeDasharray = len;
+    b.style.strokeDashoffset = len;
   });
+
+  T2.markorer = svgEl("g", { class:"startmerke" });
+  flate.appendChild(T2.markorer);
+
+  T2.strek = 0; T2.idx = 0; T2.tegner = false; T2.laast = false;
+  tegnMarkor();
+  oppdaterMaaler();
+}
+
+/* Startprikk med nummer der eleven skal sette fingeren, og en pil som viser
+   hvilken vei streken går. Markøren flytter seg med eleven langs streken. */
+function tegnMarkor(){
+  if(!T2.markorer) return;
+  T2.markorer.innerHTML = "";
+  if(T2.laast || T2.strek >= T2.punkter.length) return;
+  const pts = T2.punkter[T2.strek];
+  if(!pts) return;
+  const p0 = pts[T2.idx] || pts[0];
+  let pn = pts[pts.length - 1], gaatt = 0;
+  for(let i = T2.idx + 1; i < pts.length; i++){
+    gaatt += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+    if(gaatt >= 18){ pn = pts[i]; break; }
+  }
+  const vinkel = Math.atan2(pn.y - p0.y, pn.x - p0.x) * 180 / Math.PI;
+
+  T2.markorer.appendChild(svgEl("circle", { class:"puls", cx:p0.x, cy:p0.y, r:9 }));
+  T2.markorer.appendChild(svgEl("circle", { cx:p0.x, cy:p0.y, r:9 }));
+  const t = svgEl("text", { x:p0.x, y:p0.y });
+  t.textContent = String(T2.strek + 1);
+  T2.markorer.appendChild(t);
+  const pil = svgEl("path", { class:"startpil", d:"M0,-6 L11,0 L0,6 Z" });
+  pil.setAttribute("transform", "translate(" + pn.x + "," + pn.y + ") rotate(" + vinkel + ")");
+  T2.markorer.appendChild(pil);
 }
 
 function svgPunkt(evt){
@@ -1127,59 +1235,102 @@ function svgPunkt(evt){
   const pt = flate.createSVGPoint();
   pt.x = evt.clientX; pt.y = evt.clientY;
   const ctm = flate.getScreenCTM();
-  if(!ctm) return { x:0, y:0 };
+  if(!ctm) return { x:-9999, y:-9999 };
   return pt.matrixTransform(ctm.inverse());
 }
 
 function startStrek(evt){
-  if(S.trinn !== 2) return;
-  evt.preventDefault();
-  stoppAnimasjon();
-  $("#jubel2").classList.remove("vis");
-  T2.tegner = true;
-  T2.punkter = [svgPunkt(evt)];
-  T2.aktiv = svgEl("path", { class:"blekk", d:"", stroke:S.farge });
-  document.getElementById("blekkLag").appendChild(T2.aktiv);
-  tegnAktiv();
-  merkTruffet(T2.punkter[0]);
-}
-function fortsettStrek(evt){
-  if(!T2.tegner) return;
-  evt.preventDefault();
+  if(S.trinn !== 2 || T2.laast || !T2.punkter.length) return;
+  const pts = T2.punkter[T2.strek];
+  if(!pts) return;
   const p = svgPunkt(evt);
-  const f = T2.punkter[T2.punkter.length - 1];
-  if(Math.hypot(p.x - f.x, p.y - f.y) < 1.2) return;
-  T2.punkter.push(p);
-  tegnAktiv();
-  merkTruffet(p);
-  oppdaterDekning();
+  if(Math.hypot(p.x - pts[T2.idx].x, p.y - pts[T2.idx].y) <= STARTTOL){
+    evt.preventDefault();
+    stoppAnimasjon();
+    $("#jubel2").classList.remove("vis");
+    T2.tegner = true;
+    T2.pekerId = evt.pointerId;
+    try{ $("#flate").setPointerCapture(evt.pointerId); }catch(e){}
+  } else {
+    /* Feil sted – blink med prikken i stedet for å tegne. */
+    lydFeil();
+    if(T2.markorer && T2.markorer.animate) T2.markorer.animate([{opacity:.2},{opacity:1}], { duration:420, iterations:2 });
+  }
 }
+
+function fortsettStrek(evt){
+  if(!T2.tegner || T2.laast || evt.pointerId !== T2.pekerId) return;
+  evt.preventDefault();
+  const pts = T2.punkter[T2.strek];
+  if(!pts) return;
+  const p = svgPunkt(evt);
+  /* Kort vindu framover: bokstaver som går opp og ned samme strek (a, d, h, m)
+     skal ikke kunne hoppe over vendepunktet. */
+  let ny = T2.idx;
+  const tak = Math.min(T2.idx + 12, pts.length - 1);
+  for(let i = T2.idx; i <= tak; i++){
+    if(Math.hypot(p.x - pts[i].x, p.y - pts[i].y) <= TOL) ny = i;
+  }
+  if(ny > T2.idx){ T2.idx = ny; malStrek(); }
+  if(T2.idx >= pts.length - 1) fullforStrek();
+}
+
 function sluttStrek(){
   if(!T2.tegner) return;
   T2.tegner = false;
-  if(T2.aktiv) T2.mine.push(T2.aktiv);
-  T2.aktiv = null;
-  oppdaterDekning();
+  const pts = T2.punkter[T2.strek];
+  if(pts && T2.idx / (pts.length - 1) >= SLUTTMONN) fullforStrek();
+  else tegnMarkor();
 }
-function tegnAktiv(){
-  if(!T2.aktiv) return;
-  const d = T2.punkter.map((p, i) => (i ? "L" : "M") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
-  T2.aktiv.setAttribute("d", d || "M0,0");
+
+function malStrek(){
+  const pts = T2.punkter[T2.strek], len = T2.lengder[T2.strek];
+  T2.blekk[T2.strek].style.strokeDashoffset = len * (1 - T2.idx / (pts.length - 1));
+  if(T2.markorer) T2.markorer.innerHTML = "";
+  oppdaterMaaler();
 }
-function merkTruffet(p){
-  const r = 11;
-  for(let i = 0; i < T2.maal.length; i++){
-    const m = T2.maal[i];
-    if(m.truffet) continue;
-    if(Math.abs(m.x - p.x) <= r && Math.abs(m.y - p.y) <= r && Math.hypot(m.x - p.x, m.y - p.y) <= r) m.truffet = true;
+
+function fullforStrek(){
+  if(T2.laast) return;
+  T2.blekk[T2.strek].style.strokeDashoffset = 0;
+  if(T2.guider[T2.strek]) T2.guider[T2.strek].classList.remove("aktiv");
+  T2.tegner = false;
+  lydStrek();
+  T2.strek++; T2.idx = 0;
+  oppdaterMaaler();
+  if(T2.strek >= T2.blekk.length){
+    T2.laast = true;
+    if(T2.markorer) T2.markorer.innerHTML = "";
+    $("#flate").classList.add("ferdigflate");
+    ferdigTrinn2();
+  } else {
+    if(T2.guider[T2.strek]) T2.guider[T2.strek].classList.add("aktiv");
+    tegnMarkor();
   }
 }
-function dekning(){
-  const total = T2.maal.length || 1;
-  return Math.round(T2.maal.filter(m => m.truffet).length / total * 100);
+
+/* Angre siste strek – eller starte den om igjen hvis eleven er midt i den. */
+function angreStrek(){
+  if(!T2.blekk.length) return;
+  $("#flate").classList.remove("ferdigflate");
+  T2.laast = false; T2.tegner = false;
+  if(T2.idx === 0 && T2.strek > 0) T2.strek--;
+  if(T2.strek >= T2.blekk.length) T2.strek = T2.blekk.length - 1;
+  T2.idx = 0;
+  T2.blekk[T2.strek].style.strokeDashoffset = T2.lengder[T2.strek];
+  T2.guider.forEach((p, i) => p.classList.toggle("aktiv", i === T2.strek));
+  tegnMarkor();
+  oppdaterMaaler();
 }
-function oppdaterDekning(){
-  const pst = dekning();
+
+function fremdrift(){
+  const n = T2.blekk.length || 1;
+  const pts = T2.punkter[T2.strek];
+  const del = (!T2.laast && pts) ? T2.idx / (pts.length - 1) : 0;
+  return Math.round(Math.min(1, (T2.strek + del) / n) * 100);
+}
+function oppdaterMaaler(){
+  const pst = fremdrift();
   $("#maalefyll").style.width = pst + "%";
   $("#maalertall").textContent = pst + " %";
   $("#ferdigKnapp").classList.toggle("klar", pst >= 85);
@@ -1193,11 +1344,11 @@ function stoppAnimasjon(){
 function visMeg(){
   stoppAnimasjon();
   const lag = document.getElementById("viseLag");
-  if(!lag) return;
+  if(!lag || !T2.guider.length) return;
   let i = 0;
   const neste = () => {
-    if(i >= T2.strek.length) return;
-    const kilde = T2.strek[i];
+    if(i >= T2.guider.length) return;
+    const kilde = T2.guider[i];
     const L = kilde.getTotalLength();
     const p = svgEl("path", { class:"fasit", d:kilde.getAttribute("d") });
     p.style.strokeDasharray = L;
@@ -1217,14 +1368,14 @@ function visMeg(){
 }
 
 function ferdigTrinn2(){
-  const pst = dekning();
+  const pst = fremdrift();
   const jubel = $("#jubel2");
   const tekst = $("#jubel2Tekst");
   if(pst >= 60){
     tekst.textContent = tilfeldig(JUBELROP);
     $("#monster2").classList.add("heia");
   } else {
-    tekst.textContent = "Prøv en gang til!";
+    tekst.textContent = "Start på prikken og følg sporet!";
   }
   jubel.classList.add("vis");
   setTimeout(() => {
@@ -1465,8 +1616,12 @@ function visFasit(){
    ============================================================ */
 function byggTrinn4(){
   const b = S.bokstav;
-  $("#t4Bokstav").textContent = b;
-  const alle = ordForBokstav(b);
+  const utvalg = ordUtvalg(b);
+  S.modus = utvalg.modus;
+  $("#t4Oppdrag").innerHTML = (S.modus === "inni")
+    ? "Hvilket ord gjemmer seg? Alle har <em>" + b + "</em> i seg"
+    : "Hvilket ord gjemmer seg? Alle begynner med <em>" + b + "</em>";
+  const alle = utvalg.ord;
   S.t4Ord = stokk(alle).slice(0, 3);
 
   const rad = $("#gjettrad");
@@ -1498,11 +1653,32 @@ function byggTrinn4(){
 
     const ruter = document.createElement("div");
     ruter.className = "ruter";
+    /* Tallene ligger i tilfeldig rekkefølge, og hver rute har like mange
+       prikker som tallet viser – litt telletrening mens bildet avdekkes. */
+    const rekkefolge = stokk([1,2,3,4,5,6,7,8,9]);
     for(let i = 0; i < 9; i++){
+      const tall = rekkefolge[i];
       const r = document.createElement("button");
       r.className = "rute";
       r.type = "button";
-      r.textContent = String(i + 1);
+      r.setAttribute("aria-label", "Rute " + tall);
+
+      const tallEl = document.createElement("span");
+      tallEl.className = "rutetall";
+      tallEl.textContent = String(tall);
+      r.appendChild(tallEl);
+
+      const prikker = document.createElement("span");
+      prikker.className = "prikker";
+      prikker.setAttribute("aria-hidden", "true");
+      PRIKKEMONSTER[tall].forEach(rute => {
+        const d = document.createElement("i");
+        d.style.gridRow = String(Math.ceil(rute / 3));
+        d.style.gridColumn = String(((rute - 1) % 3) + 1);
+        prikker.appendChild(d);
+      });
+      r.appendChild(prikker);
+
       r.addEventListener("click", () => {
         r.classList.add("borte");
         if(ruter.querySelectorAll(".rute:not(.borte)").length === 0) avslor(kort, x, ordEl, false);
@@ -1530,11 +1706,25 @@ function byggTrinn4(){
   });
 }
 
+/* Prikkene ligger i terningmønster i et 3x3-rutenett – lettere å «se» mengden
+   uten å telle. Tallene under viser hvilke av de ni plassene som er fylt. */
+const PRIKKEMONSTER = {
+  1: [5],
+  2: [1, 9],
+  3: [1, 5, 9],
+  4: [1, 3, 7, 9],
+  5: [1, 3, 5, 7, 9],
+  6: [1, 3, 4, 6, 7, 9],
+  7: [1, 3, 4, 5, 6, 7, 9],
+  8: [1, 2, 3, 4, 6, 7, 8, 9],
+  9: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+};
+
 function avslor(kort, x, ordEl, ogsaaRuter){
   if(ogsaaRuter) kort.querySelectorAll(".rute").forEach(r => r.classList.add("borte"));
   kort.classList.add("avslort");
   ordEl.classList.remove("skjult");
-  ordEl.innerHTML = uthevForste(x.o);
+  ordEl.innerHTML = (S.modus === "inni") ? uthev(x.o, S.bokstav) : uthevForste(x.o);
   spill(ordLyd(x.f));
 }
 
@@ -1579,8 +1769,15 @@ $("#ordKnapp").addEventListener("click", () => {
   visTrinn1Ord();
 });
 $("#flereOrd").addEventListener("click", () => {
-  S.t1Ord = sorterForLytting(ordForBokstav(S.bokstav)).slice(0, 6);
-  $("#boble1").textContent = tilfeldig(HEIAROP_LYD);
+  if(S.t1Idx + 1 < S.t1Ord.length){
+    S.t1Idx++;
+  } else {
+    /* Ferdig med runden – trekk et nytt utvalg og start forfra. */
+    const u = ordUtvalg(S.bokstav);
+    S.t1Ord = (u.modus === "inni" ? stokk(u.ord) : sorterForLytting(u.ord)).slice(0, 6);
+    S.t1Idx = 0;
+  }
+  $("#boble1").textContent = tilfeldig(S.modus === "inni" ? HEIAROP_INNI : HEIAROP_LYD);
   visTrinn1Ord();
 });
 
@@ -1591,16 +1788,7 @@ $("#modellKnapp").addEventListener("click", () => { S.visModell = !S.visModell; 
 $("#linjerKnapp").addEventListener("click", () => { S.visLinjer = !S.visLinjer; byggTrinn2(); });
 $("#tomKnapp").addEventListener("click", () => byggTrinn2());
 $("#ferdigKnapp").addEventListener("click", ferdigTrinn2);
-$("#angreKnapp").addEventListener("click", () => {
-  const siste = T2.mine.pop();
-  if(siste && siste.parentNode) siste.parentNode.removeChild(siste);
-  T2.maal.forEach(m => { m.truffet = false; });
-  T2.mine.forEach(p => {
-    const L = p.getTotalLength();
-    for(let d = 0; d <= L; d += 2) merkTruffet(p.getPointAtLength(d));
-  });
-  oppdaterDekning();
-});
+$("#angreKnapp").addEventListener("click", angreStrek);
 
 (function byggFargevalg(){
   const rad = $("#fargevalg");
@@ -1613,6 +1801,7 @@ $("#angreKnapp").addEventListener("click", () => {
     kn.setAttribute("aria-pressed", i === 0 ? "true" : "false");
     kn.addEventListener("click", () => {
       S.farge = f;
+      T2.blekk.forEach(b => { b.style.stroke = f; });
       $$(".fargeknapp").forEach(k => k.setAttribute("aria-pressed", "false"));
       kn.setAttribute("aria-pressed", "true");
     });
@@ -1621,7 +1810,7 @@ $("#angreKnapp").addEventListener("click", () => {
 })();
 
 const flateEl = $("#flate");
-flateEl.addEventListener("pointerdown", e => { flateEl.setPointerCapture(e.pointerId); startStrek(e); });
+flateEl.addEventListener("pointerdown", startStrek);
 flateEl.addEventListener("pointermove", fortsettStrek);
 flateEl.addEventListener("pointerup", sluttStrek);
 flateEl.addEventListener("pointercancel", sluttStrek);
