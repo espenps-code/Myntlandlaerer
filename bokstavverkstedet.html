@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Bokstavverkstedet – Myntland</title>
+<meta name="description" content="Én bokstav i fire trinn: lyden, formen, navnene i klassen og gjett-bildet. For interaktiv tavle og iPad i begynneropplæringa." />
+<meta name="theme-color" content="#232a3f" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Bokstavverkstedet" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%23232a3f'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23efae2a'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+<link rel="stylesheet" href="myntland.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+/* Samme palett og formspråk som Lydverkstedet, Rimverkstedet og Skriveverkstedet. */
+:root{
+  --navy:#232a3f; --navy-soft:#3b4560;
+  --krem:#fbf1d6; --krem-dyp:#f3e2b9; --krem-lys:#fffaeb;
+  --amber:#efae2a; --amber-dyp:#c4841a;
+  --raud:#e8473f; --gronn:#74c043; --gronn-dyp:#4f8f28; --teal:#2bb3c0;
+  --himmel-1:#a6dff0; --himmel-2:#d8f2f8; --bakke:#8cc63f;
+  --text:#232a3f; --muted:#6b7690; --border:var(--navy);
+  --f1:#E23B2E; --f2:#1F7AE0; --f3:#17A05C; --f4:#EF9F27;
+  --skygge:0 4px 0 rgba(35,42,63,.9);
+  --skygge-mjuk:0 4px 0 rgba(35,42,63,.18);
+}
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; overflow:hidden; }
+body{
+  font-family:'Nunito',system-ui,sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,var(--himmel-1) 0%,var(--himmel-2) 55%,#e9f7ea 78%,var(--bakke) 100%);
+  display:flex; flex-direction:column;
+  height:100dvh;
+  user-select:none; -webkit-user-select:none;
+}
+
+/* ---------- topnav ---------- */
+.topnav{ background:var(--navy); padding:.45rem 1rem; flex:0 0 auto; }
+.topnav-inner{ max-width:1600px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.topnav-logo{
+  font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--krem); text-decoration:none;
+  display:flex; align-items:center; gap:.45rem; letter-spacing:.02em;
+}
+.topnav-logo::before{ content:"🪙"; }
+.topnav-logo span{ font-family:'Nunito',sans-serif; font-weight:800; font-size:.75rem; color:var(--amber); text-transform:uppercase; letter-spacing:.12em; }
+.topnav-back{
+  font-size:.75rem; font-weight:900; color:var(--navy); text-decoration:none; text-transform:uppercase; letter-spacing:.08em;
+  background:var(--amber); border:2px solid var(--navy); border-radius:999px; padding:.25rem .8rem;
+}
+
+/* ---------- lærerlinje ---------- */
+.laererlinje{
+  background:var(--krem); border:4px solid var(--navy); border-radius:20px;
+  box-shadow:var(--skygge); margin:.55rem .6rem .2rem;
+  padding:.55rem .8rem .65rem; flex:0 0 auto;
+  display:flex; flex-direction:column; gap:.5rem; align-items:center;
+}
+.rad{ display:flex; gap:.4rem; align-items:center; justify-content:center; flex-wrap:wrap; }
+.seg{ display:flex; background:var(--krem-dyp); border:3px solid var(--navy); border-radius:999px; padding:3px; gap:3px; }
+.seg button{
+  border:0; background:transparent; font-family:inherit; font-weight:900; font-size:.78rem;
+  padding:.3rem .75rem; border-radius:999px; color:var(--navy); cursor:pointer; opacity:.65;
+  display:inline-flex; align-items:center; gap:.35rem;
+}
+.seg button[aria-pressed="true"]{ background:var(--navy); color:var(--krem); opacity:1; }
+.seg button .nr{
+  font-family:'Fredoka One',cursive; font-size:.72rem; background:var(--navy); color:var(--krem);
+  width:1.15rem; height:1.15rem; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+}
+.seg button[aria-pressed="true"] .nr{ background:var(--amber); color:var(--navy); }
+
+.knapp{
+  border:3px solid var(--navy); background:var(--krem-lys); border-radius:999px;
+  font-family:inherit; font-weight:900; font-size:.78rem; padding:.28rem .7rem; cursor:pointer; color:var(--navy);
+  display:inline-flex; align-items:center; gap:.35rem; box-shadow:0 3px 0 var(--navy);
+  transition:transform .08s, box-shadow .08s;
+}
+.knapp:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.knapp:hover{ background:#fff; }
+.knapp.primary{ background:var(--amber); color:var(--navy); }
+.knapp.av{ opacity:.4; }
+.knapp:disabled{ opacity:.3; cursor:not-allowed; }
+
+.skille{ width:2px; height:1.5rem; background:var(--krem-dyp); border-radius:2px; margin:0 .15rem; }
+
+/* bokstavrad */
+.bokstavlinje{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; justify-content:center; }
+.btittel{ font-weight:900; font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:var(--navy); }
+.bokstavrad{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; max-width:1500px; }
+.btast{
+  position:relative; width:2.35rem; height:2.35rem; padding:0; cursor:pointer;
+  border:3px solid var(--navy); background:var(--krem-lys); border-radius:.7rem;
+  font-family:'Fredoka One',cursive; font-size:1.15rem; line-height:1; color:var(--navy);
+  display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 0 var(--navy);
+  transition:opacity .15s, background .15s;
+}
+.btast:hover{ background:#fff; }
+.btast[aria-pressed="true"]{ background:var(--amber); }
+.btast .ant{
+  position:absolute; top:-6px; right:-5px;
+  font-family:'Nunito',sans-serif; font-weight:900; font-size:.6rem;
+  background:var(--navy); color:var(--krem); border-radius:999px; padding:0 4px; min-width:1rem;
+}
+.btast.tynn .ant{ background:var(--amber-dyp); color:#fff; }
+.btast.tom .ant{ background:var(--muted); }
+
+/* ---------- scene ---------- */
+.scene{ flex:1 1 auto; min-height:0; position:relative; padding:.6rem; }
+.panel{ display:none; height:100%; flex-direction:column; gap:.5rem; }
+.panel.aktiv{ display:flex; }
+
+.topplinje{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.8rem,4vw,3rem); flex-wrap:wrap;
+  background:var(--krem); border:4px solid var(--navy); border-radius:18px; box-shadow:var(--skygge-mjuk);
+  padding:.35rem .9rem;
+}
+.oppdrag{
+  font-family:'Fredoka One',cursive; font-size:clamp(.95rem,2vw,1.45rem); color:var(--navy);
+  text-align:center; line-height:1.15;
+}
+.oppdrag em{ font-style:normal; color:var(--amber-dyp); }
+
+.arena{
+  flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,3vw,2rem);
+  background:var(--krem); border:5px solid var(--navy); border-radius:26px; padding:.7rem;
+  box-shadow:var(--skygge); position:relative; overflow:hidden;
+}
+
+/* monster + snakkeboble */
+.heier{ flex:0 0 auto; width:min(15vw,150px); display:flex; flex-direction:column; align-items:center; gap:.35rem; }
+.monster{ width:100%; max-width:150px; filter:drop-shadow(0 6px 8px rgba(35,42,63,.22)); animation:bob 2.6s ease-in-out infinite; }
+.monster.heia{ animation:heia .45s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-7px) } }
+@keyframes heia{ 0%,100%{ transform:translateY(0) rotate(-4deg) } 50%{ transform:translateY(-12px) rotate(4deg) } }
+.boble{
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:16px; color:var(--navy);
+  padding:.32rem .75rem; font-weight:900; font-size:clamp(.75rem,1.4vw,1rem); text-align:center;
+  position:relative; max-width:100%; box-shadow:0 3px 0 var(--navy);
+}
+.boble::after{ content:""; position:absolute; bottom:-11px; left:50%; transform:translateX(-50%);
+  border:8px solid transparent; border-top-color:var(--navy); }
+.mnavn{
+  font-family:'Fredoka One',cursive; font-size:clamp(.8rem,1.5vw,1.05rem); color:var(--navy);
+  background:var(--amber); border:3px solid var(--navy); border-radius:999px; padding:.05rem .7rem;
+}
+
+/* felles bildeboks */
+.bildeboks{
+  position:relative; background:#f9f0d5; border:5px solid var(--navy); border-radius:22px;
+  box-shadow:var(--skygge); overflow:hidden; aspect-ratio:1/1;
+  display:flex; align-items:center; justify-content:center;
+}
+.bildeboks img{ width:100%; height:100%; object-fit:contain; display:block; }
+.bildeboks .reserve{
+  width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+  font-size:2.4rem; color:var(--muted);
+}
+.ordlyd{
+  position:absolute; right:5px; bottom:5px; z-index:3;
+  width:2rem; height:2rem; border-radius:50%; cursor:pointer;
+  border:3px solid var(--navy); background:var(--amber); color:var(--navy);
+  font-size:.95rem; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 3px 0 var(--navy); padding:0;
+}
+.ordlyd:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.ordtekst{
+  position:absolute; left:0; right:0; bottom:0; z-index:2; text-align:center;
+  font-weight:900; font-size:clamp(.75rem,1.3vw,1rem); letter-spacing:.05em;
+  background:rgba(35,42,63,.82); color:var(--krem); padding:.12rem 0;
+}
+.ordtekst .f{ color:var(--amber); }
+.ordtekst.skjult{ display:none; }
+
+/* ---------- TRINN 1 ---------- */
+.t1flate{ flex:1 1 auto; min-width:0; height:100%; display:flex; align-items:center; justify-content:center; gap:clamp(.6rem,2.5vw,2rem); }
+.bokstavboks{
+  flex:0 0 auto; width:clamp(150px, min(30vw,52vh), 460px); height:auto; aspect-ratio:1/1;
+  background:var(--navy); border:5px solid var(--navy); border-radius:26px; box-shadow:var(--skygge);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;
+}
+.bokstavboks .par{
+  font-family:'Fredoka One',cursive; line-height:.95; color:var(--krem);
+  font-size:min(22vh,9rem); letter-spacing:.02em;
+}
+.bokstavboks .par .liten{ color:var(--amber); }
+.bokstavboks .horknapp{
+  position:absolute; bottom:-14px; left:50%; transform:translateX(-50%);
+  border:3px solid var(--navy); background:var(--amber); color:var(--navy); border-radius:999px;
+  font-family:inherit; font-weight:900; font-size:.8rem; padding:.25rem .9rem; cursor:pointer;
+  box-shadow:0 3px 0 var(--navy); white-space:nowrap;
+}
+.bokstavboks .horknapp:active{ transform:translateX(-50%) translateY(3px); box-shadow:0 0 0 var(--navy); }
+
+.ordvegg{ display:grid; grid-template-columns:repeat(3,1fr); gap:.55rem; align-content:center; width:min(44vw,600px); }
+.ordvegg .bildeboks{ width:100%; height:auto; border-width:4px; border-radius:16px; box-shadow:0 3px 0 var(--navy); cursor:pointer; }
+.ordvegg .ordlyd{ width:1.5rem; height:1.5rem; font-size:.75rem; border-width:2px; box-shadow:0 2px 0 var(--navy); }
+
+.lydtips{
+  flex:0 0 auto; max-width:min(26vw,270px); background:var(--krem-lys); border:3px solid var(--navy);
+  border-radius:16px; box-shadow:0 3px 0 var(--navy); padding:.5rem .75rem;
+  font-weight:800; font-size:clamp(.75rem,1.25vw,.95rem); line-height:1.4; color:var(--navy);
+}
+.lydtips .tittel{ display:block; font-family:'Fredoka One',cursive; font-weight:400; color:var(--amber-dyp); font-size:.85rem; margin-bottom:.15rem; }
+.lydtips b{ color:var(--amber-dyp); }
+
+/* ---------- TRINN 2 ---------- */
+.skrivefelt{ flex:1 1 auto; min-width:0; height:100%; display:flex; flex-direction:column; gap:.35rem; }
+.skriveflate{ flex:1 1 auto; width:100%; min-height:0; display:block; touch-action:none; }
+.skriveflate .hjelpelinje{ stroke:var(--navy-soft); stroke-width:1.2; opacity:.35; }
+.skriveflate .hjelpelinje.stiplet{ stroke-dasharray:5 5; }
+.skriveflate .hjelpelinje.grunn{ opacity:.6; stroke-width:1.8; }
+.skriveflate .modell{ fill:none; stroke:#e6dcc0; stroke-width:15; stroke-linecap:round; stroke-linejoin:round; }
+.skriveflate .fasit{ fill:none; stroke:#b7a473; stroke-width:15; stroke-linecap:round; stroke-linejoin:round; }
+.skriveflate .blekk{ fill:none; stroke-width:14; stroke-linecap:round; stroke-linejoin:round; }
+.skriveflate .startmerke circle{ fill:var(--amber); stroke:var(--navy); stroke-width:3; }
+.skriveflate .startmerke text{ font-family:'Fredoka One',cursive; font-size:13px; fill:var(--navy); text-anchor:middle; dominant-baseline:central; }
+.skriveflate .startpil{ fill:var(--navy); }
+.skriveflate .puls{ fill:none; stroke:var(--amber-dyp); stroke-width:2.5;
+  transform-box:fill-box; transform-origin:center; animation:startpuls 1.7s ease-out infinite; }
+@keyframes startpuls{ 0%{ transform:scale(1); opacity:.55 } 100%{ transform:scale(2.4); opacity:0 } }
+
+.verktoy{ flex:0 0 auto; display:flex; gap:.6rem; justify-content:center; padding-top:.1rem; flex-wrap:wrap; align-items:center; }
+.vknapp{
+  font-family:inherit; font-weight:900; cursor:pointer; color:var(--navy);
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:999px;
+  display:inline-flex; align-items:center; gap:.35rem; box-shadow:0 3px 0 var(--navy);
+  font-size:clamp(.8rem,1.4vw,1rem); padding:.32rem 1rem;
+  transition:transform .08s, box-shadow .08s;
+}
+.vknapp:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.vknapp.ok{ background:var(--gronn); color:#fff; }
+.vknapp.storliten{ background:var(--krem-dyp); }
+.vknapp.storliten .glyf{
+  font-family:'Fredoka One',cursive; font-size:1.25em; line-height:1;
+  color:var(--navy); background:var(--amber); border:2px solid var(--navy); border-radius:.45rem;
+  min-width:1.7em; padding:0 .2em; text-align:center;
+}
+/* «Ferdig» puster når bokstaven er godt nok sporet */
+.vknapp.ok.klar{ animation:venter 1.5s ease-in-out infinite; }
+@keyframes venter{ 0%,100%{ transform:none; box-shadow:0 3px 0 var(--navy) }
+                   50%{ transform:translateY(-2px) scale(1.05); box-shadow:0 5px 0 var(--navy) } }
+
+.fargevalg{ display:flex; gap:.35rem; }
+.fargeknapp{
+  width:1.9rem; height:1.9rem; border-radius:50%; border:3px solid var(--navy); cursor:pointer; padding:0;
+  box-shadow:0 3px 0 var(--navy);
+}
+.fargeknapp[aria-pressed="true"]{ transform:scale(1.16); }
+
+/* dekningsmåler */
+.maaler{ display:flex; align-items:center; gap:.45rem; }
+.maalerspor{ width:clamp(80px,12vw,150px); height:16px; background:var(--krem-dyp); border:3px solid var(--navy); border-radius:999px; overflow:hidden; }
+.maalerspor > div{ height:100%; width:0%; background:var(--gronn); transition:width .12s linear; }
+.maalertall{ font-family:'Fredoka One',cursive; font-size:.9rem; color:var(--navy); min-width:2.6rem; }
+
+/* ---------- TRINN 3 ---------- */
+.navnstripe{
+  flex:0 0 auto; background:var(--krem); border:4px solid var(--navy); border-radius:18px;
+  box-shadow:var(--skygge-mjuk); padding:.4rem .7rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+}
+.navnstripe .stittel{ font-weight:900; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.navnchip{
+  font-family:inherit; font-weight:900; font-size:clamp(1.5rem,2.4vw,1.9rem); cursor:pointer; color:var(--navy);
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:999px; padding:.1rem .8rem;
+  box-shadow:0 3px 0 var(--navy); line-height:1.3;
+}
+.navnchip:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.navnchip[aria-pressed="true"]{ background:var(--amber); }
+.navnchip .t{ color:var(--raud); }
+
+.kolonner{ flex:1 1 auto; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; }
+.kolonne{
+  background:var(--krem); border:4px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  padding:.55rem; display:flex; flex-direction:column; gap:.4rem; min-height:0; overflow:hidden;
+}
+.kolonne.klar{ background:var(--krem-lys); border-color:var(--amber-dyp); }
+.kolonne .khode{ flex:0 0 auto; text-align:center; }
+.kolonne .kmerke{
+  font-family:'Fredoka One',cursive; font-size:clamp(.9rem,1.5vw,1.15rem); color:var(--navy);
+  background:var(--krem-dyp); border:3px solid var(--navy); border-radius:999px; padding:.1rem .9rem; display:inline-block;
+}
+.kolonne .mal{
+  font-family:'Fredoka One',cursive; font-size:clamp(1.1rem,2vw,1.6rem); letter-spacing:.14em; color:var(--muted); margin-top:.25rem;
+}
+.kolonne .mal .m{ color:var(--raud); }
+.kliste{ flex:1 1 auto; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:.3rem; }
+.navnlinje{
+  display:flex; align-items:center; gap:.5rem; background:var(--krem-lys); border:3px solid var(--navy);
+  border-radius:14px; padding:.18rem .7rem; font-weight:900; font-size:clamp(1.7rem,2.8vw,2.2rem);
+  box-shadow:0 2px 0 var(--navy); line-height:1.25;
+}
+.navnlinje.riktig{ background:#e6f7dc; }
+.navnlinje.feil{ background:#fbe0de; }
+.navnlinje .t{ color:var(--raud); }
+.navnlinje .fasitmerke{ margin-left:auto; font-size:1.5rem; }
+.navnlinje .fjern{
+  background:none; border:0; cursor:pointer; color:var(--muted); font-size:1.7rem; font-family:inherit; line-height:1; padding:0 .2rem;
+}
+.navnlinje .fjern:hover{ color:var(--raud); }
+/* skriveboks + tastatur på tavla */
+.tastaturpanel{
+  flex:0 0 auto; background:var(--krem); border:4px solid var(--navy); border-radius:20px;
+  box-shadow:var(--skygge-mjuk); padding:.45rem .7rem .55rem;
+  display:flex; flex-direction:column; gap:.4rem; align-items:center;
+}
+.skrivelinje{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; justify-content:center; }
+.skrivelinje .merkelapp{ font-weight:900; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.skrivevindu{
+  font-family:'Fredoka One',cursive; font-size:clamp(1.6rem,2.8vw,2.2rem); color:var(--navy); line-height:1.25;
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:14px;
+  padding:.02rem .9rem; min-width:9rem; text-align:center; box-shadow:0 3px 0 var(--navy);
+}
+.skrivevindu.tom{ color:#b9b09a; }
+.skrivevindu .t{ color:var(--raud); }
+.skrivevindu .marker{ color:var(--amber-dyp); animation:blink 1s steps(1) infinite; }
+@keyframes blink{ 0%,49%{ opacity:1 } 50%,100%{ opacity:0 } }
+.skrivehint{ font-weight:900; font-size:clamp(.75rem,1.2vw,.92rem); color:var(--muted); }
+
+.tastatur{ display:flex; flex-wrap:wrap; gap:.3rem; justify-content:center; max-width:1100px; }
+.tastatur.skjult{ display:none; }
+.tast{
+  font-family:'Fredoka One',cursive; color:var(--navy); cursor:pointer;
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:.7rem;
+  box-shadow:0 4px 0 var(--navy); transition:transform .08s, box-shadow .08s, background .15s;
+  width:clamp(2rem,3.2vw,2.9rem); height:clamp(2rem,3.2vw,2.9rem);
+  font-size:clamp(.95rem,1.7vw,1.5rem); display:inline-flex; align-items:center; justify-content:center; padding:0;
+}
+.tast:hover{ background:#fff; }
+.tast:active{ transform:translateY(4px); box-shadow:0 0 0 var(--navy); }
+.tast.gjeldende{ background:var(--amber); }
+.tast.bred{
+  width:auto; padding:0 .8rem; font-family:'Nunito',sans-serif; font-weight:900;
+  font-size:clamp(.75rem,1.3vw,.95rem);
+}
+.tast.slett{ background:var(--krem-dyp); }
+.tast.tomknapp{ background:var(--krem-dyp); }
+
+/* ---------- TRINN 4 ---------- */
+.gjettrad{ flex:1 1 auto; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:.7rem; }
+.gjettkort{
+  background:var(--krem); border:4px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  padding:.55rem; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:.4rem; min-height:0; overflow:hidden;
+}
+.gjettkort.avslort{ background:var(--krem-lys); }
+.gjettkort .bildeboks{ flex:0 0 auto; width:min(100%,52vh); height:auto; }
+.ruter{ position:absolute; inset:0; z-index:4; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); }
+.rute{
+  border:2px solid var(--krem); background:var(--navy); cursor:pointer; padding:0;
+  font-family:'Fredoka One',cursive; font-size:clamp(.9rem,2vw,1.5rem); color:rgba(251,241,214,.45);
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity .35s ease, transform .35s ease;
+}
+.rute:nth-child(2n){ background:#2e3752; }
+.rute:hover{ background:var(--amber-dyp); color:var(--krem); }
+.rute.borte{ opacity:0; transform:scale(.35) rotate(-14deg); pointer-events:none; }
+.gjettord{
+  flex:0 0 auto; font-family:'Fredoka One',cursive; font-size:clamp(.85rem,1.6vw,1.2rem); letter-spacing:.06em;
+  color:var(--navy); background:var(--krem-dyp); border:3px solid var(--navy); border-radius:999px;
+  padding:.08rem .8rem; box-shadow:0 2px 0 var(--navy);
+}
+.gjettord.skjult{ color:var(--muted); background:var(--krem-lys); }
+.gjettord .f{ color:var(--raud); }
+.gjettknapper{ flex:0 0 auto; display:flex; gap:.35rem; }
+.minik{
+  font-family:inherit; font-weight:900; font-size:.72rem; color:var(--navy); cursor:pointer;
+  background:var(--krem-lys); border:2px solid var(--navy); border-radius:999px;
+  padding:.15rem .65rem; box-shadow:0 2px 0 var(--navy);
+}
+.minik:hover{ background:#fff; }
+.minik:active{ transform:translateY(2px); box-shadow:0 0 0 var(--navy); }
+
+/* tom bokstav */
+.tommelding{
+  background:var(--krem-lys); border:4px dashed var(--navy); border-radius:20px; padding:1rem 1.4rem;
+  font-weight:900; color:var(--navy); text-align:center; max-width:34rem; font-size:clamp(.85rem,1.5vw,1.05rem);
+}
+
+/* ---------- modal ---------- */
+.modal{ position:fixed; inset:0; background:rgba(35,42,63,.72); display:none; align-items:center; justify-content:center; padding:1.2rem; z-index:900; }
+.modal.open{ display:flex; }
+.modalkort{
+  background:var(--krem); border:5px solid var(--navy); border-radius:26px; box-shadow:var(--skygge);
+  padding:1.3rem; max-width:520px; width:100%; max-height:88vh; overflow:auto;
+}
+.modalkort h2{ font-family:'Fredoka One',cursive; font-weight:400; color:var(--navy); font-size:1.25rem; margin-bottom:.3rem; }
+.modalkort p{ color:var(--navy); font-weight:700; font-size:.88rem; margin-bottom:.7rem; line-height:1.5; }
+.modalkort textarea{
+  width:100%; min-height:180px; font-family:inherit; font-weight:800; font-size:1rem;
+  border:3px solid var(--navy); border-radius:14px; padding:.6rem; resize:vertical;
+  background:var(--krem-lys); color:var(--navy);
+}
+.personvern{
+  background:var(--krem-lys); border:3px solid var(--gronn-dyp); border-radius:14px; padding:.55rem .8rem;
+  font-size:.8rem; font-weight:800; color:var(--navy); margin-top:.7rem; line-height:1.45;
+}
+.modalknapper{ display:flex; gap:.5rem; margin-top:.9rem; flex-wrap:wrap; }
+
+/* ---------- jubel ---------- */
+.jubel{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:40; pointer-events:none; }
+.jubel.vis{ display:flex; }
+.jubel .tekst{
+  font-family:'Fredoka One',cursive; color:var(--amber); text-align:center; line-height:1.1;
+  font-size:clamp(1.6rem,6vw,4rem); padding:.35rem 1.6rem; border-radius:26px;
+  background:var(--navy); border:5px solid var(--navy); box-shadow:0 8px 0 rgba(35,42,63,.35);
+  animation:sprett .5s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes sprett{ from{ transform:scale(.4); opacity:0 } to{ transform:scale(1); opacity:1 } }
+
+/* ---------- ren visning ---------- */
+body.rent .topnav, body.rent .laererlinje{ display:none; }
+.flytknapp{
+  position:fixed; top:8px; right:8px; z-index:50; display:none;
+  border:3px solid var(--navy); background:var(--krem); border-radius:999px; padding:.35rem .8rem;
+  font-family:inherit; font-weight:900; color:var(--navy); cursor:pointer; box-shadow:0 3px 0 var(--navy);
+}
+body.rent .flytknapp{ display:block; }
+
+@media (max-width:1000px){
+  .t1flate{ flex-direction:column; gap:.5rem; }
+  .lydtips{ max-width:100%; }
+  .bokstavboks{ height:auto; width:min(100%,28vh); }
+  .heier{ width:22vw; }
+}
+@media (max-width:760px){
+  .kolonner, .gjettrad{ grid-template-columns:1fr; }
+  .heier{ display:none; }
+  .scene{ overflow:auto; }
+  .panel{ height:auto; min-height:100%; }
+}
+@media (prefers-reduced-motion:reduce){
+  .monster,.monster.heia,.jubel .tekst,.skriveflate .puls,.vknapp.ok.klar{ animation:none !important; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-logo" href="index.html">Bokstavverkstedet <span>Myntland</span></a>
+    <a class="topnav-back" href="begynneropplaering.html">← Tilbake</a>
+  </div>
+</nav>
+
+<div class="laererlinje">
+  <!-- rad 1: trinn + navigasjon -->
+  <div class="rad">
+    <div class="seg" id="trinnseg" role="group" aria-label="Velg trinn">
+      <button data-trinn="1" aria-pressed="true"><span class="nr">1</span> Bokstavlyd</button>
+      <button data-trinn="2" aria-pressed="false"><span class="nr">2</span> Bokstavform</button>
+      <button data-trinn="3" aria-pressed="false"><span class="nr">3</span> Navn i klassen</button>
+      <button data-trinn="4" aria-pressed="false"><span class="nr">4</span> Gjett bildet</button>
+    </div>
+    <div class="skille"></div>
+    <button class="knapp" id="forrigeKnapp" title="Forrige bokstav">◀</button>
+    <button class="knapp primary" id="nesteKnapp">Neste bokstav →</button>
+    <button class="knapp" id="lydKnapp" title="Lyd og stemme">🔊</button>
+    <button class="knapp" id="fullKnapp" title="Fullskjerm">⛶</button>
+    <button class="knapp" id="rentKnapp" title="Skjul menyene">⬆ Skjul meny</button>
+  </div>
+
+  <!-- rad 2: bokstavvelger -->
+  <div class="bokstavlinje">
+    <span class="btittel">Bokstav</span>
+    <div class="bokstavrad" id="bokstavrad"></div>
+  </div>
+
+  <!-- rad 3: verktøy for gjeldende trinn -->
+  <div class="rad" id="trinnverktoy">
+    <span id="verktoyT1" class="rad">
+      <button class="knapp" id="ordKnapp">📝 Ord av</button>
+      <button class="knapp" id="flereOrd">🔄 Andre ord</button>
+    </span>
+    <span id="verktoyT2" class="rad">
+      <button class="knapp primary" id="visMegKnapp">👀 Vis meg</button>
+      <button class="knapp" id="modellKnapp">👻 Grå bokstav på</button>
+      <button class="knapp" id="linjerKnapp">📏 Linjer på</button>
+    </span>
+    <span id="verktoyT3" class="rad">
+      <button class="knapp" id="tastaturKnapp">⌨️ Tastatur på</button>
+      <button class="knapp" id="klasselisteKnapp">👥 Klasselista</button>
+      <button class="knapp" id="sjekkKnapp">✓ Sjekk</button>
+      <button class="knapp" id="fasitKnapp">💡 Fasit</button>
+      <button class="knapp" id="nullstillNavn">↺ Start på nytt</button>
+    </span>
+    <span id="verktoyT4" class="rad">
+      <button class="knapp" id="nyeBilder">🔄 Nye bilder</button>
+      <button class="knapp" id="dekkTilKnapp">🔒 Dekk til igjen</button>
+    </span>
+  </div>
+</div>
+
+<button class="flytknapp" id="visMenyKnapp">⬇ Vis meny</button>
+
+<main class="scene">
+
+  <!-- ================= TRINN 1 ================= -->
+  <section class="panel aktiv" id="panel1">
+    <div class="topplinje">
+      <div class="oppdrag">Hvilken lyd hører du <em>først</em> i ordet?</div>
+    </div>
+    <div class="arena">
+      <div class="heier" id="heier1">
+        <div class="boble" id="boble1">Hva hører du?</div>
+        <img class="monster" id="monster1" alt="">
+        <span class="mnavn" id="mnavn1"></span>
+      </div>
+      <div class="t1flate">
+        <div class="bokstavboks">
+          <div class="par" id="bokstavPar">A<span class="liten">a</span></div>
+          <button class="horknapp" id="horBokstav">🔊 Hør bokstaven</button>
+        </div>
+        <div class="ordvegg" id="ordvegg"></div>
+        <div class="lydtips">
+          <span class="tittel">Si lyden sammen</span>
+          <span id="lydtipsTekst"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TRINN 2 ================= -->
+  <section class="panel" id="panel2">
+    <div class="topplinje">
+      <div class="oppdrag">Slik skriver vi <em id="t2Bokstav">A</em></div>
+      <div class="maaler">
+        <div class="maalerspor"><div id="maalefyll"></div></div>
+        <span class="maalertall" id="maalertall">0 %</span>
+      </div>
+    </div>
+    <div class="arena">
+      <div class="heier" id="heier2">
+        <div class="boble" id="boble2">Start på prikken!</div>
+        <img class="monster" id="monster2" alt="">
+        <span class="mnavn" id="mnavn2"></span>
+      </div>
+      <div class="skrivefelt">
+        <svg class="skriveflate" id="flate" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="verktoy">
+          <button class="vknapp storliten" id="storLitenKnapp" title="Bytt mellom stor og liten bokstav"><span class="glyf">A</span> Stor bokstav</button>
+          <div class="fargevalg" id="fargevalg"></div>
+          <button class="vknapp" id="angreKnapp">↶ Angre</button>
+          <button class="vknapp" id="tomKnapp">↺ Viske</button>
+          <button class="vknapp ok" id="ferdigKnapp">✓ Ferdig</button>
+        </div>
+      </div>
+      <div class="jubel" id="jubel2"><div class="tekst" id="jubel2Tekst">Bra jobba!</div></div>
+    </div>
+  </section>
+
+  <!-- ================= TRINN 3 ================= -->
+  <section class="panel" id="panel3">
+    <div class="topplinje">
+      <div class="oppdrag">Hvem i klassen har <em id="t3Bokstav">A</em> i navnet sitt?</div>
+    </div>
+    <div class="navnstripe" id="navnstripe">
+      <span class="stittel">Navn å plassere</span>
+      <span id="navnchips" class="rad" style="gap:.35rem"></span>
+    </div>
+    <div class="kolonner">
+      <div class="kolonne" data-plass="forst">
+        <div class="khode">
+          <span class="kmerke">1️⃣ Først i navnet</span>
+          <div class="mal" id="malForst"><span class="m">A</span>___</div>
+        </div>
+        <div class="kliste" data-liste="forst"></div>
+      </div>
+      <div class="kolonne" data-plass="inni">
+        <div class="khode">
+          <span class="kmerke">2️⃣ Inni navnet</span>
+          <div class="mal" id="malInni">_<span class="m">A</span>__</div>
+        </div>
+        <div class="kliste" data-liste="inni"></div>
+      </div>
+      <div class="kolonne" data-plass="sist">
+        <div class="khode">
+          <span class="kmerke">3️⃣ Sist i navnet</span>
+          <div class="mal" id="malSist">___<span class="m">A</span></div>
+        </div>
+        <div class="kliste" data-liste="sist"></div>
+      </div>
+    </div>
+
+    <div class="tastaturpanel" id="tastaturpanel">
+      <div class="skrivelinje">
+        <span class="merkelapp">Skriv et navn</span>
+        <div class="skrivevindu tom" id="skrivevindu">– – –</div>
+        <span class="skrivehint" id="skrivehint">…og trykk på boksen der bokstaven hører hjemme</span>
+      </div>
+      <div class="tastatur" id="tastatur"></div>
+    </div>
+  </section>
+
+  <!-- ================= TRINN 4 ================= -->
+  <section class="panel" id="panel4">
+    <div class="topplinje">
+      <div class="oppdrag">Hvilket ord gjemmer seg? Alle begynner med <em id="t4Bokstav">A</em></div>
+    </div>
+    <div class="gjettrad" id="gjettrad"></div>
+  </section>
+
+</main>
+
+<!-- ================= Klasseliste ================= -->
+<div class="modal" id="klasseModal">
+  <div class="modalkort">
+    <h2>👥 Klasselista</h2>
+    <p>Skriv ett navn per linje. Navnene brukes bare til å sortere dem i trinn 3.</p>
+    <textarea id="klasseTekst" placeholder="Ada&#10;Bjørn&#10;Emma&#10;Jonas&#10;Sara"></textarea>
+    <div class="personvern">
+      🔒 Navnene lagres <b>bare i denne nettleseren</b> på denne maskinen. Ingenting sendes til Myntland
+      eller lagres i skyen. Bruker du en delt tavle-PC, trykk «Tøm lista» når timen er ferdig.
+    </div>
+    <div class="modalknapper">
+      <button class="knapp primary" id="lagreKlasse">Lagre</button>
+      <button class="knapp" id="tomKlasse">Tøm lista</button>
+      <button class="knapp" id="lukkKlasse">Lukk</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   BOKSTAVFORMER – strekdata hentet fra Skriveverkstedet
+   ------------------------------------------------------------
+   Koordinatsystem per tegn: bredde = w, høyde 140.
+     y=10  toppen av store bokstaver
+     y=45  toppen av små bokstaver (x-høyde)
+     y=90  skrivelinja
+     y=120 under linja (nedheng)
+   Hver streng i "s" er én sammenhengende strek, i den
+   rekkefølgen den skal skrives. Start = første punkt.
+   ============================================================ */
+const GLYPHS = {
+  "A": { w:100, s:["M50,10 L20,90", "M50,10 L80,90", "M30,64 L70,64"] },
+  "B": { w:100, s:["M28,10 L28,90", "M28,10 C60,10 76,20 76,30 C76,42 60,50 28,50 C64,50 84,60 84,70 C84,82 66,90 28,90"] },
+  "C": { w:100, s:["M76,28 C66,10 24,10 22,50 C20,90 66,92 76,72"] },
+  "D": { w:100, s:["M28,10 L28,90", "M28,10 L52,10 C84,10 84,90 52,90 L28,90"] },
+  "E": { w:100, s:["M28,10 L28,90", "M28,10 L76,10", "M28,50 L68,50", "M28,90 L76,90"] },
+  "F": { w:100, s:["M28,10 L28,90", "M28,10 L76,10", "M28,50 L66,50"] },
+  "G": { w:104, s:["M78,28 C68,10 24,10 22,50 C20,90 70,94 78,70 L78,54 L56,54"] },
+  "H": { w:100, s:["M26,10 L26,90", "M74,10 L74,90", "M26,50 L74,50"] },
+  "I": { w:64,  s:["M32,10 L32,90"] },
+  "J": { w:80,  s:["M56,10 L56,70 C56,90 26,94 20,76"] },
+  "K": { w:100, s:["M26,10 L26,90", "M74,10 L28,52 L78,90"] },
+  "L": { w:92,  s:["M28,10 L28,90", "M28,90 L78,90"] },
+  "M": { w:112, s:["M22,10 L22,90", "M22,10 L56,60 L90,10 L90,90"] },
+  "N": { w:104, s:["M26,90 L26,10 L78,90 L78,10"] },
+  "O": { w:108, s:["M54,10 A32,40 0 0 0 54,90 A32,40 0 0 0 54,10"] },
+  "P": { w:100, s:["M28,10 L28,90", "M28,10 L58,10 C82,10 82,52 58,52 L28,52"] },
+  "Q": { w:108, s:["M54,10 A32,40 0 0 0 54,90 A32,40 0 0 0 54,10", "M62,68 L86,96"] },
+  "R": { w:100, s:["M28,10 L28,90", "M28,10 L58,10 C80,10 80,50 58,50 L28,50", "M50,50 L78,90"] },
+  "S": { w:100, s:["M76,26 C68,8 28,6 26,28 C24,48 74,46 74,68 C74,92 30,94 24,72"] },
+  "T": { w:100, s:["M50,10 L50,90", "M22,10 L78,10"] },
+  "U": { w:104, s:["M24,10 L24,60 C24,88 80,88 80,60 L80,10"] },
+  "V": { w:100, s:["M24,10 L50,90 L76,10"] },
+  "W": { w:132, s:["M18,10 L38,90 L66,32 L94,90 L114,10"] },
+  "X": { w:100, s:["M26,10 L76,90", "M76,10 L26,90"] },
+  "Y": { w:100, s:["M26,10 L50,50 L50,90", "M76,10 L50,50"] },
+  "Z": { w:100, s:["M26,10 L76,10 L26,90 L76,90"] },
+  "Æ": { w:144, s:["M68,10 L22,90", "M68,10 L68,90", "M68,10 L126,10", "M44,58 L116,58", "M68,90 L126,90"] },
+  "Ø": { w:108, s:["M54,10 A32,40 0 0 0 54,90 A32,40 0 0 0 54,10", "M84,12 L24,88"] },
+  "Å": { w:100, s:["M50,34 L20,90", "M50,34 L80,90", "M32,72 L68,72", "M40,12 A10,10 0 1 1 60,12 A10,10 0 1 1 40,12"] },
+
+  "a": { w:96,  s:["M70,52 C62,42 27,43 26,67 C25,90 60,95 70,82 L70,45 L70,90"] },
+  "b": { w:96,  s:["M26,10 L26,90 L26,66 C32,45 74,46 74,67 C74,90 32,91 26,90"] },
+  "c": { w:92,  s:["M72,58 C62,43 28,44 27,67 C26,90 62,93 72,79"] },
+  "d": { w:96,  s:["M70,52 C62,42 27,43 26,67 C25,90 60,95 70,82 L70,10 L70,90"] },
+  "e": { w:92,  s:["M26,69 L70,69 C72,50 42,38 30,57 C18,77 40,97 72,82"] },
+  "f": { w:80,  s:["M68,20 C66,8 46,6 46,26 L46,90", "M28,48 L68,48"] },
+  "g": { w:96,  s:["M70,52 C62,42 27,43 26,67 C25,90 60,95 70,82 L70,45 L70,102 C70,120 36,122 28,108"] },
+  "h": { w:96,  s:["M26,10 L26,90 L26,64 C32,45 72,44 72,66 L72,90"] },
+  "i": { w:60,  s:["M30,45 L30,90", "M30,25 L30,28"] },
+  "j": { w:64,  s:["M36,45 L36,102 C36,120 12,122 6,108", "M36,25 L36,28"] },
+  "k": { w:92,  s:["M26,10 L26,90", "M70,45 L32,68 L74,90"] },
+  "l": { w:56,  s:["M28,10 L28,90"] },
+  "m": { w:120, s:["M22,45 L22,90 L22,62 C26,46 56,44 56,64 L56,90 L56,62 C60,46 92,44 92,64 L92,90"] },
+  "n": { w:96,  s:["M26,45 L26,90 L26,62 C30,45 72,44 72,64 L72,90"] },
+  "o": { w:96,  s:["M48,44 A22,23 0 0 0 48,90 A22,23 0 0 0 48,44"] },
+  "p": { w:96,  s:["M26,45 L26,120 L26,50 C62,44 76,55 76,67 C76,81 58,90 26,86"] },
+  "q": { w:96,  s:["M70,52 C62,42 27,43 26,67 C25,90 60,95 70,82 L70,45 L70,120"] },
+  "r": { w:80,  s:["M30,45 L30,90 L30,60 C36,46 56,42 70,50"] },
+  "s": { w:84,  s:["M68,54 C62,42 32,41 30,54 C28,68 66,67 66,80 C66,93 34,94 26,83"] },
+  "t": { w:76,  s:["M44,18 L44,78 C44,90 56,92 64,86", "M24,45 L66,45"] },
+  "u": { w:96,  s:["M26,45 L26,70 C26,90 68,92 70,70 L70,45 L70,90"] },
+  "v": { w:92,  s:["M26,45 L48,90 L70,45"] },
+  "w": { w:116, s:["M20,45 L36,90 L58,55 L80,90 L96,45"] },
+  "x": { w:88,  s:["M26,45 L66,90", "M66,45 L26,90"] },
+  "y": { w:96,  s:["M26,45 L26,70 C26,90 66,92 70,70 L70,45 L70,102 C70,120 36,122 28,108"] },
+  "z": { w:88,  s:["M26,45 L66,45 L26,90 L66,90"] },
+  "æ": { w:140, s:["M72,50 C60,42 40,42 32,53 C24,64 26,79 38,86 C46,90 54,91 61,89 C76,85 92,77 100,62 C99,52 94,47 87,47 C79,47 75,54 75,63 C75,75 82,84 94,86 C101,87 106,85 111,80"] },
+  "ø": { w:96,  s:["M48,44 A22,23 0 0 0 48,90 A22,23 0 0 0 48,44", "M74,40 L22,94"] },
+  "å": { w:96,  s:["M70,52 C62,42 28,43 27,67 C26,90 60,95 70,82 L70,45 L70,90", "M39.5,17 A10,10 0 1 1 59.5,17 A10,10 0 1 1 39.5,17"] }
+};
+
+/* ============================================================
+   ORDBANKEN – 88 ord som allerede har bilde og innlest ord
+   ------------------------------------------------------------
+   Bilde:  bilder/lyd/<fil>.webp     Lyd: lyd/ord-<fil>.mp3
+   kl:1 = ordet starter med to konsonanter (bl, br, fr, gr, kl,
+          kn, kr, sk, sm, st). Fine å lese, men mindre egnet når
+          klassen skal lytte ut ÉN førstelyd – de kommer bakerst
+          i trinn 1.
+   ============================================================ */
+const ORDBANK = [
+  { o:"agurk", f:"agurk" }, { o:"ape", f:"ape" }, { o:"arm", f:"arm" },
+  { o:"cello", f:"cello" }, { o:"cowboy", f:"cowboy" }, { o:"container", f:"container" },
+  { o:"bakke", f:"bakke" }, { o:"ballong", f:"ballong" }, { o:"banan", f:"banan" },
+  { o:"bein", f:"bein" }, { o:"bil", f:"bil" }, { o:"blomst", f:"blomst", kl:1 },
+  { o:"bok", f:"bok" }, { o:"brev", f:"brev", kl:1 }, { o:"bro", f:"bro", kl:1 },
+  { o:"brus", f:"brus", kl:1 }, { o:"buss", f:"buss" }, { o:"bål", f:"baal" }, { o:"bær", f:"baer" },
+  { o:"dekk", f:"dekk" }, { o:"due", f:"due" }, { o:"dør", f:"door" },
+  { o:"egg", f:"egg" }, { o:"elg", f:"elg" }, { o:"elv", f:"elv" }, { o:"eple", f:"eple" },
+  { o:"fisk", f:"fisk" }, { o:"frosk", f:"frosk", kl:1 }, { o:"fugl", f:"fugl" },
+  { o:"gaffel", f:"gaffel" }, { o:"gris", f:"gris", kl:1 }, { o:"gutt", f:"gutt" }, { o:"gås", f:"gaas" },
+  { o:"hatt", f:"hatt" }, { o:"hest", f:"hest" }, { o:"hund", f:"hund" }, { o:"hus", f:"hus" },
+  { o:"igloo", f:"igloo" }, { o:"ild", f:"ild" }, { o:"is", f:"is" }, { o:"isbjørn", f:"isbjoern" },
+  { o:"jakke", f:"jakke" }, { o:"jente", f:"jente" }, { o:"jojo", f:"jojo" }, { o:"jordbær", f:"jordbaer" },
+  { o:"kake", f:"kake" }, { o:"kam", f:"kam" }, { o:"katt", f:"katt" }, { o:"klokke", f:"klokke", kl:1 },
+  { o:"kne", f:"kne", kl:1 }, { o:"kopp", f:"kopp" }, { o:"kost", f:"kost" }, { o:"krok", f:"krok", kl:1 },
+  { o:"ku", f:"ku" },
+  { o:"laks", f:"laks" }, { o:"lam", f:"lam" }, { o:"lue", f:"lue" }, { o:"lys", f:"lys" },
+  { o:"lås", f:"laas" }, { o:"løve", f:"loeve" },
+  { o:"mann", f:"mann" }, { o:"mus", f:"mus" }, { o:"mål", f:"maal" }, { o:"måne", f:"maane" },
+  { o:"nese", f:"nese" }, { o:"nål", f:"naal" }, { o:"nøtt", f:"noett" },
+  { o:"okse", f:"okse" }, { o:"orm", f:"orm" }, { o:"ost", f:"ost" }, { o:"ovn", f:"ovn" },
+  { o:"quiz", f:"quiz" },
+  { o:"penn", f:"penn" }, { o:"pil", f:"pil" }, { o:"pose", f:"pose" },
+  { o:"rake", f:"rake" }, { o:"rev", f:"rev" }, { o:"ring", f:"ring" }, { o:"ris", f:"ris" }, { o:"rose", f:"rose" },
+  { o:"sag", f:"sag" }, { o:"saks", f:"saks" }, { o:"sekk", f:"sekk" }, { o:"sitron", f:"sitron" },
+  { o:"sko", f:"sko", kl:1 }, { o:"smør", f:"smoer", kl:1 }, { o:"sol", f:"sol" }, { o:"sopp", f:"sopp" },
+  { o:"stein", f:"stein", kl:1 }, { o:"stol", f:"stol", kl:1 },
+  { o:"tann", f:"tann" }, { o:"tog", f:"tog" }, { o:"tre", f:"tre" }, { o:"tær", f:"taer" },
+  { o:"ubåt", f:"ubaat" }, { o:"ugle", f:"ugle" }, { o:"ull", f:"ull" }, { o:"ulv", f:"ulv" },
+  { o:"vaffel", f:"vaffel" }, { o:"vann", f:"vann" }, { o:"vegg", f:"vegg" }, { o:"venn", f:"venn" },
+  { o:"veps", f:"veps" }, { o:"vest", f:"vest" },
+  { o:"walkie", f:"walkie" }, { o:"wc", f:"wc" }, { o:"wok", f:"wok" },
+  { o:"xylofon", f:"xylofon" },
+  { o:"yatzy", f:"yatzy" }, { o:"yoga", f:"yoga" }, { o:"yoghurt", f:"yoghurt" },
+  { o:"zebra", f:"zebra" }, { o:"zoo", f:"zoo" },
+  { o:"ærfugl", f:"aerfugl" }, { o:"ært", f:"aert" },
+  { o:"øks", f:"oeks" }, { o:"øre", f:"oere" }, { o:"ørn", f:"oern" }, { o:"øy", f:"oey" }, { o:"øye", f:"oeye" },
+  { o:"åker", f:"aaker" }, { o:"ål", f:"aal" }, { o:"åre", f:"aare" }
+];
+
+/* Hint til læreren. Knappen spiller av bokstavNAVNET fra /lyd/,
+   så teksten viser hvordan selve lyden lages. */
+const LYDHINT = {
+  "A":"åpen munn: /a/ som i <b>ape</b>",
+  "B":"lukk leppene og la det smelle: /b/ som i <b>bil</b>",
+  "C":"lånebokstav – oftest /s/ eller /k/",
+  "D":"tunga bak fortennene: /d/ som i <b>due</b>",
+  "E":"/e/ som i <b>egg</b>",
+  "F":"blås mellom tenner og leppe: /ffff/ som i <b>fisk</b>",
+  "G":"bakerst i munnen: /g/ som i <b>gris</b>",
+  "H":"pust ut: /h/ som i <b>hus</b>",
+  "I":"smil bredt: /i/ som i <b>is</b>",
+  "J":"/j/ som i <b>jakke</b>",
+  "K":"bakerst i munnen: /k/ som i <b>katt</b>",
+  "L":"tungespissen opp: /llll/ som i <b>lue</b>",
+  "M":"lukket munn, brum: /mmmm/ som i <b>mus</b>",
+  "N":"/nnnn/ som i <b>nese</b>",
+  "O":"rund munn: /o/ som i <b>ost</b>",
+  "P":"leppesmell uten stemme: /p/ som i <b>penn</b>",
+  "Q":"lånebokstav – uttales /k/, nesten alltid med u etter",
+  "R":"rull eller skarr: /rrrr/ som i <b>rev</b>",
+  "S":"slangelyd: /ssss/ som i <b>sol</b>",
+  "T":"tungespiss mot ganen: /t/ som i <b>tog</b>",
+  "U":"spiss munn: /u/ som i <b>ugle</b>",
+  "V":"/vvvv/ som i <b>vann</b>",
+  "W":"lånebokstav – uttales oftest /v/",
+  "X":"lånebokstav – uttales /ks/",
+  "Y":"spiss munn og smil: /y/ som i <b>lys</b>",
+  "Z":"lånebokstav – uttales /s/",
+  "Æ":"bred åpen munn: /æ/ som i <b>bær</b>",
+  "Ø":"rund munn framme: /ø/ som i <b>øye</b>",
+  "Å":"rund åpen munn: /å/ som i <b>ål</b>"
+};
+
+/* Samme monstre som i Lydverkstedet og Rimverkstedet */
+const LAG = [
+  { navn:"Drage",   fil:"ildkatt",     farge:"#E23B2E" },
+  { navn:"Bølge",   fil:"indigo",      farge:"#1F7AE0" },
+  { navn:"Skog",    fil:"gressgroenn", farge:"#17A05C" },
+  { navn:"Stjerne", fil:"gullgul",     farge:"#EF9F27" }
+];
+const HEIAROP_LYD  = ["Hva hører du?","Lytt godt!","Si ordet sakte!","Hvilken lyd først?","Kjenn etter!"];
+const HEIAROP_FORM = ["Start på prikken!","Følg pilen!","Rolig og fint!","Du klarer det!","Så flink!"];
+const JUBELROP     = ["Kjempebra!","Perfekt!","Så fint!","Supert!","Bra jobba!"];
+
+const ALFABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ".split("");
+const FILNAVN = { "Æ":"AE", "Ø":"OE", "Å":"AA" };
+const RESERVE = "https://myntland.no/";
+const FARGER  = ["#E23B2E", "#1F7AE0", "#17A05C", "#EF9F27"];
+
+/* ---------- tilstand ---------- */
+const S = {
+  bokstav: "A",
+  trinn: 1,
+  lydPaa: true,
+  visOrd: false,
+  storBokstav: true,
+  visLinjer: true,
+  visModell: true,
+  farge: FARGER[0],
+  t1Ord: [],
+  t4Ord: [],
+  navn: [],
+  plassert: { forst:[], inni:[], sist:[] },
+  valgtNavn: null,
+  skrevet: "",
+  visTastatur: true
+};
+
+/* ============================================================
+   LYD – lokal fil først, så myntland.no
+   ============================================================ */
+let sisteLyd = null;
+function spill(sti){
+  if(!S.lydPaa) return;
+  try{ if(sisteLyd) sisteLyd.pause(); }catch(e){}
+  let byttet = false;
+  const reserve = () => {
+    if(byttet) return;
+    byttet = true;
+    const b = new Audio(RESERVE + sti);
+    b.play().catch(()=>{});
+    sisteLyd = b;
+  };
+  const a = new Audio(sti);
+  a.addEventListener("error", reserve);
+  a.play().catch(reserve);
+  sisteLyd = a;
+}
+const bokstavLyd = b => "lyd/" + (FILNAVN[b] || b) + ".mp3";
+const ordLyd     = f => "lyd/ord-" + f + ".mp3";
+const ordBilde   = f => "bilder/lyd/" + f + ".webp";
+const monsterUrl = f => "bilder/lyd/monster-" + f + ".webp";
+
+/* Bilde med reserve på myntland.no, og til slutt et emoji-felt. */
+function settBilde(img, sti, emoji){
+  img.src = sti;
+  img.onerror = () => {
+    img.onerror = () => {
+      const d = document.createElement("div");
+      d.className = "reserve";
+      d.textContent = emoji || "🔤";
+      if(img.parentNode) img.parentNode.replaceChild(d, img);
+    };
+    img.src = RESERVE + sti;
+  };
+}
+function settMonster(img, fil){
+  img.src = monsterUrl(fil);
+  img.onerror = () => { img.onerror = null; img.src = RESERVE + monsterUrl(fil); };
+}
+
+/* ---------- småhjelpere ---------- */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.prototype.slice.call(document.querySelectorAll(s));
+const tilfeldig = a => a[Math.floor(Math.random() * a.length)];
+
+function ordForBokstav(b){
+  const l = b.toLowerCase();
+  return ORDBANK.filter(x => x.o.charAt(0).toLowerCase() === l);
+}
+function stokk(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+/* Enkle ord først, konsonantklynger bakerst. */
+function sorterForLytting(liste){
+  return stokk(liste.filter(x => !x.kl)).concat(stokk(liste.filter(x => x.kl)));
+}
+function uthevForste(ord){
+  return '<span class="f">' + ord.charAt(0) + "</span>" + ord.slice(1);
+}
+function monsterFor(b){
+  return LAG[ALFABET.indexOf(b) % LAG.length];
+}
+
+/* ============================================================
+   BOKSTAVRAD OG TRINN
+   ============================================================ */
+function byggBokstavrad(){
+  const rad = $("#bokstavrad");
+  rad.innerHTML = "";
+  ALFABET.forEach(b => {
+    const kn = document.createElement("button");
+    kn.className = "btast";
+    kn.type = "button";
+    kn.dataset.bokstav = b;
+    kn.setAttribute("aria-pressed", b === S.bokstav ? "true" : "false");
+    kn.appendChild(document.createTextNode(b));
+
+    const antall = ordForBokstav(b).length;
+    const merke = document.createElement("span");
+    merke.className = "ant";
+    merke.textContent = antall;
+    kn.appendChild(merke);
+    if(antall === 0){
+      kn.classList.add("tom");
+      kn.title = "Ingen bilder til " + b + " ennå – trinn 1 og 4 er tomme";
+    } else if(antall < 3){
+      kn.classList.add("tynn");
+      kn.title = "Bare " + antall + " bilde" + (antall === 1 ? "" : "r") + " til " + b;
+    } else {
+      kn.title = antall + " bilder til " + b;
+    }
+    kn.addEventListener("click", () => settBokstav(b));
+    rad.appendChild(kn);
+  });
+}
+
+function settBokstav(b){
+  S.bokstav = b;
+  S.plassert = { forst:[], inni:[], sist:[] };
+  S.valgtNavn = null;
+  $$(".btast").forEach(k => k.setAttribute("aria-pressed", k.dataset.bokstav === b ? "true" : "false"));
+  tegnAlt();
+}
+
+function settTrinn(n){
+  S.trinn = n;
+  $$("#trinnseg button").forEach(t => t.setAttribute("aria-pressed", Number(t.dataset.trinn) === n ? "true" : "false"));
+  $$(".panel").forEach(p => p.classList.remove("aktiv"));
+  $("#panel" + n).classList.add("aktiv");
+  [1,2,3,4].forEach(i => { $("#verktoyT" + i).style.display = (i === n) ? "flex" : "none"; });
+  if(n === 2) byggTrinn2();
+}
+
+function tegnAlt(){
+  byggTrinn1();
+  /* Trinn 2 måler lengden på strekene – det krever at panelet er synlig. */
+  if(S.trinn === 2) byggTrinn2();
+  byggTrinn3();
+  byggTrinn4();
+}
+
+/* ============================================================
+   TRINN 1 – BOKSTAVLYD
+   ============================================================ */
+function byggTrinn1(){
+  const b = S.bokstav;
+  $("#bokstavPar").innerHTML = b + '<span class="liten">' + b.toLowerCase() + "</span>";
+  $("#lydtipsTekst").innerHTML = LYDHINT[b] || "";
+
+  const lag = monsterFor(b);
+  settMonster($("#monster1"), lag.fil);
+  $("#monster1").alt = "Monsteret " + lag.navn;
+  $("#mnavn1").textContent = lag.navn;
+  $("#boble1").textContent = tilfeldig(HEIAROP_LYD);
+
+  S.t1Ord = sorterForLytting(ordForBokstav(b)).slice(0, 6);
+  visTrinn1Ord();
+}
+
+function visTrinn1Ord(){
+  const vegg = $("#ordvegg");
+  vegg.innerHTML = "";
+  if(S.t1Ord.length === 0){
+    const d = document.createElement("div");
+    d.className = "tommelding";
+    d.textContent = "Vi har ingen bilder til " + S.bokstav + " ennå. Hvilke ord klarer klassen å finne selv?";
+    vegg.appendChild(d);
+    vegg.style.gridTemplateColumns = "1fr";
+    return;
+  }
+  vegg.style.gridTemplateColumns = "repeat(" + Math.min(3, S.t1Ord.length) + ",1fr)";
+  S.t1Ord.forEach(x => {
+    const boks = document.createElement("div");
+    boks.className = "bildeboks";
+    boks.title = "Trykk for å høre ordet";
+
+    const img = document.createElement("img");
+    img.alt = "Bilde av " + x.o;
+    img.loading = "lazy";
+    boks.appendChild(img);
+
+    const tekst = document.createElement("div");
+    tekst.className = "ordtekst" + (S.visOrd ? "" : " skjult");
+    tekst.innerHTML = uthevForste(x.o);
+    boks.appendChild(tekst);
+
+    const lyd = document.createElement("button");
+    lyd.className = "ordlyd";
+    lyd.type = "button";
+    lyd.textContent = "🔊";
+    lyd.title = "Hør ordet";
+    boks.appendChild(lyd);
+
+    boks.addEventListener("click", () => spill(ordLyd(x.f)));
+    vegg.appendChild(boks);
+    settBilde(img, ordBilde(x.f), "🔤");
+  });
+}
+
+/* ============================================================
+   TRINN 2 – BOKSTAVFORM (animasjon + sporing)
+   ============================================================ */
+const NS = "http://www.w3.org/2000/svg";
+const T2 = {
+  strek: [],        // <path class="modell">
+  maal: [],         // {x,y,truffet}
+  mine: [],
+  aktiv: null,
+  punkter: [],
+  tegner: false,
+  anim: null
+};
+
+function svgEl(navn, attr){
+  const e = document.createElementNS(NS, navn);
+  for(const k in attr) e.setAttribute(k, attr[k]);
+  return e;
+}
+
+function byggTrinn2(){
+  const flate = $("#flate");
+  const tegn = S.storBokstav ? S.bokstav : S.bokstav.toLowerCase();
+  const g = GLYPHS[tegn] || GLYPHS[S.bokstav];
+  $("#t2Bokstav").textContent = tegn;
+  $("#storLitenKnapp").innerHTML = S.storBokstav
+    ? '<span class="glyf">' + S.bokstav + "</span> Stor bokstav"
+    : '<span class="glyf">' + S.bokstav.toLowerCase() + "</span> Liten bokstav";
+  $("#modellKnapp").textContent = S.visModell ? "👻 Grå bokstav på" : "👻 Grå bokstav av";
+  $("#modellKnapp").classList.toggle("av", !S.visModell);
+  $("#linjerKnapp").textContent = S.visLinjer ? "📏 Linjer på" : "📏 Linjer av";
+  $("#linjerKnapp").classList.toggle("av", !S.visLinjer);
+
+  const lag = monsterFor(S.bokstav);
+  settMonster($("#monster2"), lag.fil);
+  $("#monster2").alt = "Monsteret " + lag.navn;
+  $("#mnavn2").textContent = lag.navn;
+  $("#boble2").textContent = tilfeldig(HEIAROP_FORM);
+  $("#monster2").classList.remove("heia");
+  $("#jubel2").classList.remove("vis");
+
+  stoppAnimasjon();
+  flate.innerHTML = "";
+  const w = g.w, h = 140, pad = 20;
+  flate.setAttribute("viewBox", (-pad) + " " + (-pad) + " " + (w + pad*2) + " " + (h + pad*2));
+
+  if(S.visLinjer){
+    const x0 = -pad + 5, x1 = w + pad - 5;
+    [["hjelpelinje stiplet",10],["hjelpelinje stiplet",45],["hjelpelinje grunn",90],["hjelpelinje stiplet",120]]
+      .forEach(par => flate.appendChild(svgEl("line", { class:par[0], x1:x0, y1:par[1], x2:x1, y2:par[1] })));
+  }
+
+  /* Grå modellbokstav – også når den er skjult, for vi måler på den. */
+  const modellag = svgEl("g", {});
+  T2.strek = [];
+  g.s.forEach(d => {
+    const p = svgEl("path", { class:"modell", d:d });
+    if(!S.visModell) p.setAttribute("opacity", "0");
+    modellag.appendChild(p);
+    T2.strek.push(p);
+  });
+  flate.appendChild(modellag);
+
+  const viseLag = svgEl("g", {}); viseLag.id = "viseLag"; flate.appendChild(viseLag);
+  const blekkLag = svgEl("g", {}); blekkLag.id = "blekkLag"; flate.appendChild(blekkLag);
+
+  /* Startprikker med nummer og retningspil */
+  const merker = svgEl("g", { class:"startmerke" });
+  const brukte = [];
+  T2.strek.forEach((p, i) => {
+    const raa  = p.getPointAtLength(0);
+    const litt = p.getPointAtLength(Math.min(14, p.getTotalLength()));
+    /* Flere streker kan starte i samme punkt (B, E). Flytt prikken litt. */
+    const pos = { x:raa.x, y:raa.y };
+    while(brukte.some(q => Math.hypot(q.x - pos.x, q.y - pos.y) < 15)){ pos.x -= 11; pos.y -= 7; }
+    brukte.push({ x:pos.x, y:pos.y });
+
+    if(i === 0) merkelappPuls(merker, pos);
+    merkelappPrikk(merker, pos, i + 1);
+
+    const vx = litt.x - raa.x, vy = litt.y - raa.y;
+    const len = Math.hypot(vx, vy) || 1;
+    const ux = vx/len, uy = vy/len;
+    const bx = raa.x + ux*18, by = raa.y + uy*18;
+    const px = -uy, py = ux;
+    merker.appendChild(svgEl("polygon", {
+      class:"startpil",
+      points: (bx + ux*8) + "," + (by + uy*8) + " " +
+              (bx + px*5) + "," + (by + py*5) + " " +
+              (bx - px*5) + "," + (by - py*5)
+    }));
+  });
+  flate.appendChild(merker);
+
+  lagMaalpunkter();
+  T2.mine = [];
+  oppdaterDekning();
+}
+function merkelappPrikk(g, pos, nr){
+  g.appendChild(svgEl("circle", { cx:pos.x, cy:pos.y, r:9 }));
+  const t = svgEl("text", { x:pos.x, y:pos.y });
+  t.textContent = String(nr);
+  g.appendChild(t);
+}
+function merkelappPuls(g, pos){
+  g.appendChild(svgEl("circle", { class:"puls", cx:pos.x, cy:pos.y, r:9 }));
+}
+
+function lagMaalpunkter(){
+  T2.maal = [];
+  T2.strek.forEach(p => {
+    const L = p.getTotalLength();
+    for(let d = 0; d <= L; d += 3){
+      const pt = p.getPointAtLength(d);
+      T2.maal.push({ x:pt.x, y:pt.y, truffet:false });
+    }
+  });
+}
+
+function svgPunkt(evt){
+  const flate = $("#flate");
+  const pt = flate.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const ctm = flate.getScreenCTM();
+  if(!ctm) return { x:0, y:0 };
+  return pt.matrixTransform(ctm.inverse());
+}
+
+function startStrek(evt){
+  if(S.trinn !== 2) return;
+  evt.preventDefault();
+  stoppAnimasjon();
+  $("#jubel2").classList.remove("vis");
+  T2.tegner = true;
+  T2.punkter = [svgPunkt(evt)];
+  T2.aktiv = svgEl("path", { class:"blekk", d:"", stroke:S.farge });
+  document.getElementById("blekkLag").appendChild(T2.aktiv);
+  tegnAktiv();
+  merkTruffet(T2.punkter[0]);
+}
+function fortsettStrek(evt){
+  if(!T2.tegner) return;
+  evt.preventDefault();
+  const p = svgPunkt(evt);
+  const f = T2.punkter[T2.punkter.length - 1];
+  if(Math.hypot(p.x - f.x, p.y - f.y) < 1.2) return;
+  T2.punkter.push(p);
+  tegnAktiv();
+  merkTruffet(p);
+  oppdaterDekning();
+}
+function sluttStrek(){
+  if(!T2.tegner) return;
+  T2.tegner = false;
+  if(T2.aktiv) T2.mine.push(T2.aktiv);
+  T2.aktiv = null;
+  oppdaterDekning();
+}
+function tegnAktiv(){
+  if(!T2.aktiv) return;
+  const d = T2.punkter.map((p, i) => (i ? "L" : "M") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+  T2.aktiv.setAttribute("d", d || "M0,0");
+}
+function merkTruffet(p){
+  const r = 11;
+  for(let i = 0; i < T2.maal.length; i++){
+    const m = T2.maal[i];
+    if(m.truffet) continue;
+    if(Math.abs(m.x - p.x) <= r && Math.abs(m.y - p.y) <= r && Math.hypot(m.x - p.x, m.y - p.y) <= r) m.truffet = true;
+  }
+}
+function dekning(){
+  const total = T2.maal.length || 1;
+  return Math.round(T2.maal.filter(m => m.truffet).length / total * 100);
+}
+function oppdaterDekning(){
+  const pst = dekning();
+  $("#maalefyll").style.width = pst + "%";
+  $("#maalertall").textContent = pst + " %";
+  $("#ferdigKnapp").classList.toggle("klar", pst >= 85);
+}
+
+function stoppAnimasjon(){
+  if(T2.anim){ cancelAnimationFrame(T2.anim); T2.anim = null; }
+  const lag = document.getElementById("viseLag");
+  if(lag) lag.innerHTML = "";
+}
+function visMeg(){
+  stoppAnimasjon();
+  const lag = document.getElementById("viseLag");
+  if(!lag) return;
+  let i = 0;
+  const neste = () => {
+    if(i >= T2.strek.length) return;
+    const kilde = T2.strek[i];
+    const L = kilde.getTotalLength();
+    const p = svgEl("path", { class:"fasit", d:kilde.getAttribute("d") });
+    p.style.strokeDasharray = L;
+    p.style.strokeDashoffset = L;
+    lag.appendChild(p);
+    const varighet = Math.max(450, L * 7);
+    const t0 = performance.now();
+    const steg = na => {
+      const k = Math.min(1, (na - t0) / varighet);
+      p.style.strokeDashoffset = L * (1 - k);
+      if(k < 1) T2.anim = requestAnimationFrame(steg);
+      else { i++; T2.anim = requestAnimationFrame(() => setTimeout(neste, 260)); }
+    };
+    T2.anim = requestAnimationFrame(steg);
+  };
+  neste();
+}
+
+function ferdigTrinn2(){
+  const pst = dekning();
+  const jubel = $("#jubel2");
+  const tekst = $("#jubel2Tekst");
+  if(pst >= 60){
+    tekst.textContent = tilfeldig(JUBELROP);
+    $("#monster2").classList.add("heia");
+  } else {
+    tekst.textContent = "Prøv en gang til!";
+  }
+  jubel.classList.add("vis");
+  setTimeout(() => {
+    jubel.classList.remove("vis");
+    $("#monster2").classList.remove("heia");
+    if(pst >= 60) byggTrinn2();
+  }, 1600);
+}
+
+/* ============================================================
+   TRINN 3 – NAVN I KLASSEN
+   ============================================================ */
+const LAGER_NOKKEL = "myntland-bokstavverksted-klasseliste";
+
+function lastKlasseliste(){
+  try{
+    const raa = window.localStorage.getItem(LAGER_NOKKEL);
+    S.navn = raa ? JSON.parse(raa) : [];
+  }catch(e){ S.navn = []; }
+  if(!Array.isArray(S.navn)) S.navn = [];
+}
+function lagreKlasseliste(){
+  try{ window.localStorage.setItem(LAGER_NOKKEL, JSON.stringify(S.navn)); }
+  catch(e){ /* privat modus – lista lever da bare til sida lukkes */ }
+}
+
+function passer(navn, b, plass){
+  const n = (navn || "").toLowerCase(), l = b.toLowerCase();
+  if(!n.length) return false;
+  if(plass === "forst") return n.charAt(0) === l;
+  if(plass === "sist")  return n.charAt(n.length - 1) === l;
+  for(let i = 1; i < n.length - 1; i++){ if(n.charAt(i) === l) return true; }
+  return false;
+}
+function uthev(navn, b){
+  const l = b.toLowerCase();
+  let ut = "";
+  for(let i = 0; i < navn.length; i++){
+    const c = navn.charAt(i);
+    ut += (c.toLowerCase() === l) ? '<span class="t">' + c + "</span>" : c;
+  }
+  return ut;
+}
+
+function byggTrinn3(){
+  const b = S.bokstav;
+  $("#t3Bokstav").textContent = b;
+  $("#malForst").innerHTML = '<span class="m">' + b + "</span>___";
+  $("#malInni").innerHTML  = '_<span class="m">' + b + "</span>__";
+  $("#malSist").innerHTML  = '___<span class="m">' + b + "</span>";
+  tegnNavnstripe();
+  tegnKolonner();
+  tegnSkrivevindu();
+  merkGjeldendeTast();
+}
+
+/* ---------- skriveboks og tastatur ---------- */
+const TASTER = "ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ".split("");
+
+function byggTastatur(){
+  const rad = $("#tastatur");
+  rad.innerHTML = "";
+  TASTER.forEach(b => {
+    const kn = document.createElement("button");
+    kn.className = "tast";
+    kn.type = "button";
+    kn.dataset.tast = b;
+    kn.textContent = b;
+    kn.addEventListener("click", () => skrivTegn(b));
+    rad.appendChild(kn);
+  });
+  [["-", "-", "bred"], [" ", "mellomrom", "bred"]].forEach(t => {
+    const kn = document.createElement("button");
+    kn.className = "tast " + t[2];
+    kn.type = "button";
+    kn.textContent = t[1];
+    kn.addEventListener("click", () => skrivTegn(t[0]));
+    rad.appendChild(kn);
+  });
+  const slett = document.createElement("button");
+  slett.className = "tast bred slett";
+  slett.type = "button";
+  slett.textContent = "⌫ Slett";
+  slett.addEventListener("click", () => settSkrevet(S.skrevet.slice(0, -1)));
+  rad.appendChild(slett);
+
+  const tom = document.createElement("button");
+  tom.className = "tast bred tomknapp";
+  tom.type = "button";
+  tom.textContent = "🧽 Tøm";
+  tom.addEventListener("click", () => settSkrevet(""));
+  rad.appendChild(tom);
+}
+
+/* Navn skrives med stor forbokstav – også etter mellomrom og bindestrek. */
+function skrivTegn(tegn){
+  const forrige = S.skrevet.slice(-1);
+  const stor = S.skrevet.length === 0 || forrige === " " || forrige === "-";
+  settSkrevet(S.skrevet + (/[A-ZÆØÅ]/.test(tegn) ? (stor ? tegn : tegn.toLowerCase()) : tegn));
+}
+
+function settSkrevet(tekst){
+  S.skrevet = tekst.replace(/^\s+/, "").slice(0, 20);
+  if(S.skrevet) S.valgtNavn = null;
+  tegnSkrivevindu();
+  tegnNavnstripe();
+}
+
+function tegnSkrivevindu(){
+  const vindu = $("#skrivevindu");
+  if(!S.skrevet){
+    vindu.className = "skrivevindu tom";
+    vindu.textContent = "– – –";
+    $("#skrivehint").textContent = S.navn.length
+      ? "Trykk på et navn over, eller skriv et her"
+      : "…og trykk på boksen der bokstaven hører hjemme";
+  } else {
+    vindu.className = "skrivevindu";
+    vindu.innerHTML = uthev(S.skrevet, S.bokstav) + '<span class="marker">|</span>';
+    $("#skrivehint").textContent = "Trykk på boksen der " + S.bokstav + " hører hjemme";
+  }
+  $$(".kolonne").forEach(k => k.classList.toggle("klar", !!(S.valgtNavn || S.skrevet)));
+}
+
+function merkGjeldendeTast(){
+  $$("#tastatur .tast").forEach(t => t.classList.toggle("gjeldende", t.dataset.tast === S.bokstav));
+}
+
+function tegnNavnstripe(){
+  const stripe = $("#navnstripe");
+  const chips = $("#navnchips");
+  chips.innerHTML = "";
+  if(S.navn.length === 0){
+    stripe.style.display = "none";
+    return;
+  }
+  stripe.style.display = "flex";
+  const brukt = [].concat(S.plassert.forst, S.plassert.inni, S.plassert.sist).map(x => x.toLowerCase());
+  const igjen = S.navn.filter(n => brukt.indexOf(n.toLowerCase()) === -1);
+  if(igjen.length === 0){
+    const d = document.createElement("span");
+    d.className = "stittel";
+    d.textContent = "Alle navnene er plassert 🎉";
+    chips.appendChild(d);
+  } else {
+    igjen.forEach(n => {
+      const kn = document.createElement("button");
+      kn.className = "navnchip";
+      kn.type = "button";
+      kn.setAttribute("aria-pressed", S.valgtNavn === n ? "true" : "false");
+      kn.innerHTML = uthev(n, S.bokstav);
+      kn.addEventListener("click", () => {
+        S.valgtNavn = (S.valgtNavn === n) ? null : n;
+        if(S.valgtNavn){ S.skrevet = ""; tegnSkrivevindu(); }
+        tegnNavnstripe();
+      });
+      chips.appendChild(kn);
+    });
+  }
+  $$(".kolonne").forEach(k => k.classList.toggle("klar", !!(S.valgtNavn || S.skrevet)));
+}
+
+function tegnKolonner(){
+  ["forst","inni","sist"].forEach(plass => {
+    const liste = document.querySelector('[data-liste="' + plass + '"]');
+    liste.innerHTML = "";
+    S.plassert[plass].forEach((navn, i) => {
+      const rad = document.createElement("div");
+      rad.className = "navnlinje";
+      const tekst = document.createElement("span");
+      tekst.innerHTML = uthev(navn, S.bokstav);
+      rad.appendChild(tekst);
+      const fjern = document.createElement("button");
+      fjern.className = "fjern";
+      fjern.type = "button";
+      fjern.textContent = "×";
+      fjern.title = "Fjern";
+      fjern.style.marginLeft = "auto";
+      fjern.addEventListener("click", e => {
+        e.stopPropagation();
+        S.plassert[plass].splice(i, 1);
+        tegnNavnstripe(); tegnKolonner();
+      });
+      rad.appendChild(fjern);
+      liste.appendChild(rad);
+    });
+  });
+}
+
+function leggINavn(plass, navn){
+  navn = (navn || "").trim();
+  if(!navn) return;
+  if(!S.plassert[plass].some(n => n.toLowerCase() === navn.toLowerCase())) S.plassert[plass].push(navn);
+  S.valgtNavn = null;
+  S.skrevet = "";
+  tegnSkrivevindu();
+  tegnNavnstripe();
+  tegnKolonner();
+}
+
+function sjekkNavn(){
+  ["forst","inni","sist"].forEach(plass => {
+    const liste = document.querySelector('[data-liste="' + plass + '"]');
+    Array.prototype.forEach.call(liste.children, (rad, i) => {
+      const ok = passer(S.plassert[plass][i], S.bokstav, plass);
+      rad.classList.toggle("riktig", ok);
+      rad.classList.toggle("feil", !ok);
+      let merke = rad.querySelector(".fasitmerke");
+      if(!merke){
+        merke = document.createElement("span");
+        merke.className = "fasitmerke";
+        rad.insertBefore(merke, rad.querySelector(".fjern"));
+      }
+      merke.textContent = ok ? "✅" : "🤔";
+    });
+  });
+}
+
+function visFasit(){
+  if(S.navn.length === 0){
+    alert("Legg inn klasselista under «👥 Klasselista» først, så kan jeg vise fasiten.");
+    return;
+  }
+  S.plassert = { forst:[], inni:[], sist:[] };
+  S.navn.forEach(n => {
+    ["forst","inni","sist"].forEach(plass => {
+      if(passer(n, S.bokstav, plass)) S.plassert[plass].push(n);
+    });
+  });
+  S.valgtNavn = null;
+  tegnNavnstripe();
+  tegnKolonner();
+  sjekkNavn();
+}
+
+/* ============================================================
+   TRINN 4 – GJETT BILDET BAK RUTENE
+   ============================================================ */
+function byggTrinn4(){
+  const b = S.bokstav;
+  $("#t4Bokstav").textContent = b;
+  const alle = ordForBokstav(b);
+  S.t4Ord = stokk(alle).slice(0, 3);
+
+  const rad = $("#gjettrad");
+  rad.innerHTML = "";
+  if(alle.length === 0){
+    rad.style.gridTemplateColumns = "1fr";
+    const d = document.createElement("div");
+    d.className = "tommelding";
+    d.style.margin = "auto";
+    d.textContent = "Vi har ingen bilder til " + b + " ennå. Velg en annen bokstav, eller la klassen tegne sine egne " + b + "-ord på tavla.";
+    rad.appendChild(d);
+    return;
+  }
+  rad.style.gridTemplateColumns = "repeat(" + S.t4Ord.length + ",1fr)";
+
+  S.t4Ord.forEach(x => {
+    const kort = document.createElement("div");
+    kort.className = "gjettkort";
+
+    const boks = document.createElement("div");
+    boks.className = "bildeboks";
+    const img = document.createElement("img");
+    img.alt = "Skjult bilde";
+    boks.appendChild(img);
+
+    const ordEl = document.createElement("div");
+    ordEl.className = "gjettord skjult";
+    ordEl.textContent = "? ? ?";
+
+    const ruter = document.createElement("div");
+    ruter.className = "ruter";
+    for(let i = 0; i < 9; i++){
+      const r = document.createElement("button");
+      r.className = "rute";
+      r.type = "button";
+      r.textContent = String(i + 1);
+      r.addEventListener("click", () => {
+        r.classList.add("borte");
+        if(ruter.querySelectorAll(".rute:not(.borte)").length === 0) avslor(kort, x, ordEl, false);
+      });
+      ruter.appendChild(r);
+    }
+    boks.appendChild(ruter);
+    kort.appendChild(boks);
+    kort.appendChild(ordEl);
+
+    const knapper = document.createElement("div");
+    knapper.className = "gjettknapper";
+    const hor = document.createElement("button");
+    hor.className = "minik"; hor.type = "button"; hor.textContent = "🔊 Hør";
+    hor.addEventListener("click", () => spill(ordLyd(x.f)));
+    knapper.appendChild(hor);
+    const vis = document.createElement("button");
+    vis.className = "minik"; vis.type = "button"; vis.textContent = "👀 Vis";
+    vis.addEventListener("click", () => avslor(kort, x, ordEl, true));
+    knapper.appendChild(vis);
+    kort.appendChild(knapper);
+
+    rad.appendChild(kort);
+    settBilde(img, ordBilde(x.f), "🖼️");
+  });
+}
+
+function avslor(kort, x, ordEl, ogsaaRuter){
+  if(ogsaaRuter) kort.querySelectorAll(".rute").forEach(r => r.classList.add("borte"));
+  kort.classList.add("avslort");
+  ordEl.classList.remove("skjult");
+  ordEl.innerHTML = uthevForste(x.o);
+  spill(ordLyd(x.f));
+}
+
+function dekkTilIgjen(){
+  $$("#gjettrad .rute").forEach(r => r.classList.remove("borte"));
+  $$("#gjettrad .gjettkort").forEach(k => k.classList.remove("avslort"));
+  $$("#gjettrad .gjettord").forEach(o => { o.classList.add("skjult"); o.textContent = "? ? ?"; });
+}
+
+/* ============================================================
+   HENDELSER
+   ============================================================ */
+$$("#trinnseg button").forEach(t => t.addEventListener("click", () => settTrinn(Number(t.dataset.trinn))));
+
+function flyttBokstav(retning){
+  let i = ALFABET.indexOf(S.bokstav) + retning;
+  if(i < 0) i = ALFABET.length - 1;
+  if(i >= ALFABET.length) i = 0;
+  settBokstav(ALFABET[i]);
+}
+$("#nesteKnapp").addEventListener("click", () => flyttBokstav(1));
+$("#forrigeKnapp").addEventListener("click", () => flyttBokstav(-1));
+
+$("#lydKnapp").addEventListener("click", () => {
+  S.lydPaa = !S.lydPaa;
+  $("#lydKnapp").textContent = S.lydPaa ? "🔊" : "🔇";
+  $("#lydKnapp").classList.toggle("av", !S.lydPaa);
+});
+$("#fullKnapp").addEventListener("click", () => {
+  if(document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(()=>{});
+});
+$("#rentKnapp").addEventListener("click", () => document.body.classList.add("rent"));
+$("#visMenyKnapp").addEventListener("click", () => document.body.classList.remove("rent"));
+
+/* Trinn 1 */
+$("#horBokstav").addEventListener("click", () => spill(bokstavLyd(S.bokstav)));
+$("#ordKnapp").addEventListener("click", () => {
+  S.visOrd = !S.visOrd;
+  $("#ordKnapp").textContent = S.visOrd ? "📝 Ord på" : "📝 Ord av";
+  $("#ordKnapp").classList.toggle("av", !S.visOrd);
+  visTrinn1Ord();
+});
+$("#flereOrd").addEventListener("click", () => {
+  S.t1Ord = sorterForLytting(ordForBokstav(S.bokstav)).slice(0, 6);
+  $("#boble1").textContent = tilfeldig(HEIAROP_LYD);
+  visTrinn1Ord();
+});
+
+/* Trinn 2 */
+$("#visMegKnapp").addEventListener("click", visMeg);
+$("#storLitenKnapp").addEventListener("click", () => { S.storBokstav = !S.storBokstav; byggTrinn2(); });
+$("#modellKnapp").addEventListener("click", () => { S.visModell = !S.visModell; byggTrinn2(); });
+$("#linjerKnapp").addEventListener("click", () => { S.visLinjer = !S.visLinjer; byggTrinn2(); });
+$("#tomKnapp").addEventListener("click", () => byggTrinn2());
+$("#ferdigKnapp").addEventListener("click", ferdigTrinn2);
+$("#angreKnapp").addEventListener("click", () => {
+  const siste = T2.mine.pop();
+  if(siste && siste.parentNode) siste.parentNode.removeChild(siste);
+  T2.maal.forEach(m => { m.truffet = false; });
+  T2.mine.forEach(p => {
+    const L = p.getTotalLength();
+    for(let d = 0; d <= L; d += 2) merkTruffet(p.getPointAtLength(d));
+  });
+  oppdaterDekning();
+});
+
+(function byggFargevalg(){
+  const rad = $("#fargevalg");
+  FARGER.forEach((f, i) => {
+    const kn = document.createElement("button");
+    kn.className = "fargeknapp";
+    kn.type = "button";
+    kn.style.background = f;
+    kn.title = "Velg farge";
+    kn.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    kn.addEventListener("click", () => {
+      S.farge = f;
+      $$(".fargeknapp").forEach(k => k.setAttribute("aria-pressed", "false"));
+      kn.setAttribute("aria-pressed", "true");
+    });
+    rad.appendChild(kn);
+  });
+})();
+
+const flateEl = $("#flate");
+flateEl.addEventListener("pointerdown", e => { flateEl.setPointerCapture(e.pointerId); startStrek(e); });
+flateEl.addEventListener("pointermove", fortsettStrek);
+flateEl.addEventListener("pointerup", sluttStrek);
+flateEl.addEventListener("pointercancel", sluttStrek);
+
+/* Trinn 3 */
+function plasserIKolonne(plass){
+  const navn = S.skrevet || S.valgtNavn;
+  if(!navn) return;
+  leggINavn(plass, navn);
+}
+$$(".kolonne").forEach(k => {
+  k.addEventListener("click", e => {
+    if(e.target.closest(".navnlinje")) return;
+    plasserIKolonne(k.dataset.plass);
+  });
+});
+byggTastatur();
+$("#tastaturKnapp").addEventListener("click", () => {
+  S.visTastatur = !S.visTastatur;
+  $("#tastatur").classList.toggle("skjult", !S.visTastatur);
+  $("#tastaturKnapp").textContent = S.visTastatur ? "⌨️ Tastatur på" : "⌨️ Tastatur av";
+  $("#tastaturKnapp").classList.toggle("av", !S.visTastatur);
+});
+$("#sjekkKnapp").addEventListener("click", sjekkNavn);
+$("#fasitKnapp").addEventListener("click", visFasit);
+$("#nullstillNavn").addEventListener("click", () => {
+  S.plassert = { forst:[], inni:[], sist:[] };
+  S.valgtNavn = null;
+  S.skrevet = "";
+  tegnSkrivevindu(); tegnNavnstripe(); tegnKolonner();
+});
+
+const klasseModal = $("#klasseModal");
+$("#klasselisteKnapp").addEventListener("click", () => {
+  $("#klasseTekst").value = S.navn.join("\n");
+  klasseModal.classList.add("open");
+});
+$("#lukkKlasse").addEventListener("click", () => klasseModal.classList.remove("open"));
+klasseModal.addEventListener("click", e => { if(e.target === klasseModal) klasseModal.classList.remove("open"); });
+$("#lagreKlasse").addEventListener("click", () => {
+  S.navn = $("#klasseTekst").value.split("\n").map(s => s.trim()).filter(Boolean);
+  lagreKlasseliste();
+  S.plassert = { forst:[], inni:[], sist:[] };
+  S.valgtNavn = null;
+  klasseModal.classList.remove("open");
+  byggTrinn3();
+});
+$("#tomKlasse").addEventListener("click", () => {
+  S.navn = [];
+  $("#klasseTekst").value = "";
+  lagreKlasseliste();
+  S.plassert = { forst:[], inni:[], sist:[] };
+  byggTrinn3();
+});
+
+/* Trinn 4 */
+$("#nyeBilder").addEventListener("click", byggTrinn4);
+$("#dekkTilKnapp").addEventListener("click", dekkTilIgjen);
+
+/* Tastatur på tavla */
+document.addEventListener("keydown", e => {
+  if(e.target && /INPUT|TEXTAREA/.test(e.target.nodeName)) return;
+  if(e.key === "ArrowRight"){ flyttBokstav(1); return; }
+  if(e.key === "ArrowLeft"){ flyttBokstav(-1); return; }
+  if(e.key === "Escape"){ klasseModal.classList.remove("open"); document.body.classList.remove("rent"); return; }
+
+  /* I trinn 3 skriver den fysiske tastaturet inn i skriveboksen.
+     Bokstavene bytter altså ikke bokstav der – bruk bokstavraden eller piltastene. */
+  if(S.trinn === 3 && !klasseModal.classList.contains("open")){
+    if(e.key === "Backspace"){ e.preventDefault(); settSkrevet(S.skrevet.slice(0, -1)); return; }
+    if(e.key === "Delete"){ settSkrevet(""); return; }
+    if(e.key >= "1" && e.key <= "3" && (S.skrevet || S.valgtNavn)){
+      plasserIKolonne(["forst","inni","sist"][Number(e.key) - 1]);
+      return;
+    }
+    if(e.key === " " || e.key === "-"){ e.preventDefault(); skrivTegn(e.key); return; }
+    if(e.key.length === 1 && ALFABET.indexOf(e.key.toUpperCase()) !== -1){ skrivTegn(e.key.toUpperCase()); return; }
+  }
+
+  if(e.key >= "1" && e.key <= "4"){ settTrinn(Number(e.key)); return; }
+  const b = e.key.toUpperCase();
+  if(b.length === 1 && ALFABET.indexOf(b) !== -1) settBokstav(b);
+});
+
+/* ---------- start ---------- */
+lastKlasseliste();
+byggBokstavrad();
+tegnAlt();
+settTrinn(1);
+</script>
+
+</body>
+</html>
