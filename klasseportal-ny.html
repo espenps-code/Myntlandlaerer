@@ -4769,5 +4769,272 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 })();
 </script>
 
+
+<style>
+/* ===================== FOKUS: forstørr og sentrer et felt ===================== */
+.panel{ position:relative; }
+
+.fz-btn{
+  width:36px; height:36px; flex:none; border-radius:50%; border:3px solid var(--ink);
+  background:var(--paper); color:var(--ink); font-size:17px; line-height:1; cursor:pointer;
+  font-family:inherit; display:grid; place-items:center; opacity:.5; padding:0;
+  box-shadow:0 4px 0 rgba(42,31,61,.18); transition:opacity .15s, transform .12s;
+}
+.fz-btn:hover{ opacity:1; }
+.fz-btn:active{ transform:translateY(3px); box-shadow:none; }
+.panel-head{ padding-right:46px; }        /* plass til forstørr-knappen i hjørnet */
+.panel-head h2{ line-height:1.05; }
+.fz-btn{ position:absolute; top:15px; right:15px; z-index:6; }
+.word .fz-btn{ background:var(--gold); }
+
+.focus-ovl{ position:absolute; inset:0; z-index:58; display:none; }
+.focus-ovl.open{ display:block; background:rgba(18,12,34,.74); animation:fzFade .18s ease-out both; }
+@keyframes fzFade{ from{ opacity:0 } to{ opacity:1 } }
+
+.focus-bar{ position:absolute; left:56px; right:118px; top:20px; height:58px;
+  display:flex; align-items:center; gap:12px; }
+.focus-title{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);
+  white-space:nowrap; }
+.focus-bar .fb-spacer{ margin-left:auto; }
+.focus-bar .fb{ height:52px; min-width:52px; padding:0 14px; border-radius:16px;
+  border:3px solid var(--ink); background:var(--cream); color:var(--ink);
+  font-family:inherit; font-size:24px; font-weight:700; cursor:pointer; line-height:1;
+  box-shadow:0 4px 0 rgba(0,0,0,.35); transition:transform .12s; }
+.focus-bar .fb:active{ transform:translateY(3px); box-shadow:none; }
+.focus-bar .fb-nav{ font-size:34px; }
+.focus-bar .fb-close{ background:var(--red); color:#fff; font-size:30px; }
+.focus-bar .fb-level{ font-size:22px; font-weight:700; color:#fff;
+  min-width:92px; text-align:center; font-variant-numeric:tabular-nums; }
+
+.focus-frame{ position:absolute; left:56px; right:118px; top:92px; bottom:52px; }
+.focus-holder{ position:absolute; top:0; left:0; transform-origin:top left;
+  display:flex; align-items:center; }
+.focus-holder > .panel{ width:100%; max-height:100%; margin:0;
+  box-shadow:0 10px 0 rgba(0,0,0,.30), 0 26px 60px rgba(0,0,0,.45); }
+.focus-holder .fz-btn{ display:none; }
+.focus-holder .panel-head{ flex:none; }
+.focus-holder .lessons,
+.focus-holder .noteboard,
+.focus-holder .goal-list,
+.focus-holder .checklist{ flex:1 1 auto; min-height:0; overflow-y:auto; padding-right:8px; }
+.focus-holder .helpers{ flex:none; }
+.focus-holder .lesson, .focus-holder .break, .focus-holder .note,
+.focus-holder .goal-item, .focus-holder .check{ flex:none; }
+.focus-holder .fundcards{ flex:none; align-items:flex-start; }
+.focus-holder .word{ overflow-y:auto; }
+.focus-holder .birthday{ justify-content:center; }
+.focus-holder .note{ transform:none; }
+.focus-holder .break{ width:100%; }
+/* «det er mer under»-hint når lista er lengre enn feltet */
+.focus-holder > .panel.fz-more::after{ content:''; position:absolute; left:5px; right:5px; bottom:5px;
+  height:52px; border-radius:0 0 21px 21px; pointer-events:none; z-index:2;
+  background:linear-gradient(to bottom, rgba(251,242,214,0), var(--cream) 78%); }
+.focus-holder > .panel.fz-more::before{ content:'\25BC'; position:absolute; left:50%; bottom:9px;
+  font-size:20px; color:var(--ink-soft); pointer-events:none; z-index:3; opacity:.8;
+  transform:translateX(-50%); }
+@media (prefers-reduced-motion:no-preference){
+  .focus-holder > .panel.fz-more::before{ animation:fzBob 1.8s ease-in-out infinite; }
+}
+@keyframes fzBob{ 0%,100%{ transform:translateX(-50%) translateY(0); } 50%{ transform:translateX(-50%) translateY(-5px); } }
+
+.focus-holder ::-webkit-scrollbar{ width:14px; }
+.focus-holder ::-webkit-scrollbar-track{ background:rgba(42,31,61,.10); border-radius:10px; }
+.focus-holder ::-webkit-scrollbar-thumb{ background:rgba(42,31,61,.55); border-radius:10px; }
+.focus-holder ::-webkit-scrollbar-thumb:hover{ background:var(--ink); }
+</style>
+<script>
+/* ====== FOKUSVISNING: klikk på &#9974; for å forstørre og sentrere et felt ====== */
+(function(){
+  'use strict';
+  var canvas = document.getElementById('canvas');
+  if(!canvas) return;
+
+  var PANELS = [
+    { sel:'.panel.timeplan', title:'På timeplanen' },
+    { sel:'.panel.notes',    title:'Fra læreren' },
+    { sel:'.panel.duty',     title:'Ukas hjelpere' },
+    { sel:'.panel.savegoal', title:'Klassens sparemål' },
+    { sel:'#fundPanel',      title:'Fond i dag' },
+    { sel:'.panel.word',     title:'Ukas ord' },
+    { sel:'#birthday',       title:'Bursdag' }
+  ];
+
+  var ZKEY = 'myntland-portal-fokuszoom';
+  var ZMIN = 1.1, ZMAX = 3.2, ZSTEP = 0.15;
+  var zoom = 1.9;
+  try{ var z0 = parseFloat(localStorage.getItem(ZKEY)); if(z0 >= ZMIN && z0 <= ZMAX) zoom = z0; }catch(e){}
+
+  var ovl = document.createElement('div');
+  ovl.className = 'focus-ovl';
+  ovl.id = 'focusOvl';
+  ovl.innerHTML =
+      '<div class="focus-bar">'
+    +   '<button type="button" class="fb fb-nav" id="fzPrev" title="Forrige felt (pil venstre)">&#8249;</button>'
+    +   '<span class="focus-title" id="fzTitle" aria-live="polite"></span>'
+    +   '<span class="fb-spacer"></span>'
+    +   '<button type="button" class="fb" id="fzMinus" title="Mindre skrift (&minus;)">A&minus;</button>'
+    +   '<span class="fb-level" id="fzLevel">190&nbsp;%</span>'
+    +   '<button type="button" class="fb" id="fzPlus" title="Større skrift (+)">A+</button>'
+    +   '<button type="button" class="fb fb-nav" id="fzNext" title="Neste felt (pil høyre)">&#8250;</button>'
+    +   '<button type="button" class="fb fb-close" id="fzClose" title="Lukk (Esc)">&times;</button>'
+    + '</div>'
+    + '<div class="focus-frame" id="focusFrame"><div class="focus-holder" id="focusHolder"></div></div>';
+  canvas.appendChild(ovl);
+
+  var frame   = ovl.querySelector('#focusFrame');
+  var holder  = ovl.querySelector('#focusHolder');
+  var titleEl = ovl.querySelector('#fzTitle');
+  var levelEl = ovl.querySelector('#fzLevel');
+
+  var current = null; /* { el, ph, title } */
+
+  function scrollRegion(panel){
+    return panel.querySelector('.lessons, .noteboard, .checklist, .goal-list');
+  }
+  function updMore(){
+    if(!current) return;
+    var r = scrollRegion(current.el);
+    var more = !!(r && r.scrollHeight > r.clientHeight + 4
+                    && r.scrollTop + r.clientHeight < r.scrollHeight - 4);
+    current.el.classList.toggle('fz-more', more);
+  }
+
+  function apply(){
+    var w = frame.clientWidth, h = frame.clientHeight;
+    if(!w || !h) return;
+    holder.style.width  = (w / zoom) + 'px';
+    holder.style.height = (h / zoom) + 'px';
+    holder.style.transform = 'scale(' + zoom + ')';
+    levelEl.innerHTML = Math.round(zoom * 100) + '&nbsp;%';
+    setTimeout(updMore, 60);
+  }
+
+  function setZoom(z){
+    zoom = Math.max(ZMIN, Math.min(ZMAX, Math.round(z * 100) / 100));
+    try{ localStorage.setItem(ZKEY, String(zoom)); }catch(e){}
+    apply();
+  }
+
+  function shown(el){
+    if(current && current.el === el) return true;
+    if(!el.offsetParent && el.offsetHeight === 0) return false;
+    try{ if(getComputedStyle(el).display === 'none') return false; }catch(e){}
+    return true;
+  }
+
+  function seq(){
+    var out = [];
+    PANELS.forEach(function(p){
+      var el = document.querySelector(p.sel);
+      if(el && shown(el)) out.push({ el:el, title:p.title });
+    });
+    return out;
+  }
+
+  function restore(){
+    if(!current) return;
+    var c = current; current = null;
+    c.el.classList.remove('is-focused');
+    c.el.classList.remove('fz-more');
+    var r = scrollRegion(c.el);
+    if(r) r.removeEventListener('scroll', updMore);
+    if(c.ph && c.ph.parentNode){
+      c.ph.parentNode.insertBefore(c.el, c.ph);
+      c.ph.parentNode.removeChild(c.ph);
+    }
+  }
+
+  function open(el, title){
+    if(!el) return;
+    if(current && current.el === el){ return; }
+    if(current) restore();
+    var ph = document.createElement('div');
+    ph.className = 'focus-ph';
+    ph.style.visibility = 'hidden';
+    ph.style.pointerEvents = 'none';
+    try{
+      var cs = getComputedStyle(el);
+      ph.style.flex = cs.flex;
+      ph.style.width = el.offsetWidth + 'px';
+      ph.style.height = el.offsetHeight + 'px';
+      if(cs.gridColumn && cs.gridColumn !== 'auto') ph.style.gridColumn = cs.gridColumn;
+    }catch(e){}
+    el.parentNode.insertBefore(ph, el);
+    current = { el:el, ph:ph, title:title };
+    holder.appendChild(el);
+    el.classList.add('is-focused');
+    titleEl.textContent = title || '';
+    ovl.classList.add('open');
+    document.body.classList.add('has-focus');
+    apply();
+    /* la panelet regne om oppsettet sitt i den nye størrelsen (f.eks. antall kolonner i huskelista) */
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+    var reg = scrollRegion(el);
+    if(reg){ reg.scrollTop = 0; reg.addEventListener('scroll', updMore); }
+    setTimeout(updMore, 80);
+  }
+
+  function close(){
+    restore();
+    ovl.classList.remove('open');
+    document.body.classList.remove('has-focus');
+    holder.innerHTML = '';
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+  }
+
+  function step(dir){
+    var s = seq();
+    if(s.length < 2) return;
+    var i = 0;
+    for(var k = 0; k < s.length; k++){ if(current && s[k].el === current.el){ i = k; break; } }
+    var n = (i + dir + s.length) % s.length;
+    open(s[n].el, s[n].title);
+  }
+
+  ovl.querySelector('#fzClose').onclick = close;
+  ovl.querySelector('#fzPrev').onclick  = function(){ step(-1); };
+  ovl.querySelector('#fzNext').onclick  = function(){ step(1); };
+  ovl.querySelector('#fzMinus').onclick = function(){ setZoom(zoom - ZSTEP); };
+  ovl.querySelector('#fzPlus').onclick  = function(){ setZoom(zoom + ZSTEP); };
+  ovl.addEventListener('click', function(e){ if(e.target === ovl || e.target === frame) close(); });
+
+  document.addEventListener('keydown', function(e){
+    if(!ovl.classList.contains('open')) return;
+    if(document.querySelector('.ovl.open')) return;               /* et annet vindu ligger over */
+    var dl = document.querySelector('.draw-layer');
+    if(dl && getComputedStyle(dl).display !== 'none') return;      /* tavla er åpen */
+    var t = e.target;
+    if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''))) return;
+    if(e.key === 'Escape'){ close(); e.preventDefault(); }
+    else if(e.key === 'ArrowRight'){ step(1); e.preventDefault(); }
+    else if(e.key === 'ArrowLeft'){ step(-1); e.preventDefault(); }
+    else if(e.key === '+' || e.key === '='){ setZoom(zoom + ZSTEP); e.preventDefault(); }
+    else if(e.key === '-'){ setZoom(zoom - ZSTEP); e.preventDefault(); }
+  });
+
+  /* ---- forstørr-knapp på hvert felt ---- */
+  PANELS.forEach(function(p){
+    var el = document.querySelector(p.sel);
+    if(!el || el.querySelector('.fz-btn')) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fz-btn';
+    b.innerHTML = '&#9974;';
+    b.title = 'Forstørr feltet: ' + p.title;
+    b.setAttribute('aria-label', b.title);
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); open(el, p.title); });
+    el.appendChild(b);
+
+    /* dobbeltklikk på tomt område i feltet gjør det samme */
+    el.addEventListener('dblclick', function(ev){
+      if(ovl.classList.contains('open')) return;
+      var t = ev.target;
+      if(t && t.closest && t.closest('[data-edit],button,input,textarea,.check,.note,.lesson,.goal-item,.fundcard,.helper')) return;
+      open(el, p.title);
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
