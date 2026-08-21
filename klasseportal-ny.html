@@ -4837,6 +4837,53 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
 }
 @keyframes fzBob{ 0%,100%{ transform:translateX(-50%) translateY(0); } 50%{ transform:translateX(-50%) translateY(-5px); } }
 
+
+/* --- toppkortene (dato, klokke, vær) kan også forstørres --- */
+.datecard, .clockcard, .clockzone{ position:relative; }
+.focus-holder > .card{ width:100%; max-height:100%; margin:0;
+  box-shadow:0 10px 0 rgba(0,0,0,.30), 0 26px 60px rgba(0,0,0,.45); }
+
+.focus-holder .datecard{ height:auto; min-height:0; padding:40px 56px; gap:48px; justify-content:center; }
+.focus-holder .datecard .cal-leaf{ width:232px; border-radius:28px; border-width:6px; }
+.focus-holder .datecard .cal-month{ font-size:38px; padding:9px 0; letter-spacing:3px; }
+.focus-holder .datecard .cal-day{ font-size:142px; }
+.focus-holder .datecard .cal-right{ gap:20px; }
+.focus-holder .datecard .weekday{ font-size:100px; }
+.focus-holder .datecard .datesub{ gap:16px; }
+.focus-holder .datecard .weeknum, .focus-holder .datecard .yearnum{ font-size:32px; padding:8px 24px; }
+
+.focus-holder .clockcard{ height:auto; min-width:0; padding:34px 40px; gap:56px; justify-content:center; }
+.focus-holder .clockcard .analog-svg{ width:270px; height:270px; }
+.focus-holder .clockcard .clock-stack{ gap:16px; }
+.focus-holder .clockcard .clock-digital{ font-size:132px; }
+.focus-holder .clockcard .clock-words{ font-size:46px; }
+
+/* --- værpanel: bare synlig i fokusvisning --- */
+#weatherPanel{ display:none; }
+.focus-holder > #weatherPanel{ display:flex; overflow-y:auto; }
+.wp-now{ display:flex; align-items:center; gap:26px; padding:2px 2px 18px;
+  border-bottom:3px dashed rgba(42,31,61,.22); margin-bottom:20px; }
+.wp-icon{ display:block; flex:none; }
+.wp-icon svg{ width:100%; height:100%; display:block; }
+.wp-now .wp-icon{ width:98px; height:98px; }
+.wp-temp{ font-size:80px; font-weight:700; color:var(--ink); line-height:1; font-variant-numeric:tabular-nums; }
+.wp-label{ font-size:36px; font-weight:600; color:var(--ink-soft); }
+.wp-when{ margin-left:auto; font-size:24px; font-weight:700; color:var(--gold-deep);
+  text-transform:uppercase; letter-spacing:1.5px; }
+.wp-days{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
+.wp-day{ background:var(--paper); border:3px solid var(--ink); border-radius:18px;
+  padding:13px 6px 15px; text-align:center; box-shadow:0 4px 0 rgba(42,31,61,.14); }
+.wp-day.is-today{ background:#fff7df; box-shadow:0 0 0 4px var(--gold), 0 5px 0 rgba(42,31,61,.18); }
+.wp-wd{ font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--ink); line-height:1.1; }
+.wp-date{ font-size:16px; font-weight:600; color:var(--ink-soft); }
+.wp-day .wp-icon{ width:66px; height:66px; margin:8px auto 6px; }
+.wp-temps{ display:flex; align-items:baseline; justify-content:center; gap:8px; }
+.wp-max{ font-size:34px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+.wp-min{ font-size:22px; font-weight:600; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+.wp-prec{ margin-top:6px; font-size:18px; font-weight:700; color:#3b78c2; }
+.wp-prec.dry{ color:var(--ink-soft); opacity:.55; }
+.wp-msg{ font-size:19px; color:var(--ink-soft); font-weight:500; line-height:1.3; padding:12px 2px 0; }
+
 .focus-holder ::-webkit-scrollbar{ width:14px; }
 .focus-holder ::-webkit-scrollbar-track{ background:rgba(42,31,61,.10); border-radius:10px; }
 .focus-holder ::-webkit-scrollbar-thumb{ background:rgba(42,31,61,.55); border-radius:10px; }
@@ -4850,6 +4897,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   if(!canvas) return;
 
   var PANELS = [
+    { sel:'.datecard',       title:'Dato' },
+    { sel:'.clockcard',      title:'Klokke' },
+    { sel:'#weatherPanel',   title:'Været', virtual:true, btnHost:'.clockzone',
+      btnTitle:'Forstørr været og se meldingen for de neste dagene', onOpen:fyllVaerpanel },
     { sel:'.panel.timeplan', title:'På timeplanen' },
     { sel:'.panel.notes',    title:'Fra læreren' },
     { sel:'.panel.duty',     title:'Ukas hjelpere' },
@@ -4858,6 +4909,149 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     { sel:'.panel.word',     title:'Ukas ord' },
     { sel:'#birthday',       title:'Bursdag' }
   ];
+
+
+  /* ================= VÆRPANEL: nå + meldingen for de neste 5 dagene ================= */
+  var WI = {
+    sun:'<svg viewBox="0 0 24 24" fill="none" stroke="#e3a82a" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.6" fill="#ffd96b"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"/></svg>',
+    sunCloud:'<svg viewBox="0 0 24 24" fill="none" stroke="#e3a82a" stroke-width="2" stroke-linecap="round"><circle cx="8.5" cy="8" r="3.4" fill="#ffd96b"/><path d="M8.5 1.8v1.6M2.3 8h1.6M4.1 3.6l1.1 1.1M12.9 3.6l-1.1 1.1"/><path d="M9 20a3.6 3.6 0 0 1 0-7.2 4.6 4.6 0 0 1 8.8-1.3A3.2 3.2 0 0 1 19 20z" fill="#cfe0ee" stroke="#5a7186" stroke-width="1.6"/></svg>',
+    cloud:'<svg viewBox="0 0 24 24" fill="#cfe0ee" stroke="#5a7186" stroke-width="1.6"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 18z"/></svg>',
+    fog:'<svg viewBox="0 0 24 24" fill="none"><path d="M7 14a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 14z" fill="#dde5ec" stroke="#7b8b99" stroke-width="1.6"/><path d="M4 17.4h16M6 20.4h13" stroke="#7b8b99" stroke-width="2" stroke-linecap="round"/></svg>',
+    rain:'<svg viewBox="0 0 24 24" fill="none" stroke="#3b78c2" stroke-width="2" stroke-linecap="round"><path d="M7 14a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 14z" fill="#cfe0ee" stroke="#5a7186" stroke-width="1.6"/><path d="M8.4 17v3M12 17.4v3.2M15.6 17v3"/></svg>',
+    sleet:'<svg viewBox="0 0 24 24" fill="none" stroke="#3b78c2" stroke-width="2" stroke-linecap="round"><path d="M7 14a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 14z" fill="#cfe0ee" stroke="#5a7186" stroke-width="1.6"/><path d="M9 17.2v3"/><path d="M15 17.2v3.4M13.6 18.2l2.8 2.4M16.4 18.2l-2.8 2.4" stroke="#5aa9d6"/></svg>',
+    snow:'<svg viewBox="0 0 24 24" fill="none" stroke="#5aa9d6" stroke-width="2" stroke-linecap="round"><path d="M7 13.6a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 13.6z" fill="#e6f1f8" stroke="#5a7186" stroke-width="1.6"/><path d="M9 16.6v4.2M7.3 17.6l3.4 2.2M10.7 17.6l-3.4 2.2M15 16.6v4.2M13.3 17.6l3.4 2.2M16.7 17.6l-3.4 2.2"/></svg>',
+    thunder:'<svg viewBox="0 0 24 24" fill="none"><path d="M7 13.6a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 13.6z" fill="#c3d3e0" stroke="#5a7186" stroke-width="1.6"/><path d="M12.6 15l-4 4.4h3l-1 3.2 4.2-4.8h-3.1z" fill="#ffd23f" stroke="#e3a82a" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+  };
+  function vIkon(c){
+    c = +c;
+    if(c === 0) return WI.sun;
+    if(c === 1 || c === 2) return WI.sunCloud;
+    if(c === 3) return WI.cloud;
+    if(c === 45 || c === 48) return WI.fog;
+    if(c >= 95) return WI.thunder;
+    if((c >= 71 && c <= 77) || c === 85 || c === 86) return WI.snow;
+    if(c === 56 || c === 57 || c === 66 || c === 67) return WI.sleet;
+    return WI.rain;
+  }
+  function vTekst(c){
+    c = +c;
+    if(c === 0) return 'Sol';
+    if(c === 1) return 'Lettskyet';
+    if(c === 2) return 'Delvis skyet';
+    if(c === 3) return 'Skyet';
+    if(c === 45 || c === 48) return 'Tåke';
+    if(c >= 95) return 'Torden';
+    if((c >= 71 && c <= 77) || c === 85 || c === 86) return 'Snø';
+    if(c === 56 || c === 57 || c === 66 || c === 67) return 'Sludd';
+    if(c >= 80 && c <= 82) return 'Regnbyger';
+    if(c >= 51 && c <= 55) return 'Yr';
+    return 'Regn';
+  }
+  var UKEDAG = ['søn','man','tir','ons','tor','fre','lør'];
+  var MND = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+
+  var vaerPanel = document.createElement('section');
+  vaerPanel.className = 'panel wpanel';
+  vaerPanel.id = 'weatherPanel';
+  vaerPanel.innerHTML =
+      '<div class="panel-head">'
+    +   '<span class="badge teal">Været</span><h2 id="wpTitle">Været</h2>'
+    +   '<span class="hint" id="wpUpdated"></span>'
+    + '</div>'
+    + '<div class="wp-now" id="wpNow"></div>'
+    + '<div class="wp-days" id="wpDays"></div>'
+    + '<div class="wp-msg" id="wpMsg"></div>';
+  canvas.appendChild(vaerPanel);
+
+  var varselCache = null;
+
+  function fyllVaerpanel(){
+    var d = (window.portal && portal.data) || {};
+    var W = (window.portal && portal.W) || [];
+    var idx = Math.max(0, Math.min(W.length - 1, d.weather | 0));
+    var naaIkon = [WI.sun, WI.cloud, WI.rain, WI.snow][idx] || WI.cloud;
+    var now = document.getElementById('wpNow');
+    now.innerHTML = '<span class="wp-icon">' + naaIkon + '</span>'
+      + '<span class="wp-temp"></span><span class="wp-label"></span>'
+      + '<span class="wp-when">Akkurat nå</span>';
+    now.querySelector('.wp-temp').textContent = d.temp || '';
+    now.querySelector('.wp-label').textContent = W[idx] ? W[idx].l : '';
+    document.getElementById('wpTitle').textContent =
+      d.weatherPlace ? ('Været i ' + d.weatherPlace) : 'Været';
+    hentVarsel();
+  }
+
+  function visVarsel(dager){
+    var box = document.getElementById('wpDays');
+    var msg = document.getElementById('wpMsg');
+    box.innerHTML = '';
+    dager.slice(0, 5).forEach(function(dag, i){
+      var dt = new Date(dag.date + 'T12:00:00');
+      var navn = i === 0 ? 'I dag' : (i === 1 ? 'I morgen' : UKEDAG[dt.getDay()]);
+      var el = document.createElement('div');
+      el.className = 'wp-day' + (i === 0 ? ' is-today' : '');
+      el.innerHTML = '<div class="wp-wd"></div><div class="wp-date"></div>'
+        + '<span class="wp-icon">' + vIkon(dag.code) + '</span>'
+        + '<div class="wp-temps"><span class="wp-max"></span><span class="wp-min"></span></div>'
+        + '<div class="wp-prec' + (dag.prec > 0.05 ? '' : ' dry') + '"></div>';
+      el.querySelector('.wp-wd').textContent = navn;
+      el.querySelector('.wp-date').textContent = dt.getDate() + '. ' + MND[dt.getMonth()];
+      el.querySelector('.wp-max').textContent = dag.max + '°';
+      el.querySelector('.wp-min').textContent = dag.min + '°';
+      el.querySelector('.wp-prec').textContent = dag.prec > 0.05
+        ? (String(dag.prec).replace('.', ',') + ' mm') : 'tørt';
+      el.title = vTekst(dag.code);
+      box.appendChild(el);
+    });
+    msg.textContent = 'Høyeste og laveste temperatur og meldt nedbør · Kilde: Open-Meteo';
+  }
+
+  function hentVarsel(){
+    var d = (window.portal && portal.data) || {};
+    var box = document.getElementById('wpDays');
+    var msg = document.getElementById('wpMsg');
+    var upd = document.getElementById('wpUpdated');
+    upd.textContent = '';
+    if(d.weatherLat == null || d.weatherLon == null){
+      box.innerHTML = '';
+      msg.textContent = 'Velg sted under ⚙️ Innstillinger → Vær, så viser vi meldingen for de neste dagene her.';
+      return;
+    }
+    var la = d.weatherLat, lo = d.weatherLon;
+    function stemple(t){
+      var dt = new Date(t);
+      upd.textContent = 'Oppdatert ' + ('0' + dt.getHours()).slice(-2) + ':' + ('0' + dt.getMinutes()).slice(-2);
+    }
+    if(varselCache && varselCache.la === la && varselCache.lo === lo
+       && (Date.now() - varselCache.t) < 30 * 60 * 1000){
+      visVarsel(varselCache.dager); stemple(varselCache.t); return;
+    }
+    box.innerHTML = '';
+    msg.textContent = 'Henter værmeldingen …';
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo
+            + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum'
+            + '&timezone=auto&forecast_days=5';
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, 9000) : null;
+    fetch(url, ctrl ? { signal: ctrl.signal } : {})
+      .then(function(r){ if(timer) clearTimeout(timer); if(!r.ok) throw new Error('http'); return r.json(); })
+      .then(function(j){
+        var dd = j && j.daily;
+        if(!dd || !dd.time || !dd.time.length) throw new Error('tomt');
+        var dager = dd.time.map(function(t, i){
+          return { date:t, code:dd.weather_code[i],
+                   max:Math.round(dd.temperature_2m_max[i]),
+                   min:Math.round(dd.temperature_2m_min[i]),
+                   prec:Math.round((dd.precipitation_sum[i] || 0) * 10) / 10 };
+        });
+        varselCache = { la:la, lo:lo, t:Date.now(), dager:dager };
+        visVarsel(dager); stemple(varselCache.t);
+      })['catch'](function(){
+        if(timer) clearTimeout(timer);
+        box.innerHTML = '';
+        msg.textContent = 'Fikk ikke tak i værmeldingen akkurat nå. Sjekk nettet og prøv igjen om litt.';
+      });
+  }
 
   var ZKEY = 'myntland-portal-fokuszoom';
   var ZMIN = 1.1, ZMAX = 3.2, ZSTEP = 0.15;
@@ -4926,7 +5120,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var out = [];
     PANELS.forEach(function(p){
       var el = document.querySelector(p.sel);
-      if(el && shown(el)) out.push({ el:el, title:p.title });
+      if(el && (p.virtual || shown(el))) out.push({ el:el, title:p.title, cfg:p });
     });
     return out;
   }
@@ -4941,13 +5135,34 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if(c.ph && c.ph.parentNode){
       c.ph.parentNode.insertBefore(c.el, c.ph);
       c.ph.parentNode.removeChild(c.ph);
+    } else if(c.cfg && c.cfg.virtual){
+      canvas.appendChild(c.el);
     }
+  }
+
+  function cfgFor(el){
+    for(var i = 0; i < PANELS.length; i++){
+      if(document.querySelector(PANELS[i].sel) === el) return PANELS[i];
+    }
+    return null;
   }
 
   function open(el, title){
     if(!el) return;
     if(current && current.el === el){ return; }
     if(current) restore();
+    var cfg = cfgFor(el);
+    if(cfg && cfg.virtual){
+      current = { el:el, ph:null, title:title, cfg:cfg };
+      holder.appendChild(el);
+      el.classList.add('is-focused');
+      titleEl.textContent = title || '';
+      ovl.classList.add('open');
+      document.body.classList.add('has-focus');
+      apply();
+      if(cfg.onOpen){ try{ cfg.onOpen(); }catch(e){} }
+      return;
+    }
     var ph = document.createElement('div');
     ph.className = 'focus-ph';
     ph.style.visibility = 'hidden';
@@ -4960,7 +5175,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       if(cs.gridColumn && cs.gridColumn !== 'auto') ph.style.gridColumn = cs.gridColumn;
     }catch(e){}
     el.parentNode.insertBefore(ph, el);
-    current = { el:el, ph:ph, title:title };
+    current = { el:el, ph:ph, title:title, cfg:cfg };
     holder.appendChild(el);
     el.classList.add('is-focused');
     titleEl.textContent = title || '';
@@ -4972,6 +5187,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var reg = scrollRegion(el);
     if(reg){ reg.scrollTop = 0; reg.addEventListener('scroll', updMore); }
     setTimeout(updMore, 80);
+    if(cfg && cfg.onOpen){ try{ cfg.onOpen(); }catch(e){} }
   }
 
   function close(){
@@ -5015,23 +5231,27 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   /* ---- forstørr-knapp på hvert felt ---- */
   PANELS.forEach(function(p){
     var el = document.querySelector(p.sel);
-    if(!el || el.querySelector('.fz-btn')) return;
+    if(!el) return;
+    var host = p.btnHost ? document.querySelector(p.btnHost) : el;
+    if(!host || host.querySelector(':scope > .fz-btn')) return;
     var b = document.createElement('button');
     b.type = 'button';
     b.className = 'fz-btn';
     b.innerHTML = '&#9974;';
-    b.title = 'Forstørr feltet: ' + p.title;
+    b.title = p.btnTitle || ('Forstørr feltet: ' + p.title);
     b.setAttribute('aria-label', b.title);
-    b.addEventListener('click', function(ev){ ev.stopPropagation(); open(el, p.title); });
-    el.appendChild(b);
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); ev.preventDefault(); open(el, p.title); });
+    host.appendChild(b);
 
     /* dobbeltklikk på tomt område i feltet gjør det samme */
-    el.addEventListener('dblclick', function(ev){
-      if(ovl.classList.contains('open')) return;
-      var t = ev.target;
-      if(t && t.closest && t.closest('[data-edit],button,input,textarea,.check,.note,.lesson,.goal-item,.fundcard,.helper')) return;
-      open(el, p.title);
-    });
+    if(!p.virtual){
+      el.addEventListener('dblclick', function(ev){
+        if(ovl.classList.contains('open')) return;
+        var t = ev.target;
+        if(t && t.closest && t.closest('[data-edit],button,input,textarea,.check,.note,.lesson,.goal-item,.fundcard,.helper')) return;
+        open(el, p.title);
+      });
+    }
   });
 })();
 </script>
