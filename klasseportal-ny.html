@@ -2035,15 +2035,31 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   renderLessons();
 
   /* ---------- notes ---------- */
-  function renderNotes() {
-    const b = document.getElementById('noteboard'); b.innerHTML = '';
+  /* Skriver laereren i en beskjed akkurat na? Da skal INGENTING tegne opp
+     beskjedtavla pa nytt - all HTML-en byttes ut, og da forsvinner markoeren
+     midt i ordet (det ser ut som portalen hopper ut av skrivemodus).
+     Vi husker at det kom noe nytt, og tegner opp igjen naar hun er ferdig. */
+  let _notesDirty = false;
+  function notesEditing(){
+    const b = document.getElementById('noteboard');
+    const a = document.activeElement;
+    return !!(b && a && a !== document.body && b.contains(a));
+  }
+  function renderNotes(force) {
+    const b = document.getElementById('noteboard'); if (!b) return;
+    if (!force && notesEditing()) { _notesDirty = true; return; }
+    _notesDirty = false;
+    b.innerHTML = '';
     const __wd = todayWd();
     const __dm = (data.dayMsg && data.dayMsg[__wd]) ? String(data.dayMsg[__wd]).trim() : '';
     if (__dm) {
       const pn = document.createElement('div'); pn.className = 'note';
       pn.innerHTML = `<span class="tape"></span><span class="ntext" contenteditable="true" spellcheck="false"></span>`;
       pn.querySelector('.ntext').textContent = __dm;
-      pn.querySelector('.ntext').addEventListener('input', (e) => { data.dayMsg[__wd] = e.target.textContent; save(); });
+      // blur i tillegg til input: teksten er lagret for tavla evt. tegnes opp igjen
+      const keepDm = (e) => { data.dayMsg[__wd] = e.target.textContent; save(); };
+      pn.querySelector('.ntext').addEventListener('input', keepDm);
+      pn.querySelector('.ntext').addEventListener('blur', keepDm);
       b.appendChild(pn);
     }
     data.notes.forEach((txt, i) => {
@@ -2053,11 +2069,20 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
         <button class="del" title="Slett">×</button>
         <span class="ntext" contenteditable="true" spellcheck="false"></span>`;
       n.querySelector('.ntext').textContent = txt;
-      n.querySelector('.ntext').addEventListener('input', (e) => { data.notes[i] = e.target.textContent; save(); });
-      n.querySelector('.del').addEventListener('click', () => { data.notes.splice(i, 1); renderNotes(); save(); });
+      const keep = (e) => { data.notes[i] = e.target.textContent; save(); };
+      n.querySelector('.ntext').addEventListener('input', keep);
+      n.querySelector('.ntext').addEventListener('blur', keep);
+      n.querySelector('.del').addEventListener('click', () => { data.notes.splice(i, 1); renderNotes(true); save(); });
       b.appendChild(n);
     });
   }
+  /* Naar laereren forlater beskjeden: tegn opp tavla hvis det kom noe fra skyen
+     mens hun skrev. */
+  document.addEventListener('focusout', (e) => {
+    const b = document.getElementById('noteboard');
+    if (!b || !e.target || !b.contains(e.target)) return;
+    setTimeout(() => { if (_notesDirty && !notesEditing()) renderNotes(true); }, 0);
+  }, true);
   function renderBirthday(){
     const panel = document.getElementById('birthday'); if (!panel) return;
     const wd = todayWd();
@@ -2096,9 +2121,9 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     }
   }
   document.getElementById('addNote').addEventListener('click', () => {
-    data.notes.push('Ny beskjed …'); renderNotes(); save();
-    const list = document.querySelectorAll('.ntext');
-    const last = list[list.length - 1]; last.focus();
+    data.notes.push('Ny beskjed …'); renderNotes(true); save();
+    const list = document.querySelectorAll('#noteboard .ntext');
+    const last = list[list.length - 1]; if (!last) return; last.focus();
     document.getSelection().selectAllChildren(last);
   });
   renderNotes();
@@ -2333,6 +2358,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     save: save,
     renderLessons: renderLessons,
     renderNotes: renderNotes,
+    notesEditing: notesEditing,
     renderBirthday: renderBirthday,
     renderHelpers: renderHelpers,
     renderChecklist: renderChecklist,
@@ -4618,10 +4644,15 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       const b = snap.val();
       if (!b) return;                              // tom klasse: behold lokale standarder, men tillat skriving
       const d = window.portal.data; if (!d) return;
+      const _forrigeSig = _daySig;
+      // Holder laereren pa a skrive en beskjed akkurat na? Da lar vi hennes egne
+      // beskjeder sta - de fra skyen ville slatt ut teksten under fingrene hennes.
+      let _skriver = false;
+      try { _skriver = !!(window.portal.notesEditing && window.portal.notesEditing()); } catch(e){}
       // Bruk KUN felt som faktisk finnes i skyen (trygg migrering fra gammelt format)
       if (b.week && typeof b.week === 'object') d.week = b.week;
-      if (Array.isArray(b.notes)) d.notes = b.notes;
-      if (b.dayMsg && typeof b.dayMsg === 'object') d.dayMsg = b.dayMsg;
+      if (Array.isArray(b.notes) && !_skriver) d.notes = b.notes;
+      if (b.dayMsg && typeof b.dayMsg === 'object' && !_skriver) d.dayMsg = b.dayMsg;
       if (Array.isArray(b.helpers)) d.helpers = b.helpers;
       if (b.helperCount != null) d.helperCount = b.helperCount;
       if (Array.isArray(b.checklist)) d.checklist = b.checklist;
@@ -4642,7 +4673,12 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       if (b.quote != null) d.quote = b.quote;
       if (b.enabled != null) d.dayEnabled = (b.enabled !== false);
       if (Array.isArray(b.music) && window._applyMusicFromCloud) window._applyMusicFromCloud(b.music);
-      _daySig = _sigOf(_payloadOf(d));
+      // Beholdt vi vare egne beskjeder? Nullstill signaturen sa de blir sendt
+      // til skyen ved neste lagring i stedet for a bli sittende fast her.
+      _daySig = _skriver ? '' : _sigOf(_payloadOf(d));
+      // Vart eget ekko fra skyen: ingenting er endret, sa ikke tegn opp pa nytt.
+      // (Tegner vi opp, mister laereren markoeren midt i det hun skriver.)
+      if (!_skriver && _daySig === _forrigeSig) return;
       try { window.portal.applyWeek && window.portal.applyWeek(); } catch(e){}
       try { window.portal.renderLessons && window.portal.renderLessons(); } catch(e){}
       try { window.portal.renderNotes && window.portal.renderNotes(); } catch(e){}
@@ -4674,6 +4710,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       var p=node.parentNode; if(!p) return;
       var tag=p.nodeName;
       if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA') return;
+      // Ikke bytt ut tekst i felt laereren skriver i: da hopper markoeren, og
+      // mynt-tegnet ville forsvunnet fra teksten som lagres.
+      if(p.isContentEditable) return;
+      if(p.closest && p.closest('[contenteditable="true"],[data-edit]')) return;
       var parts=v.split(COIN), frag=document.createDocumentFragment();
       for(var i=0;i<parts.length;i++){
         if(parts[i]) frag.appendChild(document.createTextNode(parts[i]));
@@ -4687,6 +4727,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     } else if(node.nodeType===1){
       var t=node.nodeName;
       if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='INPUT') return;
+      if(node.isContentEditable) return;
+      if(node.closest && node.closest('[contenteditable="true"],[data-edit]')) return;
       var kids=Array.prototype.slice.call(node.childNodes);
       for(var i=0;i<kids.length;i++) convert(kids[i]);
     }
