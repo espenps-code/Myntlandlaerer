@@ -514,6 +514,20 @@ h1.sticker{
 .bday-row{display:flex;align-items:center;gap:8px}
 .bday-row input,.bday-row select{font-family:var(--font);font-size:16px;border:2px solid var(--ink);border-radius:9px;padding:6px 8px;background:#fff;color:var(--ink)}
 .bday-row .bdname{flex:1;min-width:120px}
+.bday-row .bdname{max-width:380px}
+.bday-row .bdd,.bday-row .bdm{max-width:150px}
+.bday-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 10px}
+.bd-btn{font-family:var(--font);font-size:15px;font-weight:700;border:2px solid var(--ink);border-radius:9px;padding:7px 11px;background:#fff;color:var(--ink);cursor:pointer}
+.bd-btn:hover{background:rgba(231,168,42,.18)}
+.bd-msg{font-size:15px;font-weight:700;color:#2f7d32}
+.bd-next{border:2px dashed var(--ink);border-radius:12px;padding:10px 12px;margin:0 0 12px;background:rgba(255,255,255,.55)}
+.bd-next h4{margin:0 0 6px;font-size:17px}
+.bd-next ul{margin:0;padding-left:18px;font-size:15px;line-height:1.55}
+.bd-month{margin:14px 0 2px;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft)}
+.bd-month:first-child{margin-top:2px}
+.bd-empty{font-size:15px;color:var(--ink-soft);margin:6px 0 10px;line-height:1.5}
+.bd-paste{display:flex;flex-direction:column;gap:8px;margin:0 0 12px}
+.bd-paste textarea{font-family:var(--font);font-size:15px;border:2px solid var(--ink);border-radius:9px;padding:8px 10px;min-height:120px;background:#fff;color:var(--ink)}
 .plan-tab-btn{font-family:inherit;font-size:17px;font-weight:700;color:var(--ink-soft);background:transparent;border:none;border-bottom:4px solid transparent;padding:8px 14px;cursor:pointer;margin-bottom:-3px}
 .plan-tab-btn.active{color:var(--ink);border-bottom-color:var(--gold)}
 .plan-panel{display:flex;flex-direction:column;gap:14px}
@@ -1562,9 +1576,25 @@ h1.sticker{
         <div id="weekMsgs" class="week-msgs"></div>
       </div>
       <div class="plan-panel" id="planPanel-bursdager" style="display:none">
-        <p class="ovl-hint">Bursdager gjelder denne uka og dukker opp p&aring; riktig dag.</p>
+        <p class="ovl-hint">Legg inn bursdagene &eacute;n gang, s&aring; dukker de opp av seg selv p&aring; riktig dag hele skole&aring;ret. Bursdager i helga feires fredagen f&oslash;r.</p>
+        <p class="ovl-hint">Kalenderen lagres bare i denne nettleseren. Bare bursdagene som gjelder i dag og resten av uka deles med klassens skjermer, og de fjernes automatisk n&aring;r dagen er passert.</p>
+        <div class="bd-next" id="bdNext" style="display:none"></div>
+        <div class="bday-tools">
+          <button class="bd-btn" id="addBday">+ Legg til bursdag</button>
+          <button class="bd-btn" id="bdPasteBtn">Lim inn flere</button>
+          <button class="bd-btn" id="bdCopyBtn">Kopier lista</button>
+          <span class="bd-msg" id="bdMsg"></span>
+        </div>
+        <div class="bd-paste" id="bdPaste" style="display:none">
+          <p class="ovl-hint">&Eacute;n elev per linje: <b>Stjerne 14.3 10</b> (navn, dato, alder). Alderen kan sl&oslash;yfes &mdash; eller skriv f&oslash;dsels&aring;r i stedet (<b>Stjerne 14.3.2016</b>), s&aring; regnes alderen ut. Bare dag, m&aring;ned og alder lagres.</p>
+          <textarea id="bdPasteText" placeholder="Stjerne 14.3 10&#10;Drage 2.11 9&#10;M&aring;ne 27.6.2016"></textarea>
+          <div class="bday-tools">
+            <button class="bd-btn" id="bdPasteAdd">Legg til i kalenderen</button>
+            <button class="bd-btn" id="bdPasteCancel">Avbryt</button>
+          </div>
+        </div>
+        <datalist id="bdNames"></datalist>
         <div id="bdayRows" class="bday-rows"></div>
-        <button class="add-slot" id="addBday">+ Legg til bursdag</button>
       </div>
       <div class="plan-panel" id="planPanel-orden" style="display:none">
         <div class="set-heading">Ukas hjelpere</div>
@@ -1690,10 +1720,120 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   if (!data.dayMsg || typeof data.dayMsg !== 'object') data.dayMsg = {};
   if (!Array.isArray(data.birthdays)) data.birthdays = [];
+  if (!Array.isArray(data.bdCal)) data.bdCal = [];
+
+  /* ---------- bursdagskalender for hele skoleaaret ----------
+     data.bdCal     = [{name, d, m, age}] - laererens aarskalender. Ligger BARE i
+                      denne nettleseren (localStorage); den sendes aldri til skyen.
+     data.birthdays = bursdagene som gjelder i dag og resten av uka. Dette er det
+                      eneste som deles med klassens skjermer, og hver oppfoering
+                      ryddes bort automatisk med en gang dagen er passert. */
+  var BD_WEEKDAYS = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'];
+  /* Stabil id per nettleser. Er to laererskjermer koblet til samme klasse, bygger
+     hver av dem bare om sine egne oppfoeringer og lar den andres staa - da havner
+     de paa samme liste i stedet for aa overskrive hverandre i ring. */
+  var BD_ME = (function (){
+    try {
+      var k = 'myntland-portal-bdsrc', v = localStorage.getItem(k);
+      if (!v) { v = Math.random().toString(36).slice(2, 10); localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return 'lokal'; }
+  })();
+  function bdMonday(dt){
+    var t = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+    return t;
+  }
+  function bdWeekKey(dt){
+    var t = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    t.setDate(t.getDate() - ((t.getDay() + 6) % 7) + 3);      // torsdag i samme uke
+    var first = new Date(t.getFullYear(), 0, 4);
+    first.setDate(first.getDate() - ((first.getDay() + 6) % 7) + 3);
+    var no = 1 + Math.round((t - first) / 604800000);
+    return t.getFullYear() + '-' + (no < 10 ? '0' + no : String(no));
+  }
+  function bdLeap(y){ return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+  function bdClean(c){
+    if (!c) return null;
+    var name = String(c.name == null ? '' : c.name).trim();
+    var d = +c.d, m = +c.m;
+    if (!name || !(d >= 1 && d <= 31) || !(m >= 1 && m <= 12)) return null;
+    return { name: name, d: d, m: m, age: String(c.age == null ? '' : c.age).trim() };
+  }
+  function bdCalendar(){
+    var out = [];
+    (Array.isArray(data.bdCal) ? data.bdCal : []).forEach(function (c){
+      var v = bdClean(c); if (v) out.push(v);
+    });
+    return out;
+  }
+  /* Neste bursdager framover i tid - brukes av planleggeren. */
+  function bdUpcoming(n){
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var out = [];
+    bdCalendar().forEach(function (c){
+      var y = today.getFullYear();
+      var day = function (yy){ return new Date(yy, c.m - 1, (c.d === 29 && c.m === 2 && !bdLeap(yy)) ? 28 : c.d); };
+      var dt = day(y);
+      if (dt < today) dt = day(y + 1);
+      out.push({ name: c.name, age: c.age, date: dt });
+    });
+    out.sort(function (a, b){ return a.date - b.date || String(a.name).localeCompare(String(b.name), 'nb'); });
+    return out.slice(0, n || 6);
+  }
+  /* Bygger ukas liste paa nytt og rydder bort alt som er passert.
+     Regenererer bare naar datoen eller kalenderen faktisk har endret seg, slik at
+     to laererskjermer i samme klasse ikke overskriver hverandre i ring. */
+  function syncBirthdayWeek(){
+    var now = new Date(), wk = bdWeekKey(now), wd = todayWd();
+    var cal = bdCalendar();
+    var before = JSON.stringify(data.birthdays || []);
+    var kept = [];
+    (data.birthdays || []).forEach(function (b){
+      if (!b || !String(b.name == null ? '' : b.name).trim()) return;
+      if (b.src === 'cal' && b.by === BD_ME) return;        // mine egne: bygges paa nytt under
+      if (!b.wk) b.wk = wk;                                 // gamle oppfoeringer: merk dem
+      if (b.wk !== wk || wd >= 6 || +b.day < wd) return;    // passert -> bort
+      kept.push(b);
+    });
+    if (cal.length && wd < 6){
+      var mon = bdMonday(now);
+      for (var i = wd - 1; i < 7; i++){
+        var day = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+        var dd = day.getDate(), mm = day.getMonth() + 1;
+        var showOn = (i >= 5) ? 5 : (i + 1);                // helg feires fredagen foer
+        for (var j = 0; j < cal.length; j++){
+          var c = cal[j], cd = c.d;
+          if (cd === 29 && c.m === 2 && !bdLeap(day.getFullYear())) cd = 28;
+          if (cd !== dd || c.m !== mm) continue;
+          kept.push({ name: c.name, age: c.age, day: showOn, src: 'cal', wk: wk,
+                      by: BD_ME, on: (i >= 5) ? BD_WEEKDAYS[i] : '' });
+        }
+      }
+    }
+    // Deterministisk rekkefoelge, saa to skjermer regner seg fram til samme liste.
+    kept.sort(function (a, b){
+      if (+a.day !== +b.day) return +a.day - +b.day;
+      var c = String(a.name).localeCompare(String(b.name), 'nb');
+      if (c) return c;
+      return String(a.by || '').localeCompare(String(b.by || ''));
+    });
+    var seen = {}, out = [];
+    kept.forEach(function (b){
+      var k = String(b.name).trim().toLowerCase() + '|' + b.day;
+      if (seen[k]) return;
+      seen[k] = 1; out.push(b);
+    });
+    data.birthdays = out;
+    return before !== JSON.stringify(out);
+  }
+
   function applyWeek(){
     const wd = todayWd();
     if (wd >= 6) { data.plan = []; }
     else if (data.week[wd]) { data.plan = JSON.parse(JSON.stringify(data.week[wd])); }
+    syncBirthdayWeek();
     renderLessons(); renderNotes(); renderBirthday(); save();
   }
   applyWeek();
@@ -1763,6 +1903,13 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     renderBirthday();
   }
   tick(); setInterval(tick, 1000 * 20);
+  /* Dagskifte: bygg dagens plan og ukas bursdager paa nytt naar datoen endrer seg,
+     saa en skjerm som staar paa over natta viser riktig dag om morgenen. */
+  let _bdToday = new Date().toDateString();
+  setInterval(function(){
+    const t = new Date().toDateString();
+    if (t !== _bdToday){ _bdToday = t; try { applyWeek(); } catch(e){} }
+  }, 60 * 1000);
 
   /* ---------- weather ---------- */
   const W = [
@@ -1889,11 +2036,31 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const list = (data.birthdays || []).filter((b) => +b.day === +wd && String(b.name || '').trim());
     const nameEl = panel.querySelector('.bd-name');
     const ageEl = panel.querySelector('.bd-age');
+    const banEl = panel.querySelector('.bd-banner');
     if (!list.length) { panel.style.display = 'none'; return; }
     panel.style.display = '';
+    // Bursdag i helga feires fredagen foer - da staar det "blir 9 aar paa loerdag".
+    const shifted = list.every((b) => !!(b && b.on));
+    if (banEl) banEl.textContent = shifted ? 'Vi feirer!' : 'Bursdag!';
     if (list.length === 1) {
-      if (nameEl) nameEl.textContent = list[0].name;
-      if (ageEl) { ageEl.style.display = ''; const sp = ageEl.querySelector('span'); if (sp) sp.textContent = list[0].age || ''; }
+      const b = list[0];
+      const on = b.on ? String(b.on) : '';
+      const age = String(b.age == null ? '' : b.age).trim();
+      if (nameEl) nameEl.textContent = b.name;
+      if (ageEl) {
+        ageEl.style.display = '';
+        ageEl.textContent = '';
+        if (age) {
+          ageEl.appendChild(document.createTextNode('blir '));
+          const sp = document.createElement('span'); sp.textContent = age;
+          ageEl.appendChild(sp);
+          ageEl.appendChild(document.createTextNode(' år ' + (on ? ('på ' + on) : 'i dag')));
+        } else if (on) {
+          ageEl.appendChild(document.createTextNode('har bursdag på ' + on));
+        } else {
+          ageEl.style.display = 'none';
+        }
+      }
     } else {
       if (nameEl) nameEl.textContent = list.map((b) => b.name + (b.age ? (' (' + b.age + ')') : '')).join(' & ');
       if (ageEl) ageEl.style.display = 'none';
@@ -2147,6 +2314,8 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     weekNo: weekNo,
     DEFAULTS: DEFAULTS,
     applyWeek: applyWeek,
+    syncBirthdayWeek: syncBirthdayWeek,
+    bdUpcoming: bdUpcoming,
     todayWd: todayWd,
     ICONS: I
   };
@@ -2332,22 +2501,128 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.plan-tab-btn').forEach(function(x){ x.classList.toggle('active', x.dataset.ptab===name); });
     ['timeplan','beskjeder','bursdager','orden'].forEach(function(t){ var p=document.getElementById('planPanel-'+t); if(p) p.style.display=(t===name)?'flex':'none'; });
   }
-  function bdayRow(b,i){
+  /* ---------- bursdagskalender for hele skoleaaret ---------- */
+  var BD_MONTHS=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  var BD_WDAYS=['mandag','tirsdag','onsdag','torsdag','fredag','lørdag','søndag'];
+  var _bdFocus=null;
+  function bdList(){ if(!Array.isArray(data.bdCal)) data.bdCal=[]; return data.bdCal; }
+  function bdSchoolIdx(m){ m=+m||1; return m>=8 ? m-8 : m+4; }   // skoleaaret: august foerst
+  function bdSort(){
+    bdList().sort(function(a,b){
+      var am=bdSchoolIdx(a.m), bm=bdSchoolIdx(b.m);
+      if(am!==bm) return am-bm;
+      if((+a.d||0)!==(+b.d||0)) return (+a.d||0)-(+b.d||0);
+      return String(a.name||'').localeCompare(String(b.name||''),'nb');
+    });
+  }
+  function bdMsg(t){
+    var m=document.getElementById('bdMsg'); if(!m) return;
+    m.textContent=t||'';
+    if(t){ clearTimeout(bdMsg._t); bdMsg._t=setTimeout(function(){ m.textContent=''; },2600); }
+  }
+  function bdNameOptions(){
+    var arr=window._portalStudents||[], names=[];
+    arr.forEach(function(s){
+      if(!s) return;
+      var n=String(s.nick||s.name||s.kallenavn||'').trim();
+      if(n && names.indexOf(n)<0) names.push(n);
+    });
+    names.sort(function(a,b){ return a.localeCompare(b,'nb'); });
+    return names;
+  }
+  function bdRow(entry){
     var row=el('div','bday-row');
-    var dayOpts=Object.keys(DAYNAMES).map(function(d){ return '<option value="'+d+'"'+((+b.day===+d)?' selected':'')+'>'+DAYNAMES[d]+'</option>'; }).join('');
-    row.innerHTML='<input class="bdname" value="'+esc(b.name||'')+'" placeholder="Navn">'+
-      '<input class="bdage" type="number" min="1" max="20" value="'+esc(b.age||'')+'" placeholder="Alder" style="width:84px">'+
-      '<select class="bdday">'+dayOpts+'</select>'+
+    var dayOpts='', monOpts='', i;
+    for(i=1;i<=31;i++) dayOpts+='<option value="'+i+'"'+((+entry.d===i)?' selected':'')+'>'+i+'.</option>';
+    for(i=1;i<=12;i++) monOpts+='<option value="'+i+'"'+((+entry.m===i)?' selected':'')+'>'+BD_MONTHS[i-1]+'</option>';
+    row.innerHTML='<input class="bdname" list="bdNames" value="'+esc(entry.name||'')+'" placeholder="Navn eller kallenavn">'+
+      '<select class="bdd">'+dayOpts+'</select>'+
+      '<select class="bdm">'+monOpts+'</select>'+
+      '<input class="bdage" type="number" min="1" max="20" value="'+esc(entry.age||'')+'" placeholder="Blir" style="width:82px">'+
       '<button class="mini del" title="Fjern">&#128465;</button>';
-    row.querySelector('.bdname').oninput=function(){ data.birthdays[i].name=this.value; };
-    row.querySelector('.bdage').oninput=function(){ data.birthdays[i].age=this.value; };
-    row.querySelector('.bdday').onchange=function(){ data.birthdays[i].day=+this.value; };
-    row.querySelector('.del').onclick=function(){ data.birthdays.splice(i,1); buildBdayRows(); };
+    row.querySelector('.bdname').oninput=function(){ entry.name=this.value; bdRenderNext(); };
+    row.querySelector('.bdd').onchange=function(){ entry.d=+this.value; bdRenderNext(); };
+    row.querySelector('.bdm').onchange=function(){ entry.m=+this.value; bdRenderNext(); };
+    row.querySelector('.bdage').oninput=function(){ entry.age=this.value; };
+    row.querySelector('.del').onclick=function(){
+      var a=bdList(), k=a.indexOf(entry); if(k>=0) a.splice(k,1); buildBdayRows();
+    };
     return row;
   }
+  function bdRenderNext(){
+    var box=document.getElementById('bdNext'); if(!box) return;
+    var up=(portal.bdUpcoming?portal.bdUpcoming(6):[]);
+    if(!up.length){ box.style.display='none'; box.innerHTML=''; return; }
+    var html='<h4>Neste bursdager</h4><ul>';
+    up.forEach(function(u){
+      var wdn=(u.date.getDay()+6)%7;
+      var line=esc(u.name)+' &mdash; '+u.date.getDate()+'. '+BD_MONTHS[u.date.getMonth()]+' ('+BD_WDAYS[wdn]+')';
+      if(u.age) line+=' &middot; blir '+esc(u.age)+' år';
+      if(wdn>=5){
+        var fr=new Date(u.date.getFullYear(),u.date.getMonth(),u.date.getDate()-(wdn-4));
+        line+=' &rarr; feires fredag '+fr.getDate()+'.';
+      }
+      html+='<li>'+line+'</li>';
+    });
+    box.innerHTML=html+'</ul>';
+    box.style.display='';
+  }
   function buildBdayRows(){
-    var wrap=document.getElementById('bdayRows'); if(!wrap) return; wrap.innerHTML='';
-    (data.birthdays||[]).forEach(function(b,i){ wrap.appendChild(bdayRow(b,i)); });
+    var wrap=document.getElementById('bdayRows'); if(!wrap) return;
+    wrap.innerHTML='';
+    var dl=document.getElementById('bdNames');
+    if(dl) dl.innerHTML=bdNameOptions().map(function(n){ return '<option value="'+esc(n)+'">'; }).join('');
+    var arr=bdList();
+    if(!arr.length){
+      wrap.appendChild(el('div','bd-empty','Ingen bursdager lagt inn enda. Trykk «+ Legg til bursdag», eller «Lim inn flere» for å legge inn hele klassen på én gang.'));
+      bdRenderNext(); return;
+    }
+    bdSort();
+    var lastM=0, focusRow=null;
+    arr.forEach(function(entry){
+      if(+entry.m!==lastM){ lastM=+entry.m||1; wrap.appendChild(el('div','bd-month',esc(BD_MONTHS[lastM-1]))); }
+      var r=bdRow(entry);
+      if(entry===_bdFocus) focusRow=r;
+      wrap.appendChild(r);
+    });
+    if(focusRow){ try{ focusRow.querySelector('.bdname').focus(); }catch(e){} }
+    bdRenderNext();
+  }
+  /* Én elev per linje: "Stjerne 14.3 10", "Drage 2/11", "Måne 27.6.2016" */
+  function bdParse(text){
+    var out=[], now=new Date();
+    var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    String(text||'').split(/\r?\n/).forEach(function(line){
+      line=line.trim(); if(!line) return;
+      var m=line.match(/^(.+?)[\s,;:]+(\d{1,2})\s*[.\/-]\s*(\d{1,2})(?:\s*[.\/-]\s*(\d{2,4}))?\.?(?:[\s,;:]+(\d{1,2}))?\s*$/);
+      if(!m) return;
+      var name=m[1].trim().replace(/[,;:.]+$/,'').trim();
+      var d=+m[2], mo=+m[3];
+      if(!name || !(d>=1&&d<=31) || !(mo>=1&&mo<=12)) return;
+      var age=m[5]?String(+m[5]):'';
+      if(!age && m[4]){
+        var by=+m[4]; if(by<100) by+=(by>50?1900:2000);
+        var thisYear=new Date(today.getFullYear(),mo-1,d);
+        var turnYear=(thisYear<today)?(today.getFullYear()+1):today.getFullYear();
+        var a=turnYear-by;
+        if(a>0&&a<25) age=String(a);
+      }
+      out.push({name:name,d:d,m:mo,age:age});
+    });
+    return out;
+  }
+  function bdAsText(){
+    return bdList().filter(function(c){ return String(c.name||'').trim(); })
+      .map(function(c){ return String(c.name).trim()+' '+(+c.d||1)+'.'+(+c.m||1)+(String(c.age||'').trim()?(' '+String(c.age).trim()):''); })
+      .join('\n');
+  }
+  function bdCopyFallback(txt,done){
+    try{
+      var ta=document.createElement('textarea');
+      ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta); done();
+    }catch(e){ bdMsg('Fikk ikke kopiert.'); }
   }
   function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); buildBdayRows(); try{ syncHelperSeg(); renderHelperFields(); renderTaskEditor(); }catch(e){} setPlanTab('timeplan'); }
   function closePlanner(){ planOvl.classList.remove('open'); }
@@ -2544,7 +2819,50 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   planOvl.onclick=function(e){ if(e.target===planOvl) closePlanner(); };
   document.getElementById('addPlanRow').onclick=function(){ harvestPlan(); var arr=portal.data.week[editDay]; var prevEnd=''; if(arr.length){ var pr=parseRange(arr[arr.length-1].time); prevEnd=pr[1]||''; } var t=prevEnd?(prevEnd+'–'+addMin(prevEnd,45)):''; arr.push({ type:'lesson', time:t, name:'', icon:'book', color:COLORS[0] }); buildPlanRows(); };
   (function(){ var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.plan-tab-btn').forEach(function(b){ b.onclick=function(){ setPlanTab(b.dataset.ptab); }; }); })();
-  var __abBtn=document.getElementById('addBday'); if(__abBtn) __abBtn.onclick=function(){ if(!Array.isArray(data.birthdays)) data.birthdays=[]; data.birthdays.push({name:'',age:'',day:editDay||1}); buildBdayRows(); };
+  var __abBtn=document.getElementById('addBday');
+  if(__abBtn) __abBtn.onclick=function(){
+    var now=new Date();
+    var e={name:'',d:now.getDate(),m:now.getMonth()+1,age:''};
+    bdList().push(e); _bdFocus=e; buildBdayRows(); _bdFocus=null;
+  };
+  (function wireBdayTools(){
+    var box=document.getElementById('bdPaste');
+    var pb=document.getElementById('bdPasteBtn');
+    if(pb) pb.onclick=function(){
+      if(!box) return;
+      var open=(box.style.display!=='none');
+      box.style.display=open?'none':'flex';
+      if(!open){ var t=document.getElementById('bdPasteText'); if(t){ t.value=''; t.focus(); } }
+    };
+    var pc=document.getElementById('bdPasteCancel');
+    if(pc) pc.onclick=function(){ if(box) box.style.display='none'; };
+    var pa=document.getElementById('bdPasteAdd');
+    if(pa) pa.onclick=function(){
+      var t=document.getElementById('bdPasteText'); if(!t) return;
+      var rows=bdParse(t.value);
+      if(!rows.length){ bdMsg('Fant ingen linjer å legge inn.'); return; }
+      var cal=bdList(), lagt=0;
+      rows.forEach(function(r){
+        var dup=false;
+        cal.forEach(function(c){
+          if(String(c.name||'').trim().toLowerCase()===r.name.toLowerCase() && +c.d===r.d && +c.m===r.m) dup=true;
+        });
+        if(!dup){ cal.push(r); lagt++; }
+      });
+      t.value=''; if(box) box.style.display='none';
+      buildBdayRows();
+      bdMsg(lagt===1?'1 bursdag lagt inn.':(lagt+' bursdager lagt inn.'));
+    };
+    var cp=document.getElementById('bdCopyBtn');
+    if(cp) cp.onclick=function(){
+      var txt=bdAsText();
+      if(!txt){ bdMsg('Kalenderen er tom.'); return; }
+      var done=function(){ bdMsg('Kopiert – lim inn på den andre maskinen.'); };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done,function(){ bdCopyFallback(txt,done); });
+      } else bdCopyFallback(txt,done);
+    };
+  })();
   document.getElementById('planSave').onclick=function(){ harvestPlan(); if(portal.save) portal.save(); if(portal.applyWeek) portal.applyWeek(); closePlanner(); };
 
   /* ---------- vær: automatisk etter sted (Open-Meteo, gratis, uten nøkkel) ---------- */
