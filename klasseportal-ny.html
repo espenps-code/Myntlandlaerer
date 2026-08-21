@@ -520,6 +520,31 @@ h1.sticker{
 .bd-btn{font-family:var(--font);font-size:15px;font-weight:700;border:2px solid var(--ink);border-radius:9px;padding:7px 11px;background:#fff;color:var(--ink);cursor:pointer}
 .bd-btn:hover{background:rgba(231,168,42,.18)}
 .bd-msg{font-size:15px;font-weight:700;color:#2f7d32}
+.bd-msg.err{color:#b3261e}
+.bd-views{display:flex;gap:8px;margin:0 0 10px}
+.bd-views .bd-btn.pa{background:var(--ink);color:#fff}
+.bd-cal{border:2px solid var(--ink);border-radius:14px;padding:10px 12px 12px;background:rgba(255,255,255,.55)}
+.bd-cal-head{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 10px}
+.bd-mnavn{font-size:19px;font-weight:800;min-width:210px;text-align:center}
+.bd-mnavn::first-letter{text-transform:uppercase}
+.bd-nav{font-family:var(--font);font-size:20px;font-weight:800;line-height:1;border:2px solid var(--ink);border-radius:9px;background:#fff;color:var(--ink);width:40px;height:40px;cursor:pointer}
+.bd-nav:hover{background:rgba(231,168,42,.18)}
+.bd-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.bd-wd{text-align:center;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:0 0 2px}
+.bd-day{min-height:64px;border:2px solid rgba(42,31,61,.22);border-radius:10px;background:#fff;font-family:var(--font);color:var(--ink);cursor:pointer;padding:5px 6px;text-align:left;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.bd-day:hover{border-color:var(--ink);background:rgba(231,168,42,.14)}
+.bd-day .dnum{font-size:15px;font-weight:800;line-height:1}
+.bd-day.helg{background:rgba(42,31,61,.055)}
+.bd-day.tom{visibility:hidden;cursor:default}
+.bd-day.harbd{background:#fdf0c8;border-color:var(--ink)}
+.bd-day.valgt{border-color:var(--ink);box-shadow:0 0 0 3px rgba(231,168,42,.5)}
+.bd-day.skudd .dnum{opacity:.5}
+.bd-day .bdn{font-size:12px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bd-day .bdf{font-size:11px;color:var(--ink-soft);line-height:1.1}
+.bd-dag{margin-top:14px;border-top:3px dashed var(--ink);padding-top:12px}
+.bd-dag h4{margin:0 0 4px;font-size:18px}
+.bd-dag h4::first-letter{text-transform:uppercase}
+.bd-dag .bd-undertekst{font-size:14px;color:var(--ink-soft);margin:0 0 10px}
 .bd-next{border:2px dashed var(--ink);border-radius:12px;padding:10px 12px;margin:0 0 12px;background:rgba(255,255,255,.55)}
 .bd-next h4{margin:0 0 6px;font-size:17px}
 .bd-next ul{margin:0;padding-left:18px;font-size:15px;line-height:1.55}
@@ -1576,8 +1601,12 @@ h1.sticker{
         <div id="weekMsgs" class="week-msgs"></div>
       </div>
       <div class="plan-panel" id="planPanel-bursdager" style="display:none">
-        <p class="ovl-hint">Legg inn bursdagene &eacute;n gang, s&aring; dukker de opp av seg selv p&aring; riktig dag hele skole&aring;ret. Bursdager i helga feires fredagen f&oslash;r.</p>
-        <p class="ovl-hint">Kalenderen lagres bare i denne nettleseren. Bare bursdagene som gjelder i dag og resten av uka deles med klassens skjermer, og de fjernes automatisk n&aring;r dagen er passert.</p>
+        <p class="ovl-hint">Legg inn bursdagene &eacute;n gang, s&aring; dukker de opp av seg selv p&aring; riktig dag hele skole&aring;ret. Bursdager i helga feires mandagen etter.</p>
+        <p class="ovl-hint">Kalenderen lagres p&aring; klassen, s&aring; den f&oslash;lger deg til andre maskiner og medl&aelig;rere ser den ogs&aring;. Bare l&aelig;rere som er med i klassen har tilgang &mdash; elevappen f&aring;r aldri se den, og bursdagsnavn lagres ikke lenger sammen med resten av dagens plan.</p>
+        <div class="bd-views">
+          <button class="bd-btn" id="bdViewCal">&#128197; Kalender</button>
+          <button class="bd-btn" id="bdViewList">&#128203; Liste</button>
+        </div>
         <div class="bd-next" id="bdNext" style="display:none"></div>
         <div class="bday-tools">
           <button class="bd-btn" id="addBday">+ Legg til bursdag</button>
@@ -1594,6 +1623,10 @@ h1.sticker{
           </div>
         </div>
         <datalist id="bdNames"></datalist>
+        <div id="bdCalWrap">
+          <div class="bd-cal" id="bdCal"></div>
+          <div class="bd-dag" id="bdDag" style="display:none"></div>
+        </div>
         <div id="bdayRows" class="bday-rows"></div>
       </div>
       <div class="plan-panel" id="planPanel-orden" style="display:none">
@@ -1723,22 +1756,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   if (!Array.isArray(data.bdCal)) data.bdCal = [];
 
   /* ---------- bursdagskalender for hele skoleaaret ----------
-     data.bdCal     = [{name, d, m, age}] - laererens aarskalender. Ligger BARE i
-                      denne nettleseren (localStorage); den sendes aldri til skyen.
-     data.birthdays = bursdagene som gjelder i dag og resten av uka. Dette er det
-                      eneste som deles med klassens skjermer, og hver oppfoering
-                      ryddes bort automatisk med en gang dagen er passert. */
+     data.bdCal     = [{name, d, m, age}] - klassens aarskalender. Lagres i skyen paa
+                      bursdager/<klasse-ID>, en egen laerernode som elevappen ikke
+                      leser, og speiles i localStorage saa den ogsaa virker uten nett.
+     data.birthdays = bursdagene som gjelder i dag og resten av uka. Den regnes ut
+                      lokalt paa hver skjerm og sendes ALDRI til skyen - navn skal
+                      ikke ligge i dayboard, som elevappen leser i sin helhet. */
+  /* Bursdager i helga feires mandagen etter - da dukker de opp paa mandagens skjerm. */
   var BD_WEEKDAYS = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'];
-  /* Stabil id per nettleser. Er to laererskjermer koblet til samme klasse, bygger
-     hver av dem bare om sine egne oppfoeringer og lar den andres staa - da havner
-     de paa samme liste i stedet for aa overskrive hverandre i ring. */
-  var BD_ME = (function (){
-    try {
-      var k = 'myntland-portal-bdsrc', v = localStorage.getItem(k);
-      if (!v) { v = Math.random().toString(36).slice(2, 10); localStorage.setItem(k, v); }
-      return v;
-    } catch (e) { return 'lokal'; }
-  })();
   function bdMonday(dt){
     var t = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
     t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
@@ -1792,32 +1817,35 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var kept = [];
     (data.birthdays || []).forEach(function (b){
       if (!b || !String(b.name == null ? '' : b.name).trim()) return;
-      if (b.src === 'cal' && b.by === BD_ME) return;        // mine egne: bygges paa nytt under
+      if (b.src === 'cal') return;                          // bygges paa nytt fra kalenderen under
       if (!b.wk) b.wk = wk;                                 // gamle oppfoeringer: merk dem
       if (b.wk !== wk || wd >= 6 || +b.day < wd) return;    // passert -> bort
       kept.push(b);
     });
     if (cal.length && wd < 6){
       var mon = bdMonday(now);
-      for (var i = wd - 1; i < 7; i++){
-        var day = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
-        var dd = day.getDate(), mm = day.getMonth() + 1;
-        var showOn = (i >= 5) ? 5 : (i + 1);                // helg feires fredagen foer
+      var treff = function (dato, visesPaa, helgedag){
+        var dd = dato.getDate(), mm = dato.getMonth() + 1;
         for (var j = 0; j < cal.length; j++){
           var c = cal[j], cd = c.d;
-          if (cd === 29 && c.m === 2 && !bdLeap(day.getFullYear())) cd = 28;
+          if (cd === 29 && c.m === 2 && !bdLeap(dato.getFullYear())) cd = 28;
           if (cd !== dd || c.m !== mm) continue;
-          kept.push({ name: c.name, age: c.age, day: showOn, src: 'cal', wk: wk,
-                      by: BD_ME, on: (i >= 5) ? BD_WEEKDAYS[i] : '' });
+          kept.push({ name: c.name, age: c.age, day: visesPaa, src: 'cal', wk: wk,
+                      on: helgedag || '' });
         }
+      };
+      for (var i = wd - 1; i < 5; i++){                     // mandag .. fredag
+        treff(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i), i + 1, '');
+      }
+      if (wd === 1){
+        // Mandagen tar helga som nettopp var: bursdagen feires mandagen etter.
+        treff(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() - 2), 1, BD_WEEKDAYS[5]);
+        treff(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() - 1), 1, BD_WEEKDAYS[6]);
       }
     }
-    // Deterministisk rekkefoelge, saa to skjermer regner seg fram til samme liste.
     kept.sort(function (a, b){
       if (+a.day !== +b.day) return +a.day - +b.day;
-      var c = String(a.name).localeCompare(String(b.name), 'nb');
-      if (c) return c;
-      return String(a.by || '').localeCompare(String(b.by || ''));
+      return String(a.name).localeCompare(String(b.name), 'nb');
     });
     var seen = {}, out = [];
     kept.forEach(function (b){
@@ -2039,7 +2067,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const banEl = panel.querySelector('.bd-banner');
     if (!list.length) { panel.style.display = 'none'; return; }
     panel.style.display = '';
-    // Bursdag i helga feires fredagen foer - da staar det "blir 9 aar paa loerdag".
+    // Bursdag i helga feires mandagen etter - da staar det "fylte 9 aar paa loerdag".
     const shifted = list.every((b) => !!(b && b.on));
     if (banEl) banEl.textContent = shifted ? 'Vi feirer!' : 'Bursdag!';
     if (list.length === 1) {
@@ -2051,12 +2079,13 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
         ageEl.style.display = '';
         ageEl.textContent = '';
         if (age) {
-          ageEl.appendChild(document.createTextNode('blir '));
+          // Helgebursdag feires mandagen etter, saa da har den alt vaert: fortid.
+          ageEl.appendChild(document.createTextNode(on ? 'fylte ' : 'blir '));
           const sp = document.createElement('span'); sp.textContent = age;
           ageEl.appendChild(sp);
           ageEl.appendChild(document.createTextNode(' år ' + (on ? ('på ' + on) : 'i dag')));
         } else if (on) {
-          ageEl.appendChild(document.createTextNode('har bursdag på ' + on));
+          ageEl.appendChild(document.createTextNode('hadde bursdag på ' + on));
         } else {
           ageEl.style.display = 'none';
         }
@@ -2515,11 +2544,18 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       return String(a.name||'').localeCompare(String(b.name||''),'nb');
     });
   }
-  function bdMsg(t){
+  function bdMsg(t,err){
     var m=document.getElementById('bdMsg'); if(!m) return;
     m.textContent=t||'';
-    if(t){ clearTimeout(bdMsg._t); bdMsg._t=setTimeout(function(){ m.textContent=''; },2600); }
+    m.classList.toggle('err',!!err);
+    clearTimeout(bdMsg._t);
+    if(t && !err) bdMsg._t=setTimeout(function(){ m.textContent=''; },2600);
   }
+  /* Kalles fra sky-laget hvis skrivingen blir avvist - da skal ikke laereren
+     tro at 25 bursdager ble lagret naar de ikke ble det. */
+  window._bdCloudError=function(){
+    bdMsg('Fikk ikke lagret kalenderen til klassen. Den ligger trygt i denne nettleseren – prøv «Lagre uka» igjen.',true);
+  };
   function bdNameOptions(){
     var arr=window._portalStudents||[], names=[];
     arr.forEach(function(s){
@@ -2543,7 +2579,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     row.querySelector('.bdname').oninput=function(){ entry.name=this.value; bdRenderNext(); };
     row.querySelector('.bdd').onchange=function(){ entry.d=+this.value; bdRenderNext(); };
     row.querySelector('.bdm').onchange=function(){ entry.m=+this.value; bdRenderNext(); };
-    row.querySelector('.bdage').oninput=function(){ entry.age=this.value; };
+    row.querySelector('.bdage').oninput=function(){ entry.age=this.value; bdRenderNext(); };
     row.querySelector('.del').onclick=function(){
       var a=bdList(), k=a.indexOf(entry); if(k>=0) a.splice(k,1); buildBdayRows();
     };
@@ -2559,14 +2595,138 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       var line=esc(u.name)+' &mdash; '+u.date.getDate()+'. '+BD_MONTHS[u.date.getMonth()]+' ('+BD_WDAYS[wdn]+')';
       if(u.age) line+=' &middot; blir '+esc(u.age)+' år';
       if(wdn>=5){
-        var fr=new Date(u.date.getFullYear(),u.date.getMonth(),u.date.getDate()-(wdn-4));
-        line+=' &rarr; feires fredag '+fr.getDate()+'.';
+        var ma=new Date(u.date.getFullYear(),u.date.getMonth(),u.date.getDate()+(7-wdn));
+        line+=' &rarr; feires mandag '+ma.getDate()+'.';
       }
       html+='<li>'+line+'</li>';
     });
     box.innerHTML=html+'</ul>';
     box.style.display='';
   }
+  /* ---------- maanedskalender: trykk paa en dato for aa legge inn ---------- */
+  var BD_WDKORT=['ma','ti','on','to','fr','lø','sø'];
+  var _bdView='kal', _bdMnd=(new Date()).getMonth()+1, _bdValgt=0;
+  function bdSkuddaar(y){ return (y%4===0&&y%100!==0)||y%400===0; }
+  /* Viser den foerstkommende forekomsten av maaneden, saa ukedagene stemmer med
+     den bursdagen som faktisk kommer - da ser laereren med en gang hva som havner
+     i helga og dermed feires mandagen etter. */
+  function bdVisAar(m){
+    var n=new Date(), cy=n.getFullYear(), cm=n.getMonth()+1;
+    return (m>=cm)? cy : cy+1;
+  }
+  function bdDagerI(m,y){ return (m===2)?29:new Date(y,m,0).getDate(); }
+  function bdPaaDato(d,m){
+    return bdList().filter(function(c){ return +c.d===+d && +c.m===+m; });
+  }
+  function bdUkedag(d,m,y){
+    var dd=(m===2&&d===29&&!bdSkuddaar(y))?28:d;
+    return (new Date(y,m-1,dd).getDay()+6)%7;
+  }
+  function buildBdayCal(){
+    var box=document.getElementById('bdCal'); if(!box) return;
+    var m=_bdMnd, y=bdVisAar(m);
+    var h='<div class="bd-cal-head">'+
+      '<button class="bd-nav" id="bdMndPrev" title="Forrige måned" aria-label="Forrige måned">&#8249;</button>'+
+      '<span class="bd-mnavn">'+BD_MONTHS[m-1]+' '+y+'</span>'+
+      '<button class="bd-nav" id="bdMndNext" title="Neste måned" aria-label="Neste måned">&#8250;</button>'+
+      '</div><div class="bd-grid" id="bdGrid">';
+    BD_WDKORT.forEach(function(w){ h+='<div class="bd-wd">'+w+'</div>'; });
+    var start=(new Date(y,m-1,1).getDay()+6)%7;
+    for(var i=0;i<start;i++) h+='<div class="bd-day tom"></div>';
+    var antall=bdDagerI(m,y);
+    for(var d=1;d<=antall;d++){
+      var wdn=bdUkedag(d,m,y);
+      var liste=bdPaaDato(d,m).filter(function(c){ return String(c.name||'').trim(); });
+      var kl='bd-day';
+      if(wdn>=5) kl+=' helg';
+      if(liste.length) kl+=' harbd';
+      if(_bdValgt===d) kl+=' valgt';
+      if(m===2&&d===29&&!bdSkuddaar(y)) kl+=' skudd';
+      h+='<button type="button" class="'+kl+'" data-d="'+d+'">'+
+         '<span class="dnum">'+d+'</span>';
+      liste.slice(0,2).forEach(function(c){ h+='<span class="bdn">🎂 '+esc(c.name)+'</span>'; });
+      if(liste.length>2) h+='<span class="bdf">+'+(liste.length-2)+' til</span>';
+      if(liste.length&&wdn>=5) h+='<span class="bdf">feires mandag</span>';
+      h+='</button>';
+    }
+    box.innerHTML=h+'</div>';
+    document.getElementById('bdMndPrev').onclick=function(){ _bdMnd=(_bdMnd===1)?12:_bdMnd-1; _bdValgt=0; buildBdayCal(); bdBuildDag(); };
+    document.getElementById('bdMndNext').onclick=function(){ _bdMnd=(_bdMnd===12)?1:_bdMnd+1; _bdValgt=0; buildBdayCal(); bdBuildDag(); };
+    var grid=document.getElementById('bdGrid');
+    grid.onclick=function(ev){
+      var t=ev.target; while(t&&t!==grid&&!t.classList.contains('bd-day')) t=t.parentNode;
+      if(!t||t===grid||!t.dataset.d) return;
+      _bdValgt=+t.dataset.d;
+      buildBdayCal(); bdBuildDag(true);
+    };
+  }
+  function bdDagRad(entry){
+    var row=el('div','bday-row');
+    row.innerHTML='<input class="bdname" list="bdNames" value="'+esc(entry.name||'')+'" placeholder="Navn eller kallenavn">'+
+      '<input class="bdage" type="number" min="1" max="20" value="'+esc(entry.age||'')+'" placeholder="Blir" style="width:82px">'+
+      '<button class="mini del" title="Fjern">&#128465;</button>';
+    var n=row.querySelector('.bdname');
+    n.oninput=function(){ entry.name=this.value; bdRenderNext(); };
+    n.onchange=function(){ buildBdayCal(); };
+    row.querySelector('.bdage').oninput=function(){ entry.age=this.value; bdRenderNext(); };
+    row.querySelector('.del').onclick=function(){
+      var a=bdList(), k=a.indexOf(entry); if(k>=0) a.splice(k,1);
+      buildBdayCal(); bdBuildDag(); bdRenderNext();
+    };
+    return row;
+  }
+  function bdBuildDag(fokus){
+    var box=document.getElementById('bdDag'); if(!box) return;
+    if(!_bdValgt){ box.style.display='none'; box.innerHTML=''; return; }
+    var m=_bdMnd, y=bdVisAar(m), d=_bdValgt, wdn=bdUkedag(d,m,y);
+    box.innerHTML='';
+    box.style.display='';
+    var tittel=el('h4',null,BD_WDAYS[wdn]+' '+d+'. '+BD_MONTHS[m-1]);
+    box.appendChild(tittel);
+    var under='';
+    if(wdn>=5){
+      // 29. februar i et ikke-skuddaar teller som 28., ogsaa naar vi finner mandagen.
+      var dEff=(m===2&&d===29&&!bdSkuddaar(y))?28:d;
+      var ma=new Date(y,m-1,dEff+(7-wdn));
+      under='Bursdag i helga – feires mandag '+ma.getDate()+'. '+BD_MONTHS[ma.getMonth()]+'.';
+    }
+    if(m===2&&d===29) under=(under?under+' ':'')+'29. februar finnes bare i skuddår – ellers feires den 28.';
+    if(under) box.appendChild(el('p','bd-undertekst',under));
+    var rader=bdPaaDato(d,m);
+    var siste=null;
+    rader.forEach(function(entry){ siste=bdDagRad(entry); box.appendChild(siste); });
+    var knapp=el('div','bday-tools');
+    var b=el('button','bd-btn','+ Legg til på denne datoen');
+    b.onclick=function(){
+      var e={name:'',d:d,m:m,age:''};
+      bdList().push(e);
+      bdBuildDag(true);
+    };
+    knapp.appendChild(b);
+    box.appendChild(knapp);
+    if(fokus){
+      var felt=box.querySelectorAll('.bdname');
+      if(!rader.length){ b.click(); return; }
+      if(felt.length){ try{ felt[felt.length-1].focus(); }catch(e){} }
+    }
+  }
+  function bdSetView(v){
+    _bdView=v;
+    var kal=(v==='kal');
+    var w=document.getElementById('bdCalWrap'); if(w) w.style.display=kal?'':'none';
+    var l=document.getElementById('bdayRows'); if(l) l.style.display=kal?'none':'';
+    var a=document.getElementById('addBday'); if(a) a.style.display=kal?'none':'';
+    var bk=document.getElementById('bdViewCal'); if(bk) bk.classList.toggle('pa',kal);
+    var bl=document.getElementById('bdViewList'); if(bl) bl.classList.toggle('pa',!kal);
+    if(kal){ buildBdayCal(); bdBuildDag(); } else buildBdayRows();
+  }
+  window._buildBdayRows=function(){
+    try{
+      if(!document.getElementById('planOverlay').classList.contains('open')) return;
+      buildBdayRows();
+      if(_bdView==='kal'){ buildBdayCal(); bdBuildDag(); }
+    }catch(e){}
+  };
   function buildBdayRows(){
     var wrap=document.getElementById('bdayRows'); if(!wrap) return;
     wrap.innerHTML='';
@@ -2588,6 +2748,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     if(focusRow){ try{ focusRow.querySelector('.bdname').focus(); }catch(e){} }
     bdRenderNext();
   }
+  function bdBuildAlt(){ buildBdayRows(); if(_bdView==='kal'){ buildBdayCal(); bdBuildDag(); } }
   /* Én elev per linje: "Stjerne 14.3 10", "Drage 2/11", "Måne 27.6.2016" */
   function bdParse(text){
     var out=[], now=new Date();
@@ -2624,7 +2785,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       document.body.removeChild(ta); done();
     }catch(e){ bdMsg('Fikk ikke kopiert.'); }
   }
-  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); buildBdayRows(); try{ syncHelperSeg(); renderHelperFields(); renderTaskEditor(); }catch(e){} setPlanTab('timeplan'); }
+  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); _bdMnd=(new Date()).getMonth()+1; _bdValgt=0; bdSetView(_bdView); try{ syncHelperSeg(); renderHelperFields(); renderTaskEditor(); }catch(e){} setPlanTab('timeplan'); }
   function closePlanner(){ planOvl.classList.remove('open'); }
 
   function buildDayTabs(){
@@ -2825,6 +2986,11 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var e={name:'',d:now.getDate(),m:now.getMonth()+1,age:''};
     bdList().push(e); _bdFocus=e; buildBdayRows(); _bdFocus=null;
   };
+  (function wireBdayViews(){
+    var k=document.getElementById('bdViewCal'), l=document.getElementById('bdViewList');
+    if(k) k.onclick=function(){ bdSetView('kal'); };
+    if(l) l.onclick=function(){ bdSetView('liste'); };
+  })();
   (function wireBdayTools(){
     var box=document.getElementById('bdPaste');
     var pb=document.getElementById('bdPasteBtn');
@@ -2850,7 +3016,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
         if(!dup){ cal.push(r); lagt++; }
       });
       t.value=''; if(box) box.style.display='none';
-      buildBdayRows();
+      bdBuildAlt();
       bdMsg(lagt===1?'1 bursdag lagt inn.':(lagt+' bursdager lagt inn.'));
     };
     var cp=document.getElementById('bdCopyBtn');
@@ -4350,14 +4516,16 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   /* ---------- publiser dagens plan + beskjeder til skyen (dayboard) ---------- */
   var _daySig = '', _dayT = null, _cloudLoaded = false;
   function _sigOf(p){
-    return JSON.stringify({ w: p.week, n: p.notes, dm: p.dayMsg, bd: p.birthdays, h: p.helpers, hc: p.helperCount, bn: p.bdname, ba: p.bdage, wt: p.weather, wa: p.weatherAuto, wp: p.weatherPlace, pp: p.progressPercent, mu: p.music, k: p.klasse, nv: p.navn, e: p.enabled,
+    return JSON.stringify({ w: p.week, n: p.notes, dm: p.dayMsg, h: p.helpers, hc: p.helperCount, bn: p.bdname, ba: p.bdage, wt: p.weather, wa: p.weatherAuto, wp: p.weatherPlace, pp: p.progressPercent, mu: p.music, k: p.klasse, nv: p.navn, e: p.enabled,
       wo: p.word, wod: p.worddef, wau: p.wordAuto, wb: p.wordBank, q: p.quote });
   }
   function _payloadOf(d){
     var mus = (window._music && Array.isArray(window._music.bank)) ? window._music.bank : [];
     return {
       week: d.week || {}, notes: d.notes || [], dayMsg: d.dayMsg || {},
-      birthdays: d.birthdays || [], helpers: d.helpers || [], helperCount: d.helperCount || 2,
+      // Bursdagsnavn skal IKKE ligge i dayboard - elevappen abonnerer paa hele noden.
+      // Tom liste her rydder ogsaa bort det som gamle utgaver rakk aa skrive.
+      birthdays: [], helpers: d.helpers || [], helperCount: d.helperCount || 2,
       checklist: Array.isArray(d.checklist) ? d.checklist : [],
       bdname: d.bdname || '', bdage: d.bdage || '',
       weather: d.weather || 0, weatherAuto: !!d.weatherAuto, weatherPlace: d.weatherPlace || '',
@@ -4382,7 +4550,66 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     // workspaceId (ofte 'main'), sa alle klasser delte samme sky-node.
     try { set(_ref0(db, 'dayboard/' + window._CLASS_ID), payload); } catch(e){}
   }
-  window._onPortalSave = function(){ clearTimeout(_dayT); _dayT = setTimeout(pushDayboard, 1500); };
+  /* ---------- bursdagskalenderen: egen laerernode i skyen ----------
+     Ligger paa bursdager/<klasse-ID>, ikke under dayboard og ikke under
+     classes/<id>/data - begge de stedene leser elevappen. Reglene for noden skal
+     kreve at auth.uid staar i classes/<id>/members, altsaa at du er laerer i klassen. */
+  var _bdCalSig = null;                  // null = skyen er ikke lest enda
+  function _bdCalNode(){ return 'bursdager/' + window._CLASS_ID; }
+  function _bdRen(d){
+    return (Array.isArray(d.bdCal) ? d.bdCal : []).filter(function (c){
+      return c && String(c.name == null ? '' : c.name).trim();
+    });
+  }
+  function pushBdCal(){
+    if (!link || !window._CLASS_ID || window._NO_CLASS) return;
+    if (_bdCalSig === null) return;      // ALDRI skriv for vi har lest
+    var d = (window.portal && window.portal.data) ? window.portal.data : null;
+    if (!d) return;
+    var cal = _bdRen(d);
+    var sig = JSON.stringify(cal);
+    if (sig === _bdCalSig) return;
+    var forrige = _bdCalSig;
+    _bdCalSig = sig;
+    function feilet(err){
+      _bdCalSig = forrige;               // la neste lagring proeve igjen
+      console.warn('Bursdagskalenderen kunne ikke lagres:', err);
+      try { if (window._bdCloudError) window._bdCloudError(); } catch(e){}
+    }
+    try {
+      var p = set(_ref0(db, _bdCalNode()), cal.length ? cal : null);
+      if (p && p.catch) p.catch(feilet);
+    } catch(e){ feilet(e); }
+  }
+  if (link && window._CLASS_ID && window.portal) {
+    onValue(_ref0(db, _bdCalNode()), function(snap){
+      var d = window.portal.data; if (!d) return;
+      var v = snap.val(), arr = [];
+      if (Array.isArray(v)) arr = v;
+      else if (v && typeof v === 'object') arr = Object.keys(v).map(function(k){ return v[k]; });
+      arr = arr.filter(function(c){ return c && String(c.name == null ? '' : c.name).trim(); });
+      if (!arr.length && _bdCalSig === null && Array.isArray(d.bdCal) && d.bdCal.length){
+        // Klassen har ingen kalender i skyen enda, men denne maskinen har en fra
+        // for: last den opp i stedet for a slette den.
+        _bdCalSig = '';
+        pushBdCal();
+        return;
+      }
+      var inn = JSON.stringify(arr);
+      _bdCalSig = inn;
+      // Vaart eget ekko: ikke ror UI-en, ellers mister laereren markoeren midt i
+      // et navn hun holder paa aa skrive.
+      if (inn === JSON.stringify(_bdRen(d))) return;
+      d.bdCal = arr;
+      try { window.portal.applyWeek(); } catch(e){}     // applyWeek lagrer lokalt
+      try { if (window._buildBdayRows) window._buildBdayRows(); } catch(e){}
+    }, function(err){ console.warn('bursdagskalender:', err); });
+  }
+
+  window._onPortalSave = function(){
+    clearTimeout(_dayT);
+    _dayT = setTimeout(function(){ pushDayboard(); pushBdCal(); }, 1500);
+  };
 
   // Live deling: alle laerere i klassen ser samme plan, oppdateres automatisk.
   if (link && window._CLASS_ID && window.portal) {
@@ -4395,7 +4622,6 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       if (b.week && typeof b.week === 'object') d.week = b.week;
       if (Array.isArray(b.notes)) d.notes = b.notes;
       if (b.dayMsg && typeof b.dayMsg === 'object') d.dayMsg = b.dayMsg;
-      if (Array.isArray(b.birthdays)) d.birthdays = b.birthdays;
       if (Array.isArray(b.helpers)) d.helpers = b.helpers;
       if (b.helperCount != null) d.helperCount = b.helperCount;
       if (Array.isArray(b.checklist)) d.checklist = b.checklist;
