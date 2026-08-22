@@ -239,23 +239,27 @@ body{
   flex:1 1 auto; min-width:0; min-height:0;
   display:flex; gap:clamp(.6rem,2.5vw,2rem); align-items:center; justify-content:center; flex-wrap:wrap;
 }
-.celle .kurvrad{ flex:0 0 auto; width:100%; gap:.4rem; }
+.celle .kurvrad{ flex:0 0 auto; width:100%; gap:.3rem; }
 .kurv{
   position:relative; cursor:pointer; border:0; background:transparent; padding:0; font-family:inherit;
   display:flex; flex-direction:column; align-items:center; gap:.35rem;
   transition:transform .15s;
 }
-.kurv .klapprad{ font-size:clamp(.95rem,1.8vw,1.4rem); letter-spacing:.06em; line-height:1; }
-.celle .kurv .klapprad{ font-size:clamp(.7rem,1.1vw,.95rem); }
+.kurv .klapprad{ font-size:clamp(1.9rem,3.6vw,2.8rem); letter-spacing:.06em; line-height:1; }
+.celle .kurv .klapprad{
+  font-size:clamp(1.4rem,2.2vw,1.9rem);
+  /* klappene skal ikke gjøre kurven bredere – de får flyte utover kanten */
+  width:0; min-width:100%; display:flex; justify-content:center; white-space:nowrap;
+}
 .kurv .kropp{
-  width:clamp(96px,14vw,168px); aspect-ratio:1.3; position:relative;
+  width:clamp(108px,15.5vw,190px); aspect-ratio:1.3; position:relative;
   background:repeating-linear-gradient(45deg,var(--kurv-1) 0 11px,var(--kurv-2) 11px 22px);
   border:4px solid var(--navy); border-radius:12px 12px 30px 30px;
   box-shadow:var(--skygge);
   display:flex; align-items:center; justify-content:center;
   transition:background .15s, border-color .15s;
 }
-.celle .kurv .kropp{ width:clamp(58px,7vw,96px); border-width:3px; border-radius:9px 9px 20px 20px; box-shadow:0 3px 0 var(--navy); }
+.celle .kurv .kropp{ width:clamp(58px,6.9vw,96px); border-width:3px; border-radius:9px 9px 20px 20px; box-shadow:0 3px 0 var(--navy); }
 .kurv .kropp::before{
   content:""; position:absolute; top:-9px; left:-7px; right:-7px; height:16px;
   background:var(--kurv-rim); border:4px solid var(--navy); border-radius:10px;
@@ -431,7 +435,7 @@ body.rent .flytknapp{ display:block; }
   .arena .heier{ width:20vw; }
   .arena .felt{ padding-left:min(22vw,150px); }
   .maalboks .bildeboks{ height:auto; width:min(60vw,24vh); max-width:none; }
-  .kurv .kropp{ width:clamp(74px,20vw,120px); }
+  .kurv .kropp{ width:clamp(84px,22vw,136px); }
 }
 @media (prefers-reduced-motion:reduce){
   .monster,.monster.heia,.jubel .tekst,.ballong,.sky,.stavgap.fylt,.kurv.rett{ animation:none !important; transition:none !important; }
@@ -772,6 +776,12 @@ function si(...navn){
   kjoer(0);
 }
 const siOrd = o => si("ord-" + o.fil);
+/* I «Flere samtidig» er talen strupet til et minimum: fire flater som
+   snakker i munnen på hverandre blir bare rot. Der får elevene korte
+   lydeffekter (klapp, smell, feiltone) i stedet – bare den felles
+   «alle sammen»-fanfaren leses opp. tale() brukes derfor for alle
+   replikker som hører til én enkelt elevs svar. */
+const tale = (...navn) => { if (app.modus !== "flere") si(...navn); };
 /* Høyttalerknappene på bildekortene er bare med når én elev holder på om
    gangen – fire ord samtidig blir bare kakofoni. */
 const lydknappPaa = () => app.modus !== "flere";
@@ -1001,7 +1011,7 @@ function lagSorterFlate(vert, farge, valg, unnta){
 
     /* klapp rytmen, og les så svaret: «Riktig! To stavelser!» */
     const klappTid = klappRekke(fasit) * 1000;
-    senere(() => si("riktig", STAVREPLIKK[fasit - 1]), klappTid + 80);
+    senere(() => tale("riktig", STAVREPLIKK[fasit - 1]), klappTid + 80);
     valg.paaFerdig && senere(valg.paaFerdig, klappTid + 1300);
   }
 
@@ -1011,7 +1021,7 @@ function lagSorterFlate(vert, farge, valg, unnta){
     merke(kurv.querySelector(".kropp"), "✕");
     setTimeout(() => kurv.classList.remove("feil"), 450);
     valg.paaBom && valg.paaBom();
-    si("proev-igjen");
+    tale("proev-igjen");
   }
 
   function svar(kurv){
@@ -1076,7 +1086,7 @@ function lagSorterFlate(vert, farge, valg, unnta){
       if (!treff) return;
       treff.classList.add("slippKlar");
       klappRekke(fasit);
-      senere(() => si("ord-" + o.fil, STAVREPLIKK[fasit - 1]), fasit * 340 + 80);
+      senere(() => tale("ord-" + o.fil, STAVREPLIKK[fasit - 1]), fasit * 340 + 80);
       setTimeout(() => { if (!ferdig) treff.classList.remove("slippKlar"); }, 1900);
     },
     sporsmaal: () => si("klapp-ordet", "ord-" + o.fil)
@@ -1390,13 +1400,13 @@ function lagBallongFlate(vert, farge, valg, unnta){
       b.classList.add("treff-riktig");
       valg.paaRiktig && valg.paaRiktig();
       fyllGap(rekt);
-      senere(() => si("riktig", "ord-" + o.fil), 620);
+      senere(() => tale("riktig", "ord-" + o.fil), 620);
       valg.paaFerdig && senere(valg.paaFerdig, 1900);
     } else {
       b.classList.add("treff-feil");
       lydFeil();
       valg.paaBom && valg.paaBom();
-      si("proev-igjen");
+      tale("proev-igjen");
       senere(() => b.remove(), 500);
     }
   }
@@ -1408,7 +1418,7 @@ function lagBallongFlate(vert, farge, valg, unnta){
       const treffB = ballonger.find(b => b._stav === riktigStav && b.isConnected);
       if (!treffB) return;
       treffB.classList.add("markert");
-      si("ord-" + o.fil);
+      tale("ord-" + o.fil);
       setTimeout(() => treffB.classList.remove("markert"), 1700);
     },
     sporsmaal: () => si("hvilken-stavelse", "ord-" + o.fil)
@@ -1680,7 +1690,6 @@ function celleFerdigOppgave(st){
     st.celle.classList.remove("ferdig");
     st.heier._img.classList.remove("heia");
     st.heier._boble.textContent = "Din tur!";
-    if (!alleRundt) si("din-tur");
     tomTeller(st.teller, n => forsokFarge(st.plass, n));
     st.bygg();
   }, 2000);
@@ -1712,7 +1721,6 @@ function hoppTilNeste(){
     lagTurFlate();
   } else {
     app._celler.forEach(st => st.bygg());
-    si(OPPGAVER[app.oppgave].lyd);
   }
 }
 
