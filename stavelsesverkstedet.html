@@ -287,29 +287,29 @@ body{
   flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,2vw,1.4rem); flex-wrap:wrap;
   padding:.15rem 0;
 }
-.ordlinje .bildeboks{ height:auto; width:clamp(64px,11vh,110px); border-width:4px; border-radius:16px; }
-.ordlinje .bildeboks .ordlyd{ width:1.7rem; height:1.7rem; font-size:.85rem; border-width:2px; box-shadow:0 2px 0 var(--navy); }
-.stavrad{ display:flex; gap:clamp(.3rem,1vw,.7rem); align-items:center; }
+.ordlinje .bildeboks{ height:auto; width:clamp(96px,17vh,170px); border-width:5px; border-radius:18px; }
+.ordlinje .bildeboks .ordlyd{ width:2rem; height:2rem; font-size:1rem; border-width:2px; box-shadow:0 2px 0 var(--navy); }
+.stavrad{ display:flex; gap:clamp(.35rem,1.2vw,.8rem); align-items:center; }
 .stavbrikke{
-  font-family:'Fredoka One',cursive; font-size:clamp(1.3rem,3.4vw,2.6rem); color:var(--navy);
-  background:var(--krem-lys); border:4px solid var(--navy); border-radius:14px;
-  padding:.1rem clamp(.5rem,1.4vw,1rem); box-shadow:var(--skygge-mjuk); line-height:1.3;
+  font-family:'Fredoka One',cursive; font-size:clamp(1.7rem,4.4vw,3.4rem); color:var(--navy);
+  background:var(--krem-lys); border:5px solid var(--navy); border-radius:16px;
+  padding:.12rem clamp(.6rem,1.7vw,1.2rem); box-shadow:var(--skygge-mjuk); line-height:1.3;
 }
 .stavgap{
-  font-family:'Fredoka One',cursive; font-size:clamp(1.3rem,3.4vw,2.6rem); color:var(--amber-dyp);
-  background:#fff; border:4px dashed var(--amber-dyp); border-radius:14px;
-  padding:.1rem clamp(.5rem,1.4vw,1rem); min-width:2.6em; text-align:center; line-height:1.3;
+  font-family:'Fredoka One',cursive; font-size:clamp(1.7rem,4.4vw,3.4rem); color:var(--amber-dyp);
+  background:#fff; border:5px dashed var(--amber-dyp); border-radius:16px;
+  padding:.12rem clamp(.6rem,1.7vw,1.2rem); min-width:2.4em; text-align:center; line-height:1.3;
 }
 .stavgap.fylt{
   border-style:solid; border-color:var(--gronn-dyp); background:#e9f8dd; color:var(--navy);
   animation:sprett .45s cubic-bezier(.2,1.6,.4,1);
 }
 .celle .ordlinje{ gap:.35rem; }
-.celle .ordlinje .bildeboks{ width:clamp(40px,7vh,64px); border-width:3px; border-radius:10px; }
-.celle .stavrad{ gap:.2rem; }
+.celle .ordlinje .bildeboks{ width:clamp(56px,10vh,92px); border-width:3px; border-radius:12px; }
+.celle .stavrad{ gap:.25rem; }
 .celle .stavbrikke, .celle .stavgap{
-  font-size:clamp(.85rem,1.6vw,1.3rem); border-width:3px; border-radius:9px;
-  padding:.05rem .4rem;
+  font-size:clamp(1.05rem,2.1vw,1.7rem); border-width:3px; border-radius:10px;
+  padding:.06rem .45rem;
 }
 .celle .stavgap{ min-width:2.2em; }
 .himmel{
@@ -1220,9 +1220,13 @@ function lagBallongFlate(vert, farge, valg, unnta){
     const bh = bue.offsetHeight || 90;
     return himmel.clientHeight - 2 - bh * 0.22;   /* transform-origin 50% 78% */
   };
-  const tyngde = () => himmel.clientHeight * 3.1;
-  const fart = kraft => himmel.clientHeight * (1.15 + 2.0 * kraft);
-  const maksDrag = () => Math.max(80, himmel.clientHeight * 0.45);
+  /* Rikelig med kraft: mange elever drar rett fra strengen på buen,
+     og da blir draget kort. Full kraft nås derfor allerede ved et
+     drag på ~28 % av himmelhøyden, og selv det svakeste skuddet når
+     halvveis opp. */
+  const tyngde = () => himmel.clientHeight * 2.6;
+  const fart = kraft => himmel.clientHeight * (1.6 + 1.9 * kraft);
+  const maksDrag = () => Math.max(60, himmel.clientHeight * 0.28);
 
   function siktedata(){
     if (!sikte) return null;
