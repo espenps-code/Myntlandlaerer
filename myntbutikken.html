@@ -300,6 +300,27 @@ body{
 .celle .myntbelte{ border-width:2px; padding:.15rem .35rem; gap:.2rem; }
 .myntbelte.laast{ opacity:.55; pointer-events:none; }
 
+/* bekreft-knappen – eleven sier selv fra når svaret er ferdig lagt ut.
+   Uten den holder det å legge ut mynt etter mynt til kassa lyser grønt,
+   og da har eleven gjettet seg fram i stedet for å regne. */
+.bekreftknapp{
+  flex:0 0 auto; align-self:center;
+  font-family:'Fredoka One',cursive; font-size:clamp(.9rem,2.1vw,1.6rem); line-height:1.3;
+  color:var(--navy); background:var(--amber);
+  border:4px solid var(--navy); border-radius:999px;
+  padding:.12rem clamp(.9rem,2.4vw,1.8rem);
+  box-shadow:0 4px 0 var(--navy); cursor:pointer;
+  transition:transform .1s, box-shadow .1s;
+}
+.bekreftknapp:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--navy); }
+.bekreftknapp:disabled{ opacity:.4; cursor:default; transform:none; box-shadow:0 4px 0 var(--navy); }
+.bekreftknapp.rist{ animation:rist .35s; }
+.celle .bekreftknapp{
+  font-size:clamp(.55rem,1.2vw,.9rem); border-width:2px; box-shadow:0 2px 0 var(--navy);
+  padding:.02rem .6rem;
+}
+.celle .bekreftknapp:active{ box-shadow:0 1px 0 var(--navy); }
+
 /* mynthaug til visning (Tell kassa / veksle opp) */
 .myntboks{
   flex:0 1 auto; align-self:stretch; min-width:0; min-height:0; max-height:min(50vh,100%);
@@ -852,7 +873,9 @@ function velgDistraktorer(fasit, antall, lokkemat){
    ============================================================ */
 function byggDisk(vert, cfg){
   /* cfg: { fasit, belte:[verdier], venstre:Node, tomtekst, kassamerke,
-            farge, valg:{paaRiktig,paaBom,paaFerdig}, krevFaerrest, sporsmaal } */
+            farge, valg:{paaRiktig,paaBom,paaFerdig}, krevFaerrest, sporsmaal,
+            bekreft } — bekreft er teksten på bekreft-knappen. Er den satt,
+            godkjennes svaret FØRST når eleven trykker på knappen. */
   const rot = document.createElement("div");
   rot.className = "butikk";
 
@@ -881,6 +904,17 @@ function byggDisk(vert, cfg){
   disk.appendChild(tomtekst);
 
   diskboks.appendChild(kassa); diskboks.appendChild(disk);
+
+  let bekreftKn = null;
+  if (cfg.bekreft){
+    bekreftKn = document.createElement("button");
+    bekreftKn.type = "button";
+    bekreftKn.className = "bekreftknapp";
+    bekreftKn.textContent = cfg.bekreft;
+    bekreftKn.addEventListener("click", () => bekreftSvar());
+    diskboks.appendChild(bekreftKn);
+  }
+
   topp.appendChild(diskboks);
 
   const belte = document.createElement("div");
@@ -947,6 +981,7 @@ function byggDisk(vert, cfg){
   function fullfor(){
     ferdig = true;
     belte.classList.add("laast");
+    if (bekreftKn) bekreftKn.disabled = true;
     disk.querySelectorAll(".mynt").forEach(m => { m.style.pointerEvents = "none"; });
     tegnKassa();
     merke(disk, "✓");
@@ -966,6 +1001,12 @@ function byggDisk(vert, cfg){
         if (talePaa()) si("faerre-mynter");
         return;
       }
+      /* Med bekreft-knapp får eleven ingenting gratis her – summen kan
+         godt stemme, men svaret gjelder først når eleven sier fra selv. */
+      if (bekreftKn){
+        if (fraTrykk && talePaa()) siTall(s);
+        return;
+      }
       fullfor();
       return;
     }
@@ -978,6 +1019,37 @@ function byggDisk(vert, cfg){
       return;
     }
     if (fraTrykk && talePaa()) siTall(s);
+  }
+
+  /* Eleven trykker «Betal» / «Gi tilbake». Her – og bare her – avgjøres
+     svaret når knappen finnes. Er det feil, blir myntene liggende så
+     eleven kan rette opp i stedet for å begynne på nytt. */
+  function bekreftSvar(){
+    if (ferdig) return;
+    if (!paaDisk.length){
+      disk.classList.add("rist"); setTimeout(()=>disk.classList.remove("rist"), 360);
+      bekreftKn.classList.add("rist"); setTimeout(()=>bekreftKn.classList.remove("rist"), 360);
+      lydFeil();
+      cfg.valg && cfg.valg.paaHint && cfg.valg.paaHint("Legg ut mynter først!");
+      return;
+    }
+    const s = sum();
+    if (s === cfg.fasit){
+      if (cfg.krevFaerrest && paaDisk.length > faerrestAntall(cfg.fasit)){
+        disk.classList.add("rist"); setTimeout(()=>disk.classList.remove("rist"), 360);
+        cfg.valg && cfg.valg.paaHint && cfg.valg.paaHint("Riktig sum! Klarer du med færre mynter?");
+        if (talePaa()) si("faerre-mynter");
+        return;
+      }
+      fullfor();
+      return;
+    }
+    disk.classList.add("rist"); setTimeout(()=>disk.classList.remove("rist"), 360);
+    bekreftKn.classList.add("rist"); setTimeout(()=>bekreftKn.classList.remove("rist"), 360);
+    lydFeil();
+    harSagtForMye = false;   /* «for mye» får lov å si fra på nytt */
+    cfg.valg && cfg.valg.paaBom && cfg.valg.paaBom(s > cfg.fasit ? tilfeldig(FORMYEROP) : tilfeldig(BOMROP));
+    if (talePaa()) si("proev-igjen");
   }
 
   tegnDisk();
@@ -993,11 +1065,15 @@ function byggDisk(vert, cfg){
       paaDisk = fasitMynter;
       tegnDisk();
       disk.querySelectorAll(".mynt").forEach(m => { m.style.pointerEvents = "none"; });
+      /* Fasiten ligger på disken nå – da skal ikke knappen kunne trykkes
+         og gi poeng for et svar eleven ikke la ut selv. */
+      if (bekreftKn) bekreftKn.disabled = true;
       if (talePaa()) siTall(cfg.fasit);
       senere(() => {
         if (ferdig) return;
         paaDisk = gammel;
         tegnDisk();
+        if (bekreftKn) bekreftKn.disabled = false;
       }, 1800);
     },
     sporsmaal: cfg.sporsmaal || (() => {})
@@ -1030,6 +1106,7 @@ function lagBetalFlate(vert, farge, valg, unnta){
     venstre: kort,
     tomtekst: "Legg myntene på disken",
     kassamerke: "betalt",
+    bekreft: "🛒 Betal",
     farge, valg,
     krevFaerrest: app.faerre,
     sporsmaal: () => { if (talePaa()) si(...tallFil(pris), "betal-noyaktig"); }
@@ -1375,6 +1452,7 @@ function lagTilbakeFlate(vert, farge, valg, unnta){
     venstre: kort,
     tomtekst: "Legg vekslepengene her",
     kassamerke: "tilbake",
+    bekreft: "💵 Gi tilbake",
     farge, valg,
     krevFaerrest: app.faerre,
     sporsmaal: () => { if (talePaa()) si("hvor-mye-tilbake"); }
