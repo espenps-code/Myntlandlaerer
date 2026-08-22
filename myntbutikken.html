@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Myntbutikken – Myntland</title>
+<meta name="description" content="Eleven betaler nøyaktig med mynter i klassens egen valuta. Fire oppgavetyper: Betal nøyaktig, Tell kassa, Byttebua og Få tilbake. For interaktiv tavle og iPad – opptil fire elever samtidig.">
+<meta name="theme-color" content="#232a3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Myntbutikken">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<!-- Delt Myntland-styling (palett + fonter). Inline-stilene under bygger videre på denne. -->
+<link rel="stylesheet" href="myntland.css">
+
+<style>
+:root{
+  --navy:#232a3f; --navy-soft:#3b4560;
+  --krem:#fbf1d6; --krem-dyp:#f3e2b9; --krem-lys:#fffaeb;
+  --amber:#efae2a; --amber-dyp:#c4841a;
+  --raud:#e8473f; --gronn:#74c043; --gronn-dyp:#4f8f28; --teal:#2bb3c0;
+  --himmel-1:#a6dff0; --himmel-2:#d8f2f8; --bakke:#8cc63f;
+  --tre:#b07a44; --tre-mork:#8a5c2e;
+  --text:#232a3f; --muted:#6b7690; --border:var(--navy);
+  --f1:#E23B2E; --f2:#1F7AE0; --f3:#17A05C; --f4:#EF9F27;
+  --skygge:0 4px 0 rgba(35,42,63,.9);
+  --skygge-mjuk:0 4px 0 rgba(35,42,63,.18);
+}
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; overflow:hidden; }
+body{
+  font-family:'Nunito',system-ui,sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,var(--himmel-1) 0%,var(--himmel-2) 55%,#e9f7ea 78%,var(--bakke) 100%);
+  display:flex; flex-direction:column;
+  height:100dvh;
+  user-select:none; -webkit-user-select:none;
+}
+
+/* ---------- topnav ---------- */
+.topnav{ background:var(--navy); padding:.45rem 1rem; flex:0 0 auto; }
+.topnav-inner{ max-width:1600px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.topnav-logo{
+  font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--krem); text-decoration:none;
+  display:flex; align-items:center; gap:.45rem; letter-spacing:.02em;
+}
+.topnav-logo::before{ content:"🪙"; }
+.topnav-logo span{ font-family:'Nunito',sans-serif; font-weight:800; font-size:.75rem; color:var(--amber); text-transform:uppercase; letter-spacing:.12em; }
+.topnav-back{
+  font-size:.75rem; font-weight:900; color:var(--navy); text-decoration:none; text-transform:uppercase; letter-spacing:.08em;
+  background:var(--amber); border:2px solid var(--navy); border-radius:999px; padding:.25rem .8rem;
+}
+
+/* ---------- lærerlinje ---------- */
+.laererlinje{
+  background:var(--krem); border:4px solid var(--navy); border-radius:20px;
+  box-shadow:var(--skygge); margin:.55rem .6rem .2rem;
+  padding:.55rem .8rem .65rem; flex:0 0 auto;
+  display:flex; flex-direction:column; gap:.5rem; align-items:center;
+}
+.rad{ display:flex; gap:.4rem; align-items:center; justify-content:center; flex-wrap:wrap; }
+.seg{ display:flex; background:var(--krem-dyp); border:3px solid var(--navy); border-radius:999px; padding:3px; gap:3px; }
+.seg button{
+  border:0; background:transparent; font-family:inherit; font-weight:900; font-size:.78rem;
+  padding:.3rem .75rem; border-radius:999px; color:var(--navy); cursor:pointer; opacity:.65;
+}
+.seg button[aria-pressed="true"]{ background:var(--navy); color:var(--krem); opacity:1; }
+.seg.skjult{ display:none; }
+.knapp{
+  border:3px solid var(--navy); background:var(--krem-lys); border-radius:999px;
+  font-family:inherit; font-weight:900; font-size:.78rem; padding:.28rem .7rem; cursor:pointer; color:var(--navy);
+  display:inline-flex; align-items:center; gap:.35rem; box-shadow:0 3px 0 var(--navy);
+  transition:transform .08s, box-shadow .08s;
+}
+.knapp:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.knapp:hover{ background:#fff; }
+.knapp.primary{ background:var(--amber); color:var(--navy); }
+.knapp.av{ opacity:.4; }
+.knapp.skjult{ display:none; }
+
+/* mynter i spill */
+.myntlinje{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; justify-content:center; }
+.mtittel{ font-weight:900; font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:var(--navy); }
+.mtall{ font-weight:900; font-size:.75rem; color:var(--muted); }
+.mtall.tom{ color:var(--amber-dyp); }
+.myntrad{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; align-items:center; }
+.mtast{
+  position:relative; padding:.1rem; cursor:pointer;
+  border:3px solid var(--navy); background:var(--krem-lys); border-radius:999px;
+  display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 0 var(--navy);
+  transition:opacity .15s, background .15s; width:2.5rem; height:2.5rem;
+}
+.mtast svg{ width:100%; height:100%; display:block; }
+.mtast[aria-pressed="false"]{ opacity:.32; }
+.mtast[aria-pressed="true"]{ background:var(--amber); }
+
+/* ---------- scene ---------- */
+.scene{
+  flex:1 1 auto; min-height:0; position:relative; padding:.6rem;
+  /* Myntstørrelsene bor her, ikke på .butikk – «Tell kassa» og «veksle opp»
+     ligger utenfor butikkflata og trenger de samme målene. */
+  --beltestr:min(9.5vw,11.5vh); --diskstr:min(7.5vw,9.5vh); --visstr:min(8.5vw,10.5vh);
+}
+
+/* tur for tur */
+.tur{ height:100%; display:flex; flex-direction:column; gap:.5rem; }
+.topplinje{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.8rem,4vw,3rem); flex-wrap:wrap;
+  background:var(--krem); border:4px solid var(--navy); border-radius:18px; box-shadow:var(--skygge-mjuk);
+  padding:.35rem .9rem;
+}
+.oppdrag{
+  font-family:'Fredoka One',cursive; font-size:clamp(.95rem,2vw,1.45rem); color:var(--navy);
+  text-align:center; line-height:1.15;
+}
+.oppdrag em{ font-style:normal; color:var(--amber-dyp); }
+
+.elevstripe{ display:flex; gap:.45rem; align-items:center; }
+.elevmerke{
+  width:46px; height:46px; border-radius:50%; background:var(--krem-lys);
+  border:3px solid var(--navy); display:flex; align-items:center; justify-content:center;
+  position:relative; opacity:.4; transition:transform .2s, opacity .2s;
+}
+.elevmerke img{ width:82%; height:82%; object-fit:contain; }
+.elevmerke.aktiv{ opacity:1; transform:scale(1.18); box-shadow:0 3px 0 var(--navy); }
+.elevmerke.ferdig{ opacity:1; }
+.elevmerke.ferdig::after{ content:"✅"; position:absolute; right:-4px; bottom:-4px; font-size:1rem; }
+
+/* teller 1-2-3 */
+.teller{ display:flex; gap:.4rem; align-items:center; }
+.tellerboks{
+  width:34px; height:34px; border-radius:10px; background:var(--krem-lys);
+  border:3px dashed var(--navy); display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden; opacity:.75;
+}
+.tellerboks.full{ border-style:solid; opacity:1; box-shadow:0 2px 0 var(--navy); }
+.tellerboks .tallet{ font-family:'Fredoka One',cursive; font-size:1rem; color:var(--muted); }
+.tellerboks .hake{ font-size:1.1rem; color:#fff; font-weight:900; text-shadow:0 1px 0 rgba(0,0,0,.3); }
+
+.arena{
+  flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,3vw,2.5rem);
+  background:var(--krem); border:5px solid var(--navy); border-radius:26px; padding:.7rem;
+  box-shadow:var(--skygge); position:relative;
+}
+.arena .heier{ position:absolute; left:1.5%; top:50%; transform:translateY(-50%); z-index:2;
+  width:min(14vw,140px); display:flex; flex-direction:column; align-items:center; gap:.35rem; }
+.arena .felt{ width:100%; height:100%; min-width:0; padding-left:min(16vw,158px); padding-right:.6rem;
+  display:flex; align-items:center; justify-content:center; }
+
+/* monster */
+.monster{ width:100%; max-width:150px; filter:drop-shadow(0 6px 8px rgba(35,42,63,.22)); animation:bob 2.6s ease-in-out infinite; }
+.monster.heia{ animation:heia .45s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-7px) } }
+@keyframes heia{ 0%,100%{ transform:translateY(0) rotate(-4deg) } 50%{ transform:translateY(-12px) rotate(4deg) } }
+.boble{
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:16px; color:var(--navy);
+  padding:.32rem .75rem; font-weight:900; font-size:clamp(.75rem,1.4vw,1rem); text-align:center;
+  position:relative; max-width:100%; box-shadow:0 3px 0 var(--navy);
+}
+.boble::after{ content:""; position:absolute; bottom:-11px; left:50%; transform:translateX(-50%);
+  border:8px solid transparent; border-top-color:var(--navy); }
+.navn{
+  font-family:'Fredoka One',cursive; font-size:clamp(.85rem,1.6vw,1.15rem); color:var(--navy)!important;
+  background:var(--amber); border:3px solid var(--navy); border-radius:999px; padding:.05rem .7rem;
+}
+
+/* flere samtidig */
+.grid4{ height:100%; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:1fr; gap:.6rem; }
+.celle{
+  --beltestr:min(7vw,7.5vh); --diskstr:min(5vw,5.5vh); --visstr:min(4.8vw,5.4vh);
+  background:var(--krem); border:4px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  display:flex; flex-direction:column; align-items:center; gap:.3rem;
+  padding:.5rem; min-height:0; min-width:0; position:relative; overflow:hidden;
+}
+.celle .heier{ flex:0 0 auto; width:100%; max-width:none;
+  display:flex; flex-direction:row; align-items:center; justify-content:center; gap:.4rem; }
+.celle .monster{ width:auto; max-width:none; height:clamp(34px,6vh,58px); }
+.celle .navn{ font-size:clamp(.7rem,1.1vw,.9rem); border-width:2px; }
+.celle .boble{ font-size:clamp(.62rem,.95vw,.8rem); padding:.2rem .45rem; box-shadow:0 2px 0 var(--navy); }
+.celle .boble::after{ bottom:auto; top:50%; left:auto; right:-11px;
+  transform:translateY(-50%); border-top-color:transparent; border-left-color:var(--navy); }
+.celle .felt{ flex:1 1 auto; width:100%; min-height:0; min-width:0; padding:.15rem .1rem .2rem; display:flex; align-items:center; justify-content:center; }
+.celle.ferdig{ background:var(--krem-lys); }
+.celle .elevnr{
+  font-weight:900; font-size:clamp(.62rem,.95vw,.78rem); color:var(--navy)!important; text-transform:uppercase; letter-spacing:.08em;
+  background:var(--krem-dyp); border:2px solid var(--navy); border-radius:999px; padding:.05rem .5rem;
+}
+.celle .teller{ flex:0 0 auto; }
+.celle .tellerboks{ width:22px; height:22px; border-width:2px; border-radius:7px; }
+.celle .tellerboks .tallet{ font-size:.72rem; }
+.cellejubel{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-family:'Fredoka One',cursive; color:#fff; font-size:clamp(1rem,2.2vw,1.8rem);
+  padding:.5rem 1.1rem; border-radius:18px; z-index:5; text-align:center;
+  border:4px solid var(--navy);
+  animation:sprett .45s cubic-bezier(.2,1.6,.4,1); box-shadow:0 5px 0 var(--navy);
+}
+
+/* ============================================================
+   MYNTER
+   ============================================================ */
+.mynt{
+  padding:0; border:0; background:transparent; cursor:pointer; font-family:inherit;
+  width:calc(var(--str,60px) * var(--skala,1)); aspect-ratio:1/1; flex:0 0 auto;
+  filter:drop-shadow(0 3px 0 rgba(35,42,63,.35));
+  transition:transform .1s;
+}
+.mynt svg{ width:100%; height:100%; display:block; }
+.mynt.belte{ --str:var(--beltestr); }
+.mynt.pa-disk{ --str:var(--diskstr); animation:myntned .22s cubic-bezier(.2,1.5,.4,1); }
+.mynt.vis{ --str:var(--visstr); cursor:default; pointer-events:none; }
+.mynt.belte:hover{ transform:translateY(-3px); }
+.mynt.belte:active{ transform:translateY(2px); }
+@keyframes myntned{ from{ transform:translateY(-26px) scale(.7); opacity:0 } to{ transform:none; opacity:1 } }
+
+/* ---------- butikkflata ---------- */
+.butikk{
+  width:100%; height:100%; min-height:0; min-width:0;
+  display:flex; flex-direction:column; gap:clamp(.3rem,1vw,.7rem); align-items:stretch;
+}
+.celle .butikk{ gap:.25rem; }
+
+.butikktopp{
+  flex:1 1 auto; min-height:0; display:flex; align-items:stretch; justify-content:center;
+  gap:clamp(.4rem,2vw,1.4rem);
+}
+.celle .butikktopp{ flex-direction:column; gap:.25rem; }
+
+/* varekortet – emoji, navn og prislapp */
+.varekort{
+  flex:0 0 auto; align-self:center;
+  background:var(--krem-lys); border:5px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  padding:clamp(.3rem,1vw,.8rem) clamp(.5rem,1.4vw,1.1rem);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.15rem;
+  min-width:0;
+}
+.celle .varekort{ border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy); padding:.2rem .4rem;
+  flex-direction:row; gap:.35rem; }
+.varekort .bilde{ font-size:clamp(1.6rem,5vw,3.6rem); line-height:1; }
+.celle .varekort .bilde{ font-size:clamp(1rem,2.2vw,1.6rem); }
+.varekort .varenavn{
+  font-weight:900; font-size:clamp(.65rem,1.2vw,1rem); color:var(--muted);
+  text-transform:uppercase; letter-spacing:.06em; text-align:center;
+}
+.celle .varekort .varenavn{ font-size:clamp(.55rem,.85vw,.7rem); }
+.prislapp{
+  font-family:'Fredoka One',cursive; color:var(--navy);
+  background:var(--amber); border:3px solid var(--navy); border-radius:999px;
+  padding:.05rem .75rem; font-size:clamp(1rem,2.6vw,2rem); display:inline-flex; align-items:center; gap:.25rem;
+  box-shadow:0 3px 0 var(--navy);
+}
+.celle .prislapp{ font-size:clamp(.75rem,1.5vw,1.1rem); border-width:2px; box-shadow:0 2px 0 var(--navy); padding:.02rem .5rem; }
+.prislapp .myntico, .prislapp img{ height:.85em; }
+
+/* kassa + disk */
+.diskboks{
+  flex:1 1 auto; min-width:0; min-height:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(.2rem,.8vw,.5rem);
+}
+.kassa{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:.4rem;
+  font-family:'Fredoka One',cursive; font-size:clamp(.95rem,2.4vw,1.9rem); color:var(--krem);
+  background:var(--navy); border:4px solid var(--navy); border-radius:14px; padding:.05rem .9rem;
+  box-shadow:var(--skygge-mjuk); transition:background .15s, color .15s;
+}
+.celle .kassa{ font-size:clamp(.7rem,1.4vw,1.05rem); border-width:2px; border-radius:9px; padding:.02rem .5rem; }
+.kassa .merk{ font-family:'Nunito',sans-serif; font-weight:900; font-size:.5em; text-transform:uppercase; letter-spacing:.1em; opacity:.75; }
+.kassa.stemmer{ background:var(--gronn-dyp); border-color:var(--gronn-dyp); }
+.kassa.formye{ background:var(--raud); border-color:var(--raud); }
+
+.disk{
+  flex:1 1 auto; width:100%; min-height:0; min-width:0; position:relative;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0 14px, rgba(0,0,0,.04) 14px 28px),
+    linear-gradient(180deg,#c08b52,#a5713f);
+  border:5px solid var(--navy); border-radius:20px; box-shadow:var(--skygge) , inset 0 4px 10px rgba(0,0,0,.18);
+  padding:clamp(.25rem,.9vw,.6rem);
+  display:flex; flex-wrap:wrap; gap:clamp(.15rem,.7vw,.45rem); align-content:center; justify-content:center;
+  overflow:hidden; max-height:min(42vh,100%);
+}
+.celle .disk{ border-width:3px; border-radius:12px; padding:.2rem; gap:.15rem; max-height:none; }
+.disk.rist{ animation:rist .35s; }
+.disktom{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:rgba(255,255,255,.85); font-weight:900; font-size:clamp(.7rem,1.5vw,1.05rem);
+  text-transform:uppercase; letter-spacing:.1em; pointer-events:none; text-align:center; padding:0 .5rem;
+  text-shadow:0 2px 0 rgba(0,0,0,.25);
+}
+.celle .disktom{ font-size:.6rem; letter-spacing:.05em; }
+
+/* myntbeltet nederst */
+.myntbelte{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+  gap:clamp(.3rem,1.4vw,1rem);
+  background:var(--krem-dyp); border:4px solid var(--navy); border-radius:999px;
+  padding:clamp(.2rem,.7vw,.45rem) clamp(.5rem,1.6vw,1.2rem); box-shadow:var(--skygge-mjuk);
+}
+.celle .myntbelte{ border-width:2px; padding:.15rem .35rem; gap:.2rem; }
+.myntbelte.laast{ opacity:.55; pointer-events:none; }
+
+/* mynthaug til visning (Tell kassa / veksle opp) */
+.myntboks{
+  flex:0 1 auto; align-self:stretch; min-width:0; min-height:0; max-height:min(50vh,100%);
+  background:var(--krem-lys); border:5px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  padding:clamp(.3rem,1vw,.8rem);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(.15rem,.6vw,.4rem);
+  overflow:hidden;
+}
+.celle .myntboks{ border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy); padding:.25rem; }
+.myntboks .haugrad{ display:flex; flex-wrap:wrap; gap:clamp(.15rem,.6vw,.4rem); align-items:center; justify-content:center; }
+
+/* ---------- svaralternativ ---------- */
+.oppgave{ width:100%; height:100%; min-height:0; display:flex; gap:clamp(.4rem,2vw,1.6rem); align-items:center; justify-content:center; }
+.celle .oppgave{ flex-direction:column; gap:.3rem; }
+
+.maalboks{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.35rem; min-width:0; min-height:0; flex:1 1 56%; height:100%; }
+.celle .maalboks{ flex:1 1 auto; width:100%; }
+.maalboks .merkelapp{
+  flex:0 0 auto;
+  font-weight:900; font-size:clamp(.65rem,1.1vw,.85rem); text-transform:uppercase; letter-spacing:.08em;
+  color:var(--navy); background:var(--krem-dyp); border:2px solid var(--navy); border-radius:999px; padding:.1rem .7rem;
+}
+.celle .maalboks .merkelapp{ font-size:.58rem; padding:.05rem .45rem; }
+
+.kortrad{
+  --kols:2; --rader:2;
+  flex:0 0 auto; min-width:0; min-height:0; display:grid;
+  grid-template-columns:repeat(var(--kols),auto);
+  gap:clamp(.3rem,1.2vw,.9rem); place-content:center; place-items:center;
+}
+.celle .kortrad{ width:100%; gap:.25rem; }
+.kort{ padding:0; border:0; background:transparent; cursor:pointer; font-family:inherit; transition:transform .1s; }
+.tallkort{
+  position:relative; background:#f9f0d5; border:5px solid var(--navy); border-radius:22px;
+  box-shadow:var(--skygge); overflow:hidden; aspect-ratio:1/1;
+  display:flex; align-items:center; justify-content:center;
+}
+.tallkort svg{ width:100%; height:100%; display:block; }
+.kort .tallkort{ width:min( calc(28vw / var(--kols)), calc(34vh / var(--rader)) ); }
+.celle .kort .tallkort{
+  width:min( calc(14vw / var(--kols)), calc(22vh / var(--rader)) );
+  border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy);
+}
+/* myntkort – samme kort, men med en mynt på */
+.tallkort.myntsvar{ background:var(--krem-lys); }
+.tallkort.myntsvar .mynt{ --str:100%; width:86%; pointer-events:none; }
+.kort:hover .tallkort{ background:#fffdf5; }
+.kort.rett .tallkort{ border-color:var(--gronn-dyp); background:#e9f8dd; box-shadow:0 4px 0 var(--gronn-dyp); }
+.kort.feil .tallkort{ border-color:var(--raud); opacity:.4; animation:rist .35s; }
+.kort.dempet{ opacity:.35; pointer-events:none; }
+.kortrad.laast .kort{ pointer-events:none; }
+@keyframes rist{ 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-6px) } 75%{ transform:translateX(6px) } }
+
+.merke-rett, .merke-feil{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0);
+  font-size:clamp(1.6rem,4vw,3rem); z-index:4; pointer-events:none;
+  animation:sprett .35s cubic-bezier(.2,1.6,.4,1) forwards;
+}
+
+/* ---------- beskjed når myntslagene ikke strekker til ---------- */
+.beskjed{
+  max-width:34ch; text-align:center; background:var(--krem-lys);
+  border:5px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  padding:1.2rem 1.6rem; font-weight:800; color:var(--navy); font-size:clamp(.85rem,1.6vw,1.1rem);
+}
+.beskjed strong{ display:block; font-family:'Fredoka One',cursive; font-size:1.25em; margin-bottom:.3rem; }
+
+/* ---------- overlay / jubel ---------- */
+.jubel{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:.9rem; z-index:40; pointer-events:none; }
+.jubel.vis{ display:flex; }
+.jubel .tekst{
+  font-family:'Fredoka One',cursive; color:var(--amber); text-align:center; line-height:1.1;
+  font-size:clamp(2rem,7vw,5.5rem);
+  padding:.35rem 1.6rem; border-radius:26px; background:var(--navy); border:5px solid var(--navy);
+  box-shadow:0 8px 0 rgba(35,42,63,.35);
+  animation:sprett .5s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes sprett{ from{ transform:scale(.4); opacity:0 } to{ transform:scale(1); opacity:1 } }
+.jubel .valg{ display:flex; gap:.6rem; pointer-events:auto; flex-wrap:wrap; justify-content:center; }
+.jubel .valg button{
+  font-family:'Fredoka One',cursive; font-size:clamp(1rem,2.4vw,1.6rem);
+  border:4px solid var(--navy); border-radius:999px; padding:.5rem 1.6rem; cursor:pointer;
+  background:var(--amber); color:var(--navy); box-shadow:0 5px 0 var(--navy);
+}
+.jubel .valg button:active{ transform:translateY(5px); box-shadow:0 0 0 var(--navy); }
+.jubel .valg button.sek{ background:var(--krem-lys); color:var(--navy); }
+#konfetti{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+
+/* skjult lærerlinje */
+body.rent .topnav, body.rent .laererlinje{ display:none; }
+.flytknapp{
+  position:fixed; top:8px; right:8px; z-index:50; display:none;
+  border:3px solid var(--navy); background:var(--krem); border-radius:999px; padding:.35rem .8rem;
+  font-family:inherit; font-weight:900; color:var(--navy); cursor:pointer; box-shadow:0 3px 0 var(--navy);
+}
+body.rent .flytknapp{ display:block; }
+
+@media (max-width:900px){
+  .oppgave{ flex-direction:column; gap:.4rem; }
+  .butikktopp{ flex-direction:column; gap:.35rem; }
+  .varekort{ flex-direction:row; gap:.5rem; }
+  .arena .heier{ width:20vw; }
+  .arena .felt{ padding-left:min(22vw,150px); }
+  .kort .tallkort{ width:min( calc(24vw / var(--kols)), calc(20vh / var(--rader)) ); }
+  .scene{ --beltestr:min(13vw,10vh); --diskstr:min(9vw,7vh); --visstr:min(9vw,7vh); }
+}
+@media (prefers-reduced-motion:reduce){
+  .monster,.monster.heia,.jubel .tekst,.mynt.pa-disk{ animation:none !important; transition:none !important; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-logo" href="begynneropplaering.html">Myntbutikken <span>· Myntland</span></a>
+    <a class="topnav-back" href="begynneropplaering.html">← Tilbake</a>
+  </div>
+</nav>
+
+<div class="laererlinje">
+  <div class="rad">
+    <div class="seg" id="oppgavevelger">
+      <button data-oppgave="betal" aria-pressed="true">💰 Betal nøyaktig</button>
+      <button data-oppgave="kassa" aria-pressed="false">🪙 Tell kassa</button>
+      <button data-oppgave="bytte" aria-pressed="false">🔁 Byttebua</button>
+      <button data-oppgave="tilbake" aria-pressed="false">💵 Få tilbake</button>
+    </div>
+    <div class="seg" id="modusvelger">
+      <button data-modus="tur" aria-pressed="true">🙋 Tur for tur</button>
+      <button data-modus="flere" aria-pressed="false">👥 Flere samtidig</button>
+    </div>
+    <button class="knapp" id="antallKnapp" title="Hvor mange elever som er med">👥 4 elever</button>
+    <button class="knapp" id="runderKnapp" title="Hvor mange oppgaver hver elev får">🔁 3 oppgaver</button>
+    <button class="knapp" id="valgKnapp" title="Hvor mange svar eleven velger mellom">🔢 4 valg</button>
+    <button class="knapp" id="belopKnapp" title="Hvor store beløp som kan komme">💵 Opp til 20</button>
+    <button class="knapp" id="faerreKnapp" title="Krev at eleven bruker færrest mulig mynter">🎯 Færrest mynter av</button>
+    <button class="knapp" id="navnKnapp" title="Vis varenavnet under bildet – fint til lesetrening">🏷️ Varenavn på</button>
+    <button class="knapp" id="visKnapp">👀 Vis meg</button>
+    <button class="knapp" id="nullstillKnapp">↺ Start på nytt</button>
+    <button class="knapp primary" id="nesteKnapp">Neste oppgave →</button>
+    <button class="knapp" id="lydKnapp" title="Lyd og stemme">🔊</button>
+    <button class="knapp" id="fullKnapp" title="Fullskjerm">⛶</button>
+    <button class="knapp" id="rentKnapp" title="Skjul menyene">⬆ Skjul meny</button>
+  </div>
+  <div class="myntlinje">
+    <span class="mtittel">Mynter i spill</span>
+    <div class="myntrad" id="myntrad"></div>
+    <span class="mtall" id="mtall"></span>
+  </div>
+</div>
+
+<button class="flytknapp" id="visMenyKnapp">⬇ Vis meny</button>
+
+<main class="scene" id="scene"></main>
+<canvas id="konfetti"></canvas>
+
+<script>
+/* ============================================================
+   MYNTBUTIKKEN – Myntland
+   ------------------------------------------------------------
+   Plassverdi i klassens egen valuta. Fire oppgavetyper:
+     1) Betal nøyaktig – varen har en pris, eleven legger mynter på disken
+     2) Tell kassa     – en haug blandede mynter, eleven finner totalen
+     3) Byttebua       – veksle én mynt i mindre, eller finne mynten som
+                         er verdt like mye som en haug
+     4) Få tilbake     – eleven betaler med én stor mynt og legger ut
+                         vekslepengene selv
+
+   Alt tegnes som SVG rett i sida, så myntene skalerer perfekt både på
+   storskjerm og i firedelt visning. Ingen bilder kreves – monstrene
+   hentes fra bilder/lyd/ med myntland.no som reserve, akkurat som i
+   Telleverkstedet.
+
+   Interaksjonen er TRYKK, ikke dra: trykk på en mynt i beltet for å legge
+   den på disken, trykk på en mynt på disken for å ta den tilbake. Drag
+   ryker på interaktive tavler når flere hender er borti samtidig.
+
+   Lyd: tall-0 … tall-20 finnes fra før (Skriveverkstedet + Telleverkstedet).
+   De sju nye replikkene står i myntbutikken-innlesing.html. Mangler en
+   mp3, hopper verktøyet bare over den.
+   ============================================================ */
+
+/* ---------- Myntslag ---------- */
+const MYNTSLAG = [1, 5, 10, 20];
+const MYNT_SKALA = { 1:0.74, 5:0.85, 10:0.95, 20:1 };
+/* 20-mynten har sølvkjerne i gullring, så den ikke forveksles med tieren. */
+const MYNT_UTSEENDE = {
+  1:  { ytre:"#e0a96d", ring:"#a9743a", kjerne:null },
+  5:  { ytre:"#c7cfd9", ring:"#8b97a6", kjerne:null },
+  10: { ytre:"#efae2a", ring:"#c4841a", kjerne:null },
+  20: { ytre:"#efae2a", ring:"#c4841a", kjerne:"#c7cfd9" }
+};
+const MAKS_PA_DISK = 14;          /* så disken aldri renner over */
+
+const TALLORD = ["null","én","to","tre","fire","fem","seks","sju","åtte","ni","ti",
+                 "elleve","tolv","tretten","fjorten","femten","seksten","sytten","atten","nitten","tjue"];
+const MAKS_TALT = 20;             /* så langt rekker de innleste tallene */
+
+/* ---------- Varer i butikken ---------- */
+const VARER = [
+  ["🍎","Eple"], ["🍌","Banan"], ["🍐","Pære"], ["🍊","Appelsin"], ["🍇","Druer"],
+  ["🍓","Jordbær"], ["🥕","Gulrot"], ["🥛","Melk"], ["🍞","Brød"], ["🧀","Ost"],
+  ["🥚","Egg"], ["🧃","Juice"], ["🍪","Kjeks"], ["🥐","Rundstykke"], ["🍫","Sjokolade"],
+  ["✏️","Blyant"], ["🖍️","Fargestift"], ["📏","Linjal"], ["✂️","Saks"], ["📕","Bok"],
+  ["🎒","Sekk"], ["🧦","Sokker"], ["🧤","Votter"], ["⚽","Ball"], ["🎈","Ballong"],
+  ["🚗","Lekebil"], ["🧩","Puslespill"], ["🪥","Tannbørste"], ["🧼","Såpe"], ["🌻","Blomst"]
+];
+
+/* ---------- Elevfarger og monstre ---------- */
+const LAG = [
+  { navn:"Drage",   fil:"ildkatt",     farge:"#E23B2E", morkt:"#9c1f16" },
+  { navn:"Bølge",   fil:"indigo",      farge:"#1F7AE0", morkt:"#0e4585" },
+  { navn:"Skog",    fil:"gressgroenn", farge:"#17A05C", morkt:"#0a5b34" },
+  { navn:"Stjerne", fil:"gullgul",     farge:"#EF9F27", morkt:"#a06a10" }
+];
+const FARGER = ["#E23B2E","#1F7AE0","#17A05C","#EF9F27","#7B4BD8","#0E9C9C","#D63F86","#C2571A"];
+const forsokFarge = (plass, forsok) => FARGER[((plass * 5 + forsok) % FARGER.length + FARGER.length) % FARGER.length];
+
+const HEIAROP  = ["Ta den største mynten først!","Tell mens du legger!","Ta det rolig!","Du klarer det!","Hvor mye mangler?","Bra!","Tell én gang til!"];
+const JUBELROP = ["Kjempebra!","Perfekt betalt!","Så fint!","Supert!","Helt riktig!"];
+const BOMROP   = ["Nesten! Tell en gang til.","Prøv igjen – tell rolig.","Se på prislappen igjen."];
+const FORMYEROP= ["Det ble for mye – ta bort en mynt.","Litt for mye! Ta en mynt tilbake."];
+
+const OPPGAVER = {
+  betal:   { tittel:() => "Betal <em>nøyaktig</em>" },
+  kassa:   { tittel:() => "<em>Hvor mye</em> er det i kassa?" },
+  bytte:   { tittel:() => "I <em>byttebua</em>" },
+  tilbake: { tittel:() => "Hvor mye skal <em>tilbake</em>?" }
+};
+
+/* ---------- Tilstand ---------- */
+const app = {
+  oppgave:"betal", modus:"tur",
+  antall:4, runder:3, valg:4, belop:20, faerre:false, visNavn:true,
+  aktive:null, tur:0, rep:0, ferdigeSett:0,
+  flater:[], belopsko:[], varekø:[]
+};
+
+/* ---------- Små hjelpere ---------- */
+const $ = s => document.querySelector(s);
+const tilfeldig = a => a[Math.floor(Math.random()*a.length)];
+const bland = a => { const b = a.slice(); for (let i=b.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [b[i],b[j]] = [b[j],b[i]]; } return b; };
+const monsterUrl = fil => "bilder/lyd/monster-" + fil + ".webp";
+const monsterReserve = fil => "https://myntland.no/monsters/" + fil + ".webp";
+const summer = liste => liste.reduce((s,v) => s + v, 0);
+
+/* ============================================================
+   PENGEMATEMATIKK
+   ------------------------------------------------------------
+   Læreren kan skru myntslag av og på. Da må verktøyet vite hvilke
+   beløp som i det hele tatt lar seg betale: er bare 5- og 10-mynten
+   i spill, finnes det ingen pris på 7. Alt regnes ut med dynamisk
+   programmering én gang per myntsett og bufres.
+   ============================================================ */
+const REGNEBUFFER = new Map();
+function myntIBruk(){
+  const m = MYNTSLAG.filter(v => app.aktive.has(v));
+  return m.length ? m : [1];
+}
+function regnetabell(){
+  const m = myntIBruk();
+  const nokkel = m.join(",");
+  let t = REGNEBUFFER.get(nokkel);
+  if (t) return t;
+
+  const TAK = 120;
+  const antall = new Array(TAK + 1).fill(Infinity);   /* færrest mynter opp til beløpet */
+  const valgt  = new Array(TAK + 1).fill(0);          /* hvilken mynt vi tok sist */
+  antall[0] = 0;
+  for (let s = 1; s <= TAK; s++){
+    for (const v of m){
+      if (v <= s && antall[s - v] + 1 < antall[s]){ antall[s] = antall[s - v] + 1; valgt[s] = v; }
+    }
+  }
+  t = { mynter:m, antall, valgt, tak:TAK };
+  REGNEBUFFER.set(nokkel, t);
+  return t;
+}
+const kanBetales = sum => sum >= 0 && sum <= 120 && regnetabell().antall[sum] < Infinity;
+const faerrestAntall = sum => regnetabell().antall[sum];
+/* Myntene i den korteste løsninga, største først. */
+function faerrestMynter(sum){
+  const t = regnetabell();
+  if (!kanBetales(sum)) return [];
+  const ut = [];
+  let rest = sum;
+  while (rest > 0){ const v = t.valgt[rest]; if (!v) break; ut.push(v); rest -= v; }
+  return ut.sort((a,b) => b - a);
+}
+/* Alle beløp opp til taket som lar seg betale, og som ikke krever
+   flere mynter enn det er plass til på disken. */
+function mulgeBelop(maks, min){
+  const ut = [];
+  for (let s = (min || 1); s <= maks; s++)
+    if (kanBetales(s) && faerrestAntall(s) <= MAKS_PA_DISK) ut.push(s);
+  return ut;
+}
+/* Beløpskø: vi går gjennom et blandet utvalg før noe gjentas. */
+function fyllBelopsko(){
+  const alle = mulgeBelop(app.belop, 2);
+  /* Beløp som krever minst to mynter er mer verdt å øve på enn de som
+     er én mynt i seg selv – de siste får bli med, men sjeldnere. */
+  const flere = alle.filter(s => faerrestAntall(s) >= 2);
+  app.belopsko = bland(flere.length >= 4 ? flere : alle);
+}
+function nesteBelop(unnta){
+  if (!app.belopsko.length) fyllBelopsko();
+  if (!app.belopsko.length) return null;
+  let n = app.belopsko.shift();
+  if (unnta && unnta.length && unnta.includes(n) && app.belopsko.length){
+    const bytt = app.belopsko.findIndex(x => !unnta.includes(x));
+    if (bytt >= 0){ app.belopsko.push(n); n = app.belopsko.splice(bytt,1)[0]; }
+  }
+  return n;
+}
+function nesteVare(){
+  if (!app.varekø.length) app.varekø = bland(VARER.slice());
+  return app.varekø.shift();
+}
+
+/* ---------- Lyd ---------- */
+let lydPaa = true, ac = null;
+function lydKontekst(){
+  if (!ac) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); }
+  if (ac && ac.state === "suspended") ac.resume();
+  return ac;
+}
+function tone(freq, tid=0.12, type="sine", vol=0.15, forsink=0){
+  if (!lydPaa) return;
+  const k = lydKontekst(); if (!k) return;
+  const o = k.createOscillator(), g = k.createGain();
+  o.type = type; o.frequency.value = freq;
+  const t0 = k.currentTime + forsink;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + tid);
+  o.connect(g); g.connect(k.destination); o.start(t0); o.stop(t0 + tid + 0.05);
+}
+const lydMyntNed = () => tone(760, 0.08, "triangle", 0.11);
+const lydMyntOpp = () => tone(420, 0.08, "triangle", 0.09);
+const lydKlikk   = () => tone(560, 0.07, "triangle", 0.09);
+const lydRunde   = () => [660,880].forEach((f,i)=>tone(f,0.14,"triangle",0.13,i*0.09));
+const lydFerdig  = () => [523,659,784,1047].forEach((f,i)=>tone(f,0.18,"triangle",0.14,i*0.09));
+const lydFanfare = () => [523,659,784,1047,1319,1047,1319].forEach((f,i)=>tone(f,0.24,"triangle",0.15,i*0.11));
+const lydFeil    = () => [330,247].forEach((f,i)=>tone(f,0.16,"sine",0.10,i*0.10));
+
+/* ---------- Innlest tale (mp3) ---------- */
+const LYDSTI = "lyd/";
+const REPLIKKER = [
+  "betal-noyaktig","hvor-mye-i-kassa","veksle-ned","hvilken-mynt",
+  "hvor-mye-tilbake","for-mye","faerre-mynter",       /* nye – leses inn */
+  "riktig","proev-igjen",                             /* fins alt i /lyd/ */
+  "din-tur","neste-elev","alle-sammen"                /* fins alt i /lyd/ */
+];
+
+const lydLager = new Map();
+let taleNr = 0, spillerNaa = null;
+
+function hentLyd(navn){
+  let a = lydLager.get(navn);
+  if (!a){ a = new Audio(LYDSTI + navn + ".mp3"); a.preload = "auto"; lydLager.set(navn, a); }
+  return a;
+}
+function forbered(...navn){ navn.forEach(n => { try { hentLyd(n).load(); } catch(e){} }); }
+function stoppTale(){
+  taleNr++;
+  if (spillerNaa){ try { spillerNaa.pause(); spillerNaa.currentTime = 0; } catch(e){} spillerNaa = null; }
+}
+/* si("riktig","tall-7") spiller filene etter hverandre. Ny si() avbryter den
+   forrige, og en fil som mangler hopper vi bare over. */
+function si(...navn){
+  if (!lydPaa || !navn.length) return;
+  stoppTale();
+  const mitt = taleNr;
+  const kjoer = i => {
+    if (i >= navn.length || mitt !== taleNr) return;
+    const a = hentLyd(navn[i]);
+    let brukt = false;
+    const videre = () => {
+      if (brukt) return;
+      brukt = true;
+      a.removeEventListener("ended", videre);
+      a.removeEventListener("error", videre);
+      if (mitt === taleNr) kjoer(i + 1);
+    };
+    a.addEventListener("ended", videre);
+    a.addEventListener("error", videre);
+    try { a.currentTime = 0; } catch(e){}
+    spillerNaa = a;
+    const p = a.play();
+    if (p && p.catch) p.catch(videre);
+  };
+  kjoer(0);
+}
+/* Tallfilene stopper på tjue. Større beløp får gå stille – heller det
+   enn en robotstemme som staver «trettifire». */
+const tallFil = n => (n >= 0 && n <= MAKS_TALT) ? ["tall-" + n] : [];
+const siTall  = n => { const f = tallFil(n); if (f.length) si(f[0]); };
+/* Stemmen er med når én elev holder på om gangen. I «Flere samtidig» sitter
+   fire elever ved samme skjerm, og fire stemmer oppå hverandre blir bare støy. */
+const talePaa = () => app.modus !== "flere";
+
+/* ---------- Tidsutløsere som hører til runden ---------- */
+let rundeTimere = [];
+function senere(fn, ms){ const t = setTimeout(() => { rundeTimere = rundeTimere.filter(x => x !== t); fn(); }, ms); rundeTimere.push(t); return t; }
+function stoppTimere(){ rundeTimere.forEach(clearTimeout); rundeTimere = []; }
+
+/* ---------- Konfetti ---------- */
+const kanvas = $("#konfetti"), ktx = kanvas.getContext("2d");
+let biter = [], konfettiKjorer = false;
+function skalerKanvas(){
+  const d = window.devicePixelRatio || 1;
+  kanvas.width = innerWidth * d; kanvas.height = innerHeight * d;
+  kanvas.style.width = innerWidth + "px"; kanvas.style.height = innerHeight + "px";
+  ktx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener("resize", skalerKanvas); skalerKanvas();
+const KONFETTIFARGER = ["#E23B2E","#1F7AE0","#17A05C","#EF9F27","#534AB7","#D85A30","#ff6fb5","#25c7c7"];
+function konfetti(x, y, antall=90, fart=1){
+  for (let i=0;i<antall;i++){
+    const v = (Math.random()*7+3)*fart, a = Math.random()*Math.PI*2;
+    biter.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 4,
+      st:Math.random()*8+5, f:tilfeldig(KONFETTIFARGER),
+      r:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, liv:1 });
+  }
+  if (!konfettiKjorer){ konfettiKjorer = true; requestAnimationFrame(tegnKonfetti); }
+}
+function storKonfetti(){
+  const b = innerWidth, h = innerHeight;
+  konfetti(b*0.2, h*0.45, 110, 1.3); konfetti(b*0.8, h*0.45, 110, 1.3);
+  konfetti(b*0.5, h*0.35, 140, 1.5);
+  setTimeout(()=>{ konfetti(b*0.35,h*0.5,90,1.2); konfetti(b*0.65,h*0.5,90,1.2); }, 260);
+}
+function tegnKonfetti(){
+  ktx.clearRect(0,0,innerWidth,innerHeight);
+  biter = biter.filter(p => p.liv > 0 && p.y < innerHeight + 60);
+  for (const p of biter){
+    p.vy += 0.22; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.r += p.vr; p.liv -= 0.004;
+    ktx.save(); ktx.translate(p.x, p.y); ktx.rotate(p.r); ktx.globalAlpha = Math.max(0, Math.min(1, p.liv*1.6));
+    ktx.fillStyle = p.f; ktx.fillRect(-p.st/2, -p.st/2, p.st, p.st*0.6); ktx.restore();
+  }
+  if (biter.length){ requestAnimationFrame(tegnKonfetti); }
+  else { konfettiKjorer = false; ktx.clearRect(0,0,innerWidth,innerHeight); }
+}
+
+/* ============================================================
+   SVG
+   ============================================================ */
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attr){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attr) e.setAttribute(k, attr[k]);
+  return e;
+}
+function nySvg(b, h){
+  return svgEl("svg", { viewBox:"0 0 " + b + " " + h, preserveAspectRatio:"xMidYMid meet" });
+}
+
+/* Én mynt med verdien skrevet på. Verdien MÅ stå på mynten – det er
+   nettopp forskjellen på å telle mynter og å telle verdi. */
+function myntSvg(verdi){
+  const u = MYNT_UTSEENDE[verdi] || MYNT_UTSEENDE[1];
+  const s = nySvg(100, 100);
+  s.appendChild(svgEl("circle", { cx:50, cy:50, r:45, fill:u.ytre, stroke:"#232a3f", "stroke-width":7 }));
+  if (u.kjerne) s.appendChild(svgEl("circle", { cx:50, cy:50, r:29, fill:u.kjerne, stroke:"#232a3f", "stroke-width":5 }));
+  else          s.appendChild(svgEl("circle", { cx:50, cy:50, r:33, fill:"none",    stroke:u.ring,   "stroke-width":5 }));
+  const t = svgEl("text", { x:50, y:64, "text-anchor":"middle",
+    "font-family":"'Fredoka One', cursive", "font-size": verdi >= 10 ? 33 : 40, fill:"#232a3f" });
+  t.textContent = verdi;
+  s.appendChild(t);
+  return s;
+}
+function myntEl(verdi, klasse){
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "mynt " + (klasse || "");
+  b.style.setProperty("--skala", MYNT_SKALA[verdi] || 1);
+  b.appendChild(myntSvg(verdi));
+  b._verdi = verdi;
+  return b;
+}
+
+/* Tallkort – tallet tegnes som SVG-tekst, så sifferet vokser med kortet. */
+function tallKortSvg(n){
+  const s = nySvg(100, 100);
+  const t = svgEl("text", { x:50, y:72, "text-anchor":"middle",
+    "font-family":"'Fredoka One', cursive", "font-size": n >= 100 ? 52 : n >= 10 ? 62 : 72, fill:"#232a3f" });
+  t.textContent = n;
+  s.appendChild(t);
+  return s;
+}
+function lagTallkort(n){
+  const d = document.createElement("div");
+  d.className = "tallkort";
+  d.appendChild(tallKortSvg(n));
+  return d;
+}
+function lagMyntkort(verdi){
+  const d = document.createElement("div");
+  d.className = "tallkort myntsvar";
+  const m = myntEl(verdi, "vis");
+  m.style.removeProperty("--skala");
+  d.appendChild(m);
+  return d;
+}
+
+function merke(vert, tegn){
+  const d = document.createElement("div");
+  d.className = tegn === "✓" ? "merke-rett" : "merke-feil";
+  d.textContent = tegn;
+  vert.appendChild(d);
+  setTimeout(()=>d.remove(), 1400);
+}
+
+/* Rutenettet for svaralternativene: 2 og 3 kort på én rad, 4 som 2×2, 5 som 3+2. */
+function settRutenett(rad, n){
+  const kols = n <= 3 ? n : n === 4 ? 2 : 3;
+  rad.style.setProperty("--kols", kols);
+  rad.style.setProperty("--rader", Math.ceil(n / kols));
+}
+
+/* Distraktorer til et beløp. Nabotallene først – det er dem eleven
+   bommer på – pluss den klassiske feilen: å telle mynter i stedet for
+   verdi. Den sendes inn som «lokkemat». */
+function velgDistraktorer(fasit, antall, lokkemat){
+  const sett = [];
+  const leggTil = n => {
+    if (n > 0 && n <= 120 && n !== fasit && !sett.includes(n)) sett.push(n);
+  };
+  (lokkemat || []).forEach(leggTil);
+  /* Nabotallene er dem eleven faktisk bommer på. Vi bygger en liste
+     sortert etter avstand (+1, −1, +2, −2 …), tar de nærmeste og
+     blander dem – da blir det ikke alltid nøyaktig ±1. */
+  const naere = [];
+  for (let d = 1; d <= 14; d++){ naere.push(fasit + d); naere.push(fasit - d); }
+  bland(naere.filter(n => n > 0 && !sett.includes(n)).slice(0, Math.max(antall + 2, 4)))
+    .forEach(leggTil);
+  for (let d = 1; sett.length < antall && d < 60; d++){ leggTil(fasit + d); leggTil(fasit - d); }
+  return sett.slice(0, antall);
+}
+
+/* ============================================================
+   DISKEN – felles maskineri for oppgave 1, 3b og 4
+   ------------------------------------------------------------
+   Eleven trykker på en mynt i beltet for å legge den på disken, og
+   på en mynt på disken for å ta den tilbake. Kassa viser summen så
+   langt. Bommer eleven over målet, sier kassa fra med én gang – det
+   er hele poenget med å betale nøyaktig.
+   ============================================================ */
+function byggDisk(vert, cfg){
+  /* cfg: { fasit, belte:[verdier], venstre:Node, tomtekst, kassamerke,
+            farge, valg:{paaRiktig,paaBom,paaFerdig}, krevFaerrest, sporsmaal } */
+  const rot = document.createElement("div");
+  rot.className = "butikk";
+
+  const topp = document.createElement("div");
+  topp.className = "butikktopp";
+  if (cfg.venstre) topp.appendChild(cfg.venstre);
+
+  const diskboks = document.createElement("div");
+  diskboks.className = "diskboks";
+
+  const kassa = document.createElement("div");
+  kassa.className = "kassa";
+  const kassatall = document.createElement("span");
+  kassatall.textContent = "0";
+  const kassamerk = document.createElement("span");
+  kassamerk.className = "merk";
+  kassamerk.textContent = cfg.kassamerke || "på disken";
+  kassa.appendChild(kassatall); kassa.appendChild(kassamerk);
+
+  const disk = document.createElement("div");
+  disk.className = "disk";
+  disk.style.borderColor = cfg.farge || "#232a3f";
+  const tomtekst = document.createElement("div");
+  tomtekst.className = "disktom";
+  tomtekst.textContent = cfg.tomtekst || "Legg myntene her";
+  disk.appendChild(tomtekst);
+
+  diskboks.appendChild(kassa); diskboks.appendChild(disk);
+  topp.appendChild(diskboks);
+
+  const belte = document.createElement("div");
+  belte.className = "myntbelte";
+  cfg.belte.forEach(v => {
+    const kn = myntEl(v, "belte");
+    kn.title = v + " mynter";
+    kn.addEventListener("click", () => legg(v));
+    belte.appendChild(kn);
+  });
+
+  rot.appendChild(topp); rot.appendChild(belte);
+  vert.appendChild(rot);
+
+  let paaDisk = [], ferdig = false, harSagtForMye = false;
+
+  function sum(){ return summer(paaDisk); }
+
+  function tegnKassa(){
+    const s = sum();
+    kassatall.textContent = s;
+    kassa.classList.toggle("formye", !ferdig && s > cfg.fasit);
+    kassa.classList.toggle("stemmer", ferdig);
+    tomtekst.style.display = paaDisk.length ? "none" : "";
+  }
+
+  function tegnDisk(){
+    /* Myntene ligger sortert med de største først – da leser disken seg
+       selv, og eleven ser strategien «størst først» av seg selv. */
+    disk.querySelectorAll(".mynt").forEach(m => m.remove());
+    paaDisk.slice().sort((a,b) => b - a).forEach(v => {
+      const m = myntEl(v, "pa-disk");
+      m.title = "Trykk for å ta mynten tilbake";
+      m.addEventListener("click", () => taBort(v));
+      disk.appendChild(m);
+    });
+    tegnKassa();
+  }
+
+  function legg(v){
+    if (ferdig) return;
+    if (paaDisk.length >= MAKS_PA_DISK){
+      disk.classList.add("rist"); setTimeout(()=>disk.classList.remove("rist"), 360);
+      lydFeil();
+      return;
+    }
+    paaDisk.push(v);
+    lydMyntNed();
+    tegnDisk();
+    sjekk(true);
+  }
+
+  function taBort(v){
+    if (ferdig) return;
+    const i = paaDisk.indexOf(v);
+    if (i < 0) return;
+    paaDisk.splice(i, 1);
+    lydMyntOpp();
+    harSagtForMye = false;
+    tegnDisk();
+    if (talePaa()) siTall(sum());
+  }
+
+  function fullfor(){
+    ferdig = true;
+    belte.classList.add("laast");
+    disk.querySelectorAll(".mynt").forEach(m => { m.style.pointerEvents = "none"; });
+    tegnKassa();
+    merke(disk, "✓");
+    cfg.valg && cfg.valg.paaRiktig && cfg.valg.paaRiktig();
+    if (talePaa()) si("riktig", ...tallFil(cfg.fasit));
+    cfg.valg && cfg.valg.paaFerdig && senere(cfg.valg.paaFerdig, 900);
+  }
+
+  function sjekk(fraTrykk){
+    const s = sum();
+    if (s === cfg.fasit){
+      /* Riktig sum. Er «færrest mynter» slått på, må antallet også stemme
+         med den korteste løsninga – ellers får eleven en vennlig dytt. */
+      if (cfg.krevFaerrest && paaDisk.length > faerrestAntall(cfg.fasit)){
+        disk.classList.add("rist"); setTimeout(()=>disk.classList.remove("rist"), 360);
+        cfg.valg && cfg.valg.paaHint && cfg.valg.paaHint("Riktig sum! Klarer du med færre mynter?");
+        if (talePaa()) si("faerre-mynter");
+        return;
+      }
+      fullfor();
+      return;
+    }
+    if (s > cfg.fasit){
+      if (!harSagtForMye){
+        harSagtForMye = true;
+        cfg.valg && cfg.valg.paaBom && cfg.valg.paaBom(tilfeldig(FORMYEROP));
+        if (talePaa()) si("for-mye");
+      }
+      return;
+    }
+    if (fraTrykk && talePaa()) siTall(s);
+  }
+
+  tegnDisk();
+
+  return {
+    fasit: cfg.fasit,
+    tallKey: cfg.fasit,
+    settNavn: () => {},
+    visMeg: () => {
+      if (ferdig) return;
+      const fasitMynter = faerrestMynter(cfg.fasit);
+      const gammel = paaDisk.slice();
+      paaDisk = fasitMynter;
+      tegnDisk();
+      disk.querySelectorAll(".mynt").forEach(m => { m.style.pointerEvents = "none"; });
+      if (talePaa()) siTall(cfg.fasit);
+      senere(() => {
+        if (ferdig) return;
+        paaDisk = gammel;
+        tegnDisk();
+      }, 1800);
+    },
+    sporsmaal: cfg.sporsmaal || (() => {})
+  };
+}
+
+/* ============================================================
+   OPPGAVE 1 – BETAL NØYAKTIG
+   ============================================================ */
+function lagBetalFlate(vert, farge, valg, unnta){
+  const pris = nesteBelop(unnta);
+  if (pris == null) return beskjedFlate(vert, "Ingen priser passer", "Skru på flere myntslag, eller sett beløpet høyere.");
+  const vare = nesteVare();
+
+  const kort = document.createElement("div");
+  kort.className = "varekort";
+  kort.style.borderColor = farge;
+  const bilde = document.createElement("div");
+  bilde.className = "bilde"; bilde.textContent = vare[0];
+  const navn = document.createElement("div");
+  navn.className = "varenavn"; navn.textContent = vare[1];
+  navn.style.display = app.visNavn ? "" : "none";
+  const lapp = document.createElement("div");
+  lapp.className = "prislapp"; lapp.textContent = pris + " 🪙";
+  kort.appendChild(bilde); kort.appendChild(navn); kort.appendChild(lapp);
+
+  const flate = byggDisk(vert, {
+    fasit: pris,
+    belte: myntIBruk(),
+    venstre: kort,
+    tomtekst: "Legg myntene på disken",
+    kassamerke: "betalt",
+    farge, valg,
+    krevFaerrest: app.faerre,
+    sporsmaal: () => { if (talePaa()) si(...tallFil(pris), "betal-noyaktig"); }
+  });
+  flate.settNavn = paa => { navn.style.display = paa ? "" : "none"; };
+  return flate;
+}
+
+/* ============================================================
+   OPPGAVE 2 – TELL KASSA
+   ------------------------------------------------------------
+   En haug blandede mynter, og eleven velger totalen. Myntene ligger
+   sortert i rader etter verdi – tiere øverst, så femmere, så enere.
+   Det er slik en kasse faktisk ser ut, og det er slik man teller.
+   ============================================================ */
+function lagKassaMynter(){
+  const m = myntIBruk();
+  const maks = app.belop;
+  /* Vi trekker mynter til vi nærmer oss taket, men holder antallet nede
+     så det går an å telle uten å miste tråden. */
+  const maksAntall = Math.min(8, MAKS_PA_DISK);
+  /* Tre mynter er nedre grense når beløpet tillater det – med to mynter
+     blir «tell mynter i stedet for verdi» en altfor tydelig blindvei. */
+  for (const minst of [3, 2]){
+    for (let forsok = 0; forsok < 80; forsok++){
+      const liste = [];
+      let sum = 0;
+      const mal = minst + Math.floor(Math.random() * (maksAntall - minst + 1));
+      for (let i = 0; i < mal; i++){
+        const lovlige = m.filter(v => sum + v <= maks);
+        if (!lovlige.length) break;
+        const v = tilfeldig(lovlige);
+        liste.push(v); sum += v;
+      }
+      if (liste.length >= minst && sum >= 2) return liste;
+    }
+  }
+  return [m[0], m[0]];
+}
+
+function lagKassaFlate(vert, farge, valg, unnta){
+  let mynter = lagKassaMynter();
+  let fasit = summer(mynter);
+  /* De andre cellene skal ikke ha samme svar samtidig. */
+  for (let i = 0; i < 20 && unnta && unnta.includes(fasit); i++){
+    mynter = lagKassaMynter(); fasit = summer(mynter);
+  }
+  /* Lokkematen er den klassiske feilen: å telle mynter i stedet for verdi.
+     Den er bare verdt å ha med når haugen er stor nok til at tallet ser
+     troverdig ut – med to mynter avslører den seg selv. */
+  const lokkemat = mynter.length >= 3 ? [mynter.length] : [];
+  const svarene = bland([fasit, ...velgDistraktorer(fasit, app.valg - 1, lokkemat)]);
+
+  const rot = document.createElement("div");
+  rot.className = "oppgave";
+
+  const maalboks = document.createElement("div");
+  maalboks.className = "maalboks";
+  const lapp = document.createElement("div");
+  lapp.className = "merkelapp"; lapp.textContent = "Hvor mye i kassa?";
+  const boks = document.createElement("div");
+  boks.className = "myntboks";
+  boks.style.borderColor = farge;
+  tegnHaug(boks, mynter);
+  maalboks.appendChild(lapp); maalboks.appendChild(boks);
+
+  const rad = document.createElement("div");
+  rad.className = "kortrad";
+  settRutenett(rad, svarene.length);
+
+  const kortEl = [];
+  svarene.forEach(t => {
+    const kn = document.createElement("button");
+    kn.className = "kort"; kn.type = "button";
+    const kort = lagTallkort(t);
+    kn.appendChild(kort);
+    kn._tall = t; kn._kort = kort;
+    kn.addEventListener("click", () => svar(kn, t));
+    rad.appendChild(kn);
+    kortEl.push(kn);
+  });
+
+  rot.appendChild(maalboks); rot.appendChild(rad);
+  vert.appendChild(rot);
+
+  let ferdig = false;
+  function svar(kn, t){
+    if (ferdig) return;
+    if (t === fasit){
+      ferdig = true;
+      rad.classList.add("laast");
+      kn.classList.add("rett");
+      merke(kn._kort, "✓");
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) si("riktig", ...tallFil(fasit));
+      valg.paaFerdig && senere(valg.paaFerdig, 800);
+    } else {
+      kn.classList.add("feil");
+      lydFeil();
+      merke(kn._kort, "✕");
+      setTimeout(()=>{ kn.classList.remove("feil"); kn.classList.add("dempet"); }, 380);
+      valg.paaBom && valg.paaBom();
+      if (talePaa()) si("proev-igjen");
+    }
+  }
+
+  return {
+    fasit, tallKey: fasit,
+    settNavn: () => {},
+    visMeg: () => {
+      const treff = kortEl.find(k => k._tall === fasit);
+      if (!treff) return;
+      treff.classList.add("rett");
+      if (talePaa()) siTall(fasit);
+      setTimeout(()=>{ if (!ferdig) treff.classList.remove("rett"); }, 1600);
+    },
+    sporsmaal: () => { if (talePaa()) si("hvor-mye-i-kassa"); }
+  };
+}
+
+/* Myntene ligger på rad, største først. Det er ikke pynt: leser eleven
+   fra venstre, får hen tellerekka gratis – «ti, femten, seksten». */
+function tegnHaug(boks, mynter){
+  const rad = document.createElement("div");
+  rad.className = "haugrad";
+  mynter.slice().sort((a,b) => b - a).forEach(v => rad.appendChild(myntEl(v, "vis")));
+  boks.appendChild(rad);
+}
+
+/* ============================================================
+   OPPGAVE 3 – BYTTEBUA
+   ------------------------------------------------------------
+   To retninger, som veksler tilfeldig:
+     a) Veksle NED: én stor mynt på disken skal byttes i mindre mynter
+        som er verdt like mye. Beltet har bare de mindre myntene.
+     b) Veksle OPP: en haug små mynter – hvilken enkeltmynt er verdt
+        like mye?
+   Uten denne oppgaven blir «betal 17 nøyaktig» bare telling. Det er
+   her tieren blir til ti enere og tilbake igjen.
+   ============================================================ */
+function vekselbare(){
+  /* Myntslag som lar seg lage av mindre myntslag i spill. */
+  const m = myntIBruk();
+  return m.filter(stor => {
+    const smaa = m.filter(v => v < stor);
+    if (!smaa.length) return false;
+    const kan = new Array(stor + 1).fill(false); kan[0] = true;
+    for (let s = 1; s <= stor; s++)
+      for (const v of smaa) if (v <= s && kan[s - v]){ kan[s] = true; break; }
+    return kan[stor];
+  });
+}
+
+function lagByttebuaFlate(vert, farge, valg, unnta){
+  const kandidater = vekselbare();
+  if (!kandidater.length)
+    return beskjedFlate(vert, "Byttebua er tom", "Skru på minst to myntslag – da er det noe å veksle med.");
+
+  let stor = tilfeldig(kandidater);
+  if (unnta && unnta.length && unnta.includes(stor)){
+    const fri = kandidater.filter(v => !unnta.includes(v));
+    if (fri.length) stor = tilfeldig(fri);
+  }
+  const smaa = myntIBruk().filter(v => v < stor);
+  const oppNed = Math.random() < 0.5 ? "ned" : "opp";
+
+  if (oppNed === "ned") return byggVekslNed(vert, farge, valg, stor, smaa);
+  return byggVekslOpp(vert, farge, valg, stor, smaa);
+}
+
+/* a) Veksle ned – legg ut mynter som er verdt like mye som den store. */
+function byggVekslNed(vert, farge, valg, stor, smaa){
+  const kort = document.createElement("div");
+  kort.className = "varekort";
+  kort.style.borderColor = farge;
+  const lapp0 = document.createElement("div");
+  lapp0.className = "varenavn"; lapp0.textContent = "Veksle denne";
+  const holder = document.createElement("div");
+  holder.style.display = "flex"; holder.style.alignItems = "center"; holder.style.justifyContent = "center";
+  const m = myntEl(stor, "vis");
+  m.style.setProperty("--str", "min(14vw,17vh)");
+  holder.appendChild(m);
+  const lapp = document.createElement("div");
+  lapp.className = "prislapp"; lapp.textContent = stor + " 🪙";
+  kort.appendChild(lapp0); kort.appendChild(holder); kort.appendChild(lapp);
+
+  const flate = byggDisk(vert, {
+    fasit: stor,
+    belte: smaa,
+    venstre: kort,
+    tomtekst: "Legg mynter som er verdt like mye",
+    kassamerke: "på disken",
+    farge, valg,
+    krevFaerrest: false,
+    sporsmaal: () => { if (talePaa()) si("veksle-ned"); }
+  });
+  flate.tallKey = stor;
+  return flate;
+}
+
+/* b) Veksle opp – hvilken mynt er haugen verdt? */
+function byggVekslOpp(vert, farge, valg, stor, smaa){
+  /* En tilfeldig kombinasjon av de mindre myntene som blir nøyaktig «stor». */
+  function lagKombinasjon(){
+    for (let forsok = 0; forsok < 200; forsok++){
+      const liste = []; let rest = stor;
+      while (rest > 0){
+        const lovlige = smaa.filter(v => v <= rest);
+        if (!lovlige.length) break;
+        const v = tilfeldig(lovlige);
+        liste.push(v); rest -= v;
+      }
+      if (rest === 0 && liste.length <= MAKS_PA_DISK) return liste;
+    }
+    /* Reserve: den korteste løsninga med bare de mindre myntene. */
+    const ut = []; let rest = stor;
+    const sortert = smaa.slice().sort((a,b) => b - a);
+    while (rest > 0){
+      const v = sortert.find(x => x <= rest);
+      if (!v) break;
+      ut.push(v); rest -= v;
+    }
+    return ut;
+  }
+  const haug = lagKombinasjon();
+  const svarene = bland(myntIBruk());
+
+  const rot = document.createElement("div");
+  rot.className = "oppgave";
+
+  const maalboks = document.createElement("div");
+  maalboks.className = "maalboks";
+  const lapp = document.createElement("div");
+  lapp.className = "merkelapp"; lapp.textContent = "Hvilken mynt er dette verdt?";
+  const boks = document.createElement("div");
+  boks.className = "myntboks";
+  boks.style.borderColor = farge;
+  tegnHaug(boks, haug);
+  maalboks.appendChild(lapp); maalboks.appendChild(boks);
+
+  const rad = document.createElement("div");
+  rad.className = "kortrad";
+  settRutenett(rad, svarene.length);
+
+  const kortEl = [];
+  svarene.forEach(v => {
+    const kn = document.createElement("button");
+    kn.className = "kort"; kn.type = "button";
+    const kort = lagMyntkort(v);
+    kn.appendChild(kort);
+    kn._tall = v; kn._kort = kort;
+    kn.addEventListener("click", () => svar(kn, v));
+    rad.appendChild(kn);
+    kortEl.push(kn);
+  });
+
+  rot.appendChild(maalboks); rot.appendChild(rad);
+  vert.appendChild(rot);
+
+  let ferdig = false;
+  function svar(kn, v){
+    if (ferdig) return;
+    if (v === stor){
+      ferdig = true;
+      rad.classList.add("laast");
+      kn.classList.add("rett");
+      merke(kn._kort, "✓");
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) si("riktig", ...tallFil(stor));
+      valg.paaFerdig && senere(valg.paaFerdig, 800);
+    } else {
+      kn.classList.add("feil");
+      lydFeil();
+      merke(kn._kort, "✕");
+      setTimeout(()=>{ kn.classList.remove("feil"); kn.classList.add("dempet"); }, 380);
+      valg.paaBom && valg.paaBom();
+      if (talePaa()) si("proev-igjen");
+    }
+  }
+
+  return {
+    fasit: stor, tallKey: stor,
+    settNavn: () => {},
+    visMeg: () => {
+      const treff = kortEl.find(k => k._tall === stor);
+      if (!treff) return;
+      treff.classList.add("rett");
+      if (talePaa()) siTall(stor);
+      setTimeout(()=>{ if (!ferdig) treff.classList.remove("rett"); }, 1600);
+    },
+    sporsmaal: () => { if (talePaa()) si("hvilken-mynt"); }
+  };
+}
+
+/* ============================================================
+   OPPGAVE 4 – FÅ TILBAKE
+   ------------------------------------------------------------
+   Varen koster 14, eleven betaler med en 20-mynt. Hvor mye skal
+   tilbake? Eleven legger vekslepengene på disken selv. Målet står
+   IKKE på kassa – det er nettopp differansen som skal regnes ut.
+   ============================================================ */
+function lagTilbakeFlate(vert, farge, valg, unnta){
+  const m = myntIBruk();
+  /* Mynten eleven betaler med må være stor nok til at det blir noe igjen. */
+  const store = m.filter(v => v >= 5 && v <= Math.max(app.belop, Math.min(...m)));
+  const betaltMed = store.length ? tilfeldig(store) : Math.max(...m);
+
+  const muligePriser = [];
+  for (let p = 1; p < betaltMed; p++)
+    if (kanBetales(p) && kanBetales(betaltMed - p) && faerrestAntall(betaltMed - p) <= MAKS_PA_DISK)
+      muligePriser.push(p);
+  if (!muligePriser.length)
+    return beskjedFlate(vert, "For få myntslag", "Skru på minst to myntslag – ellers blir det aldri vekslepenger.");
+
+  let pris = tilfeldig(muligePriser);
+  for (let i = 0; i < 20 && unnta && unnta.includes(betaltMed - pris); i++) pris = tilfeldig(muligePriser);
+  const tilbake = betaltMed - pris;
+  const vare = nesteVare();
+
+  const kort = document.createElement("div");
+  kort.className = "varekort";
+  kort.style.borderColor = farge;
+  const bilde = document.createElement("div");
+  bilde.className = "bilde"; bilde.textContent = vare[0];
+  const navn = document.createElement("div");
+  navn.className = "varenavn"; navn.textContent = vare[1];
+  navn.style.display = app.visNavn ? "" : "none";
+  const lapp = document.createElement("div");
+  lapp.className = "prislapp"; lapp.textContent = pris + " 🪙";
+  const betaltLapp = document.createElement("div");
+  betaltLapp.className = "varenavn"; betaltLapp.textContent = "Betalte med";
+  const holder = document.createElement("div");
+  holder.style.display = "flex"; holder.style.alignItems = "center"; holder.style.justifyContent = "center";
+  const bm = myntEl(betaltMed, "vis");
+  bm.style.setProperty("--str", "min(11vw,13vh)");
+  holder.appendChild(bm);
+  kort.appendChild(bilde); kort.appendChild(navn); kort.appendChild(lapp);
+  kort.appendChild(betaltLapp); kort.appendChild(holder);
+
+  const flate = byggDisk(vert, {
+    fasit: tilbake,
+    belte: m,
+    venstre: kort,
+    tomtekst: "Legg vekslepengene her",
+    kassamerke: "tilbake",
+    farge, valg,
+    krevFaerrest: app.faerre,
+    sporsmaal: () => { if (talePaa()) si("hvor-mye-tilbake"); }
+  });
+  flate.tallKey = tilbake;
+  flate.settNavn = paa => { navn.style.display = paa ? "" : "none"; };
+  return flate;
+}
+
+/* ---------- Beskjed når myntslagene ikke strekker til ---------- */
+function beskjedFlate(vert, tittel, tekst){
+  const d = document.createElement("div");
+  d.className = "beskjed";
+  const s = document.createElement("strong");
+  s.textContent = tittel;
+  d.appendChild(s);
+  d.appendChild(document.createTextNode(tekst));
+  vert.appendChild(d);
+  return { fasit:null, tallKey:null, settNavn:()=>{}, visMeg:()=>{}, sporsmaal:()=>{} };
+}
+
+function lagOppgave(vert, farge, valg, unnta){
+  if (app.oppgave === "kassa")   return lagKassaFlate(vert, farge, valg, unnta);
+  if (app.oppgave === "bytte")   return lagByttebuaFlate(vert, farge, valg, unnta);
+  if (app.oppgave === "tilbake") return lagTilbakeFlate(vert, farge, valg, unnta);
+  return lagBetalFlate(vert, farge, valg, unnta);
+}
+
+/* ============================================================
+   FELLESDELER – monster, teller, jubel
+   ============================================================ */
+function monsterBoks(lag, ropTekst){
+  const d = document.createElement("div");
+  d.className = "heier"; d.style.color = lag.farge;
+  const img = document.createElement("img");
+  img.className = "monster"; img.alt = "Monsteret " + lag.navn;
+  img.src = monsterUrl(lag.fil);
+  img.onerror = () => { img.onerror = null; img.src = monsterReserve(lag.fil); };
+  const navn = document.createElement("div");
+  navn.className = "navn"; navn.style.color = lag.morkt; navn.textContent = lag.navn;
+  const boble = document.createElement("div");
+  boble.className = "boble"; boble.textContent = ropTekst || tilfeldig(HEIAROP);
+  d.appendChild(boble); d.appendChild(img); d.appendChild(navn);
+  d._boble = boble; d._img = img;
+  return d;
+}
+
+function lagTeller(fargeFn){
+  const t = document.createElement("div");
+  t.className = "teller";
+  for (let i=1;i<=app.runder;i++){
+    const b = document.createElement("div");
+    b.className = "tellerboks"; b.dataset.n = i;
+    b.style.borderColor = fargeFn(i-1);
+    b.innerHTML = '<span class="tallet">' + i + '</span>';
+    t.appendChild(b);
+  }
+  return t;
+}
+function fyllTeller(teller, n, farge){
+  const b = teller && teller.querySelector('.tellerboks[data-n="' + n + '"]');
+  if (!b) return;
+  b.classList.add("full");
+  b.innerHTML = '<span class="hake">✓</span>';
+  b.style.background = farge;
+}
+function tomTeller(teller, fargeFn){
+  teller && teller.querySelectorAll(".tellerboks").forEach(b => {
+    b.className = "tellerboks"; b.style.background = ""; b.style.borderColor = fargeFn(+b.dataset.n - 1);
+    b.innerHTML = '<span class="tallet">' + b.dataset.n + '</span>';
+  });
+}
+
+function visJubel(tekst, farge, knapper, tid){
+  skjulJubel();
+  const j = document.createElement("div");
+  j.className = "jubel vis"; j.id = "jubel";
+  const t = document.createElement("div"); t.className = "tekst"; t.textContent = tekst;
+  if (farge) t.style.background = farge;
+  j.appendChild(t);
+  if (knapper){
+    const v = document.createElement("div"); v.className = "valg";
+    knapper.forEach(k => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = k.tekst;
+      if (k.sek) b.className = "sek";
+      b.addEventListener("click", () => { skjulJubel(); k.gjor(); });
+      v.appendChild(b);
+    });
+    j.appendChild(v);
+  }
+  $("#scene").appendChild(j);
+  if (tid) setTimeout(skjulJubel, tid);
+}
+function skjulJubel(){ const j = $("#jubel"); if (j) j.remove(); }
+function visCelleJubel(celle, farge, tekst){
+  const d = document.createElement("div");
+  d.className = "cellejubel"; d.textContent = tekst;
+  d.style.background = farge;
+  celle.appendChild(d);
+  setTimeout(()=>d.remove(), 1800);
+}
+
+/* ============================================================
+   SCENE
+   ============================================================ */
+function nyRunde(){
+  stoppTimere();
+  app.tur = 0; app.rep = 0; app.flater = []; app.ferdigeSett = 0;
+  skjulJubel();
+  fyllBelopsko();
+  const scene = $("#scene"); scene.innerHTML = "";
+  if (app.modus === "tur") byggTur(scene);
+  else byggFlere(scene);
+}
+
+/* ---------- MODUS: TUR FOR TUR ---------- */
+function byggTur(scene){
+  const rot = document.createElement("div"); rot.className = "tur";
+
+  const topp = document.createElement("div"); topp.className = "topplinje";
+  const stripe = document.createElement("div"); stripe.className = "elevstripe";
+  for (let i=0;i<app.antall;i++){
+    const m = document.createElement("div"); m.className = "elevmerke"; m.dataset.i = i;
+    m.style.borderColor = LAG[i].farge;
+    const img = document.createElement("img");
+    img.src = monsterUrl(LAG[i].fil); img.alt = LAG[i].navn;
+    img.onerror = () => { img.onerror = null; img.src = monsterReserve(LAG[i].fil); };
+    m.appendChild(img);
+    stripe.appendChild(m);
+  }
+  const oppdrag = document.createElement("div");
+  oppdrag.className = "oppdrag";
+  oppdrag.innerHTML = OPPGAVER[app.oppgave].tittel();
+  const teller = lagTeller(n => forsokFarge(0, n));
+  topp.appendChild(stripe); topp.appendChild(oppdrag); topp.appendChild(teller);
+
+  const arena = document.createElement("div"); arena.className = "arena";
+  arena.style.borderColor = forsokFarge(0, 0);
+  const heier = monsterBoks(LAG[0]);
+  const felt = document.createElement("div"); felt.className = "felt";
+  arena.appendChild(heier); arena.appendChild(felt);
+
+  rot.appendChild(topp); rot.appendChild(arena); scene.appendChild(rot);
+
+  app._teller = teller; app._arena = arena; app._felt = felt;
+  app._stripe = stripe; app._heier = heier; app._oppdrag = oppdrag;
+  merkAktivElev();
+  lagTurFlate();
+}
+
+function merkAktivElev(){
+  app._stripe && app._stripe.querySelectorAll(".elevmerke").forEach(m => {
+    const i = +m.dataset.i;
+    m.classList.toggle("aktiv", i === app.tur);
+    m.classList.toggle("ferdig", i < app.tur);
+  });
+}
+
+function lagTurFlate(){
+  const heier = app._heier;
+  const farge = forsokFarge(app.tur, app.rep);
+  app._felt.innerHTML = "";
+  app._arena.style.borderColor = farge;
+  app.flater = [ lagOppgave(app._felt, farge, {
+    paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
+    paaBom:    t  => { heier._boble.textContent = t || tilfeldig(BOMROP); },
+    paaHint:   t  => { heier._boble.textContent = t; },
+    paaFerdig: () => turFerdigOppgave()
+  }) ];
+  app.flater[0].sporsmaal();
+}
+
+function turFerdigOppgave(){
+  const heier = app._heier;
+  const farge = forsokFarge(app.tur, app.rep);
+  app.rep++;
+  fyllTeller(app._teller, app.rep, farge);
+  heier._img.classList.add("heia");
+  const r = app._arena.getBoundingClientRect();
+
+  if (app.rep < app.runder){
+    lydRunde();
+    konfetti(r.left + r.width/2, r.top + r.height/2, 30, 0.8);
+    const igjen = app.runder - app.rep;
+    heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
+    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 2100);
+    return;
+  }
+
+  lydFerdig();
+  konfetti(r.left + r.width/2, r.top + r.height/2, 80, 1.1);
+  heier._boble.textContent = tilfeldig(JUBELROP);
+  app.tur++; app.rep = 0;
+
+  if (app.tur < app.antall){
+    senere(()=>{
+      visJubel("NESTE ELEV!", LAG[app.tur].farge, null, 2400);
+      si("neste-elev");
+      senere(()=>{
+        const nyttLag = LAG[app.tur];
+        app._arena.style.borderColor = nyttLag.farge;
+        const nyHeier = monsterBoks(nyttLag);
+        app._arena.replaceChild(nyHeier, app._heier);
+        app._heier = nyHeier;
+        tomTeller(app._teller, n => forsokFarge(app.tur, n));
+        merkAktivElev();
+        lagTurFlate();
+      }, 2400);
+    }, 2200);
+  } else {
+    merkAktivElev();
+    senere(alleFerdige, 2200);
+  }
+}
+
+/* ---------- MODUS: FLERE SAMTIDIG ---------- */
+function byggFlere(scene){
+  const rot = document.createElement("div"); rot.className = "grid4";
+  rot.style.gridTemplateColumns = "repeat(" + app.antall + ",1fr)";
+  rot.style.gridTemplateRows = "1fr";
+  scene.appendChild(rot);
+  app.flater = [];
+  app._celler = [];
+
+  for (let i=0;i<app.antall;i++){
+    const lag = LAG[i];
+    const celle = document.createElement("div"); celle.className = "celle";
+    celle.style.borderColor = lag.farge;
+    const heier = monsterBoks(lag);
+    const merket = document.createElement("div");
+    merket.className = "elevnr"; merket.style.color = lag.morkt; merket.textContent = "Elev 1";
+    heier.appendChild(merket);
+    const teller = lagTeller(n => forsokFarge(i, n));
+    const felt = document.createElement("div"); felt.className = "felt";
+    celle.appendChild(heier); celle.appendChild(teller); celle.appendChild(felt);
+    rot.appendChild(celle);
+
+    const st = { i, rep:0, elev:1, plass:i, lag, celle, heier, teller, felt, merket };
+    st.bygg = () => {
+      felt.innerHTML = "";
+      /* Naboene skal ikke ha samme svar samtidig – da blir det fristende
+         å skotte bort i stedet for å telle selv. */
+      const brukte = app._celler.map(c => c.flate && c.flate.tallKey).filter(v => v != null);
+      st.flate = lagOppgave(felt, forsokFarge(st.plass, st.rep), {
+        paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
+        paaBom:    t  => { heier._boble.textContent = t || tilfeldig(BOMROP); },
+        paaHint:   t  => { heier._boble.textContent = t; },
+        paaFerdig: () => celleFerdigOppgave(st)
+      }, brukte);
+      app.flater[i] = st.flate;
+    };
+    app._celler.push(st);
+    st.bygg();
+  }
+}
+
+function celleFerdigOppgave(st){
+  const farge = forsokFarge(st.plass, st.rep);
+  st.rep++;
+  fyllTeller(st.teller, st.rep, farge);
+  st.heier._img.classList.add("heia");
+  const r = st.celle.getBoundingClientRect();
+
+  if (st.rep < app.runder){
+    lydRunde();
+    konfetti(r.left + r.width/2, r.top + r.height/2, 25, 0.8);
+    const igjen = app.runder - st.rep;
+    st.heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
+    senere(()=>{ st.heier._img.classList.remove("heia"); st.bygg(); }, 1200);
+    return;
+  }
+
+  lydFerdig();
+  konfetti(r.left + r.width/2, r.top + r.height/2, 70, 1);
+  st.celle.classList.add("ferdig");
+  st.heier._boble.textContent = tilfeldig(JUBELROP);
+  visCelleJubel(st.celle, st.lag.farge, "NESTE ELEV!");
+  app.ferdigeSett++;
+  const alleRundt = app.ferdigeSett % app.antall === 0;
+
+  senere(()=>{
+    st.rep = 0; st.elev++;
+    st.plass += app.antall;
+    st.merket.textContent = "Elev " + st.elev;
+    st.celle.classList.remove("ferdig");
+    st.heier._img.classList.remove("heia");
+    st.heier._boble.textContent = "Din tur!";
+    tomTeller(st.teller, n => forsokFarge(st.plass, n));
+    st.bygg();
+  }, 2000);
+
+  if (alleRundt){
+    senere(()=>{
+      lydFanfare(); storKonfetti(); si("alle-sammen");
+      visJubel("🎉 SUPERT! 🎉", null, null, 1700);
+    }, 350);
+  }
+}
+
+function alleFerdige(){
+  lydFanfare(); storKonfetti();
+  si("alle-sammen");
+  visJubel("🎉 SUPERT! 🎉", null, [
+    { tekst:"Ny vare →", gjor:nyRunde },
+    { tekst:"Samme oppgave ↺", sek:true, gjor:nyRunde }
+  ]);
+}
+
+/* ---------- neste oppgave uten å telle den som ferdig ----------
+   Trykker læreren «Neste» rett etter at eleven svarte riktig, ligger det
+   fortsatt en utløser og venter på å telle svaret ferdig. Den må dø her –
+   ellers teller den på oppgaven som nettopp ble bygd i stedet. */
+function hoppTilNeste(){
+  stoppTimere();
+  if (app.modus === "tur") lagTurFlate();
+  else app._celler.forEach(st => st.bygg());
+}
+
+/* ============================================================
+   MYNTER I SPILL
+   ------------------------------------------------------------
+   Læreren slår myntslag av og på. Jobber klassen med tiere og enere
+   denne uka, står bare de to på. Valget huskes på denne maskina.
+   ============================================================ */
+const MYNT_NOKKEL = "myntland-myntbutikken-mynter-v1";
+
+function lastMynter(){
+  try {
+    const a = JSON.parse(localStorage.getItem(MYNT_NOKKEL));
+    if (Array.isArray(a) && a.length) return new Set(a.filter(v => MYNTSLAG.includes(v)));
+  } catch(e){}
+  return new Set([1, 5, 10]);      /* trygt utgangspunkt */
+}
+function lagreMynter(){
+  try { localStorage.setItem(MYNT_NOKKEL, JSON.stringify([...app.aktive])); } catch(e){}
+}
+
+function byggMyntknapper(){
+  const boks = $("#myntrad"); boks.innerHTML = "";
+  MYNTSLAG.forEach(v => {
+    const kn = document.createElement("button");
+    kn.type = "button";
+    kn.className = "mtast";
+    kn.dataset.v = v;
+    kn.title = v + "-mynt";
+    kn.setAttribute("aria-label", v + "-mynt");
+    kn.appendChild(myntSvg(v));
+    kn.setAttribute("aria-pressed", app.aktive.has(v) ? "true" : "false");
+    kn.addEventListener("click", () => vekslMynt(v));
+    boks.appendChild(kn);
+  });
+  oppdaterMtall();
+}
+function tegnMyntknapper(){
+  document.querySelectorAll(".mtast").forEach(kn => {
+    kn.setAttribute("aria-pressed", app.aktive.has(+kn.dataset.v) ? "true" : "false");
+  });
+}
+function oppdaterMtall(){
+  const felt = $("#mtall");
+  const n = MYNTSLAG.filter(v => app.aktive.has(v)).length;
+  if (!n){
+    felt.textContent = "ingen myntslag valgt – bruker 1-mynten";
+    felt.classList.add("tom");
+    return;
+  }
+  felt.classList.remove("tom");
+  const m = myntIBruk();
+  felt.textContent = m.join(" · ");
+  if (n === 1 && (app.oppgave === "bytte" || app.oppgave === "tilbake"))
+    felt.textContent += " · denne oppgaven trenger minst to myntslag";
+}
+
+function vekslMynt(v){
+  if (app.aktive.has(v)) app.aktive.delete(v); else app.aktive.add(v);
+  lagreMynter(); tegnMyntknapper(); oppdaterMtall();
+  nyRunde();
+}
+
+/* ============================================================
+   LÆRERLINJA
+   ============================================================ */
+const BELOPSTRINN = [10, 20, 50, 99];
+
+function oppdaterKnapper(){
+  const kassa   = app.oppgave === "kassa";
+  const bytte   = app.oppgave === "bytte";
+  const tilbake = app.oppgave === "tilbake";
+  const betal   = app.oppgave === "betal";
+  const harVare = betal || tilbake;
+  const harDisk = betal || bytte || tilbake;
+
+  $("#antallKnapp").classList.toggle("skjult", app.modus !== "flere");
+  $("#valgKnapp").classList.toggle("skjult", !kassa);
+  $("#belopKnapp").classList.toggle("skjult", bytte);
+  $("#faerreKnapp").classList.toggle("skjult", !(betal || tilbake));
+  $("#navnKnapp").classList.toggle("skjult", !harVare);
+
+  $("#antallKnapp").textContent = "👥 " + app.antall + " elever";
+  $("#runderKnapp").textContent = "🔁 " + app.runder + (app.runder === 1 ? " oppgave" : " oppgaver");
+  $("#valgKnapp").textContent   = "🔢 " + app.valg + " valg";
+  $("#belopKnapp").textContent  = "💵 Opp til " + app.belop;
+  $("#faerreKnapp").textContent = app.faerre ? "🎯 Færrest mynter på" : "🎯 Færrest mynter av";
+  $("#faerreKnapp").classList.toggle("av", !app.faerre);
+  $("#navnKnapp").textContent   = app.visNavn ? "🏷️ Varenavn på" : "🏷️ Varenavn av";
+  $("#navnKnapp").classList.toggle("av", !app.visNavn);
+  $("#nesteKnapp").textContent  = harDisk ? "Neste vare →" : "Neste oppgave →";
+  if (bytte) $("#nesteKnapp").textContent = "Neste bytte →";
+}
+
+$("#oppgavevelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.oppgave = b.dataset.oppgave;
+  document.querySelectorAll("#oppgavevelger button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true":"false"));
+  oppdaterKnapper(); oppdaterMtall(); nyRunde();
+});
+$("#modusvelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.modus = b.dataset.modus;
+  document.querySelectorAll("#modusvelger button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true":"false"));
+  oppdaterKnapper(); nyRunde();
+});
+$("#antallKnapp").addEventListener("click", () => {
+  app.antall = app.antall >= 4 ? 2 : app.antall + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#runderKnapp").addEventListener("click", () => {
+  app.runder = app.runder >= 5 ? 1 : app.runder + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#valgKnapp").addEventListener("click", () => {
+  app.valg = app.valg >= 5 ? 2 : app.valg + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#belopKnapp").addEventListener("click", () => {
+  app.belop = BELOPSTRINN[(BELOPSTRINN.indexOf(app.belop) + 1) % BELOPSTRINN.length];
+  oppdaterKnapper(); nyRunde();
+});
+$("#faerreKnapp").addEventListener("click", () => {
+  app.faerre = !app.faerre;
+  oppdaterKnapper(); nyRunde();
+});
+$("#navnKnapp").addEventListener("click", () => {
+  app.visNavn = !app.visNavn;
+  oppdaterKnapper();
+  app.flater.forEach(f => f && f.settNavn && f.settNavn(app.visNavn));
+});
+$("#visKnapp").addEventListener("click", () => {
+  app.flater.forEach(f => f && f.visMeg && f.visMeg());
+});
+$("#nesteKnapp").addEventListener("click", hoppTilNeste);
+$("#nullstillKnapp").addEventListener("click", nyRunde);
+
+/* Første berøring låser opp lyd i nettleseren – da henter vi replikkene samtidig */
+let lydVarmet = false;
+["pointerdown","keydown"].forEach(h => addEventListener(h, () => {
+  if (lydVarmet) return;
+  lydVarmet = true;
+  lydKontekst();
+  forbered(...REPLIKKER);
+  for (let n = 0; n <= MAKS_TALT; n++) forbered("tall-" + n);
+}, { once:false, passive:true }));
+
+$("#lydKnapp").addEventListener("click", () => {
+  lydPaa = !lydPaa;
+  $("#lydKnapp").textContent = lydPaa ? "🔊" : "🔇";
+  $("#lydKnapp").classList.toggle("av", !lydPaa);
+  if (lydPaa) lydKontekst();
+  else stoppTale();
+});
+$("#fullKnapp").addEventListener("click", () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  else document.exitFullscreen && document.exitFullscreen();
+});
+$("#rentKnapp").addEventListener("click", () => document.body.classList.add("rent"));
+$("#visMenyKnapp").addEventListener("click", () => document.body.classList.remove("rent"));
+
+/* --- tastatur for læreren --- */
+addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight"){ hoppTilNeste(); return; }
+  if (e.key === " "){ e.preventDefault(); nyRunde(); return; }
+  if (e.key === "Enter"){ $("#visKnapp").click(); return; }
+});
+
+/* --- start --- */
+app.aktive = lastMynter();
+byggMyntknapper();
+oppdaterKnapper();
+nyRunde();
+</script>
+
+<!-- Mynt-ikon: bytter 🪙-emojien til eget bilde overalt (også dynamisk innhold) -->
+<style>.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>
+<script>
+(function(){
+  var COIN='🪙'; // mynt-emoji
+  function convert(node){
+    if(!node) return;
+    if(node.nodeType===3){
+      var v=node.nodeValue;
+      if(!v || v.indexOf(COIN)===-1) return;
+      var p=node.parentNode; if(!p) return;
+      var tag=p.nodeName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA') return;
+      var parts=v.split(COIN), frag=document.createDocumentFragment();
+      for(var i=0;i<parts.length;i++){
+        if(parts[i]) frag.appendChild(document.createTextNode(parts[i]));
+        if(i<parts.length-1){
+          var img=document.createElement('img');
+          img.className='myntico'; img.src='mynt.webp'; img.alt='mynt';
+          frag.appendChild(img);
+        }
+      }
+      p.replaceChild(frag,node);
+    } else if(node.nodeType===1){
+      var t=node.nodeName;
+      if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='INPUT'||t==='SVG'||t==='svg') return;
+      var kids=Array.prototype.slice.call(node.childNodes);
+      for(var i=0;i<kids.length;i++) convert(kids[i]);
+    }
+  }
+  function run(){ try{ convert(document.body); }catch(e){} }
+  try{
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var m=muts[i];
+        if(m.type==='childList'){ for(var j=0;j<m.addedNodes.length;j++) convert(m.addedNodes[j]); }
+        else if(m.type==='characterData'){ convert(m.target); }
+      }
+    });
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
+})();
+</script>
+</body>
+</html>
