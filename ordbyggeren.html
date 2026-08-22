@@ -205,8 +205,8 @@ body{
 /* ============================================================
    OPPGAVE 1 – DRA SAMMEN
    Bokstavkortene ligger absolutt plassert i sporet, og JS-en
-   regner ut både kortstørrelse og posisjoner. Avstanden mellom
-   to kort ER pausen mellom de to lydene når ordet leses.
+   regner ut både kortstørrelse og posisjoner. Øverst i sporet går
+   det en smal «pil-lane» der draretningspila ligger.
    ============================================================ */
 /* Alt eleven skal ta på, ligger NEDERST. En førsteklassing ved
    smartboardet rekker ikke opp på øvre halvdel av tavla, så bildet får
@@ -237,7 +237,7 @@ body{
 }
 .ordspor.samlet{ border-style:solid; background:#fff6dd; }
 .lydkort{
-  position:absolute; top:50%; margin-top:0;
+  position:absolute;
   display:flex; align-items:center; justify-content:center;
   background:var(--amber); border:4px solid var(--navy); border-radius:14px;
   font-family:'Fredoka One',cursive; color:var(--navy); line-height:1;
@@ -245,10 +245,35 @@ body{
   transition:left .1s ease, background .15s, box-shadow .1s;
 }
 .lydkort.vokal{ background:var(--raud); color:#fff; }
-.lydkort.drar{ cursor:grabbing; z-index:4; transition:none; box-shadow:0 9px 0 rgba(35,42,63,.45); }
+.lydkort.drar{ cursor:grabbing; z-index:4; box-shadow:0 9px 0 rgba(35,42,63,.45); }
+/* Under draget må HELE gruppa følge fingeren i samme sekund. Med en
+   overgang på left ville bokstavene som henger etter den eleven holder
+   i, sakket 0,1 s bak – og da ser de ikke ut som ett ord. */
+.ordspor.drar .lydkort{ transition:none; }
 .lydkort.lyser{ background:#fff; outline:4px solid var(--gronn-dyp); outline-offset:2px; z-index:3; }
 .lydkort.vokal.lyser{ background:#ffd9d6; }
 .ordspor.samlet .lydkort{ border-radius:8px; }
+/* Bare bokstavene som henger sammen kan dras – de løse står stille og
+   venter på å bli hentet. */
+.lydkort.los{ cursor:default; }
+.lydkort.griper{ cursor:grab; }
+
+/* Draretningspila står over den første bokstaven og følger gruppa
+   bortover. Den nikker mot høyre, samme vei som vi leser. */
+.dragpil{
+  position:absolute; z-index:5; pointer-events:none;
+  transform:translateX(-50%);
+  animation:pilnikk 1.15s ease-in-out infinite;
+  transition:left .12s ease;
+  filter:drop-shadow(0 2px 0 rgba(35,42,63,.25));
+}
+.dragpil.drar{ transition:none; }
+.dragpil.borte{ display:none; }
+.dragpil svg{ display:block; width:100%; height:100%; }
+@keyframes pilnikk{
+  0%,100%{ transform:translateX(-50%) }
+  50%    { transform:translateX(calc(-50% + 14px)) }
+}
 
 /* Fasiten fyller plassen OVER sporet og legger seg nederst i den, altså
    rett over bokstavkortene. Plassen er reservert hele tida (opacity 0),
@@ -400,7 +425,7 @@ body.rent .flytknapp{ display:block; }
   .remsekort{ height:clamp(30px,4.4vw,56px); width:clamp(25px,3.6vw,46px); font-size:clamp(.85rem,2vw,1.6rem); }
 }
 @media (prefers-reduced-motion:reduce){
-  .monster,.monster.heia,.jubel .tekst,.slisse.full,.lydkort,.fasitboks{ animation:none !important; transition:none !important; }
+  .monster,.monster.heia,.jubel .tekst,.slisse.full,.lydkort,.fasitboks,.dragpil{ animation:none !important; transition:none !important; }
 }
 </style>
 </head>
@@ -593,13 +618,11 @@ const TEMPO = [
   { key:"rask",    tekst:"🐇 Raskt",   ms:260 }
 ];
 
-/* Lengste pause mellom to lyder i «Dra sammen», når kortene ligger
-   så langt fra hverandre som sporet tillater. */
-const MAKSPAUSE = 900;
-/* Så nær hverandre må to kort være for at de skal klikke sammen –
-   en andel av kortbredden, så det er like lett med små fingre på en
-   iPad som med hele hånda på tavla. */
-const SNAPP_ANDEL = 0.38;
+/* Pause mellom lydene når ordet staves til slutt. Kort – dette er
+   sammentrekninga, ikke oppdelinga. */
+const STAVEPAUSE = 140;
+/* Liten pust mellom stavinga og hele ordet. */
+const FORORD = 300;
 
 /* ---------- Tilstand ---------- */
 const app = {
@@ -846,14 +869,16 @@ function merke(vert, tegn){
 /* ============================================================
    OPPGAVE 1 – DRA SAMMEN
    ------------------------------------------------------------
-   Kortene ligger absolutt plassert i sporet. andel[i] er gapet
-   mellom kort i og i+1, målt som en andel av det største gapet
-   sporet har plass til (0 = kortene ligger inntil hverandre,
-   1 = så langt fra hverandre som mulig). Ut fra andel[i] regnes
-   både posisjonene og pausen mellom lyd i og lyd i+1.
+   Bokstavene ligger spredt utover sporet. Eleven tar tak i den
+   første – pila viser hvilken og hvilken vei – og drar mot høyre
+   i én sammenhengende bevegelse. Hver gang gruppa treffer neste
+   bokstav, blir den med, og lyden spilles i samme sekund.
 
-   At begge deler kommer fra samme tall er hele poenget: det
-   eleven ser, er det eleven hører.
+   Det er her sammentrekninga bor: drar eleven sakte, kommer
+   lydene enkeltvis (s … o … l); drar hen fort, glir de over i
+   hverandre (sol). Tempoet ligger i handa, ikke i programmet.
+   Når siste bokstav er hentet, staves ordet én gang – og først
+   da leses det som ett ord, med bildet.
    ============================================================ */
 function lagDraFlate(vert, farge, valg){
   const o = nesteOrd();
@@ -871,10 +896,9 @@ function lagDraFlate(vert, farge, valg){
   const linje = document.createElement("div");
   linje.className = "sporlinje";
   const les = document.createElement("button");
-  les.type = "button"; les.className = "lesknapp"; les.textContent = "▶ Les";
+  les.type = "button"; les.className = "lesknapp"; les.textContent = "▶ Hør igjen";
   const hint = document.createElement("div");
   hint.className = "drahint";
-  hint.textContent = "Dra bokstavene mot hverandre";
   linje.appendChild(les); linje.appendChild(hint);
 
   ramme.appendChild(spor); ramme.appendChild(linje);
@@ -892,6 +916,14 @@ function lagDraFlate(vert, farge, valg){
   rot.appendChild(fasit); rot.appendChild(ramme);
   vert.appendChild(rot);
 
+  /* --- draretningspila --- */
+  const pil = document.createElement("div");
+  pil.className = "dragpil";
+  pil.innerHTML = '<svg viewBox="0 0 56 28" aria-hidden="true">' +
+    '<path d="M3 10 H30 V3.5 L53 14 L30 24.5 V18 H3 Z" fill="var(--amber)" ' +
+    'stroke="var(--navy)" stroke-width="3" stroke-linejoin="round"/></svg>';
+  spor.appendChild(pil);
+
   /* --- kortene --- */
   const kort = o.lyd.map((ch, i) => {
     const d = document.createElement("div");
@@ -902,185 +934,204 @@ function lagDraFlate(vert, farge, valg){
     return d;
   });
 
-  let andel = new Array(Math.max(0, n-1)).fill(1);
-  let kortB = 40, kortH = 46, gapMaks = 0, sporB = 0;
-  let p = new Array(n).fill(0);
-  let samlet = false, ferdig = false, leser = false;
+  /* festet = hvor mange bokstaver som henger sammen fra venstre.
+     Den første er «festet» fra starten – det er den eleven tar tak i.
+     p0 = venstre kant av den gruppa. De løse bokstavene står stille
+     på plassene sine og venter. */
+  let festet = 1, p0 = 0;
+  let kortB = 40, kortH = 46, kortY = 0, gap = 0, sporB = 0, kant = 6;
+  let ferdig = false, avsluttet = false, leser = false, harStartlyd = false;
+
+  function slott(i){ return kant + i * (kortB + gap); }
 
   function maalTall(){
     sporB = spor.clientWidth || 1;
     const sporH = spor.clientHeight || 1;
-    const kant = Math.max(6, sporB * 0.02);
-    const maks = 140;
-    kortB = Math.min(maks, sporH * 0.74, (sporB - 2*kant) / (n + (n-1)*0.9));
+    kant = Math.max(6, sporB * 0.02);
+    /* Øverste bånd i sporet er reservert til pila. */
+    const pilBand = Math.max(16, Math.min(46, sporH * 0.24));
+    const restH = sporH - pilBand;
+    kortB = Math.min(140, restH * 0.86, (sporB - 2*kant) / (n + (n-1)*0.9));
     kortB = Math.max(16, kortB);
-    kortH = Math.min(sporH * 0.86, kortB * 1.22);
-    gapMaks = n > 1 ? Math.max(0, (sporB - 2*kant - n*kortB) / (n-1)) : 0;
-    return kant;
+    kortH = Math.min(restH * 0.94, kortB * 1.22);
+    kortY = pilBand + (restH - kortH) / 2;
+    /* Avstanden mellom bokstavene er hvor langt eleven må dra. På en bred
+       tavle ville et toboksstavsord ellers krevd en meter sidelengs, så
+       vi setter et tak – og sentrerer oppstillingen i sporet. */
+    gap = n > 1 ? Math.min(kortB * 2.4, Math.max(0, (sporB - 2*kant - n*kortB) / (n-1))) : 0;
+    kant = Math.max(kant, (sporB - (n*kortB + (n-1)*gap)) / 2);
+    const pilB = Math.max(26, Math.min(kortB * 0.9, (pilBand - 4) * 2.1));
+    pil.style.width  = pilB + "px";
+    pil.style.height = (pilBand - 4) + "px";
+    pil.style.top = "2px";
   }
 
-  /* Legg kortene ut fra andel[] og sentrer gruppa i sporet. */
   function plasser(){
     maalTall();
-    const gaps = andel.map(a => a * gapMaks);
-    const total = n*kortB + gaps.reduce((s,g)=>s+g, 0);
-    let x = (sporB - total) / 2;
-    p = [];
-    for (let i=0;i<n;i++){ p.push(x); x += kortB + (gaps[i] || 0); }
+    p0 = ferdig ? (sporB - n*kortB) / 2 : slott(0);
     tegn();
   }
 
   function tegn(){
     kort.forEach((d, i) => {
+      const inne = i < festet;
       d.style.width  = kortB + "px";
       d.style.height = kortH + "px";
-      d.style.marginTop = (-kortH/2) + "px";
+      d.style.top    = kortY + "px";
       d.style.fontSize = Math.max(9, kortB * 0.62) + "px";
-      d.style.left = p[i] + "px";
+      d.style.left   = (inne ? p0 + i*kortB : slott(i)) + "px";
+      d.classList.toggle("griper", inne && !ferdig);
+      d.classList.toggle("los", !inne);
     });
-    spor.classList.toggle("samlet", samlet);
+    pil.style.left = (p0 + kortB/2) + "px";
+    pil.classList.toggle("borte", ferdig);
+    spor.classList.toggle("samlet", ferdig);
   }
 
-  function gapPiksler(){
-    const g = [];
-    for (let i=0;i<n-1;i++) g.push(Math.max(0, p[i+1] - (p[i] + kortB)));
-    return g;
+  function settHint(){
+    if (ferdig){ hint.textContent = "Ordet ble " + o.ord.toUpperCase() + "!"; return; }
+    if (festet === 1){ hint.textContent = "Dra den første bokstaven mot den neste"; return; }
+    const igjen = n - festet;
+    hint.textContent = igjen === 1 ? "Én bokstav igjen!" : igjen + " bokstaver igjen!";
   }
 
-  /* Etter et dra: klikk gapene sammen hvis de er nesten null, regn om
-     til andeler, og sentrer gruppa på nytt. */
-  function fest(){
-    const g = gapPiksler();
-    const snapp = Math.max(9, kortB * SNAPP_ANDEL);
-    let noeKlikket = false;
-    andel = g.map(v => {
-      if (v <= snapp){ if (v > 0.5) noeKlikket = true; return 0; }
-      return gapMaks > 0 ? klem(v / gapMaks, 0, 1) : 0;
-    });
-    const varSamlet = samlet;
-    samlet = n === 1 || andel.every(a => a === 0);
-    plasser();
-    if (noeKlikket) lydSnapp();
-    if (samlet && !varSamlet) hint.textContent = "Nå ligger lydene inntil hverandre!";
-    else if (!samlet) hint.textContent = andel.some(a => a === 0) ? "Nesten! Dra de siste sammen" : "Dra bokstavene mot hverandre";
-  }
+  function lys(i){ kort.forEach((d, j) => d.classList.toggle("lyser", i === j)); }
+  function lysAlle(paa){ kort.forEach(d => d.classList.toggle("lyser", !!paa)); }
 
-  /* --- lese opp --- */
-  function lysOpp(i){
-    kort.forEach((d, j) => d.classList.toggle("lyser", i === j));
-  }
-  function lysAlle(paa){
-    kort.forEach(d => d.classList.toggle("lyser", !!paa));
-  }
+  /* ============================================================
+     SAMMENTREKNINGA
+     ------------------------------------------------------------
+     Eleven tar tak i den første bokstaven og drar mot høyre – samme
+     vei som vi leser. Hver gang gruppa treffer neste bokstav, blir
+     den med, og lyden spilles i samme øyeblikk. Drar eleven sakte,
+     kommer lydene enkeltvis; drar hen fort, glir de over i hverandre.
+     Det er eleven selv som bestemmer tempoet, med handa.
+     ============================================================ */
+  function flyttTil(x){
+    if (ferdig) return;
+    const hoyre = sporB - kant - festet*kortB;
+    let ny = klem(x, kant, hoyre);
+    /* Gruppa kan ikke passere neste løse bokstav uten å ta den med seg. */
+    if (festet < n) ny = Math.min(ny, slott(festet) - festet*kortB);
+    p0 = ny;
 
-  function lesOpp(){
-    if (ferdig || leser) return;
-    leser = true;
-    const g = gapPiksler();
-    const heleOrdet = n === 1 || g.every(v => v <= 0.5);
-
-    if (heleOrdet){
-      /* Kortene ligger inntil hverandre – da høres ordet som ett ord. */
-      lysAlle(true);
-      siRekke(["ord-" + o.fil], [0], null, () => {
-        leser = false;
-        lysAlle(false);
-        fullfor();
-      });
-      return;
+    if (festet < n && p0 + festet*kortB >= slott(festet) - 0.5){
+      festet++;
+      const kortEt = kort[festet-1];
+      si(bokstavFil(o.lyd[festet-1]));
+      kortEt.classList.add("lyser");
+      setTimeout(()=>kortEt.classList.remove("lyser"), 320);
+      settHint();
+      if (festet >= n){ tegn(); fullfor(); return; }
     }
-
-    const navn = o.lyd.map(bokstavFil);
-    const pauser = g.map(v => Math.round(klem(gapMaks > 0 ? v/gapMaks : 0, 0, 1) * MAKSPAUSE));
-    pauser.push(0);
-    siRekke(navn, pauser, i => lysOpp(i), () => { leser = false; lysOpp(-1); });
+    tegn();
   }
 
+  /* Alle bokstavene er hentet: gruppa glir til midten, ordet staves
+     én gang – og først da leses det som ett ord. */
   function fullfor(){
     if (ferdig) return;
     ferdig = true;
-    spor.classList.add("samlet");
+    /* Slipp draget her, ikke ved pointerup – da får glidningen inn til
+       midten sin myke overgang selv om fingeren fortsatt er nede. */
+    spor.classList.remove("drar");
+    pil.classList.remove("drar");
+    kort.forEach(d => d.classList.remove("drar"));
+    settHint();
+    plasser();
+    senere(stavOgLes, 380);
+  }
+
+  function stavOgLes(){
+    leser = true;
+    const navn = [...o.lyd.map(bokstavFil), "ord-" + o.fil];
+    const pauser = navn.map((_, i) => i < n-1 ? STAVEPAUSE : i === n-1 ? FORORD : 0);
+    siRekke(navn, pauser, i => { if (i === n) lysAlle(true); else lys(i); }, () => {
+      leser = false;
+      lysAlle(false);
+      avslutt();
+    });
+  }
+
+  function avslutt(){
+    if (avsluttet) return;
+    avsluttet = true;
     fasit.classList.add("vis");
-    hint.textContent = "Ordet ble " + o.ord.toUpperCase() + "!";
     const r = fasit.getBoundingClientRect();
     konfetti(r.left + r.width/2, r.top + r.height/2, 40, 0.9);
     valg.paaRiktig && valg.paaRiktig();
     valg.paaFerdig && senere(valg.paaFerdig, 1500);
   }
 
-  /* --- dra --- */
-  let dragI = -1, dragStartX = 0, dragStartP = 0;
-
-  function normaliser(i){
-    const kant = Math.max(6, sporB * 0.02);
-    for (let j=i+1;j<n;j++) p[j] = Math.max(p[j], p[j-1] + kortB);
-    for (let j=i-1;j>=0;j--) p[j] = Math.min(p[j], p[j+1] - kortB);
-    const minX = kant, maksX = sporB - kant - kortB;
-    if (p[0] < minX){
-      const d = minX - p[0];
-      for (let j=0;j<n;j++) p[j] += d;
-      for (let j=1;j<n;j++) p[j] = Math.max(p[j], p[j-1] + kortB);
-    }
-    if (p[n-1] > maksX){
-      const d = p[n-1] - maksX;
-      for (let j=0;j<n;j++) p[j] -= d;
-      for (let j=n-2;j>=0;j--) p[j] = Math.min(p[j], p[j+1] - kortB);
-    }
+  /* ▶ Hør igjen: er ordet ferdig, staves og leses det på nytt. Er det
+     ikke det, hører eleven lydene som er hentet så langt. */
+  function horIgjen(){
+    stoppTale();
+    leser = false;
+    if (ferdig){ stavOgLes(); return; }
+    const navn = o.lyd.slice(0, festet).map(bokstavFil);
+    const pauser = navn.map((_, i) => i < navn.length-1 ? STAVEPAUSE : 0);
+    siRekke(navn, pauser, i => lys(i), () => lys(-1));
   }
+  les.addEventListener("click", horIgjen);
+
+  /* --- dra --- */
+  let dragI = -1, startX = 0, startP0 = 0;
 
   kort.forEach((d, i) => {
     d.addEventListener("pointerdown", e => {
-      if (ferdig) return;
+      if (ferdig || i >= festet) return;      /* bare gruppa kan dras */
       e.preventDefault();
-      dragI = i; dragStartX = e.clientX; dragStartP = p[i];
+      dragI = i; startX = e.clientX; startP0 = p0;
       d.classList.add("drar");
+      spor.classList.add("drar");
+      pil.classList.add("drar");
       try { d.setPointerCapture(e.pointerId); } catch(err){}
-      stoppTale();
-      leser = false;
-      lysOpp(-1);
-      if (lydPaa) si(bokstavFil(o.lyd[i])); else lydKlikk();
+      stoppTale(); leser = false; lys(-1);
+      /* Den aller første lyden kommer når eleven tar tak. Resten kommer
+         av seg selv, etter hvert som bokstavene blir hentet. */
+      if (!harStartlyd){ harStartlyd = true; si(bokstavFil(o.lyd[0])); }
+      else lydKlikk();
     });
     d.addEventListener("pointermove", e => {
       if (dragI !== i) return;
       e.preventDefault();
-      const kant = Math.max(6, sporB * 0.02);
-      p[i] = klem(dragStartP + (e.clientX - dragStartX), kant, sporB - kant - kortB);
-      normaliser(i);
-      tegn();
+      flyttTil(startP0 + (e.clientX - startX));
     });
     const slipp = e => {
       if (dragI !== i) return;
       dragI = -1;
       d.classList.remove("drar");
+      spor.classList.remove("drar");
+      pil.classList.remove("drar");
       try { d.releasePointerCapture(e.pointerId); } catch(err){}
-      fest();
-      senere(lesOpp, 180);
     };
     d.addEventListener("pointerup", slipp);
     d.addEventListener("pointercancel", slipp);
   });
 
-  les.addEventListener("click", () => { stoppTale(); leser = false; lesOpp(); });
-
   plasser();
+  settHint();
 
   return {
     ord: o,
-    settOrdtekst: paa => {
-      bilde._tekst.style.display = paa ? "" : "none";
-    },
+    settOrdtekst: paa => { bilde._tekst.style.display = paa ? "" : "none"; },
     settBilde: paa => {
-      if (paa || ferdig) fasit.classList.add("vis");
+      if (paa || avsluttet) fasit.classList.add("vis");
       else fasit.classList.remove("vis");
     },
     nyStorrelse: () => plasser(),
+    /* «Vis meg» henter bokstavene automatisk, én om gangen, slik at
+       læreren kan modellere bevegelsen på tavla. */
     visMeg: () => {
       if (ferdig) return;
-      stoppTale(); leser = false;
-      andel = andel.map(()=>0);
-      samlet = true;
-      plasser();
-      senere(lesOpp, 320);
+      if (!harStartlyd){ harStartlyd = true; si(bokstavFil(o.lyd[0])); }
+      const steg = () => {
+        if (ferdig || festet >= n) return;
+        flyttTil(slott(festet) - festet*kortB);
+        if (!ferdig) senere(steg, 520);
+      };
+      senere(steg, 350);
     },
     sporsmaal: () => si("dra-sammen")
   };
