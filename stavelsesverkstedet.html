@@ -304,22 +304,32 @@ body{
   border-style:solid; border-color:var(--gronn-dyp); background:#e9f8dd; color:var(--navy);
   animation:sprett .45s cubic-bezier(.2,1.6,.4,1);
 }
+.celle .ordlinje{ gap:.35rem; }
+.celle .ordlinje .bildeboks{ width:clamp(40px,7vh,64px); border-width:3px; border-radius:10px; }
+.celle .stavrad{ gap:.2rem; }
+.celle .stavbrikke, .celle .stavgap{
+  font-size:clamp(.85rem,1.6vw,1.3rem); border-width:3px; border-radius:9px;
+  padding:.05rem .4rem;
+}
+.celle .stavgap{ min-width:2.2em; }
 .himmel{
   flex:1 1 auto; min-height:0; position:relative; overflow:hidden;
   background:linear-gradient(180deg,#bfe7f4 0%,#e2f5fa 70%,#d5efd0 100%);
   border:4px solid var(--navy); border-radius:20px; box-shadow:var(--skygge-mjuk);
+  touch-action:none; cursor:crosshair;
 }
+.celle .himmel{ border-width:3px; border-radius:14px; }
 .sky{ position:absolute; font-size:clamp(1.6rem,4vw,3rem); opacity:.7; pointer-events:none; animation:driv linear infinite; }
 @keyframes driv{ from{ transform:translateX(-15vw) } to{ transform:translateX(115vw) } }
 
 .ballong{
-  position:absolute; transform:translateX(-50%); cursor:pointer;
+  position:absolute; transform:translateX(-50%); pointer-events:none;
   border:0; background:transparent; padding:0; font-family:inherit;
   width:clamp(86px,12vw,150px); z-index:3;
   animation:sveve 3s ease-in-out infinite;
 }
 @keyframes sveve{ 0%,100%{ margin-top:0 } 50%{ margin-top:-14px } }
-.ballong:hover .ballongkropp{ filter:brightness(1.08); }
+.celle .ballong{ width:clamp(52px,6.5vw,92px); }
 .ballongkropp{
   width:100%; aspect-ratio:.84; position:relative;
   border-radius:50% 50% 47% 47% / 56% 56% 44% 44%;
@@ -348,18 +358,33 @@ body{
   animation:sprett .4s cubic-bezier(.2,1.6,.4,1) forwards;
 }
 .ballong.markert .ballongkropp{ outline:5px solid var(--amber); outline-offset:4px; }
-.himmel.laast .ballong{ pointer-events:none; }
 
 .bue{
-  position:absolute; left:50%; bottom:4px; transform:translateX(-50%);
-  width:clamp(64px,9vw,110px); z-index:2; pointer-events:none;
+  position:absolute; left:50%; bottom:2px;
+  width:clamp(76px,11vw,132px); z-index:4; pointer-events:none;
+  transform:translateX(-50%);
+  transform-origin:50% 78%;
   filter:drop-shadow(0 3px 0 rgba(35,42,63,.25));
 }
+.celle .bue{ width:clamp(52px,6vw,84px); }
 .bue svg, .pilfly svg{ width:100%; height:auto; display:block; }
 .pilfly{
-  position:absolute; left:0; top:0; width:clamp(46px,6vw,76px); z-index:6; pointer-events:none;
-  transition:transform .26s linear;
+  position:absolute; left:0; top:0; width:clamp(40px,5vw,64px); z-index:6; pointer-events:none;
 }
+.celle .pilfly{ width:clamp(28px,3.2vw,44px); }
+.siktepunkt{
+  position:absolute; width:9px; height:9px; border-radius:50%;
+  background:rgba(35,42,63,.5); border:2px solid rgba(255,255,255,.6);
+  transform:translate(-50%,-50%); pointer-events:none; z-index:5; display:none;
+}
+.siktehint{
+  position:absolute; left:50%; bottom:clamp(70px,12vh,120px); transform:translateX(-50%);
+  font-weight:900; font-size:clamp(.7rem,1.2vw,.95rem); color:var(--navy);
+  background:var(--krem-lys); border:2px solid var(--navy); border-radius:999px;
+  padding:.15rem .8rem; box-shadow:0 2px 0 var(--navy); pointer-events:none; z-index:5;
+  white-space:nowrap; animation:bob 2.2s ease-in-out infinite;
+}
+.celle .siktehint{ font-size:clamp(.55rem,.9vw,.72rem); bottom:clamp(46px,8vh,80px); padding:.1rem .55rem; }
 .stavflyger{
   position:absolute; z-index:7; pointer-events:none;
   font-family:'Fredoka One',cursive; font-size:clamp(1.1rem,2.6vw,2rem); color:var(--navy);
@@ -588,13 +613,17 @@ const LAG = [
 const FARGER = ["#E23B2E","#1F7AE0","#17A05C","#EF9F27","#7B4BD8","#0E9C9C","#D63F86","#C2571A"];
 const forsokFarge = (plass, forsok) => FARGER[((plass * 5 + forsok) % FARGER.length + FARGER.length) % FARGER.length];
 
-const HEIAROP  = ["Klapp ordet!","Hvor mange klapp?","Si ordet høyt!","Lytt godt!","Klapp sakte!","Bra!","Kjenn etter!","Så flink!"];
+const HEIAROP_SORTER  = ["Klapp ordet!","Hvor mange klapp?","Si ordet høyt!","Lytt godt!","Klapp sakte!","Bra!","Kjenn etter!","Så flink!"];
+const HEIAROP_BALLONG = ["Dra i buen!","Sikt godt!","Lytt til ordet!","Du klarer det!","Rolig og fint!","Bra!","Så flink!"];
+const aktivHeiarop = () => app.oppgave === "ballong" ? HEIAROP_BALLONG : HEIAROP_SORTER;
 const JUBELROP = ["Kjempebra!","Perfekt!","Så fint!","Supert!","Bra jobba!"];
-const BOMROP   = ["Nesten! Prøv en gang til.","Klapp ordet sakte en gang til.","Hør en gang til!"];
+const BOMROP_SORTER  = ["Nesten! Prøv en gang til.","Klapp ordet sakte en gang til.","Hør en gang til!"];
+const BOMROP_BALLONG = ["Nesten! Sikt en gang til.","Hør ordet en gang til!","Prøv et nytt skudd!"];
+const aktivBomrop = () => app.oppgave === "ballong" ? BOMROP_BALLONG : BOMROP_SORTER;
 
 const OPPGAVER = {
   sorter:  { tittel:"Klapp ordet – legg bildet i riktig <em>kurv</em>", lyd:"klapp-ordet" },
-  ballong: { tittel:"Skyt ballongen med stavelsen som <em>mangler</em>", lyd:"hvilken-stavelse" }
+  ballong: { tittel:"Spenn buen – skyt stavelsen som <em>mangler</em>", lyd:"hvilken-stavelse" }
 };
 const STAVREPLIKK = ["en-stavelse","to-stavelser","tre-stavelser"];
 
@@ -745,7 +774,7 @@ function si(...navn){
 const siOrd = o => si("ord-" + o.fil);
 /* Høyttalerknappene på bildekortene er bare med når én elev holder på om
    gangen – fire ord samtidig blir bare kakofoni. */
-const lydknappPaa = () => app.oppgave !== "sorter" || app.modus !== "flere";
+const lydknappPaa = () => app.modus !== "flere";
 
 /* ---------- Tidsutløsere som hører til runden ---------- */
 let rundeTimere = [];
@@ -1059,18 +1088,25 @@ function lagSorterFlate(vert, farge, valg, unnta){
    OPPGAVE 2 – STAVELSESBALLONGER
    ------------------------------------------------------------
    Ordet står øverst med én stavelse skjult. Tre ballonger svever
-   i himmelen – bare én har stavelsen som mangler. Eleven trykker
-   på en ballong, og buen nederst skyter en pil på den.
-   Spilles tur for tur med hele arenaen – fire små himler på delt
-   skjerm blir for trangt å sikte i.
+   i himmelen – bare én har stavelsen som mangler. Eleven SPENNER
+   BUEN selv: trykk hvor som helst i himmelen, dra bakover for å
+   sikte (som i Buekonkurransen – slyngemekanikk: dra ned, skyt
+   opp), og slipp for å skyte. Pila følger en bue med tyngdekraft,
+   så eleven må sikte, ikke bare peke.
+
+   Fungerer også i «Flere samtidig»: opptil fire elever, hver med
+   sitt eget ord, egne tre ballonger og egen bue. Hvert felt
+   sporer sin egen peker, så fire fingre på tavla går fint.
    ============================================================ */
 const BUE_SVG =
-  '<svg viewBox="0 0 100 92" aria-hidden="true">' +
-  '<path d="M10 72 Q50 8 90 72" fill="none" stroke="#8a5a2b" stroke-width="8" stroke-linecap="round"/>' +
-  '<line x1="10" y1="72" x2="90" y2="72" stroke="#232a3f" stroke-width="3"/>' +
-  '<line x1="50" y1="84" x2="50" y2="28" stroke="#8a5a2b" stroke-width="5" stroke-linecap="round"/>' +
-  '<polygon points="50,14 41,32 59,32" fill="#e8473f" stroke="#232a3f" stroke-width="3"/>' +
-  '<path d="M42 86 L50 72 L58 86 Z" fill="#2bb3c0" stroke="#232a3f" stroke-width="2.5"/>' +
+  '<svg viewBox="0 0 100 120" aria-hidden="true">' +
+  '<path d="M12 78 Q50 6 88 78" fill="none" stroke="#8a5a2b" stroke-width="8" stroke-linecap="round"/>' +
+  '<polyline class="streng" points="12,78 50,78 88,78" fill="none" stroke="#232a3f" stroke-width="3" stroke-linecap="round"/>' +
+  '<g class="nokk">' +
+  '<line x1="50" y1="78" x2="50" y2="22" stroke="#8a5a2b" stroke-width="5" stroke-linecap="round"/>' +
+  '<polygon points="50,8 41,26 59,26" fill="#e8473f" stroke="#232a3f" stroke-width="3"/>' +
+  '<path d="M42 82 L50 68 L58 82 Z" fill="#2bb3c0" stroke="#232a3f" stroke-width="2.5"/>' +
+  '</g>' +
   '</svg>';
 const PIL_SVG =
   '<svg viewBox="0 0 24 80" aria-hidden="true">' +
@@ -1079,8 +1115,15 @@ const PIL_SVG =
   '<path d="M4 78 L12 64 L20 78 Z" fill="#2bb3c0" stroke="#232a3f" stroke-width="2"/>' +
   '</svg>';
 
-function lagBallongFlate(vert, farge, valg){
-  const o = nesteBallongOrd();
+/* Vinkelgrenser fra Buekonkurransen: pila kan bare skytes oppover. */
+const SIKTE_MIN = -Math.PI + 0.22;
+const SIKTE_MAKS = -0.22;
+const MIN_DRAG = 14;      /* kortere drag enn dette = ikke noe skudd */
+
+let bueHintVist = false;  /* «Dra, sikt og slipp!» vises til første skudd i økta */
+
+function lagBallongFlate(vert, farge, valg, unnta){
+  const o = nesteBallongOrd(unnta);
   const idx = Math.floor(Math.random() * o.stav.length);
   const riktigStav = o.stav[idx];
   const alternativ = bland([riktigStav, ...lagDistraktorer(o, idx, 2)]);
@@ -1107,13 +1150,13 @@ function lagBallongFlate(vert, farge, valg){
   });
   ordlinje.appendChild(boks); ordlinje.appendChild(stavrad);
 
-  /* himmelen med ballonger og bue */
+  /* himmelen med ballonger, bue og siktepunkter */
   const himmel = document.createElement("div");
   himmel.className = "himmel";
   for (let i = 0; i < 3; i++){
     const sky = document.createElement("div");
     sky.className = "sky"; sky.textContent = "☁️";
-    sky.style.top = (5 + Math.random() * 45) + "%";
+    sky.style.top = (5 + Math.random() * 40) + "%";
     sky.style.left = "0";
     sky.style.animationDuration = (38 + Math.random() * 30) + "s";
     sky.style.animationDelay = (-Math.random() * 60) + "s";
@@ -1123,11 +1166,11 @@ function lagBallongFlate(vert, farge, valg){
   const ballonger = [];
   const plasser = bland([18, 50, 82]);
   alternativ.forEach((s, i) => {
-    const b = document.createElement("button");
-    b.className = "ballong"; b.type = "button";
+    const b = document.createElement("div");
+    b.className = "ballong";
     b._stav = s;
     b.style.left = plasser[i] + "%";
-    b.style.top = (5 + Math.random() * 16) + "%";
+    b.style.top = (4 + Math.random() * 14) + "%";
     b.style.animationDuration = (2.6 + Math.random() * 1.2) + "s";
     b.style.animationDelay = (-Math.random() * 3) + "s";
     const kropp = document.createElement("div");
@@ -1138,7 +1181,6 @@ function lagBallongFlate(vert, farge, valg){
     snor.className = "ballongsnor";
     snor.style.transform = "rotate(" + (Math.random() < 0.5 ? -5 : 5) + "deg)";
     b.appendChild(kropp); b.appendChild(snor);
-    b.addEventListener("click", () => skyt(b));
     himmel.appendChild(b);
     ballonger.push(b);
   });
@@ -1146,36 +1188,165 @@ function lagBallongFlate(vert, farge, valg){
   const bue = document.createElement("div");
   bue.className = "bue"; bue.innerHTML = BUE_SVG;
   himmel.appendChild(bue);
+  const streng = bue.querySelector(".streng");
+  const nokk = bue.querySelector(".nokk");
+
+  /* siktepunkter (banen pila kommer til å følge) */
+  const punkter = [];
+  for (let i = 0; i < 6; i++){
+    const p = document.createElement("div");
+    p.className = "siktepunkt";
+    himmel.appendChild(p);
+    punkter.push(p);
+  }
+
+  let hint = null;
+  if (!bueHintVist){
+    hint = document.createElement("div");
+    hint.className = "siktehint"; hint.textContent = "🏹 Dra, sikt og slipp!";
+    himmel.appendChild(hint);
+  }
 
   rot.appendChild(ordlinje); rot.appendChild(himmel);
   vert.appendChild(rot);
 
-  let laast = false, ferdig = false;
+  let ferdig = false, pilAktiv = false, sikte = null;
 
-  function flyPil(tilRekt, naarFramme){
-    const hr = himmel.getBoundingClientRect();
-    const br = bue.getBoundingClientRect();
-    const x0 = br.left + br.width/2 - hr.left;
-    const y0 = br.top + br.height*0.25 - hr.top;
-    const x1 = tilRekt.left + tilRekt.width/2 - hr.left;
-    const y1 = tilRekt.top + tilRekt.height/2 - hr.top;
+  /* ---------- geometri og fysikk ----------
+     Alt skaleres etter himmelhøyden, så det kjennes likt i stor
+     arena og i en liten firedelt celle. */
+  const ankerX = () => himmel.clientWidth / 2;
+  const ankerY = () => {
+    const bh = bue.offsetHeight || 90;
+    return himmel.clientHeight - 2 - bh * 0.22;   /* transform-origin 50% 78% */
+  };
+  const tyngde = () => himmel.clientHeight * 3.1;
+  const fart = kraft => himmel.clientHeight * (1.15 + 2.0 * kraft);
+  const maksDrag = () => Math.max(80, himmel.clientHeight * 0.45);
+
+  function siktedata(){
+    if (!sikte) return null;
+    const dx = sikte.sx - sikte.cx, dy = sikte.sy - sikte.cy;
+    const lengde = Math.hypot(dx, dy);
+    if (lengde < 0.5) return null;
+    let vinkel = Math.atan2(dy, dx);
+    if (vinkel > 0) vinkel = (vinkel < Math.PI / 2) ? SIKTE_MAKS : SIKTE_MIN;
+    vinkel = Math.min(SIKTE_MAKS, Math.max(SIKTE_MIN, vinkel));
+    return { vinkel, kraft: Math.min(lengde, maksDrag()) / maksDrag(), lengde };
+  }
+
+  function tegnBue(d){
+    if (!d){
+      bue.style.transform = "translateX(-50%)";
+      streng.setAttribute("points", "12,78 50,78 88,78");
+      nokk.setAttribute("transform", "");
+      punkter.forEach(p => { p.style.display = "none"; });
+      return;
+    }
+    bue.style.transform = "translateX(-50%) rotate(" + (d.vinkel * 180 / Math.PI + 90) + "deg)";
+    const pull = d.kraft * 26;
+    streng.setAttribute("points", "12,78 50," + (78 + pull) + " 88,78");
+    nokk.setAttribute("transform", "translate(0," + pull + ")");
+
+    /* banen: samme fysikk som selve skuddet */
+    const ax = ankerX(), ay = ankerY(), g = tyngde(), v = fart(d.kraft);
+    const vx = Math.cos(d.vinkel) * v, vy = Math.sin(d.vinkel) * v;
+    const B = himmel.clientWidth, H = himmel.clientHeight;
+    punkter.forEach((p, i) => {
+      const t = 0.09 + i * 0.075;
+      const x = ax + vx * t, y = ay + vy * t + 0.5 * g * t * t;
+      const inne = x > 6 && x < B - 6 && y > 6 && y < H - 6;
+      p.style.display = inne ? "block" : "none";
+      if (inne){ p.style.left = x + "px"; p.style.top = y + "px"; }
+    });
+  }
+
+  /* ---------- sikting: én peker per himmel ---------- */
+  himmel.addEventListener("pointerdown", e => {
+    if (ferdig || pilAktiv || sikte) return;
+    sikte = { id: e.pointerId, sx: e.clientX, sy: e.clientY, cx: e.clientX, cy: e.clientY };
+    try { himmel.setPointerCapture(e.pointerId); } catch(err){}
+    if (hint){ hint.remove(); hint = null; }
+    e.preventDefault();
+  });
+  himmel.addEventListener("pointermove", e => {
+    if (!sikte || e.pointerId !== sikte.id) return;
+    sikte.cx = e.clientX; sikte.cy = e.clientY;
+    tegnBue(siktedata());
+  });
+  function slippPeker(e, skyt){
+    if (!sikte || e.pointerId !== sikte.id) return;
+    sikte.cx = e.clientX; sikte.cy = e.clientY;
+    const d = siktedata();
+    sikte = null;
+    tegnBue(null);
+    if (skyt && !ferdig && !pilAktiv && d && d.lengde >= MIN_DRAG) skytPil(d);
+  }
+  himmel.addEventListener("pointerup", e => slippPeker(e, true));
+  himmel.addEventListener("pointercancel", e => slippPeker(e, false));
+
+  /* ---------- skuddet ---------- */
+  function skytPil(d){
+    pilAktiv = true;
+    bueHintVist = true;
+    nokk.style.opacity = "0";               /* pila har forlatt buen */
+    lydPil();
 
     const pil = document.createElement("div");
     pil.className = "pilfly"; pil.innerHTML = PIL_SVG;
     himmel.appendChild(pil);
-    const b = pil.offsetWidth || 50, h = pil.offsetHeight || b * 80/24;
-    const vinkel = Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI + 90;
-    const still = (x, y) => "translate(" + (x - b/2) + "px," + (y - h/2) + "px) rotate(" + vinkel + "deg)";
-    pil.style.transition = "none";
-    pil.style.transform = still(x0, y0);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      pil.style.transition = "transform .26s linear";
-      pil.style.transform = still(x1, y1);
-    }));
-    let brukt = false;
-    const framme = () => { if (brukt) return; brukt = true; pil.remove(); naarFramme(); };
-    pil.addEventListener("transitionend", framme);
-    setTimeout(framme, 450);
+    const pb = pil.offsetWidth || 46, ph = pil.offsetHeight || pb * 80 / 24;
+
+    const g = tyngde(), v = fart(d.kraft);
+    const st = {
+      x: ankerX() + Math.cos(d.vinkel) * 26,
+      y: ankerY() + Math.sin(d.vinkel) * 26,
+      vx: Math.cos(d.vinkel) * v,
+      vy: Math.sin(d.vinkel) * v
+    };
+    let sist = performance.now();
+
+    function ryddPil(){
+      pil.remove();
+      pilAktiv = false;
+      nokk.style.opacity = "";
+    }
+
+    function tikk(naa){
+      if (!himmel.isConnected){ return; }   /* flata er revet ned */
+      const dt = Math.min(0.032, (naa - sist) / 1000); sist = naa;
+      st.vy += g * dt;
+      st.x += st.vx * dt;
+      st.y += st.vy * dt;
+
+      const retn = Math.atan2(st.vy, st.vx);
+      pil.style.transform = "translate(" + (st.x - pb/2) + "px," + (st.y - ph/2) + "px) rotate(" + (retn * 180 / Math.PI + 90) + "deg)";
+
+      /* treff? pilspissen mot ballongsentrum */
+      const hr = himmel.getBoundingClientRect();
+      const tuppX = st.x + Math.cos(retn) * ph * 0.45;
+      const tuppY = st.y + Math.sin(retn) * ph * 0.45;
+      for (const b of ballonger){
+        if (!b.isConnected || b.classList.contains("treff-riktig") || b.classList.contains("treff-feil")) continue;
+        const kr = b.querySelector(".ballongkropp").getBoundingClientRect();
+        const cx = kr.left + kr.width/2 - hr.left;
+        const cy = kr.top + kr.height/2 - hr.top;
+        const r = kr.width * 0.5;
+        if ((tuppX - cx) * (tuppX - cx) + (tuppY - cy) * (tuppY - cy) <= r * r){
+          ryddPil();
+          treff(b, kr);
+          return;
+        }
+      }
+
+      /* utafor himmelen = bom, prøv igjen */
+      if (st.y > himmel.clientHeight + 70 || st.x < -80 || st.x > himmel.clientWidth + 80 || st.y < -160){
+        ryddPil();
+        return;
+      }
+      requestAnimationFrame(tikk);
+    }
+    requestAnimationFrame(tikk);
   }
 
   function smellPaa(b){
@@ -1207,45 +1378,34 @@ function lagBallongFlate(vert, farge, valg){
     }, 520);
   }
 
-  function skyt(b){
-    if (laast || ferdig) return;
-    laast = true;
-    himmel.classList.add("laast");
-    lydPil();
-    const rekt = b.querySelector(".ballongkropp").getBoundingClientRect();
-    flyPil(rekt, () => {
-      lydSmell();
-      smellPaa(b);
-      if (b._stav === riktigStav){
-        ferdig = true;
-        b.classList.add("treff-riktig");
-        valg.paaRiktig && valg.paaRiktig();
-        fyllGap(rekt);
-        senere(() => si("riktig", "ord-" + o.fil), 620);
-        valg.paaFerdig && senere(valg.paaFerdig, 1900);
-      } else {
-        b.classList.add("treff-feil");
-        lydFeil();
-        valg.paaBom && valg.paaBom();
-        si("proev-igjen");
-        senere(() => {
-          b.remove();
-          laast = false;
-          himmel.classList.remove("laast");
-        }, 500);
-      }
-    });
+  function treff(b, rekt){
+    lydSmell();
+    smellPaa(b);
+    if (b._stav === riktigStav){
+      ferdig = true;
+      b.classList.add("treff-riktig");
+      valg.paaRiktig && valg.paaRiktig();
+      fyllGap(rekt);
+      senere(() => si("riktig", "ord-" + o.fil), 620);
+      valg.paaFerdig && senere(valg.paaFerdig, 1900);
+    } else {
+      b.classList.add("treff-feil");
+      lydFeil();
+      valg.paaBom && valg.paaBom();
+      si("proev-igjen");
+      senere(() => b.remove(), 500);
+    }
   }
 
   return {
     fil: o.fil,
     settOrdtekst: () => {},
     visMeg: () => {
-      const treff = ballonger.find(b => b._stav === riktigStav && b.isConnected);
-      if (!treff) return;
-      treff.classList.add("markert");
+      const treffB = ballonger.find(b => b._stav === riktigStav && b.isConnected);
+      if (!treffB) return;
+      treffB.classList.add("markert");
       si("ord-" + o.fil);
-      setTimeout(() => treff.classList.remove("markert"), 1700);
+      setTimeout(() => treffB.classList.remove("markert"), 1700);
     },
     sporsmaal: () => si("hvilken-stavelse", "ord-" + o.fil)
   };
@@ -1253,7 +1413,7 @@ function lagBallongFlate(vert, farge, valg){
 
 function lagOppgave(vert, farge, valg, unnta){
   return app.oppgave === "ballong"
-    ? lagBallongFlate(vert, farge, valg)
+    ? lagBallongFlate(vert, farge, valg, unnta)
     : lagSorterFlate(vert, farge, valg, unnta);
 }
 
@@ -1270,7 +1430,7 @@ function monsterBoks(lag, ropTekst){
   const navn = document.createElement("div");
   navn.className = "navn"; navn.style.color = lag.morkt; navn.textContent = lag.navn;
   const boble = document.createElement("div");
-  boble.className = "boble"; boble.textContent = ropTekst || tilfeldig(HEIAROP);
+  boble.className = "boble"; boble.textContent = ropTekst || tilfeldig(aktivHeiarop());
   d.appendChild(boble); d.appendChild(img); d.appendChild(navn);
   d._boble = boble; d._img = img;
   return d;
@@ -1340,7 +1500,7 @@ function nyRunde(){
   skjulJubel();
   fyllOrdko(); fyllBallko();
   const scene = $("#scene"); scene.innerHTML = "";
-  if (app.oppgave === "ballong" || app.modus === "tur") byggTur(scene);
+  if (app.modus === "tur") byggTur(scene);
   else byggFlere(scene);
 }
 
@@ -1394,7 +1554,7 @@ function lagTurFlate(){
   app._arena.style.borderColor = farge;
   app.flater = [ lagOppgave(app._felt, farge, {
     paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
-    paaBom:    () => { heier._boble.textContent = tilfeldig(BOMROP); },
+    paaBom:    () => { heier._boble.textContent = tilfeldig(aktivBomrop()); },
     paaFerdig: () => turFerdigOppgave()
   }) ];
   app.flater[0].sporsmaal();
@@ -1445,7 +1605,9 @@ function turFerdigOppgave(){
   }
 }
 
-/* ---------- MODUS: FLERE SAMTIDIG (bare klapp og sorter) ---------- */
+/* ---------- MODUS: FLERE SAMTIDIG ----------
+   Gjelder begge oppgavene. I ballongspillet får hver elev sitt
+   eget ord, egne tre ballonger og egen bue i sin egen celle. */
 function byggFlere(scene){
   const rot = document.createElement("div"); rot.className = "grid4";
   rot.style.gridTemplateColumns = "repeat(" + app.antall + ",1fr)";
@@ -1473,7 +1635,7 @@ function byggFlere(scene){
       const brukte = app._celler.map(c => c.flate && c.flate.fil).filter(Boolean);
       st.flate = lagOppgave(felt, forsokFarge(st.plass, st.rep), {
         paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
-        paaBom:    () => { heier._boble.textContent = tilfeldig(BOMROP); },
+        paaBom:    () => { heier._boble.textContent = tilfeldig(aktivBomrop()); },
         paaFerdig: () => celleFerdigOppgave(st)
       }, brukte);
       app.flater[i] = st.flate;
@@ -1542,7 +1704,7 @@ function alleFerdige(){
    ellers teller den på oppgaven som nettopp ble bygd i stedet. */
 function hoppTilNeste(){
   stoppTimere();
-  if (app.oppgave === "ballong" || app.modus === "tur"){
+  if (app.modus === "tur"){
     lagTurFlate();
   } else {
     app._celler.forEach(st => st.bygg());
@@ -1616,7 +1778,6 @@ function oppdaterOrdtall(){
    ============================================================ */
 function oppdaterKnapper(){
   const ballong = app.oppgave === "ballong";
-  $("#modusvelger").classList.toggle("skjult", ballong);
   $("#ordKnapp").classList.toggle("skjult", ballong);
   $("#antallKnapp").textContent = "👥 " + app.antall + (app.antall === 1 ? " elev" : " elever");
   $("#runderKnapp").textContent = "🔁 " + app.runder + (app.runder === 1 ? " oppgave" : " oppgaver");
