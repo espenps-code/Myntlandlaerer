@@ -1864,6 +1864,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     syncBirthdayWeek();
     renderLessons(); renderNotes(); renderBirthday(); save();
   }
+  let _notesDirty = false; /* maa initialiseres foer applyWeek() -> renderNotes() kjoerer */
   applyWeek();
   function load() {
     let raw = {};
@@ -2039,7 +2040,6 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
      beskjedtavla pa nytt - all HTML-en byttes ut, og da forsvinner markoeren
      midt i ordet (det ser ut som portalen hopper ut av skrivemodus).
      Vi husker at det kom noe nytt, og tegner opp igjen naar hun er ferdig. */
-  let _notesDirty = false;
   function notesEditing(){
     const b = document.getElementById('noteboard');
     const a = document.activeElement;
@@ -3300,7 +3300,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   startAutoWeather();
 
   /* init */
-  applySeason();
+  if (window._applySeason) window._applySeason();
   applyVideoVis();
 })();
 
