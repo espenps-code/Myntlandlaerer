@@ -418,6 +418,21 @@ body{
 .ordbrikke.tegn{ background:var(--amber); }
 .ordbrikke.feil{ animation:rist .35s; border-color:var(--raud); }
 .ordbrikke.hint{ outline:4px solid var(--teal); outline-offset:3px; animation:bob 1s ease-in-out infinite; }
+.dpad{
+  position:absolute; right:8px; bottom:8px; z-index:6;
+  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+  width:clamp(104px,20vh,158px); aspect-ratio:1/1; gap:4px; touch-action:none;
+}
+.celle .dpad{ width:clamp(70px,13vh,100px); gap:3px; }
+.dpad button{
+  border:3px solid var(--navy); border-radius:12px; background:rgba(255,250,235,.85);
+  color:var(--navy); font-size:clamp(.95rem,2.4vh,1.5rem); font-weight:900; font-family:inherit;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 2px 0 var(--navy); padding:0; touch-action:none;
+}
+.dpad button:active{ transform:translateY(2px); box-shadow:0 0 0 var(--navy); background:var(--amber); }
+.celle .dpad button{ border-width:2px; border-radius:8px; font-size:clamp(.6rem,1.6vh,.95rem); }
+.dpad .tomrom{ pointer-events:none; }
 .slangehint{
   position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
   font-weight:900; font-size:clamp(.7rem,1.2vw,.95rem); color:var(--navy);
@@ -1625,8 +1640,8 @@ function lagOppgave(vert, farge, valg, unnta){
    ------------------------------------------------------------
    Klassisk snake, men uten død: brettet er et rutenett, slangen
    går jevnt framover, og eleven styrer med sveip hvor som helst
-   på brettet (eller piltastene). Et trykk uten sveip svinger
-   slangen mot fingeren – kjekt på tavla. Ordene i setningen
+   på brettet, pilknappene nede i hjørnet eller piltastene på
+   tastaturet. Et trykk uten sveip svinger slangen mot fingeren. Ordene i setningen
    ligger strødd utover, og slangen spiser dem i riktig
    rekkefølge: ordet med stor forbokstav først, punktumet sist.
    Feil ord gir bare en liten rist og «prøv igjen» – ordet blir
@@ -1684,10 +1699,34 @@ function lagSlangeFlate(vert, farge, valg, unnta){
     brett.appendChild(el);
   });
 
+  /* pilknapper på skjermen – for dem som heller trykker enn sveiper */
+  const dpad = document.createElement("div");
+  dpad.className = "dpad";
+  for (let i = 0; i < 9; i++){
+    const tast = i === 1 ? "ArrowUp" : i === 3 ? "ArrowLeft" : i === 5 ? "ArrowRight" : i === 7 ? "ArrowDown" : null;
+    if (!tast){
+      const tom = document.createElement("span");
+      tom.className = "tomrom";
+      dpad.appendChild(tom);
+      continue;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = i === 1 ? "▲" : i === 3 ? "◀" : i === 5 ? "▶" : "▼";
+    b.setAttribute("aria-label", "Styr slangen " + (i === 1 ? "opp" : i === 3 ? "til venstre" : i === 5 ? "til høyre" : "ned"));
+    b.addEventListener("pointerdown", e => {
+      e.stopPropagation();              /* ikke start et sveip på brettet */
+      e.preventDefault();
+      settRetning(RETNINGER[tast]);
+    });
+    dpad.appendChild(b);
+  }
+  brett.appendChild(dpad);
+
   let hint = null;
   if (!slangeHintVist){
     hint = document.createElement("div");
-    hint.className = "slangehint"; hint.textContent = "🐍 Sveip for å styre slangen!";
+    hint.className = "slangehint"; hint.textContent = "🐍 Sveip – eller trykk på pilene!";
     brett.appendChild(hint);
   }
 
@@ -1695,17 +1734,19 @@ function lagSlangeFlate(vert, farge, valg, unnta){
   let rute = 0, kol = 0, rad = 0, ox = 0, oy = 0;
   let slange = [], ledd = [];
   let retning = {x:1,y:0}, nesteRetning = null, vinkelNaa = 90;
-  let nesteIdx = 0, ferdig = false, vokse = 0, tikkMs = 360, startet = false;
+  let nesteIdx = 0, ferdig = false, vokse = 0, tikkMs = 330, startet = false;
 
   const cx = c => ox + (c.x + 0.5) * rute;
   const cy = c => oy + (c.y + 0.5) * rute;
 
-  /* Regner ut rutenettet fra brettets faktiske størrelse, så det
-     kjennes likt i stor arena og i en liten firedelt celle. */
+  /* Regner ut rutenettet fra brettets faktiske størrelse – men
+     banen holder seg alltid på rundt 90 ruter. På en bred tavle blir
+     rutene STORE i stedet for at det blir flere av dem, så slangen
+     aldri har lange ødemarker å krysse. */
   function maal(){
     const B = brett.clientWidth, H = brett.clientHeight;
     if (B < 60 || H < 60) return false;
-    rute = Math.max(18, Math.min(52, Math.floor(Math.min(B, H) / 10)));
+    rute = Math.max(22, Math.min(84, Math.floor(Math.sqrt(B * H / 90))));
     kol = Math.max(6, Math.floor(B / rute));
     rad = Math.max(5, Math.floor(H / rute));
     ox = Math.round((B - kol * rute) / 2);
@@ -1778,8 +1819,12 @@ function lagSlangeFlate(vert, farge, valg, unnta){
     for (const p of poster){
       if (p.spist || !p.el.isConnected) continue;
       const r = p.el.getBoundingClientRect();
-      const inne = hx >= r.left - hr.left - 4 && hx <= r.right - hr.left + 4 &&
-                   hy >= r.top - hr.top - 4 && hy <= r.bottom - hr.top + 4;
+      /* treffboksen er aldri smalere enn én rute – ellers kan små
+         brikker («på», punktumet) falle mellom to rutesentre */
+      const mx = Math.max(6, (rute - (r.right - r.left)) / 2 + 4);
+      const my = Math.max(6, (rute - (r.bottom - r.top)) / 2 + 4);
+      const inne = hx >= r.left - hr.left - mx && hx <= r.right - hr.left + mx &&
+                   hy >= r.top - hr.top - my && hy <= r.bottom - hr.top + my;
       if (inne && !p.inne){ p.inne = true; spis(p); }
       else if (!inne) p.inne = false;
     }
@@ -1807,7 +1852,7 @@ function lagSlangeFlate(vert, farge, valg, unnta){
     });
     nesteIdx++;
     vokse += 2;
-    tikkMs = Math.max(240, tikkMs - 18);
+    tikkMs = Math.max(230, tikkMs - 15);
     ledd.forEach(el => { el.style.transition = "transform " + tikkMs + "ms linear"; });
     if (nesteIdx > s.n) heleSetningen();
   }
@@ -1827,6 +1872,10 @@ function lagSlangeFlate(vert, farge, valg, unnta){
   function plasserBrikker(){
     const B = brett.clientWidth, H = brett.clientHeight;
     const lagt = [];
+    /* hold brikkene unna pilknappene i hjørnet */
+    const dr = dpad.getBoundingClientRect(), br = brett.getBoundingClientRect();
+    lagt.push({ left:dr.left - br.left - 8, right:dr.right - br.left + 8,
+                top:dr.top - br.top - 8, bottom:dr.bottom - br.top + 8 });
     const sy = Math.floor(rad / 2);
     const startSone = { left:0, right:ox + 6.5 * rute,
                         top:oy + (sy - 1.6) * rute, bottom:oy + (sy + 2.6) * rute };
