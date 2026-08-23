@@ -255,7 +255,9 @@ body{
 /* ============ OPPGAVE 1 – BYGG SETNINGEN ============ */
 .byggspill{ width:100%; height:100%; min-height:0; display:flex; flex-direction:column; gap:clamp(.3rem,1.4vh,.9rem); align-items:center; justify-content:center; }
 .byggtopp{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,2vw,1.4rem); flex-wrap:wrap; }
-.byggtopp .bildeboks{ height:auto; width:clamp(74px,15vh,142px); border-width:5px; border-radius:18px; }
+/* Setningsbildene viser en hel handling, ikke bare én gjenstand –
+   de trenger litt mer plass enn ettordsbildene gjorde. */
+.byggtopp .bildeboks{ height:auto; width:clamp(84px,19vh,180px); border-width:5px; border-radius:18px; }
 .byggtopp .bildeboks .ordlyd{ width:2rem; height:2rem; font-size:1rem; border-width:2px; box-shadow:0 2px 0 var(--navy); }
 .celle .byggtopp .bildeboks{ width:clamp(44px,8vh,76px); border-width:3px; border-radius:11px; }
 .kortbord{
@@ -291,7 +293,7 @@ body{
   flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.4rem,1.6vw,1.2rem); flex-wrap:wrap;
   padding:.1rem 0;
 }
-.buetopp .bildeboks{ height:auto; width:clamp(56px,11vh,110px); border-width:4px; border-radius:16px; }
+.buetopp .bildeboks{ height:auto; width:clamp(64px,13vh,128px); border-width:4px; border-radius:16px; }
 .buetopp .bildeboks .ordlyd{ width:1.8rem; height:1.8rem; font-size:.9rem; border-width:2px; box-shadow:0 2px 0 var(--navy); }
 .celle .buetopp .bildeboks{ width:clamp(36px,6.5vh,62px); border-width:3px; border-radius:10px; }
 .himmel{
@@ -507,8 +509,12 @@ body.rent .flytknapp{ display:block; }
            Brukes bare til å finne fornuftige avledere i
            «Ordet som mangler» – luka byttes med ord av samme
            slag, ikke et tilfeldig ord.
-   bilde = filnavnet i bilder/lyd/ (uten .webp). Alle bildene
-           fins fra før.
+   bilde = filnavnet i bilder/lyd/ (uten .webp). Bildet viser
+           HVEM eller HVA setningen handler om – altså subjektet,
+           som er nøyaktig det ordet eleven skal finne til første
+           luke. Setninger som begynner med Vi/Jeg/Barna har ikke
+           noe subjektbilde og viser objektet i stedet.
+           Alle bildene fins fra før.
    Lydfila heter setn-<slug av t>.mp3 og lages av slug() under.
    ============================================================ */
 const SETNINGER = [
@@ -516,7 +522,7 @@ const SETNINGER = [
   { t:"Katten sover godt.",        k:"sva",   bilde:"katt" },
   { t:"Hunden løper fort.",        k:"sva",   bilde:"hund" },
   { t:"Sola skinner varmt.",       k:"sva",   bilde:"sol" },
-  { t:"Musa spiser osten.",        k:"svs",   bilde:"ost" },
+  { t:"Musa spiser osten.",        k:"svs",   bilde:"mus" },
   { t:"Fisken svømmer stille.",    k:"sva",   bilde:"fisk" },
   { t:"Bilen kjører sakte.",       k:"sva",   bilde:"bil" },
   { t:"Toget kommer snart.",       k:"sva",   bilde:"tog" },
@@ -527,49 +533,49 @@ const SETNINGER = [
   { t:"Løven brøler høyt.",        k:"sva",   bilde:"loeve" },
   { t:"Flyet flyr høyt.",          k:"sva",   bilde:"fly" },
   { t:"Frosken hopper langt.",     k:"sva",   bilde:"frosk" },
-  { t:"Gutten leser boka.",        k:"svs",   bilde:"bok" },
-  { t:"Jenta åpner døra.",         k:"svs",   bilde:"door" },
+  { t:"Gutten leser boka.",        k:"svs",   bilde:"gutt" },
+  { t:"Jenta åpner døra.",         k:"svs",   bilde:"jente" },
   { t:"Vi spiser eple.",           k:"dvs",   bilde:"eple" },
   { t:"Hesten spiser gress.",      k:"svs",   bilde:"hest" },
 
   /* ---- 4 ord ---- */
-  { t:"Katten sover på stolen.",         k:"svps", bilde:"stol" },
-  { t:"Hunden graver i bakken.",         k:"svps", bilde:"bakke" },
-  { t:"Gutten sitter på sykkelen.",      k:"svps", bilde:"sykkel" },
-  { t:"Jenta har en paraply.",           k:"svds", bilde:"paraply" },
+  { t:"Katten sover på stolen.",         k:"svps", bilde:"katt" },
+  { t:"Hunden graver i bakken.",         k:"svps", bilde:"hund" },
+  { t:"Gutten sitter på sykkelen.",      k:"svps", bilde:"gutt" },
+  { t:"Jenta har en paraply.",           k:"svds", bilde:"jente" },
   { t:"Elefanten drikker mye vann.",     k:"svas", bilde:"elefant" },
-  { t:"Sola skinner over huset.",        k:"svps", bilde:"hus" },
-  { t:"Bilen står ved veggen.",          k:"svps", bilde:"vegg" },
+  { t:"Sola skinner over huset.",        k:"svps", bilde:"sol" },
+  { t:"Bilen står ved veggen.",          k:"svps", bilde:"bil" },
   { t:"Vi hører på radioen.",            k:"dvps", bilde:"radio" },
   { t:"Zebraen løper over broa.",        k:"svps", bilde:"zebra" },
   { t:"Ulven hyler mot månen.",          k:"svps", bilde:"ulv" },
-  { t:"Fuglen sitter i treet.",          k:"svps", bilde:"tre" },
-  { t:"Jenta ringer med telefonen.",     k:"svps", bilde:"telefon" },
+  { t:"Fuglen sitter i treet.",          k:"svps", bilde:"fugl" },
+  { t:"Jenta ringer med telefonen.",     k:"svps", bilde:"jente" },
   { t:"Barna leker med ballongen.",      k:"svps", bilde:"ballong" },
   { t:"Sommerfuglen sitter på blomsten.",k:"svps", bilde:"sommerfugl" },
-  { t:"Hesten spiser et eple.",          k:"svds", bilde:"eple" },
+  { t:"Hesten spiser et eple.",          k:"svds", bilde:"hest" },
   { t:"Isbjørnen sover i snøen.",        k:"svps", bilde:"isbjoern" },
   { t:"Edderkoppen spinner et nett.",    k:"svds", bilde:"edderkopp" },
   { t:"Jeg skriver et brev.",            k:"dvds", bilde:"brev" },
 
   /* ---- 5 ord ---- */
-  { t:"Musa spiser osten under bordet.",       k:"svsps", bilde:"ost" },
-  { t:"Sola skinner over huset vårt.",         k:"svpsd", bilde:"hus" },
-  { t:"Jenta sykler fort til skolen.",         k:"svaps", bilde:"sykkel" },
+  { t:"Musa spiser osten under bordet.",       k:"svsps", bilde:"mus" },
+  { t:"Sola skinner over huset vårt.",         k:"svpsd", bilde:"sol" },
+  { t:"Jenta sykler fort til skolen.",         k:"svaps", bilde:"jente" },
   { t:"Vi spiser eple og appelsin.",           k:"dvsks", bilde:"appelsin" },
   { t:"Elefanten er større enn musa.",         k:"svaks", bilde:"elefant" },
   { t:"Paraplyen er stor og blå.",             k:"svaka", bilde:"paraply" },
-  { t:"Bilen kjører sakte over broa.",         k:"svaps", bilde:"bro" },
-  { t:"Fuglen sitter stille i treet.",         k:"svaps", bilde:"tre" },
+  { t:"Bilen kjører sakte over broa.",         k:"svaps", bilde:"bil" },
+  { t:"Fuglen sitter stille i treet.",         k:"svaps", bilde:"fugl" },
   { t:"Sommerfuglen sitter stille på blomsten.",k:"svaps",bilde:"sommerfugl" },
   { t:"Zebraen har striper på ryggen.",        k:"svsps", bilde:"zebra" },
   { t:"Isbjørnen går langt over isen.",        k:"svaps", bilde:"isbjoern" },
   { t:"Vi hører på radioen sammen.",           k:"dvpsa", bilde:"radio" },
   { t:"Toget kommer til stasjonen nå.",        k:"svpsa", bilde:"tog" },
   { t:"Klokka på veggen er sju.",              k:"spsvt", bilde:"klokke" },
-  { t:"Frosken hopper ned i vannet.",          k:"svaps", bilde:"vann" },
-  { t:"Ulven hyler høyt mot månen.",           k:"svaps", bilde:"maane" },
-  { t:"Gutten leser om store dinosaurer.",     k:"svpas", bilde:"dinosaur" },
+  { t:"Frosken hopper ned i vannet.",          k:"svaps", bilde:"frosk" },
+  { t:"Ulven hyler høyt mot månen.",           k:"svaps", bilde:"ulv" },
+  { t:"Gutten leser om store dinosaurer.",     k:"svpas", bilde:"gutt" },
   { t:"Hunden løper etter en ball.",           k:"svpds", bilde:"hund" }
 ];
 
@@ -862,12 +868,32 @@ function lagAvledere(s, idx, antall){
 /* ============================================================
    FELLES BYGGEKLOSSER
    ============================================================ */
+/* Bildet: eget setningsbilde hvis det fins, ellers bildet av
+   subjektet fra den gamle bildebanken. Kjeden prøves ovenfra og
+   ned, så verktøyet virker like godt med 18 setningsbilder som
+   med 54 – og både lokalt og fra serveren. */
+function bildekjede(s){
+  return [
+    "bilder/setninger/" + s.fil + ".webp",
+    "https://myntland.no/bilder/setninger/" + s.fil + ".webp",
+    bildeUrl(s.bilde),
+    bildeReserve(s.bilde)
+  ];
+}
+
 function lagBildeboks(s, medLyd){
   const boks = document.createElement("div");
   boks.className = "bildeboks";
   const img = document.createElement("img");
-  img.src = bildeUrl(s.bilde); img.alt = s.t; img.draggable = false;
-  img.onerror = () => { img.onerror = null; img.src = bildeReserve(s.bilde); };
+  const kjede = bildekjede(s);
+  let ledd = 0;
+  img.alt = s.t; img.draggable = false;
+  img.onerror = () => {
+    ledd++;
+    if (ledd < kjede.length) img.src = kjede[ledd];
+    else img.onerror = null;
+  };
+  img.src = kjede[0];
   boks.appendChild(img);
 
   if (medLyd && lydknappPaa()){

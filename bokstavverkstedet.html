@@ -218,6 +218,32 @@ body{
 .lydtips .tittel{ display:block; font-family:'Fredoka One',cursive; font-weight:400; color:var(--amber-dyp); font-size:.85rem; margin-bottom:.15rem; }
 .lydtips b{ color:var(--amber-dyp); }
 
+/* ---------- TRINN 1 – BOKSTAVVERS ---------- */
+.versscene{ flex:1 1 auto; min-width:0; height:100%; display:flex; align-items:center; justify-content:center; gap:clamp(.8rem,3vw,2.5rem); }
+.versbokstav{
+  flex:0 0 auto; width:clamp(120px,16vw,230px); aspect-ratio:1/1;
+  background:var(--navy); border:5px solid var(--navy); border-radius:26px; box-shadow:var(--skygge);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Fredoka One',cursive; color:var(--krem); font-size:clamp(2.6rem,7vw,5.2rem); line-height:.95; letter-spacing:.02em;
+}
+.versbokstav .liten{ color:var(--amber); }
+.versbokstav svg.egenglyf{ height:1.05em; width:auto; display:block; }
+.versplakat{
+  flex:0 1 auto; min-width:0; max-width:min(56vw,780px);
+  background:var(--krem-lys); border:5px solid var(--navy); border-radius:26px; box-shadow:var(--skygge);
+  padding:clamp(.9rem,2.2vw,1.6rem) clamp(1.1rem,2.8vw,2.1rem);
+  display:flex; flex-direction:column; align-items:center; gap:clamp(.6rem,1.6vw,1rem);
+}
+.storvers{ font-weight:800; font-size:clamp(1.05rem,2.5vw,1.85rem); line-height:1.55; color:var(--navy); }
+.storvers div{ padding-left:.8em; text-indent:-.8em; }
+.storvers .f{ color:var(--raud); }
+.vershorknapp{
+  border:3px solid var(--navy); background:var(--amber); color:var(--navy); border-radius:999px;
+  font-family:inherit; font-weight:900; font-size:clamp(.85rem,1.5vw,1.05rem); padding:.35rem 1.2rem; cursor:pointer;
+  box-shadow:0 3px 0 var(--navy); white-space:nowrap;
+}
+.vershorknapp:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+
 /* ---------- TRINN 2 ---------- */
 .skrivefelt{ flex:1 1 auto; min-width:0; height:100%; display:flex; flex-direction:column; gap:.35rem; }
 .skriveflate{ flex:1 1 auto; width:100%; min-height:0; display:block; touch-action:none; }
@@ -439,6 +465,9 @@ body.rent .flytknapp{ display:block; }
 
 @media (max-width:1000px){
   .t1flate{ flex-direction:column; gap:.5rem; }
+  .versscene{ flex-direction:column; gap:.6rem; }
+  .versbokstav{ width:clamp(90px,20vw,140px); }
+  .versplakat{ max-width:100%; }
   .lydtips{ max-width:100%; }
   .bokstavboks{ height:auto; width:min(100%,28vh); }
   .heier{ width:22vw; }
@@ -467,10 +496,11 @@ body.rent .flytknapp{ display:block; }
   <!-- rad 1: trinn + navigasjon -->
   <div class="rad">
     <div class="seg" id="trinnseg" role="group" aria-label="Velg trinn">
-      <button data-trinn="1" aria-pressed="true"><span class="nr">1</span> Bokstavlyd</button>
-      <button data-trinn="2" aria-pressed="false"><span class="nr">2</span> Bokstavform</button>
-      <button data-trinn="3" aria-pressed="false"><span class="nr">3</span> Navn i klassen</button>
-      <button data-trinn="4" aria-pressed="false"><span class="nr">4</span> Gjett bildet</button>
+      <button data-trinn="1" aria-pressed="true"><span class="nr">1</span> Bokstavvers</button>
+      <button data-trinn="2" aria-pressed="false"><span class="nr">2</span> Bokstavlyd</button>
+      <button data-trinn="3" aria-pressed="false"><span class="nr">3</span> Bokstavform</button>
+      <button data-trinn="4" aria-pressed="false"><span class="nr">4</span> Navn i klassen</button>
+      <button data-trinn="5" aria-pressed="false"><span class="nr">5</span> Gjett bildet</button>
     </div>
     <div class="skille"></div>
     <button class="knapp" id="forrigeKnapp" title="Forrige bokstav">◀</button>
@@ -488,23 +518,24 @@ body.rent .flytknapp{ display:block; }
 
   <!-- rad 3: verktøy for gjeldende trinn -->
   <div class="rad" id="trinnverktoy">
-    <span id="verktoyT1" class="rad">
+    <span id="verktoyT1" class="rad"></span>
+    <span id="verktoyT2" class="rad">
       <button class="knapp" id="ordKnapp">📝 Ord av</button>
       <button class="knapp" id="flereOrd">➡️ Neste ord</button>
     </span>
-    <span id="verktoyT2" class="rad">
+    <span id="verktoyT3" class="rad">
       <button class="knapp primary" id="visMegKnapp">👀 Vis meg</button>
       <button class="knapp" id="modellKnapp">👻 Grå bokstav på</button>
       <button class="knapp" id="linjerKnapp">📏 Linjer på</button>
     </span>
-    <span id="verktoyT3" class="rad">
+    <span id="verktoyT4" class="rad">
       <button class="knapp" id="tastaturKnapp">⌨️ Tastatur på</button>
       <button class="knapp" id="klasselisteKnapp">👥 Klasselista</button>
       <button class="knapp" id="sjekkKnapp">✓ Sjekk</button>
       <button class="knapp" id="fasitKnapp">💡 Fasit</button>
       <button class="knapp" id="nullstillNavn">↺ Start på nytt</button>
     </span>
-    <span id="verktoyT4" class="rad">
+    <span id="verktoyT5" class="rad">
       <button class="knapp" id="nyeBilder">🔄 Nye bilder</button>
       <button class="knapp" id="dekkTilKnapp">🔒 Dekk til igjen</button>
     </span>
@@ -517,6 +548,27 @@ body.rent .flytknapp{ display:block; }
 
   <!-- ================= TRINN 1 ================= -->
   <section class="panel aktiv" id="panel1">
+    <div class="topplinje">
+      <div class="oppdrag" id="tvOppdrag">Verset om <em>A</em></div>
+    </div>
+    <div class="arena">
+      <div class="heier" id="heierV">
+        <div class="boble" id="bobleV">Les med meg!</div>
+        <img class="monster" id="monsterV" alt="">
+        <span class="mnavn" id="mnavnV"></span>
+      </div>
+      <div class="versscene">
+        <div class="versbokstav" id="versBokstav">A<span class="liten">a</span></div>
+        <div class="versplakat">
+          <div class="storvers" id="storVers"></div>
+          <button class="vershorknapp" id="horVers" type="button" title="Spill av verset (når det er lest inn)">🔊 Hør verset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TRINN 2 ================= -->
+  <section class="panel" id="panel2">
     <div class="topplinje">
       <div class="oppdrag" id="t1Oppdrag">Hvilken lyd hører du <em>først</em> i ordet?</div>
     </div>
@@ -540,8 +592,8 @@ body.rent .flytknapp{ display:block; }
     </div>
   </section>
 
-  <!-- ================= TRINN 2 ================= -->
-  <section class="panel" id="panel2">
+  <!-- ================= TRINN 3 ================= -->
+  <section class="panel" id="panel3">
     <div class="topplinje">
       <div class="oppdrag">Start på prikken og følg sporet: <em id="t2Bokstav">A</em></div>
       <div class="maaler">
@@ -569,8 +621,8 @@ body.rent .flytknapp{ display:block; }
     </div>
   </section>
 
-  <!-- ================= TRINN 3 ================= -->
-  <section class="panel" id="panel3">
+  <!-- ================= TRINN 4 ================= -->
+  <section class="panel" id="panel4">
     <div class="topplinje">
       <div class="oppdrag">Hvem i klassen har <em id="t3Bokstav">A</em> i navnet sitt?</div>
     </div>
@@ -612,8 +664,8 @@ body.rent .flytknapp{ display:block; }
     </div>
   </section>
 
-  <!-- ================= TRINN 4 ================= -->
-  <section class="panel" id="panel4">
+  <!-- ================= TRINN 5 ================= -->
+  <section class="panel" id="panel5">
     <div class="topplinje">
       <div class="oppdrag" id="t4Oppdrag">Hvilket ord gjemmer seg? Alle begynner med <em>A</em></div>
     </div>
@@ -800,6 +852,41 @@ const LYDHINT = {
   "Å":"rund åpen munn: /å/ som i <b>ål</b>"
 };
 
+/* Bokstavvers – innledning til hver bokstav. Fire linjer, enderim.
+   Innlest utgave: lyd/vers-<FILNAVN>.mp3 (se bokstavverkstedet-produksjon.html).
+   Mangler mp3-en, er kortet der likevel – knappen blir bare stille. */
+const VERS = {
+  "A": ["Apen gaper: «Ah, så bra!»", "Agurk vil den gjerne ha.", "Armen vinker: «Kom og se —", "A er først i ABC!»"],
+  "B": ["B for banan, for buss og bil,", "for brev og bok — og for et smil!", "Bamsen finner blanke bær:", "de aller beste vokser her!"],
+  "C": ["C er en gjest vi sjelden ser,", "i «cowboy» og «cello» — ikke mer.", "Egen lyd har den ikke, nei:", "den låner S og K sin vei!"],
+  "D": ["Dua banker på en dør:", "dunk, dunk, dunk — som dagen før.", "Dekk som ruller, dyner, dun —", "D er dagens beste funn!"],
+  "E": ["Elgen rusler ved en elv,", "stopper opp og ser seg selv:", "«E for elg — det er jo meg!", "Egg og eple gir jeg deg.»"],
+  "F": ["Fuglen flakser mot en sky,", "flyr forbi et stort, blankt fly.", "Fisken vifter, rask og frisk —", "F er først i «fugl» og «fisk»!"],
+  "G": ["Grisen gomler grønne blad,", "gutten mater den — så glad!", "Gåsa gakker ved sitt fat:", "«G for gås og grønn, god mat!»"],
+  "H": ["Hesten holder hagefest,", "hunden kommer — han er gjest.", "Hils med hatten, hopp og hei:", "«Heia, heia — du og meg!»"],
+  "I": ["Isbjørnen vil ha en is,", "smiler bredt og spør om pris.", "«Én til deg og én til meg —", "nam, en is! Så glad er jeg!»"],
+  "J": ["Jenta i den gule jakke", "triller jojo ned en bakke.", "Jordbær har hun i sin sekk —", "«jøss!» — med ett så var de vekk!"],
+  "K": ["Katten baker deilig kake,", "kua kommer for å smake.", "Kopper, krem — sett alt fram:", "K for kake, katt og kam!"],
+  "L": ["Lammet leker med en løve,", "begge vil en L-lyd prøve:", "syng en L med tunga opp —", "la-la-la fra tå til topp!"],
+  "M": ["I månelyset står et hus,", "der inne bor en liten mus.", "Lukk munnen din og nynn som den:", "nynn en M, min gode venn!"],
+  "N": ["Nøtta datt ned på en nese —", "den som satt der, prøvde å lese!", "«Nei og nei!» sa nesa da:", "«Nøtter kan man gjerne ha!»"],
+  "O": ["Ormen åler seg mot osten,", "oksen feier gulv med kosten.", "Rund din munn og rop en O:", "«Ohoi!» — nå er vi to!"],
+  "P": ["Pennen skriver til en venn:", "«P for post — jeg sender den!»", "Puff! Det popper: pop, pop, pop —", "som popkorn hopper det opp!"],
+  "Q": ["Q er sjelden ute og går,", "mest i «quiz» den plassen får.", "Q sier K — og se på den:", "U er Q-ens beste venn!"],
+  "R": ["Reven legger i en pose", "ring og ris og rød en rose.", "Rull på tunga, R er her:", "hør den rulle i «rev» og «bær»!"],
+  "S": ["Slangen ligger på en stol,", "soler seg i sommersol.", "Hør den hvisker, lur og hes:", "en lang og listig slange-hves!"],
+  "T": ["Toget tøffer — kan du se? —", "tuter høyt forbi et tre.", "Ti små tær på tur i dag —", "T er takten, klapp et slag!"],
+  "U": ["Ugla roper: «Uhu, uhu!»", "Ulven svarer: «Klokka er sju!»", "Ubåten der nede lurer —", "dypt der nede: hør, den durer!"],
+  "V": ["Vaffelen er varm og fin,", "vepsen surrer: «Den er min!»", "Vannet skvulper, vind på vei —", "vift og vink, ja, vink til meg!"],
+  "W": ["W er en dobbelt-V,", "i «wok» og «walkie» kan du se.", "To V-er tett i tett på rad —", "de sier bare V — vær glad!"],
+  "X": ["X er formet som et kryss,", "og den er en sjelden gjest.", "Du hører X i «laks» og «seks» —", "xylofonen kan den best!"],
+  "Y": ["Y står sjelden først i ord,", "men i «lys» og «lyn» den bor.", "Spiss din munn og smil litt til —", "Y er lyden din med stil!"],
+  "Z": ["Zebraen bor i en zoo,", "Z sier S — som «sebra», jo!", "Striper, striper, topp til tå:", "sikksakk — se på zebraen gå!"],
+  "Æ": ["Kan du plukke røde bær", "mens du står på dine tær?", "Ærfuglen synger: «æ og æ» —", "akkurat som sauens «bæ»!"],
+  "Ø": ["Ut mot havet ligger en øy,", "dit flyr ørnen, stolt og høy.", "Legg en hånd bak ditt øre —", "Ø er lyden du skal høre!"],
+  "Å": ["Ålen åler seg mot mål,", "blank og glatt som blankest stål.", "Rund din munn og rop et «å» —", "«Åhå!» Vi er framme nå!"],
+};
+
 /* Samme monstre som i Lydverkstedet og Rimverkstedet */
 const LAG = [
   { navn:"Drage",   fil:"ildkatt",     farge:"#E23B2E" },
@@ -859,6 +946,7 @@ function spill(sti){
   sisteLyd = a;
 }
 const bokstavLyd = b => "lyd/" + (FILNAVN[b] || b) + ".mp3";
+const versLyd    = b => "lyd/vers-" + (FILNAVN[b] || b) + ".mp3";
 const ordLyd     = f => "lyd/ord-" + f + ".mp3";
 const ordBilde   = f => "bilder/lyd/" + f + ".webp";
 const monsterUrl = f => "bilder/lyd/monster-" + f + ".webp";
@@ -962,7 +1050,7 @@ function byggBokstavrad(){
     kn.appendChild(merke);
     if(antall === 0){
       kn.classList.add("tom");
-      kn.title = "Ingen bilder til " + b + " ennå – trinn 1 og 4 er tomme";
+      kn.title = "Ingen bilder til " + b + " ennå – trinn 2 og 5 er tomme";
     } else if(utvalg.modus === "inni"){
       kn.classList.add("inni");
       kn.title = b + " starter nesten ingen norske ord – her øver klassen på " + b + " inni ordet";
@@ -990,20 +1078,23 @@ function settTrinn(n){
   $$("#trinnseg button").forEach(t => t.setAttribute("aria-pressed", Number(t.dataset.trinn) === n ? "true" : "false"));
   $$(".panel").forEach(p => p.classList.remove("aktiv"));
   $("#panel" + n).classList.add("aktiv");
-  [1,2,3,4].forEach(i => { $("#verktoyT" + i).style.display = (i === n) ? "flex" : "none"; });
-  if(n === 2) byggTrinn2();
+  [1,2,3,4,5].forEach(i => { $("#verktoyT" + i).style.display = (i === n) ? "flex" : "none"; });
+  if(n === 3) byggTrinn2();
 }
 
 function tegnAlt(){
+  byggVers();
   byggTrinn1();
-  /* Trinn 2 måler lengden på strekene – det krever at panelet er synlig. */
-  if(S.trinn === 2) byggTrinn2();
+  /* Bokstavform (trinn 3) måler lengden på strekene – det krever at panelet er synlig. */
+  if(S.trinn === 3) byggTrinn2();
   byggTrinn3();
   byggTrinn4();
 }
 
 /* ============================================================
-   TRINN 1 – BOKSTAVLYD
+   TRINN 2 – BOKSTAVLYD
+   (Funksjonene under heter fortsatt byggTrinn1/visTrinn1Ord/t1… fra
+   tida med fire trinn. Nummereringa i id-er som panel2/verktoyT2 er ny.)
    ============================================================ */
 function byggTrinn1(){
   const b = S.bokstav;
@@ -1075,7 +1166,31 @@ function visTrinn1Ord(){
 }
 
 /* ============================================================
-   TRINN 2 – BOKSTAVFORM (animasjon + sporing)
+   TRINN 1 – BOKSTAVVERS
+   Verset er innledninga til hver bokstav. Bokstaven males rød
+   der den starter et ord, så klassen ser bokstavrimet mens
+   verset leses høyt.
+   ============================================================ */
+const HEIAROP_VERS = ["Les med meg!","Hør verset!","Kan du rime?","Si det i kor!","En gang til!"];
+function byggVers(){
+  const b = S.bokstav;
+  $("#tvOppdrag").innerHTML = "Verset om <em>" + b + "</em>";
+  $("#versBokstav").innerHTML = parInnhold(b);
+  const lag = monsterFor(b);
+  settMonster($("#monsterV"), lag.fil);
+  $("#monsterV").alt = "Monsteret " + lag.navn;
+  $("#mnavnV").textContent = lag.navn;
+  $("#bobleV").textContent = tilfeldig(HEIAROP_VERS);
+  const v = VERS[b] || [];
+  const re = new RegExp("(^|[\\s«»(—–/-])([" + b + b.toLowerCase() + "])", "g");
+  $("#storVers").innerHTML = v
+    .map(l => "<div>" + l.replace(re, '$1<span class="f">$2</span>') + "</div>")
+    .join("");
+}
+
+
+/* ============================================================
+   TRINN 3 – BOKSTAVFORM (animasjon + sporing)
    ============================================================ */
 const NS = "http://www.w3.org/2000/svg";
 /* Sporingsmotoren er den samme som i Skriveverkstedet: eleven setter fingeren
@@ -1240,7 +1355,7 @@ function svgPunkt(evt){
 }
 
 function startStrek(evt){
-  if(S.trinn !== 2 || T2.laast || !T2.punkter.length) return;
+  if(S.trinn !== 3 || T2.laast || !T2.punkter.length) return;
   const pts = T2.punkter[T2.strek];
   if(!pts) return;
   const p = svgPunkt(evt);
@@ -1386,7 +1501,7 @@ function ferdigTrinn2(){
 }
 
 /* ============================================================
-   TRINN 3 – NAVN I KLASSEN
+   TRINN 4 – NAVN I KLASSEN
    ============================================================ */
 const LAGER_NOKKEL = "myntland-bokstavverksted-klasseliste";
 
@@ -1612,7 +1727,7 @@ function visFasit(){
 }
 
 /* ============================================================
-   TRINN 4 – GJETT BILDET BAK RUTENE
+   TRINN 5 – GJETT BILDET BAK RUTENE
    ============================================================ */
 function byggTrinn4(){
   const b = S.bokstav;
@@ -1760,8 +1875,9 @@ $("#fullKnapp").addEventListener("click", () => {
 $("#rentKnapp").addEventListener("click", () => document.body.classList.add("rent"));
 $("#visMenyKnapp").addEventListener("click", () => document.body.classList.remove("rent"));
 
-/* Trinn 1 */
+/* Trinn 1 – bokstavvers, og trinn 2 – bokstavlyd */
 $("#horBokstav").addEventListener("click", () => spill(bokstavLyd(S.bokstav)));
+$("#horVers").addEventListener("click", () => spill(versLyd(S.bokstav)));
 $("#ordKnapp").addEventListener("click", () => {
   S.visOrd = !S.visOrd;
   $("#ordKnapp").textContent = S.visOrd ? "📝 Ord på" : "📝 Ord av";
@@ -1781,7 +1897,7 @@ $("#flereOrd").addEventListener("click", () => {
   visTrinn1Ord();
 });
 
-/* Trinn 2 */
+/* Trinn 3 – bokstavform */
 $("#visMegKnapp").addEventListener("click", visMeg);
 $("#storLitenKnapp").addEventListener("click", () => { S.storBokstav = !S.storBokstav; byggTrinn2(); });
 $("#modellKnapp").addEventListener("click", () => { S.visModell = !S.visModell; byggTrinn2(); });
@@ -1815,7 +1931,7 @@ flateEl.addEventListener("pointermove", fortsettStrek);
 flateEl.addEventListener("pointerup", sluttStrek);
 flateEl.addEventListener("pointercancel", sluttStrek);
 
-/* Trinn 3 */
+/* Trinn 4 – navn i klassen */
 function plasserIKolonne(plass){
   const navn = S.skrevet || S.valgtNavn;
   if(!navn) return;
@@ -1866,7 +1982,7 @@ $("#tomKlasse").addEventListener("click", () => {
   byggTrinn3();
 });
 
-/* Trinn 4 */
+/* Trinn 5 – gjett bildet */
 $("#nyeBilder").addEventListener("click", byggTrinn4);
 $("#dekkTilKnapp").addEventListener("click", dekkTilIgjen);
 
@@ -1877,9 +1993,9 @@ document.addEventListener("keydown", e => {
   if(e.key === "ArrowLeft"){ flyttBokstav(-1); return; }
   if(e.key === "Escape"){ klasseModal.classList.remove("open"); document.body.classList.remove("rent"); return; }
 
-  /* I trinn 3 skriver den fysiske tastaturet inn i skriveboksen.
+  /* I trinn 4 skriver den fysiske tastaturet inn i skriveboksen.
      Bokstavene bytter altså ikke bokstav der – bruk bokstavraden eller piltastene. */
-  if(S.trinn === 3 && !klasseModal.classList.contains("open")){
+  if(S.trinn === 4 && !klasseModal.classList.contains("open")){
     if(e.key === "Backspace"){ e.preventDefault(); settSkrevet(S.skrevet.slice(0, -1)); return; }
     if(e.key === "Delete"){ settSkrevet(""); return; }
     if(e.key >= "1" && e.key <= "3" && (S.skrevet || S.valgtNavn)){
@@ -1890,7 +2006,7 @@ document.addEventListener("keydown", e => {
     if(e.key.length === 1 && ALFABET.indexOf(e.key.toUpperCase()) !== -1){ skrivTegn(e.key.toUpperCase()); return; }
   }
 
-  if(e.key >= "1" && e.key <= "4"){ settTrinn(Number(e.key)); return; }
+  if(e.key >= "1" && e.key <= "5"){ settTrinn(Number(e.key)); return; }
   const b = e.key.toUpperCase();
   if(b.length === 1 && ALFABET.indexOf(b) !== -1) settBokstav(b);
 });
