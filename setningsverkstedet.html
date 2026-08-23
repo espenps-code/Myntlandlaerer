@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Setningsverkstedet – Myntland</title>
-<meta name="description" content="Eleven drar ordkortene på plass til en hel setning – eller spenner buen og skyter ordet som mangler. Stor forbokstav og punktum på plass. For interaktiv tavle og iPad – opptil fire elever samtidig.">
+<meta name="description" content="Eleven drar ordkortene på plass til en hel setning, skyter ordet som mangler – eller styrer slangen som spiser ordene i riktig rekkefølge. Stor forbokstav og punktum på plass. For interaktiv tavle og iPad – opptil fire elever samtidig.">
 <meta name="theme-color" content="#232a3f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -215,8 +215,9 @@ body{
 .bildeboks .ordlyd:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
 
 /* ============ FELLES: SETNINGSLINJA ============
-   Lukene setningen bygges i. Første luke bærer merket for stor
-   forbokstav, siste luke er den smale punktumluka. */
+   Lukene setningen bygges i. Siste luke er den smale punktumluka.
+   Ingen merker over lukene: den store forbokstaven står på selve
+   ordkortet, og punktumkortet er gult – det er nok å kjenne igjen. */
 .setningslinje{
   display:flex; gap:clamp(.2rem,.7vw,.5rem); align-items:flex-end; justify-content:center; flex-wrap:wrap;
   padding:.15rem 0;
@@ -237,18 +238,6 @@ body{
 .luke.feil{ animation:rist .35s; border-color:var(--raud); }
 .luke.hint{ border-color:var(--teal); box-shadow:0 0 0 4px rgba(43,179,192,.28); }
 .luke.punkt{ min-width:1.4em; padding-left:.25rem; padding-right:.25rem; }
-.luke.stor::after{
-  content:"ABC"; position:absolute; top:-.72em; left:50%; transform:translateX(-50%);
-  font-family:'Nunito',sans-serif; font-weight:900; font-size:.5em; letter-spacing:.06em;
-  color:var(--navy); background:var(--amber); border:2px solid var(--navy); border-radius:999px;
-  padding:0 .45em; white-space:nowrap;
-}
-.luke.punkt::after{
-  content:"."; position:absolute; top:-.85em; left:50%; transform:translateX(-50%);
-  font-family:'Fredoka One',cursive; font-size:.62em; line-height:1;
-  color:var(--navy); background:var(--amber); border:2px solid var(--navy); border-radius:999px;
-  padding:0 .5em .18em;
-}
 .celle .luke{ font-size:clamp(.66rem,1.25vw,1.05rem); border-width:3px; border-radius:9px; padding:.05rem .3rem; min-width:2.4em; }
 .celle .luke.punkt{ min-width:1.2em; }
 
@@ -385,6 +374,59 @@ body{
 }
 .celle .ordflyger{ font-size:clamp(.6rem,1.1vw,.95rem); border-width:2px; padding:.02rem .35rem; }
 
+/* ============ SLANGESPILLET – brett, slange, ordbrikker ============
+   Klassisk snake på rutenett, men uten død: slangen går gjennom
+   veggen og kommer ut på andre sida, og halen er ufarlig. Ordene
+   ligger strødd på brettet og spises i setningsrekkefølge. */
+.slangespill{ width:100%; height:100%; min-height:0; display:flex; flex-direction:column; gap:.35rem; position:relative; }
+.slangebrett{
+  flex:1 1 auto; min-height:0; position:relative; overflow:hidden;
+  background:#e0f3cf;
+  border:4px solid var(--navy); border-radius:20px; box-shadow:var(--skygge-mjuk);
+  touch-action:none; cursor:pointer;
+}
+.celle .slangebrett{ border-width:3px; border-radius:14px; }
+.slangeledd{
+  position:absolute; left:0; top:0; z-index:2;
+  background:var(--gronn); border:3px solid var(--navy); border-radius:38%;
+  box-shadow:inset -3px -4px 0 rgba(35,42,63,.16);
+}
+.slangeledd.lys{ background:#93d65e; }
+.celle .slangeledd{ border-width:2px; }
+.slangehode{
+  position:absolute; left:0; top:0; z-index:3;
+  background:var(--gronn-dyp); border:3px solid var(--navy); border-radius:45% 45% 38% 38%;
+  box-shadow:inset -3px -4px 0 rgba(35,42,63,.2);
+}
+.celle .slangehode{ border-width:2px; }
+.slangehode .oye{ position:absolute; top:9%; width:32%; height:32%; background:#fff; border:2px solid var(--navy); border-radius:50%; }
+.slangehode .oye::after{ content:""; position:absolute; left:26%; top:30%; width:46%; height:46%; background:var(--navy); border-radius:50%; }
+.slangehode .oye.v{ left:7%; } .slangehode .oye.h{ right:7%; }
+.slangehode .tunge{
+  position:absolute; left:50%; top:-26%; width:12%; height:28%; min-width:3px;
+  background:var(--raud); border-radius:3px; transform:translateX(-50%);
+  animation:tungeflik 1.6s ease-in-out infinite; transform-origin:50% 100%;
+}
+@keyframes tungeflik{ 0%,70%,100%{ transform:translateX(-50%) scaleY(0) } 78%,92%{ transform:translateX(-50%) scaleY(1) } }
+.ordbrikke{
+  position:absolute; z-index:4; pointer-events:none;
+  font-family:'Fredoka One',cursive; font-size:clamp(.95rem,2vw,1.6rem); line-height:1.3; color:var(--navy);
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:999px;
+  padding:.06rem .6rem; box-shadow:0 3px 0 var(--navy); white-space:nowrap;
+}
+.celle .ordbrikke{ font-size:clamp(.55rem,1vw,.85rem); border-width:2px; padding:.02rem .4rem; box-shadow:0 2px 0 var(--navy); }
+.ordbrikke.tegn{ background:var(--amber); }
+.ordbrikke.feil{ animation:rist .35s; border-color:var(--raud); }
+.ordbrikke.hint{ outline:4px solid var(--teal); outline-offset:3px; animation:bob 1s ease-in-out infinite; }
+.slangehint{
+  position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
+  font-weight:900; font-size:clamp(.7rem,1.2vw,.95rem); color:var(--navy);
+  background:var(--krem-lys); border:2px solid var(--navy); border-radius:999px;
+  padding:.15rem .8rem; box-shadow:0 2px 0 var(--navy); pointer-events:none; z-index:5;
+  white-space:nowrap; animation:bob 2.2s ease-in-out infinite;
+}
+.celle .slangehint{ font-size:clamp(.55rem,.9vw,.72rem); padding:.1rem .55rem; }
+
 /* ---------- overlay / jubel ---------- */
 .jubel{
   position:absolute; inset:0; display:none; align-items:center; justify-content:center;
@@ -424,7 +466,7 @@ body.rent .flytknapp{ display:block; }
   .byggtopp .bildeboks{ width:clamp(60px,12vh,110px); }
 }
 @media (prefers-reduced-motion:reduce){
-  .monster,.monster.heia,.jubel .tekst,.ballong,.sky,.luke.fylt,.ordkort.hint{ animation:none !important; transition:none !important; }
+  .monster,.monster.heia,.jubel .tekst,.ballong,.sky,.luke.fylt,.ordkort.hint,.ordbrikke.hint,.slangehint,.slangehode .tunge{ animation:none !important; transition:none !important; }
 }
 </style>
 </head>
@@ -442,6 +484,7 @@ body.rent .flytknapp{ display:block; }
     <div class="seg" id="oppgavevelger">
       <button data-oppgave="bygg" aria-pressed="true">🧩 Bygg setningen</button>
       <button data-oppgave="mangler" aria-pressed="false">🏹 Ordet som mangler</button>
+      <button data-oppgave="slange" aria-pressed="false">🐍 Slangespillet</button>
     </div>
     <div class="seg" id="modusvelger">
       <button data-modus="tur" aria-pressed="true">🙋 Tur for tur</button>
@@ -476,16 +519,20 @@ body.rent .flytknapp{ display:block; }
    SETNINGSVERKSTEDET – Myntland
    ------------------------------------------------------------
    Steg 2 etter Ordbyggeren: der ble lydene til ord, her blir
-   ordene til en setning. To oppgavetyper:
+   ordene til en setning. Tre oppgavetyper:
 
      1) Bygg setningen     – ordkortene ligger stokket på bordet,
-                             eleven drar dem opp i lukene. Første
-                             luke gir stor forbokstav, siste luke
-                             er punktumluka.
+                             eleven drar dem opp i lukene. Ordet med
+                             stor forbokstav skal først, punktum-
+                             kortet sist.
      2) Ordet som mangler  – setningen står ferdig med én luke.
                              Tre ballonger svever i himmelen, og
                              eleven spenner buen og skyter ordet
                              som passer.
+     3) Slangespillet      – ordene ligger strødd på brettet, og
+                             eleven styrer slangen med sveip eller
+                             piltaster og spiser ordene i riktig
+                             rekkefølge – punktumet til slutt.
 
    Bildene ligger i bilder/lyd/<fil>.webp – nøyaktig samme filer
    som Lydverkstedet, Rimverkstedet, Ordbyggeren og Stavelses-
@@ -499,9 +546,9 @@ body.rent .flytknapp{ display:block; }
    ------------------------------------------------------------
    t     = setningen slik den skal se ut, med stor forbokstav og
            punktum. Ordkortene lages ved å splitte på mellomrom
-           og fjerne punktumet – første ord vises med liten
-           forbokstav på kortet, og får den store når det lander
-           i første luke. Det er hele poenget med oppgaven.
+           og fjerne punktumet – første ord beholder den store
+           forbokstaven på kortet, så eleven kan lese seg fram til
+           hvilket ord setningen begynner med.
    k     = én bokstav per ord, ordklassen:
              s substantiv · v verb · a adjektiv/adverb
              p preposisjon · d determinativ/pronomen
@@ -623,15 +670,18 @@ const forsokFarge = (plass, forsok) => FARGER[((plass * 5 + forsok) % FARGER.len
 
 const HEIAROP_BYGG  = ["Hvilket ord kommer først?","Les hva du har!","Husk stor forbokstav!","Punktum til slutt!","Lytt til setningen!","Bra!","Så flink!"];
 const HEIAROP_LUKE  = ["Dra i buen!","Sikt godt!","Lytt til setningen!","Hvilket ord passer?","Du klarer det!","Rolig og fint!","Så flink!"];
-const aktivHeiarop  = () => app.oppgave === "bygg" ? HEIAROP_BYGG : HEIAROP_LUKE;
+const HEIAROP_SLANGE= ["Styr slangen!","Hvilket ord er først?","Lytt til setningen!","Sveip for å svinge!","Du klarer det!","Så flink!"];
+const aktivHeiarop  = () => app.oppgave === "bygg" ? HEIAROP_BYGG : app.oppgave === "slange" ? HEIAROP_SLANGE : HEIAROP_LUKE;
 const JUBELROP = ["Kjempebra!","Perfekt!","Så fint!","Supert!","Bra jobba!"];
 const BOMROP_BYGG = ["Nesten! Prøv et annet ord.","Les setningen én gang til.","Hør setningen en gang til!"];
 const BOMROP_LUKE = ["Nesten! Sikt en gang til.","Hør setningen en gang til!","Prøv et nytt skudd!"];
-const aktivBomrop = () => app.oppgave === "bygg" ? BOMROP_BYGG : BOMROP_LUKE;
+const BOMROP_SLANGE = ["Nesten! Finn ordet som kommer først.","Hør setningen en gang til!","Prøv et annet ord!"];
+const aktivBomrop = () => app.oppgave === "bygg" ? BOMROP_BYGG : app.oppgave === "slange" ? BOMROP_SLANGE : BOMROP_LUKE;
 
 const OPPGAVER = {
   bygg:    { tittel:"Legg ordene i riktig <em>rekkefølge</em>",   lyd:"bygg-setningen" },
-  mangler: { tittel:"Spenn buen – skyt ordet som <em>mangler</em>", lyd:"ordet-mangler" }
+  mangler: { tittel:"Spenn buen – skyt ordet som <em>mangler</em>", lyd:"ordet-mangler" },
+  slange:  { tittel:"Slangen spiser ordene i riktig <em>rekkefølge</em>", lyd:"spis-ordene" }
 };
 
 /* ---------- Tilstand ---------- */
@@ -720,14 +770,14 @@ function lydSmell(){
    skrevet ae/oe/aa. Mangler en fil, hoppes den bare over. */
 const LYDSTI = "lyd/";
 const REPLIKKER = [
-  "bygg-setningen","ordet-mangler",                       /* nye – leses inn */
+  "bygg-setningen","ordet-mangler","spis-ordene",         /* nye – leses inn */
   "stor-forbokstav","punktum",                            /* nye – leses inn */
   "riktig","proev-igjen",                                 /* fins alt i /lyd/ */
   "din-tur","neste-elev","alle-sammen"                    /* fins alt i /lyd/ */
 ];
 
 const lydLager = new Map();
-let taleNr = 0, spillerNaa = null;
+let taleNr = 0, spillerNaa = null, taleKoe = [], taleGaar = false, taleVern = false, taleVakt = null;
 
 function hentLyd(navn){
   let a = lydLager.get(navn);
@@ -737,40 +787,85 @@ function hentLyd(navn){
 function forbered(...navn){ navn.forEach(n => { try { hentLyd(n).load(); } catch(e){} }); }
 function stoppTale(){
   taleNr++;
+  taleKoe = [];
+  taleGaar = false;
+  taleVern = false;
+  if (taleVakt){ clearTimeout(taleVakt); taleVakt = null; }
   if (spillerNaa){ try { spillerNaa.pause(); spillerNaa.currentTime = 0; } catch(e){} spillerNaa = null; }
 }
+/* Spiller neste fil i køen. En fil som mangler – eller som nettleseren
+   ikke vil starte – hopper vi bare over. Vaktposten sørger for at køen
+   aldri blir stående fast om «ended» aldri kommer. */
+function spillKoe(mitt){
+  if (mitt !== taleNr) return;
+  const navn = taleKoe.shift();
+  if (navn === undefined){ taleGaar = false; taleVern = false; spillerNaa = null; return; }
+  const a = hentLyd(navn);
+  let brukt = false;
+  const videre = () => {
+    if (brukt) return;
+    brukt = true;
+    if (taleVakt){ clearTimeout(taleVakt); taleVakt = null; }
+    a.removeEventListener("ended", videre);
+    a.removeEventListener("error", videre);
+    spillKoe(mitt);
+  };
+  a.addEventListener("ended", videre);
+  a.addEventListener("error", videre);
+  try { a.currentTime = 0; } catch(e){}
+  spillerNaa = a;
+  const p = a.play();
+  if (p && p.catch) p.catch(videre);
+  taleVakt = setTimeout(videre, (isFinite(a.duration) ? a.duration * 1000 : 6000) + 1200);
+}
 /* si("bygg-setningen","setn-katten-sover-godt") spiller filene etter
-   hverandre. Ny si() avbryter den forrige, og en fil som mangler
-   hopper vi bare over. */
+   hverandre. Ny si() avbryter den forrige. */
 function si(...navn){
   if (!lydPaa || !navn.length) return;
   stoppTale();
-  const mitt = taleNr;
-  const kjoer = i => {
-    if (i >= navn.length || mitt !== taleNr) return;
-    const a = hentLyd(navn[i]);
-    let brukt = false;
-    const videre = () => {
-      if (brukt) return;
-      brukt = true;
-      a.removeEventListener("ended", videre);
-      a.removeEventListener("error", videre);
-      if (mitt === taleNr) kjoer(i + 1);
-    };
-    a.addEventListener("ended", videre);
-    a.addEventListener("error", videre);
-    try { a.currentTime = 0; } catch(e){}
-    spillerNaa = a;
-    const p = a.play();
-    if (p && p.catch) p.catch(videre);
-  };
-  kjoer(0);
+  taleKoe = navn.slice();
+  taleGaar = true;
+  spillKoe(taleNr);
 }
+/* Korte tilbakemeldinger som SKAL bli ferdigsnakket – «punktum» og
+   «stor forbokstav». De varer under to sekunder, men rosen kom før
+   og hugget dem av på midten. siKort() merker replikken som vernet,
+   og både neste siKort() og siEtter() legger seg da bak i køen i
+   stedet for å avbryte. Legger eleven forbokstaven og punktumet rett
+   etter hverandre, blir begge sagt – i den rekkefølgen kortene kom. */
+function siKort(...navn){
+  if (taleVern && taleGaar){ taleKoe.push(...navn); return; }
+  si(...navn);
+  if (taleGaar) taleVern = true;
+}
+/* Rosen etter et riktig svar. Venter bare på en vernet replikk – går
+   det et spørsmål (som er ti sekunder langt), avbryter vi som før. */
+function siEtter(...navn){
+  if (!lydPaa || !navn.length) return;
+  if (taleVern && taleGaar){ taleKoe.push(...navn); return; }
+  si(...navn);
+}
+/* Hvor mange millisekunder tale som står igjen. Pausene mellom rundene
+   bruker dette til å vokse med replikkene i stedet for å gjette. */
+function taleRest(){
+  let ms = 0;
+  if (taleGaar && spillerNaa && isFinite(spillerNaa.duration))
+    ms += Math.max(0, spillerNaa.duration - spillerNaa.currentTime) * 1000;
+  taleKoe.forEach(n => {
+    const a = hentLyd(n);
+    if (isFinite(a.duration)) ms += a.duration * 1000;
+  });
+  return Math.round(ms);
+}
+/* Vanlig pause, men aldri kortere enn det som står igjen å si. */
+const pauseFor = ms => Math.max(ms, taleRest() + 400);
 /* I «Flere samtidig» er talen strupet til et minimum: fire flater som
    snakker i munnen på hverandre blir bare rot. Der får elevene korte
    lydeffekter i stedet – bare den felles «alle sammen»-fanfaren leses
    opp. tale() brukes derfor for alt som hører til én enkelt elev. */
-const tale = (...navn) => { if (app.modus !== "flere") si(...navn); };
+const tale      = (...navn) => { if (app.modus !== "flere") si(...navn); };
+const taleKort  = (...navn) => { if (app.modus !== "flere") siKort(...navn); };
+const taleEtter = (...navn) => { if (app.modus !== "flere") siEtter(...navn); };
 /* Høyttalerknappen på bildekortet er bare med når én elev holder på om
    gangen – fire setninger samtidig blir bare kakofoni. */
 const lydknappPaa = () => app.modus !== "flere";
@@ -914,7 +1009,7 @@ function lagSetningslinje(s, fyltFraStart){
   const luker = [];
   for (let i = 0; i <= s.n; i++){
     const l = document.createElement("div");
-    l.className = "luke" + (i === 0 ? " stor" : "") + (i === s.n ? " punkt" : "");
+    l.className = "luke" + (i === s.n ? " punkt" : "");
     l.dataset.i = i;
     if (fyltFraStart){
       l.classList.add("fylt");
@@ -940,10 +1035,9 @@ function fyllLuke(luke, tekst){
    ------------------------------------------------------------
    Ordkortene ligger stokket på bordet under lukene, og eleven
    drar dem opp – eller trykker på kortet og så på luka, som
-   funker best på tavla. Kortet for det første ordet står med
-   liten forbokstav på bordet og får den store i det øyeblikket
-   det lander i første luke: det er selve poenget.
-   Punktumkortet er gult og må på plass til slutt.
+   funker best på tavla. Kortet for det første ordet bærer den
+   store forbokstaven: den er ledetråden til hvilket ord som skal
+   først. Punktumkortet er gult og må på plass til slutt.
    ============================================================ */
 function lukeUnder(x, y, luker){
   return luker.find(l => {
@@ -974,6 +1068,7 @@ function flyTil(el, fraRekt, tilRekt, cb, tid=450){
 
 function lagByggFlate(vert, farge, valg, unnta){
   const s = nesteSetning(unnta);
+  forbered(s.fil);
 
   const rot = document.createElement("div");
   rot.className = "byggspill";
@@ -993,7 +1088,7 @@ function lagByggFlate(vert, farge, valg, unnta){
   /* kortbordet – ordene stokket, punktumkortet med i bunken */
   const bord = document.createElement("div");
   bord.className = "kortbord";
-  const poster = s.ord.map((o, i) => ({ tekst: i === 0 ? o.toLowerCase() : o, i }));
+  const poster = s.ord.map((o, i) => ({ tekst: o, i }));
   poster.push({ tekst:".", i:s.n, tegn:true });
   const kortene = [];
   bland(poster).forEach(p => {
@@ -1057,8 +1152,8 @@ function lagByggFlate(vert, farge, valg, unnta){
       kort._plass.remove();
       igjen--;
       if (!bord.children.length) bord.classList.add("tomt");
-      if (erPunktum){ lydPunktum(); tale("punktum"); }
-      else if (kort._i === 0){ lydKlikk(); tale("stor-forbokstav"); }
+      if (erPunktum){ lydPunktum(); taleKort("punktum"); }
+      else if (kort._i === 0){ lydKlikk(); taleKort("stor-forbokstav"); }
       else lydKlikk();
       const lr = luke.getBoundingClientRect();
       konfetti(lr.left + lr.width/2, lr.top + lr.height/2, 18, 0.7);
@@ -1071,7 +1166,7 @@ function lagByggFlate(vert, farge, valg, unnta){
     valg.paaRiktig && valg.paaRiktig();
     const r = linje.getBoundingClientRect();
     konfetti(r.left + r.width/2, r.top + r.height/2, 55, 1);
-    senere(() => tale("riktig", s.fil), 320);
+    senere(() => taleEtter("riktig", s.fil), 320);
     valg.paaFerdig && senere(valg.paaFerdig, 2600);
   }
 
@@ -1207,7 +1302,7 @@ function plasserBallonger(himmel, poster, ballongFarger){
     const kropp = document.createElement("div");
     kropp.className = "ballongkropp";
     kropp.style.background = ballongFarger[i % ballongFarger.length];
-    kropp.textContent = p.tekst;
+    kropp.textContent = p.vis || p.tekst;
     const snor = document.createElement("div");
     snor.className = "ballongsnor";
     snor.style.transform = "rotate(" + (Math.random() < 0.5 ? -5 : 5) + "deg)";
@@ -1440,11 +1535,12 @@ function flygOrdTilLuke(rot, fraRekt, luke, tekst, ferdigCb){
    Hele setningen står ferdig bortsett fra ett ord. Tre ballonger
    svever – ett riktig ord og to av samme ordklasse. Treffer
    eleven feil, sprekker den ballongen og er ute av spill.
-   Er det første ordet som mangler, får det stor forbokstav i det
-   det lander i luka.
+   Er det første ordet som mangler, står alle tre ballongene med
+   stor forbokstav – ellers ville bokstaven røpet svaret.
    ============================================================ */
 function lagManglerFlate(vert, farge, valg, unnta){
   const s = nesteSetning(unnta);
+  forbered(s.fil);
   /* Luka legges på et ord det fins nok av samme slag til å lage
      avledere av. Bindeord (og, enn) og tallord er det for få av i
      banken – de hoppes over, ellers blir de to andre ballongene
@@ -1471,7 +1567,8 @@ function lagManglerFlate(vert, farge, valg, unnta){
   gap.textContent = "?";
   topp.appendChild(boks); topp.appendChild(linje);
 
-  const poster = bland([riktig, ...lagAvledere(s, idx, 2)]).map(o => ({ tekst:o }));
+  const poster = bland([riktig, ...lagAvledere(s, idx, 2)])
+    .map(o => ({ tekst:o, vis: idx === 0 ? stor(o) : o }));
 
   let ferdig = false;
 
@@ -1484,9 +1581,9 @@ function lagManglerFlate(vert, farge, valg, unnta){
       b.classList.add("treff-riktig");
       valg.paaRiktig && valg.paaRiktig();
       flygOrdTilLuke(rot, kr, gap, idx === 0 ? stor(riktig) : riktig, () => {
-        if (idx === 0) tale("stor-forbokstav");
+        if (idx === 0) taleKort("stor-forbokstav");
       });
-      senere(() => tale("riktig", s.fil), 700);
+      senere(() => taleEtter("riktig", s.fil), 700);
       valg.paaFerdig && senere(valg.paaFerdig, 2500);
     } else {
       b.classList.add("treff-feil");
@@ -1516,9 +1613,320 @@ function lagManglerFlate(vert, farge, valg, unnta){
 }
 
 function lagOppgave(vert, farge, valg, unnta){
-  return app.oppgave === "mangler"
-    ? lagManglerFlate(vert, farge, valg, unnta)
-    : lagByggFlate(vert, farge, valg, unnta);
+  if (app.oppgave === "mangler") return lagManglerFlate(vert, farge, valg, unnta);
+  if (app.oppgave === "slange")  return lagSlangeFlate(vert, farge, valg, unnta);
+  return lagByggFlate(vert, farge, valg, unnta);
+}
+</script>
+
+<script>
+/* ============================================================
+   OPPGAVE 3 – SLANGESPILLET
+   ------------------------------------------------------------
+   Klassisk snake, men uten død: brettet er et rutenett, slangen
+   går jevnt framover, og eleven styrer med sveip hvor som helst
+   på brettet (eller piltastene). Et trykk uten sveip svinger
+   slangen mot fingeren – kjekt på tavla. Ordene i setningen
+   ligger strødd utover, og slangen spiser dem i riktig
+   rekkefølge: ordet med stor forbokstav først, punktumet sist.
+   Feil ord gir bare en liten rist og «prøv igjen» – ordet blir
+   stående. Går slangen ut av brettet, kommer den inn igjen på
+   andre sida, og halen er ufarlig å krysse. For hvert spiste ord
+   vokser halen litt og farten øker et knepp.
+
+   Fungerer i «Flere samtidig»: hvert brett sporer sin egen
+   peker, så fire slanger på tavla går fint.
+   ============================================================ */
+const RETNINGER = {
+  ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0}
+};
+/* Hodet peker dit slangen går; SVG-ansiktet er tegnet med nesa opp. */
+const SLANGE_GRADER = { "0,-1":0, "1,0":90, "0,1":180, "-1,0":270 };
+
+let slangeHintVist = false;  /* «Sveip for å styre!» vises til første sving i økta */
+
+/* To glade «nam»-toner når slangen får i seg riktig ord. */
+function lydNam(){ tone(540,0.07,"triangle",0.13); tone(820,0.1,"triangle",0.13,0.07); }
+
+function lagSlangeFlate(vert, farge, valg, unnta){
+  const s = nesteSetning(unnta);
+  forbered(s.fil);
+
+  const rot = document.createElement("div");
+  rot.className = "slangespill";
+
+  /* bildet + setningslinja med tomme luker – fylles etter hvert
+     som slangen spiser. Gjenbruker buetoppens størrelser. */
+  const topp = document.createElement("div");
+  topp.className = "buetopp";
+  const boks = lagBildeboks(s, true);
+  boks.style.borderColor = farge;
+  boks.style.display = app.visBilde ? "" : "none";
+  const linje = lagSetningslinje(s, false);
+  const luker = linje._luker;
+  topp.appendChild(boks); topp.appendChild(linje);
+
+  const brett = document.createElement("div");
+  brett.className = "slangebrett";
+
+  rot.appendChild(topp); rot.appendChild(brett);
+  vert.appendChild(rot);
+
+  /* ordbrikkene: alle ordene + punktumet. Første ord beholder den
+     store forbokstaven – det er ledetråden, akkurat som på kortene. */
+  const poster = s.ord.map((o, i) => ({ tekst:o, i }));
+  poster.push({ tekst:".", i:s.n, tegn:true });
+  poster.forEach(p => {
+    const el = document.createElement("div");
+    el.className = "ordbrikke" + (p.tegn ? " tegn" : "");
+    el.textContent = p.tekst;
+    p.el = el; p.spist = false; p.inne = false;
+    brett.appendChild(el);
+  });
+
+  let hint = null;
+  if (!slangeHintVist){
+    hint = document.createElement("div");
+    hint.className = "slangehint"; hint.textContent = "🐍 Sveip for å styre slangen!";
+    brett.appendChild(hint);
+  }
+
+  /* ---------- rutenett og tilstand ---------- */
+  let rute = 0, kol = 0, rad = 0, ox = 0, oy = 0;
+  let slange = [], ledd = [];
+  let retning = {x:1,y:0}, nesteRetning = null, vinkelNaa = 90;
+  let nesteIdx = 0, ferdig = false, vokse = 0, tikkMs = 360, startet = false;
+
+  const cx = c => ox + (c.x + 0.5) * rute;
+  const cy = c => oy + (c.y + 0.5) * rute;
+
+  /* Regner ut rutenettet fra brettets faktiske størrelse, så det
+     kjennes likt i stor arena og i en liten firedelt celle. */
+  function maal(){
+    const B = brett.clientWidth, H = brett.clientHeight;
+    if (B < 60 || H < 60) return false;
+    rute = Math.max(18, Math.min(52, Math.floor(Math.min(B, H) / 10)));
+    kol = Math.max(6, Math.floor(B / rute));
+    rad = Math.max(5, Math.floor(H / rute));
+    ox = Math.round((B - kol * rute) / 2);
+    oy = Math.round((H - rad * rute) / 2);
+    /* sjakkbrett i to grønntoner, på linje med rutenettet */
+    brett.style.backgroundImage = "conic-gradient(#e6f6d3 0 25%, #d8efc0 0 50%, #e6f6d3 0 75%, #d8efc0 0)";
+    brett.style.backgroundSize = (rute * 2) + "px " + (rute * 2) + "px";
+    brett.style.backgroundPosition = ox + "px " + oy + "px";
+    return true;
+  }
+
+  /* Hodet snur alltid korteste vei, så det ikke spinner 270 grader. */
+  function nyVinkel(){
+    const m = SLANGE_GRADER[retning.x + "," + retning.y];
+    vinkelNaa += (m - (vinkelNaa % 360) + 540) % 360 - 180;
+  }
+
+  function stillLedd(el, c, erHode, hopp){
+    const st = el._st;
+    const t = "translate(" + Math.round(cx(c) - st/2) + "px," + Math.round(cy(c) - st/2) + "px)"
+            + (erHode ? " rotate(" + vinkelNaa + "deg)" : "");
+    if (hopp){
+      /* nytt ledd eller hopp gjennom veggen: ingen glidning tvers over brettet */
+      el.style.transition = "none";
+      el.style.transform = t;
+      void el.offsetWidth;
+      el.style.transition = "transform " + tikkMs + "ms linear";
+    } else {
+      el.style.transform = t;
+    }
+  }
+
+  function lagLedd(i, c){
+    const el = document.createElement("div");
+    el.className = i === 0 ? "slangehode" : "slangeledd" + (i % 2 ? " lys" : "");
+    const st = Math.round(rute * (i === 0 ? 0.94 : 0.84));
+    el._st = st; el._c = c;
+    el.style.width = st + "px"; el.style.height = st + "px";
+    if (i === 0) el.innerHTML = '<span class="oye v"></span><span class="oye h"></span><span class="tunge"></span>';
+    stillLedd(el, c, i === 0, true);
+    brett.appendChild(el);
+    return el;
+  }
+
+  /* ---------- ett steg fram ---------- */
+  function steg(){
+    if (nesteRetning){ retning = nesteRetning; nesteRetning = null; nyVinkel(); }
+    const hode = { x:(slange[0].x + retning.x + kol) % kol,
+                   y:(slange[0].y + retning.y + rad) % rad };
+    slange.unshift(hode);
+    if (vokse > 0) vokse--;
+    else slange.pop();
+    while (ledd.length < slange.length)
+      ledd.push(lagLedd(ledd.length, slange[slange.length - 1]));
+    for (let i = 0; i < slange.length; i++){
+      const c = slange[i], g = ledd[i]._c;
+      const hopp = !g || Math.abs(c.x - g.x) > 1 || Math.abs(c.y - g.y) > 1;
+      ledd[i]._c = c;
+      stillLedd(ledd[i], c, i === 0, hopp);
+    }
+    sjekkSpis();
+  }
+
+  /* Hodesenteret mot brikkerektangelet – med litt slingringsmonn.
+     inne-flagget gjør at et feil ord bare sier fra én gang per
+     besøk, ikke på hvert tikk mens slangen glir over. */
+  function sjekkSpis(){
+    const hr = brett.getBoundingClientRect();
+    const hx = cx(slange[0]), hy = cy(slange[0]);
+    for (const p of poster){
+      if (p.spist || !p.el.isConnected) continue;
+      const r = p.el.getBoundingClientRect();
+      const inne = hx >= r.left - hr.left - 4 && hx <= r.right - hr.left + 4 &&
+                   hy >= r.top - hr.top - 4 && hy <= r.bottom - hr.top + 4;
+      if (inne && !p.inne){ p.inne = true; spis(p); }
+      else if (!inne) p.inne = false;
+    }
+  }
+
+  function spis(p){
+    if (ferdig) return;
+    if (p.i !== nesteIdx){
+      lydFeil();
+      p.el.classList.add("feil");
+      setTimeout(() => p.el.classList.remove("feil"), 400);
+      valg.paaBom && valg.paaBom();
+      tale("proev-igjen");
+      return;
+    }
+    p.spist = true;
+    const r = p.el.getBoundingClientRect();
+    p.el.remove();
+    lydNam();
+    const erPunktum = p.i === s.n;
+    const tekst = erPunktum ? "." : (p.i === 0 ? stor(p.tekst) : p.tekst);
+    flygOrdTilLuke(rot, r, luker[p.i], tekst, () => {
+      if (erPunktum){ lydPunktum(); taleKort("punktum"); }
+      else if (p.i === 0) taleKort("stor-forbokstav");
+    });
+    nesteIdx++;
+    vokse += 2;
+    tikkMs = Math.max(240, tikkMs - 18);
+    ledd.forEach(el => { el.style.transition = "transform " + tikkMs + "ms linear"; });
+    if (nesteIdx > s.n) heleSetningen();
+  }
+
+  function heleSetningen(){
+    ferdig = true;                      /* stopper tikkinga – slangen fryser fornøyd */
+    valg.paaRiktig && valg.paaRiktig();
+    const r = linje.getBoundingClientRect();
+    konfetti(r.left + r.width/2, r.top + r.height/2, 55, 1);
+    senere(() => taleEtter("riktig", s.fil), 600);
+    valg.paaFerdig && senere(valg.paaFerdig, 2600);
+  }
+
+  /* ---------- ordbrikkene utover brettet ----------
+     Brikkene ankres i tilfeldige ruter, klemmes innenfor kantene,
+     og legges aldri oppå hverandre eller i slangens startbane. */
+  function plasserBrikker(){
+    const B = brett.clientWidth, H = brett.clientHeight;
+    const lagt = [];
+    const sy = Math.floor(rad / 2);
+    const startSone = { left:0, right:ox + 6.5 * rute,
+                        top:oy + (sy - 1.6) * rute, bottom:oy + (sy + 2.6) * rute };
+    poster.forEach(p => {
+      const bw = p.el.offsetWidth, bh = p.el.offsetHeight;
+      let valgt = null;
+      for (let fors = 0; fors < 240 && !valgt; fors++){
+        const c = { x:Math.floor(Math.random() * kol), y:Math.floor(Math.random() * rad) };
+        const x = Math.max(bw/2 + 6, Math.min(B - bw/2 - 6, cx(c)));
+        const y = Math.max(bh/2 + 6, Math.min(H - bh/2 - 6, cy(c)));
+        const r = { left:x - bw/2 - 8, right:x + bw/2 + 8, top:y - bh/2 - 8, bottom:y + bh/2 + 8 };
+        const krasj = lagt.some(a => r.left < a.right && r.right > a.left && r.top < a.bottom && r.bottom > a.top)
+          || (r.left < startSone.right && r.right > startSone.left && r.top < startSone.bottom && r.bottom > startSone.top);
+        if (!krasj) valgt = { x, y, r };
+      }
+      if (!valgt){
+        /* trangt brett (mange ord i liten celle): slipp sonekravet */
+        const c = { x:Math.floor(Math.random() * kol), y:Math.floor(Math.random() * rad) };
+        const x = Math.max(bw/2 + 6, Math.min(B - bw/2 - 6, cx(c)));
+        const y = Math.max(bh/2 + 6, Math.min(H - bh/2 - 6, cy(c)));
+        valgt = { x, y, r:{ left:x - bw/2 - 8, right:x + bw/2 + 8, top:y - bh/2 - 8, bottom:y + bh/2 + 8 } };
+      }
+      lagt.push(valgt.r);
+      p.el.style.left = Math.round(valgt.x - bw/2) + "px";
+      p.el.style.top = Math.round(valgt.y - bh/2) + "px";
+    });
+  }
+
+  /* ---------- styring ---------- */
+  function settRetning(r){
+    if (!r || ferdig) return;
+    if (r.x === retning.x && r.y === retning.y) return;
+    if (r.x === -retning.x && r.y === -retning.y) return;   /* ikke rett bakover */
+    nesteRetning = r;
+    if (hint){ hint.remove(); hint = null; slangeHintVist = true; }
+  }
+
+  let sveip = null;
+  brett.addEventListener("pointerdown", e => {
+    sveip = { id:e.pointerId, x:e.clientX, y:e.clientY, flyttet:false };
+    try { brett.setPointerCapture(e.pointerId); } catch(err){}
+    e.preventDefault();
+  });
+  brett.addEventListener("pointermove", e => {
+    if (!sveip || e.pointerId !== sveip.id) return;
+    const dx = e.clientX - sveip.x, dy = e.clientY - sveip.y;
+    if (Math.hypot(dx, dy) < 16) return;
+    sveip.flyttet = true;
+    settRetning(Math.abs(dx) > Math.abs(dy) ? { x:Math.sign(dx), y:0 } : { x:0, y:Math.sign(dy) });
+    /* nullstill utgangspunktet, så eleven kan styre i én lang dragning */
+    sveip.x = e.clientX; sveip.y = e.clientY;
+  });
+  brett.addEventListener("pointerup", e => {
+    if (!sveip || e.pointerId !== sveip.id) return;
+    if (!sveip.flyttet && slange.length){
+      /* et rent trykk: sving mot fingeren */
+      const hr = brett.getBoundingClientRect();
+      const dx = e.clientX - hr.left - cx(slange[0]);
+      const dy = e.clientY - hr.top - cy(slange[0]);
+      settRetning(Math.abs(dx) > Math.abs(dy) ? { x:Math.sign(dx) || 1, y:0 } : { x:0, y:Math.sign(dy) || 1 });
+    }
+    sveip = null;
+  });
+  brett.addEventListener("pointercancel", e => { if (sveip && e.pointerId === sveip.id) sveip = null; });
+
+  /* ---------- i gang ---------- */
+  let sisteTikk = 0;
+  function loop(naa){
+    if (!brett.isConnected || ferdig) return;   /* flata er revet ned eller ferdig */
+    if (startet && naa - sisteTikk >= tikkMs){ sisteTikk = naa; steg(); }
+    requestAnimationFrame(loop);
+  }
+  function start(){
+    if (!brett.isConnected) return;
+    if (!maal()){ requestAnimationFrame(start); return; }
+    const sy = Math.floor(rad / 2);
+    const sx = Math.min(kol - 2, 3);
+    slange = [ {x:sx,y:sy}, {x:(sx-1+kol)%kol,y:sy}, {x:(sx-2+kol)%kol,y:sy} ];
+    slange.forEach((c, i) => ledd.push(lagLedd(i, c)));
+    plasserBrikker();
+    startet = true;
+    sisteTikk = performance.now();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(start);
+
+  return {
+    fil: s.fil,
+    styr: tast => settRetning(RETNINGER[tast]),
+    settBilde: paa => { boks.style.display = paa ? "" : "none"; },
+    visMeg: () => {
+      if (ferdig) return;
+      const p = poster.find(x => x.i === nesteIdx && !x.spist);
+      if (!p || !p.el.isConnected) return;
+      p.el.classList.add("hint");
+      tale(s.fil);
+      setTimeout(() => p.el.classList.remove("hint"), 2200);
+    },
+    sporsmaal: () => si("spis-ordene", s.fil)
+  };
 }
 </script>
 
@@ -1679,7 +2087,7 @@ function turFerdigOppgave(){
     konfetti(r.left + r.width/2, r.top + r.height/2, 30, 0.8);
     const igjen = app.runder - app.rep;
     heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
-    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 2100);
+    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, pauseFor(2100));
     return;
   }
 
@@ -1689,7 +2097,8 @@ function turFerdigOppgave(){
   app.tur++; app.rep = 0;
 
   /* Talen skal rekke å bli ferdig før neste replikk starter – si() avbryter
-     den forrige. Pausene under har litt margin oppå replikklengdene. */
+     den forrige. pauseFor() holder den vanlige pausen, men strekker den hvis
+     det fortsatt står ros og setning igjen i talekøen. */
   if (app.tur < app.antall){
     senere(()=>{
       visJubel("NESTE ELEV!", LAG[app.tur].farge, null, 2400);
@@ -1704,10 +2113,10 @@ function turFerdigOppgave(){
         merkAktivElev();
         lagTurFlate();
       }, 2400);
-    }, 2200);
+    }, pauseFor(2200));
   } else {
     merkAktivElev();
-    senere(alleFerdige, 2200);
+    senere(alleFerdige, pauseFor(2200));
   }
 }
 
@@ -1938,6 +2347,13 @@ $("#visMenyKnapp").addEventListener("click", () => document.body.classList.remov
 /* --- tastatur for læreren --- */
 addEventListener("keydown", e => {
   if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+  /* I slangespillet styrer piltastene slangen – bruk «Neste setning»-
+     knappen (eller mellomrom for ny runde) for å hoppe videre. */
+  if (app.oppgave === "slange" && RETNINGER[e.key]){
+    e.preventDefault();
+    app.flater.forEach(f => f && f.styr && f.styr(e.key));
+    return;
+  }
   if (e.key === "ArrowRight"){ hoppTilNeste(); return; }
   if (e.key === " "){ e.preventDefault(); nyRunde(); return; }
   if (e.key === "Enter"){ $("#visKnapp").click(); return; }
