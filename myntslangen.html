@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Myntslangen – Myntland</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-behavior:none;
+  background:linear-gradient(180deg,#bfeaf2 0%,#cdeede 42%,#dcefc7 70%,#e7f3bf 100%);
+  font-family:'Fredoka',system-ui,sans-serif;color:#2a1f3d;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+*{box-sizing:border-box;}
+button{font-family:'Fredoka',system-ui,sans-serif;}
+input{font-family:'Fredoka',system-ui,sans-serif;}
+.skjult{display:none !important;}
+
+@keyframes puls{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+@keyframes sprett{from{transform:scale(.3);opacity:0;}40%{transform:scale(1.12);opacity:1;}to{transform:scale(1);opacity:1;}}
+@keyframes popin{from{opacity:0;transform:translateY(26px) scale(.96);}to{opacity:1;transform:none;}}
+@keyframes blunk{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+#spillflate{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+
+/* ---------- overlegg-skjermer ---------- */
+.midt{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:2vh 2vw;overflow:auto;}
+.kort{width:min(1120px,95vw);background:#fbf2d6;border:4px solid #2a1f3d;border-radius:26px;
+  box-shadow:0 10px 0 rgba(42,31,61,.18),0 16px 30px rgba(42,31,61,.16);
+  padding:clamp(14px,2.4vh,30px) clamp(18px,3vw,42px);
+  animation:popin .5s cubic-bezier(.34,1.56,.64,1) both;}
+.merkelapp{display:flex;justify-content:center;margin-bottom:6px;}
+.merkelapp span{background:#2a1f3d;color:#fbf2d6;font-size:clamp(11px,1.7vh,18px);font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;padding:5px 18px;border-radius:30px;}
+.tittel{font-weight:700;font-size:clamp(30px,6vh,74px);line-height:.95;letter-spacing:2px;text-align:center;
+  margin:0 0 .12em;color:#e3a82a;-webkit-text-stroke:6px #2a1f3d;paint-order:stroke fill;text-shadow:5px 6px 0 #2a1f3d;}
+.undertittel{text-align:center;margin:0 0 clamp(10px,2vh,22px);font-family:'DM Serif Display',Georgia,serif;
+  font-style:italic;font-size:clamp(15px,2.3vh,26px);color:#4a3c63;}
+.seksjon{margin-bottom:clamp(8px,1.8vh,20px);}
+.seksjon-tittel{text-align:center;font-size:clamp(11px,1.6vh,17px);font-weight:700;text-transform:uppercase;
+  letter-spacing:2px;color:#4a3c63;margin:0 0 .55em;}
+.valgrad{display:flex;flex-wrap:wrap;gap:clamp(8px,1.3vw,16px);justify-content:center;}
+.valgknapp{font-weight:700;font-size:clamp(15px,2.2vh,26px);border:4px solid #2a1f3d;border-radius:18px;
+  padding:.4em 1.1em;min-width:3.2em;cursor:pointer;box-shadow:0 5px 0 rgba(42,31,61,.25);
+  background:#fffaf0;color:#2a1f3d;}
+.valgknapp:active{transform:translateY(4px);box-shadow:none;}
+.valgknapp.aktiv{background:#e3a82a;color:#fff;}
+.navnrad{display:flex;flex-wrap:wrap;gap:clamp(8px,1.2vw,14px);justify-content:center;}
+.navnkort{flex:1 1 190px;max-width:250px;background:#fffaf0;border:4px solid #2a1f3d;border-radius:18px;
+  box-shadow:0 5px 0 rgba(42,31,61,.16);padding:10px 12px 12px;}
+.navnkort .merke{display:inline-block;font-weight:700;font-size:clamp(11px,1.6vh,15px);color:#fff;
+  border:3px solid #2a1f3d;border-radius:30px;padding:.15em .8em;margin-bottom:8px;}
+.navnkort input{width:100%;border:3px solid #2a1f3d;border-radius:12px;padding:.4em .6em;font-weight:600;
+  font-size:clamp(14px,2vh,20px);color:#2a1f3d;background:#fff;outline:none;}
+.hovedknapper{display:flex;flex-wrap:wrap;gap:clamp(8px,1.3vw,16px);justify-content:center;margin-top:clamp(8px,1.8vh,20px);}
+.startknapp{font-weight:700;font-size:clamp(17px,2.7vh,30px);background:#7bb026;color:#fff;border:4px solid #2a1f3d;
+  border-radius:20px;padding:.42em 1.5em;cursor:pointer;box-shadow:0 7px 0 rgba(42,31,61,.3);}
+.startknapp:active{transform:translateY(5px);box-shadow:0 2px 0 rgba(42,31,61,.3);}
+.sekundknapp{font-weight:700;font-size:clamp(15px,2.3vh,26px);background:#fffaf0;color:#2a1f3d;border:4px solid #2a1f3d;
+  border-radius:20px;padding:.42em 1.2em;cursor:pointer;box-shadow:0 7px 0 rgba(42,31,61,.22);}
+.sekundknapp:active{transform:translateY(5px);box-shadow:0 2px 0 rgba(42,31,61,.22);}
+.hjelpetekst{text-align:center;margin:clamp(10px,1.8vh,18px) 0 0;font-size:clamp(11px,1.6vh,16px);
+  font-weight:500;color:#4a3c63;line-height:1.5;}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none;}
+#hudMidt{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;align-items:center;
+  gap:clamp(6px,1vw,14px);flex-wrap:nowrap;max-width:96vw;}
+#klokke{background:#fbf2d6;border:4px solid #2a1f3d;border-radius:22px;box-shadow:0 6px 0 rgba(42,31,61,.2);
+  padding:.02em .55em;min-width:2.6em;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;
+  font-size:clamp(22px,4.6vh,46px);color:#2a1f3d;}
+#klokke.hast{color:#e64b3b;animation:puls .8s ease-in-out infinite;}
+.poengchip{display:flex;align-items:center;gap:clamp(4px,.6vw,9px);background:#fbf2d6;border:3px solid #2a1f3d;
+  border-radius:16px;box-shadow:0 4px 0 rgba(42,31,61,.18);padding:.18em .6em;font-weight:700;
+  font-size:clamp(12px,2.2vh,22px);white-space:nowrap;}
+.poengchip .prikk{width:.75em;height:.75em;border-radius:50%;border:2.5px solid #2a1f3d;flex:none;}
+.poengchip .cnavn{max-width:6.5em;overflow:hidden;text-overflow:ellipsis;}
+.poengchip .cpoeng{color:#c8901a;font-variant-numeric:tabular-nums;}
+.poengchip.frossen{background:#d7ecf7;}
+.poengchip.frossen .cfrys{animation:blunk .5s linear infinite;}
+.hudknapp{position:absolute;top:12px;pointer-events:auto;width:clamp(40px,5.4vh,56px);height:clamp(40px,5.4vh,56px);
+  display:grid;place-items:center;border:4px solid #2a1f3d;border-radius:50%;background:#fffaf0;color:#2a1f3d;
+  font-weight:700;font-size:clamp(16px,2.5vh,25px);cursor:pointer;box-shadow:0 5px 0 rgba(42,31,61,.25);}
+.hudknapp:active{transform:translateY(4px);box-shadow:none;}
+#knStopp{left:12px;background:#e64b3b;color:#fff;}
+#knFull{right:calc(clamp(40px,5.4vh,56px) + 22px);}
+#knLyd{right:12px;}
+
+/* ---------- piltast-pader ---------- */
+#pads{position:fixed;left:0;right:0;bottom:6px;z-index:11;display:flex;justify-content:space-evenly;
+  align-items:flex-end;gap:8px;pointer-events:none;}
+.pad{display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:auto;}
+.padgrid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:5px;
+  width:clamp(108px,17vh,168px);height:clamp(108px,17vh,168px);}
+.padbtn{border:3px solid #2a1f3d;border-radius:14px;cursor:pointer;display:grid;place-items:center;
+  font-size:clamp(17px,2.9vh,30px);font-weight:700;color:#2a1f3d;box-shadow:0 4px 0 rgba(42,31,61,.28);
+  padding:0;line-height:1;touch-action:manipulation;}
+.padbtn:active{transform:translateY(3px);box-shadow:none;}
+.padmidt{display:grid;place-items:center;}
+.padmidt .prikk{width:55%;height:55%;border-radius:50%;border:3px solid #2a1f3d;}
+.padnavn{font-weight:700;font-size:clamp(11px,1.7vh,16px);color:#2a1f3d;background:#fbf2d6;
+  border:3px solid #2a1f3d;border-radius:30px;padding:.05em .7em;max-width:11em;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;box-shadow:0 3px 0 rgba(42,31,61,.18);}
+.padtast{font-size:clamp(9px,1.3vh,12px);font-weight:600;color:#4a3c63;letter-spacing:1px;}
+
+/* ---------- nedtelling ---------- */
+#nedOverlay{position:fixed;inset:0;z-index:30;display:grid;place-items:center;pointer-events:none;
+  background:rgba(251,242,214,.28);}
+#nedTekst{font-weight:700;letter-spacing:2px;color:#e3a82a;-webkit-text-stroke:8px #2a1f3d;
+  paint-order:stroke fill;text-shadow:8px 9px 0 #2a1f3d;animation:sprett .9s ease-out;}
+
+/* ---------- sluttskjerm ---------- */
+#skjermSlutt{background:rgba(13,10,22,.28);}
+.resultliste{display:flex;flex-direction:column;gap:clamp(7px,1.2vh,13px);margin:0 0 clamp(10px,2vh,22px);}
+.resultrad{display:flex;align-items:center;gap:clamp(8px,1.4vw,18px);border:4px solid #2a1f3d;border-radius:18px;
+  padding:clamp(7px,1.3vh,15px) clamp(12px,2vw,22px);}
+.resultrad .medalje{font-weight:700;font-size:clamp(20px,3.4vh,38px);width:1.7em;text-align:center;}
+.resultrad .prikk{width:clamp(18px,2.6vh,28px);height:clamp(18px,2.6vh,28px);border-radius:50%;
+  border:3px solid #2a1f3d;flex:none;}
+.resultrad .rnavn{font-weight:700;font-size:clamp(17px,3vh,34px);flex:1;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.resultrad .rpoeng{font-weight:700;font-size:clamp(17px,3vh,34px);color:#c8901a;font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+
+<canvas id="spillflate"></canvas>
+
+<!-- ============ STARTSKJERM ============ -->
+<div class="midt" id="skjermStart">
+  <div class="kort">
+    <div class="merkelapp"><span>✦ Myntland · Myntslangen ✦</span></div>
+    <h1 class="tittel">MYNTSLANGEN</h1>
+    <p class="undertittel">Spis flest mynter før tiden er ute – alle spiller samtidig på samme brett</p>
+
+    <div class="seksjon">
+      <p class="seksjon-tittel">Hvor mange spiller?</p>
+      <div class="valgrad" id="antallRad"></div>
+    </div>
+
+    <div class="seksjon">
+      <p class="seksjon-tittel">Kallenavn</p>
+      <div class="navnrad" id="navnRad"></div>
+    </div>
+
+    <div class="seksjon">
+      <p class="seksjon-tittel">Hvor lenge varer runden?</p>
+      <div class="valgrad" id="tidRad"></div>
+    </div>
+
+    <div class="seksjon">
+      <p class="seksjon-tittel">Hvor fort kryper slangene?</p>
+      <div class="valgrad" id="fartRad"></div>
+    </div>
+
+    <div class="hovedknapper">
+      <button class="startknapp" id="knStart">Start runden 🐍</button>
+      <button class="sekundknapp" id="knFullStart">⛶ Fullskjerm</button>
+    </div>
+
+    <p class="hjelpetekst">Styr slangen med <b>piltastene nederst på skjermen</b> – eller med tastaturet.<br>
+      🪙 vanlig mynt = <b>1 poeng</b> &nbsp;·&nbsp; ✨ gullmynt = <b>5 poeng</b> &nbsp;·&nbsp;
+      krasjer du i en annen slange eller veggen, rister slangen og står fast i <b>2 sekunder</b>.</p>
+  </div>
+</div>
+
+<!-- ============ HUD ============ -->
+<div id="hud" class="skjult">
+  <div id="hudMidt"></div>
+  <button class="hudknapp" id="knStopp" title="Avslutt runden">✕</button>
+  <button class="hudknapp" id="knFull" title="Fullskjerm">⛶</button>
+  <button class="hudknapp" id="knLyd" title="Lyd av/på">🔊</button>
+</div>
+
+<!-- ============ PILTAST-PADER ============ -->
+<div id="pads" class="skjult"></div>
+
+<!-- ============ NEDTELLING ============ -->
+<div id="nedOverlay" class="skjult"><span id="nedTekst"></span></div>
+
+<!-- ============ SLUTTSKJERM ============ -->
+<div class="midt skjult" id="skjermSlutt">
+  <div class="kort" style="width:min(1000px,94vw);">
+    <h1 class="tittel" style="font-size:clamp(28px,5.4vh,66px);">TIDEN ER UTE!</h1>
+    <p class="undertittel" id="vinnertekst"></p>
+    <div class="resultliste" id="resultliste"></div>
+    <div class="hovedknapper" style="margin-top:0;">
+      <button class="startknapp" id="knIgjen">Spill igjen 🔁</button>
+      <button class="sekundknapp" id="knTilbake">Endre spillere</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= konstanter ================= */
+var FARGER = [
+  { hex:'#e64b3b', lys:'#f79184' },
+  { hex:'#27b3c6', lys:'#7fdae6' },
+  { hex:'#7bb026', lys:'#b6df70' },
+  { hex:'#e3a82a', lys:'#ffd96b' }
+];
+var STD_NAVN = ['Stjerne','Drage','Måne','Bølge'];
+var TASTESETT = [
+  { navn:'Piltaster', opp:'ArrowUp', ned:'ArrowDown', venstre:'ArrowLeft', hoyre:'ArrowRight' },
+  { navn:'W A S D',   opp:'w', ned:'s', venstre:'a', hoyre:'d' },
+  { navn:'I J K L',   opp:'i', ned:'k', venstre:'j', hoyre:'l' },
+  { navn:'T F G H',   opp:'t', ned:'g', venstre:'f', hoyre:'h' }
+];
+var RETN = { opp:{x:0,y:-1}, ned:{x:0,y:1}, venstre:{x:-1,y:0}, hoyre:{x:1,y:0} };
+var COLS = 26, ROWS = 14;
+var FRYSETID = 2000;      /* ms fastfrosset etter krasj */
+var SPOKELSESTID = 1500;  /* ms uskadelig etter opptining */
+var STARTLENGDE = 4, MAKSLENGDE = 18;
+var GULLSJANSE = 0.13;
+
+/* ================= tilstand ================= */
+var innst = { antall:4, rundetid:90, tick:240, navn:STD_NAVN.slice(), lyd:true };
+var spill = { skjerm:'start', slanger:[], mynter:[], partikler:[], flytetekst:[], skyer:[],
+              tidIgjen:90, akk:0, sisteT:0, sisteSek:-1 };
+var brett = { x:0, y:0, celle:32, b:0, h:0 };
+var B=0, H=0, S=1;
+
+var lerret = document.getElementById('spillflate');
+var ctx = lerret.getContext('2d');
+
+function $(id){ return document.getElementById(id); }
+var elStart=$('skjermStart'), elSlutt=$('skjermSlutt'), elHud=$('hud'), elPads=$('pads'),
+    elNedO=$('nedOverlay'), elNed=$('nedTekst'), elHudMidt=$('hudMidt');
+
+/* ================= lyd ================= */
+var ac = null;
+function lk(){
+  if(!ac){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return null; ac = new AC(); }
+  if(ac.state === 'suspended') ac.resume();
+  return ac;
+}
+function tone(f1,f2,len,type,styrke,delay){
+  if(!innst.lyd) return;
+  var a = lk(); if(!a) return;
+  var t = a.currentTime + (delay||0);
+  var osc = a.createOscillator(), g = a.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(f1, t);
+  if(f2 && f2 !== f1) osc.frequency.exponentialRampToValueAtTime(Math.max(40,f2), t+len);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(styrke||0.14, t+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+len);
+  osc.connect(g); g.connect(a.destination);
+  osc.start(t); osc.stop(t+len+0.05);
+}
+function lydSpis(){ tone(880,880,0.09,'sine',0.16,0); tone(1320,1320,0.12,'sine',0.12,0.07); }
+function lydGull(){ [660,880,1180,1560].forEach(function(f,i){ tone(f,f,0.13,'sine',0.13,i*0.065); }); }
+function lydKrasj(){ tone(300,80,0.35,'sawtooth',0.12,0); tone(180,60,0.4,'square',0.08,0.05); }
+function lydTikk(){ tone(950,950,0.07,'square',0.07,0); }
+function lydFerdig(){ [523,659,784,1046].forEach(function(f,i){ tone(f,f,0.34,'triangle',0.15,i*0.15); }); }
+function lydSving(){ tone(520,640,0.05,'triangle',0.05,0); }
+
+/* ================= geometri ================= */
+function tilpass(){
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  B = window.innerWidth; H = window.innerHeight;
+  S = Math.max(0.55, Math.min(H/820, B/1450));
+  lerret.width = Math.round(B*dpr);
+  lerret.height = Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var topp  = Math.max(96, Math.min(H*0.17, 160));
+  var bunn  = Math.max(126, Math.min(H*0.24, 196));
+  /* mål de faktiske padene så brettet alltid slutter over pilene */
+  if(elPads && !elPads.classList.contains('skjult')){
+    var pr = elPads.getBoundingClientRect();
+    if(pr.height > 0) bunn = Math.max(bunn, (H - pr.top) + 16);
+  }
+  var celle = Math.floor(Math.min((B-28)/COLS, (H-topp-bunn)/ROWS));
+  celle = Math.max(14, celle);
+  brett.celle = celle;
+  brett.b = celle*COLS; brett.h = celle*ROWS;
+  brett.x = Math.round((B - brett.b)/2);
+  brett.y = Math.round(topp + (H - topp - bunn - brett.h)/2);
+  if(!spill.skyer.length) lagSkyer();
+}
+function lagSkyer(){
+  spill.skyer = [];
+  for(var i=0;i<6;i++) spill.skyer.push({
+    x: Math.random()*B, y: (0.04+Math.random()*0.1)*H,
+    r: (26+Math.random()*36)*S, fart: 5+Math.random()*10, alfa: 0.6+Math.random()*0.35
+  });
+}
+function cx(c){ return brett.x + c*brett.celle + brett.celle/2; }
+function cy(r){ return brett.y + r*brett.celle + brett.celle/2; }
+
+/* ================= startskjerm-UI ================= */
+function byggAntall(){
+  var rad = $('antallRad'); rad.innerHTML = '';
+  [1,2,3,4].forEach(function(n){
+    var kn = document.createElement('button');
+    kn.className = 'valgknapp' + (innst.antall===n ? ' aktiv' : '');
+    kn.textContent = n;
+    kn.onclick = function(){ innst.antall = n; byggAntall(); byggNavn(); };
+    rad.appendChild(kn);
+  });
+}
+function byggNavn(){
+  var rad = $('navnRad'); rad.innerHTML = '';
+  for(var i=0;i<innst.antall;i++)(function(i){
+    var kort = document.createElement('div'); kort.className = 'navnkort';
+    var merke = document.createElement('span'); merke.className = 'merke';
+    merke.style.background = FARGER[i].hex; merke.textContent = 'Slange ' + (i+1);
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.maxLength = 12; inp.value = innst.navn[i] || STD_NAVN[i];
+    inp.setAttribute('aria-label','Slange ' + (i+1) + ' kallenavn');
+    inp.oninput = function(){ innst.navn[i] = inp.value; };
+    kort.appendChild(merke); kort.appendChild(inp); rad.appendChild(kort);
+  })(i);
+}
+function byggTid(){
+  var rad = $('tidRad'); rad.innerHTML = '';
+  [{s:60,t:'1 min'},{s:90,t:'1½ min'},{s:120,t:'2 min'}].forEach(function(v){
+    var kn = document.createElement('button');
+    kn.className = 'valgknapp' + (innst.rundetid===v.s ? ' aktiv' : '');
+    kn.textContent = v.t;
+    kn.onclick = function(){ innst.rundetid = v.s; byggTid(); };
+    rad.appendChild(kn);
+  });
+}
+function byggFart(){
+  var rad = $('fartRad'); rad.innerHTML = '';
+  [{ms:320,t:'🐌 Rolig'},{ms:240,t:'🙂 Middels'},{ms:175,t:'⚡ Rask'}].forEach(function(v){
+    var kn = document.createElement('button');
+    kn.className = 'valgknapp' + (innst.tick===v.ms ? ' aktiv' : '');
+    kn.textContent = v.t;
+    kn.onclick = function(){ innst.tick = v.ms; byggFart(); };
+    rad.appendChild(kn);
+  });
+}
+
+/* ================= spillere ================= */
+function lagSlanger(){
+  var starter = [
+    { r:3,      c:5,      dir:'hoyre'   },
+    { r:ROWS-4, c:COLS-6, dir:'venstre' },
+    { r:3,      c:COLS-6, dir:'venstre' },
+    { r:ROWS-4, c:5,      dir:'hoyre'   }
+  ];
+  spill.slanger = [];
+  for(var i=0;i<innst.antall;i++){
+    var st = starter[i], d = RETN[st.dir];
+    var celler = [];
+    for(var k=0;k<STARTLENGDE;k++) celler.push({ c: st.c - d.x*k, r: st.r - d.y*k });
+    spill.slanger.push({
+      idx:i, navn: (innst.navn[i]||'').trim().substring(0,12) || STD_NAVN[i],
+      farge: FARGER[i], poeng:0, celler:celler, prev:kopier(celler),
+      dir:st.dir, onsket:st.dir, vekst:0,
+      frystTil:0, spokTil:0, ristFase:Math.random()*10
+    });
+  }
+}
+function kopier(celler){ return celler.map(function(p){ return {c:p.c, r:p.r}; }); }
+function motsatt(d){ return d==='opp'?'ned' : d==='ned'?'opp' : d==='venstre'?'hoyre' : 'venstre'; }
+
+function settRetning(i, dir){
+  var s = spill.slanger[i];
+  if(!s || spill.skjerm!=='spill') return;
+  if(dir === motsatt(s.dir) && s.celler.length > 1) return;
+  if(s.onsket !== dir){ s.onsket = dir; lydSving(); }
+}
+
+/* ================= mynter ================= */
+function ledigCelle(){
+  for(var fors=0; fors<200; fors++){
+    var c = Math.floor(Math.random()*COLS), r = Math.floor(Math.random()*ROWS);
+    var opptatt = spill.mynter.some(function(m){ return m.c===c && m.r===r; });
+    if(!opptatt) opptatt = spill.slanger.some(function(s){
+      return s.celler.some(function(p){ return p.c===c && p.r===r; });
+    });
+    if(!opptatt) return {c:c, r:r};
+  }
+  return null;
+}
+function lagMynt(){
+  var pos = ledigCelle(); if(!pos) return;
+  var gull = Math.random() < GULLSJANSE;
+  spill.mynter.push({ c:pos.c, r:pos.r, gull:gull, verdi:gull?5:1, fase:Math.random()*Math.PI*2 });
+}
+function fyllMynter(){
+  var maal = 3 + innst.antall;
+  while(spill.mynter.length < maal) lagMynt();
+}
+
+/* ================= effekter ================= */
+function gnister(x,y,farge,antall){
+  for(var i=0;i<antall;i++){
+    var v = Math.random()*Math.PI*2, fart = (60+Math.random()*160)*S;
+    spill.partikler.push({ x:x, y:y, vx:Math.cos(v)*fart, vy:Math.sin(v)*fart-60*S,
+      r:(2.5+Math.random()*3.5)*S, farge:farge, liv:1 });
+  }
+}
+function flyt(x,y,tekst,farge,stor){
+  spill.flytetekst.push({ x:x, y:y, tekst:tekst, farge:farge, liv:1, stor:!!stor });
+}
+
+/* ================= runde ================= */
+var nedTimer = null;
+function startRunde(){
+  lk();
+  lagSlanger();
+  spill.mynter = []; spill.partikler = []; spill.flytetekst = [];
+  fyllMynter();
+  spill.tidIgjen = innst.rundetid;
+  spill.akk = 0; spill.sisteSek = -1;
+  spill.skjerm = 'nedtelling';
+  elStart.classList.add('skjult'); elSlutt.classList.add('skjult');
+  elHud.classList.remove('skjult'); elPads.classList.remove('skjult');
+  byggHudChips(); byggPads(); tilpass();
+  oppdaterKlokke();
+  nedSteg(3);
+}
+function nedSteg(k){
+  elNedO.classList.remove('skjult');
+  if(k > 0){
+    visNed(String(k), 'clamp(90px,26vh,300px)');
+    tone(440+(3-k)*80, 440+(3-k)*80, 0.16, 'triangle', 0.13, 0);
+    nedTimer = setTimeout(function(){ nedSteg(k-1); }, 800);
+  } else {
+    visNed('Kom igjen!', 'clamp(50px,15vh,170px)');
+    tone(880,1320,0.3,'triangle',0.16,0);
+    nedTimer = setTimeout(function(){
+      elNedO.classList.add('skjult');
+      spill.skjerm = 'spill';
+      spill.sisteT = performance.now();
+    }, 900);
+  }
+}
+function visNed(tekst, str){
+  elNed.style.fontSize = str;
+  elNed.textContent = tekst;
+  elNed.style.animation = 'none';
+  void elNed.offsetWidth;
+  elNed.style.animation = 'sprett .9s ease-out';
+}
+function avsluttRunde(){
+  if(nedTimer) clearTimeout(nedTimer);
+  elNedO.classList.add('skjult');
+  spill.skjerm = 'slutt';
+  elHud.classList.add('skjult'); elPads.classList.add('skjult');
+  lydFerdig();
+  var sortert = spill.slanger.slice().sort(function(a,b){ return b.poeng - a.poeng; });
+  var topp = sortert.length ? sortert[0].poeng : 0;
+  var vinnere = sortert.filter(function(s){ return s.poeng === topp && topp > 0; });
+  var tekst;
+  if(topp === 0) tekst = 'Ingen mynter denne runden – prøv igjen!';
+  else if(vinnere.length === 1) tekst = '🏆 ' + vinnere[0].navn + ' vant med ' + topp + ' mynter!';
+  else tekst = '🏆 Delt seier: ' + vinnere.map(function(v){ return v.navn; }).join(' og ') + ' – ' + topp + ' mynter hver!';
+  $('vinnertekst').textContent = tekst;
+  var liste = $('resultliste'); liste.innerHTML = '';
+  var medaljer = ['🥇','🥈','🥉','4.'];
+  sortert.forEach(function(s,i){
+    var rad = document.createElement('div'); rad.className = 'resultrad';
+    rad.style.background = (i===0 && topp>0) ? '#ffedb3' : '#fffaf0';
+    rad.style.boxShadow = (i===0 && topp>0) ? '0 6px 0 rgba(42,31,61,.22)' : '0 4px 0 rgba(42,31,61,.14)';
+    rad.innerHTML = '<div class="medalje"></div><div class="prikk"></div><div class="rnavn"></div><div class="rpoeng"></div>';
+    rad.querySelector('.medalje').textContent = medaljer[i] || (i+1)+'.';
+    rad.querySelector('.prikk').style.background = s.farge.hex;
+    rad.querySelector('.rnavn').textContent = s.navn;
+    rad.querySelector('.rpoeng').textContent = s.poeng + ' 🪙';
+    liste.appendChild(rad);
+  });
+  elSlutt.classList.remove('skjult');
+}
+
+/* ================= HUD ================= */
+var chipEls = [];
+function byggHudChips(){
+  elHudMidt.innerHTML = '';
+  chipEls = [];
+  var venstreDel = spill.slanger.slice(0, Math.ceil(innst.antall/2));
+  var hoyreDel   = spill.slanger.slice(Math.ceil(innst.antall/2));
+  function lagChip(s){
+    var chip = document.createElement('div'); chip.className = 'poengchip';
+    chip.innerHTML = '<span class="prikk"></span><span class="cnavn"></span><span class="cpoeng"></span><span class="cfrys"></span>';
+    chip.querySelector('.prikk').style.background = s.farge.hex;
+    chip.querySelector('.cnavn').textContent = s.navn;
+    chip.querySelector('.cpoeng').textContent = '🪙 0';
+    chipEls[s.idx] = chip;
+    return chip;
+  }
+  venstreDel.forEach(function(s){ elHudMidt.appendChild(lagChip(s)); });
+  var klokke = document.createElement('div'); klokke.id = 'klokke'; klokke.textContent = innst.rundetid;
+  elHudMidt.appendChild(klokke);
+  hoyreDel.forEach(function(s){ elHudMidt.appendChild(lagChip(s)); });
+}
+function oppdaterKlokke(){
+  var kl = $('klokke'); if(!kl) return;
+  var sek = Math.max(0, Math.ceil(spill.tidIgjen));
+  kl.textContent = sek;
+  kl.className = sek <= 10 ? 'hast' : '';
+  kl.id = 'klokke';
+}
+function oppdaterChips(){
+  var naa = performance.now();
+  spill.slanger.forEach(function(s){
+    var chip = chipEls[s.idx]; if(!chip) return;
+    chip.querySelector('.cpoeng').textContent = '🪙 ' + s.poeng;
+    var frossen = naa < s.frystTil;
+    chip.classList.toggle('frossen', frossen);
+    chip.querySelector('.cfrys').textContent = frossen ? '💫' : '';
+  });
+}
+
+/* ================= pader ================= */
+function byggPads(){
+  elPads.innerHTML = '';
+  spill.slanger.forEach(function(s){
+    var pad = document.createElement('div'); pad.className = 'pad';
+    var navn = document.createElement('span'); navn.className = 'padnavn';
+    navn.textContent = s.navn; navn.style.background = s.farge.lys;
+    var grid = document.createElement('div'); grid.className = 'padgrid';
+    var layout = [null,'opp',null,'venstre','midt','hoyre',null,'ned',null];
+    var pil = { opp:'▲', ned:'▼', venstre:'◀', hoyre:'▶' };
+    layout.forEach(function(rolle){
+      if(rolle === null){ grid.appendChild(document.createElement('span')); return; }
+      if(rolle === 'midt'){
+        var m = document.createElement('div'); m.className = 'padmidt';
+        var p = document.createElement('div'); p.className = 'prikk';
+        p.style.background = s.farge.hex; m.appendChild(p); grid.appendChild(m); return;
+      }
+      var kn = document.createElement('button');
+      kn.type = 'button'; kn.className = 'padbtn';
+      kn.style.background = s.farge.lys;
+      kn.textContent = pil[rolle];
+      kn.setAttribute('aria-label', s.navn + ' ' + rolle);
+      kn.addEventListener('pointerdown', function(e){
+        e.preventDefault(); settRetning(s.idx, rolle);
+      });
+      grid.appendChild(kn);
+    });
+    var tast = document.createElement('span'); tast.className = 'padtast';
+    tast.textContent = '⌨ ' + TASTESETT[s.idx].navn;
+    pad.appendChild(navn); pad.appendChild(grid); pad.appendChild(tast);
+    elPads.appendChild(pad);
+  });
+}
+
+/* ================= tastatur ================= */
+window.addEventListener('keydown', function(e){
+  if(spill.skjerm !== 'spill' && spill.skjerm !== 'nedtelling') return;
+  var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  for(var i=0;i<innst.antall;i++){
+    var ts = TASTESETT[i];
+    if(k === ts.opp){ settRetning(i,'opp'); e.preventDefault(); return; }
+    if(k === ts.ned){ settRetning(i,'ned'); e.preventDefault(); return; }
+    if(k === ts.venstre){ settRetning(i,'venstre'); e.preventDefault(); return; }
+    if(k === ts.hoyre){ settRetning(i,'hoyre'); e.preventDefault(); return; }
+  }
+});
+
+/* ================= spill-logikk ================= */
+function frys(s){
+  var naa = performance.now();
+  s.frystTil = naa + FRYSETID;
+  s.spokTil = naa + FRYSETID + SPOKELSESTID;
+  var hode = s.celler[0];
+  gnister(cx(hode.c), cy(hode.r), s.farge.hex, 16);
+  gnister(cx(hode.c), cy(hode.r), '#ffffff', 8);
+  flyt(cx(hode.c), cy(hode.r) - brett.celle*0.8, '💫', s.farge.hex, true);
+  lydKrasj();
+}
+
+function steg(){
+  var naa = performance.now();
+  var planer = [];
+
+  spill.slanger.forEach(function(s){
+    s.prev = kopier(s.celler);
+    if(naa < s.frystTil){ planer.push(null); return; }
+    if(s.onsket !== motsatt(s.dir) || s.celler.length === 1) s.dir = s.onsket;
+    else s.onsket = s.dir;
+    var d = RETN[s.dir], hode = s.celler[0];
+    var m = { c: hode.c + d.x, r: hode.r + d.y };
+    if(m.c < 0 || m.c >= COLS || m.r < 0 || m.r >= ROWS){
+      /* veggkrasj */
+      if(naa < s.spokTil){
+        s.dir = s.onsket = motsatt(s.dir);           /* spøkelse: bare snu */
+      } else {
+        frys(s);
+        s.dir = s.onsket = motsatt(s.dir);           /* etter frys: gå tilbake */
+      }
+      planer.push(null); return;
+    }
+    planer.push(m);
+  });
+
+  /* to hoder inn i samme rute */
+  for(var i=0;i<planer.length;i++){
+    if(!planer[i]) continue;
+    for(var j=i+1;j<planer.length;j++){
+      if(!planer[j]) continue;
+      var A = spill.slanger[i], Bb = spill.slanger[j];
+      var aSpok = naa < A.spokTil, bSpok = naa < Bb.spokTil;
+      if(aSpok || bSpok) continue;
+      var sammeRute = planer[i].c === planer[j].c && planer[i].r === planer[j].r;
+      var bytte = planer[i].c === Bb.celler[0].c && planer[i].r === Bb.celler[0].r &&
+                  planer[j].c === A.celler[0].c && planer[j].r === A.celler[0].r;
+      if(sammeRute || bytte){
+        frys(A); frys(Bb);
+        planer[i] = null; planer[j] = null;
+      }
+    }
+  }
+
+  /* krasj i annen slange + flytting */
+  spill.slanger.forEach(function(s, i){
+    var m = planer[i]; if(!m) return;
+    if(naa >= s.spokTil){
+      for(var j=0;j<spill.slanger.length;j++){
+        if(j === i) continue;
+        var truffet = spill.slanger[j].celler.some(function(p){ return p.c===m.c && p.r===m.r; });
+        if(truffet){ frys(s); planer[i] = null; return; }
+      }
+    }
+    /* flytt */
+    s.celler.unshift({c:m.c, r:m.r});
+    if(s.vekst > 0 && s.celler.length <= MAKSLENGDE){ s.vekst--; }
+    else { s.celler.pop(); }
+
+    /* mynt? */
+    for(var k=spill.mynter.length-1;k>=0;k--){
+      var my = spill.mynter[k];
+      if(my.c === m.c && my.r === m.r){
+        s.poeng += my.verdi;
+        s.vekst += my.gull ? 2 : 1;
+        gnister(cx(my.c), cy(my.r), my.gull ? '#e3a82a' : '#ffe07a', my.gull ? 26 : 14);
+        flyt(cx(my.c), cy(my.r), '+' + my.verdi, s.farge.hex, my.gull);
+        if(my.gull) lydGull(); else lydSpis();
+        spill.mynter.splice(k,1);
+      }
+    }
+  });
+
+  fyllMynter();
+}
+
+/* ================= hovedløkke ================= */
+function lokke(t){
+  requestAnimationFrame(lokke);
+  var dt = Math.min(0.1, (t - (spill.sisteT || t)) / 1000);
+  spill.sisteT = t;
+
+  spill.skyer.forEach(function(sk){
+    sk.x += sk.fart * dt;
+    if(sk.x - sk.r*2.4 > B) sk.x = -sk.r*2.4;
+  });
+
+  if(spill.skjerm === 'spill'){
+    spill.akk += dt*1000;
+    while(spill.akk >= innst.tick){ spill.akk -= innst.tick; steg(); }
+    spill.tidIgjen -= dt;
+    var sek = Math.ceil(spill.tidIgjen);
+    if(sek !== spill.sisteSek){
+      spill.sisteSek = sek;
+      oppdaterKlokke();
+      if(sek <= 5 && sek > 0) lydTikk();
+    }
+    oppdaterChips();
+    if(spill.tidIgjen <= 0) avsluttRunde();
+  }
+
+  /* partikler og flytetekst */
+  for(var i=spill.partikler.length-1;i>=0;i--){
+    var p = spill.partikler[i];
+    p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 480*S*dt; p.liv -= dt*1.6;
+    if(p.liv <= 0) spill.partikler.splice(i,1);
+  }
+  for(var i2=spill.flytetekst.length-1;i2>=0;i2--){
+    var f = spill.flytetekst[i2];
+    f.y -= 46*S*dt; f.liv -= dt*0.9;
+    if(f.liv <= 0) spill.flytetekst.splice(i2,1);
+  }
+
+  tegn(t);
+}
+
+/* ================= tegning ================= */
+function tegn(t){
+  ctx.clearRect(0,0,B,H);
+
+  /* skyer */
+  spill.skyer.forEach(function(sk){
+    ctx.globalAlpha = sk.alfa * 0.85;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(sk.x, sk.y, sk.r, 0, Math.PI*2);
+    ctx.arc(sk.x + sk.r*0.9, sk.y + sk.r*0.15, sk.r*0.72, 0, Math.PI*2);
+    ctx.arc(sk.x - sk.r*0.85, sk.y + sk.r*0.2, sk.r*0.62, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  tegnBrett();
+  spill.mynter.forEach(function(m){ tegnMynt(m, t); });
+
+  var frosne = [], vanlige = [];
+  spill.slanger.forEach(function(s){ (performance.now() < s.frystTil ? frosne : vanlige).push(s); });
+  vanlige.forEach(function(s){ tegnSlange(s, t); });
+  frosne.forEach(function(s){ tegnSlange(s, t); });
+
+  /* gnister */
+  spill.partikler.forEach(function(p){
+    ctx.globalAlpha = Math.max(0, p.liv);
+    ctx.fillStyle = p.farge;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  /* flytetekst */
+  spill.flytetekst.forEach(function(f){
+    ctx.globalAlpha = Math.max(0, Math.min(1, f.liv*1.4));
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    var str = Math.round((f.stor ? 34 : 24) * S);
+    ctx.font = '700 ' + str + "px 'Fredoka', sans-serif";
+    ctx.lineWidth = Math.max(3, str*0.22); ctx.strokeStyle = '#2a1f3d';
+    ctx.strokeText(f.tekst, f.x, f.y);
+    ctx.fillStyle = f.farge;
+    ctx.fillText(f.tekst, f.x, f.y);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function rundet(x,y,b,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+b,y,x+b,y+h,r); ctx.arcTo(x+b,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+b,y,r);
+  ctx.closePath();
+}
+
+function tegnBrett(){
+  var ramme = 10*S, r = 18*S;
+  /* skygge + kremramme */
+  rundet(brett.x-ramme, brett.y-ramme+8*S, brett.b+ramme*2, brett.h+ramme*2, r);
+  ctx.fillStyle = 'rgba(42,31,61,.2)'; ctx.fill();
+  rundet(brett.x-ramme, brett.y-ramme, brett.b+ramme*2, brett.h+ramme*2, r);
+  ctx.fillStyle = '#fbf2d6'; ctx.fill();
+  ctx.lineWidth = 4; ctx.strokeStyle = '#2a1f3d'; ctx.stroke();
+  /* gressfelt med sjakkruter */
+  rundet(brett.x, brett.y, brett.b, brett.h, 10*S);
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = '#dff0c3'; ctx.fillRect(brett.x, brett.y, brett.b, brett.h);
+  ctx.fillStyle = '#d3e8b2';
+  for(var rr=0; rr<ROWS; rr++) for(var cc=0; cc<COLS; cc++)
+    if((rr+cc)%2===0) ctx.fillRect(brett.x+cc*brett.celle, brett.y+rr*brett.celle, brett.celle, brett.celle);
+  ctx.restore();
+  rundet(brett.x, brett.y, brett.b, brett.h, 10*S);
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(42,31,61,.55)'; ctx.stroke();
+}
+
+function tegnMynt(m, t){
+  var celle = brett.celle;
+  var x = cx(m.c), y = cy(m.r) + Math.sin(t/420 + m.fase)*2*S;
+  var rad = celle * (m.gull ? 0.4 : 0.34);
+  var bredde = Math.abs(Math.cos(t/520 + m.fase)) * 0.75 + 0.25;
+  ctx.save(); ctx.translate(x,y); ctx.scale(bredde,1);
+  ctx.fillStyle = 'rgba(42,31,61,.18)';
+  ctx.beginPath(); ctx.arc(0, rad*0.22, rad, 0, Math.PI*2); ctx.fill();
+  var g = ctx.createRadialGradient(-rad*0.32, -rad*0.34, rad*0.15, 0, 0, rad);
+  if(m.gull){ g.addColorStop(0,'#fff6d8'); g.addColorStop(0.45,'#ffe07a'); g.addColorStop(1,'#e3a82a'); }
+  else { g.addColorStop(0,'#fff3cf'); g.addColorStop(0.5,'#ffd96b'); g.addColorStop(1,'#c8901a'); }
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0,0,rad,0,Math.PI*2); ctx.fill();
+  ctx.lineWidth = Math.max(2, rad*0.13); ctx.strokeStyle = '#2a1f3d'; ctx.stroke();
+  ctx.lineWidth = Math.max(1.2, rad*0.07); ctx.strokeStyle = 'rgba(255,255,255,.55)';
+  ctx.beginPath(); ctx.arc(0,0,rad*0.68,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#2a1f3d';
+  ctx.font = '700 ' + Math.round(rad*0.9) + "px 'Fredoka', sans-serif";
+  ctx.globalAlpha = 0.4 + bredde*0.6;
+  ctx.fillText(String(m.verdi), x, y + rad*0.04);
+  ctx.globalAlpha = 1;
+  if(m.gull){
+    ctx.font = Math.round(rad*0.6) + 'px sans-serif';
+    ctx.fillText('✨', x + rad*0.9, y - rad*0.85);
+  }
+}
+
+function tegnSlange(s, t){
+  var naa = performance.now();
+  var frossen = naa < s.frystTil;
+  var spok = !frossen && naa < s.spokTil;
+  var celle = brett.celle;
+  var andel = frossen ? 0 : Math.min(1, spill.akk / innst.tick);
+
+  /* interpolerte punkter */
+  var pkt = [];
+  for(var i=0;i<s.celler.length;i++){
+    var cur = s.celler[i];
+    var pre = s.prev[i] || cur;
+    pkt.push({ x: cx(pre.c) + (cx(cur.c)-cx(pre.c))*andel,
+               y: cy(pre.r) + (cy(cur.r)-cy(pre.r))*andel });
+  }
+  /* risting */
+  if(frossen){
+    var j = Math.sin(naa/28 + s.ristFase)*3.2*S;
+    var j2 = Math.cos(naa/23 + s.ristFase)*2.6*S;
+    pkt.forEach(function(p){ p.x += j; p.y += j2; });
+  }
+  if(spok) ctx.globalAlpha = 0.55;
+
+  function poly(){
+    ctx.beginPath();
+    ctx.moveTo(pkt[0].x, pkt[0].y);
+    for(var k=1;k<pkt.length;k++) ctx.lineTo(pkt[k].x, pkt[k].y);
+  }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  /* skygge */
+  ctx.save(); ctx.translate(0, 3*S);
+  poly(); ctx.lineWidth = celle*0.72; ctx.strokeStyle = 'rgba(42,31,61,.15)'; ctx.stroke();
+  ctx.restore();
+  /* kropp: kontur, farge, lys stripe */
+  poly(); ctx.lineWidth = celle*0.8;  ctx.strokeStyle = '#2a1f3d'; ctx.stroke();
+  poly(); ctx.lineWidth = celle*0.6;  ctx.strokeStyle = frossen ? '#bcd6e6' : s.farge.hex; ctx.stroke();
+  poly(); ctx.lineWidth = celle*0.2;  ctx.strokeStyle = frossen ? '#e8f4fb' : s.farge.lys;
+  ctx.globalAlpha = (spok ? 0.55 : 1) * 0.85; ctx.stroke();
+  ctx.globalAlpha = spok ? 0.55 : 1;
+
+  /* hode */
+  var h = pkt[0], d = RETN[s.dir];
+  var hr = celle*0.46;
+  ctx.beginPath(); ctx.arc(h.x, h.y, hr, 0, Math.PI*2);
+  ctx.fillStyle = frossen ? '#bcd6e6' : s.farge.hex; ctx.fill();
+  ctx.lineWidth = Math.max(2.5, celle*0.1); ctx.strokeStyle = '#2a1f3d'; ctx.stroke();
+  /* øyne */
+  var ex = -d.y, ey = d.x; /* vinkelrett på retning */
+  var eAv = celle*0.19, eFrem = celle*0.13, eR = celle*0.15;
+  [[1],[-1]].forEach(function(side){
+    var sx = h.x + d.x*eFrem + ex*eAv*side[0];
+    var sy = h.y + d.y*eFrem + ey*eAv*side[0];
+    ctx.beginPath(); ctx.arc(sx, sy, eR, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.lineWidth = Math.max(1.5, celle*0.05); ctx.strokeStyle = '#2a1f3d'; ctx.stroke();
+    if(frossen){
+      /* krysse-øyne når frossen */
+      ctx.lineWidth = Math.max(1.8, celle*0.06); ctx.strokeStyle = '#2a1f3d';
+      ctx.beginPath();
+      ctx.moveTo(sx-eR*0.5, sy-eR*0.5); ctx.lineTo(sx+eR*0.5, sy+eR*0.5);
+      ctx.moveTo(sx+eR*0.5, sy-eR*0.5); ctx.lineTo(sx-eR*0.5, sy+eR*0.5);
+      ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.arc(sx + d.x*eR*0.35, sy + d.y*eR*0.35, eR*0.45, 0, Math.PI*2);
+      ctx.fillStyle = '#2a1f3d'; ctx.fill();
+    }
+  });
+  /* tunge */
+  if(!frossen && Math.sin(t/260 + s.ristFase) > 0.55){
+    ctx.strokeStyle = '#e64b3b'; ctx.lineWidth = Math.max(1.6, celle*0.06); ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(h.x + d.x*hr, h.y + d.y*hr);
+    ctx.lineTo(h.x + d.x*(hr + celle*0.28), h.y + d.y*(hr + celle*0.28));
+    ctx.stroke();
+  }
+  /* stjerner over frossent hode */
+  if(frossen){
+    var sn = Math.round((s.frystTil - naa)/1000 * 10) / 10;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = Math.round(celle*0.7) + 'px sans-serif';
+    var vipp = Math.sin(naa/120) * celle*0.12;
+    ctx.fillText('💫', h.x + vipp, h.y - celle*1.05);
+    ctx.font = '700 ' + Math.round(celle*0.42) + "px 'Fredoka', sans-serif";
+    ctx.lineWidth = Math.max(2.5, celle*0.1); ctx.strokeStyle = '#2a1f3d';
+    ctx.strokeText(sn.toFixed(1), h.x + celle*1.1, h.y - celle*1.05);
+    ctx.fillStyle = '#e8f4fb';
+    ctx.fillText(sn.toFixed(1), h.x + celle*1.1, h.y - celle*1.05);
+  }
+
+  /* navneskilt */
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  var nStr = Math.max(10, Math.round(celle*0.38));
+  ctx.font = '600 ' + nStr + "px 'Fredoka', sans-serif";
+  var tb = ctx.measureText(s.navn).width;
+  var nx = h.x, ny = h.y - celle*(frossen ? 2.0 : 1.05);
+  ny = Math.max(ny, brett.y - celle*0.1);
+  var pb = tb + nStr*1.1, ph = nStr*1.55;
+  ctx.globalAlpha = (spok ? 0.55 : 1) * 0.92;
+  rundet(nx - pb/2, ny - ph/2, pb, ph, ph/2);
+  ctx.fillStyle = '#fbf2d6'; ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = '#2a1f3d'; ctx.stroke();
+  ctx.fillStyle = '#2a1f3d';
+  ctx.fillText(s.navn, nx, ny + nStr*0.06);
+  ctx.globalAlpha = 1;
+}
+
+/* ================= knapper ================= */
+function fullskjerm(){
+  var d = document.documentElement;
+  if(!document.fullscreenElement){ if(d.requestFullscreen) d.requestFullscreen(); }
+  else if(document.exitFullscreen) document.exitFullscreen();
+}
+$('knStart').onclick = startRunde;
+$('knIgjen').onclick = startRunde;
+$('knFullStart').onclick = fullskjerm;
+$('knFull').onclick = fullskjerm;
+$('knStopp').onclick = avsluttRunde;
+$('knTilbake').onclick = function(){
+  elSlutt.classList.add('skjult'); elHud.classList.add('skjult');
+  elPads.classList.add('skjult');
+  spill.skjerm = 'start';
+  elStart.classList.remove('skjult');
+};
+$('knLyd').onclick = function(){
+  innst.lyd = !innst.lyd;
+  $('knLyd').textContent = innst.lyd ? '🔊' : '🔇';
+};
+
+document.addEventListener('touchmove', function(e){
+  if(spill.skjerm === 'spill') e.preventDefault();
+}, { passive:false });
+document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+
+/* ================= oppstart ================= */
+window.addEventListener('resize', tilpass);
+byggAntall(); byggNavn(); byggTid(); byggFart();
+tilpass();
+requestAnimationFrame(function(t){ spill.sisteT = t; requestAnimationFrame(lokke); });
+
+/* eksponert for testing */
+window.__myntslangen = { spill:spill, innst:innst, startRunde:startRunde, settRetning:settRetning, steg:steg };
+})();
+</script>
+</body>
+</html>
