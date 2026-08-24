@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Regnestrategiene – Myntland</title>
+<meta name="description" content="Regnestrategier for begynneropplæringen: tiervenner, dobling og nær-dobling, fyll tieren og regnefamilien – med tierrammer som viser hvorfor det stemmer. For interaktiv tavle og iPad – opptil fire elever samtidig.">
+<meta name="theme-color" content="#232a3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Regnestrategiene">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+
+<!-- Delt Myntland-styling (palett + fonter). Inline-stilene under bygger videre på denne. -->
+<link rel="stylesheet" href="myntland.css">
+
+<style>
+:root{
+  --navy:#232a3f; --navy-soft:#3b4560;
+  --krem:#fbf1d6; --krem-dyp:#f3e2b9; --krem-lys:#fffaeb;
+  --amber:#efae2a; --amber-dyp:#c4841a;
+  --raud:#e8473f; --gronn:#74c043; --gronn-dyp:#4f8f28; --teal:#2bb3c0; --teal-dyp:#17747e;
+  --himmel-1:#a6dff0; --himmel-2:#d8f2f8; --bakke:#8cc63f;
+  --text:#232a3f; --muted:#6b7690; --border:var(--navy);
+  --f1:#E23B2E; --f2:#1F7AE0; --f3:#17A05C; --f4:#EF9F27;
+  --skygge:0 4px 0 rgba(35,42,63,.9);
+  --skygge-mjuk:0 4px 0 rgba(35,42,63,.18);
+}
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; overflow:hidden; }
+body{
+  font-family:'Nunito',system-ui,sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,var(--himmel-1) 0%,var(--himmel-2) 55%,#e9f7ea 78%,var(--bakke) 100%);
+  display:flex; flex-direction:column;
+  height:100dvh;
+  user-select:none; -webkit-user-select:none;
+}
+
+/* ---------- topnav ---------- */
+.topnav{ background:var(--navy); padding:.45rem 1rem; flex:0 0 auto; }
+.topnav-inner{ max-width:1600px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.topnav-logo{
+  font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--krem); text-decoration:none;
+  display:flex; align-items:center; gap:.45rem; letter-spacing:.02em;
+}
+.topnav-logo::before{ content:"🪙"; }
+.topnav-logo span{ font-family:'Nunito',sans-serif; font-weight:800; font-size:.75rem; color:var(--amber); text-transform:uppercase; letter-spacing:.12em; }
+.topnav-back{
+  font-size:.75rem; font-weight:900; color:var(--navy); text-decoration:none; text-transform:uppercase; letter-spacing:.08em;
+  background:var(--amber); border:2px solid var(--navy); border-radius:999px; padding:.25rem .8rem;
+}
+
+/* ---------- lærerlinje ---------- */
+.laererlinje{
+  background:var(--krem); border:4px solid var(--navy); border-radius:20px;
+  box-shadow:var(--skygge); margin:.55rem .6rem .2rem;
+  padding:.55rem .8rem .65rem; flex:0 0 auto;
+  display:flex; flex-direction:column; gap:.5rem; align-items:center;
+}
+.rad{ display:flex; gap:.4rem; align-items:center; justify-content:center; flex-wrap:wrap; }
+.rad.skjult{ display:none; }
+.seg{ display:flex; background:var(--krem-dyp); border:3px solid var(--navy); border-radius:999px; padding:3px; gap:3px; }
+.seg button{
+  border:0; background:transparent; font-family:inherit; font-weight:900; font-size:.78rem;
+  padding:.3rem .75rem; border-radius:999px; color:var(--navy); cursor:pointer; opacity:.65;
+}
+.seg button[aria-pressed="true"]{ background:var(--navy); color:var(--krem); opacity:1; }
+.seg.skjult{ display:none; }
+.gruppe{ display:inline-flex; gap:.4rem; align-items:center; }
+.gruppe.skjult{ display:none; }
+.knapp{
+  border:3px solid var(--navy); background:var(--krem-lys); border-radius:999px;
+  font-family:inherit; font-weight:900; font-size:.78rem; padding:.28rem .7rem; cursor:pointer; color:var(--navy);
+  display:inline-flex; align-items:center; gap:.35rem; box-shadow:0 3px 0 var(--navy);
+  transition:transform .08s, box-shadow .08s;
+}
+.knapp:active{ transform:translateY(3px); box-shadow:0 0 0 var(--navy); }
+.knapp:hover{ background:#fff; }
+.knapp.primary{ background:var(--amber); color:var(--navy); }
+.knapp.av{ opacity:.4; }
+.knapp.skjult{ display:none; }
+.ttittel{ font-weight:900; font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:var(--navy); }
+
+/* ---------- scene ---------- */
+.scene{ flex:1 1 auto; min-height:0; position:relative; padding:.6rem; }
+
+/* tur for tur */
+.tur{ height:100%; display:flex; flex-direction:column; gap:.5rem; }
+.topplinje{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:clamp(.8rem,4vw,3rem); flex-wrap:wrap;
+  background:var(--krem); border:4px solid var(--navy); border-radius:18px; box-shadow:var(--skygge-mjuk);
+  padding:.35rem .9rem;
+}
+.oppdrag{
+  font-family:'Fredoka One',cursive; font-size:clamp(.95rem,2vw,1.45rem); color:var(--navy);
+  text-align:center; line-height:1.15;
+}
+.oppdrag em{ font-style:normal; color:var(--amber-dyp); }
+
+.elevstripe{ display:flex; gap:.45rem; align-items:center; }
+.elevmerke{
+  width:46px; height:46px; border-radius:50%; background:var(--krem-lys);
+  border:3px solid var(--navy); display:flex; align-items:center; justify-content:center;
+  position:relative; opacity:.4; transition:transform .2s, opacity .2s;
+}
+.elevmerke img{ width:82%; height:82%; object-fit:contain; }
+.elevmerke.aktiv{ opacity:1; transform:scale(1.18); box-shadow:0 3px 0 var(--navy); }
+.elevmerke.ferdig{ opacity:1; }
+.elevmerke.ferdig::after{ content:"✅"; position:absolute; right:-4px; bottom:-4px; font-size:1rem; }
+
+/* teller 1-2-3 */
+.teller{ display:flex; gap:.4rem; align-items:center; }
+.tellerboks{
+  width:34px; height:34px; border-radius:10px; background:var(--krem-lys);
+  border:3px dashed var(--navy); display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden; opacity:.75;
+}
+.tellerboks.full{ border-style:solid; opacity:1; box-shadow:0 2px 0 var(--navy); }
+.tellerboks .tallet{ font-family:'Fredoka One',cursive; font-size:1rem; color:var(--muted); }
+.tellerboks .hake{ font-size:1.1rem; color:#fff; font-weight:900; text-shadow:0 1px 0 rgba(0,0,0,.3); }
+
+.arena{
+  flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; gap:clamp(.5rem,3vw,2.5rem);
+  background:var(--krem); border:5px solid var(--navy); border-radius:26px; padding:.7rem;
+  box-shadow:var(--skygge); position:relative;
+}
+.arena .heier{ position:absolute; left:1.5%; top:50%; transform:translateY(-50%); z-index:2;
+  width:min(15vw,150px); display:flex; flex-direction:column; align-items:center; gap:.35rem; }
+.arena .felt{ width:100%; height:100%; min-width:0; padding-left:min(17vw,168px); padding-right:.6rem;
+  display:flex; align-items:center; justify-content:center; }
+
+/* monster */
+.monster{ width:100%; max-width:150px; filter:drop-shadow(0 6px 8px rgba(35,42,63,.22)); animation:bob 2.6s ease-in-out infinite; }
+.monster.heia{ animation:heia .45s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-7px) } }
+@keyframes heia{ 0%,100%{ transform:translateY(0) rotate(-4deg) } 50%{ transform:translateY(-12px) rotate(4deg) } }
+.boble{
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:16px; color:var(--navy);
+  padding:.32rem .75rem; font-weight:900; font-size:clamp(.8rem,1.5vw,1.05rem); text-align:center;
+  position:relative; max-width:100%; box-shadow:0 3px 0 var(--navy);
+}
+.boble::after{ content:""; position:absolute; bottom:-11px; left:50%; transform:translateX(-50%);
+  border:8px solid transparent; border-top-color:var(--navy); }
+.navn{
+  font-family:'Fredoka One',cursive; font-size:clamp(.85rem,1.6vw,1.15rem); color:var(--navy)!important;
+  background:var(--amber); border:3px solid var(--navy); border-radius:999px; padding:.05rem .7rem;
+}
+
+/* flere samtidig */
+.grid4{ height:100%; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:1fr; gap:.6rem; }
+.celle{
+  background:var(--krem); border:4px solid var(--navy); border-radius:22px; box-shadow:var(--skygge);
+  display:flex; flex-direction:column; align-items:center; gap:.3rem;
+  padding:.5rem; min-height:0; min-width:0; position:relative; overflow:hidden;
+}
+.celle .heier{ flex:0 0 auto; width:100%; max-width:none;
+  display:flex; flex-direction:row; align-items:center; justify-content:center; gap:.4rem; }
+.celle .monster{ width:auto; max-width:none; height:clamp(38px,7vh,68px); }
+.celle .navn{ font-size:clamp(.7rem,1.1vw,.9rem); border-width:2px; }
+.celle .boble{ font-size:clamp(.68rem,1.05vw,.85rem); padding:.22rem .5rem; box-shadow:0 2px 0 var(--navy); }
+.celle .boble::after{ bottom:auto; top:50%; left:auto; right:-11px;
+  transform:translateY(-50%); border-top-color:transparent; border-left-color:var(--navy); }
+.celle .felt{ flex:1 1 auto; width:100%; min-height:0; min-width:0; padding:.15rem .2rem .3rem; display:flex; align-items:center; justify-content:center; }
+.celle.ferdig{ background:var(--krem-lys); }
+.celle .elevnr{
+  font-weight:900; font-size:clamp(.62rem,.95vw,.78rem); color:var(--navy)!important; text-transform:uppercase; letter-spacing:.08em;
+  background:var(--krem-dyp); border:2px solid var(--navy); border-radius:999px; padding:.05rem .5rem;
+}
+.celle .teller{ flex:0 0 auto; }
+.celle .tellerboks{ width:24px; height:24px; border-width:2px; border-radius:8px; }
+.celle .tellerboks .tallet{ font-size:.78rem; }
+.cellejubel{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-family:'Fredoka One',cursive; color:#fff; font-size:clamp(1rem,2.2vw,1.8rem);
+  padding:.5rem 1.1rem; border-radius:18px; z-index:5; text-align:center;
+  border:4px solid var(--navy);
+  animation:sprett .45s cubic-bezier(.2,1.6,.4,1); box-shadow:0 5px 0 var(--navy);
+}
+
+/* ---------- oppgaveflate ---------- */
+/* Oppgavene står i kolonne: regnestykket øverst, mengdebildet i midten,
+   svarkortene nederst – akkurat som i Tallinjeverkstedet. */
+.oppgave{ width:100%; height:100%; min-height:0; display:flex; flex-direction:column;
+  gap:clamp(.3rem,1.2vh,.8rem); align-items:center; justify-content:center; }
+
+.inforad{ flex:0 0 auto; display:flex; gap:.5rem; align-items:center; justify-content:center; flex-wrap:wrap; }
+.merkelapp{
+  font-weight:900; font-size:clamp(.65rem,1.1vw,.85rem); text-transform:uppercase; letter-spacing:.08em;
+  color:var(--navy); background:var(--krem-dyp); border:2px solid var(--navy); border-radius:999px; padding:.1rem .7rem;
+}
+.celle .merkelapp{ font-size:.6rem; padding:.05rem .45rem; }
+.merkelapp.strategi{ background:#dff3f5; border-color:var(--teal-dyp); color:var(--teal-dyp); }
+.infochip{
+  font-family:'Fredoka One',cursive; font-size:clamp(.9rem,1.9vw,1.5rem); color:var(--navy);
+  background:var(--krem-lys); border:3px solid var(--navy); border-radius:999px; padding:.05rem .8rem;
+  box-shadow:0 3px 0 var(--navy); white-space:nowrap;
+}
+.infochip em{ font-style:normal; color:var(--amber-dyp); }
+.infochip .gr{ color:var(--gronn-dyp); }
+.infochip .bl{ color:var(--teal-dyp); }
+.infochip.svar{ border-color:var(--gronn-dyp); background:#e9f8dd; }
+.infochip.liten{ font-size:clamp(.75rem,1.3vw,1.05rem); opacity:.85; }
+/* Chip som venter på tur: tar plassen sin fra start, men er usynlig –
+   da skyver den ikke de andre sidelengs når den dukker opp. */
+.infochip.venter{ visibility:hidden; }
+.infochip .vent-hake{ visibility:hidden; }
+.infochip.nyss{ animation:chipInn .35s ease-out; }
+@keyframes chipInn{ from{ opacity:0; transform:scale(.75) } to{ opacity:1; transform:scale(1) } }
+.celle .infochip{ font-size:clamp(.7rem,1.25vw,1rem); border-width:2px; box-shadow:0 2px 0 var(--navy); padding:.02rem .55rem; }
+.celle .infochip.liten{ font-size:clamp(.6rem,1vw,.8rem); }
+
+/* Mengdebildet – SVG med egen viewBox som skalerer selv. */
+.feltboks{
+  width:100%; flex:1 1 auto; min-width:0; min-height:0;
+  background:var(--krem-lys); border:5px solid var(--navy); border-radius:22px;
+  box-shadow:var(--skygge); padding:clamp(.3rem,1vw,.8rem);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  position:relative;
+}
+.celle .feltboks{ border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy); padding:.25rem; }
+/* Strategibeskjeden inne på spillefeltet – stor og tydelig */
+.feltboks.medlapp{ padding-top:clamp(2.4rem,7vh,4rem); }
+.feltlapp{
+  position:absolute; top:clamp(.4rem,1.2vh,.8rem); left:50%; transform:translateX(-50%);
+  font-family:'Fredoka One',cursive; font-size:clamp(1.05rem,2.6vw,2rem);
+  color:var(--teal-dyp); background:#dff3f5; border:3px solid var(--teal-dyp);
+  border-radius:999px; padding:.12rem 1.2rem; box-shadow:0 3px 0 var(--teal-dyp);
+  white-space:nowrap; z-index:3; max-width:96%;
+  animation:lappsprett .45s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes lappsprett{ from{ transform:translateX(-50%) scale(.4); opacity:0 } to{ transform:translateX(-50%) scale(1); opacity:1 } }
+.celle .feltboks.medlapp{ padding-top:clamp(1.5rem,4.5vh,2.4rem); }
+.celle .feltlapp{ font-size:clamp(.72rem,1.35vw,1.05rem); border-width:2px; padding:.03rem .6rem; box-shadow:0 2px 0 var(--teal-dyp); }
+svg.bilde{ width:100%; height:100%; display:block; overflow:visible; touch-action:none; }
+
+/* familie-chips som dukker opp til slutt – store og rolige, de er selve poenget */
+.familierad{ flex:0 0 auto; display:flex; gap:.7rem; align-items:center; justify-content:center; flex-wrap:wrap; }
+.familierad .infochip{
+  animation:sprett .5s cubic-bezier(.2,1.6,.4,1);
+  font-size:clamp(1.1rem,2.6vw,2rem); padding:.15rem 1.1rem;
+}
+.celle .familierad{ gap:.3rem; }
+.celle .familierad .infochip{ font-size:clamp(.75rem,1.4vw,1.1rem); padding:.05rem .6rem; }
+
+/* Svaralternativene (tallkort) i et rutenett – kolonner settes fra JS. */
+.kortrad{
+  --kols:4; --rader:1;
+  flex:0 0 auto; min-width:0; min-height:0; display:grid;
+  grid-template-columns:repeat(var(--kols),auto);
+  gap:clamp(.3rem,1.2vw,.9rem); place-content:center; place-items:center;
+}
+.celle .kortrad{ width:100%; gap:.25rem; }
+.kort{ padding:0; border:0; background:transparent; cursor:pointer; font-family:inherit; transition:transform .1s; }
+.tallkort{
+  position:relative; background:#f9f0d5; border:5px solid var(--navy); border-radius:22px;
+  box-shadow:var(--skygge); overflow:hidden; aspect-ratio:1/1;
+  display:flex; align-items:center; justify-content:center;
+}
+.tallkort svg{ width:100%; height:100%; display:block; }
+.kort .tallkort{ width:min( calc(44vw / var(--kols)), 15vh ); }
+.celle .kort .tallkort{
+  width:min( calc(19vw / var(--kols)), 10vh );
+  border-width:3px; border-radius:14px; box-shadow:0 3px 0 var(--navy);
+}
+.kort:hover .tallkort{ background:#fffdf5; }
+.kort.rett .tallkort{ border-color:var(--gronn-dyp); background:#e9f8dd; box-shadow:0 4px 0 var(--gronn-dyp); }
+.kort.feil .tallkort{ border-color:var(--raud); opacity:.4; animation:rist .35s; }
+.kort.dempet{ opacity:.35; pointer-events:none; }
+.kortrad.laast .kort{ pointer-events:none; }
+@keyframes rist{ 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-6px) } 75%{ transform:translateX(6px) } }
+
+.merke-rett, .merke-feil{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0);
+  font-size:clamp(1.6rem,4vw,3rem); z-index:4; pointer-events:none;
+  animation:sprett .35s cubic-bezier(.2,1.6,.4,1) forwards;
+}
+
+/* ---------- overlay / jubel ---------- */
+.jubel{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:.9rem; z-index:40; pointer-events:none; }
+.jubel.vis{ display:flex; }
+.jubel .tekst{
+  font-family:'Fredoka One',cursive; color:var(--amber); text-align:center; line-height:1.1;
+  font-size:clamp(2rem,7vw,5.5rem);
+  padding:.35rem 1.6rem; border-radius:26px; background:var(--navy); border:5px solid var(--navy);
+  box-shadow:0 8px 0 rgba(35,42,63,.35);
+  animation:sprett .5s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes sprett{ from{ transform:scale(.4); opacity:0 } to{ transform:scale(1); opacity:1 } }
+.jubel .valg{ display:flex; gap:.6rem; pointer-events:auto; flex-wrap:wrap; justify-content:center; }
+.jubel .valg button{
+  font-family:'Fredoka One',cursive; font-size:clamp(1rem,2.4vw,1.6rem);
+  border:4px solid var(--navy); border-radius:999px; padding:.5rem 1.6rem; cursor:pointer;
+  background:var(--amber); color:var(--navy); box-shadow:0 5px 0 var(--navy);
+}
+.jubel .valg button:active{ transform:translateY(5px); box-shadow:0 0 0 var(--navy); }
+.jubel .valg button.sek{ background:var(--krem-lys); color:var(--navy); }
+#konfetti{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+
+/* skjult lærerlinje */
+body.rent .topnav, body.rent .laererlinje{ display:none; }
+.flytknapp{
+  position:fixed; top:8px; right:8px; z-index:50; display:none;
+  border:3px solid var(--navy); background:var(--krem); border-radius:999px; padding:.35rem .8rem;
+  font-family:inherit; font-weight:900; color:var(--navy); cursor:pointer; box-shadow:0 3px 0 var(--navy);
+}
+body.rent .flytknapp{ display:block; }
+
+@media (max-width:900px){
+  .arena .heier{ width:20vw; }
+  .arena .felt{ padding-left:min(22vw,150px); }
+  .kort .tallkort{ width:min( calc(38vw / var(--kols)), 12vh ); }
+}
+@media (prefers-reduced-motion:reduce){
+  .monster,.monster.heia,.jubel .tekst{ animation:none !important; transition:none !important; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-logo" href="begynneropplaering.html">Regnestrategiene <span>· Myntland</span></a>
+    <a class="topnav-back" href="begynneropplaering.html">← Tilbake</a>
+  </div>
+</nav>
+
+<div class="laererlinje">
+  <div class="rad">
+    <div class="seg" id="oppgavevelger">
+      <button data-oppgave="tiervenner" aria-pressed="true">🤝 Tiervenner</button>
+      <button data-oppgave="dobling" aria-pressed="false">👯 Dobling</button>
+      <button data-oppgave="fyll" aria-pressed="false">🌟 Fyll tieren</button>
+      <button data-oppgave="familie" aria-pressed="false">🏠 Regnefamilien</button>
+    </div>
+    <div class="seg" id="modusvelger">
+      <button data-modus="tur" aria-pressed="true">🙋 Tur for tur</button>
+      <button data-modus="flere" aria-pressed="false">👥 Flere samtidig</button>
+    </div>
+    <button class="knapp" id="antallKnapp" title="Hvor mange elever som er med">👥 4 elever</button>
+    <button class="knapp" id="runderKnapp" title="Hvor mange oppgaver hver elev får">🔁 3 oppgaver</button>
+    <button class="knapp" id="valgKnapp" title="Hvor mange tall eleven velger mellom">🔢 4 valg</button>
+    <button class="knapp" id="doblingKnapp" title="Dobling, nær-dobling eller begge">👯 Bare dobling</button>
+    <button class="knapp" id="regneKnapp" title="Over eller under tieren">➕ Fyll tieren</button>
+    <button class="knapp" id="husKnapp" title="Ett manglende tall, eller bygg alle fire etasjene">🏢 Bygg hele huset</button>
+    <button class="knapp" id="visKnapp">👀 Vis meg</button>
+    <button class="knapp" id="nullstillKnapp">↺ Start på nytt</button>
+    <button class="knapp primary" id="nesteKnapp">Neste oppgave →</button>
+    <button class="knapp" id="lydKnapp" title="Lyd og stemme">🔊</button>
+    <button class="knapp" id="fullKnapp" title="Fullskjerm">⛶</button>
+    <button class="knapp" id="rentKnapp" title="Skjul menyene">⬆ Skjul meny</button>
+  </div>
+  <div class="rad" id="rad2">
+    <span class="gruppe" id="helhetGruppe">
+      <span class="ttittel">Venner til</span>
+      <span class="seg" id="helhetvelger">
+        <button data-helhet="5" aria-pressed="false">5</button>
+        <button data-helhet="10" aria-pressed="true">10</button>
+      </span>
+    </span>
+    <span class="gruppe" id="omraadeGruppe">
+      <span class="ttittel">Tallområde</span>
+      <span class="seg" id="omraadevelger">
+        <button data-omraade="10" aria-pressed="true">0–10</button>
+        <button data-omraade="20" aria-pressed="false">0–20</button>
+      </span>
+    </span>
+  </div>
+</div>
+
+<button class="flytknapp" id="visMenyKnapp">⬇ Vis meny</button>
+
+<main class="scene" id="scene"></main>
+<canvas id="konfetti"></canvas>
+<script>
+/* ============================================================
+   REGNESTRATEGIENE – Myntland
+   ------------------------------------------------------------
+   Fire oppgavetyper som bygger gode regnestrategier for addisjon
+   og subtraksjon – veien fra telling til tallfakta:
+     1) Tiervenner    – hvor mange mangler for å bli 10 (eller 5)?
+     2) Dobling       – 4+4, og nær-dobling: 4+5 = dobbelt + 1
+     3) Fyll tieren   – tierovergang i to steg: 8+5 = 8+2+3,
+                        og «ned til tieren»: 13−5 = 13−3−2
+     4) Regnefamilien – del-helhet-huset som viser at 3+4=7 hører
+                        sammen med 7−3 og 7−4
+
+   Faglig ramme (Matematikksenteret): barns strategier utvikler seg
+   fra direkte modellering via tellestrategier til avledede og
+   automatiserte tallfakta. Verktøyet trener de avledede strategiene
+   med tierramma som visuell støtte – mengden VISER hvorfor svaret
+   stemmer, så eleven slipper å telle én og én.
+
+   Mengdene tegnes som SVG rett i sida – da skalerer de perfekt både
+   på storskjerm og i firedelt visning.
+
+   Lyd: tall-0 … tall-20, riktig, proev-igjen, din-tur, neste-elev og
+   alle-sammen finnes fra før (de andre verkstedene). De nye replikkene
+   står i regnestrategiene-innlesing.html. Mangler en mp3, hopper
+   verktøyet bare over den.
+   ============================================================ */
+
+/* ---------- Tallbanken ---------- */
+const TALLORD = ["null","én","to","tre","fire","fem","seks","sju","åtte","ni","ti",
+                 "elleve","tolv","tretten","fjorten","femten","seksten","sytten","atten","nitten","tjue"];
+
+const DOBLEVALG = ["dobling","naer","dblandet"];
+const DOBLE_NAVN = { dobling:"👯 Bare dobling", naer:"✨ Nær-dobling", dblandet:"👯✨ Begge deler" };
+const REGNEVALG = ["pluss","minus","blandet"];
+const REGNE_NAVN = { pluss:"➕ Fyll tieren", minus:"➖ Ned til tieren", blandet:"➕➖ Begge veier" };
+const HUSVALG = ["hele","ett"];
+const HUS_NAVN = { hele:"🏢 Bygg hele huset", ett:"🏠 Finn ett tall" };
+
+/* ---------- Elevfarger og monstre ---------- */
+const LAG = [
+  { navn:"Drage",   fil:"ildkatt",     farge:"#E23B2E", morkt:"#9c1f16" },
+  { navn:"Bølge",   fil:"indigo",      farge:"#1F7AE0", morkt:"#0e4585" },
+  { navn:"Skog",    fil:"gressgroenn", farge:"#17A05C", morkt:"#0a5b34" },
+  { navn:"Stjerne", fil:"gullgul",     farge:"#EF9F27", morkt:"#a06a10" }
+];
+const FARGER = ["#E23B2E","#1F7AE0","#17A05C","#EF9F27","#7B4BD8","#0E9C9C","#D63F86","#C2571A"];
+const forsokFarge = (plass, forsok) => FARGER[((plass * 5 + forsok) % FARGER.length + FARGER.length) % FARGER.length];
+
+const HEIAROP  = ["Se på ramma!","Bruk det du vet!","Ta det rolig!","Du klarer det!","Bra!","Tenk deg om!","Så flink!","Se mønsteret!"];
+const JUBELROP = ["Kjempebra!","Perfekt!","Så fint!","Supert!","Smart tenkt!"];
+const BOMROP   = ["Nesten! Se på ramma.","Bruk tierramma som hjelp.","Prøv igjen – rolig og fint."];
+
+const OPPGAVER = {
+  tiervenner: { tittel:() => "Finn <em>vennen</em> – hvor mange mangler for å bli " + app.helhet + "?" },
+  dobling:    { tittel:() => "Se dobbelt – <em>doblingen</em> hjelper deg!" },
+  fyll:       { tittel:() => "Gå <em>via tieren</em> – da blir det lett!" },
+  familie:    { tittel:() => "Hvilket tall mangler i <em>regnefamilien</em>?" }
+};
+
+/* ---------- Tilstand ---------- */
+const app = {
+  oppgave:"tiervenner", modus:"tur",
+  antall:4, runder:3, valg:4, helhet:10, omraade:10, dobling:"dblandet", regne:"pluss", husmodus:"hele",
+  tur:0, rep:0, ferdigeSett:0,
+  flater:[], _celler:[], sisteNokkel:{}
+};
+
+/* ---------- Små hjelpere ---------- */
+const $ = s => document.querySelector(s);
+const tilfeldig = a => a[Math.floor(Math.random()*a.length)];
+const heltall = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+const bland = a => { const b = a.slice(); for (let i=b.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [b[i],b[j]] = [b[j],b[i]]; } return b; };
+const monsterUrl = fil => "bilder/lyd/monster-" + fil + ".webp";
+const monsterReserve = fil => "https://myntland.no/monsters/" + fil + ".webp";
+
+/* ---------- Lyd ---------- */
+let lydPaa = true, ac = null;
+function lydKontekst(){
+  if (!ac) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); }
+  if (ac && ac.state === "suspended") ac.resume();
+  return ac;
+}
+function tone(freq, tid=0.12, type="sine", vol=0.15, forsink=0){
+  if (!lydPaa) return;
+  const k = lydKontekst(); if (!k) return;
+  const o = k.createOscillator(), g = k.createGain();
+  o.type = type; o.frequency.value = freq;
+  const t0 = k.currentTime + forsink;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + tid);
+  o.connect(g); g.connect(k.destination); o.start(t0); o.stop(t0 + tid + 0.05);
+}
+const lydKlikk  = () => tone(560, 0.07, "triangle", 0.09);
+const lydSteg   = () => [660,880].forEach((f,i)=>tone(f,0.12,"triangle",0.12,i*0.08));
+const lydRunde  = () => [660,880].forEach((f,i)=>tone(f,0.14,"triangle",0.13,i*0.09));
+const lydFerdig = () => [523,659,784,1047].forEach((f,i)=>tone(f,0.18,"triangle",0.14,i*0.09));
+const lydFanfare= () => [523,659,784,1047,1319,1047,1319].forEach((f,i)=>tone(f,0.24,"triangle",0.15,i*0.11));
+const lydFeil   = () => [330,247].forEach((f,i)=>tone(f,0.16,"sine",0.10,i*0.10));
+const lydFly    = i => tone(540 + i*80, 0.1, "triangle", 0.11);
+
+/* ---------- Innlest tale (mp3) ---------- */
+const LYDSTI = "lyd/";
+const REPLIKKER = [
+  "tiervenn","femvenn","hva-blir","pluss","minus","er-lik",      /* nye – leses inn */
+  "fyll-tieren","ned-til-tieren","legg-paa-resten",              /* nye – leses inn */
+  "ta-bort-resten","regnefamilien","tenk-dobling",               /* nye – leses inn */
+  "hvor-mange-dro-du-inn",                                       /* ny – leses inn */
+  "riktig","proev-igjen",                                        /* fins alt i /lyd/ */
+  "din-tur","neste-elev","alle-sammen"                           /* fins alt i /lyd/ */
+];
+
+const lydLager = new Map();
+let taleNr = 0, spillerNaa = null;
+
+function hentLyd(navn){
+  let a = lydLager.get(navn);
+  if (!a){ a = new Audio(LYDSTI + navn + ".mp3"); a.preload = "auto"; lydLager.set(navn, a); }
+  return a;
+}
+function forbered(...navn){ navn.forEach(n => { try { hentLyd(n).load(); } catch(e){} }); }
+function stoppTale(){
+  taleNr++;
+  if (spillerNaa){ try { spillerNaa.pause(); spillerNaa.currentTime = 0; } catch(e){} spillerNaa = null; }
+}
+/* si("riktig","tall-7") spiller filene etter hverandre. Ny si() avbryter den
+   forrige, og en fil som mangler hopper vi bare over. */
+function si(...navn){
+  if (!lydPaa || !navn.length) return;
+  stoppTale();
+  const mitt = taleNr;
+  const kjoer = i => {
+    if (i >= navn.length || mitt !== taleNr) return;
+    const a = hentLyd(navn[i]);
+    let brukt = false;
+    const videre = () => {
+      if (brukt) return;
+      brukt = true;
+      a.removeEventListener("ended", videre);
+      a.removeEventListener("error", videre);
+      if (mitt === taleNr) kjoer(i + 1);
+    };
+    a.addEventListener("ended", videre);
+    a.addEventListener("error", videre);
+    try { a.currentTime = 0; } catch(e){}
+    spillerNaa = a;
+    const p = a.play();
+    if (p && p.catch) p.catch(videre);
+  };
+  kjoer(0);
+}
+const siTall = n => si("tall-" + n);
+/* Stemmen er med når én elev holder på om gangen. I «Flere samtidig» sitter
+   fire elever ved samme skjerm, og fire stemmer oppå hverandre blir bare støy. */
+const talePaa = () => app.modus !== "flere";
+
+/* ---------- Tidsutløsere som hører til runden ---------- */
+let rundeTimere = [];
+function senere(fn, ms){ const t = setTimeout(() => { rundeTimere = rundeTimere.filter(x => x !== t); fn(); }, ms); rundeTimere.push(t); return t; }
+function stoppTimere(){ rundeTimere.forEach(clearTimeout); rundeTimere = []; }
+
+/* ---------- Konfetti ---------- */
+const kanvas = $("#konfetti"), ktx = kanvas.getContext("2d");
+let biter = [], konfettiKjorer = false;
+function skalerKanvas(){
+  const d = window.devicePixelRatio || 1;
+  kanvas.width = innerWidth * d; kanvas.height = innerHeight * d;
+  kanvas.style.width = innerWidth + "px"; kanvas.style.height = innerHeight + "px";
+  ktx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener("resize", skalerKanvas); skalerKanvas();
+const KONFETTIFARGER = ["#E23B2E","#1F7AE0","#17A05C","#EF9F27","#534AB7","#D85A30","#ff6fb5","#25c7c7"];
+function konfetti(x, y, antall=90, fart=1){
+  for (let i=0;i<antall;i++){
+    const v = (Math.random()*7+3)*fart, a = Math.random()*Math.PI*2;
+    biter.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 4,
+      st:Math.random()*8+5, f:tilfeldig(KONFETTIFARGER),
+      r:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, liv:1 });
+  }
+  if (!konfettiKjorer){ konfettiKjorer = true; requestAnimationFrame(tegnKonfetti); }
+}
+function storKonfetti(){
+  const b = innerWidth, h = innerHeight;
+  konfetti(b*0.2, h*0.45, 110, 1.3); konfetti(b*0.8, h*0.45, 110, 1.3);
+  konfetti(b*0.5, h*0.35, 140, 1.5);
+  setTimeout(()=>{ konfetti(b*0.35,h*0.5,90,1.2); konfetti(b*0.65,h*0.5,90,1.2); }, 260);
+}
+function tegnKonfetti(){
+  ktx.clearRect(0,0,innerWidth,innerHeight);
+  biter = biter.filter(p => p.liv > 0 && p.y < innerHeight + 60);
+  for (const p of biter){
+    p.vy += 0.22; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.r += p.vr; p.liv -= 0.004;
+    ktx.save(); ktx.translate(p.x, p.y); ktx.rotate(p.r); ktx.globalAlpha = Math.max(0, Math.min(1, p.liv*1.6));
+    ktx.fillStyle = p.f; ktx.fillRect(-p.st/2, -p.st/2, p.st, p.st*0.6); ktx.restore();
+  }
+  if (biter.length){ requestAnimationFrame(tegnKonfetti); }
+  else { konfettiKjorer = false; ktx.clearRect(0,0,innerWidth,innerHeight); }
+}
+
+/* ============================================================
+   SVG – tierrammer, mynthauger og regnefamilie-huset
+   ------------------------------------------------------------
+   Alt ender som en <svg> med egen viewBox og preserveAspectRatio.
+   Da kan boksen rundt ha hvilken som helst form – bildet legger
+   seg alltid midt i og fyller det det kan.
+   ============================================================ */
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attr){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attr) e.setAttribute(k, attr[k]);
+  return e;
+}
+function nySvg(b, h){
+  const s = svgEl("svg", { viewBox:"0 0 " + b + " " + h, preserveAspectRatio:"xMidYMid meet" });
+  s.setAttribute("class", "bilde");
+  return s;
+}
+
+const NAVY = "#232a3f", AMBER = "#EF9F27", AMBER_DYP = "#c4841a",
+      GRONN = "#74c043", GRONN_DYP = "#4f8f28", TEAL = "#2bb3c0", TEAL_DYP = "#17747e", RAUD = "#e8473f";
+const MYNTFARGER = {
+  amber:{ fyll:AMBER, ring:AMBER_DYP },
+  teal: { fyll:TEAL,  ring:TEAL_DYP },
+  gronn:{ fyll:GRONN, ring:GRONN_DYP }
+};
+
+/* Én mynt. */
+function tegnMynt(vert, cx, cy, r, farge){
+  const f = MYNTFARGER[farge] || MYNTFARGER.amber;
+  const g = svgEl("g", { class:"mynt" });
+  g.appendChild(svgEl("circle", { cx, cy, r, fill:f.fyll, stroke:NAVY, "stroke-width":r*0.16 }));
+  g.appendChild(svgEl("circle", { cx, cy, r:r*0.56, fill:"none", stroke:f.ring, "stroke-width":r*0.11 }));
+  vert.appendChild(g);
+  return g;
+}
+/* Rødt kryss over en mynt – brukes når mynter «tas bort» i minus. */
+function kryssMynt(vert, cx, cy, r){
+  const g = svgEl("g", {});
+  const a = r*0.85;
+  g.appendChild(svgEl("line", { x1:cx-a, y1:cy-a, x2:cx+a, y2:cy+a, stroke:RAUD, "stroke-width":r*0.28, "stroke-linecap":"round" }));
+  g.appendChild(svgEl("line", { x1:cx-a, y1:cy+a, x2:cx+a, y2:cy-a, stroke:RAUD, "stroke-width":r*0.28, "stroke-linecap":"round" }));
+  vert.appendChild(g);
+  return g;
+}
+
+/* ---------- Tierramme ----------
+   maks = 5 gir én rad, maks = 10 gir 2×5. Rutene fylles radvis fra
+   venstre. «fyll» er en liste med myntfarger – én per fylt rute – slik
+   at 8 gule + 2 grønne kan vises i samme ramme. */
+const RUTE = 100, KANT = 8;
+function rammeGruppe(fyll, maks){
+  const rader = maks === 5 ? 1 : 2;
+  const b = 5*RUTE, h = rader*RUTE;
+  const g = svgEl("g", {});
+  g.appendChild(svgEl("rect", { x:0, y:0, width:b, height:h, rx:18,
+    fill:"#fffaeb", stroke:NAVY, "stroke-width":7 }));
+  for (let k=1; k<5; k++)
+    g.appendChild(svgEl("line", { x1:k*RUTE, y1:0, x2:k*RUTE, y2:h,
+      stroke:NAVY, "stroke-width":3, opacity:.35 }));
+  if (rader > 1)
+    g.appendChild(svgEl("line", { x1:0, y1:RUTE, x2:b, y2:RUTE,
+      stroke:NAVY, "stroke-width":3, opacity:.35 }));
+  const posisjoner = [];
+  for (let i=0; i<maks; i++){
+    const rad = Math.floor(i/5), kol = i%5;
+    posisjoner.push({ cx:kol*RUTE + RUTE/2, cy:rad*RUTE + RUTE/2 });
+  }
+  fyll.forEach((farge, i) => {
+    if (i < maks) tegnMynt(g, posisjoner[i].cx, posisjoner[i].cy, RUTE*0.34, farge);
+  });
+  g._pos = posisjoner; g._b = b; g._h = h;
+  return g;
+}
+
+/* Mynthaug i ordnede rader à 5 – den løse mengden i «Fyll tieren». */
+function haugGruppe(antall, farge){
+  const M = 88;
+  const kols = Math.min(5, Math.max(1, antall));
+  const rader = Math.max(1, Math.ceil(antall/5));
+  const g = svgEl("g", {});
+  const pos = [];
+  for (let i=0; i<antall; i++){
+    const rad = Math.floor(i/5), kol = i%5;
+    const iRad = (rad === rader-1) ? (antall - rad*5) : 5;
+    const skyv = (kols - iRad) * M / 2;
+    pos.push({ cx: skyv + kol*M + M/2, cy: rad*M + M/2 });
+  }
+  const mynter = [];
+  pos.forEach(p => mynter.push(tegnMynt(g, p.cx, p.cy, M*0.4, farge)));
+  g._pos = pos; g._mynter = mynter; g._b = kols*M; g._h = rader*M;
+  return g;
+}
+
+/* Setter grupper ved siden av hverandre med et tegn (+/−) mellom,
+   loddrett midtstilt, og pakker alt i én svg. */
+function settSammen(deler){
+  const GAP = 46, TEGNPLASS = 74;
+  let bredde = 0, hoyde = 0;
+  deler.forEach(d => {
+    if (d.tegn){ bredde += TEGNPLASS; hoyde = Math.max(hoyde, 90); }
+    else { bredde += d.g._b; hoyde = Math.max(hoyde, d.g._h); }
+    bredde += GAP;
+  });
+  bredde -= GAP;
+  const s = nySvg(bredde + KANT*2, hoyde + KANT*2);
+  let x = KANT;
+  deler.forEach(d => {
+    if (d.tegn){
+      const t = svgEl("text", { x:x + TEGNPLASS/2, y:KANT + hoyde/2 + 26, "text-anchor":"middle",
+        "font-family":"'Fredoka One', cursive", "font-size":78, fill:NAVY });
+      t.textContent = d.tegn;
+      s.appendChild(t);
+      x += TEGNPLASS + GAP;
+    } else {
+      const y = KANT + (hoyde - d.g._h)/2;
+      d.g.setAttribute("transform", "translate(" + x + "," + y + ")");
+      s.appendChild(d.g);
+      d.g._x = x; d.g._y = y;
+      x += d.g._b + GAP;
+    }
+  });
+  return s;
+}
+
+/* ---------- Svevende mynter ----------
+   Flytter mynter fra ett sted i svg-en til et annet med en myk bue –
+   én og én, med landelyd. Brukes i «Fyll tieren» så eleven SER at vi
+   tar fra det andre leddet for å fylle ramma. Med redusert bevegelse
+   hopper myntene rett på plass i stedet. */
+function animerFly(flytt, ferdig){
+  const redusert = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (redusert || !flytt.length){
+    flytt.forEach(f => f.mynt.setAttribute("transform", "translate(" + f.dx + "," + f.dy + ")"));
+    ferdig && ferdig();
+    return;
+  }
+  const VARIGHET = 520, MELLOM = 200;
+  const start = performance.now();
+  let ferdigKalt = false;
+  function steg(no){
+    let alleFerdige = true;
+    flytt.forEach((f, i) => {
+      let t = (no - start - i*MELLOM) / VARIGHET;
+      if (t < 0) t = 0;
+      if (t < 1) alleFerdige = false;
+      if (t > 1) t = 1;
+      const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;   /* easeInOutQuad */
+      const loft = Math.sin(Math.PI * t) * 95;                    /* buen opp i lufta */
+      f.mynt.setAttribute("transform", "translate(" + (f.dx*e) + "," + (f.dy*e - loft) + ")");
+      if (t >= 1 && !f.landet){ f.landet = true; lydFly(i); }
+    });
+    if (!alleFerdige) requestAnimationFrame(steg);
+    else if (!ferdigKalt){ ferdigKalt = true; ferdig && ferdig(); }
+  }
+  requestAnimationFrame(steg);
+}
+
+/* ---------- Regnefamilie-huset ----------
+   Helheten bor på loftet, delene i hver sin stue. Det manglende
+   tallet vises som «?» til eleven har funnet det. */
+function husGruppe(hel, p, q, mangler){
+  const g = svgEl("g", {});
+  const B = 560, H = 372;
+  /* tak */
+  g.appendChild(svgEl("polygon", { points:"280,6 34,168 526,168",
+    fill:"#f3e2b9", stroke:NAVY, "stroke-width":8, "stroke-linejoin":"round" }));
+  /* kropp med to rom */
+  g.appendChild(svgEl("rect", { x:70, y:168, width:420, height:174, rx:6,
+    fill:"#fffaeb", stroke:NAVY, "stroke-width":8 }));
+  g.appendChild(svgEl("line", { x1:280, y1:168, x2:280, y2:342, stroke:NAVY, "stroke-width":5, opacity:.5 }));
+  /* pluss- og minuspiler som binder huset sammen */
+  g.appendChild(svgEl("text", { x:170, y:158, "text-anchor":"middle",
+    "font-family":"'Fredoka One', cursive", "font-size":40, fill:AMBER_DYP })).textContent = "+";
+  g.appendChild(svgEl("text", { x:392, y:158, "text-anchor":"middle",
+    "font-family":"'Fredoka One', cursive", "font-size":40, fill:AMBER_DYP })).textContent = "+";
+  const tall = (x, y, verdi, skjult, storrelse) => {
+    const t = svgEl("text", { x, y, "text-anchor":"middle",
+      "font-family":"'Fredoka One', cursive", "font-size":storrelse, fill: skjult ? AMBER_DYP : NAVY });
+    t.textContent = skjult ? "?" : verdi;
+    g.appendChild(t);
+    return t;
+  };
+  g._helT = tall(280, 138, hel, mangler === "hel", 84);
+  g._pT   = tall(175, 288, p,   mangler === "p",   72);
+  g._qT   = tall(385, 288, q,   mangler === "q",   72);
+  g._b = B; g._h = H;
+  return g;
+}
+
+/* ---------- Huset med etasjer ----------
+   «Bygg hele huset»: familien bor på loftet, og hvert regnestykke i
+   familien blir en ny etasje. Etasjen eleven jobber med er gul, de
+   ferdige er grønne – huset vokser til alle fire står. */
+const ETG_H = 96;
+function husMedEtasjer(hel, p, q, etasjer){
+  const g = husGruppe(hel, p, q, null);   /* tak + stuer, alle tall synlige */
+  const synlige = etasjer.filter(f => f.vist);
+  synlige.forEach((f, i) => {
+    const y = 342 + i*ETG_H;
+    g.appendChild(svgEl("rect", { x:70, y, width:420, height:ETG_H, rx:6,
+      fill: f.ferdig ? "#e9f8dd" : "#fffaeb",
+      stroke: f.ferdig ? NAVY : AMBER_DYP, "stroke-width":8 }));
+    const t = svgEl("text", { x:280, y:y+64, "text-anchor":"middle",
+      "font-family":"'Fredoka One', cursive", "font-size":50 });
+    const t1 = svgEl("tspan", { fill:NAVY }); t1.textContent = f.pre;
+    const t2 = svgEl("tspan", { fill: f.ferdig ? GRONN_DYP : AMBER_DYP });
+    t2.textContent = f.ferdig ? String(f.svar) : "?";
+    const t3 = svgEl("tspan", { fill:NAVY }); t3.textContent = f.suf;
+    t.appendChild(t1); t.appendChild(t2); t.appendChild(t3);
+    g.appendChild(t);
+  });
+  g._h = 342 + synlige.length*ETG_H + 6;
+  return g;
+}
+
+/* ---------- Tallkort ---------- */
+function lagTallkort(n){
+  const d = document.createElement("div");
+  d.className = "tallkort";
+  const s = svgEl("svg", { viewBox:"0 0 100 100", preserveAspectRatio:"xMidYMid meet" });
+  const t = svgEl("text", { x:50, y:70, "text-anchor":"middle",
+    "font-family":"'Fredoka One', cursive", "font-size":58, fill:NAVY });
+  t.textContent = n;
+  s.appendChild(t);
+  d.appendChild(s);
+  return d;
+}
+
+function merke(vert, tegn){
+  const d = document.createElement("div");
+  d.className = tegn === "✓" ? "merke-rett" : "merke-feil";
+  d.textContent = tegn;
+  vert.appendChild(d);
+  setTimeout(()=>d.remove(), 1400);
+}
+
+/* ============================================================
+   SVARKORT
+   ------------------------------------------------------------
+   Distraktorer: nabotall først – det er dem eleven bommer på.
+   Vi trekker blant de nærmeste innenfor [lo, hi].
+   ============================================================ */
+function velgDistraktorer(fasit, antall, lo, hi){
+  const alle = [];
+  for (let n=lo; n<=hi; n++) if (n !== fasit) alle.push(n);
+  alle.sort((a,b) => Math.abs(a-fasit) - Math.abs(b-fasit) || a-b);
+  const naere = alle.slice(0, Math.min(alle.length, antall + 2));
+  const valgt = bland(naere).slice(0, antall);
+  for (const n of alle){
+    if (valgt.length >= antall) break;
+    if (!valgt.includes(n)) valgt.push(n);
+  }
+  return valgt.slice(0, antall);
+}
+
+/* Rutenettet for svaralternativene: opptil 5 kort på én rad,
+   i firedelt visning brytes de i to rader fra 4 kort. */
+function settRutenett(rad, n, iCelle){
+  const kols = iCelle && n >= 4 ? Math.ceil(n/2) : n;
+  rad.style.setProperty("--kols", kols);
+  rad.style.setProperty("--rader", Math.ceil(n / kols));
+}
+
+/* Bygger en rad med svarkort i «vert». Returnerer kontroll-objekt. */
+function lagSvarkort(vert, fasit, lo, hi, iCelle, paaRett, paaBom){
+  const svarene = bland([fasit, ...velgDistraktorer(fasit, app.valg - 1, lo, hi)]);
+  const rad = document.createElement("div");
+  rad.className = "kortrad";
+  settRutenett(rad, svarene.length, iCelle);
+
+  const kortEl = [];
+  let ferdig = false;
+  svarene.forEach(t => {
+    const kn = document.createElement("button");
+    kn.className = "kort"; kn.type = "button";
+    const kort = lagTallkort(t);
+    kn.appendChild(kort);
+    kn._tall = t; kn._kort = kort;
+    kn.addEventListener("click", () => {
+      if (ferdig) return;
+      if (t === fasit){
+        ferdig = true;
+        rad.classList.add("laast");
+        kn.classList.add("rett");
+        merke(kort, "✓");
+        paaRett();
+      } else {
+        kn.classList.add("feil");
+        lydFeil();
+        merke(kort, "✕");
+        setTimeout(()=>{ kn.classList.remove("feil"); kn.classList.add("dempet"); }, 380);
+        paaBom();
+      }
+    });
+    rad.appendChild(kn);
+    kortEl.push(kn);
+  });
+  vert.appendChild(rad);
+  return {
+    rad, kortEl,
+    erFerdig: () => ferdig,
+    visRett: () => {
+      const treff = kortEl.find(k => k._tall === fasit);
+      if (!treff) return;
+      treff.classList.add("rett");
+      setTimeout(()=>{ if (!ferdig) treff.classList.remove("rett"); }, 1600);
+    }
+  };
+}
+
+/* ---------- Nøkler mot gjentak ----------
+   Hver oppgave lager en nøkkel. Vi unngår at samme oppgave kommer to
+   ganger på rad, og at naboceller får samme oppgave samtidig. */
+function trekkUnik(lagNokkel, unnta){
+  let n = lagNokkel();
+  for (let i=0; i<24; i++){
+    const kolliderer = (unnta && unnta.includes(n.nokkel)) || app.sisteNokkel[app.oppgave] === n.nokkel;
+    if (!kolliderer) break;
+    n = lagNokkel();
+  }
+  app.sisteNokkel[app.oppgave] = n.nokkel;
+  return n;
+}
+
+/* Felles små byggeklosser for oppgaveflatene */
+function nyOppgaveRot(vert){
+  const rot = document.createElement("div");
+  rot.className = "oppgave";
+  vert.appendChild(rot);
+  return rot;
+}
+function nyInforad(rot){
+  const d = document.createElement("div");
+  d.className = "inforad";
+  rot.appendChild(d);
+  return d;
+}
+function nyLapp(vert, tekst, strategi){
+  const d = document.createElement("div");
+  d.className = "merkelapp" + (strategi ? " strategi" : "");
+  d.textContent = tekst;
+  vert.appendChild(d);
+  return d;
+}
+function nyChip(vert, html, liten){
+  const d = document.createElement("div");
+  d.className = "infochip" + (liten ? " liten" : "");
+  d.innerHTML = html;
+  vert.appendChild(d);
+  return d;
+}
+function nyFeltboks(rot, svg, farge){
+  const d = document.createElement("div");
+  d.className = "feltboks";
+  if (farge) d.style.borderColor = farge;
+  d.appendChild(svg);
+  rot.appendChild(d);
+  return d;
+}
+/* Stor strategibeskjed oppe på selve spillefeltet */
+function nyFeltlapp(boks, tekst){
+  const d = document.createElement("div");
+  d.className = "feltlapp";
+  d.textContent = tekst;
+  boks.classList.add("medlapp");
+  boks.appendChild(d);
+  return d;
+}
+
+/* ============================================================
+   OPPGAVE 1 – TIERVENNER
+   ------------------------------------------------------------
+   Tierramma viser n mynter. Hvor mange mangler for å bli 5/10?
+   Ved riktig svar fyller de grønne vennene resten av ramma –
+   bildet VISER at n + venn = helheten.
+   ============================================================ */
+/* ---------- Vennebrettet ----------
+   Tierramme øverst og en grønn uendelig-mynt i skåla under. Eleven
+   drar mynter fra kilden opp i ramma – de snapper til nærmeste
+   ledige rute, og en lagt mynt kan plukkes opp og flyttes eller
+   dras ut igjen. Kilden går aldri tom (derav ∞). */
+function tegnVennebrett(n, H){
+  const frame = rammeGruppe(Array(n).fill("amber"), H);
+  const b = frame._b + KANT*2;
+  const R = 46;
+  const skaalY = KANT + frame._h + 40;
+  const s = nySvg(b, skaalY + R*2 + 32);
+  frame.setAttribute("transform", "translate(" + KANT + "," + KANT + ")");
+  s.appendChild(frame);
+
+  /* skåla og uendelig-mynten */
+  const midtX = b/2, kcy = skaalY + R + 6;
+  s.appendChild(svgEl("rect", { x:midtX-112, y:skaalY-12, width:224, height:R*2+34, rx:28,
+    fill:"#e4f4ee", stroke:GRONN_DYP, "stroke-width":6 }));
+  const kilde = svgEl("g", { class:"kilde", style:"cursor:grab" });
+  kilde.appendChild(svgEl("circle", { cx:midtX, cy:kcy, r:R, fill:GRONN, stroke:NAVY, "stroke-width":7 }));
+  kilde.appendChild(svgEl("circle", { cx:midtX, cy:kcy, r:R*0.62, fill:"none", stroke:GRONN_DYP, "stroke-width":5 }));
+  const inf = svgEl("text", { x:midtX, y:kcy+15, "text-anchor":"middle",
+    "font-family":"'Fredoka One', cursive", "font-size":42, fill:"#fff" });
+  inf.textContent = "∞";
+  kilde.appendChild(inf);
+  s.appendChild(kilde);
+
+  const draglag = svgEl("g", {});
+  s.appendChild(draglag);
+
+  const fylt = [];
+  for (let i=0; i<H; i++) fylt.push(i < n);
+  const vennMynter = new Map();
+  let laast = false, aktivDrag = null;
+
+  const punkt = e => {
+    const p = s.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+    const m = s.getScreenCTM();
+    return m ? p.matrixTransform(m.inverse()) : { x:0, y:0 };
+  };
+  const celleXY = i => ({ x: KANT + frame._pos[i].cx, y: KANT + frame._pos[i].cy });
+
+  s.addEventListener("pointerdown", e => {
+    if (laast || aktivDrag) return;
+    const fraKilde = e.target.closest && e.target.closest(".kilde");
+    const fraMynt  = e.target.closest && e.target.closest(".venn-mynt");
+    if (!fraKilde && !fraMynt) return;
+    e.preventDefault();
+    const p = punkt(e);
+    if (fraMynt){
+      const i = +fraMynt.getAttribute("data-celle");
+      fraMynt.remove();
+      vennMynter.delete(i);
+      fylt[i] = false;
+    }
+    const g = svgEl("g", { style:"pointer-events:none" });
+    tegnMynt(g, 0, 0, RUTE*0.34, "gronn");
+    g.setAttribute("transform", "translate(" + p.x + "," + p.y + ")");
+    draglag.appendChild(g);
+    aktivDrag = { g, pid:e.pointerId };
+    try { s.setPointerCapture(e.pointerId); } catch(err){}
+    lydKlikk();
+  });
+  s.addEventListener("pointermove", e => {
+    if (!aktivDrag || e.pointerId !== aktivDrag.pid) return;
+    const p = punkt(e);
+    aktivDrag.g.setAttribute("transform", "translate(" + p.x + "," + p.y + ")");
+  });
+  s.addEventListener("pointerup", e => {
+    if (!aktivDrag || e.pointerId !== aktivDrag.pid) return;
+    const p = punkt(e);
+    aktivDrag.g.remove();
+    aktivDrag = null;
+    /* nærmeste ledige rute */
+    let best = -1, bestAvst = Infinity;
+    for (let i=0; i<H; i++){
+      if (fylt[i]) continue;
+      const c = celleXY(i);
+      const avst = Math.hypot(p.x - c.x, p.y - c.y);
+      if (avst < bestAvst){ bestAvst = avst; best = i; }
+    }
+    if (best >= 0 && bestAvst <= RUTE*0.85){
+      const c = celleXY(best);
+      const g = tegnMynt(s, c.x, c.y, RUTE*0.34, "gronn");
+      g.setAttribute("class", "venn-mynt");
+      g.setAttribute("data-celle", best);
+      g.setAttribute("style", "cursor:grab");
+      fylt[best] = true;
+      vennMynter.set(best, g);
+      lydFly(vennMynter.size);
+      s._paaLagt && s._paaLagt(vennMynter.size);
+    }
+  });
+  s.addEventListener("pointercancel", e => {
+    if (aktivDrag && e.pointerId === aktivDrag.pid){ aktivDrag.g.remove(); aktivDrag = null; }
+  });
+
+  s._laas = () => { laast = true; kilde.setAttribute("style", "cursor:default; opacity:.45"); };
+  s._ledige = () => { const l = []; for (let i=0; i<H; i++) if (!fylt[i]) l.push(celleXY(i)); return l; };
+  return s;
+}
+
+function lagTiervennFlate(vert, farge, valg, unnta, iCelle){
+  const H = app.helhet;
+  const t = trekkUnik(() => { const n = heltall(1, H-1); return { nokkel:n, n }; }, unnta);
+  const n = t.n, venn = H - n;
+
+  const rot = nyOppgaveRot(vert);
+  const info = nyInforad(rot);
+  nyLapp(info, H === 10 ? "Tiervenner" : "Venner til 5", true);
+  const chip = nyChip(info, n + " + <em>?</em> = " + H);
+
+  const svg = tegnVennebrett(n, H);
+  const boks = nyFeltboks(rot, svg, farge);
+  const lapp = nyFeltlapp(boks, "Dra inn mynter til ramma er full!");
+
+  /* svarkortene tar plassen sin fra start, men vises først når ramma er full */
+  const kortVert = document.createElement("div");
+  kortVert.style.visibility = "hidden";
+  rot.appendChild(kortVert);
+
+  let fullt = false;
+  const kort = lagSvarkort(kortVert, venn, 0, H, iCelle,
+    () => {
+      chip.innerHTML = n + " + <span class='gr'>" + venn + "</span> = " + H;
+      chip.classList.add("svar");
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) si("riktig", "tall-" + n, "pluss", "tall-" + venn, "er-lik", "tall-" + H);
+      valg.paaFerdig && senere(valg.paaFerdig, 1100);
+    },
+    () => {
+      valg.paaBom && valg.paaBom();
+      if (talePaa()) si("proev-igjen");
+    });
+
+  svg._paaLagt = antall => {
+    if (talePaa()) siTall(antall);               /* teller høyt: én, to, tre … */
+    if (n + antall >= H){
+      fullt = true;
+      svg._laas();
+      lydSteg();
+      lapp.textContent = "Hvor mange dro du inn?";
+      kortVert.style.visibility = "";
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) senere(() => si("hvor-mange-dro-du-inn"), 800);
+    }
+  };
+
+  return {
+    fasit:venn, tallKey:t.nokkel,
+    visMeg: () => {
+      if (fullt){ kort.visRett(); if (talePaa()) siTall(venn); return; }
+      /* blink de tomme rutene som hint */
+      svg._ledige().forEach(c => {
+        const ring = svgEl("circle", { cx:c.x, cy:c.y, r:RUTE*0.36, fill:"none",
+          stroke:AMBER_DYP, "stroke-width":8, opacity:.9 });
+        svg.appendChild(ring);
+        setTimeout(() => ring.remove(), 1400);
+      });
+      if (talePaa()) siTall(venn);
+    },
+    sporsmaal: () => { if (talePaa()) si(H === 10 ? "tiervenn" : "femvenn"); }
+  };
+}
+
+/* ============================================================
+   OPPGAVE 2 – DOBLING OG NÆR-DOBLING
+   ------------------------------------------------------------
+   To tierrammer side om side. Dobling: a + a. Nær-dobling:
+   a + (a+1) – med hint om å bruke doblingen og legge til én.
+   ============================================================ */
+function lagDoblingFlate(vert, farge, valg, unnta, iCelle){
+  const variant = app.dobling === "dblandet" ? (Math.random() < 0.5 ? "dobling" : "naer") : app.dobling;
+  const maksA = app.omraade === 10 ? (variant === "naer" ? 4 : 5) : (variant === "naer" ? 9 : 10);
+  const t = trekkUnik(() => {
+    const a = heltall(1, maksA);
+    return { nokkel: a*100 + (variant === "naer" ? 1 : 0), a };
+  }, unnta);
+  const a = t.a, b = variant === "naer" ? a + 1 : a, sum = a + b;
+
+  const rot = nyOppgaveRot(vert);
+  const info = nyInforad(rot);
+  nyLapp(info, variant === "naer" ? "Nesten dobbelt!" : "Dobling!", true);
+  const chip = nyChip(info, a + " + " + b + " = <em>?</em>");
+  const hint = variant === "naer" ? nyChip(info, "💡 " + a + " + " + a + " og én til", true) : null;
+
+  const rammeMaks = app.omraade === 10 ? (sum <= 5 ? 5 : 10) : 10;
+  const g1 = rammeGruppe(Array(a).fill("amber"), rammeMaks);
+  const g2 = rammeGruppe(Array(b).fill("teal"), rammeMaks);
+  const svg = settSammen([{ g:g1 }, { tegn:"+" }, { g:g2 }]);
+  nyFeltboks(rot, svg, farge);
+
+  const kort = lagSvarkort(rot, sum, Math.max(0, sum-4), Math.min(app.omraade, sum+4), iCelle,
+    () => {
+      chip.innerHTML = a + " + " + b + " = <span class='gr'>" + sum + "</span>";
+      chip.classList.add("svar");
+      if (variant === "naer"&& hint) hint.innerHTML = "💡 " + a + " + " + a + " + 1 = <span class='gr'>" + sum + "</span>";
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) si("riktig", "tall-" + a, "pluss", "tall-" + b, "er-lik", "tall-" + sum);
+      valg.paaFerdig && senere(valg.paaFerdig, 1100);
+    },
+    () => {
+      valg.paaBom && valg.paaBom();
+      if (talePaa()) si(variant === "naer" ? "tenk-dobling" : "proev-igjen");
+    });
+
+  return {
+    fasit:sum, tallKey:t.nokkel,
+    visMeg: () => { kort.visRett(); if (talePaa()) siTall(sum); },
+    sporsmaal: () => { if (talePaa()) si("hva-blir", "tall-" + a, "pluss", "tall-" + b); }
+  };
+}
+
+/* ============================================================
+   OPPGAVE 3 – FYLL TIEREN (tierovergang i to steg)
+   ------------------------------------------------------------
+   Pluss:  8 + 5  →  steg 1: 8 + ? = 10   steg 2: 10 + 3 = ?
+   Minus:  13 − 5 →  steg 1: 13 − ? = 10  steg 2: 10 − 2 = ?
+   Til slutt vises hele tankerekka: 8 + 5 = 8 + 2 + 3 = 13.
+   ============================================================ */
+function lagFyllFlate(vert, farge, valg, unnta, iCelle){
+  const vei = app.regne === "blandet" ? (Math.random() < 0.5 ? "pluss" : "minus") : app.regne;
+
+  const rot = nyOppgaveRot(vert);
+  const info = nyInforad(rot);
+
+  if (vei === "pluss"){
+    const t = trekkUnik(() => {
+      const a = heltall(6, 9);
+      const b = heltall(11 - a, 9);
+      return { nokkel: a*100 + b, a, b };
+    }, unnta);
+    const a = t.a, b = t.b, d = 10 - a, r = b - d, sum = a + b;
+
+    const stykke = nyChip(info, a + " + " + b + " = <em>?</em>");
+    const steg = nyChip(info, "Steg 1: &nbsp;" + a + " + <em>?</em> = 10 &nbsp;<span class='vent-hake'>✓</span>", true);
+    /* steg 2 tar plassen sin allerede nå – usynlig, så ingenting flytter seg */
+    const steg2 = nyChip(info, "Steg 2: &nbsp;10 + " + r + " = <em>?</em> &nbsp;<span class='vent-hake'>✓</span>", true);
+    steg2.classList.add("venter");
+
+    const g1 = rammeGruppe(Array(a).fill("amber"), 10);
+    const g2 = haugGruppe(b, "teal");
+    const svg1 = settSammen([{ g:g1 }, { tegn:"+" }, { g:g2 }]);
+    const boks = nyFeltboks(rot, svg1, farge);
+    const lapp = nyFeltlapp(boks, "Fyll tieren først!");
+
+    const kortVert = document.createElement("div");
+    rot.appendChild(kortVert);
+
+    let steg2kort = null;
+
+    const steg1kort = lagSvarkort(kortVert, d, 0, 10, iCelle,
+      () => {
+        lydSteg();
+        steg.innerHTML = "Steg 1: &nbsp;" + a + " + <span class='bl'>" + d + "</span> = 10 &nbsp;✓";
+        steg.classList.add("svar");
+        valg.paaRiktig && valg.paaRiktig();
+        if (talePaa()) si("riktig");
+        /* de d bakerste myntene svever fra haugen og inn i de tomme
+           rutene – eleven SER at vi tar fra det andre leddet */
+        const flytt = [];
+        for (let i=0; i<d; i++){
+          const nr = b - d + i;
+          flytt.push({ mynt: g2._mynter[nr],
+            dx: (g1._x + g1._pos[a + i].cx) - (g2._x + g2._pos[nr].cx),
+            dy: (g1._y + g1._pos[a + i].cy) - (g2._y + g2._pos[nr].cy) });
+        }
+        animerFly(flytt, () => {
+          lapp.textContent = "Legg på resten!";
+          steg2.classList.remove("venter");
+          steg2.classList.add("nyss");
+          if (talePaa()) si("legg-paa-resten");
+          kortVert.innerHTML = "";
+          steg2kort = lagSvarkort(kortVert, sum, 10, Math.min(20, sum+4), iCelle,
+          () => {
+            steg2.innerHTML = "Steg 2: &nbsp;10 + " + r + " = <span class='gr'>" + sum + "</span> &nbsp;✓";
+            steg2.classList.add("svar");
+            stykke.innerHTML = a + " + " + b + " = <span class='gr'>" + sum + "</span>";
+            stykke.classList.add("svar");
+            valg.paaRiktig && valg.paaRiktig();
+            if (talePaa()) si("riktig", "tall-" + a, "pluss", "tall-" + b, "er-lik", "tall-" + sum);
+            valg.paaFerdig && senere(valg.paaFerdig, 1400);
+          },
+          () => { valg.paaBom && valg.paaBom(); if (talePaa()) si("proev-igjen"); });
+        });
+      },
+      () => { valg.paaBom && valg.paaBom(); if (talePaa()) si("proev-igjen"); });
+
+    return {
+      fasit:sum, tallKey:t.nokkel,
+      visMeg: () => {
+        if (steg2kort && !steg2kort.erFerdig()){ steg2kort.visRett(); if (talePaa()) siTall(sum); }
+        else if (!steg1kort.erFerdig()){ steg1kort.visRett(); if (talePaa()) siTall(d); }
+      },
+      sporsmaal: () => { if (talePaa()) si("hva-blir", "tall-" + a, "pluss", "tall-" + b, "fyll-tieren"); }
+    };
+  }
+
+  /* ---- minus: ned til tieren ---- */
+  const t = trekkUnik(() => {
+    const s = heltall(11, 18);
+    const b = heltall(s - 10 + 1, 9);
+    return { nokkel: s*100 + b, s, b };
+  }, unnta);
+  const s = t.s, b = t.b, d = s - 10, r = b - d, res = s - b;
+
+  const stykke = nyChip(info, s + " − " + b + " = <em>?</em>");
+  const steg = nyChip(info, "Steg 1: &nbsp;" + s + " − <em>?</em> = 10 &nbsp;<span class='vent-hake'>✓</span>", true);
+  /* steg 2 tar plassen sin allerede nå – usynlig, så ingenting flytter seg */
+  const steg2 = nyChip(info, "Steg 2: &nbsp;10 − " + r + " = <em>?</em> &nbsp;<span class='vent-hake'>✓</span>", true);
+  steg2.classList.add("venter");
+
+  const g1 = rammeGruppe(Array(10).fill("amber"), 10);
+  const g2 = rammeGruppe(Array(d).fill("amber"), 10);
+  const boks = nyFeltboks(rot, settSammen([{ g:g1 }, { g:g2 }]), farge);
+  nyFeltlapp(boks, "Ned til tieren først!");
+
+  const kortVert = document.createElement("div");
+  rot.appendChild(kortVert);
+
+  let steg2kort = null;
+
+  const steg1kort = lagSvarkort(kortVert, d, 0, 10, iCelle,
+    () => {
+      lydSteg();
+      /* de d ytterste myntene krysses ut – vi står igjen på 10 */
+      boks.innerHTML = "";
+      const h1 = rammeGruppe(Array(10).fill("amber"), 10);
+      const h2 = rammeGruppe(Array(d).fill("amber"), 10);
+      for (let i=0; i<d; i++) kryssMynt(h2, h2._pos[i].cx, h2._pos[i].cy, RUTE*0.34);
+      boks.appendChild(settSammen([{ g:h1 }, { g:h2 }]));
+      nyFeltlapp(boks, "Ta bort resten!");
+      steg.innerHTML = "Steg 1: &nbsp;" + s + " − <span class='bl'>" + d + "</span> = 10 &nbsp;✓";
+      steg.classList.add("svar");
+      steg2.classList.remove("venter");
+      steg2.classList.add("nyss");
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) si("riktig", "ta-bort-resten");
+      kortVert.innerHTML = "";
+      steg2kort = lagSvarkort(kortVert, res, 0, 10, iCelle,
+        () => {
+          /* de siste r myntene krysses ut i fulle ramma */
+          boks.innerHTML = "";
+          const j1 = rammeGruppe(Array(10).fill("amber"), 10);
+          const j2 = rammeGruppe(Array(d).fill("amber"), 10);
+          for (let i=0; i<d; i++) kryssMynt(j2, j2._pos[i].cx, j2._pos[i].cy, RUTE*0.34);
+          for (let i=0; i<r; i++){ const p = j1._pos[9-i]; kryssMynt(j1, p.cx, p.cy, RUTE*0.34); }
+          boks.appendChild(settSammen([{ g:j1 }, { g:j2 }]));
+          nyFeltlapp(boks, "Ta bort resten!");
+          steg2.innerHTML = "Steg 2: &nbsp;10 − " + r + " = <span class='gr'>" + res + "</span> &nbsp;✓";
+          steg2.classList.add("svar");
+          stykke.innerHTML = s + " − " + b + " = <span class='gr'>" + res + "</span>";
+          stykke.classList.add("svar");
+          valg.paaRiktig && valg.paaRiktig();
+          if (talePaa()) si("riktig", "tall-" + s, "minus", "tall-" + b, "er-lik", "tall-" + res);
+          valg.paaFerdig && senere(valg.paaFerdig, 1400);
+        },
+        () => { valg.paaBom && valg.paaBom(); if (talePaa()) si("proev-igjen"); });
+    },
+    () => { valg.paaBom && valg.paaBom(); if (talePaa()) si("proev-igjen"); });
+
+  return {
+    fasit:res, tallKey:t.nokkel,
+    visMeg: () => {
+      if (steg2kort && !steg2kort.erFerdig()){ steg2kort.visRett(); if (talePaa()) siTall(res); }
+      else if (!steg1kort.erFerdig()){ steg1kort.visRett(); if (talePaa()) siTall(d); }
+    },
+    sporsmaal: () => { if (talePaa()) si("hva-blir", "tall-" + s, "minus", "tall-" + b, "ned-til-tieren"); }
+  };
+}
+
+/* ============================================================
+   OPPGAVE 4 – REGNEFAMILIEN
+   ------------------------------------------------------------
+   Del-helhet-huset: helheten på loftet, delene i stuene. Ett tall
+   mangler. Ved riktig svar vises hele familien – to plusstykker
+   og to minusstykker av de samme tre tallene.
+   ============================================================ */
+function lagFamilieFlate(vert, farge, valg, unnta, iCelle){
+  if (app.husmodus === "hele") return lagHusByggFlate(vert, farge, valg, unnta, iCelle);
+  const maksHel = app.omraade === 10 ? 10 : 20;
+  const t = trekkUnik(() => {
+    const hel = heltall(4, maksHel);
+    const p = heltall(1, hel - 1);
+    const mangler = tilfeldig(["hel","p","q","p","q"]); /* delene mangler oftest */
+    return { nokkel: hel*100 + p, hel, p, mangler };
+  }, unnta);
+  const hel = t.hel, p = t.p, q = hel - p;
+  const fasit = t.mangler === "hel" ? hel : (t.mangler === "p" ? p : q);
+
+  const rot = nyOppgaveRot(vert);
+  const info = nyInforad(rot);
+  nyLapp(info, "Regnefamilien", true);
+  const chip = nyChip(info, t.mangler === "hel"
+    ? p + " + " + q + " = <em>?</em>"
+    : (t.mangler === "p" ? "<em>?</em> + " + q + " = " + hel : p + " + <em>?</em> = " + hel));
+
+  const hus = husGruppe(hel, p, q, t.mangler);
+  const svg = settSammen([{ g:hus }]);
+  nyFeltboks(rot, svg, farge);
+
+  const familierad = document.createElement("div");
+  familierad.className = "familierad";
+  rot.appendChild(familierad);
+
+  const kort = lagSvarkort(rot, fasit, 0, maksHel, iCelle,
+    () => {
+      const vis = tekst => { tekst.textContent = String(tekst === hus._helT ? hel : (tekst === hus._pT ? p : q)); tekst.setAttribute("fill", GRONN_DYP); };
+      if (t.mangler === "hel") vis(hus._helT);
+      else if (t.mangler === "p") vis(hus._pT);
+      else vis(hus._qT);
+      chip.innerHTML = t.mangler === "hel"
+        ? p + " + " + q + " = <span class='gr'>" + hel + "</span>"
+        : (t.mangler === "p" ? "<span class='gr'>" + p + "</span> + " + q + " = " + hel
+                             : p + " + <span class='gr'>" + q + "</span> = " + hel);
+      chip.classList.add("svar");
+      /* hele familien på rekke – ett og ett stykke, og god tid til å lese
+         dem sammen før neste oppgave kommer */
+      [ p + " + " + q + " = " + hel,
+        q + " + " + p + " = " + hel,
+        hel + " − " + p + " = " + q,
+        hel + " − " + q + " = " + p
+      ].forEach((s2, i) => senere(() => nyChip(familierad, s2).classList.add("svar"), 300 + i*650));
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) si("riktig", "tall-" + p, "pluss", "tall-" + q, "er-lik", "tall-" + hel);
+      valg.paaFerdig && senere(valg.paaFerdig, 7000);
+    },
+    () => {
+      valg.paaBom && valg.paaBom();
+      if (talePaa()) si("proev-igjen");
+    });
+
+  return {
+    fasit, tallKey:t.nokkel,
+    visMeg: () => { kort.visRett(); if (talePaa()) siTall(fasit); },
+    sporsmaal: () => { if (talePaa()) si("regnefamilien"); }
+  };
+}
+
+/* ---------- «Bygg hele huset» ----------
+   Familien (p, q og helheten) står på loftet. Eleven bygger fire
+   etasjer – ett regnestykke fra familien per etasje: p+q, q+?, hel−p
+   og hel−?. Huset vokser for hvert riktige svar. */
+function lagHusByggFlate(vert, farge, valg, unnta, iCelle){
+  const maksHel = app.omraade === 10 ? 10 : 20;
+  const t = trekkUnik(() => {
+    const hel = heltall(4, maksHel);
+    const p = heltall(1, hel - 1);
+    return { nokkel: hel*100 + p, hel, p };
+  }, unnta);
+  const hel = t.hel, p = t.p, q = hel - p;
+
+  const etasjer = [
+    { pre: p + " + " + q + " = ", suf: "",         svar: hel },
+    { pre: q + " + ",             suf: " = " + hel, svar: p },
+    { pre: hel + " − " + p + " = ", suf: "",        svar: q },
+    { pre: hel + " − ",           suf: " = " + p,   svar: q }
+  ].map(f => ({ ...f, vist:false, ferdig:false }));
+  etasjer[0].vist = true;
+  let idx = 0;
+
+  const rot = nyOppgaveRot(vert);
+  const info = nyInforad(rot);
+  nyLapp(info, "Regnefamilien", true);
+  const chip = nyChip(info, "Familien: <em>" + p + "</em> · <em>" + q + "</em> · <em>" + hel + "</em>");
+
+  const boks = nyFeltboks(rot, settSammen([{ g:husMedEtasjer(hel, p, q, etasjer) }]), farge);
+  nyFeltlapp(boks, "Bygg huset ferdig!");
+
+  const kortVert = document.createElement("div");
+  rot.appendChild(kortVert);
+
+  function tegn(lapp){
+    boks.innerHTML = "";
+    boks.appendChild(settSammen([{ g:husMedEtasjer(hel, p, q, etasjer) }]));
+    nyFeltlapp(boks, lapp);
+  }
+
+  let kort = null;
+  function byggKort(){
+    kortVert.innerHTML = "";
+    kort = lagSvarkort(kortVert, etasjer[idx].svar, 0, maksHel, iCelle,
+      () => {
+        etasjer[idx].ferdig = true;
+        idx++;
+        if (idx < etasjer.length){
+          lydSteg();
+          etasjer[idx].vist = true;
+          tegn("Bygg huset ferdig!");
+          valg.paaRiktig && valg.paaRiktig();
+          if (talePaa()) si("riktig");
+          byggKort();
+        } else {
+          tegn("Hele familien er hjemme!");
+          chip.classList.add("svar");
+          kortVert.innerHTML = "";
+          valg.paaRiktig && valg.paaRiktig();
+          if (talePaa()) si("riktig", "tall-" + p, "pluss", "tall-" + q, "er-lik", "tall-" + hel);
+          valg.paaFerdig && senere(valg.paaFerdig, 2600);
+        }
+      },
+      () => {
+        valg.paaBom && valg.paaBom();
+        if (talePaa()) si("proev-igjen");
+      });
+  }
+  byggKort();
+
+  return {
+    fasit:hel, tallKey:t.nokkel,
+    visMeg: () => {
+      if (kort && idx < etasjer.length){ kort.visRett(); if (talePaa()) siTall(etasjer[idx].svar); }
+    },
+    sporsmaal: () => { if (talePaa()) si("regnefamilien"); }
+  };
+}
+
+function lagOppgave(vert, farge, valg, unnta, iCelle){
+  if (app.oppgave === "dobling") return lagDoblingFlate(vert, farge, valg, unnta, iCelle);
+  if (app.oppgave === "fyll")    return lagFyllFlate(vert, farge, valg, unnta, iCelle);
+  if (app.oppgave === "familie") return lagFamilieFlate(vert, farge, valg, unnta, iCelle);
+  return lagTiervennFlate(vert, farge, valg, unnta, iCelle);
+}
+
+/* ============================================================
+   FELLESDELER – monster, teller, jubel
+   ============================================================ */
+function monsterBoks(lag, ropTekst){
+  const d = document.createElement("div");
+  d.className = "heier"; d.style.color = lag.farge;
+  const img = document.createElement("img");
+  img.className = "monster"; img.alt = "Monsteret " + lag.navn;
+  img.src = monsterUrl(lag.fil);
+  img.onerror = () => { img.onerror = null; img.src = monsterReserve(lag.fil); };
+  const navn = document.createElement("div");
+  navn.className = "navn"; navn.style.color = lag.morkt; navn.textContent = lag.navn;
+  const boble = document.createElement("div");
+  boble.className = "boble"; boble.textContent = ropTekst || tilfeldig(HEIAROP);
+  d.appendChild(boble); d.appendChild(img); d.appendChild(navn);
+  d._boble = boble; d._img = img;
+  return d;
+}
+
+function lagTeller(fargeFn){
+  const t = document.createElement("div");
+  t.className = "teller";
+  for (let i=1;i<=app.runder;i++){
+    const b = document.createElement("div");
+    b.className = "tellerboks"; b.dataset.n = i;
+    b.style.borderColor = fargeFn(i-1);
+    b.innerHTML = '<span class="tallet">' + i + '</span>';
+    t.appendChild(b);
+  }
+  return t;
+}
+function fyllTeller(teller, n, farge){
+  const b = teller && teller.querySelector('.tellerboks[data-n="' + n + '"]');
+  if (!b) return;
+  b.classList.add("full");
+  b.innerHTML = '<span class="hake">✓</span>';
+  b.style.background = farge;
+}
+function tomTeller(teller, fargeFn){
+  teller && teller.querySelectorAll(".tellerboks").forEach(b => {
+    b.className = "tellerboks"; b.style.background = ""; b.style.borderColor = fargeFn(+b.dataset.n - 1);
+    b.innerHTML = '<span class="tallet">' + b.dataset.n + '</span>';
+  });
+}
+
+function visJubel(tekst, farge, knapper, tid){
+  skjulJubel();
+  const j = document.createElement("div");
+  j.className = "jubel vis"; j.id = "jubel";
+  const t = document.createElement("div"); t.className = "tekst"; t.textContent = tekst;
+  if (farge) t.style.background = farge;
+  j.appendChild(t);
+  if (knapper){
+    const v = document.createElement("div"); v.className = "valg";
+    knapper.forEach(k => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = k.tekst;
+      if (k.sek) b.className = "sek";
+      b.addEventListener("click", () => { skjulJubel(); k.gjor(); });
+      v.appendChild(b);
+    });
+    j.appendChild(v);
+  }
+  $("#scene").appendChild(j);
+  if (tid) setTimeout(skjulJubel, tid);
+}
+function skjulJubel(){ const j = $("#jubel"); if (j) j.remove(); }
+function visCelleJubel(celle, farge, tekst){
+  const d = document.createElement("div");
+  d.className = "cellejubel"; d.textContent = tekst;
+  d.style.background = farge;
+  celle.appendChild(d);
+  setTimeout(()=>d.remove(), 1800);
+}
+
+/* ============================================================
+   SCENE
+   ============================================================ */
+function nyRunde(){
+  stoppTimere();
+  app.tur = 0; app.rep = 0; app.flater = []; app.ferdigeSett = 0;
+  skjulJubel();
+  const scene = $("#scene"); scene.innerHTML = "";
+  if (app.modus === "tur") byggTur(scene);
+  else byggFlere(scene);
+}
+
+/* ---------- MODUS: TUR FOR TUR ---------- */
+function byggTur(scene){
+  const rot = document.createElement("div"); rot.className = "tur";
+
+  const topp = document.createElement("div"); topp.className = "topplinje";
+  const stripe = document.createElement("div"); stripe.className = "elevstripe";
+  for (let i=0;i<app.antall;i++){
+    const m = document.createElement("div"); m.className = "elevmerke"; m.dataset.i = i;
+    m.style.borderColor = LAG[i].farge;
+    const img = document.createElement("img");
+    img.src = monsterUrl(LAG[i].fil); img.alt = LAG[i].navn;
+    img.onerror = () => { img.onerror = null; img.src = monsterReserve(LAG[i].fil); };
+    m.appendChild(img);
+    stripe.appendChild(m);
+  }
+  const oppdrag = document.createElement("div");
+  oppdrag.className = "oppdrag";
+  oppdrag.innerHTML = OPPGAVER[app.oppgave].tittel();
+  const teller = lagTeller(n => forsokFarge(0, n));
+  topp.appendChild(stripe); topp.appendChild(oppdrag); topp.appendChild(teller);
+
+  const arena = document.createElement("div"); arena.className = "arena";
+  arena.style.borderColor = forsokFarge(0, 0);
+  const heier = monsterBoks(LAG[0]);
+  const felt = document.createElement("div"); felt.className = "felt";
+  arena.appendChild(heier); arena.appendChild(felt);
+
+  rot.appendChild(topp); rot.appendChild(arena); scene.appendChild(rot);
+
+  app._teller = teller; app._arena = arena; app._felt = felt;
+  app._stripe = stripe; app._heier = heier; app._oppdrag = oppdrag;
+  merkAktivElev();
+  lagTurFlate();
+}
+
+function merkAktivElev(){
+  app._stripe && app._stripe.querySelectorAll(".elevmerke").forEach(m => {
+    const i = +m.dataset.i;
+    m.classList.toggle("aktiv", i === app.tur);
+    m.classList.toggle("ferdig", i < app.tur);
+  });
+}
+
+function lagTurFlate(){
+  const heier = app._heier;
+  const farge = forsokFarge(app.tur, app.rep);
+  app._felt.innerHTML = "";
+  app._arena.style.borderColor = farge;
+  app.flater = [ lagOppgave(app._felt, farge, {
+    paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
+    paaBom:    () => { heier._boble.textContent = tilfeldig(BOMROP); },
+    paaFerdig: () => turFerdigOppgave()
+  }, null, false) ];
+  app.flater[0].sporsmaal();
+}
+
+function turFerdigOppgave(){
+  const heier = app._heier;
+  const farge = forsokFarge(app.tur, app.rep);
+  app.rep++;
+  fyllTeller(app._teller, app.rep, farge);
+  heier._img.classList.add("heia");
+  const r = app._arena.getBoundingClientRect();
+
+  if (app.rep < app.runder){
+    lydRunde();
+    konfetti(r.left + r.width/2, r.top + r.height/2, 30, 0.8);
+    const igjen = app.runder - app.rep;
+    heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
+    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 2100);
+    return;
+  }
+
+  lydFerdig();
+  konfetti(r.left + r.width/2, r.top + r.height/2, 80, 1.1);
+  heier._boble.textContent = tilfeldig(JUBELROP);
+  app.tur++; app.rep = 0;
+
+  if (app.tur < app.antall){
+    senere(()=>{
+      visJubel("NESTE ELEV!", LAG[app.tur].farge, null, 2400);
+      si("neste-elev");
+      senere(()=>{
+        const nyttLag = LAG[app.tur];
+        app._arena.style.borderColor = nyttLag.farge;
+        const nyHeier = monsterBoks(nyttLag);
+        app._arena.replaceChild(nyHeier, app._heier);
+        app._heier = nyHeier;
+        tomTeller(app._teller, n => forsokFarge(app.tur, n));
+        merkAktivElev();
+        lagTurFlate();
+      }, 2400);
+    }, 2200);
+  } else {
+    merkAktivElev();
+    senere(alleFerdige, 2200);
+  }
+}
+
+/* ---------- MODUS: FLERE SAMTIDIG ---------- */
+function byggFlere(scene){
+  const rot = document.createElement("div"); rot.className = "grid4";
+  rot.style.gridTemplateColumns = "repeat(" + app.antall + ",1fr)";
+  rot.style.gridTemplateRows = "1fr";
+  scene.appendChild(rot);
+  app.flater = [];
+  app._celler = [];
+
+  for (let i=0;i<app.antall;i++){
+    const lag = LAG[i];
+    const celle = document.createElement("div"); celle.className = "celle";
+    celle.style.borderColor = lag.farge;
+    const heier = monsterBoks(lag);
+    const merket = document.createElement("div");
+    merket.className = "elevnr"; merket.style.color = lag.morkt; merket.textContent = "Elev 1";
+    heier.appendChild(merket);
+    const teller = lagTeller(n => forsokFarge(i, n));
+    const felt = document.createElement("div"); felt.className = "felt";
+    celle.appendChild(heier); celle.appendChild(teller); celle.appendChild(felt);
+    rot.appendChild(celle);
+
+    const st = { i, rep:0, elev:1, plass:i, lag, celle, heier, teller, felt, merket };
+    st.bygg = () => {
+      felt.innerHTML = "";
+      /* De andre cellene skal ikke ha samme oppgave samtidig – da blir det
+         fristende å skotte på naboen i stedet for å tenke selv. */
+      const brukte = app._celler.map(c => c.flate && c.flate.tallKey).filter(v => v != null);
+      st.flate = lagOppgave(felt, forsokFarge(st.plass, st.rep), {
+        paaRiktig: () => { heier._img.classList.add("heia"); heier._boble.textContent = tilfeldig(JUBELROP); },
+        paaBom:    () => { heier._boble.textContent = tilfeldig(BOMROP); },
+        paaFerdig: () => celleFerdigOppgave(st)
+      }, brukte, true);
+      app.flater[i] = st.flate;
+    };
+    app._celler.push(st);
+    st.bygg();
+  }
+}
+
+function celleFerdigOppgave(st){
+  const farge = forsokFarge(st.plass, st.rep);
+  st.rep++;
+  fyllTeller(st.teller, st.rep, farge);
+  st.heier._img.classList.add("heia");
+  const r = st.celle.getBoundingClientRect();
+
+  if (st.rep < app.runder){
+    lydRunde();
+    konfetti(r.left + r.width/2, r.top + r.height/2, 25, 0.8);
+    const igjen = app.runder - st.rep;
+    st.heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
+    senere(()=>{ st.heier._img.classList.remove("heia"); st.bygg(); }, 1200);
+    return;
+  }
+
+  lydFerdig();
+  konfetti(r.left + r.width/2, r.top + r.height/2, 70, 1);
+  st.celle.classList.add("ferdig");
+  st.heier._boble.textContent = tilfeldig(JUBELROP);
+  visCelleJubel(st.celle, st.lag.farge, "NESTE ELEV!");
+  app.ferdigeSett++;
+  const alleRundt = app.ferdigeSett % app.antall === 0;
+
+  senere(()=>{
+    st.rep = 0; st.elev++;
+    st.plass += app.antall;
+    st.merket.textContent = "Elev " + st.elev;
+    st.celle.classList.remove("ferdig");
+    st.heier._img.classList.remove("heia");
+    st.heier._boble.textContent = "Din tur!";
+    tomTeller(st.teller, n => forsokFarge(st.plass, n));
+    st.bygg();
+  }, 2000);
+
+  if (alleRundt){
+    senere(()=>{
+      lydFanfare(); storKonfetti(); si("alle-sammen");
+      visJubel("🎉 SUPERT! 🎉", null, null, 1700);
+    }, 350);
+  }
+}
+
+function alleFerdige(){
+  lydFanfare(); storKonfetti();
+  si("alle-sammen");
+  visJubel("🎉 SUPERT! 🎉", null, [
+    { tekst:"Nye oppgaver →", gjor:nyRunde },
+    { tekst:"Samme en gang til ↺", sek:true, gjor:nyRunde }
+  ]);
+}
+
+/* ---------- neste oppgave uten å telle den som ferdig ----------
+   Trykker læreren «Neste» rett etter at eleven svarte riktig, ligger det
+   fortsatt en utløser og venter på å telle svaret ferdig. Den må dø her –
+   ellers teller den på oppgaven som nettopp ble bygd i stedet. */
+function hoppTilNeste(){
+  stoppTimere();
+  if (app.modus === "tur"){
+    lagTurFlate();
+  } else {
+    app._celler.forEach(st => st.bygg());
+  }
+}
+
+/* ============================================================
+   LAGRING – valgene huskes på denne maskina
+   ============================================================ */
+const LAGRE_NOKKEL = "myntland-regnestrategiene-v1";
+function lastValg(){
+  try {
+    const v = JSON.parse(localStorage.getItem(LAGRE_NOKKEL));
+    if (v && [5,10].includes(v.helhet)) app.helhet = v.helhet;
+    if (v && [10,20].includes(v.omraade)) app.omraade = v.omraade;
+    if (v && DOBLEVALG.includes(v.dobling)) app.dobling = v.dobling;
+    if (v && REGNEVALG.includes(v.regne)) app.regne = v.regne;
+    if (v && HUSVALG.includes(v.husmodus)) app.husmodus = v.husmodus;
+  } catch(e){}
+}
+function lagreValg(){
+  try { localStorage.setItem(LAGRE_NOKKEL, JSON.stringify({ helhet:app.helhet, omraade:app.omraade, dobling:app.dobling, regne:app.regne, husmodus:app.husmodus })); } catch(e){}
+}
+
+/* ============================================================
+   LÆRERLINJA
+   ============================================================ */
+function oppdaterKnapper(){
+  const dobling = app.oppgave === "dobling";
+  const fyll    = app.oppgave === "fyll";
+  const venner  = app.oppgave === "tiervenner";
+  const familie = app.oppgave === "familie";
+  $("#antallKnapp").classList.toggle("skjult", app.modus !== "flere");
+  $("#doblingKnapp").classList.toggle("skjult", !dobling);
+  $("#regneKnapp").classList.toggle("skjult", !fyll);
+  $("#husKnapp").classList.toggle("skjult", !familie);
+  $("#helhetGruppe").classList.toggle("skjult", !venner);
+  $("#omraadeGruppe").classList.toggle("skjult", !(dobling || familie));
+  $("#rad2").classList.toggle("skjult", fyll);
+  $("#antallKnapp").textContent = "👥 " + app.antall + " elever";
+  $("#runderKnapp").textContent = "🔁 " + app.runder + (app.runder === 1 ? " oppgave" : " oppgaver");
+  $("#valgKnapp").textContent = "🔢 " + app.valg + " valg";
+  $("#doblingKnapp").textContent = DOBLE_NAVN[app.dobling];
+  $("#regneKnapp").textContent = REGNE_NAVN[app.regne];
+  $("#husKnapp").textContent = HUS_NAVN[app.husmodus];
+  document.querySelectorAll("#helhetvelger button").forEach(b => {
+    b.setAttribute("aria-pressed", +b.dataset.helhet === app.helhet ? "true" : "false");
+  });
+  document.querySelectorAll("#omraadevelger button").forEach(b => {
+    b.setAttribute("aria-pressed", +b.dataset.omraade === app.omraade ? "true" : "false");
+  });
+}
+
+$("#oppgavevelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.oppgave = b.dataset.oppgave;
+  document.querySelectorAll("#oppgavevelger button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true":"false"));
+  oppdaterKnapper(); nyRunde();
+});
+$("#modusvelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.modus = b.dataset.modus;
+  document.querySelectorAll("#modusvelger button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true":"false"));
+  oppdaterKnapper(); nyRunde();
+});
+$("#helhetvelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.helhet = +b.dataset.helhet;
+  lagreValg(); oppdaterKnapper(); nyRunde();
+});
+$("#omraadevelger").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  app.omraade = +b.dataset.omraade;
+  lagreValg(); oppdaterKnapper(); nyRunde();
+});
+$("#antallKnapp").addEventListener("click", () => {
+  app.antall = app.antall >= 4 ? 2 : app.antall + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#runderKnapp").addEventListener("click", () => {
+  app.runder = app.runder >= 5 ? 1 : app.runder + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#valgKnapp").addEventListener("click", () => {
+  app.valg = app.valg >= 5 ? 2 : app.valg + 1;
+  oppdaterKnapper(); nyRunde();
+});
+$("#doblingKnapp").addEventListener("click", () => {
+  app.dobling = DOBLEVALG[(DOBLEVALG.indexOf(app.dobling) + 1) % DOBLEVALG.length];
+  lagreValg(); oppdaterKnapper(); nyRunde();
+});
+$("#regneKnapp").addEventListener("click", () => {
+  app.regne = REGNEVALG[(REGNEVALG.indexOf(app.regne) + 1) % REGNEVALG.length];
+  lagreValg(); oppdaterKnapper(); nyRunde();
+});
+$("#husKnapp").addEventListener("click", () => {
+  app.husmodus = HUSVALG[(HUSVALG.indexOf(app.husmodus) + 1) % HUSVALG.length];
+  lagreValg(); oppdaterKnapper(); nyRunde();
+});
+$("#visKnapp").addEventListener("click", () => {
+  app.flater.forEach(f => f && f.visMeg());
+});
+$("#nesteKnapp").addEventListener("click", hoppTilNeste);
+$("#nullstillKnapp").addEventListener("click", nyRunde);
+
+/* Første berøring låser opp lyd i nettleseren – da henter vi replikkene samtidig */
+let lydVarmet = false;
+["pointerdown","keydown"].forEach(h => addEventListener(h, () => {
+  if (lydVarmet) return;
+  lydVarmet = true;
+  lydKontekst();
+  forbered(...REPLIKKER);
+  const tallnavn = [];
+  for (let n=0; n<=20; n++) tallnavn.push("tall-" + n);
+  forbered(...tallnavn);
+}, { once:false, passive:true }));
+
+$("#lydKnapp").addEventListener("click", () => {
+  lydPaa = !lydPaa;
+  $("#lydKnapp").textContent = lydPaa ? "🔊" : "🔇";
+  $("#lydKnapp").classList.toggle("av", !lydPaa);
+  if (lydPaa) lydKontekst();
+  else stoppTale();
+});
+$("#fullKnapp").addEventListener("click", () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  else document.exitFullscreen && document.exitFullscreen();
+});
+$("#rentKnapp").addEventListener("click", () => document.body.classList.add("rent"));
+$("#visMenyKnapp").addEventListener("click", () => document.body.classList.remove("rent"));
+
+/* --- tastatur for læreren --- */
+addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight"){ hoppTilNeste(); return; }
+  if (e.key === " "){ e.preventDefault(); nyRunde(); return; }
+  if (e.key === "Enter"){ $("#visKnapp").click(); return; }
+});
+
+/* --- start --- */
+lastValg();
+oppdaterKnapper();
+nyRunde();
+</script>
+</body>
+</html>

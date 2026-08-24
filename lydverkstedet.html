@@ -201,7 +201,7 @@ body{
   font-family:'Fredoka One',cursive; color:#fff; font-size:clamp(1rem,2.2vw,1.8rem);
   padding:.5rem 1.1rem; border-radius:18px; z-index:5; text-align:center;
   border:4px solid var(--navy);
-  animation:sprett .45s cubic-bezier(.2,1.6,.4,1); box-shadow:0 5px 0 var(--navy);
+  animation:sprettMidt .45s cubic-bezier(.2,1.6,.4,1); box-shadow:0 5px 0 var(--navy);
 }
 
 /* ---------- oppgaveflate ---------- */
@@ -304,6 +304,8 @@ body{
   animation:sprett .5s cubic-bezier(.2,1.6,.4,1);
 }
 @keyframes sprett{ from{ transform:scale(.4); opacity:0 } to{ transform:scale(1); opacity:1 } }
+/* For elementer som sentreres med translate(-50%,-50%): sprett uten å miste sentreringa. */
+@keyframes sprettMidt{ from{ transform:translate(-50%,-50%) scale(.4); opacity:0 } to{ transform:translate(-50%,-50%) scale(1); opacity:1 } }
 .jubel .valg{ display:flex; gap:.6rem; pointer-events:auto; flex-wrap:wrap; justify-content:center; }
 .jubel .valg button{
   font-family:'Fredoka One',cursive; font-size:clamp(1rem,2.4vw,1.6rem);
