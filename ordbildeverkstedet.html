@@ -637,7 +637,7 @@ const OPPGAVER = {
   finn:   { tittel:"Hvilket ord <em>hørte</em> du?",             lyd:"hvilket-ord-hoerte-du" },
   blink:  { tittel:"Se godt etter – hva <em>sto</em> det?",      lyd:"se-godt-etter" },
   memory: { tittel:"Snu to kort og finn to <em>like</em> ord",   lyd:"finn-to-like" },
-  luke:   { tittel:"Hvilket ord <em>mangler</em> i setningen?",  lyd:"ordet-mangler" }
+  luke:   { tittel:"Hvilket ord <em>mangler</em> i setningen?",  lyd:"hvilket-ord-mangler" }
 };
 
 /* ---------- Tilstand ---------- */
@@ -691,8 +691,8 @@ const lydFeil   = () => [330,247].forEach((f,i)=>tone(f,0.16,"sine",0.10,i*0.10)
 const LYDSTI = "lyd/";
 const REPLIKKER = [
   "hvilket-ord-hoerte-du","se-godt-etter","finn-to-like",   /* nye – leses inn */
-  "det-sto","like-ord",                                     /* nye – leses inn */
-  "ordet-mangler","riktig","proev-igjen",                   /* fins alt i /lyd/ */
+  "det-sto","like-ord","hvilket-ord-mangler",               /* nye – leses inn */
+  "riktig","proev-igjen",                                   /* fins alt i /lyd/ */
   "din-tur","neste-elev","alle-sammen"                      /* fins alt i /lyd/ */
 ];
 /* Teksten stemmen faller tilbake på når mp3-en mangler. */
@@ -702,7 +702,7 @@ const RESERVETEKST = {
   "finn-to-like":"Snu to kort og finn to like ord!",
   "det-sto":"Det sto",
   "like-ord":"To like ord!",
-  "ordet-mangler":"Hvilket ord mangler?",
+  "hvilket-ord-mangler":"Hvilket ord mangler i setningen?",
   "riktig":"Riktig!",
   "proev-igjen":"Prøv igjen!",
   "din-tur":"Din tur!",
@@ -1137,7 +1137,7 @@ function lagLukeFlate(vert, farge, valg, unnta){
       setTimeout(()=>luke.classList.remove("hint"), 1800);
       si(data.s.fil);
     },
-    sporsmaal: () => si("ordet-mangler", data.s.fil)
+    sporsmaal: () => si("hvilket-ord-mangler", data.s.fil)
   };
 }
 
