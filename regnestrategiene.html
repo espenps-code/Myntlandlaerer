@@ -486,7 +486,16 @@ const REPLIKKER = [
 ];
 
 const lydLager = new Map();
-let taleNr = 0, spillerNaa = null;
+let taleNr = 0, spillerNaa = null, taleAktiv = false;
+/* Funksjoner som venter på at stemmen skal snakke ferdig. Uten dette starter
+   neste replikk på fast klokke, og en oppsummering som «riktig – to pluss åtte
+   er lik ti» (ca. 5 sekunder) blir hugget av på midten. */
+let taleLyttere = [];
+function taleTier(){
+  taleAktiv = false;
+  const venter = taleLyttere; taleLyttere = [];
+  venter.forEach(f => { try { f(); } catch(e){} });
+}
 
 function hentLyd(navn){
   let a = lydLager.get(navn);
@@ -496,6 +505,7 @@ function hentLyd(navn){
 function forbered(...navn){ navn.forEach(n => { try { hentLyd(n).load(); } catch(e){} }); }
 function stoppTale(){
   taleNr++;
+  taleAktiv = false;
   if (spillerNaa){ try { spillerNaa.pause(); spillerNaa.currentTime = 0; } catch(e){} spillerNaa = null; }
 }
 /* si("riktig","tall-7") spiller filene etter hverandre. Ny si() avbryter den
@@ -504,8 +514,10 @@ function si(...navn){
   if (!lydPaa || !navn.length) return;
   stoppTale();
   const mitt = taleNr;
+  taleAktiv = true;
   const kjoer = i => {
-    if (i >= navn.length || mitt !== taleNr) return;
+    if (mitt !== taleNr) return;
+    if (i >= navn.length){ taleTier(); return; }
     const a = hentLyd(navn[i]);
     let brukt = false;
     const videre = () => {
@@ -525,6 +537,23 @@ function si(...navn){
   kjoer(0);
 }
 const siTall = n => si("tall-" + n);
+/* Som senere(), men venter i tillegg på at stemmen skal bli ferdig – aldri
+   før ms, aldri senere enn maksMs (nødbrems hvis et lydklipp mangler). */
+function senereEtterTale(fn, ms, maksMs){
+  let gjort = false;
+  const kjor = () => { if (gjort) return; gjort = true; fn(); };
+  senere(() => { if (!taleAktiv) kjor(); else taleLyttere.push(() => senere(kjor, 250)); }, ms);
+  senere(kjor, maksMs || (ms + 5000));
+  return kjor;
+}
+/* Replikker maskinen selv starter (nytt spørsmål, «neste elev») skal vente til
+   stemmen har snakket ferdig – ellers avbryter de oppsummeringen. Elevens egne
+   trykk bruker si() og avbryter som før, med én gang. */
+function siEtter(...navn){
+  if (!lydPaa || !navn.length) return;
+  if (!taleAktiv) return si(...navn);
+  senereEtterTale(() => si(...navn), 0, 6000);
+}
 /* Stemmen er med når én elev holder på om gangen. I «Flere samtidig» sitter
    fire elever ved samme skjerm, og fire stemmer oppå hverandre blir bare støy. */
 const talePaa = () => app.modus !== "flere";
@@ -532,7 +561,7 @@ const talePaa = () => app.modus !== "flere";
 /* ---------- Tidsutløsere som hører til runden ---------- */
 let rundeTimere = [];
 function senere(fn, ms){ const t = setTimeout(() => { rundeTimere = rundeTimere.filter(x => x !== t); fn(); }, ms); rundeTimere.push(t); return t; }
-function stoppTimere(){ rundeTimere.forEach(clearTimeout); rundeTimere = []; }
+function stoppTimere(){ rundeTimere.forEach(clearTimeout); rundeTimere = []; taleLyttere = []; }
 
 /* ---------- Konfetti ---------- */
 const kanvas = $("#konfetti"), ktx = kanvas.getContext("2d");
@@ -1093,7 +1122,7 @@ function lagTiervennFlate(vert, farge, valg, unnta, iCelle){
       lapp.textContent = "Hvor mange dro du inn?";
       kortVert.style.visibility = "";
       valg.paaRiktig && valg.paaRiktig();
-      if (talePaa()) senere(() => si("hvor-mange-dro-du-inn"), 800);
+      if (talePaa()) senere(() => siEtter("hvor-mange-dro-du-inn"), 400);
     }
   };
 
@@ -1110,7 +1139,7 @@ function lagTiervennFlate(vert, farge, valg, unnta, iCelle){
       });
       if (talePaa()) siTall(venn);
     },
-    sporsmaal: () => { if (talePaa()) si(H === 10 ? "tiervenn" : "femvenn"); }
+    sporsmaal: () => { if (talePaa()) siEtter(H === 10 ? "tiervenn" : "femvenn"); }
   };
 }
 
@@ -1158,7 +1187,7 @@ function lagDoblingFlate(vert, farge, valg, unnta, iCelle){
   return {
     fasit:sum, tallKey:t.nokkel,
     visMeg: () => { kort.visRett(); if (talePaa()) siTall(sum); },
-    sporsmaal: () => { if (talePaa()) si("hva-blir", "tall-" + a, "pluss", "tall-" + b); }
+    sporsmaal: () => { if (talePaa()) siEtter("hva-blir", "tall-" + a, "pluss", "tall-" + b); }
   };
 }
 
@@ -1220,7 +1249,7 @@ function lagFyllFlate(vert, farge, valg, unnta, iCelle){
           lapp.textContent = "Legg på resten!";
           steg2.classList.remove("venter");
           steg2.classList.add("nyss");
-          if (talePaa()) si("legg-paa-resten");
+          if (talePaa()) siEtter("legg-paa-resten");
           kortVert.innerHTML = "";
           steg2kort = lagSvarkort(kortVert, sum, 10, Math.min(20, sum+4), iCelle,
           () => {
@@ -1243,7 +1272,7 @@ function lagFyllFlate(vert, farge, valg, unnta, iCelle){
         if (steg2kort && !steg2kort.erFerdig()){ steg2kort.visRett(); if (talePaa()) siTall(sum); }
         else if (!steg1kort.erFerdig()){ steg1kort.visRett(); if (talePaa()) siTall(d); }
       },
-      sporsmaal: () => { if (talePaa()) si("hva-blir", "tall-" + a, "pluss", "tall-" + b, "fyll-tieren"); }
+      sporsmaal: () => { if (talePaa()) siEtter("hva-blir", "tall-" + a, "pluss", "tall-" + b, "fyll-tieren"); }
     };
   }
 
@@ -1316,7 +1345,7 @@ function lagFyllFlate(vert, farge, valg, unnta, iCelle){
       if (steg2kort && !steg2kort.erFerdig()){ steg2kort.visRett(); if (talePaa()) siTall(res); }
       else if (!steg1kort.erFerdig()){ steg1kort.visRett(); if (talePaa()) siTall(d); }
     },
-    sporsmaal: () => { if (talePaa()) si("hva-blir", "tall-" + s, "minus", "tall-" + b, "ned-til-tieren"); }
+    sporsmaal: () => { if (talePaa()) siEtter("hva-blir", "tall-" + s, "minus", "tall-" + b, "ned-til-tieren"); }
   };
 }
 
@@ -1384,7 +1413,7 @@ function lagFamilieFlate(vert, farge, valg, unnta, iCelle){
   return {
     fasit, tallKey:t.nokkel,
     visMeg: () => { kort.visRett(); if (talePaa()) siTall(fasit); },
-    sporsmaal: () => { if (talePaa()) si("regnefamilien"); }
+    sporsmaal: () => { if (talePaa()) siEtter("regnefamilien"); }
   };
 }
 
@@ -1462,7 +1491,7 @@ function lagHusByggFlate(vert, farge, valg, unnta, iCelle){
     visMeg: () => {
       if (kort && idx < etasjer.length){ kort.visRett(); if (talePaa()) siTall(etasjer[idx].svar); }
     },
-    sporsmaal: () => { if (talePaa()) si("regnefamilien"); }
+    sporsmaal: () => { if (talePaa()) siEtter("regnefamilien"); }
   };
 }
 
@@ -1628,7 +1657,7 @@ function turFerdigOppgave(){
     konfetti(r.left + r.width/2, r.top + r.height/2, 30, 0.8);
     const igjen = app.runder - app.rep;
     heier._boble.textContent = igjen === 1 ? "Én igjen!" : igjen + " igjen!";
-    senere(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 2100);
+    senereEtterTale(()=>{ heier._img.classList.remove("heia"); lagTurFlate(); }, 2100, 8000);
     return;
   }
 
@@ -1638,9 +1667,9 @@ function turFerdigOppgave(){
   app.tur++; app.rep = 0;
 
   if (app.tur < app.antall){
-    senere(()=>{
+    senereEtterTale(()=>{
       visJubel("NESTE ELEV!", LAG[app.tur].farge, null, 2400);
-      si("neste-elev");
+      siEtter("neste-elev");
       senere(()=>{
         const nyttLag = LAG[app.tur];
         app._arena.style.borderColor = nyttLag.farge;
@@ -1651,10 +1680,10 @@ function turFerdigOppgave(){
         merkAktivElev();
         lagTurFlate();
       }, 2400);
-    }, 2200);
+    }, 2200, 8000);
   } else {
     merkAktivElev();
-    senere(alleFerdige, 2200);
+    senereEtterTale(alleFerdige, 2200, 8000);
   }
 }
 
