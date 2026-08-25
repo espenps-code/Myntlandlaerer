@@ -193,7 +193,7 @@ body{
   font-family:'Fredoka One',cursive; color:#fff; font-size:clamp(1rem,2.2vw,1.8rem);
   padding:.5rem 1.1rem; border-radius:18px; z-index:5; text-align:center;
   border:4px solid var(--navy);
-  animation:sprett .45s cubic-bezier(.2,1.6,.4,1); box-shadow:0 5px 0 var(--navy);
+  animation:sprettMidt .45s cubic-bezier(.2,1.6,.4,1); box-shadow:0 5px 0 var(--navy);
 }
 
 /* ---------- bildekort ---------- */
@@ -282,7 +282,7 @@ body{
 .merke-rett, .merke-feil{
   position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0);
   font-size:clamp(1.6rem,4vw,3rem); z-index:4; pointer-events:none;
-  animation:sprett .35s cubic-bezier(.2,1.6,.4,1) forwards;
+  animation:sprettMidt .35s cubic-bezier(.2,1.6,.4,1) forwards;
 }
 
 /* ============ OPPGAVE 2 – STAVELSESBALLONGER ============ */
@@ -359,7 +359,7 @@ body{
 .ballongsmell{
   position:absolute; left:50%; top:34%; transform:translate(-50%,-50%) scale(0);
   font-size:clamp(1.8rem,4vw,3.2rem); pointer-events:none; z-index:4;
-  animation:sprett .4s cubic-bezier(.2,1.6,.4,1) forwards;
+  animation:sprettMidt .4s cubic-bezier(.2,1.6,.4,1) forwards;
 }
 .ballong.markert .ballongkropp{ outline:5px solid var(--amber); outline-offset:4px; }
 
@@ -411,6 +411,8 @@ body{
   animation:sprett .5s cubic-bezier(.2,1.6,.4,1);
 }
 @keyframes sprett{ from{ transform:scale(.4); opacity:0 } to{ transform:scale(1); opacity:1 } }
+/* For elementer som sentreres med translate(-50%,-50%): sprett uten å miste sentreringa. */
+@keyframes sprettMidt{ from{ transform:translate(-50%,-50%) scale(.4); opacity:0 } to{ transform:translate(-50%,-50%) scale(1); opacity:1 } }
 .jubel .valg{ display:flex; gap:.6rem; pointer-events:auto; flex-wrap:wrap; justify-content:center; }
 .jubel .valg button{
   font-family:'Fredoka One',cursive; font-size:clamp(1rem,2.4vw,1.6rem);
@@ -650,6 +652,77 @@ const monsterReserve = fil => "https://myntland.no/monsters/" + fil + ".webp";
 
 /* ---------- Lyd (effekter) ---------- */
 let lydPaa = true, ac = null;
+/* ---------- Vekk lyden på tavla ----------
+   Interaktive tavler og HDMI-høyttalere slår av lydutgangen når det har vært
+   stille en stund, og bruker et lite øyeblikk på å våkne igjen. Da blir
+   begynnelsen av det første ordet borte – akkurat i det en ny side eller en
+   ny oppgave åpner seg. Derfor starter vi et lydløst spor med én gang, venter
+   mens tavla våkner, og spiller først da. Har det nettopp vært lyd, er
+   utgangen alt våken, og da venter vi ikke. */
+const LYD_OPPVARMING   = 1000;  /* ms vi venter mens tavla våkner */
+const LYD_STILLEGRENSE = 4000;  /* ms uten lyd før vi regner utgangen som sovnet */
+let lydSistTid = 0, lydStilleSpor = null, lydVekkSvar = 0, lydVekkTid = 0;
+
+/* To sekunder digital stillhet, laget som en WAV i minnet – ingen ekstra fil
+   å publisere. Sporet høres ikke, men holder lydutgangen åpen mens vi venter. */
+function lydStille(){
+  if (lydStilleSpor) return lydStilleSpor;
+  const sr = 8000, n = sr * 2, b = new Uint8Array(44 + n * 2), dv = new DataView(b.buffer);
+  const merk = (p, t) => { for (let i = 0; i < t.length; i++) b[p + i] = t.charCodeAt(i); };
+  merk(0, "RIFF"); dv.setUint32(4, 36 + n * 2, true); merk(8, "WAVEfmt ");
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true);
+  dv.setUint16(34, 16, true); merk(36, "data"); dv.setUint32(40, n * 2, true);
+  let s = ""; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  lydStilleSpor = new Audio("data:audio/wav;base64," + btoa(s));
+  lydStilleSpor.preload = "auto";
+  return lydStilleSpor;
+}
+
+/* Sier hvor mange millisekunder vi bør vente før lyden spilles, og starter
+   samtidig det lydløse sporet. Kall som kommer i samme øyeblikk får samme
+   svar, slik at en liten melodi ikke sprekker opp i to. */
+function lydVekk(){
+  const naa = Date.now();
+  if (naa - lydVekkTid < 60) return lydVekkSvar;
+  lydVekkTid = naa;
+  lydVekkSvar = (naa - lydSistTid > LYD_STILLEGRENSE) ? LYD_OPPVARMING : 0;
+  lydSistTid = naa;
+  if (lydVekkSvar){
+    try {
+      const s = lydStille();
+      s.currentTime = 0;
+      const p = s.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch(e){}
+  }
+  return lydVekkSvar;
+}
+
+/* Legger oppvarmingen på en lydfil: play() venter til tavla er våken, og
+   pause() rekker å stoppe fila før den har begynt. Resten av koden merker
+   ingen forskjell – den kaller play() og pause() som før. */
+function lydOppvarming(a){
+  const spillNaa = a.play.bind(a), stoppNaa = a.pause.bind(a);
+  let venter = null;
+  a.play = () => {
+    if (venter){ clearTimeout(venter); venter = null; }
+    const vent = lydVekk();
+    if (!vent){ return spillNaa(); }
+    return new Promise((ja, nei) => {
+      venter = setTimeout(() => {
+        venter = null;
+        lydSistTid = Date.now();
+        try { const p = spillNaa(); if (p && p.then) p.then(ja, nei); else ja(); }
+        catch(e){ nei(e); }
+      }, vent);
+    });
+  };
+  a.pause = () => { if (venter){ clearTimeout(venter); venter = null; } stoppNaa(); };
+  a.addEventListener("ended", () => { lydSistTid = Date.now(); });
+  return a;
+}
+
 function lydKontekst(){
   if (!ac) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); }
   if (ac && ac.state === "suspended") ac.resume();
@@ -660,7 +733,7 @@ function tone(freq, tid=0.12, type="sine", vol=0.15, forsink=0){
   const k = lydKontekst(); if (!k) return;
   const o = k.createOscillator(), g = k.createGain();
   o.type = type; o.frequency.value = freq;
-  const t0 = k.currentTime + forsink;
+  const t0 = k.currentTime + forsink + lydVekk() / 1000;
   g.gain.setValueAtTime(0.0001, t0);
   g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + tid);
@@ -741,7 +814,7 @@ let taleNr = 0, spillerNaa = null;
 
 function hentLyd(navn){
   let a = lydLager.get(navn);
-  if (!a){ a = new Audio(LYDSTI + navn + ".mp3"); a.preload = "auto"; lydLager.set(navn, a); }
+  if (!a){ a = lydOppvarming(new Audio(LYDSTI + navn + ".mp3")); a.preload = "auto"; lydLager.set(navn, a); }
   return a;
 }
 function forbered(...navn){ navn.forEach(n => { try { hentLyd(n).load(); } catch(e){} }); }
