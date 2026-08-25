@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Telleverkstedet – Myntland</title>
-<meta name="description" content="Eleven ser en mengde og finner tallet – eller lager mengden selv i tierramma. Fire oppgavetyper: Hvor mange, Fyll tierramma, Venner til 10 og Mengde-memory. For interaktiv tavle og iPad – opptil fire elever samtidig.">
+<meta name="description" content="Eleven ser en mengde og finner tallet – eller lager mengden selv ved å dra mynter fra uendelig-mynten opp i tierramma. Fire oppgavetyper: Hvor mange, Fyll tierramma, Venner til 10 og Mengde-memory. For interaktiv tavle og iPad – opptil fire elever samtidig.">
 <meta name="theme-color" content="#232a3f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -265,6 +265,24 @@ body{
 .fyllramme{ flex:1 1 auto; min-width:0; min-height:0; height:100%; display:flex; align-items:center; justify-content:center; }
 .celle .fyllramme{ width:100%; }
 .rute{ cursor:pointer; }
+
+/* ---------- Dra fra uendelig-mynten ---------- */
+.drabrett{ touch-action:none; }
+.drabrett .kilde, .drabrett .dramynt{ cursor:grab; }
+.drabrett.laast .kilde, .drabrett.laast .dramynt{ cursor:default; }
+.ferdigknapp{
+  flex:0 0 auto; font-family:'Fredoka One',cursive; color:var(--navy);
+  font-size:clamp(.85rem,1.8vw,1.4rem);
+  background:var(--amber); border:4px solid var(--navy); border-radius:999px;
+  padding:.12rem 1.1rem; cursor:pointer; box-shadow:0 4px 0 var(--navy);
+  transition:transform .1s, background .2s;
+}
+.ferdigknapp:not(:disabled):hover{ transform:translateY(-2px); }
+.ferdigknapp:disabled{ opacity:.35; cursor:default; box-shadow:0 2px 0 var(--navy); }
+.ferdigknapp.rett{ background:var(--gronn); }
+.ferdigknapp.bom, .fyllteller.bom{ animation:rist .35s; }
+.celle .ferdigknapp{ font-size:clamp(.65rem,1.1vw,.95rem); border-width:3px; padding:.02rem .6rem; box-shadow:0 3px 0 var(--navy); }
+.celle .fyllmaal{ flex-wrap:wrap; justify-content:center; }
 .fyllteller{
   flex:0 0 auto; display:flex; align-items:center; gap:.4rem;
   font-family:'Fredoka One',cursive; font-size:clamp(.9rem,2vw,1.5rem); color:var(--navy);
@@ -417,8 +435,11 @@ body.rent .flytknapp{ display:block; }
    ------------------------------------------------------------
    Fire oppgavetyper som alle handler om antall:
      1) Hvor mange?      – en mengde vises, eleven velger tallet
-     2) Fyll tierramma   – tallet vises, eleven lager mengden selv
-     3) Venner til 10    – hvor mange mangler for å bli 5/10/20
+     2) Fyll tierramma   – tallet vises, eleven drar selv mynter opp fra
+                           uendelig-mynten og trykker «Ferdig!» når hen
+                           mener det stemmer
+     3) Venner til 10    – ramma er delvis fylt, eleven drar inn resten og
+                           svarer så på hvor mange hen dro inn
      4) Mengde-memory    – snu to kort: mengde + tall som hører sammen
 
    Mengdene tegnes som SVG rett i sida. Det gjør at de skalerer perfekt
@@ -430,6 +451,7 @@ body.rent .flytknapp{ display:block; }
 
    Lyd: tall-0 … tall-9 finnes fra før (Skriveverkstedet). tall-10 …
    tall-20 og de fire nye replikkene står i telleverkstedet-innlesing.html.
+   «hvor-mange-dro-du-inn» ligger alt i /lyd/ (fra Regnestrategiene).
    Mangler en mp3, hopper verktøyet bare over den.
    ============================================================ */
 
@@ -512,6 +534,7 @@ const lydFeil   = () => [330,247].forEach((f,i)=>tone(f,0.16,"sine",0.10,i*0.10)
 const LYDSTI = "lyd/";
 const REPLIKKER = [
   "hvor-mange","legg-i-ramma","hvor-mange-mangler","finn-tallpar","tallpar",  /* nye – leses inn */
+  "hvor-mange-dro-du-inn",                                                    /* fins alt i /lyd/ */
   "riktig","proev-igjen",                                                     /* fins alt i /lyd/ */
   "din-tur","neste-elev","alle-sammen"                                        /* fins alt i /lyd/ */
 ];
@@ -622,11 +645,18 @@ function nySvg(b, h){
   s.setAttribute("class", "mengde");
   return s;
 }
-/* Én mynt. Klassen «mynt» brukes også når vi teller etter i testene. */
-function tegnMynt(vert, cx, cy, r){
+/* Én mynt. Klassen «mynt» brukes også når vi teller etter i testene.
+   «sort» er valgfri: amber er vanlig mynt, gronn brukes til myntene eleven
+   selv drar inn i ramma – da ser hen delen sin inni helheten. */
+const MYNTSORT = {
+  amber: { fyll:"#EF9F27", ring:"#c4841a" },
+  gronn: { fyll:"#74c043", ring:"#4f8f28" }
+};
+function tegnMynt(vert, cx, cy, r, sort){
+  const f = MYNTSORT[sort] || MYNTSORT.amber;
   const g = svgEl("g", { class:"mynt" });
-  g.appendChild(svgEl("circle", { cx, cy, r, fill:"#EF9F27", stroke:"#232a3f", "stroke-width":r*0.16 }));
-  g.appendChild(svgEl("circle", { cx, cy, r:r*0.56, fill:"none", stroke:"#c4841a", "stroke-width":r*0.11 }));
+  g.appendChild(svgEl("circle", { cx, cy, r, fill:f.fyll, stroke:"#232a3f", "stroke-width":r*0.16 }));
+  g.appendChild(svgEl("circle", { cx, cy, r:r*0.56, fill:"none", stroke:f.ring, "stroke-width":r*0.11 }));
   vert.appendChild(g);
   return g;
 }
@@ -697,6 +727,145 @@ function settRammeAntall(svg, antall){
     const m = ruteMidt(i, o);
     tegnMynt(lag, m.cx, m.cy, RUTE*0.34);
   }
+}
+
+/* ---------- Drabrett: ramme + uendelig-mynt ----------
+   Samme ramme som over, men med en skål under der det ligger en mynt
+   med ∞ på. Eleven drar mynter opp i ramma – de snapper til nærmeste
+   ledige rute, og en mynt eleven har lagt kan plukkes opp igjen og
+   flyttes eller dras ut. Kilden går aldri tom (derav ∞).
+   «fast» er mynter som ligger der fra før og ikke kan flyttes – det er
+   delen eleven skal fylle opp fra i Venner til 10. */
+function tegnDrabrett(fast, maks, sort){
+  const o = rammeOppsett(maks);
+  const b = o.kolonner * RUTE, h = o.rammer*o.hoyde + (o.rammer-1)*RAMMEGAP;
+  const R = 46, SKAALGAP = 34;
+  const skaalY = KANT + h + SKAALGAP;
+  const s = nySvg(b + KANT*2, skaalY + R*2 + 30);
+  s.setAttribute("class", "mengde drabrett");
+
+  const g = svgEl("g", { transform:"translate(" + KANT + "," + KANT + ")" });
+  s.appendChild(g);
+  for (let f=0; f<o.rammer; f++){
+    const y = f*(o.hoyde + RAMMEGAP);
+    g.appendChild(svgEl("rect", { x:0, y, width:b, height:o.hoyde, rx:18,
+      fill:"#fffaeb", stroke:"#232a3f", "stroke-width":7 }));
+    for (let k=1; k<o.kolonner; k++)
+      g.appendChild(svgEl("line", { x1:k*RUTE, y1:y, x2:k*RUTE, y2:y+o.hoyde,
+        stroke:"#232a3f", "stroke-width":3, opacity:.35 }));
+    if (o.rader > 1)
+      g.appendChild(svgEl("line", { x1:0, y1:y+RUTE, x2:b, y2:y+RUTE,
+        stroke:"#232a3f", "stroke-width":3, opacity:.35 }));
+  }
+  const fastlag = svgEl("g", {});
+  g.appendChild(fastlag);
+  for (let i=0; i<fast && i<maks; i++){
+    const m = ruteMidt(i, o);
+    tegnMynt(fastlag, m.cx, m.cy, RUTE*0.34);
+  }
+
+  /* skåla og uendelig-mynten */
+  const midtX = (b + KANT*2)/2, kcy = skaalY + R + 2;
+  s.appendChild(svgEl("rect", { x:midtX-118, y:skaalY-14, width:236, height:R*2+32, rx:28,
+    fill:"#e4f4ee", stroke:"#4f8f28", "stroke-width":6 }));
+  const kilde = svgEl("g", { class:"kilde" });
+  tegnMynt(kilde, midtX, kcy, R, sort);
+  const inf = svgEl("text", { x:midtX, y:kcy+16, "text-anchor":"middle",
+    "font-family":"'Fredoka One', cursive", "font-size":44, fill:"#232a3f" });
+  inf.textContent = "∞";
+  kilde.appendChild(inf);
+  s.appendChild(kilde);
+
+  const lagtlag = svgEl("g", {});
+  s.appendChild(lagtlag);
+  const draglag = svgEl("g", {});
+  s.appendChild(draglag);
+
+  const fylt = [];
+  for (let i=0; i<maks; i++) fylt.push(i < fast);
+  const lagte = new Map();
+  let laast = false, aktiv = null;
+
+  const punkt = e => {
+    const p = s.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+    const m = s.getScreenCTM();
+    return m ? p.matrixTransform(m.inverse()) : { x:0, y:0 };
+  };
+  const celleXY = i => { const m = ruteMidt(i, o); return { x:KANT + m.cx, y:KANT + m.cy }; };
+  const meld = lagtTil => { s._paaEndret && s._paaEndret(lagte.size, lagtTil); };
+
+  s.addEventListener("pointerdown", e => {
+    if (laast || aktiv) return;
+    const fraKilde = e.target.closest && e.target.closest(".kilde");
+    const fraMynt  = e.target.closest && e.target.closest(".dramynt");
+    if (!fraKilde && !fraMynt) return;
+    e.preventDefault();
+    const p = punkt(e);
+    /* Plukker eleven opp en mynt hen har lagt, tas den ut av ramma med
+       en gang – så kan den enten flyttes eller slippes utenfor. */
+    if (fraMynt){
+      const i = +fraMynt.getAttribute("data-celle");
+      fraMynt.remove(); lagte.delete(i); fylt[i] = false;
+      meld(false);
+    }
+    const gg = svgEl("g", { style:"pointer-events:none" });
+    tegnMynt(gg, 0, 0, RUTE*0.34, sort);
+    gg.setAttribute("transform", "translate(" + p.x + "," + p.y + ")");
+    draglag.appendChild(gg);
+    aktiv = { g:gg, pid:e.pointerId };
+    try { s.setPointerCapture(e.pointerId); } catch(err){}
+    lydKlikk();
+  });
+  s.addEventListener("pointermove", e => {
+    if (!aktiv || e.pointerId !== aktiv.pid) return;
+    const p = punkt(e);
+    aktiv.g.setAttribute("transform", "translate(" + p.x + "," + p.y + ")");
+  });
+  s.addEventListener("pointerup", e => {
+    if (!aktiv || e.pointerId !== aktiv.pid) return;
+    const p = punkt(e);
+    aktiv.g.remove(); aktiv = null;
+    /* nærmeste ledige rute */
+    let best = -1, bestAvst = Infinity;
+    for (let i=0; i<maks; i++){
+      if (fylt[i]) continue;
+      const c = celleXY(i);
+      const avst = Math.hypot(p.x - c.x, p.y - c.y);
+      if (avst < bestAvst){ bestAvst = avst; best = i; }
+    }
+    if (best >= 0 && bestAvst <= RUTE*0.85){
+      const c = celleXY(best);
+      const m = tegnMynt(lagtlag, c.x, c.y, RUTE*0.34, sort);
+      m.setAttribute("class", "mynt dramynt");
+      m.setAttribute("data-celle", best);
+      fylt[best] = true; lagte.set(best, m);
+      meld(true);
+    } else {
+      meld(false);
+    }
+  });
+  s.addEventListener("pointercancel", e => {
+    if (aktiv && e.pointerId === aktiv.pid){ aktiv.g.remove(); aktiv = null; }
+  });
+
+  s._antall = () => lagte.size;
+  s._laas   = () => { laast = true; s.classList.add("laast"); kilde.setAttribute("opacity", ".4"); };
+  s._ledige = () => { const l = []; for (let i=0;i<maks;i++) if (!fylt[i]) l.push(celleXY(i)); return l; };
+  /* Hint til «Vis meg»: gjennomsiktige mynter i de første ledige rutene. */
+  s._spok = antall => {
+    if (antall <= 0) return;
+    const lag = svgEl("g", { opacity:".45", style:"pointer-events:none" });
+    s.appendChild(lag);
+    let satt = 0;
+    for (let i=0; i<maks && satt<antall; i++){
+      if (fylt[i]) continue;
+      const c = celleXY(i);
+      tegnMynt(lag, c.x, c.y, RUTE*0.34, sort);
+      satt++;
+    }
+    setTimeout(() => lag.remove(), 1600);
+  };
+  return s;
 }
 
 /* ---------- Terninger ---------- */
@@ -1025,10 +1194,13 @@ function lagHvorMangeFlate(vert, farge, valg, unnta){
 /* ============================================================
    OPPGAVE 2 – FYLL TIERRAMMA
    ------------------------------------------------------------
-   Motsatt vei: tallet står der, og eleven lager mengden selv. Hvert
-   trykk legger en mynt i ramma og teller høyt. Trykker eleven på en
-   full rute, tas mynten bort igjen. Ramma er nøyaktig så stor at det
-   ikke går an å legge i for mange.
+   Motsatt vei: tallet står der, og eleven lager mengden selv. Eleven
+   drar mynter opp fra uendelig-mynten i skåla, én om gangen, og
+   stemmen teller høyt underveis. Ramma bekrefter ingenting av seg
+   selv – eleven bestemmer når hen er ferdig og trykker «Ferdig!».
+   Bommer hen, blir myntene liggende, så hen kan telle om igjen og
+   rette selv. Det er tellinga som er poenget, ikke at det låser seg
+   i det riktig antall tilfeldigvis ligger der.
    ============================================================ */
 function lagFyllFlate(vert, farge, valg, unnta){
   const n = nesteTall(unnta);
@@ -1047,47 +1219,53 @@ function lagFyllFlate(vert, farge, valg, unnta){
   const teller = document.createElement("div");
   teller.className = "fyllteller";
   teller.textContent = "0 🪙";
-  maal.appendChild(lapp); maal.appendChild(kort); maal.appendChild(teller);
+  const ferdigKnapp = document.createElement("button");
+  ferdigKnapp.type = "button";
+  ferdigKnapp.className = "ferdigknapp";
+  ferdigKnapp.textContent = "Ferdig!";
+  ferdigKnapp.disabled = true;
+  maal.appendChild(lapp); maal.appendChild(kort);
+  maal.appendChild(teller); maal.appendChild(ferdigKnapp);
 
   const rammefelt = document.createElement("div");
   rammefelt.className = "fyllramme";
-  const svg = tegnRamme(0, maks, true);
+  const svg = tegnDrabrett(0, maks, "amber");
   rammefelt.appendChild(svg);
 
   rot.appendChild(maal); rot.appendChild(rammefelt);
   vert.appendChild(rot);
 
-  let fylt = 0, ferdig = false;
+  let ferdig = false;
 
-  function tegnOm(){
-    /* Myntene legger seg alltid fra venstre – da blir ramma lesbar
-       uansett hvor i ramma eleven trykker. */
-    settRammeAntall(svg, fylt);
-    teller.textContent = fylt + " 🪙";
-  }
+  svg._paaEndret = (antall, lagtTil) => {
+    if (ferdig) return;
+    teller.textContent = antall + " 🪙";
+    ferdigKnapp.disabled = antall === 0;
+    if (lagtTil){ if (talePaa()) siTall(antall); }   /* teller høyt: én, to, tre … */
+    else lydKlikk();
+  };
 
-  svg.querySelectorAll(".rute").forEach(r => {
-    r.addEventListener("click", () => {
-      if (ferdig) return;
-      /* Trykk på en rute med mynt tar mynten bort igjen; trykk på en tom
-         rute legger en ny til. Ramma har akkurat nok ruter til at det
-         ikke går an å legge i for mange. */
-      const i = +r.dataset.i;
-      if (i < fylt) fylt--;
-      else if (fylt < maks) fylt++;
-      tegnOm();
-      if (fylt === n){
-        ferdig = true;
-        kort.style.borderColor = "#4f8f28";
-        merke(kort, "✓");
-        valg.paaRiktig && valg.paaRiktig();
-        if (talePaa()) si("riktig", "tall-" + n);
-        valg.paaFerdig && senere(valg.paaFerdig, 800);
-      } else {
-        lydKlikk();
-        if (talePaa()) siTall(fylt);
-      }
-    });
+  ferdigKnapp.addEventListener("click", () => {
+    if (ferdig) return;
+    if (svg._antall() === n){
+      ferdig = true;
+      svg._laas();
+      ferdigKnapp.disabled = true;
+      ferdigKnapp.classList.add("rett");
+      kort.style.borderColor = "#4f8f28";
+      merke(kort, "✓");
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) si("riktig", "tall-" + n);
+      valg.paaFerdig && senere(valg.paaFerdig, 900);
+    } else {
+      /* Ingen fasit her – bare «tell en gang til». Myntene blir liggende. */
+      lydFeil();
+      merke(kort, "✕");
+      ferdigKnapp.classList.add("bom"); teller.classList.add("bom");
+      setTimeout(() => { ferdigKnapp.classList.remove("bom"); teller.classList.remove("bom"); }, 420);
+      valg.paaBom && valg.paaBom();
+      if (talePaa()) si("proev-igjen");
+    }
   });
 
   return {
@@ -1095,9 +1273,8 @@ function lagFyllFlate(vert, farge, valg, unnta){
     settOrdtekst: paa => { kort._tekst.style.display = paa ? "" : "none"; },
     visMeg: () => {
       if (ferdig) return;
-      settRammeAntall(svg, n);
+      svg._spok(n - svg._antall());
       if (talePaa()) siTall(n);
-      setTimeout(()=>{ if (!ferdig) tegnOm(); }, 1600);
     },
     /* Tallet først, så beskjeden: «Sju. Legg så mange mynter i ramma.» */
     sporsmaal: () => { if (talePaa()) si("tall-" + n, "legg-i-ramma"); }
@@ -1107,8 +1284,11 @@ function lagFyllFlate(vert, farge, valg, unnta){
 /* ============================================================
    OPPGAVE 3 – VENNER TIL 10
    ------------------------------------------------------------
-   Ramma er delvis fylt, og eleven finner tallet som mangler for at
-   det skal bli helt. Læreren velger om helheten er 5, 10 eller 20.
+   Ramma er delvis fylt, og eleven fyller resten selv med grønne
+   mynter fra uendelig-mynten. Da SER hen at delen og resten blir
+   helheten – og teller den selv, mynt for mynt. Først når ramma er
+   full, spør vi hvor mange hen dro inn, og eleven bekrefter med
+   tallkortet. Læreren velger om helheten er 5, 10 eller 20.
    ============================================================ */
 function lagVennerFlate(vert, farge, valg, unnta){
   const H = app.helhet;
@@ -1128,15 +1308,19 @@ function lagVennerFlate(vert, farge, valg, unnta){
   const maalboks = document.createElement("div");
   maalboks.className = "maalboks";
   const lapp = document.createElement("div");
-  lapp.className = "merkelapp"; lapp.textContent = "Skal bli " + H;
+  lapp.className = "merkelapp"; lapp.textContent = "Dra inn til det blir " + H;
   const boks = document.createElement("div");
   boks.className = "mengdeboks";
   boks.style.borderColor = farge;
-  boks.appendChild(tegnRamme(k, H, false));
+  const svg = tegnDrabrett(k, H, "gronn");
+  boks.appendChild(svg);
   maalboks.appendChild(lapp); maalboks.appendChild(boks);
 
+  /* Svarkortene tar plassen sin fra start, men vises først når ramma er
+     full – da flytter ikke resten av flata seg når de dukker opp. */
   const rad = document.createElement("div");
   rad.className = "kortrad";
+  rad.style.visibility = "hidden";
   settRutenett(rad, svarene.length);
 
   const tekster = [], kortEl = [];
@@ -1155,17 +1339,32 @@ function lagVennerFlate(vert, farge, valg, unnta){
   rot.appendChild(maalboks); rot.appendChild(rad);
   vert.appendChild(rot);
 
-  let ferdig = false;
+  let ferdig = false, fullt = false;
+
+  svg._paaEndret = (antall, lagtTil) => {
+    if (fullt) return;
+    if (lagtTil){ if (talePaa()) siTall(antall); }   /* teller de grønne: én, to, tre … */
+    else lydKlikk();
+    if (k + antall >= H){
+      fullt = true;
+      svg._laas();
+      lydSnu();
+      lapp.textContent = "Hvor mange dro du inn?";
+      rad.style.visibility = "";
+      valg.paaRiktig && valg.paaRiktig();
+      if (talePaa()) senere(() => si("hvor-mange-dro-du-inn"), 900);
+    }
+  };
+
   function svar(kn, t){
-    if (ferdig) return;
+    if (ferdig || !fullt) return;
     if (t === mangler){
       ferdig = true;
       rad.classList.add("laast");
       kn.classList.add("rett");
       merke(kn._kort, "✓");
-      /* Fasiten fylles inn i ramma, så eleven ser at det ble helt. */
-      boks.textContent = "";
-      boks.appendChild(tegnRamme(H, H, false));
+      /* Regnestykket står igjen på lappen: 6 + 4 = 10. */
+      lapp.textContent = k + " + " + mangler + " = " + H;
       valg.paaRiktig && valg.paaRiktig();
       if (talePaa()) si("riktig", "tall-" + mangler);
       valg.paaFerdig && senere(valg.paaFerdig, 900);
@@ -1183,6 +1382,12 @@ function lagVennerFlate(vert, farge, valg, unnta){
     fasit: mangler, tallKey: k, repr:"ramme",
     settOrdtekst: paa => tekster.forEach(t => { t.style.display = paa ? "" : "none"; }),
     visMeg: () => {
+      /* Før ramma er full er hintet myntene som mangler – etterpå kortet. */
+      if (!fullt){
+        svg._spok(H - k - svg._antall());
+        if (talePaa()) siTall(mangler);
+        return;
+      }
       const treff = kortEl.find(x => x._tall === mangler);
       if (!treff) return;
       treff.classList.add("rett");
