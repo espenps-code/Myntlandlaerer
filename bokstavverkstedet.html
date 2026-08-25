@@ -827,7 +827,7 @@ const LYDHINT = {
   "D":"tunga bak fortennene: /d/ som i <b>due</b>",
   "E":"/e/ som i <b>egg</b>",
   "F":"blås mellom tenner og leppe: /ffff/ som i <b>fisk</b>",
-  "G":"bakerst i munnen: /g/ som i <b>gris</b>",
+  "G":"bakerst i munnen: /g/ som i <b>gås</b>",
   "H":"pust ut: /h/ som i <b>hus</b>",
   "I":"smil bredt: /i/ som i <b>is</b>",
   "J":"/j/ som i <b>jakke</b>",
@@ -1003,6 +1003,21 @@ function stokk(arr){
   }
   return a;
 }
+/* Ordet som står i «Si lyden sammen» (LYDHINT) skal være det FØRSTE bildet
+   klassen møter – ellers sier tipset «/b/ som i bil» mens bildet viser bær. */
+function hintOrd(b){
+  const m = /<b>([^<]+)<\/b>/.exec(LYDHINT[b] || "");
+  return m ? m[1].trim().toLowerCase() : "";
+}
+function hintForst(liste, b){
+  const mal = hintOrd(b);
+  if(!mal) return liste;
+  const i = liste.findIndex(x => x.o.toLowerCase() === mal);
+  if(i <= 0) return liste;
+  const a = liste.slice();
+  a.unshift(a.splice(i, 1)[0]);
+  return a;
+}
 /* Enkle ord først, konsonantklynger bakerst. */
 function sorterForLytting(liste){
   return stokk(liste.filter(x => !x.kl)).concat(stokk(liste.filter(x => x.kl)));
@@ -1111,7 +1126,7 @@ function byggTrinn1(){
     ? "<em>Hvor</em> hører du " + b + " i ordet?"
     : "Hvilken lyd hører du <em>først</em> i ordet?";
   $("#boble1").textContent = tilfeldig(S.modus === "inni" ? HEIAROP_INNI : HEIAROP_LYD);
-  S.t1Ord = (S.modus === "inni" ? stokk(utvalg.ord) : sorterForLytting(utvalg.ord)).slice(0, 6);
+  S.t1Ord = hintForst(S.modus === "inni" ? stokk(utvalg.ord) : sorterForLytting(utvalg.ord), b).slice(0, 6);
   S.t1Idx = 0;
   visTrinn1Ord();
 }
