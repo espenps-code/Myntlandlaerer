@@ -25,6 +25,17 @@
   /* LOGIN */
   #screen-login{background:var(--bg);padding:2rem;align-items:center;justify-content:center;}
   .login-card{background:white;border-radius:24px;padding:2rem;width:100%;border:2px solid var(--border);}
+  /* Scan-kort-skjermer (logg inn / butikk): monsteret med bankkortet.
+     Samme blokk i elevapp14 og elevapp57 – hold dem like. */
+  .scan-hero{display:flex;justify-content:center;margin:1.4rem 0 .3rem;}
+  .scan-hero-img{width:min(48vw,200px);height:auto;filter:drop-shadow(0 10px 16px rgba(30,15,82,.18));animation:scanHeroBob 3.2s ease-in-out infinite;transition:width .3s ease;}
+  @keyframes scanHeroBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @media (prefers-reduced-motion:reduce){.scan-hero-img{animation:none;}}
+  /* Når PIN-tastaturet er oppe (kortet er scannet), krymper monsteret så alt får plass */
+  #screen-login:has(#login-card:not([style*="none"])) .scan-hero-img,
+  #shop-login-section:has(#shop-login-card:not([style*="none"])) .scan-hero-img{width:min(24vw,96px);}
+  @media (max-height:640px){.scan-hero{margin-top:.8rem;} .scan-hero-img{width:min(36vw,140px);}}
+
   .pin-dots{display:flex;gap:16px;justify-content:center;margin:1.5rem 0;}
   .pin-dot{width:22px;height:22px;border-radius:50%;border:3px solid var(--border);transition:all .15s;}
   .pin-dot.filled{background:var(--green);border-color:var(--green);}
