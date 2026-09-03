@@ -438,6 +438,7 @@ h1.sticker{
   box-shadow:0 4px 0 rgba(42,31,61,.25);transition:transform .1s;line-height:1}
 .portal-toolbar button:active{transform:translateY(3px);box-shadow:none}
 .portal-toolbar button:hover{background:var(--gold)}
+.portal-toolbar .tb-sep{height:3px;margin:3px 7px;border-radius:3px;background:rgba(42,31,61,.22)}
 
 .ovl{position:fixed;inset:0;z-index:70;background:rgba(13,10,22,.55);backdrop-filter:blur(3px);
   display:none;align-items:flex-start;justify-content:center;padding:48px 18px;overflow:auto}
@@ -1170,15 +1171,17 @@ h1.sticker{
 
     <!-- Verktøysøyle: ligger nå INNE i arket, loddrett langs høyre kant, så den skalerer og plasserer seg likt i vindu og fullskjerm -->
     <div class="portal-toolbar">
+      <button id="tbPlan" title="Planlegg uka">&#128197;</button>
       <button id="tbConnect" title="Koble til klasse">&#127974;</button>
-      <button id="tbDraw" title="Tegn på tavla">&#9999;&#65039;</button>
       <button id="tbReward" title="Belønning">&#127873;</button>
-      <button id="tbMusic" title="Musikk">&#127925;</button>
+      <div class="tb-sep" aria-hidden="true"></div>
+      <button id="tbDraw" title="Tegn på tavla">&#9999;&#65039;</button>
       <button id="tbTimer" title="Timer">&#9201;&#65039;</button>
-      <button id="tbBreak" title="Brain break">&#129496;</button>
-      <button id="tbPlan" title="Planlegg uke">&#128197;</button>
       <button id="tbWheel" title="Lykkehjul">&#127905;</button>
       <button id="tbGames" title="Tavlespill">&#127918;</button>
+      <button id="tbBreak" title="Brain break">&#129496;</button>
+      <button id="tbMusic" title="Musikk">&#127925;</button>
+      <div class="tb-sep" aria-hidden="true"></div>
       <button id="tbFs" title="Fullskjerm">&#9974;</button>
       <button id="tbSettings" title="Innstillinger">&#9881;&#65039;</button>
     </div>
@@ -1197,7 +1200,6 @@ h1.sticker{
         <button class="set-tab-btn active" data-tab="bakgrunn">Bakgrunn</button>
         <button class="set-tab-btn" data-tab="vaer">Vær</button>
         <button class="set-tab-btn" data-tab="timeplan">Timeplan</button>
-        <button class="set-tab-btn" data-tab="ord">Ukas ord</button>
         <button class="set-tab-btn" data-tab="app">Elevapp</button>
       </div>
       <div class="set-panel active" id="set-panel-bakgrunn">
@@ -1232,20 +1234,6 @@ h1.sticker{
           <div class="set-label">Aktiv time: vis prosent<span class="set-sub">Av = minutter igjen. På = prosent av timen gjort.</span></div>
           <label class="set-switch"><input type="checkbox" id="setProgressPercent"><span class="set-slider"></span></label>
         </div>
-      </div>
-      <div class="set-panel" id="set-panel-ord">
-        <div class="set-heading">Ukas ord</div>
-        <div class="set-row">
-          <div class="set-label">Bytt ord automatisk hver uke<span class="set-sub">Ordbanken roterer ett ord per uke. Slå av for å velge selv.</span></div>
-          <label class="set-switch"><input type="checkbox" id="setWordAuto"><span class="set-slider"></span></label>
-        </div>
-        <div id="setWordManual" class="set-names" style="flex-direction:column">
-          <label class="set-field"><span>Ordet</span><input type="text" id="setWord" autocomplete="off"></label>
-          <label class="set-field"><span>Forklaring</span><input type="text" id="setWordDef" autocomplete="off"></label>
-        </div>
-        <div class="set-heading2">Ordbank (<span id="wordBankCount">20</span>)</div>
-        <div class="set-tasks" id="setWordBank"></div>
-        <button class="set-addtask" id="setAddWord">+ Legg til ord</button>
       </div>
       <div class="set-panel" id="set-panel-app">
         <div class="set-heading">Dagen i dag (elevappen)</div>
@@ -1579,6 +1567,7 @@ h1.sticker{
         <button class="plan-tab-btn" data-ptab="beskjeder">Beskjeder</button>
         <button class="plan-tab-btn" data-ptab="bursdager">Bursdager</button>
         <button class="plan-tab-btn" data-ptab="orden">Ordenselever</button>
+        <button class="plan-tab-btn" data-ptab="ord">Ukas ord</button>
       </div>
       <div class="plan-panel" id="planPanel-timeplan">
         <div class="daytabs" id="dayTabs"></div>
@@ -1644,6 +1633,20 @@ h1.sticker{
         <div class="set-heading2">Oppgaver</div>
         <div class="set-tasks" id="setTasks"></div>
         <button class="set-addtask" id="setAddTask">+ Legg til oppgave</button>
+      </div>
+      <div class="plan-panel" id="planPanel-ord" style="display:none">
+        <div class="set-heading">Ukas ord</div>
+        <div class="set-row">
+          <div class="set-label">Bytt ord automatisk hver uke<span class="set-sub">Ordbanken roterer ett ord per uke. Slå av for å velge selv.</span></div>
+          <label class="set-switch"><input type="checkbox" id="setWordAuto"><span class="set-slider"></span></label>
+        </div>
+        <div id="setWordManual" class="set-names" style="flex-direction:column">
+          <label class="set-field"><span>Ordet</span><input type="text" id="setWord" autocomplete="off"></label>
+          <label class="set-field"><span>Forklaring</span><input type="text" id="setWordDef" autocomplete="off"></label>
+        </div>
+        <div class="set-heading2">Ordbank (<span id="wordBankCount">20</span>)</div>
+        <div class="set-tasks" id="setWordBank"></div>
+        <button class="set-addtask" id="setAddWord">+ Legg til ord</button>
       </div>
     </div>
     <div class="plan-foot">
@@ -2555,7 +2558,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   function setPlanTab(name){
     var tabs=document.getElementById('planTabs'); if(tabs) tabs.querySelectorAll('.plan-tab-btn').forEach(function(x){ x.classList.toggle('active', x.dataset.ptab===name); });
-    ['timeplan','beskjeder','bursdager','orden'].forEach(function(t){ var p=document.getElementById('planPanel-'+t); if(p) p.style.display=(t===name)?'flex':'none'; });
+    ['timeplan','beskjeder','bursdager','orden','ord'].forEach(function(t){ var p=document.getElementById('planPanel-'+t); if(p) p.style.display=(t===name)?'flex':'none'; });
   }
   /* ---------- bursdagskalender for hele skoleaaret ---------- */
   var BD_MONTHS=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
@@ -2812,7 +2815,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       document.body.removeChild(ta); done();
     }catch(e){ bdMsg('Fikk ikke kopiert.'); }
   }
-  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); _bdMnd=(new Date()).getMonth()+1; _bdValgt=0; bdSetView(_bdView); try{ syncHelperSeg(); renderHelperFields(); renderTaskEditor(); }catch(e){} setPlanTab('timeplan'); }
+  function openPlanner(){ editDay = portal.todayWd ? portal.todayWd() : 1; if(editDay<1||editDay>5) editDay=1; planOvl.classList.add('open'); buildDayTabs(); buildPlanRows(); buildWeekMsgs(); _bdMnd=(new Date()).getMonth()+1; _bdValgt=0; bdSetView(_bdView); try{ syncHelperSeg(); renderHelperFields(); renderTaskEditor(); syncWordEditor(); }catch(e){} setPlanTab('timeplan'); }
   function closePlanner(){ planOvl.classList.remove('open'); }
 
   function buildDayTabs(){
@@ -3197,6 +3200,13 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       row.appendChild(w); row.appendChild(d); row.appendChild(del); box.appendChild(row);
     });
   }
+  function syncWordEditor(){
+    const wAuto = document.getElementById('setWordAuto'); if (wAuto) wAuto.checked = !!data.wordAuto;
+    const wMan = document.getElementById('setWordManual'); if (wMan) wMan.style.display = data.wordAuto ? 'none' : 'flex';
+    const sw = document.getElementById('setWord'); if (sw) sw.value = data.word || '';
+    const swd = document.getElementById('setWordDef'); if (swd) swd.value = data.worddef || '';
+    renderWordBankEditor();
+  }
   function syncHelperSeg(){
     document.querySelectorAll('#helperCountSeg .seg-btn').forEach(function(b){ b.classList.toggle('active', (+b.dataset.n) === (data.helperCount || 2)); });
   }
@@ -3220,7 +3230,7 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     var wMan = document.getElementById('setWordManual'); if (wMan) wMan.style.display = data.wordAuto ? 'none' : 'flex';
     var sw = document.getElementById('setWord'); if (sw && ae !== sw) sw.value = data.word || '';
     var swd = document.getElementById('setWordDef'); if (swd && ae !== swd) swd.value = data.worddef || '';
-    var ovl = document.getElementById('settingsOverlay');
+    var ovl = document.getElementById('planOverlay');
     var inBank = !!(ae && ae.closest && ae.closest('#setWordBank'));
     if (ovl && ovl.classList.contains('open') && !inBank) renderWordBankEditor();
   }
@@ -3232,11 +3242,6 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const pp = document.getElementById('setProgressPercent'); if (pp) pp.checked = !!data.progressPercent;
     syncHelperSeg(); renderHelperFields();
     renderTaskEditor();
-    const wAuto = document.getElementById('setWordAuto'); if (wAuto) wAuto.checked = !!data.wordAuto;
-    const wMan = document.getElementById('setWordManual'); if (wMan) wMan.style.display = data.wordAuto ? 'none' : 'flex';
-    const sw = document.getElementById('setWord'); if (sw) sw.value = data.word || '';
-    const swd = document.getElementById('setWordDef'); if (swd) swd.value = data.worddef || '';
-    renderWordBankEditor();
     var _de = document.getElementById('setDayEnabled'); if (_de) _de.checked = data.dayEnabled !== false;
     var _sb = (data.seasonBg === 'auto') ? 'auto' : 'standard';
     document.querySelectorAll('#seasonBgSeg .seg-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bg === _sb); });
