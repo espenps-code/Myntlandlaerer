@@ -174,10 +174,10 @@
   <div class="splash-logo">Myntland</div>
   <div class="splash-tagline">Min intro til økonomi 💰</div>
   <button class="role-btn role-btn-customer" onclick="selectRole('customer')">👛 Min nettbank</button>
-  <button class="role-btn role-btn-cashier" onclick="selectRole('cashier')">🏪 Jeg er kasse</button>
+  <button class="role-btn role-btn-cashier" onclick="selectRole('cashier')">🏪 Butikk</button>
+  <button class="role-btn role-btn-myntjakten" onclick="openRestaurant()">🍕 Restaurant</button>
   <button class="role-btn role-btn-myntjakten" onclick="openMyntspillMeny()">🪙 Myntspill</button>
   <button class="role-btn role-btn-myntjakten" onclick="goToDag()">📅 Dagen i dag</button>
-  <button class="role-btn role-btn-myntjakten" onclick="openRestaurant()">🍕 Restaurant</button>
   <div id="myntspill-meny" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,12,45,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeMyntspillMeny()">
     <div style="background:#fff;border-radius:24px;max-width:420px;width:100%;padding:1.6rem 1.4rem;text-align:center;box-shadow:0 14px 40px rgba(30,15,82,.35);font-family:'Nunito',sans-serif;">
       <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#1e0f52;">Velg spill 🎮</div>
@@ -458,12 +458,13 @@
     <div class="rest-topbar">
       <button class="back-btn" onclick="restBackToChoose()">← Tilbake</button>
       <div class="cashier-top-title" style="font-size:1.4rem;">🧾 Servitør</div>
-      <button class="back-btn" id="rest-tab-mine-btn" onclick="restServitorTab('mine')">Mine bestillinger <span class="rest-badge" id="rest-mine-badge" style="display:none;">0</span></button>
+      <button class="back-btn" id="rest-tab-mine-btn" onclick="restServitorTab('mine')">Alle mine <span class="rest-badge" id="rest-mine-badge" style="display:none;">0</span></button>
     </div>
   </div>
 
   <!-- Ny bestilling -->
   <div class="rest-content" id="rest-ny">
+    <div id="rest-active-bar"></div>
     <div class="rest-section-title">1. Hvilket bord?</div>
     <div class="rest-tables" id="rest-tables"></div>
     <div class="rest-section-title">2. Hvem er gjesten? <span class="rest-optional">(valgfritt)</span></div>
@@ -477,6 +478,7 @@
   <!-- Mine bestillinger -->
   <div class="rest-content" id="rest-mine" style="display:none;">
     <button class="action-btn action-btn-amber" onclick="restServitorTab('ny')">➕ Ny bestilling</button>
+    <div class="rest-section-title">Mine bestillinger</div>
     <div id="rest-mine-list"></div>
   </div>
 </div>

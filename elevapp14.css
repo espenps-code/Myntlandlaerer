@@ -455,7 +455,8 @@
   .rest-menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;}
   .rest-item{background:white;border:3px solid var(--border);border-radius:18px;padding:8px 6px 6px;text-align:center;cursor:pointer;position:relative;font-family:'Nunito',sans-serif;transition:transform .1s;}
   .rest-item:active{transform:scale(.95);}
-  .rest-item img{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto 4px;}
+  .rest-item > img{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto 4px;}
+  .rest-item .rest-pr img,.rest-item .myntico{width:auto;height:1em;display:inline;margin:0 .04em;vertical-align:-0.16em;}
   .rest-item .rest-nm{font-weight:900;font-size:.9rem;color:var(--text);line-height:1.1;}
   .rest-item .rest-pr{font-family:'Fredoka One',cursive;color:#1a5fa5;font-size:1rem;}
   .rest-item.sel{border-color:var(--green);background:var(--green-light);}
@@ -501,4 +502,23 @@
   .pin-overlay-btn.ok{background:var(--green);border-color:var(--green);}
   .rest-sum-actions{margin-top:12px;}
   .rest-sum-actions .action-btn{margin-bottom:8px;}
+
+  /* Statusstripe: mine aktive bestillinger, alltid synlig øverst hos servitøren */
+  #rest-active-bar:empty{display:none;}
+  .rest-active-title{font-family:'Fredoka One',cursive;font-size:1.15rem;color:var(--green-dark);margin:.2rem 0 .5rem;}
+  .rest-active{display:flex;align-items:center;gap:12px;border-radius:18px;padding:12px 14px;margin-bottom:10px;border:3px solid var(--border);background:white;}
+  .rest-active .rest-active-table{font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--green-dark);flex:none;min-width:88px;}
+  .rest-active .rest-active-table small{display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;color:var(--muted);}
+  .rest-active .rest-active-msg{flex:1;font-weight:900;font-size:1.1rem;color:var(--text);}
+  .rest-active .rest-active-msg small{display:block;font-weight:700;font-size:.85rem;color:var(--muted);}
+  .rest-active .action-btn{margin:0;flex:none;width:auto;padding:12px 18px;font-size:1.15rem;white-space:nowrap;}
+  .rest-active.new{border-color:#9cc3ea;background:#eef5fd;}
+  .rest-active.cooking{border-color:var(--amber);background:var(--amber-light);}
+  .rest-active.ready{border-color:var(--amber);background:var(--amber);color:var(--green-dark);animation:restGlow 1.4s ease-in-out infinite;box-shadow:0 6px 22px rgba(239,159,39,.45);}
+  .rest-active.ready .rest-active-table,.rest-active.ready .rest-active-msg,.rest-active.ready .rest-active-msg small,.rest-active.ready .rest-active-table small{color:var(--green-dark);}
+  .rest-active.ready .action-btn{background:var(--green-dark);color:white;box-shadow:none;}
+  @keyframes restGlow{0%,100%{box-shadow:0 6px 22px rgba(239,159,39,.35)}50%{box-shadow:0 0 0 6px rgba(239,159,39,.55),0 6px 26px rgba(239,159,39,.6)}}
+  @media (prefers-reduced-motion:reduce){.rest-active.ready{animation:none;}}
+  .rest-active .rest-active-msg{min-width:0;}
+  @media (max-width:560px){.rest-active{flex-wrap:wrap;} .rest-active .action-btn{width:100%;}}
   /* ═══════════════ /RESTAURANT ═══════════════ */

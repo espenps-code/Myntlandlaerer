@@ -2562,7 +2562,7 @@ function restStartListener() {
 }
 function restStopListener() { if (_restUnsub) { try { _restUnsub(); } catch (e) {} _restUnsub = null; } }
 function restRenderAll() {
-  if (_restRole === 'servitor') restRenderMine();
+  if (_restRole === 'servitor') { restRenderMine(); restRenderActiveBar(); }
   if (_restRole === 'kjokken') restRenderKitchen();
 }
 async function restUpdateOrder(key, patch) {
@@ -2639,7 +2639,7 @@ async function restSendOrder() {
     const r = window._push(window._ref(window._db, 'orders14'));
     await window._set(r, order);
     if (typeof playSuccessChime === 'function') playSuccessChime();
-    if (typeof showSuccess === 'function') showSuccess('📨', 'Sendt til kjøkkenet!', 'Bord ' + _restTable, 'Kjøkkenet ser bestillingen nå. Du finner den under «Mine bestillinger».');
+    if (typeof showSuccess === 'function') showSuccess('📨', 'Sendt til kjøkkenet!', 'Bord ' + _restTable, 'Kjøkkenet ser bestillingen nå. Følg med på stripa øverst – den blir gul når pizzaen er klar.');
     restResetOrderForm();
   } catch (e) {
     console.warn('orders14 push feilet', e);
@@ -2649,7 +2649,7 @@ async function restSendOrder() {
 }
 
 // ── Servitør: mine bestillinger ───────────────────────────────────────────
-const REST_STATUS = { new: ['Venter på kjøkkenet', 'new'], cooking: ['På gang', 'cooking'], ready: ['Klar – hent og lever!', 'ready'], paid: ['Betalt', 'paid'] };
+const REST_STATUS = { new: ['Venter på kjøkkenet', 'new'], cooking: ['Kjøkkenet lager den', 'cooking'], ready: ['Klar – venter på betaling', 'ready'], paid: ['Betalt', 'paid'] };
 function restOrderItemsHtml(o) {
   return `<div class="rest-card-items">${(o.items || []).map(it => `<div class="${it.id === 'bunn' ? 'base' : ''}">${restItemHtml(it, 56)}<span>${restEsc(it.name)}</span></div>`).join('')}</div>`;
 }
@@ -2677,6 +2677,26 @@ function restRenderMine() {
   }).join('');
 }
 async function restCancel(key) { await restUpdateOrder(key, { status: 'cancelled' }); }
+
+
+// Statusstripe øverst på servitørskjermen: alle mine aktive bestillinger, klare lyser gult.
+function restRenderActiveBar() {
+  const el = document.getElementById('rest-active-bar'); if (!el) return;
+  const me = restDeviceId();
+  const mine = Object.entries(_restOrders).map(([k, v]) => ({ ...v, _key: k }))
+    .filter(o => o.waiter === me && (o.status === 'new' || o.status === 'cooking' || o.status === 'ready'))
+    .sort((a, b) => (a.status === 'ready' ? -1 : 0) - (b.status === 'ready' ? -1 : 0) || (a.ts || 0) - (b.ts || 0));
+  if (!mine.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="rest-active-title">Mine bestillinger</div>' + mine.map(o => {
+    const items = (o.items || []).filter(it => it.id !== 'bunn').map(it => it.name).join(', ');
+    let msg = '', btn = '';
+    if (o.status === 'new')     msg = `Venter på kjøkkenet<small>${restEsc(items)}</small>`;
+    if (o.status === 'cooking') msg = `Kjøkkenet lager den<small>${restEsc(items)}</small>`;
+    if (o.status === 'ready') { msg = `Klar – venter på betaling!<small>Hent pizzaen, lever den og regn ut regningen</small>`;
+      btn = `<button class="action-btn" onclick="restOpenSum('${o._key}')">🧮 Ta betalt</button>`; }
+    return `<div class="rest-active ${o.status}"><div class="rest-active-table">Bord ${o.table}${o.guest ? `<small>${restEsc(o.guest)}</small>` : ''}</div><div class="rest-active-msg">${msg}</div>${btn}</div>`;
+  }).join('');
+}
 
 // ── Servitør: regn ut summen selv ─────────────────────────────────────────
 function restOpenSum(key) {
