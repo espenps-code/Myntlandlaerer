@@ -2166,7 +2166,9 @@ async function checkCashpayPin() {
   }
 
   const amount   = _cashierPayTotal || 0;
-  const playOnly = (window._settings && window._settings.realPayments14 === false);
+  const playOnly = window._restPayingKey
+    ? (window._settings && window._settings.realPaymentsRest14 === false)
+    : (window._settings && window._settings.realPayments14 === false);
   const fbKey    = s.fbKey;
 
   if (!playOnly) {

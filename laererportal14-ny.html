@@ -63,7 +63,7 @@
 
   const _params = new URLSearchParams(location.search);
   window._CLASS_ID = _params.get('class') || null;
-  const CLASS_ROOTS = new Set(['students14','transactions14','classGoals14','customRewards14','groceries','hendelser14','savings14','settings','teachers','paymentRequests14','dayboard']);
+  const CLASS_ROOTS = new Set(['students14','transactions14','classGoals14','customRewards14','groceries','hendelser14','savings14','settings','teachers','paymentRequests14','dayboard','orders14']);
   function classScope(pth){
     if(!window._CLASS_ID) return pth;
     const clean = String(pth).replace(/^\/+/,'');
@@ -147,6 +147,7 @@
       }
       // Oppdater toggleknappene for ekte/leke-betaling
       if (typeof syncRealPaymentsToggle === 'function') syncRealPaymentsToggle();
+      if (typeof syncRestPaymentsToggle === 'function') syncRestPaymentsToggle();
     });
   }
 
@@ -587,6 +588,30 @@
         <button type="button" id="real-payments-on" onclick="setRealPayments14(true)"></button>
         <button type="button" id="real-payments-off" onclick="setRealPayments14(false)"></button>
         <div id="real-payments-hint"></div>
+      </div>
+    </div>
+
+    <!-- ── Restaurant (Myntland Pizzeria) ── -->
+    <div class="card">
+      <div class="card-title">🍕 Restaurant</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Restauranten i elevappen (Servitør / Kjøkken) har sin egen betalingsmodus, uavhengig av butikken.</p>
+
+      <div id="rest-mode-status" style="border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;border:2px solid transparent;transition:all .2s;">
+        <div id="rest-mode-icon" style="font-size:2.6rem;line-height:1;flex-shrink:0;">💰</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.7;margin-bottom:.15rem;">Restauranten</div>
+          <div id="rest-mode-title" style="font-family:'Fredoka One',cursive;font-size:1.5rem;line-height:1.1;margin-bottom:.25rem;">Ekte mynter</div>
+          <div id="rest-mode-desc" style="font-size:.85rem;font-weight:600;line-height:1.4;">Gjesten betaler regningen med mynter fra kontoen sin når servitøren scanner bankkortet.</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-ghost" id="rest-mode-switch" onclick="toggleRestPaymentMode14()" style="width:100%;margin-bottom:1.25rem;">
+        <span id="rest-mode-switch-text">🎮 Bytt til lekemodus</span>
+      </button>
+
+      <div style="border-top:1.5px solid var(--border);padding-top:1rem;">
+        <div style="font-weight:800;margin-bottom:.25rem;">🔄 Nullstill restauranten</div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;font-weight:600;">Fjerner alle bestillinger (også ferdige) fra servitør- og kjøkken-iPadene, så neste økt starter blankt. Mynter som allerede er betalt, røres ikke. <span id="rest-order-count"></span></p>
+        <button type="button" class="btn btn-ghost" onclick="resetRestaurant14()" style="width:100%;">🔄 Nullstill restauranten til neste økt</button>
       </div>
     </div>
   </div>

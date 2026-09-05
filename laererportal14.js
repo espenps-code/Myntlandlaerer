@@ -247,6 +247,8 @@ function showPage(page) {
     if (typeof renderGroceryList === 'function') renderGroceryList();
     if (typeof renderHandlelisteSelect === 'function') renderHandlelisteSelect();
     if (typeof syncRealPaymentsToggle === 'function') syncRealPaymentsToggle();
+    if (typeof syncRestPaymentsToggle === 'function') syncRestPaymentsToggle();
+    if (typeof refreshRestOrderCount14 === 'function') refreshRestOrderCount14();
   }
   if (page === 'belonninger') {
     if (typeof renderClassGoalsPage   === 'function') renderClassGoalsPage();
@@ -2412,6 +2414,57 @@ async function setRealPayments14(real) {
   if (!window._settings) window._settings = {};
   window._settings.realPayments14 = val;
   syncRealPaymentsToggle();
+}
+
+// ══════════════════════════════════════════════════════════
+// RESTAURANT (settings/realPaymentsRest14 + orders14)
+// ══════════════════════════════════════════════════════════
+async function setRestPayments14(real) {
+  const val = !!real;
+  if (!window._db || !window._update || !window._ref) return;
+  await window._update(window._ref(window._db, 'settings'), { realPaymentsRest14: val });
+  if (!window._settings) window._settings = {};
+  window._settings.realPaymentsRest14 = val;
+  syncRestPaymentsToggle();
+}
+function toggleRestPaymentMode14() {
+  const real = (window._settings?.realPaymentsRest14 !== false);
+  setRestPayments14(!real);
+}
+function syncRestPaymentsToggle() {
+  const real = (window._settings?.realPaymentsRest14 !== false);
+  const box = document.getElementById('rest-mode-status'); if (!box) return;
+  const iconEl = document.getElementById('rest-mode-icon'), titleEl = document.getElementById('rest-mode-title'),
+        descEl = document.getElementById('rest-mode-desc'), switchTxt = document.getElementById('rest-mode-switch-text');
+  if (real) {
+    box.style.background = 'var(--green-light)'; box.style.borderColor = 'var(--green)'; box.style.color = 'var(--green-dark)';
+    iconEl.textContent = '💰'; titleEl.textContent = 'Ekte mynter';
+    descEl.textContent = 'Gjesten betaler regningen med mynter fra kontoen sin når servitøren scanner bankkortet.';
+    switchTxt.textContent = '🎮 Bytt til lekemodus';
+  } else {
+    box.style.background = 'var(--purple-light)'; box.style.borderColor = 'var(--purple)'; box.style.color = 'var(--purple)';
+    iconEl.textContent = '🎮'; titleEl.textContent = 'Lekemodus';
+    descEl.textContent = 'Servitøren scanner kortet og gjesten taster PIN som vanlig, men ingen mynter trekkes. Fint første gang.';
+    switchTxt.textContent = '💰 Bytt til ekte mynter';
+  }
+}
+function refreshRestOrderCount14() {
+  const el = document.getElementById('rest-order-count'); if (!el || !window._onValue || !window._ref || !window._db) return;
+  try {
+    window._onValue(window._ref(window._db, 'orders14'), snap => {
+      const n = Object.keys(snap.val() || {}).length;
+      el.textContent = n ? `Akkurat nå ligger det ${n} bestilling${n === 1 ? '' : 'er'} der.` : 'Ingen bestillinger ligger der nå.';
+    }, { onlyOnce: true });
+  } catch (e) {}
+}
+async function resetRestaurant14() {
+  if (!window._db || !window._ref || !window._set) return;
+  if (!confirm('Nullstille restauranten? Alle bestillinger fjernes fra servitør- og kjøkken-iPadene.')) return;
+  try {
+    await window._set(window._ref(window._db, 'orders14'), null);
+    refreshRestOrderCount14();
+    alert('Restauranten er nullstilt – klar til neste økt.');
+  } catch (e) { alert('Klarte ikke nullstille: ' + (e && e.message ? e.message : e)); }
 }
 
 function togglePaymentMode14() {
