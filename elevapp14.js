@@ -139,6 +139,7 @@ function showScreen(id) {
 function goToSplash() {
   stopScan();
   stopPaymentRequestListener();
+  if (typeof restStopListener === 'function') restStopListener();
   window._currentStudent = null;
   window._preselectedStudent = null;
   currentPin = ''; cart = []; cartTotal = 0; transactions = []; _pinVisible14 = false;
@@ -2198,6 +2199,7 @@ async function checkCashpayPin() {
   hideCashierPayPin();
   clearCart();
   playSuccessChime();
+  if (typeof restOnPaid === 'function') { try { restOnPaid(fbKey, amount); } catch(e){} }
   if (playOnly) {
     showSuccess('🎮','Lekekjøp godkjent!',`${studentName} – ${amount} 🪙`,'Ingen mynter ble trukket fra konto');
   } else {
@@ -2449,3 +2451,330 @@ function dagUpdateSplashBtn(){
   if(c){ var board=dagBoard(); b.style.display=(board && board.enabled!==false) ? '' : 'none'; }
   else { var all=window._dayboard||{}; var any=false; for(var k in all){ if(all[k]&&all[k].enabled!==false&&all[k].week) any=true; } b.style.display=any?'':'none'; }
 }
+
+
+/* ═══════════════ RESTAURANT (Myntland Pizzeria) ═══════════════
+   Servitør-iPad legger inn bestilling → orders14/<key> (klassescopet)
+   → Kjøkken-iPad ser den i sanntid → «Klar!» → servitøren regner ut
+   summen selv og tar betalt via den vanlige kasseflyten (scan kort + PIN).
+   Status: new → cooking → ready → paid                                  */
+
+const REST_DEFAULT_MENU = [
+  { id:'bunn',      name:'Pizzabunn', price:20, img:'bilder/pizzeria/00_pizzabunn.webp', fixed:true },
+  { id:'saus',      name:'Tomatsaus', price:5,  img:'bilder/pizzeria/01_tomatsaus.webp', layer:true },
+  { id:'ost',       name:'Ost',       price:5,  img:'bilder/pizzeria/02_ost.webp',       layer:true },
+  { id:'skinke',    name:'Skinke',    price:6,  img:'bilder/pizzeria/03_skinke.webp' },
+  { id:'pepperoni', name:'Pepperoni', price:8,  img:'bilder/pizzeria/04_pepperoni.webp' },
+  { id:'kjottdeig', name:'Kjøttdeig', price:8,  img:'bilder/pizzeria/05_kjottdeig.webp' },
+  { id:'kylling',   name:'Kylling',   price:10, img:'bilder/pizzeria/12_kylling.webp' },
+  { id:'paprika',   name:'Paprika',   price:3,  img:'bilder/pizzeria/06_paprika.webp' },
+  { id:'mais',      name:'Mais',      price:2,  img:'bilder/pizzeria/07_mais.webp' },
+  { id:'sopp',      name:'Sopp',      price:4,  img:'bilder/pizzeria/08_sopp.webp' },
+  { id:'ananas',    name:'Ananas',    price:4,  img:'bilder/pizzeria/09_ananas.webp' },
+  { id:'lok',       name:'Løk',       price:2,  img:'bilder/pizzeria/10_lok.webp' },
+  { id:'oliven',    name:'Oliven',    price:3,  img:'bilder/pizzeria/11_oliven.webp' }
+];
+const REST_MAX_TOPPINGS = 4;
+const REST_TABLES = 6;
+
+let _restRole        = null;   // 'servitor' | 'kjokken'
+let _restOrders      = {};     // key -> order
+let _restUnsub       = null;
+let _restKnownKeys   = null;   // for pip ved ny bestilling på kjøkkenet
+let _restShowDone    = false;
+let _restTable       = null;
+let _restSel         = new Set();   // valgte ingrediens-id-er (ikke bunn)
+let _restSumKey      = null;
+let _restSumInput    = '';
+let _restSumTries    = 0;
+let _restTab         = 'ny';
+window._restPayingKey = null;
+
+function restDeviceId() {
+  try {
+    let id = localStorage.getItem('myntlandRestDevice');
+    if (!id) { id = 'w' + Math.random().toString(36).slice(2, 10); localStorage.setItem('myntlandRestDevice', id); }
+    return id;
+  } catch (e) { return 'w-anon'; }
+}
+
+// Menyen: standard pizzameny, eller varer i butikken med kategori «Pizza» hvis læreren har lagt inn slike.
+function restMenu() {
+  const custom = (window._groceries || []).filter(g => String(g.category || '').trim().toLowerCase() === 'pizza');
+  if (custom.length >= 3) {
+    return custom.map(g => ({ id: g.fbKey, name: g.name, price: Number(g.price) || 0, emoji: g.emoji || '🍕',
+      fixed: /bunn/i.test(g.name), layer: /saus|ost/i.test(g.name) }));
+  }
+  return REST_DEFAULT_MENU;
+}
+function restItemHtml(it, size) {
+  const s = size || 64;
+  return it.img
+    ? `<img src="${it.img}" alt="" style="width:${s}px;height:${s}px;">`
+    : `<div style="font-size:${Math.round(s*0.7)}px;line-height:${s}px;height:${s}px;">${it.emoji || '🍕'}</div>`;
+}
+function restEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ── Navigasjon ────────────────────────────────────────────────────────────
+function openRestaurant() { showScreen('screen-restaurant'); }
+function restBackToChoose() { restStopListener(); _restRole = null; showScreen('screen-restaurant'); }
+function restOpenServitor() {
+  _restRole = 'servitor';
+  restResetOrderForm();
+  restServitorTab('ny');
+  showScreen('screen-servitor');
+  restStartListener();
+}
+function restOpenKjokken() {
+  _restRole = 'kjokken';
+  _restKnownKeys = null;
+  _restShowDone = false;
+  showScreen('screen-kjokken');
+  restStartListener();
+}
+
+// ── Firebase-lytter ───────────────────────────────────────────────────────
+function restStartListener() {
+  restStopListener();
+  if (!window._onValue || !window._ref || !window._db) { restRenderAll(); return; }
+  _restUnsub = window._onValue(window._ref(window._db, 'orders14'), snap => {
+    const all = snap.val() || {};
+    const cutoff = Date.now() - 24 * 3600 * 1000;      // gamle bestillinger vises ikke
+    const next = {};
+    Object.entries(all).forEach(([k, v]) => { if (v && (v.ts || 0) > cutoff) next[k] = v; });
+    // Pip på kjøkkenet når det kommer en NY bestilling (ikke ved første lasting)
+    if (_restRole === 'kjokken') {
+      if (_restKnownKeys) {
+        const fresh = Object.keys(next).some(k => !_restKnownKeys.has(k) && next[k].status === 'new');
+        if (fresh && typeof playSuccessChime === 'function') playSuccessChime();
+      }
+      _restKnownKeys = new Set(Object.keys(next));
+    }
+    // Pling hos servitøren når en av mine blir klar
+    if (_restRole === 'servitor') {
+      const mine = restDeviceId();
+      const becameReady = Object.keys(next).some(k => next[k].waiter === mine && next[k].status === 'ready' && _restOrders[k] && _restOrders[k].status !== 'ready');
+      if (becameReady && typeof playSuccessChime === 'function') playSuccessChime();
+    }
+    _restOrders = next;
+    restRenderAll();
+  });
+}
+function restStopListener() { if (_restUnsub) { try { _restUnsub(); } catch (e) {} _restUnsub = null; } }
+function restRenderAll() {
+  if (_restRole === 'servitor') restRenderMine();
+  if (_restRole === 'kjokken') restRenderKitchen();
+}
+async function restUpdateOrder(key, patch) {
+  if (!window._update || !window._ref || !window._db) return;
+  patch.updatedAt = Date.now();
+  try { await window._update(window._ref(window._db, 'orders14/' + key), patch); } catch (e) { console.warn('orders14 update feilet', e); }
+}
+
+// ── Servitør: ny bestilling ───────────────────────────────────────────────
+function restResetOrderForm() {
+  _restTable = null; _restSel = new Set();
+  const g = document.getElementById('rest-guest'); if (g) g.value = '';
+  restRenderTables(); restRenderMenu(); restRenderSummary();
+}
+function restServitorTab(tab) {
+  _restTab = tab;
+  document.getElementById('rest-ny').style.display   = tab === 'ny'   ? '' : 'none';
+  document.getElementById('rest-mine').style.display = tab === 'mine' ? '' : 'none';
+  if (tab === 'mine') restRenderMine();
+}
+function restRenderTables() {
+  const el = document.getElementById('rest-tables'); if (!el) return;
+  let h = '';
+  for (let i = 1; i <= REST_TABLES; i++) h += `<button class="rest-table-btn${_restTable === i ? ' sel' : ''}" onclick="restPickTable(${i})">${i}</button>`;
+  el.innerHTML = h;
+}
+function restPickTable(n) { _restTable = n; restRenderTables(); restRenderSummary(); }
+function restRenderMenu() {
+  const el = document.getElementById('rest-menu'); if (!el) return;
+  const menu = restMenu();
+  const toppings = [..._restSel].filter(id => { const it = menu.find(m => m.id === id); return it && !it.layer; }).length;
+  el.innerHTML = menu.map(it => {
+    const sel = it.fixed || _restSel.has(it.id);
+    const dis = !it.fixed && !it.layer && !sel && toppings >= REST_MAX_TOPPINGS;
+    return `<div class="rest-item${it.fixed ? ' fixed' : ''}${sel && !it.fixed ? ' sel' : ''}${dis ? ' dis' : ''}" onclick="restToggle('${it.id}')">
+      ${restItemHtml(it, 64)}<div class="rest-nm">${restEsc(it.name)}</div><div class="rest-pr">${it.price} 🪙</div></div>`;
+  }).join('');
+}
+function restToggle(id) {
+  const menu = restMenu(); const it = menu.find(m => m.id === id);
+  if (!it || it.fixed) return;
+  if (_restSel.has(id)) _restSel.delete(id);
+  else {
+    if (!it.layer) {
+      const toppings = [..._restSel].filter(x => { const m = menu.find(q => q.id === x); return m && !m.layer; }).length;
+      if (toppings >= REST_MAX_TOPPINGS) { if (typeof playErrorBeep === 'function') playErrorBeep(); return; }
+    }
+    _restSel.add(id);
+  }
+  restRenderMenu(); restRenderSummary();
+}
+function restSelectedItems() {
+  const menu = restMenu();
+  return menu.filter(it => it.fixed || _restSel.has(it.id)).map(it => ({ id: it.id, name: it.name, price: it.price, img: it.img || null, emoji: it.emoji || null }));
+}
+function restRenderSummary() {
+  const el = document.getElementById('rest-summary'); const btn = document.getElementById('rest-send-btn');
+  if (!el) return;
+  const items = restSelectedItems();
+  let h = _restTable ? `<span class="rest-chip">Bord ${_restTable}</span>` : `<span class="rest-chip warn">Velg bord</span>`;
+  h += items.map(it => `<span class="rest-chip">${restEsc(it.name)}</span>`).join('');
+  el.innerHTML = h;
+  if (btn) { const ok = !!_restTable; btn.disabled = !ok; btn.style.opacity = ok ? '1' : '.5'; }
+}
+async function restSendOrder() {
+  if (!_restTable) { restRenderSummary(); return; }
+  if (!window._push || !window._ref || !window._db) { alert('Ingen kontakt med Myntland – sjekk nettet.'); return; }
+  const items = restSelectedItems();
+  const total = items.reduce((s, it) => s + (Number(it.price) || 0), 0);
+  const guest = (document.getElementById('rest-guest')?.value || '').trim().slice(0, 24);
+  const order = { table: _restTable, guest, items, total, status: 'new', ts: Date.now(), updatedAt: Date.now(), waiter: restDeviceId() };
+  const btn = document.getElementById('rest-send-btn'); if (btn) btn.disabled = true;
+  try {
+    const r = window._push(window._ref(window._db, 'orders14'));
+    await window._set(r, order);
+    if (typeof playSuccessChime === 'function') playSuccessChime();
+    if (typeof showSuccess === 'function') showSuccess('📨', 'Sendt til kjøkkenet!', 'Bord ' + _restTable, 'Kjøkkenet ser bestillingen nå. Du finner den under «Mine bestillinger».');
+    restResetOrderForm();
+  } catch (e) {
+    console.warn('orders14 push feilet', e);
+    alert('Klarte ikke sende bestillingen. Prøv igjen.');
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ── Servitør: mine bestillinger ───────────────────────────────────────────
+const REST_STATUS = { new: ['Venter på kjøkkenet', 'new'], cooking: ['På gang', 'cooking'], ready: ['Klar – hent og lever!', 'ready'], paid: ['Betalt', 'paid'] };
+function restOrderItemsHtml(o) {
+  return `<div class="rest-card-items">${(o.items || []).map(it => `<div class="${it.id === 'bunn' ? 'base' : ''}">${restItemHtml(it, 56)}<span>${restEsc(it.name)}</span></div>`).join('')}</div>`;
+}
+function restRenderMine() {
+  const el = document.getElementById('rest-mine-list'); const badge = document.getElementById('rest-mine-badge');
+  if (!el) return;
+  const me = restDeviceId();
+  const recentPaid = Date.now() - 60 * 60 * 1000;
+  const mine = Object.entries(_restOrders).map(([k, v]) => ({ ...v, _key: k }))
+    .filter(o => o.waiter === me && (o.status !== 'paid' || (o.updatedAt || 0) > recentPaid))
+    .sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const ready = mine.filter(o => o.status === 'ready').length;
+  if (badge) { badge.style.display = ready ? '' : 'none'; badge.textContent = ready; }
+  if (!mine.length) { el.innerHTML = `<div class="rest-empty"><img src="bilder/pizzeria/14_servitor.webp" alt="">Ingen bestillinger ennå. Trykk «Ny bestilling» for å begynne.</div>`; return; }
+  el.innerHTML = mine.map(o => {
+    const st = REST_STATUS[o.status] || REST_STATUS.new;
+    let actions = '';
+    if (o.status === 'ready') actions = `<button class="action-btn action-btn-green" onclick="restOpenSum('${o._key}')">🧮 Regn ut og ta betalt</button>`;
+    if (o.status === 'new') actions = `<button class="action-btn action-btn-ghost action-btn-small" onclick="restCancel('${o._key}')">Angre bestilling</button>`;
+    return `<div class="rest-card ${o.status}">
+      <div class="rest-card-head"><div class="rest-card-table">Bord ${o.table}${o.guest ? `<small>${restEsc(o.guest)}</small>` : ''}</div><span class="rest-status ${st[1]}">${st[0]}</span></div>
+      ${restOrderItemsHtml(o)}
+      ${o.status === 'paid' ? `<div style="font-weight:800;color:var(--muted);">Sum: ${o.total} 🪙</div>` : ''}
+      <div class="rest-card-actions">${actions}</div></div>`;
+  }).join('');
+}
+async function restCancel(key) { await restUpdateOrder(key, { status: 'cancelled' }); }
+
+// ── Servitør: regn ut summen selv ─────────────────────────────────────────
+function restOpenSum(key) {
+  const o = _restOrders[key]; if (!o) return;
+  _restSumKey = key; _restSumInput = ''; _restSumTries = 0;
+  document.getElementById('rest-sum-items').innerHTML = (o.items || []).map(it => `<div><span>${restEsc(it.name)}</span><span>${it.price} 🪙</span></div>`).join('');
+  document.getElementById('rest-sum-error').textContent = '';
+  document.getElementById('rest-sum-actions').style.display = 'none';
+  const d = document.getElementById('rest-sum-display'); if (d) d.classList.remove('ok');
+  restSumRender();
+  document.getElementById('rest-sum-overlay').classList.add('open');
+}
+function restCloseSum() { document.getElementById('rest-sum-overlay').classList.remove('open'); _restSumKey = null; }
+function restSumRender() { document.getElementById('rest-sum-input').innerHTML = _restSumInput || '&nbsp;'; }
+function restSumPress(v) {
+  if (document.getElementById('rest-sum-actions').style.display !== 'none') return;
+  if (v === 'DEL') _restSumInput = _restSumInput.slice(0, -1);
+  else if (_restSumInput.length < 4) _restSumInput += v;
+  document.getElementById('rest-sum-error').textContent = '';
+  restSumRender();
+}
+function restSumCheck() {
+  const o = _restOrders[_restSumKey]; if (!o) return;
+  const err = document.getElementById('rest-sum-error');
+  if (!_restSumInput) { err.textContent = 'Tast inn summen først'; return; }
+  const guess = parseInt(_restSumInput, 10);
+  if (guess === Number(o.total)) {
+    err.textContent = '';
+    document.querySelector('#rest-sum-overlay .rest-sum-display').classList.add('ok');
+    document.getElementById('rest-sum-actions').style.display = '';
+    if (typeof playSuccessChime === 'function') playSuccessChime();
+    return;
+  }
+  _restSumTries++;
+  if (typeof playErrorBeep === 'function') playErrorBeep();
+  if (_restSumTries >= 3) {
+    _restSumInput = String(o.total); restSumRender();
+    err.textContent = 'Riktig sum er ' + o.total + ' – legg sammen én og én neste gang!';
+    document.querySelector('#rest-sum-overlay .rest-sum-display').classList.add('ok');
+    document.getElementById('rest-sum-actions').style.display = '';
+  } else {
+    err.textContent = guess < o.total ? 'Litt for lite – tell en gang til!' : 'Litt for mye – tell en gang til!';
+    _restSumInput = ''; restSumRender();
+  }
+}
+// Betaling via den vanlige kasseflyten: fyll kurven, scan gjestens kort, PIN på denne iPaden.
+function restStartPayment() {
+  const o = _restOrders[_restSumKey]; if (!o) return;
+  cart = (o.items || []).map(it => ({ emoji: it.emoji || '🍕', name: it.name, price: Number(it.price) || 0 }));
+  cartTotal = Number(o.total) || 0;
+  if (typeof renderCart === 'function') renderCart();
+  window._restPayingKey = _restSumKey;
+  restCloseSum();
+  startScan('cashierCustomerCard');
+}
+async function restMarkPaidManual() {
+  const key = _restSumKey; restCloseSum();
+  await restUpdateOrder(key, { status: 'paid', paidWith: 'manual' });
+  if (typeof showSuccess === 'function') showSuccess('✅', 'Levert og betalt!', 'Bord ' + (_restOrders[key]?.table || ''), 'Bestillingen er ferdig.');
+}
+// Kalles fra checkCashpayPin når betalingen gikk gjennom
+async function restOnPaid(studentFbKey, amount) {
+  const key = window._restPayingKey; if (!key) return;
+  window._restPayingKey = null;
+  await restUpdateOrder(key, { status: 'paid', paidWith: 'card', guestFbKey: studentFbKey || null, paidAmount: amount || 0 });
+}
+
+// ── Kjøkken ───────────────────────────────────────────────────────────────
+function restToggleDone() {
+  _restShowDone = !_restShowDone;
+  const b = document.getElementById('rest-done-btn'); if (b) b.textContent = _restShowDone ? 'Aktive' : 'Ferdige';
+  restRenderKitchen();
+}
+function restRenderKitchen() {
+  const el = document.getElementById('rest-kitchen-list'); if (!el) return;
+  const list = Object.entries(_restOrders).map(([k, v]) => ({ ...v, _key: k }))
+    .filter(o => _restShowDone ? (o.status === 'ready' || o.status === 'paid') : (o.status === 'new' || o.status === 'cooking'))
+    .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  if (!list.length) {
+    el.innerHTML = `<div class="rest-empty"><img src="bilder/pizzeria/13_kokk.webp" alt="">${_restShowDone ? 'Ingen ferdige pizzaer ennå.' : 'Ingen bestillinger akkurat nå. Kjøkkenet venter …'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(o => {
+    const st = REST_STATUS[o.status] || REST_STATUS.new;
+    let actions = '';
+    if (o.status === 'new')     actions = `<button class="action-btn action-btn-amber" onclick="restSetStatus('${o._key}','cooking')">👨‍🍳 Vi lager den!</button>`;
+    if (o.status === 'cooking') actions = `<button class="action-btn action-btn-green" onclick="restSetStatus('${o._key}','ready')">✅ Klar!</button>`;
+    if (o.status === 'ready')   actions = `<button class="action-btn action-btn-ghost action-btn-small" onclick="restSetStatus('${o._key}','cooking')">Angre – ikke klar</button>`;
+    if (o.status === 'paid')    actions = `<button class="action-btn action-btn-ghost action-btn-small" onclick="restRemove('${o._key}')">Fjern</button>`;
+    return `<div class="rest-card ${o.status}">
+      <div class="rest-card-head"><div class="rest-card-table">Bord ${o.table}${o.guest ? `<small>${restEsc(o.guest)}</small>` : ''}</div><span class="rest-status ${st[1]}">${st[0]}</span></div>
+      ${restOrderItemsHtml(o)}
+      <div class="rest-card-actions">${actions}</div></div>`;
+  }).join('');
+}
+async function restSetStatus(key, status) { await restUpdateOrder(key, { status }); }
+async function restRemove(key) {
+  if (!window._set || !window._ref || !window._db) return;
+  try { await window._set(window._ref(window._db, 'orders14/' + key), null); } catch (e) {}
+}
+/* ═══════════════ /RESTAURANT ═══════════════ */

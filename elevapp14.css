@@ -428,3 +428,77 @@
     #screen-cashier .cashier-actions > .action-btn{margin-bottom:0;}
     #screen-cashier .cashier-actions > .action-btn-small{align-self:center;max-width:240px;}
   }
+
+
+  /* ═══════════════ RESTAURANT (Myntland Pizzeria) ═══════════════ */
+  #screen-restaurant.active,#screen-servitor.active,#screen-kjokken.active{max-width:100%;margin:0;background:var(--bg);}
+  .rest-choose{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;max-width:520px;margin:0 auto;width:100%;}
+  .rest-intro{font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);margin-bottom:1.2rem;text-align:center;}
+  .rest-role-btn{width:100%;display:flex;align-items:center;gap:16px;text-align:left;background:white;border:3px solid var(--border);border-radius:22px;padding:14px 18px;margin-bottom:14px;cursor:pointer;font-family:'Nunito',sans-serif;color:var(--text);transition:transform .12s;}
+  .rest-role-btn:active{transform:scale(.97);}
+  .rest-role-btn b{display:block;font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);font-weight:400;}
+  .rest-role-btn small{display:block;font-weight:700;color:var(--muted);font-size:.9rem;}
+  .rest-role-img{width:84px;height:84px;object-fit:contain;flex:none;}
+  .rest-role-servitor{border-color:#1a5fa5;}
+  .rest-role-kjokken{border-color:var(--amber);}
+  .rest-hint{color:var(--muted);font-weight:700;font-size:.85rem;text-align:center;margin-top:.5rem;}
+
+  .rest-topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .rest-badge{display:inline-block;background:var(--amber);color:var(--green-dark);border-radius:999px;padding:0 8px;font-weight:900;margin-left:4px;}
+  .rest-content{padding:1rem 1.2rem 2rem;flex:1;overflow-y:auto;max-width:900px;width:100%;margin:0 auto;}
+  .rest-section-title{font-family:'Fredoka One',cursive;font-size:1.15rem;color:var(--green-dark);margin:.9rem 0 .5rem;}
+  .rest-optional{font-family:'Nunito',sans-serif;font-weight:700;color:var(--muted);font-size:.85rem;}
+  .rest-input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:14px;font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:700;background:white;color:var(--text);}
+  .rest-tables{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+  .rest-table-btn{background:white;border:3px solid var(--border);border-radius:16px;padding:10px 0;font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--green-dark);cursor:pointer;}
+  .rest-table-btn.sel{background:var(--green);border-color:var(--green-dark);color:white;}
+  .rest-menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;}
+  .rest-item{background:white;border:3px solid var(--border);border-radius:18px;padding:8px 6px 6px;text-align:center;cursor:pointer;position:relative;font-family:'Nunito',sans-serif;transition:transform .1s;}
+  .rest-item:active{transform:scale(.95);}
+  .rest-item img{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto 4px;}
+  .rest-item .rest-nm{font-weight:900;font-size:.9rem;color:var(--text);line-height:1.1;}
+  .rest-item .rest-pr{font-family:'Fredoka One',cursive;color:#1a5fa5;font-size:1rem;}
+  .rest-item.sel{border-color:var(--green);background:var(--green-light);}
+  .rest-item.sel::after{content:'✓';position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:50%;background:var(--green);color:white;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+  .rest-item.fixed{border-color:var(--amber);background:var(--amber-light);cursor:default;}
+  .rest-item.fixed .rest-nm::after{content:' (alltid med)';font-weight:700;color:var(--muted);font-size:.75rem;}
+  .rest-item.dis{opacity:.4;}
+  .rest-order-summary{background:white;border:2px solid var(--border);border-radius:16px;padding:10px 14px;margin:14px 0 10px;font-weight:800;color:var(--green-dark);min-height:46px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .rest-chip{background:var(--green-light);border-radius:999px;padding:4px 10px;font-size:.9rem;}
+  .rest-chip.warn{background:var(--amber-light);color:#a35f00;}
+
+  .rest-card{background:white;border:2px solid var(--border);border-radius:18px;padding:12px 14px;margin-bottom:12px;}
+  .rest-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+  .rest-card-table{font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--green-dark);}
+  .rest-card-table small{font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;color:var(--muted);margin-left:8px;}
+  .rest-status{border-radius:999px;padding:4px 12px;font-weight:900;font-size:.85rem;white-space:nowrap;}
+  .rest-status.new{background:#dbeafe;color:#1a5fa5;}
+  .rest-status.cooking{background:var(--amber-light);color:#a35f00;}
+  .rest-status.ready{background:var(--green-light);color:var(--green-dark);}
+  .rest-status.paid{background:#eee;color:#555;}
+  .rest-card-items{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .rest-card-items div{display:flex;flex-direction:column;align-items:center;width:72px;font-size:.75rem;font-weight:800;text-align:center;color:var(--text);}
+  .rest-card-items img{width:56px;height:56px;object-fit:contain;}
+  .rest-card-items div.base img{width:56px;}
+  .rest-card-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .rest-card-actions .action-btn{margin:0;flex:1;padding:12px;font-size:1.1rem;}
+  .rest-card.ready{border-color:var(--green);box-shadow:0 0 0 3px var(--green-light);}
+  .rest-card.cooking{border-color:var(--amber);}
+  .rest-empty{text-align:center;color:var(--muted);font-weight:700;padding:2rem 1rem;}
+  .rest-empty img{width:120px;height:120px;object-fit:contain;display:block;margin:0 auto .5rem;opacity:.9;}
+  #rest-kitchen-list .rest-card-items img{width:72px;height:72px;}
+  #rest-kitchen-list .rest-card-items div{width:88px;font-size:.85rem;}
+  #rest-kitchen-list .rest-card-table{font-size:2rem;}
+  @media (min-width:700px){ #rest-kitchen-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start;} #rest-kitchen-list .rest-card{margin-bottom:0;} }
+
+  .rest-sum-card{background:rgba(255,255,255,.1);border-radius:20px;padding:1.2rem;width:100%;max-width:360px;}
+  .rest-sum-items{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .rest-sum-items div{display:flex;justify-content:space-between;color:white;font-weight:800;font-size:1rem;}
+  .rest-sum-items div span:last-child{font-family:'Fredoka One',cursive;color:var(--amber);}
+  .rest-sum-question{color:rgba(255,255,255,.85);font-weight:800;text-align:center;margin-bottom:6px;}
+  .rest-sum-display{background:rgba(0,0,0,.25);border-radius:14px;padding:10px;text-align:center;font-family:'Fredoka One',cursive;font-size:2.2rem;color:white;margin-bottom:8px;min-height:64px;}
+  .rest-sum-display.ok{background:var(--green);}
+  .pin-overlay-btn.ok{background:var(--green);border-color:var(--green);}
+  .rest-sum-actions{margin-top:12px;}
+  .rest-sum-actions .action-btn{margin-bottom:8px;}
+  /* ═══════════════ /RESTAURANT ═══════════════ */

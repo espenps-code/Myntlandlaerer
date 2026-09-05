@@ -64,7 +64,7 @@
   const db   = getDatabase(app);
   const auth = getAuth(app);
 
-  const CLASS_ROOTS = new Set(['students14','transactions14','classGoals14','customRewards14','groceries','hendelser14','savings14','settings','paymentRequests14']);
+  const CLASS_ROOTS = new Set(['students14','transactions14','classGoals14','customRewards14','groceries','hendelser14','savings14','settings','paymentRequests14','orders14']);
   function classScope(pth){
     if(!window._CLASS_ID) return pth;
     const clean = String(pth).replace(/^\/+/,'');
@@ -177,6 +177,7 @@
   <button class="role-btn role-btn-cashier" onclick="selectRole('cashier')">🏪 Jeg er kasse</button>
   <button class="role-btn role-btn-myntjakten" onclick="openMyntspillMeny()">🪙 Myntspill</button>
   <button class="role-btn role-btn-myntjakten" onclick="goToDag()">📅 Dagen i dag</button>
+  <button class="role-btn role-btn-myntjakten" onclick="openRestaurant()">🍕 Restaurant</button>
   <div id="myntspill-meny" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,12,45,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeMyntspillMeny()">
     <div style="background:#fff;border-radius:24px;max-width:420px;width:100%;padding:1.6rem 1.4rem;text-align:center;box-shadow:0 14px 40px rgba(30,15,82,.35);font-family:'Nunito',sans-serif;">
       <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#1e0f52;">Velg spill 🎮</div>
@@ -428,6 +429,101 @@
     </div>
   </div>
 </div>
+
+
+<!-- ═══════════════ RESTAURANT (Myntland Pizzeria) ═══════════════ -->
+<!-- Rollevalg -->
+<div class="screen" id="screen-restaurant">
+  <div class="cashier-top">
+    <button class="back-btn" onclick="goToSplash()" style="display:block;margin-bottom:8px;">← Avslutt</button>
+    <div class="cashier-top-title">🍕 Myntland Pizzeria</div>
+  </div>
+  <div class="rest-choose">
+    <p class="rest-intro">Hva skal du være i dag?</p>
+    <button class="rest-role-btn rest-role-servitor" onclick="restOpenServitor()">
+      <img src="bilder/pizzeria/14_servitor.webp" alt="" class="rest-role-img">
+      <span><b>Servitør</b><small>Ta imot bestillinger og send dem til kjøkkenet</small></span>
+    </button>
+    <button class="rest-role-btn rest-role-kjokken" onclick="restOpenKjokken()">
+      <img src="bilder/pizzeria/13_kokk.webp" alt="" class="rest-role-img">
+      <span><b>Kjøkken</b><small>Se bestillingene og lag pizzaene</small></span>
+    </button>
+    <p class="rest-hint">Én iPad er servitør, én iPad er kjøkken. Bestillingene går automatisk mellom dem.</p>
+  </div>
+</div>
+
+<!-- Servitør -->
+<div class="screen" id="screen-servitor">
+  <div class="cashier-top">
+    <div class="rest-topbar">
+      <button class="back-btn" onclick="restBackToChoose()">← Tilbake</button>
+      <div class="cashier-top-title" style="font-size:1.4rem;">🧾 Servitør</div>
+      <button class="back-btn" id="rest-tab-mine-btn" onclick="restServitorTab('mine')">Mine bestillinger <span class="rest-badge" id="rest-mine-badge" style="display:none;">0</span></button>
+    </div>
+  </div>
+
+  <!-- Ny bestilling -->
+  <div class="rest-content" id="rest-ny">
+    <div class="rest-section-title">1. Hvilket bord?</div>
+    <div class="rest-tables" id="rest-tables"></div>
+    <div class="rest-section-title">2. Hvem er gjesten? <span class="rest-optional">(valgfritt)</span></div>
+    <input id="rest-guest" class="rest-input" type="text" maxlength="24" placeholder="Kallenavn, f.eks. Stjerne" autocomplete="off">
+    <div class="rest-section-title">3. Hva vil gjesten ha? <span class="rest-optional">Bunn, saus og ost er med – velg inntil 4 ingredienser</span></div>
+    <div class="rest-menu" id="rest-menu"></div>
+    <div class="rest-order-summary" id="rest-summary"></div>
+    <button class="action-btn action-btn-green" id="rest-send-btn" onclick="restSendOrder()">📨 Send til kjøkkenet</button>
+  </div>
+
+  <!-- Mine bestillinger -->
+  <div class="rest-content" id="rest-mine" style="display:none;">
+    <button class="action-btn action-btn-amber" onclick="restServitorTab('ny')">➕ Ny bestilling</button>
+    <div id="rest-mine-list"></div>
+  </div>
+</div>
+
+<!-- Kjøkken -->
+<div class="screen" id="screen-kjokken">
+  <div class="cashier-top">
+    <div class="rest-topbar">
+      <button class="back-btn" onclick="restBackToChoose()">← Tilbake</button>
+      <div class="cashier-top-title" style="font-size:1.4rem;">👨‍🍳 Kjøkken</div>
+      <button class="back-btn" onclick="restToggleDone()" id="rest-done-btn">Ferdige</button>
+    </div>
+  </div>
+  <div class="rest-content" id="rest-kitchen-list"></div>
+</div>
+
+<!-- Regn ut summen (servitør) -->
+<div class="pin-overlay" id="rest-sum-overlay" style="z-index:600;">
+  <div class="pin-overlay-title">🧮 Regn ut regningen</div>
+  <div class="rest-sum-card">
+    <div class="rest-sum-items" id="rest-sum-items"></div>
+    <div class="rest-sum-question">Hvor mye blir det til sammen?</div>
+    <div class="rest-sum-display"><span id="rest-sum-input">&nbsp;</span> <span class="rest-sum-coin">🪙</span></div>
+    <div class="pin-overlay-error" id="rest-sum-error"></div>
+    <div class="pin-overlay-numpad">
+      <button class="pin-overlay-btn" onclick="restSumPress('1')">1</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('2')">2</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('3')">3</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('4')">4</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('5')">5</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('6')">6</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('7')">7</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('8')">8</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('9')">9</button>
+      <button class="pin-overlay-btn del" onclick="restSumPress('DEL')">⌫</button>
+      <button class="pin-overlay-btn" onclick="restSumPress('0')">0</button>
+      <button class="pin-overlay-btn ok" onclick="restSumCheck()">✓</button>
+    </div>
+    <div class="rest-sum-actions" id="rest-sum-actions" style="display:none;">
+      <button class="action-btn action-btn-green" onclick="restStartPayment()">💳 Scan gjestens bankkort</button>
+      <button class="action-btn action-btn-ghost action-btn-small" onclick="restMarkPaidManual()">Betalt med lekepenger</button>
+    </div>
+  </div>
+  <button class="pin-overlay-cancel" onclick="restCloseSum()">Avbryt</button>
+</div>
+<!-- ═══════════════ /RESTAURANT ═══════════════ -->
+
 
 <!-- CAMERA SCANNER -->
 <div class="scanner-overlay" id="scanner-overlay">
