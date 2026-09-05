@@ -526,6 +526,32 @@
 <!-- ═══════════════ /RESTAURANT ═══════════════ -->
 
 
+<!-- ═══════════════ TELLEBRETT — tellehjelp i kassa (settings/tellehjelp14) ═══════════════ -->
+<div class="pin-overlay" id="tellebrett-overlay" style="z-index:550;">
+  <div class="pin-overlay-title">🧮 Tell opp betalingen</div>
+  <div class="tb-card">
+    <div class="tb-target">Sum å betale <b id="tb-target">0 🪙</b></div>
+    <div class="tb-tray" id="tb-tray"><div class="tb-tray-empty">Trykk på mynter og sedler under – eller dra dem hit</div></div>
+    <div class="tb-sum" id="tb-sum"><span class="tb-sum-label">Du har lagt</span><span id="tb-sum-val">0 🪙</span></div>
+    <div class="pin-overlay-error" id="tb-hint"></div>
+    <div class="tb-money" id="tb-money">
+      <button type="button" class="tb-coin" data-v="1" aria-label="1 mynt">1</button>
+      <button type="button" class="tb-coin" data-v="5" aria-label="5 mynter">5</button>
+      <button type="button" class="tb-coin" data-v="10" aria-label="10 mynter">10</button>
+      <button type="button" class="tb-coin" data-v="20" aria-label="20 mynter">20</button>
+      <button type="button" class="tb-bill" data-v="50" aria-label="50-seddel">50</button>
+      <button type="button" class="tb-bill" data-v="100" aria-label="100-seddel">100</button>
+    </div>
+    <div class="tb-actions">
+      <button class="action-btn action-btn-green" id="tb-pay-btn" onclick="tbConfirm()" disabled>💳 Ta betalt med kort</button>
+      <button class="action-btn action-btn-ghost action-btn-small" onclick="tbReset()">↩️ Ta bort alle</button>
+    </div>
+  </div>
+  <button class="pin-overlay-cancel" onclick="tbClose()">Avbryt</button>
+</div>
+<!-- ═══════════════ /TELLEBRETT ═══════════════ -->
+
+
 <!-- CAMERA SCANNER -->
 <div class="scanner-overlay" id="scanner-overlay">
   <div class="scanner-header">

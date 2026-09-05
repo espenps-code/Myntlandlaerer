@@ -522,3 +522,36 @@
   .rest-active .rest-active-msg{min-width:0;}
   @media (max-width:560px){.rest-active{flex-wrap:wrap;} .rest-active .action-btn{width:100%;}}
   /* ═══════════════ /RESTAURANT ═══════════════ */
+
+  /* ═══════════════ TELLEBRETT (tellehjelp i kassa) ═══════════════ */
+  .tb-card{background:rgba(255,255,255,.1);border-radius:20px;padding:1rem;width:100%;max-width:440px;display:flex;flex-direction:column;gap:10px;}
+  .tb-target{color:rgba(255,255,255,.85);font-weight:700;text-align:center;font-size:1rem;}
+  .tb-target b{font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--amber);margin-left:6px;}
+  .tb-tray{min-height:104px;background:rgba(0,0,0,.25);border:2px dashed rgba(255,255,255,.3);border-radius:14px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;justify-content:center;transition:background .15s,border-color .15s;}
+  .tb-tray.over{background:rgba(244,162,97,.28);border-color:var(--amber);}
+  .tb-tray-empty{color:rgba(255,255,255,.55);font-size:.85rem;font-weight:700;text-align:center;align-self:center;width:100%;padding:1.2rem .5rem;}
+  .tb-sum{background:rgba(0,0,0,.25);border-radius:14px;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;color:white;font-weight:700;transition:background .15s;}
+  .tb-sum span:last-child{font-family:'Fredoka One',cursive;font-size:1.9rem;}
+  .tb-sum.ok{background:var(--green);}
+  .tb-sum.over{background:#E76F51;}
+  .tb-money{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;padding:6px 0;}
+  .tb-coin,.tb-bill{border:none;cursor:pointer;font-family:'Fredoka One',cursive;color:var(--green-dark);display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;padding:0;transition:transform .1s,box-shadow .1s;}
+  .tb-coin{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE08A,var(--amber) 60%,#C97B2A);box-shadow:0 4px 0 #A3611F,0 6px 12px rgba(0,0,0,.3);font-size:1.5rem;}
+  .tb-coin[data-v="1"]{width:52px;height:52px;font-size:1.25rem;background:radial-gradient(circle at 35% 30%,#F3F3F3,#C9CDD2 60%,#8E959D);box-shadow:0 4px 0 #6B7279,0 6px 12px rgba(0,0,0,.3);}
+  .tb-coin[data-v="20"]{width:74px;height:74px;font-size:1.75rem;}
+  .tb-bill{width:100px;height:54px;border-radius:8px;background:linear-gradient(135deg,#7FD1B9,var(--green) 55%,#1B7A66);border:2px solid rgba(255,255,255,.6);box-shadow:0 4px 0 var(--green-dark),0 6px 12px rgba(0,0,0,.3);color:white;font-size:1.4rem;}
+  .tb-bill[data-v="100"]{width:112px;background:linear-gradient(135deg,#C9B3F0,#7B5EA7 55%,#4E3A73);box-shadow:0 4px 0 #3A2A57,0 6px 12px rgba(0,0,0,.3);}
+  .tb-money .tb-coin:active,.tb-money .tb-bill:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.4);}
+  .tb-tray .tb-coin,.tb-tray .tb-coin[data-v]{width:44px;height:44px;font-size:1.05rem;box-shadow:0 2px 0 rgba(0,0,0,.35);}
+  .tb-tray .tb-bill,.tb-tray .tb-bill[data-v]{width:68px;height:38px;font-size:1rem;box-shadow:0 2px 0 rgba(0,0,0,.35);}
+  .tb-tray .tb-new{animation:tbDrop .25s ease-out;}
+  @keyframes tbDrop{from{transform:scale(1.5);opacity:0}to{transform:scale(1);opacity:1}}
+  .tb-drag-ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:999;transform:translate(-50%,-50%) scale(1.1);opacity:.9;}
+  .tb-actions{margin-top:4px;}
+  .tb-actions .action-btn{margin-bottom:8px;}
+  .tb-actions .action-btn-green:disabled{opacity:.4;box-shadow:none;cursor:default;}
+  .tb-actions .action-btn-green:not(:disabled){animation:tbReady .9s ease-in-out infinite alternate;}
+  @keyframes tbReady{from{transform:scale(1)}to{transform:scale(1.03)}}
+  @media (prefers-reduced-motion:reduce){.tb-actions .action-btn-green:not(:disabled),.tb-tray .tb-new{animation:none;}}
+  @media (max-height:700px){.tb-tray{min-height:80px;} .tb-coin{width:54px;height:54px;font-size:1.3rem;} .tb-coin[data-v="20"]{width:62px;height:62px;} .tb-bill{height:46px;width:88px;} .tb-bill[data-v="100"]{width:98px;} .tb-sum span:last-child{font-size:1.5rem;} .pin-overlay #tellebrett-overlay{padding:1rem;}}
+  /* ═══════════════ /TELLEBRETT ═══════════════ */

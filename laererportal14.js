@@ -248,6 +248,10 @@ function showPage(page) {
     if (typeof renderHandlelisteSelect === 'function') renderHandlelisteSelect();
     if (typeof syncRealPaymentsToggle === 'function') syncRealPaymentsToggle();
     if (typeof syncRestPaymentsToggle === 'function') syncRestPaymentsToggle();
+    if (typeof syncTellehjelpToggle === 'function') syncTellehjelpToggle();
+  }
+  if (page === 'restaurant') {
+    if (typeof syncRestPaymentsToggle === 'function') syncRestPaymentsToggle();
     if (typeof refreshRestOrderCount14 === 'function') refreshRestOrderCount14();
   }
   if (page === 'belonninger') {
@@ -2417,6 +2421,42 @@ async function setRealPayments14(real) {
 }
 
 // ══════════════════════════════════════════════════════════
+// TELLEHJELP I KASSA (settings/tellehjelp14)
+// ══════════════════════════════════════════════════════════
+// true            = før bankkortet scannes må kassa telle seg opp til summen
+//                   med mynter (1/5/10/20) og sedler (50/100) i elevappen
+// false (default) = rett til kortscan som før
+// Gjelder både butikken og pizzeriaen.
+async function setTellehjelp14(on) {
+  const val = !!on;
+  if (!window._db || !window._update || !window._ref) return;
+  await window._update(window._ref(window._db, 'settings'), { tellehjelp14: val });
+  if (!window._settings) window._settings = {};
+  window._settings.tellehjelp14 = val;
+  syncTellehjelpToggle();
+}
+function toggleTellehjelp14() {
+  setTellehjelp14(!(window._settings?.tellehjelp14 === true));
+}
+function syncTellehjelpToggle() {
+  const on = (window._settings?.tellehjelp14 === true);
+  const box = document.getElementById('tellehjelp-status'); if (!box) return;
+  const iconEl = document.getElementById('tellehjelp-icon'), titleEl = document.getElementById('tellehjelp-title'),
+        descEl = document.getElementById('tellehjelp-desc'), switchTxt = document.getElementById('tellehjelp-switch-text');
+  if (on) {
+    box.style.background = 'var(--green-light)'; box.style.borderColor = 'var(--green)'; box.style.color = 'var(--green-dark)';
+    iconEl.textContent = '🧮'; titleEl.textContent = 'Tellehjelp på';
+    descEl.textContent = 'Før kortet scannes må kassa legge mynter (1, 5, 10, 20) og sedler (50, 100) i brettet til summen stemmer. Gjelder butikken og pizzeriaen.';
+    switchTxt.textContent = '⏭️ Slå av tellehjelp';
+  } else {
+    box.style.background = 'var(--bg)'; box.style.borderColor = 'var(--border)'; box.style.color = 'var(--green-dark)';
+    iconEl.textContent = '💳'; titleEl.textContent = 'Tellehjelp av';
+    descEl.textContent = 'Kassa går rett til kortscan når kurven er full. Slå på for å øve telling og veksling ved hver betaling.';
+    switchTxt.textContent = '🧮 Slå på tellehjelp';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
 // RESTAURANT (settings/realPaymentsRest14 + orders14)
 // ══════════════════════════════════════════════════════════
 async function setRestPayments14(real) {
@@ -2653,6 +2693,19 @@ function showTab(tabId, btn) {
   });
   if (tabId === 'butikk-skriv') renderGroceryPrintSelect();
   if (tabId === 'butikk-handleliste' && typeof renderHandlelisteSelect === 'function') renderHandlelisteSelect();
+}
+
+function showRestTab(tabId, btn) {
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['rest-guide','rest-innstillinger'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === tabId ? 'block' : 'none';
+  });
+  if (tabId === 'rest-innstillinger') {
+    if (typeof syncRestPaymentsToggle === 'function') syncRestPaymentsToggle();
+    if (typeof refreshRestOrderCount14 === 'function') refreshRestOrderCount14();
+  }
 }
 
 // ── Tastatur-PIN (for PC-nettleser) ───────────────────────────────────────

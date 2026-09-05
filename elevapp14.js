@@ -2058,6 +2058,8 @@ let _cashierPendingUnsub  = null;  // listener cleanup
 
 function startCustomerCardScan() {
   if (!cart.length) return;
+  // Tellehjelp (settings/tellehjelp14): tell opp summen med mynter/sedler før kortscan
+  if (tellehjelpOn() && cartTotal > 0) { tbOpen(cartTotal, () => startScan('cashierCustomerCard')); return; }
   startScan('cashierCustomerCard');
 }
 
@@ -2455,6 +2457,120 @@ function dagUpdateSplashBtn(){
 }
 
 
+/* ═══════════════ TELLEBRETT — tellehjelp i kassa ═══════════════
+   Når læreren har slått på «Tellehjelp i kassa» (settings/tellehjelp14),
+   må kassa telle seg opp til summen med mynter (1/5/10/20) og sedler
+   (50/100) FØR bankkortet kan scannes. Brukes av både butikken
+   (startCustomerCardScan) og pizzeriaen (restStartPayment).
+   Løpende sum vises hele tiden: grønn når det stemmer, rød når det er
+   for mye. Mynter/sedler legges ved trykk eller ved å dra dem inn i
+   brettet; trykk på en mynt i brettet for å ta den bort igjen. */
+let _tbTarget = 0, _tbPlaced = [], _tbOnDone = null, _tbBound = false, _tbWasOk = false;
+
+function tellehjelpOn() { return !!(window._settings && window._settings.tellehjelp14 === true); }
+
+function tbOpen(target, onDone) {
+  _tbTarget = Number(target) || 0; _tbPlaced = []; _tbOnDone = onDone; _tbWasOk = false;
+  const t = document.getElementById('tb-target'); if (t) t.textContent = _tbTarget + ' 🪙';
+  tbBind();
+  tbRender(false);
+  const ov = document.getElementById('tellebrett-overlay'); if (ov) ov.classList.add('open');
+}
+function tbClose() {
+  document.getElementById('tellebrett-overlay')?.classList.remove('open');
+  _tbOnDone = null; _tbPlaced = [];
+}
+function tbSum() { return _tbPlaced.reduce((a, b) => a + b, 0); }
+function tbAdd(v) {
+  v = Number(v); if (!v) return;
+  _tbPlaced.push(v);
+  try { playScanBeep(); } catch (e) {}
+  tbRender(true);
+}
+function tbRemove(i) { _tbPlaced.splice(i, 1); tbRender(false); }
+function tbReset()   { _tbPlaced = []; tbRender(false); }
+
+function tbRender(animateLast) {
+  const tray = document.getElementById('tb-tray'), sumBox = document.getElementById('tb-sum'),
+        sumVal = document.getElementById('tb-sum-val'), hint = document.getElementById('tb-hint'),
+        btn = document.getElementById('tb-pay-btn');
+  if (!tray || !sumBox || !sumVal || !hint) return;
+  const sum = tbSum();
+  if (!_tbPlaced.length) {
+    tray.innerHTML = '<div class="tb-tray-empty">Trykk på mynter og sedler under – eller dra dem hit</div>';
+  } else {
+    tray.innerHTML = _tbPlaced.map((v, i) =>
+      `<button type="button" class="${v >= 50 ? 'tb-bill' : 'tb-coin'}${animateLast && i === _tbPlaced.length - 1 ? ' tb-new' : ''}" data-v="${v}" onclick="tbRemove(${i})" aria-label="Ta bort ${v}">${v}</button>`
+    ).join('');
+  }
+  sumVal.textContent = sum + ' 🪙';
+  sumBox.classList.remove('ok', 'over');
+  const ok = sum === _tbTarget && _tbTarget > 0;
+  if (ok) {
+    sumBox.classList.add('ok');
+    hint.textContent = 'Det stemmer! 🎉'; hint.style.color = '#7FD1B9';
+  } else if (sum > _tbTarget) {
+    sumBox.classList.add('over');
+    hint.textContent = 'Litt for mye – ta bort ' + (sum - _tbTarget) + ' 🪙 (trykk på en mynt i brettet)'; hint.style.color = '';
+  } else if (_tbPlaced.length) {
+    hint.textContent = 'Litt for lite – mangler ' + (_tbTarget - sum) + ' 🪙'; hint.style.color = 'rgba(255,255,255,.8)';
+  } else {
+    hint.textContent = ''; hint.style.color = '';
+  }
+  if (btn) { btn.disabled = !ok; btn.innerHTML = ok ? '💳 Stemmer! Ta betalt med kort' : '💳 Ta betalt med kort'; }
+  if (ok && !_tbWasOk) { try { playSuccessChime(); } catch (e) {} }
+  _tbWasOk = ok;
+}
+
+function tbConfirm() {
+  if (tbSum() !== _tbTarget || !_tbTarget) return;
+  const cb = _tbOnDone;
+  tbClose();
+  if (typeof cb === 'function') cb();
+}
+
+// Trykk = legg i brettet. Dra (pointer events) = legg i brettet hvis fingeren slippes over brettet.
+function tbBind() {
+  if (_tbBound) return; _tbBound = true;
+  const money = document.getElementById('tb-money'); if (!money) return;
+  const inTray = (x, y) => {
+    const tray = document.getElementById('tb-tray'); if (!tray) return false;
+    const r = tray.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  };
+  money.querySelectorAll('[data-v]').forEach(btn => {
+    let ghost = null, moved = false, sx = 0, sy = 0;
+    const clear = () => {
+      if (ghost) { ghost.remove(); ghost = null; }
+      document.getElementById('tb-tray')?.classList.remove('over');
+      moved = false;
+    };
+    btn.addEventListener('pointerdown', e => {
+      moved = false; sx = e.clientX; sy = e.clientY;
+      try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    btn.addEventListener('pointermove', e => {
+      if (e.buttons === 0 && e.pointerType === 'mouse') return;
+      if (!moved && Math.hypot(e.clientX - sx, e.clientY - sy) < 8) return;
+      if (!moved) {
+        moved = true;
+        ghost = btn.cloneNode(true); ghost.classList.add('tb-drag-ghost');
+        document.body.appendChild(ghost);
+      }
+      ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
+      document.getElementById('tb-tray')?.classList.toggle('over', inTray(e.clientX, e.clientY));
+    });
+    btn.addEventListener('pointerup', e => {
+      const wasDrag = moved, drop = inTray(e.clientX, e.clientY);
+      clear();
+      if (!wasDrag || drop) tbAdd(btn.dataset.v);
+    });
+    btn.addEventListener('pointercancel', clear);
+    btn.addEventListener('lostpointercapture', () => { if (moved) clear(); });
+  });
+}
+/* ═══════════════ /TELLEBRETT ═══════════════ */
+
 /* ═══════════════ RESTAURANT (Myntland Pizzeria) ═══════════════
    Servitør-iPad legger inn bestilling → orders14/<key> (klassescopet)
    → Kjøkken-iPad ser den i sanntid → «Klar!» → servitøren regner ut
@@ -2752,6 +2868,8 @@ function restStartPayment() {
   if (typeof renderCart === 'function') renderCart();
   window._restPayingKey = _restSumKey;
   restCloseSum();
+  // Tellehjelp (settings/tellehjelp14): tell opp regningen med mynter/sedler før kortscan
+  if (tellehjelpOn() && cartTotal > 0) { tbOpen(cartTotal, () => startScan('cashierCustomerCard')); return; }
   startScan('cashierCustomerCard');
 }
 async function restMarkPaidManual() {

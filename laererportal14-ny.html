@@ -148,6 +148,7 @@
       // Oppdater toggleknappene for ekte/leke-betaling
       if (typeof syncRealPaymentsToggle === 'function') syncRealPaymentsToggle();
       if (typeof syncRestPaymentsToggle === 'function') syncRestPaymentsToggle();
+      if (typeof syncTellehjelpToggle === 'function') syncTellehjelpToggle();
     });
   }
 
@@ -290,6 +291,7 @@
       <button class="active" onclick="showPage('elever')" id="nav-elever"><i class="ti ti-users" aria-hidden="true"></i>Elever</button>
       <button onclick="showPage('saldo')" id="nav-saldo"><i class="ti ti-wallet" aria-hidden="true"></i>Saldo</button>
       <button onclick="showPage('butikk')" id="nav-butikk"><i class="ti ti-shopping-cart" aria-hidden="true"></i>Butikk</button>
+      <button onclick="showPage('restaurant')" id="nav-restaurant"><i class="ti ti-pizza" aria-hidden="true"></i>Restaurant</button>
       <button onclick="showPage('belonninger')" id="nav-belonninger"><i class="ti ti-medal" aria-hidden="true"></i>Belønninger</button>
       <button onclick="openKlasseportal()" id="nav-klasseportal"><i class="ti ti-presentation" aria-hidden="true"></i>Klasseportal</button>
       <button onclick="showPage('laerere')" id="nav-laerere" style="display:none;"><i class="ti ti-settings" aria-hidden="true"></i>Lærere</button>
@@ -531,7 +533,7 @@
           <div style="font-size:2rem;line-height:1;flex-shrink:0;">4️⃣</div>
           <div>
             <div style="font-family:'Fredoka One',cursive;color:#1B4F8C;font-size:1.05rem;margin-bottom:.25rem;">💳 Sett opp kassen</div>
-            <div style="font-size:.88rem;color:#1B4F8C;font-weight:600;line-height:1.5;">En eller flere elever åpner elevappen sin og velger <strong>«Jeg er kasse»</strong>. Det åpner kassefunksjonen i elevappen. Elever som har regnet ut totalsummen på handlelisten sin kan komme til kassen.</div>
+            <div style="font-size:.88rem;color:#1B4F8C;font-weight:600;line-height:1.5;">En eller flere elever åpner elevappen og trykker <strong>«🏪 Butikk»</strong> på startsiden. Det åpner kassa på den iPaden. Elever som har regnet ut totalsummen på handlelisten sin, kan komme til kassa med varekortene og bankkortet sitt.</div>
           </div>
         </div>
 
@@ -540,10 +542,11 @@
           <div>
             <div style="font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:1.05rem;margin-bottom:.25rem;">🛒 Slik betaler eleven</div>
             <div style="font-size:.88rem;color:var(--green-dark);font-weight:600;line-height:1.5;">
-              <strong>a)</strong> Kasse-betjenten scanner varelappene → varene legges i kassen.<br>
-              <strong>b)</strong> Når kunden vil betale: kasse-betjenten trykker <strong>«📷 Scan elevens kort for betaling»</strong> og scanner kundens bankkort.<br>
-              <strong>c)</strong> Kunden må taste inn <strong>PIN-koden</strong> sin for å bekrefte.<br>
-              <strong>d)</strong> Penger trekkes (eller ikke – se «Innstillinger»). Kassen viser «Betalt!» ✅
+              <strong>a)</strong> Kasse-betjenten scanner varelappene (eller søker dem opp) → varene legges i kassa, og summen vises øverst.<br>
+              <strong>b)</strong> Når kunden vil betale, trykker kasse-betjenten <strong>«💳 Betal»</strong>.<br>
+              <strong>c)</strong> <em>Med tellehjelp på:</em> et <strong>tellebrett</strong> dukker opp. Kasse-betjenten legger mynter (1, 5, 10, 20) og sedler (50, 100) i brettet til summen stemmer – for mye blir rødt, for lite viser hva som mangler. Kortknappen åpner først når det stemmer.<br>
+              <strong>d)</strong> Kasse-betjenten scanner kundens <strong>bankkort</strong>, og kunden taster <strong>PIN-koden</strong> sin på kasse-iPaden.<br>
+              <strong>e)</strong> Mynter trekkes (eller ikke – se «Innstillinger»). Kassa viser «Betalt!» ✅
             </div>
           </div>
         </div>
@@ -552,7 +555,7 @@
           <div style="font-size:2rem;line-height:1;flex-shrink:0;">6️⃣</div>
           <div>
             <div style="font-family:'Fredoka One',cursive;color:#5B2A91;font-size:1.05rem;margin-bottom:.25rem;">🎮 Lek eller på ekte?</div>
-            <div style="font-size:.88rem;color:#5B2A91;font-weight:600;line-height:1.5;">I <strong>«Innstillinger»</strong> velger du om mynter faktisk skal trekkes fra elevens konto, eller om alle kjøp bare er på liksom (lekemodus). Kjekt når dere bare øver på flyten uten å bruke opp elevenes saldo.</div>
+            <div style="font-size:.88rem;color:#5B2A91;font-weight:600;line-height:1.5;">I <strong>«Innstillinger»</strong> velger du om mynter faktisk skal trekkes fra elevens konto, eller om alle kjøp bare er på liksom (lekemodus). Kjekt når dere bare øver på flyten uten å bruke opp elevenes saldo. Der slår du også <strong>tellehjelp i kassa</strong> på eller av.</div>
           </div>
         </div>
       </div>
@@ -591,29 +594,27 @@
       </div>
     </div>
 
-    <!-- ── Restaurant (Myntland Pizzeria) ── -->
+    <!-- ── Tellehjelp i kassa (settings/tellehjelp14) ── -->
     <div class="card">
-      <div class="card-title">🍕 Restaurant</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Restauranten i elevappen (Servitør / Kjøkken) har sin egen betalingsmodus, uavhengig av butikken.</p>
+      <div class="card-title">🧮 Tellehjelp i kassa</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Når tellehjelp er på, må eleven i kassa <strong>telle seg opp til summen</strong> med mynter og sedler før bankkortet scannes. Løpende sum vises hele tiden – blir det for mye, blir summen rød, og kortknappen åpner først når det stemmer. Gjelder både butikken og pizzeriaen.</p>
 
-      <div id="rest-mode-status" style="border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;border:2px solid transparent;transition:all .2s;">
-        <div id="rest-mode-icon" style="font-size:2.6rem;line-height:1;flex-shrink:0;">💰</div>
+      <div id="tellehjelp-status" style="border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;border:2px solid transparent;transition:all .2s;">
+        <div id="tellehjelp-icon" style="font-size:2.6rem;line-height:1;flex-shrink:0;">💳</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.7;margin-bottom:.15rem;">Restauranten</div>
-          <div id="rest-mode-title" style="font-family:'Fredoka One',cursive;font-size:1.5rem;line-height:1.1;margin-bottom:.25rem;">Ekte mynter</div>
-          <div id="rest-mode-desc" style="font-size:.85rem;font-weight:600;line-height:1.4;">Gjesten betaler regningen med mynter fra kontoen sin når servitøren scanner bankkortet.</div>
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.7;margin-bottom:.15rem;">Ved betaling</div>
+          <div id="tellehjelp-title" style="font-family:'Fredoka One',cursive;font-size:1.5rem;line-height:1.1;margin-bottom:.25rem;">Tellehjelp av</div>
+          <div id="tellehjelp-desc" style="font-size:.85rem;font-weight:600;line-height:1.4;">Kassa går rett til kortscan når kurven er full.</div>
         </div>
       </div>
-      <button type="button" class="btn btn-ghost" id="rest-mode-switch" onclick="toggleRestPaymentMode14()" style="width:100%;margin-bottom:1.25rem;">
-        <span id="rest-mode-switch-text">🎮 Bytt til lekemodus</span>
+      <button type="button" class="btn btn-ghost" id="tellehjelp-switch" onclick="toggleTellehjelp14()" style="width:100%;">
+        <span id="tellehjelp-switch-text">🧮 Slå på tellehjelp</span>
       </button>
-
-      <div style="border-top:1.5px solid var(--border);padding-top:1rem;">
-        <div style="font-weight:800;margin-bottom:.25rem;">🔄 Nullstill restauranten</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;font-weight:600;">Fjerner alle bestillinger (også ferdige) fra servitør- og kjøkken-iPadene, så neste økt starter blankt. Mynter som allerede er betalt, røres ikke. <span id="rest-order-count"></span></p>
-        <button type="button" class="btn btn-ghost" onclick="resetRestaurant14()" style="width:100%;">🔄 Nullstill restauranten til neste økt</button>
+      <div style="margin-top:1rem;background:var(--bg);border-radius:12px;padding:.8rem 1rem;border-left:4px solid var(--amber);font-size:.82rem;color:var(--muted);font-weight:600;line-height:1.5;">
+        💡 Mynter: 1, 5, 10 og 20. Sedler: 50 og 100. Eleven kan trykke på dem eller dra dem inn i brettet, og trykke på en mynt i brettet for å ta den bort igjen. Innstillingen gjelder både butikken og restauranten.
       </div>
     </div>
+
   </div>
 
   <!-- ── 3) VARER (var: dagligvarer/butikk-rediger) ── -->
@@ -625,7 +626,7 @@
         <div class="form-row"><label>Varenavn</label><input type="text" id="item-name" placeholder="Melk"></div>
         <div class="form-row"><label>Pris (mynter)</label><input type="number" id="item-price" placeholder="12" min="1"></div>
         <div class="form-row"><label>Kategori</label>
-          <select id="item-category"><option>Meieri</option><option>Brød & Bakeri</option><option>Frukt & Grønt</option><option>Kjøtt & Fisk</option><option>Drikke</option><option>Godteri & Snacks</option><option>Annet</option></select>
+          <select id="item-category"><option>Meieri</option><option>Brød & Bakeri</option><option>Frukt & Grønt</option><option>Kjøtt & Fisk</option><option>Drikke</option><option>Godteri & Snacks</option><option>Pizza</option><option>Annet</option></select>
         </div>
       </div>
       <button class="btn btn-primary" id="grocery-save-btn" onclick="addGroceryItem()">Legg til vare</button>
@@ -673,6 +674,106 @@
       <div class="card-title">👁️ Forhåndsvisning <span style="font-size:.75rem;color:var(--muted);font-weight:400;">(liggende A4 – 2 lister per side)</span></div>
       <div id="handleliste-content"></div>
       <button class="btn btn-amber" onclick="printShoppingList()" style="margin-top:1rem;">🖨️ Åpne utskrift</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESTAURANT (Myntland Pizzeria) ===== -->
+<div class="page" id="page-restaurant">
+  <div class="page-title">🍕 Restaurant</div>
+  <div class="page-subtitle">Servitør, kjøkken og betaling i klassens pizzeria</div>
+  <div class="tabs">
+    <button class="tab active" onclick="showRestTab('rest-guide',this)">📖 Slik fungerer det</button>
+    <button class="tab" onclick="showRestTab('rest-innstillinger',this)">⚙️ Innstillinger</button>
+  </div>
+
+  <!-- ── 1) GUIDE ── -->
+  <div id="rest-guide">
+    <div class="card">
+      <div class="card-title">📖 Slik fungerer restauranten</div>
+      <p style="font-size:.9rem;color:var(--muted);margin-bottom:1.25rem;font-weight:600;">Myntland Pizzeria er et rollespill med tre roller – servitør, kjøkken og gjest. Slik går en bestilling fra bord til betaling:</p>
+
+      <div style="display:grid;gap:1rem;">
+        <div style="display:flex;gap:1rem;background:var(--green-light);border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">1️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:1.05rem;margin-bottom:.25rem;">🍕 Menyen</div>
+            <div style="font-size:.88rem;color:var(--green-dark);font-weight:600;line-height:1.5;">Restauranten kommer med en <strong>ferdig pizzameny</strong>: pizzabunn, tomatsaus, ost og topping som skinke, pepperoni, kylling og paprika – alt med pris i mynter. Vil du ha egen meny? Legg inn minst 3 varer med kategori <strong>«Pizza»</strong> under <strong>Butikk → Varer</strong>, så brukes de i stedet.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;background:#FFF6DD;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">2️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#854F0B;font-size:1.05rem;margin-bottom:.25rem;">📱 To roller – to iPader</div>
+            <div style="font-size:.88rem;color:#854F0B;font-weight:600;line-height:1.5;">Elevene åpner elevappen og trykker <strong>«🍕 Restaurant»</strong> på startsiden. Der velger de rolle: <strong>Servitør</strong> eller <strong>Kjøkken</strong>. Bruk gjerne én iPad til servitøren og én til kjøkkenet – de snakker sammen i sanntid. Resten av klassen er gjester med bankkortet sitt.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;background:#FCE7E1;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">3️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#9C2B1B;font-size:1.05rem;margin-bottom:.25rem;">📝 Servitøren tar bestillingen</div>
+            <div style="font-size:.88rem;color:#9C2B1B;font-weight:600;line-height:1.5;">Servitøren velger <strong>bord</strong> (1–6), skriver gjerne gjestens kallenavn, og bygger pizzaen <strong>lag på lag</strong> sammen med gjesten – bunn, saus, ost og topping. Prisen regnes opp underveis. Så trykker servitøren <strong>«📨 Send til kjøkkenet»</strong>.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;background:#E8F2FF;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">4️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#1B4F8C;font-size:1.05rem;margin-bottom:.25rem;">👨‍🍳 Kjøkkenet lager pizzaen</div>
+            <div style="font-size:.88rem;color:#1B4F8C;font-weight:600;line-height:1.5;">Bestillingen dukker opp på kjøkken-iPaden med det samme. Kokken trykker <strong>«Vi lager den!»</strong>, «lager» pizzaen (på liksom, med papp eller tegning) og trykker <strong>«✅ Klar!»</strong> når den er ferdig. Servitøren får beskjed – stripa øverst blir gul.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;background:#F4ECFF;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">5️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:#5B2A91;font-size:1.05rem;margin-bottom:.25rem;">🧮 Servitøren regner ut regningen</div>
+            <div style="font-size:.88rem;color:#5B2A91;font-weight:600;line-height:1.5;">Servitøren trykker <strong>«Regn ut og ta betalt»</strong> og ser alle varene på regningen. Nå må servitøren <strong>selv taste inn summen</strong>. Feil svar gir et hint («litt for lite» / «litt for mye»); etter tre forsøk vises riktig sum. Er <strong>tellehjelp</strong> på (Butikk → Innstillinger), kommer tellebrettet i tillegg: legg mynter og sedler til summen stemmer.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;background:#E8F8F2;border-radius:14px;padding:1rem;align-items:flex-start;">
+          <div style="font-size:2rem;line-height:1;flex-shrink:0;">6️⃣</div>
+          <div>
+            <div style="font-family:'Fredoka One',cursive;color:var(--green-dark);font-size:1.05rem;margin-bottom:.25rem;">💳 Gjesten betaler</div>
+            <div style="font-size:.88rem;color:var(--green-dark);font-weight:600;line-height:1.5;">Servitøren scanner <strong>gjestens bankkort</strong>, og gjesten taster <strong>PIN-koden</strong> sin på servitør-iPaden. Mynter trekkes fra gjestens konto – eller ikke, hvis restauranten står i lekemodus (se «Innstillinger»). Bestillingen merkes «Levert og betalt» ✅</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.25rem;background:var(--bg);border-radius:12px;padding:.9rem 1.1rem;border-left:4px solid var(--amber);font-size:.85rem;color:var(--muted);font-weight:600;line-height:1.55;">
+        💡 <strong>Tips:</strong> La elevene rullere på rollene, og nullstill restauranten mellom øktene (under «Innstillinger») så neste gjeng starter med tomme bord. Regningen kan gjerne regnes på papir også – da får hele bordet være med.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2) INNSTILLINGER ── -->
+  <div id="rest-innstillinger" style="display:none;">
+    <!-- ── Restaurant (Myntland Pizzeria) ── -->
+    <div class="card">
+      <div class="card-title">💰 Betalingsmodus</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Restauranten har sin egen betalingsmodus, uavhengig av butikken. Lekemodus er fint første gang – da øver dere på flyten uten at gjestene bruker mynter.</p>
+
+      <div id="rest-mode-status" style="border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;border:2px solid transparent;transition:all .2s;">
+        <div id="rest-mode-icon" style="font-size:2.6rem;line-height:1;flex-shrink:0;">💰</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.7;margin-bottom:.15rem;">Restauranten</div>
+          <div id="rest-mode-title" style="font-family:'Fredoka One',cursive;font-size:1.5rem;line-height:1.1;margin-bottom:.25rem;">Ekte mynter</div>
+          <div id="rest-mode-desc" style="font-size:.85rem;font-weight:600;line-height:1.4;">Gjesten betaler regningen med mynter fra kontoen sin når servitøren scanner bankkortet.</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-ghost" id="rest-mode-switch" onclick="toggleRestPaymentMode14()" style="width:100%;margin-bottom:1.25rem;">
+        <span id="rest-mode-switch-text">🎮 Bytt til lekemodus</span>
+      </button>
+
+      <div style="border-top:1.5px solid var(--border);padding-top:1rem;">
+        <div style="font-weight:800;margin-bottom:.25rem;">🔄 Nullstill restauranten</div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;font-weight:600;">Fjerner alle bestillinger (også ferdige) fra servitør- og kjøkken-iPadene, så neste økt starter blankt. Mynter som allerede er betalt, røres ikke. <span id="rest-order-count"></span></p>
+        <button type="button" class="btn btn-ghost" onclick="resetRestaurant14()" style="width:100%;">🔄 Nullstill restauranten til neste økt</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🧮 Tellehjelp i kassa</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;font-weight:600;">Tellehjelpen – der eleven legger mynter og sedler til summen stemmer før kortet scannes – gjelder både butikken og restauranten. Den slås på og av under <strong>Butikk → Innstillinger</strong>.</p>
+      <button type="button" class="btn btn-ghost" onclick="showPage('butikk'); setTimeout(function(){ var b=document.querySelector('#page-butikk .tabs button[onclick*=&quot;butikk-innstillinger&quot;]'); if(b) showTab('butikk-innstillinger', b); },0);" style="width:100%;">⚙️ Gå til tellehjelp-innstillingen</button>
     </div>
   </div>
 </div>
