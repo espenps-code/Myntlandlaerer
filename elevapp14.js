@@ -2823,6 +2823,9 @@ function restOpenSum(key) {
   document.getElementById('rest-sum-items').innerHTML = (o.items || []).map(it => `<div><span>${restEsc(it.name)}</span><span>${it.price} 🪙</span></div>`).join('');
   document.getElementById('rest-sum-error').textContent = '';
   document.getElementById('rest-sum-actions').style.display = 'none';
+  // Knappeteksten forteller hva som kommer: tellebrett først (hvis tellehjelp er på), ellers rett til kortscan
+  const payBtn = document.getElementById('rest-sum-pay-btn');
+  if (payBtn) payBtn.textContent = (typeof tellehjelpOn === 'function' && tellehjelpOn()) ? '🧮 Tell opp og ta betalt' : '💳 Scan gjestens bankkort';
   const d = document.getElementById('rest-sum-display'); if (d) d.classList.remove('ok');
   restSumRender();
   document.getElementById('rest-sum-overlay').classList.add('open');
