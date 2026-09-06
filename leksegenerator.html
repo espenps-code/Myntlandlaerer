@@ -521,8 +521,9 @@ body {
     box-shadow: none !important;
     border-radius: 0 !important;
     width: 210mm !important;
-    min-height: 280mm !important;
-    max-height: 280mm !important;
+    /* 296mm (ikke 297) — 1mm slakk mot avrunding så vi aldri får en tom ekstraside */
+    min-height: 296mm !important;
+    max-height: 296mm !important;
     margin: 0 !important;
     transform: none !important;
     overflow: hidden;
@@ -1214,28 +1215,113 @@ function buildPage(opts) {
 </div>`;
 }
 
-// Omtrentlig høydebudsjett for innholdet på én A4-side.
-// Ved utskrift har vi 297mm tilgjengelig (full A4, @page margin: 0),
-// minus worksheet-padding (10mm topp + 14mm bunn = 24mm),
-// minus header (~20mm) + info-linje (~8mm) + footer (~12mm) = 40mm.
-// Det gir 297 - 24 - 40 = 233mm reell plass. Sett til 232 for sikkerhet.
-const PAGE_CONTENT_BUDGET_MM = 232;
+// ─────────────────────────────────────────────────────────────
+// SIDEBUDSJETT OG MÅLING
+// Ved utskrift er hvert ark låst til 296mm (se @media print) med
+// overflow: hidden — alt som ikke får plass blir kuttet. Vi gjetter
+// derfor IKKE høyder lenger, men måler seksjonene i et skjult ark
+// med nøyaktig samme CSS som utskriften.
+// ─────────────────────────────────────────────────────────────
+const PRINT_SHEET_MM   = 296;   // må matche max-height i @media print
+const SHEET_PADDING_MM = 24;    // 10mm topp + 14mm bunn (.worksheet padding)
+const SAFETY_MM        = 3;     // slakk for fontavrunding/nettleserforskjeller
 
-// Estimert høyde i mm per seksjon.
-// add/sub bruker 4-kolonne-layout med fast rutehøyde, så høyden er nær konstant.
-// mul/div bruker 2-kolonne-layout: ceil(count/2) rader, høyde per rad varierer
-// med nivå (utfordrende gir 7 rader = 70mm + padding ≈ 77.5mm per rad).
-// tekstoppgave har ett spørsmål + et 50mm rutenett + padding.
-function estimateSectionHeightMm(type, count, level) {
-  if (type === 'add' || type === 'sub') return 67;
-  if (type === 'mul' || type === 'div') {
-    // På utfordrende nivå kappes count til 2 (samme logikk som i buildSection)
-    const effectiveCount = level === 'hard' ? Math.min(count, 2) : count;
-    const rowHeight = level === 'hard' ? 77.5 : 37.5;
-    return 14 + Math.ceil(effectiveCount / 2) * rowHeight;
+const pxToMm = px => px / 96 * 25.4;
+
+// Lager et usynlig .worksheet-ark utenfor skjermen som vi kan måle i
+function makeMeasureSheet() {
+  const el = document.createElement('div');
+  el.className = 'worksheet';
+  el.setAttribute('aria-hidden', 'true');
+  el.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;' +
+                     'min-height:0;max-height:none;transform:none;box-shadow:none;';
+  document.body.appendChild(el);
+  return el;
+}
+
+// Måler hvor mye plass header + info-rad + footer tar på ett ark (mm),
+// inkludert marginene mellom dem. Resten av arket er budsjettet for seksjoner.
+function measurePageBudgetMm() {
+  const sheet = makeMeasureSheet();
+  sheet.innerHTML = buildPage({
+    week: 1, cls: 'x', sectionsHtml: '',
+    headerMonster: '', footerMonster: '',
+    cornerTl: '', cornerTr: '', cornerBl: '', cornerBr: '',
+    pageLabel: 'Side 1 av 2'
+  });
+  const inner   = sheet.querySelector('.ws-content');
+  const fixedMm = pxToMm(inner.getBoundingClientRect().height);
+  sheet.remove();
+  return PRINT_SHEET_MM - SHEET_PADDING_MM - fixedMm - SAFETY_MM;
+}
+
+// Måler den faktiske høyden (mm) til hver seksjon, inkl. seksjonens egne
+// marginer (display:flow-root gjør at margin-top på .section-hd telles med).
+function measureSectionsMm(sections) {
+  const sheet = makeMeasureSheet();
+  sheet.innerHTML = '<div class="ws-content">' +
+    sections.map(sec => `<div class="measure-sec" style="display:flow-root">${sec.html}</div>`).join('') +
+    '</div>';
+  const wraps = sheet.querySelectorAll('.measure-sec');
+  sections.forEach((sec, i) => {
+    sec.heightMm = pxToMm(wraps[i].getBoundingClientRect().height);
+  });
+  sheet.remove();
+}
+
+// Hvor lave kan skrivefeltene bli før det går ut over elevens plass?
+function minGridHeightMm(type, level) {
+  if (type === 'add' || type === 'sub') return 38;
+  if (type === 'txt') return 36;
+  if ((type === 'mul' || type === 'div') && level === 'hard') return 56;
+  return 24;
+}
+
+// Bytter rutehøyden i en ferdigbygd seksjon (både CSS-høyde og SVG-viewBox,
+// slik at rutene beholder 7×10mm og ikke blir klemt).
+function setGridHeight(html, oldH, newH) {
+  const h = s => String(s).replace('.', '\\.');
+  html = html.replace(new RegExp(`height:${h(oldH)}mm"`, 'g'), `height:${newH}mm"`);
+  html = html.replace(new RegExp(`viewBox="0 0 (\\d+(?:\\.\\d+)?) ${h(oldH)}"`, 'g'), `viewBox="0 0 $1 ${newH}"`);
+  return html;
+}
+
+// Prøver å få seksjonene til å passe innenfor budsjettet ved å krympe
+// skrivefeltene jevnt (1mm om gangen, ned til minimum). Returnerer true
+// hvis det gikk. Høydene måles på nytt etterpå.
+function shrinkToFit(sections, budgetMm) {
+  let total = sections.reduce((a, s) => a + s.heightMm, 0);
+  let over = total - budgetMm;
+  if (over <= 0) return true;
+
+  // Hvor mye kan vi maksimalt spare? (hver mm i rutehøyde sparer 'rows' mm)
+  const maxSave = sections.reduce((a, s) => a + (s.gridH - s.minGridH) * s.rows, 0);
+  if (maxSave < over) return false;
+
+  const snapshot = sections.map(s => ({ html: s.html, gridH: s.gridH, heightMm: s.heightMm }));
+  const newH = sections.map(s => s.gridH);
+  let guard = 0;
+  while (over > 0 && guard++ < 200) {
+    let changed = false;
+    sections.forEach((s, i) => {
+      if (over > 0 && newH[i] > s.minGridH) {
+        newH[i] -= 1; over -= s.rows; changed = true;
+      }
+    });
+    if (!changed) break;
   }
-  if (type === 'txt') return 85;
-  return 0;
+  sections.forEach((s, i) => {
+    if (newH[i] !== s.gridH) {
+      s.html = setGridHeight(s.html, s.gridH, newH[i]);
+      s.gridH = newH[i];
+    }
+  });
+  measureSectionsMm(sections);
+  total = sections.reduce((a, s) => a + s.heightMm, 0);
+  if (total <= budgetMm) return true;
+  // Gikk ikke likevel — rull tilbake så seksjonene beholder full størrelse
+  sections.forEach((s, i) => Object.assign(s, snapshot[i]));
+  return false;
 }
 
 function generateWorksheet() {
@@ -1274,11 +1360,23 @@ function generateWorksheet() {
 
   // Bygg alle valgte seksjoner som {type, html, heightMm}-poster
   const sections = [];
-  if (useAdd) sections.push({type:'add', html: buildSection('add','Addisjon',      '+','pill-add', imgs[imgIdx++], count, lvlAdd), heightMm: estimateSectionHeightMm('add', count, lvlAdd)});
-  if (useSub) sections.push({type:'sub', html: buildSection('sub','Subtraksjon',   '−','pill-sub', imgs[imgIdx++], count, lvlSub), heightMm: estimateSectionHeightMm('sub', count, lvlSub)});
-  if (useMul) sections.push({type:'mul', html: buildSection('mul','Multiplikasjon','·','pill-mul', imgs[imgIdx++], count, lvlMul), heightMm: estimateSectionHeightMm('mul', count, lvlMul)});
-  if (useDiv) sections.push({type:'div', html: buildSection('div','Divisjon',      ':','pill-div', imgs[imgIdx++], count, lvlDiv), heightMm: estimateSectionHeightMm('div', count, lvlDiv)});
-  if (useTxt) sections.push({type:'txt', html: buildTextSection(imgs[imgIdx++], lvlTxt, allowedOps),                               heightMm: estimateSectionHeightMm('txt', count, lvlTxt)});
+  // rows = antall rader med skrivefelt (så vi vet hvor mye 1mm krymping sparer)
+  const mkSec = (type, html, level, rows) => ({
+    type, html, level, rows,
+    gridH: type === 'txt' ? 50 : gridHeightMm(type, level),
+    minGridH: minGridHeightMm(type, level),
+    heightMm: 0
+  });
+  const mdRows = level => Math.ceil((level === 'hard' ? Math.min(count, 2) : count) / 2);
+  if (useAdd) sections.push(mkSec('add', buildSection('add','Addisjon',      '+','pill-add', imgs[imgIdx++], count, lvlAdd), lvlAdd, 1));
+  if (useSub) sections.push(mkSec('sub', buildSection('sub','Subtraksjon',   '−','pill-sub', imgs[imgIdx++], count, lvlSub), lvlSub, 1));
+  if (useMul) sections.push(mkSec('mul', buildSection('mul','Multiplikasjon','·','pill-mul', imgs[imgIdx++], count, lvlMul), lvlMul, mdRows(lvlMul)));
+  if (useDiv) sections.push(mkSec('div', buildSection('div','Divisjon',      ':','pill-div', imgs[imgIdx++], count, lvlDiv), lvlDiv, mdRows(lvlDiv)));
+  if (useTxt) sections.push(mkSec('txt', buildTextSection(imgs[imgIdx++], lvlTxt, allowedOps),                               lvlTxt, 1));
+
+  // Mål ekte høyder og hvor mye plass ett ark har til seksjoner
+  const PAGE_CONTENT_BUDGET_MM = measurePageBudgetMm();
+  measureSectionsMm(sections);
 
   // ─────────────────────────────────────────────────────────────
   // SIDEFORDELING — finner den mest plasseffektive måten å pakke
@@ -1302,8 +1400,8 @@ function generateWorksheet() {
     (sectionOrder[a.type] ?? 99) - (sectionOrder[b.type] ?? 99)
   );
 
-  if (totalHeight <= PAGE_CONTENT_BUDGET_MM) {
-    // Alt får plass på én side
+  if (totalHeight <= PAGE_CONTENT_BUDGET_MM || shrinkToFit(sections, PAGE_CONTENT_BUDGET_MM)) {
+    // Alt får plass på én side (ev. med litt lavere skrivefelt)
     pages[0] = sortSections(sections);
   } else {
     // Prøv alle 2^N måter å splitte seksjonene over 2 sider.
@@ -1356,6 +1454,19 @@ function generateWorksheet() {
 
     if (bestSplit) {
       pages = [bestSplit.side1, bestSplit.side2];
+    } else if (sections.length >= 2 && (() => {
+      // Ingen 2-side-fordeling passet med fulle skrivefelt — prøv å krympe
+      // feltene på hver halvdel (logisk rekkefølge beholdes).
+      const sorted = sortSections(sections);
+      for (let cut = 1; cut < sorted.length; cut++) {
+        const p1 = sorted.slice(0, cut), p2 = sorted.slice(cut);
+        if (shrinkToFit(p1, PAGE_CONTENT_BUDGET_MM) && shrinkToFit(p2, PAGE_CONTENT_BUDGET_MM)) {
+          pages = [p1, p2]; return true;
+        }
+      }
+      return false;
+    })()) {
+      // pages er satt i blokken over
     } else {
       // Fallback: greedy packing (kan gi 3+ sider). Skal i praksis
       // aldri skje, men er en trygghet for ekstreme tilfeller.
