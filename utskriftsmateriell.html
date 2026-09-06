@@ -722,7 +722,7 @@
   <div class="hero-inner">
     <div class="hero-tag">For lærere</div>
     <h1>Utskrifts<span class="accent">materiell</span></h1>
-    <p class="hero-sub">Plakater, monsterkort, diplomer, spillkort og arbeidshefter – ferdig til print. Gjør klasserommet til et levende Myntland.</p>
+    <p class="hero-sub">Plakater, monsterkort, diplomer, spillkort, arbeidshefter og praktiske opplegg – ferdig til print. Gjør klasserommet til et levende Myntland.</p>
   </div>
 </section>
 
@@ -772,6 +772,9 @@
     </button>
     <button class="tab" data-category="arbeidshefter" role="tab">
       📓 Arbeidshefter <span class="tab-count" data-count="arbeidshefter">0</span>
+    </button>
+    <button class="tab" data-category="praktisk" role="tab">
+      🍕 Praktisk økonomi <span class="tab-count" data-count="praktisk">0</span>
     </button>
   </div>
 
@@ -824,7 +827,7 @@
 
    Felter:
      id          – kort identifikator
-     category    – 'plakater' | 'monsterkort' | 'diplomer' | 'spillkort'
+     category    – 'plakater' | 'monsterkort' | 'diplomer' | 'skjemaer' | 'spillkort' | 'arbeidshefter' | 'praktisk'
      title       – navn som vises på kortet
      description – kort tekst (1–2 setninger)
      trinn       – f.eks. '1.–4. trinn' eller '5.–7. trinn'
@@ -1140,6 +1143,21 @@ const RESOURCES = [
       pages: 8,
       prefix: 'arbeidshefte-skatt-side'
     }
+  },
+  {
+    id: 'myntland-pizzeria',
+    category: 'praktisk',
+    title: 'Myntland Pizzeria – praktisk økonomi',
+    description: 'Klassen driver sin egen pizzarestaurant! Gjestene bestiller fra menyen, servitøren skriver regningen, og kokkene bygger pizzaen av laminerte brikker med borrelås. Pakken inneholder lærerveiledning (4 sider med tre nivåer og LK20), meny og prisliste, pizzabunn med saus og ost, 11 ingredienskort, bestillingslister, bestillingskort med regneutfordringer, rollekort og bordnummer. Fungerer helt uten skjerm – eller sammen med Restaurant-funksjonen i elevappen. 14 sider, A4.',
+    trinn: '1.–4. trinn',
+    thumb: 'materiell/thumbs/myntland-pizzeria.jpg',
+    pdf: 'materiell/pdf/myntland-pizzeria.pdf',
+    pdfSize: '2.9 MB',
+    pageGallery: {
+      dir: 'materiell/preview/',
+      pages: 14,
+      prefix: 'myntland-pizzeria-side'
+    }
   }
   // Legg til flere ressurser her etterhvert som de blir klare
 ];
@@ -1150,7 +1168,8 @@ const CATEGORY_LABELS = {
   diplomer: { emoji: '🏆', singular: 'diplom' },
   skjemaer: { emoji: '📝', singular: 'skjema' },
   spillkort: { emoji: '🎴', singular: 'spillkort' },
-  arbeidshefter: { emoji: '📓', singular: 'arbeidshefte' }
+  arbeidshefter: { emoji: '📓', singular: 'arbeidshefte' },
+  praktisk: { emoji: '🍕', singular: 'praktisk opplegg' }
 };
 
 // Hjelper: matcher en ressurs et gitt trinn?
@@ -1166,7 +1185,7 @@ function matchesTrinn(resource, trinnKey) {
 function updateCounts() {
   const counts = {
     alle: RESOURCES.length,
-    plakater: 0, monsterkort: 0, diplomer: 0, skjemaer: 0, spillkort: 0, arbeidshefter: 0,
+    plakater: 0, monsterkort: 0, diplomer: 0, skjemaer: 0, spillkort: 0, arbeidshefter: 0, praktisk: 0,
     'trinn-14': 0, 'trinn-57': 0
   };
   RESOURCES.forEach(r => {
@@ -1374,7 +1393,7 @@ monsterModal.addEventListener('click', (e) => {
   }
 });
 
-// Sideforhåndsvisning — for arbeidshefter (8 sider per hefte)
+// Sideforhåndsvisning — for arbeidshefter og praktiske opplegg (flersidige PDF-er)
 function openPagePreview(resourceId) {
   const r = RESOURCES.find(x => x.id === resourceId);
   if (!r || !r.pageGallery) return;
