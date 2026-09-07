@@ -2387,7 +2387,9 @@ function wpCaptureActiveStep(){
     bonus:parseInt(b.querySelector('.wp-step-bonus').value)||0,
     reqs:Array.from(b.querySelectorAll('.wp-req-row')).map(r=>({
       text:r.querySelector('.wp-req-text').value.trim(),
-      link:r.querySelector('.wp-req-link').value.trim()
+      link:r.querySelector('.wp-req-link').value.trim(),
+      bonus:!!(r.querySelector('.wp-req-bonus')||{}).checked,
+      bonusCoins:parseInt((r.querySelector('.wp-req-bonus-coins')||{}).value)||0
     }))
   };
 }
@@ -2445,7 +2447,10 @@ function wpRemoveReq(stepIdx,reqIdx){
 // Sammenslått rad for et lagret trinn.
 function wpStepRowHTML(st,i){
   const t=(st.title||'').trim();
-  const nReq=(st.reqs||[]).filter(r=>r.text||r.link).length;
+  const realReqs=(st.reqs||[]).filter(r=>r.text||r.link);
+  const nBonus=realReqs.filter((r,j)=>j>0&&r.bonus).length;
+  const bonusCoins=realReqs.reduce((a,r,j)=>(j>0&&r.bonus)?a+(parseInt(r.bonusCoins)||0):a,0);
+  const nReq=realReqs.length-nBonus;
   const titleHtml=t ? wpEscAttr(t)
     : '<span style="color:var(--muted);font-weight:600;">Trinn uten tittel</span>';
   return `<div class="wp-step-done">
@@ -2453,7 +2458,7 @@ function wpStepRowHTML(st,i){
     <div style="flex:1;min-width:0;">
       <div style="font-weight:800;color:var(--teal-dark);">${titleHtml}</div>
       <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
-        ${nReq} arbeidskrav${st.bonus?' · 🪙 '+st.bonus:''}
+        ${nReq} arbeidskrav${nBonus?' + ⭐ '+nBonus+' bonus'+(bonusCoins?' (🪙 '+bonusCoins+')':''):''}${st.bonus?' · 🪙 '+st.bonus:''}
       </div>
     </div>
     <button class="btn btn-ghost btn-sm" onclick="wpEditStep(${i})">✏️ Rediger</button>
@@ -2480,6 +2485,10 @@ function wpStepEditorHTML(st,i){
         <div class="wp-req-fields">
           <input type="text" class="wp-req-text" placeholder="Arbeidskrav, f.eks. Gjør oppgave 1–8 på s. 24" value="${wpEscAttr(r.text)}">
           <input type="text" class="wp-req-link" placeholder="🔗 Lenke-URL (valgfritt)" value="${wpEscAttr(r.link)}">
+          ${j>0?`<div class="wp-req-bonus-wrap">
+            <label class="wp-req-bonus-lbl"><input type="checkbox" class="wp-req-bonus" ${r.bonus?'checked':''} onchange="this.closest('.wp-req-bonus-wrap').querySelector('.wp-req-bonus-amt').style.display=this.checked?'flex':'none'"> ⭐ Bonusoppgave – ekstra utfordring, trengs ikke for å få trinnet godkjent</label>
+            <label class="wp-req-bonus-amt" style="display:${r.bonus?'flex':'none'}">Ekstra mynter for bonusoppgaven: <input type="number" class="wp-req-bonus-coins" min="0" value="${parseInt(r.bonusCoins)||0}"> 🪙 <span class="wp-req-bonus-hint">(0 = ingen mynter)</span></label>
+          </div>`:''}
         </div>
         <button class="btn btn-ghost btn-sm" onclick="wpRemoveReq(${i},${j})" title="Fjern arbeidskrav">✕</button>
       </div>`).join('')}
@@ -2526,7 +2535,10 @@ function wpBuildPayload(){
     .map(st=>({
       title:st.title.trim(), goal:st.goal||'', bonus:st.bonus||0, approval:approval,
       reqs:(st.reqs||[]).filter(r=>r.text||r.link)
-        .map(r=>({text:r.text||'',link:r.link||''}))
+        .map((r,j)=>{
+          const isB=(j>0 && !!r.bonus);
+          return {text:r.text||'',link:r.link||'', bonus:isB, bonusCoins:isB?(parseInt(r.bonusCoins)||0):0};
+        })
     }));
   return { icon, subject, theme: theme||null, class:cls, approval, steps };
 }
@@ -2896,8 +2908,13 @@ function refreshApproveModal(){
     } else {
       const step=p.steps[cur]||{};
       const ss=pr.steps?.[cur]||{};
-      const nReqs=(step.reqs||[]).length;
-      const nChk=Object.values(ss.checks||{}).filter(Boolean).length;
+      const chk=ss.checks||{};
+      const allReqs=step.reqs||[];
+      const nReqs=allReqs.filter((r,j)=>!(j>0&&r.bonus)).length;
+      const nChk=allReqs.filter((r,j)=>!(j>0&&r.bonus)&&chk[j]).length;
+      const nBon=allReqs.filter((r,j)=>j>0&&r.bonus).length;
+      const nBonChk=allReqs.filter((r,j)=>j>0&&r.bonus&&chk[j]).length;
+      const bonTxt=nBon?` · ⭐ ${nBonChk}/${nBon} bonus`:'';
       const needG=step.approval==='both';
       const gPill=!needG?'<span class="wp-pill wp-pill-na">Foresatt ikke nødvendig</span>'
         :'<span class="wp-pill wp-pill-na">Foresatt (etter lærer)</span>';
@@ -2905,7 +2922,7 @@ function refreshApproveModal(){
         <div style="flex:1;min-width:130px;">
           <div style="font-weight:800;">${nm}</div>
           <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
-            Trinn ${cur+1}/${nSteps}: ${wpEscAttr(step.title)} · ${nChk}/${nReqs} huket av
+            Trinn ${cur+1}/${nSteps}: ${wpEscAttr(step.title)} · ${nChk}/${nReqs} huket av${bonTxt}
           </div>
         </div>
         <span class="wp-pill wp-pill-wait">⏳ Lærer</span>${gPill}
@@ -2972,17 +2989,20 @@ async function wpSettleBonus(planKey, studentKey, idx){
     [base+'/steps/'+idx+'/completed']:true,
     [base+'/steps/'+idx+'/completedTs']:Date.now()
   });
-  if((step.bonus||0)>0){
+  // Ekstra mynter for avhukede ⭐ bonusoppgaver legges til trinnbonusen.
+  const extra=(step.reqs||[]).reduce((a,r,j)=>(j>0&&r.bonus&&(ss.checks||{})[j])?a+(parseInt(r.bonusCoins)||0):a,0);
+  if(extra>0) await window._update(fbRef(base+'/steps/'+idx),{bonusExtraPaid:extra});
+  if((step.bonus||0)+extra>0){
     const sSnap=await window._get(fbRef('students57/'+studentKey));
     const sv=sSnap.val()||{};
-    const bonus=step.bonus||0;
+    const bonus=(step.bonus||0)+extra;
     const _tax=((window._settings&&window._settings.taxRate)||20)/100;
     const taxAmt=Math.floor(bonus*_tax);
     const net=bonus-taxAmt;
     await window._update(fbRef('students57/'+studentKey),{balance:(sv.balance||0)+net, badgeTaxContributed:(sv.badgeTaxContributed||0)+taxAmt});
     if(taxAmt>0) await distributeToGoalsPortal(taxAmt);
     await logTx(studentKey,'income','🪙',
-      'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(taxAmt>0?' (netto etter skatt)':''),net);
+      'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(extra>0?' + ⭐ bonusoppgave':'')+(taxAmt>0?' (netto etter skatt)':''),net);
   }
   return true;
 }

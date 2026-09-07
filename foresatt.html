@@ -482,7 +482,7 @@ function fgRenderSummary(){
     });
     steps.forEach((step,idx)=>{
       const ss=pr.steps?.[idx]||{};
-      const allChecked=(step.reqs||[]).every((r,j)=>(ss.checks||{})[j]);
+      const allChecked=(step.reqs||[]).every((r,j)=>(j>0&&r.bonus)||(ss.checks||{})[j]);
       if(step.approval==='both' && ss.teacherApproved && !ss.guardianApproved && !ss.bonusPaid && allChecked){
         canApprove.push({planKey:p.fbKey, idx, subject:p.subject, title:step.title});
       }
@@ -611,24 +611,29 @@ function fgRenderStep(){
   if(reqs.length){
     html+='<div class="section-title">✅ Arbeidskrav</div>';
     reqs.forEach((r,j)=>{
-      const on=!!checks[j];
-      html+=`<div class="ap-req">
+      const on=!!checks[j]; const bon=(j>0&&!!r.bonus);
+      html+=`<div class="ap-req"${bon?' style="border-style:dashed;background:#fff9e6"':''}>
         <div class="ap-check${on?' on':''}">${on?'✓':''}</div>
         <div style="flex:1">
+          ${bon?'<div style="font-size:.75rem;font-weight:800;color:var(--muted)">⭐ Bonusoppgave (frivillig)'+((parseInt(r.bonusCoins)||0)>0?' · +🪙 '+parseInt(r.bonusCoins):'')+'</div>':''}
           <div class="ap-req-text">${fgEsc(r.text)}</div>
           ${r.link?`<a class="ap-req-link" href="${fgEsc(fgFixUrl(r.link))}" target="_blank" rel="noopener">🔗 Åpne lenke</a>`:''}
         </div></div>`;
     });
-    const nDone=reqs.filter((r,j)=>checks[j]).length;
+    const reqOnly=reqs.filter((r,j)=>!(j>0&&r.bonus));
+    const bonOnly=reqs.filter((r,j)=>(j>0&&r.bonus));
+    const nDone=reqs.filter((r,j)=>!(j>0&&r.bonus)&&checks[j]).length;
+    const nBonDone=reqs.filter((r,j)=>(j>0&&r.bonus)&&checks[j]).length;
     html+=`<div style="font-size:.8rem;font-weight:800;color:var(--muted);margin:.2rem 0 .4rem">`
-         +`${nDone} av ${reqs.length} huket av av eleven</div>`;
+         +`${nDone} av ${reqOnly.length} arbeidskrav huket av av eleven`
+         +(bonOnly.length?` · ⭐ ${nBonDone} av ${bonOnly.length} bonusoppgaver`:'')+`</div>`;
   } else {
     html+='<div class="fg-intro">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
   }
   // STATUS / GODKJENNING
   {
     const needBoth=st.approval==='both';
-    const allChecked=reqs.length?reqs.every((r,j)=>checks[j]):true;
+    const allChecked=reqs.length?reqs.every((r,j)=>(j>0&&r.bonus)||checks[j]):true;
     const pendingGuardian=needBoth && ss.teacherApproved && !ss.guardianApproved && !ss.bonusPaid;
     if(pendingGuardian){
       if(allChecked){
@@ -717,8 +722,8 @@ async function fgApprove(_arg){
   const ssNow=(pr.steps&&pr.steps[idx])||{};
   if(step.approval!=='both') return;
   if(ssNow.guardianApproved||ssNow.bonusPaid) return;
-  if(!(step.reqs||[]).every((r,j)=>(ssNow.checks||{})[j])){
-    await fgAlert('Eleven må huke av alle arbeidskravene før trinnet kan bekreftes.',
+  if(!(step.reqs||[]).every((r,j)=>(j>0&&r.bonus)||(ssNow.checks||{})[j])){
+    await fgAlert('Eleven må huke av alle arbeidskravene før trinnet kan bekreftes. (Bonusoppgaver er frivillige.)',
       {title:'Ikke helt klart ennå',icon:'\u2705'});
     return;
   }
@@ -765,17 +770,19 @@ async function fgSettleBonus(planKey, idx){
     [base+'/steps/'+idx+'/completed']:true,
     [base+'/steps/'+idx+'/completedTs']:Date.now()
   });
-  if((step.bonus||0)>0){
+  const extra=(step.reqs||[]).reduce((a,r,j)=>(j>0&&r.bonus&&(ss.checks||{})[j])?a+(parseInt(r.bonusCoins)||0):a,0);
+  if(extra>0) await window._update(fgRef(base+'/steps/'+idx),{bonusExtraPaid:extra});
+  if((step.bonus||0)+extra>0){
     const sSnap=await window._get(fgRef('students57/'+_studentKey));
     const sv=sSnap.val()||{};
-    const bonus=step.bonus||0;
+    const bonus=(step.bonus||0)+extra;
     const taxAmt=Math.floor(bonus*fgTax());
     const net=bonus-taxAmt;
     await window._update(fgRef('students57/'+_studentKey),{balance:(sv.balance||0)+net, badgeTaxContributed:(sv.badgeTaxContributed||0)+taxAmt});
     if(taxAmt>0) await fgDistributeToGoals(taxAmt);
     await window._set(window._push(fgRef('transactions57/'+_studentKey)),{
       type:'income', icon:'🪙',
-      desc:'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(taxAmt>0?' (netto etter skatt)':''), amount:net, ts:Date.now()
+      desc:'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(extra>0?' + ⭐ bonusoppgave':'')+(taxAmt>0?' (netto etter skatt)':''), amount:net, ts:Date.now()
     });
   }
 }

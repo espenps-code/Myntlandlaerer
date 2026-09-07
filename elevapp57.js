@@ -492,6 +492,15 @@ function apRenderPlan(){
   grid.innerHTML=rail+apPlanPanels(plan,steps,cur,sel,leadLocked);
   const selEl=grid.querySelector('.ap2-trinn.sel'); if(selEl) selEl.scrollIntoView({inline:'center',block:'nearest'});
 }
+// Bonusoppgaver (⭐) teller ikke med i kravet for godkjenning. Første krav er alltid obligatorisk.
+function apIsBonusReq(r,j){ return j>0 && !!(r&&r.bonus); }
+// Sum av ekstra mynter for ⭐ bonusoppgaver eleven har huket av.
+function apBonusExtra(step,checks){
+  return ((step&&step.reqs)||[]).reduce((a,r,j)=>(apIsBonusReq(r,j)&&(checks||{})[j])?a+(parseInt(r.bonusCoins)||0):a,0);
+}
+function apRequiredDone(reqs,checks){
+  return (reqs||[]).every((r,j)=>apIsBonusReq(r,j) || (checks||{})[j]);
+}
 function apPlanPanels(plan,steps,cur,sel,leadLocked){
   const st=steps[sel]||{};
   const pr=apProgress(_apPlanKey); const ss=(pr.steps&&pr.steps[sel])||{};
@@ -525,14 +534,20 @@ function apPlanPanels(plan,steps,cur,sel,leadLocked){
   if(reqs.length){
     krav+='<ul class="ap2-krav">';
     reqs.forEach(function(r,j){
-      const on=!!checks[j];
+      const on=!!checks[j]; const bon=apIsBonusReq(r,j);
       const link=r.link?'<a class="ap2-klenke" href="'+apEsc(apFixUrl(r.link))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+AP_LINK+' Åpne lenke</a>':'';
-      krav+='<li class="ap2-kitem'+(on?' on':'')+'" '+(isActive?'onclick="apToggleCheck('+j+')"':'')+'>'
-        +'<span class="ap2-box">'+AP_CHECK+'</span><div class="ap2-kbody"><span class="ap2-ktext">'+apEsc(r.text)+'</span>'+link+'</div></li>';
+      krav+='<li class="ap2-kitem'+(on?' on':'')+(bon?' bonus':'')+'" '+(isActive?'onclick="apToggleCheck('+j+')"':'')+'>'
+        +'<span class="ap2-box">'+AP_CHECK+'</span><div class="ap2-kbody">'
+        +(bon?'<span class="ap2-kbonus">⭐ Bonusoppgave'+((parseInt(r.bonusCoins)||0)>0?' · +🪙 '+parseInt(r.bonusCoins):'')+'</span>':'')
+        +'<span class="ap2-ktext">'+apEsc(r.text)+'</span>'+link+'</div></li>';
     });
     krav+='</ul>';
-    const nDone=reqs.filter((r,j)=>checks[j]).length; const all=(nDone===reqs.length);
-    krav+='<div class="ap2-foot'+(all?' alldone':'')+'"><span class="frac">'+nDone+' / '+reqs.length+'</span> arbeidskrav huket av</div>';
+    const reqIdx=reqs.map((r,j)=>j).filter(j=>!apIsBonusReq(reqs[j],j));
+    const bonIdx=reqs.map((r,j)=>j).filter(j=>apIsBonusReq(reqs[j],j));
+    const nDone=reqIdx.filter(j=>checks[j]).length; const all=(nDone===reqIdx.length);
+    const nBonDone=bonIdx.filter(j=>checks[j]).length;
+    krav+='<div class="ap2-foot'+(all?' alldone':'')+'"><span class="frac">'+nDone+' / '+reqIdx.length+'</span> arbeidskrav huket av'
+      +(bonIdx.length?' <span class="ap2-bonusfrac">⭐ '+nBonDone+' / '+bonIdx.length+'</span>':'')+'</div>';
   } else {
     krav+='<div class="ap2-info">Ingen arbeidskrav lagt inn på dette trinnet.</div>';
   }
@@ -552,7 +567,7 @@ function apPlanPanels(plan,steps,cur,sel,leadLocked){
     } else if(ss.teacherApproved){
       tail='<div class="ap2-panel"><div class="ap2-status ok">✓ Læreren har godkjent trinnet ditt!</div></div>';
     } else {
-      const all=reqs.every((r,j)=>checks[j]);
+      const all=apRequiredDone(reqs,checks);
       tail='<button class="ap2-scan'+(all?'':' disabled')+'" '+(all?'onclick="startScan(\'wpapprove\')"':'')+'>'
         +AP_SCAN_ICON+'<span>Scan godkjenning fra læreren</span></button>';
     }
@@ -612,14 +627,16 @@ async function apSettleBonus(planKey, idx){
     [base+'/steps/'+idx+'/completed']:true,
     [base+'/steps/'+idx+'/completedTs']:Date.now()
   });
-  if((step.bonus||0)>0){
+  const extra=apBonusExtra(step,ss.checks);
+  if(extra>0) await window._update(fbRef(base+'/steps/'+idx),{bonusExtraPaid:extra});
+  if((step.bonus||0)+extra>0){
     const s2=(await window._get(fbRef('students57/'+sk))).val()||{};
-    const bonus=step.bonus||0;
+    const bonus=(step.bonus||0)+extra;
     const taxAmt=Math.floor(bonus*getTax());
     const net=bonus-taxAmt;
     await window._update(fbRef('students57/'+sk),{balance:(s2.balance||0)+net, badgeTaxContributed:(s2.badgeTaxContributed||0)+taxAmt});
     if(taxAmt>0) await distributeToGoals(taxAmt);
-    await saveTx(sk,'income','🪙','Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(taxAmt>0?' (netto etter skatt)':''),net);
+    await saveTx(sk,'income','🪙','Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(extra>0?' + ⭐ bonusoppgave':'')+(taxAmt>0?' (netto etter skatt)':''),net);
   }
   return true;
 }
@@ -645,15 +662,16 @@ async function doWpApproveScan(){
     showSuccess('✅','Allerede godkjent','','Læreren har alt godkjent dette trinnet'); return;
   }
   const step=steps[cur];
-  if(!(step.reqs||[]).every((r,j)=>(ss.checks||{})[j])){
-    showSuccess('📋','Ikke ferdig ennå','','Huk av alle arbeidskravene på trinnet ditt før du scanner godkjenning.');
+  if(!apRequiredDone(step.reqs,ss.checks)){
+    showSuccess('📋','Ikke ferdig ennå','','Huk av alle arbeidskravene på trinnet ditt før du scanner godkjenning. (Bonusoppgaver er frivillige.)');
     return;
   }
   await window._update(fbRef('workPlanProgress/'+sk+'/'+planKey+'/steps/'+cur),
     { teacherApproved:true, teacherApprovedTs:Date.now() });
   const res=await apAfterTeacherApprove(planKey);
   if(res.bonusPaid){
-    showSuccess('🎉','Trinn fullført!', (step.bonus>0?'+🪙 '+step.bonus:''),
+    const totB=(step.bonus||0)+apBonusExtra(step,ss.checks);
+    showSuccess('🎉','Trinn fullført!', (totB>0?'+🪙 '+totB:''),
       'Bra jobba i '+plan.subject+'! Neste trinn er låst opp.');
   } else if(res.pendingGuardian){
     showSuccess('🎉','Du er videre!','',
