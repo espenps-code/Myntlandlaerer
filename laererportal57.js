@@ -2261,6 +2261,7 @@ let _wpEditKey = null;     // firebase-nøkkel som redigeres (null = ny plan)
 let _wpEditSteps = [];     // arbeidskopi av trinn under redigering
 let _wpActiveStep = -1;    // hvilket trinn som er åpent for redigering (-1 = ingen)
 let _wpApproveKey = null;  // plan-nøkkel åpen i godkjenn-modalen
+let _wpAutosaving = false; // pågående automatisk kladdelagring
 
 function wpEscAttr(s){
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;')
@@ -2362,12 +2363,14 @@ function openPlanEditor(planKey){
     _wpEditSteps=[wpBlankStep()];
     _wpActiveStep=0;
   }
+  wpAutosaveStatus('');
   wpRenderSteps();
   ed.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function closePlanEditor(){
   showWpTab('liste');
   _wpEditKey=null; _wpEditSteps=[]; _wpActiveStep=-1;
+  wpAutosaveStatus('');
 }
 function wpEdAlert(msg,type){
   document.getElementById('wp-editor-alert').innerHTML=
@@ -2408,6 +2411,7 @@ function wpSaveStep(){
   }
   wpRenderSteps();
   document.getElementById('wp-editor-alert').innerHTML='';
+  wpAutosaveDraft();
 }
 function wpEditStep(i){
   wpCaptureActiveStep();
@@ -2422,6 +2426,7 @@ function wpDiscardStep(i){
   if(_wpActiveStep===i) _wpActiveStep=-1;
   else if(_wpActiveStep>i) _wpActiveStep--;
   wpRenderSteps();
+  wpAutosaveDraft();
 }
 function wpAddReq(stepIdx){
   wpCaptureActiveStep();
@@ -2493,7 +2498,7 @@ function wpRenderSteps(){
   }
   const titled=_wpEditSteps.filter(s=>(s.title||'').trim()).length;
   html+='<div class="wp-publish-hint">'+(titled<3
-      ? '📝 '+titled+' av 3 trinn lagret. Trappa kan publiseres når minst 3 trinn er lagret.'
+      ? '📝 '+titled+' av 3 trinn lagret. Trappa kan publiseres når minst 3 trinn er lagret. Kladden lagres automatisk.'
       : '✅ '+titled+' trinn lagret – klar til å publiseres.')+'</div>';
   cont.innerHTML=html;
   const pubBtn=document.getElementById('wp-publish-btn');
@@ -2502,9 +2507,9 @@ function wpRenderSteps(){
     pubBtn.title=titled<3?'Lagre minst 3 trinn for å publisere':'Publiser periodeplanen for elevene';
   }
 }
-// publish=true → synlig for elevene. publish=false → lagre som kladd.
-async function savePlan(publish){
-  if(!ready()){ wpEdAlert('Firebase ikke klar – prøv igjen om et øyeblikk.','error'); return; }
+// Leser skjema + _wpEditSteps og bygger det som skal lagres i workPlans/{key}.
+// Kun trinn med tittel tas med (tomme «neste trinn» faller bort).
+function wpBuildPayload(){
   wpCaptureActiveStep();
   const icon=document.getElementById('wp-fag').value||'book';
   const subject=wpFagName(icon)||'Fag';
@@ -2513,8 +2518,6 @@ async function savePlan(publish){
   const theme=String(thEl?thEl.value:'').trim().slice(0,60);
   // Godkjenningsvalg gjelder hele periodeplanen – kopieres inn på hvert trinn.
   const approval=document.getElementById('wp-approval').value==='both'?'both':'teacher';
-  if(!subject){ wpEdAlert('Skriv inn hvilket fag periodeplanen gjelder.','error'); return; }
-  // Behold kun trinn med tittel (tomme «neste trinn» faller bort).
   const steps=_wpEditSteps
     .filter(s=>(s.title||'').trim())
     .map(st=>({
@@ -2522,6 +2525,66 @@ async function savePlan(publish){
       reqs:(st.reqs||[]).filter(r=>r.text||r.link)
         .map(r=>({text:r.text||'',link:r.link||''}))
     }));
+  return { icon, subject, theme: theme||null, class:cls, approval, steps };
+}
+// Advar før siden lukkes hvis et trinn står åpent med innhold som ikke er lagret.
+window.addEventListener('beforeunload', e=>{
+  const tab=document.getElementById('wp-tab-ny');
+  if(!tab || tab.style.display==='none' || _wpActiveStep<0) return;
+  const b=document.querySelector('#wp-steps-container .wp-step-edit');
+  if(!b) return;
+  const hasText=[...b.querySelectorAll('input[type=text],textarea')].some(el=>el.value.trim());
+  if(hasText){ e.preventDefault(); e.returnValue=''; }
+});
+function wpAutosaveStatus(msg){
+  const el=document.getElementById('wp-autosave-status');
+  if(el) el.textContent=msg||'';
+}
+// Automatisk kladdelagring – kalles hver gang et trinn lagres/forkastes i editoren.
+// Gjelder KUN nye planer og upubliserte kladder: en publisert plan skal ikke få
+// halvferdige endringer synlige for elevene før læreren trykker lagre/publiser.
+// Ny plan får sin Firebase-nøkkel ved første autolagring, så senere lagringer
+// oppdaterer samme plan (ingen duplikater).
+async function wpAutosaveDraft(){
+  try{
+    if(!ready()) return;
+    if(_wpEditKey){
+      const ex=(window._workPlans||[]).find(x=>x.fbKey===_wpEditKey);
+      if(ex && ex.active!==false){
+        wpAutosaveStatus('Publisert plan – endringer lagres når du trykker «Lagre kladd» eller «Publiser».');
+        return;
+      }
+    }
+    const payload=wpBuildPayload();
+    if(!payload.steps.length) return;   // ingenting å ta vare på ennå
+    if(_wpAutosaving) return;
+    _wpAutosaving=true;
+    if(_wpEditKey){
+      await window._update(fbRef('workPlans/'+_wpEditKey), { ...payload, active:false });
+    } else {
+      const r=window._push(fbRef('workPlans'));
+      _wpEditKey=r.key;   // settes synkront, så neste autolagring treffer samme plan
+      await window._set(r, { ...payload, active:false,
+        workspaceId: currentWorkspaceId() || 'main', created:Date.now() });
+      document.getElementById('wp-editor-title').textContent='✏️ Rediger periodeplan';
+    }
+    const t=new Date();
+    wpAutosaveStatus('💾 Kladd lagret automatisk kl. '
+      +String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')
+      +' – du finner den under «Ikke publisert».');
+  }catch(e){
+    console.warn('Autolagring av kladd feilet', e);
+    wpAutosaveStatus('⚠️ Kunne ikke autolagre kladden – trykk «Lagre kladd» for å være sikker.');
+  }finally{
+    _wpAutosaving=false;
+  }
+}
+// publish=true → synlig for elevene. publish=false → lagre som kladd.
+async function savePlan(publish){
+  if(!ready()){ wpEdAlert('Firebase ikke klar – prøv igjen om et øyeblikk.','error'); return; }
+  const payload=wpBuildPayload();
+  const steps=payload.steps;
+  if(!payload.subject){ wpEdAlert('Skriv inn hvilket fag periodeplanen gjelder.','error'); return; }
   if(publish && steps.length<3){
     wpEdAlert('Du må ha minst 3 lagrede trinn for å publisere.','error'); return;
   }
@@ -2529,11 +2592,10 @@ async function savePlan(publish){
   const ex=_wpEditKey?((window._workPlans||[]).find(x=>x.fbKey===_wpEditKey)||{}):{};
   const willActive = publish ? true : (_wpEditKey ? (ex.active!==false) : false);
   if(_wpEditKey){
-    await window._update(fbRef('workPlans/'+_wpEditKey),
-      { icon, subject, theme: theme||null, class:cls, approval, steps, active:willActive });
+    await window._update(fbRef('workPlans/'+_wpEditKey), { ...payload, active:willActive });
   } else {
     await window._set(window._push(fbRef('workPlans')),
-      { icon, subject, theme: theme||null, class:cls, approval, steps, active:willActive,
+      { ...payload, active:willActive,
         workspaceId: currentWorkspaceId() || 'main', created:Date.now() });
   }
   closePlanEditor();
