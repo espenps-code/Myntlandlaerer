@@ -2405,7 +2405,10 @@ function wpSaveStep(){
   const st=_wpEditSteps[_wpActiveStep];
   if(!st || !st.title){ wpEdAlert('Gi trinnet en tittel før du lagrer det.','error'); return; }
   _wpActiveStep=-1;
-  if(_wpEditSteps.length<6){
+  // Neste tomme trinn åpnes automatisk bare til minimumskravet (3 trinn) er nådd.
+  // Etter det velger læreren selv med «Legg til trinn» – ingen uønsket trinn 4/5/6.
+  const titled=_wpEditSteps.filter(x=>(x.title||'').trim()).length;
+  if(titled<3 && _wpEditSteps.length<6){
     _wpEditSteps.push(wpBlankStep());
     _wpActiveStep=_wpEditSteps.length-1;
   }
