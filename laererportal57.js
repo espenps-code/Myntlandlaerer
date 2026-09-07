@@ -2935,10 +2935,14 @@ function refreshApproveModal(){
 async function teacherApproveStep(studentKey){
   const planKey=_wpApproveKey;
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
-  const cur=wpGetProgress(studentKey,planKey).current||0;
+  const prNow=wpGetProgress(studentKey,planKey);
+  const cur=prNow.current||0;
   if(cur>=(p.steps||[]).length) return;
+  // Frys avkryssingene i godkjenningsøyeblikket – bonusoppgaver huket av
+  // ETTER lærerens godkjenning teller ikke (må godkjennes på nytt).
+  const checksNow=(prNow.steps&&prNow.steps[cur]&&prNow.steps[cur].checks)||{};
   await window._update(fbRef('workPlanProgress/'+studentKey+'/'+planKey+'/steps/'+cur),
-    { teacherApproved:true, teacherApprovedTs:Date.now() });
+    { teacherApproved:true, teacherApprovedTs:Date.now(), approvedChecks:checksNow, approvedChecksTaken:true });
   await wpAfterTeacherApprove(planKey, studentKey);
   refreshApproveModal();
 }
@@ -2955,6 +2959,8 @@ async function teacherUnapprove(studentKey, idx){
   await window._update(fbRef('/'),{
     [base+'/steps/'+idx+'/teacherApproved']:false,
     [base+'/steps/'+idx+'/teacherApprovedTs']:null,
+    [base+'/steps/'+idx+'/approvedChecks']:null,
+    [base+'/steps/'+idx+'/approvedChecksTaken']:null,
     [base+'/current']:idx
   });
   refreshApproveModal();
@@ -2990,7 +2996,7 @@ async function wpSettleBonus(planKey, studentKey, idx){
     [base+'/steps/'+idx+'/completedTs']:Date.now()
   });
   // Ekstra mynter for avhukede ⭐ bonusoppgaver legges til trinnbonusen.
-  const extra=(step.reqs||[]).reduce((a,r,j)=>(j>0&&r.bonus&&(ss.checks||{})[j])?a+(parseInt(r.bonusCoins)||0):a,0);
+  const extra=(step.reqs||[]).reduce((a,r,j)=>(j>0&&r.bonus&&((ss.approvedChecksTaken?(ss.approvedChecks||{}):(ss.checks||{})))[j])?a+(parseInt(r.bonusCoins)||0):a,0);
   if(extra>0) await window._update(fbRef(base+'/steps/'+idx),{bonusExtraPaid:extra});
   if((step.bonus||0)+extra>0){
     const sSnap=await window._get(fbRef('students57/'+studentKey));

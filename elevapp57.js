@@ -498,6 +498,10 @@ function apIsBonusReq(r,j){ return j>0 && !!(r&&r.bonus); }
 function apBonusExtra(step,checks){
   return ((step&&step.reqs)||[]).reduce((a,r,j)=>(apIsBonusReq(r,j)&&(checks||{})[j])?a+(parseInt(r.bonusCoins)||0):a,0);
 }
+// Avkryssingene som gjelder for bonus: frosset ved lærerens godkjenning.
+function apApprovedChecks(ss){
+  return (ss&&ss.approvedChecksTaken)?(ss.approvedChecks||{}):((ss&&ss.checks)||{});
+}
 function apRequiredDone(reqs,checks){
   return (reqs||[]).every((r,j)=>apIsBonusReq(r,j) || (checks||{})[j]);
 }
@@ -532,13 +536,18 @@ function apPlanPanels(plan,steps,cur,sel,leadLocked){
 
   let krav='<div class="ap2-panel"><h3>Mine arbeidskrav</h3>';
   if(reqs.length){
+    const reqDone=apRequiredDone(reqs,checks);
+    const frozen=!!ss.teacherApproved;   // læreren har godkjent – ingen endringer
     krav+='<ul class="ap2-krav">';
     reqs.forEach(function(r,j){
       const on=!!checks[j]; const bon=apIsBonusReq(r,j);
+      const locked=bon && !reqDone && !on;
+      const canClick=isActive && !frozen && !locked;
       const link=r.link?'<a class="ap2-klenke" href="'+apEsc(apFixUrl(r.link))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+AP_LINK+' Åpne lenke</a>':'';
-      krav+='<li class="ap2-kitem'+(on?' on':'')+(bon?' bonus':'')+'" '+(isActive?'onclick="apToggleCheck('+j+')"':'')+'>'
-        +'<span class="ap2-box">'+AP_CHECK+'</span><div class="ap2-kbody">'
+      krav+='<li class="ap2-kitem'+(on?' on':'')+(bon?' bonus':'')+(locked?' locked':'')+'" '+(canClick?'onclick="apToggleCheck('+j+')"':'')+'>'
+        +'<span class="ap2-box">'+(locked?'🔒':AP_CHECK)+'</span><div class="ap2-kbody">'
         +(bon?'<span class="ap2-kbonus">⭐ Bonusoppgave'+((parseInt(r.bonusCoins)||0)>0?' · +🪙 '+parseInt(r.bonusCoins):'')+'</span>':'')
+        +(locked?'<span class="ap2-klocked">Gjør de andre arbeidskravene først</span>':'')
         +'<span class="ap2-ktext">'+apEsc(r.text)+'</span>'+link+'</div></li>';
     });
     krav+='</ul>';
@@ -578,7 +587,12 @@ async function apToggleCheck(reqIdx){
   const sk=window._currentStudent?.fbKey; if(!sk||!_apPlanKey) return;
   const pr=apProgress(_apPlanKey);
   if(_apStepIdx!==(pr.current||0)) return;   // bare aktivt trinn
-  const cur=!!(pr.steps?.[_apStepIdx]?.checks?.[reqIdx]);
+  const ssT=pr.steps?.[_apStepIdx]||{};
+  if(ssT.teacherApproved) return;            // frosset etter lærergodkjenning
+  const plan=(getWorkPlans()||[]).find(p=>p.fbKey===_apPlanKey);
+  const stepT=((plan&&plan.steps)||[])[_apStepIdx]||{};
+  const cur=!!(ssT.checks?.[reqIdx]);
+  if(apIsBonusReq((stepT.reqs||[])[reqIdx],reqIdx) && !cur && !apRequiredDone(stepT.reqs,ssT.checks)) return; // bonus låst til de vanlige er gjort
   await window._update(
     fbRef('workPlanProgress/'+sk+'/'+_apPlanKey+'/steps/'+_apStepIdx+'/checks'),
     { [reqIdx]: !cur });
@@ -627,7 +641,7 @@ async function apSettleBonus(planKey, idx){
     [base+'/steps/'+idx+'/completed']:true,
     [base+'/steps/'+idx+'/completedTs']:Date.now()
   });
-  const extra=apBonusExtra(step,ss.checks);
+  const extra=apBonusExtra(step,apApprovedChecks(ss));
   if(extra>0) await window._update(fbRef(base+'/steps/'+idx),{bonusExtraPaid:extra});
   if((step.bonus||0)+extra>0){
     const s2=(await window._get(fbRef('students57/'+sk))).val()||{};
@@ -667,10 +681,10 @@ async function doWpApproveScan(){
     return;
   }
   await window._update(fbRef('workPlanProgress/'+sk+'/'+planKey+'/steps/'+cur),
-    { teacherApproved:true, teacherApprovedTs:Date.now() });
+    { teacherApproved:true, teacherApprovedTs:Date.now(), approvedChecks:(ss.checks||{}), approvedChecksTaken:true });
   const res=await apAfterTeacherApprove(planKey);
   if(res.bonusPaid){
-    const totB=(step.bonus||0)+apBonusExtra(step,ss.checks);
+    const totB=(step.bonus||0)+apBonusExtra(step,ss.checks);   // ss = avkryssingene i scan-øyeblikket
     showSuccess('🎉','Trinn fullført!', (totB>0?'+🪙 '+totB:''),
       'Bra jobba i '+plan.subject+'! Neste trinn er låst opp.');
   } else if(res.pendingGuardian){
