@@ -537,17 +537,23 @@ function apPlanPanels(plan,steps,cur,sel,leadLocked){
   let krav='<div class="ap2-panel"><h3>Mine arbeidskrav</h3>';
   if(reqs.length){
     const reqDone=apRequiredDone(reqs,checks);
-    const frozen=!!ss.teacherApproved;   // læreren har godkjent – ingen endringer
+    const frozen=!!ss.teacherApproved;   // læreren har godkjent – vanlige krav er låst
+    const lateChecks=ss.lateBonusChecks||{}, paidReqs=ss.bonusExtraPaidReqs||{};
     krav+='<ul class="ap2-krav">';
     reqs.forEach(function(r,j){
-      const on=!!checks[j]; const bon=apIsBonusReq(r,j);
+      const bon=apIsBonusReq(r,j);
+      const late=bon && frozen && !checks[j] && !!lateChecks[j];   // huket av etter godkjenning
+      const on=!!checks[j] || late;
       const locked=bon && !reqDone && !on;
-      const canClick=isActive && !frozen && !locked;
+      // Etter godkjenning: bare bonusoppgaver som ikke er betalt kan hukes av (og av igjen).
+      const lateOk=bon && frozen && !checks[j] && !paidReqs[j];
+      const canClick=(isActive||isDone) && !locked && (frozen ? lateOk : isActive);
       const link=r.link?'<a class="ap2-klenke" href="'+apEsc(apFixUrl(r.link))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+AP_LINK+' Åpne lenke</a>':'';
       krav+='<li class="ap2-kitem'+(on?' on':'')+(bon?' bonus':'')+(locked?' locked':'')+'" '+(canClick?'onclick="apToggleCheck('+j+')"':'')+'>'
         +'<span class="ap2-box">'+(locked?'🔒':AP_CHECK)+'</span><div class="ap2-kbody">'
         +(bon?'<span class="ap2-kbonus">⭐ Bonusoppgave'+((parseInt(r.bonusCoins)||0)>0?' · +🪙 '+parseInt(r.bonusCoins):'')+'</span>':'')
         +(locked?'<span class="ap2-klocked">Gjør de andre arbeidskravene først</span>':'')
+        +(late&&!paidReqs[j]?'<span class="ap2-klocked">Gjort etter godkjenning – læreren betaler ut bonusen</span>':'')
         +'<span class="ap2-ktext">'+apEsc(r.text)+'</span>'+link+'</div></li>';
     });
     krav+='</ul>';
@@ -586,13 +592,22 @@ function apPlanPanels(plan,steps,cur,sel,leadLocked){
 async function apToggleCheck(reqIdx){
   const sk=window._currentStudent?.fbKey; if(!sk||!_apPlanKey) return;
   const pr=apProgress(_apPlanKey);
-  if(_apStepIdx!==(pr.current||0)) return;   // bare aktivt trinn
   const ssT=pr.steps?.[_apStepIdx]||{};
-  if(ssT.teacherApproved) return;            // frosset etter lærergodkjenning
   const plan=(getWorkPlans()||[]).find(p=>p.fbKey===_apPlanKey);
   const stepT=((plan&&plan.steps)||[])[_apStepIdx]||{};
+  const isBon=apIsBonusReq((stepT.reqs||[])[reqIdx],reqIdx);
+  if(ssT.teacherApproved){
+    // Etter godkjenning: bare ubetalte bonusoppgaver, og de havner i lateBonusChecks
+    // (ikke i checks) – læreren må betale ut manuelt.
+    if(!isBon || ssT.checks?.[reqIdx] || ssT.bonusExtraPaidReqs?.[reqIdx]) return;
+    const lateCur=!!(ssT.lateBonusChecks?.[reqIdx]);
+    await window._update(fbRef('workPlanProgress/'+sk+'/'+_apPlanKey+'/steps/'+_apStepIdx+'/lateBonusChecks'),
+      { [reqIdx]: lateCur?null:true });
+    return;
+  }
+  if(_apStepIdx!==(pr.current||0)) return;   // bare aktivt trinn
   const cur=!!(ssT.checks?.[reqIdx]);
-  if(apIsBonusReq((stepT.reqs||[])[reqIdx],reqIdx) && !cur && !apRequiredDone(stepT.reqs,ssT.checks)) return; // bonus låst til de vanlige er gjort
+  if(isBon && !cur && !apRequiredDone(stepT.reqs,ssT.checks)) return; // bonus låst til de vanlige er gjort
   await window._update(
     fbRef('workPlanProgress/'+sk+'/'+_apPlanKey+'/steps/'+_apStepIdx+'/checks'),
     { [reqIdx]: !cur });
@@ -641,8 +656,11 @@ async function apSettleBonus(planKey, idx){
     [base+'/steps/'+idx+'/completed']:true,
     [base+'/steps/'+idx+'/completedTs']:Date.now()
   });
-  const extra=apBonusExtra(step,apApprovedChecks(ss));
-  if(extra>0) await window._update(fbRef(base+'/steps/'+idx),{bonusExtraPaid:extra});
+  const _src=apApprovedChecks(ss);
+  const extra=apBonusExtra(step,_src);
+  const _paidReqs={}; (step.reqs||[]).forEach((r,j)=>{ if(apIsBonusReq(r,j)&&_src[j]) _paidReqs['bonusExtraPaidReqs/'+j]=true; });
+  if(extra>0) _paidReqs['bonusExtraPaid']=extra;
+  if(Object.keys(_paidReqs).length) await window._update(fbRef(base+'/steps/'+idx),_paidReqs);
   if((step.bonus||0)+extra>0){
     const s2=(await window._get(fbRef('students57/'+sk))).val()||{};
     const bonus=(step.bonus||0)+extra;

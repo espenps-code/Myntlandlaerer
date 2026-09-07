@@ -2882,6 +2882,23 @@ function refreshApproveModal(){
     const cur=pr.current||0;
     const nm=`${wpEscAttr(s.firstname)} ${s.lastname?wpEscAttr(s.lastname.charAt(0))+'.':''}`;
     let rows='';
+    // ⭐ Bonusoppgaver eleven har huket av ETTER lærerens godkjenning – betales ut manuelt.
+    for(let i=0;i<nSteps;i++){
+      const step=p.steps[i]||{};
+      const ss=pr.steps?.[i]||{};
+      if(!ss.teacherApproved) continue;
+      const late=wpLateBonusUnpaid(step,ss);
+      if(!late.idx.length) continue;
+      rows+=`<div class="wp-approve-row" style="background:#fff9e6;">
+        <div style="flex:1;min-width:130px;">
+          <div style="font-weight:800;">${nm}</div>
+          <div style="font-size:.78rem;color:var(--muted);font-weight:700;">
+            Trinn ${i+1}/${nSteps}: ${wpEscAttr(step.title)} · ⭐ ${late.idx.length} bonusoppgave${late.idx.length>1?'r':''} gjort i etterkant
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="wpPayLateBonus('${s.fbKey}',${i})">⭐ Betal ut bonus${late.coins>0?' (🪙 '+late.coins+')':''}</button>
+      </div>`;
+    }
     // Passerte «both»-trinn der bonusen ennå venter på en voksen hjemme.
     for(let i=0;i<Math.min(cur,nSteps);i++){
       const step=p.steps[i]||{};
@@ -2996,8 +3013,11 @@ async function wpSettleBonus(planKey, studentKey, idx){
     [base+'/steps/'+idx+'/completedTs']:Date.now()
   });
   // Ekstra mynter for avhukede ⭐ bonusoppgaver legges til trinnbonusen.
-  const extra=(step.reqs||[]).reduce((a,r,j)=>(j>0&&r.bonus&&((ss.approvedChecksTaken?(ss.approvedChecks||{}):(ss.checks||{})))[j])?a+(parseInt(r.bonusCoins)||0):a,0);
-  if(extra>0) await window._update(fbRef(base+'/steps/'+idx),{bonusExtraPaid:extra});
+  const _src=(ss.approvedChecksTaken?(ss.approvedChecks||{}):(ss.checks||{}));
+  const extra=(step.reqs||[]).reduce((a,r,j)=>(j>0&&r.bonus&&_src[j])?a+(parseInt(r.bonusCoins)||0):a,0);
+  const _paidReqs={}; (step.reqs||[]).forEach((r,j)=>{ if(j>0&&r.bonus&&_src[j]) _paidReqs['bonusExtraPaidReqs/'+j]=true; });
+  if(extra>0) _paidReqs['bonusExtraPaid']=extra;
+  if(Object.keys(_paidReqs).length) await window._update(fbRef(base+'/steps/'+idx),_paidReqs);
   if((step.bonus||0)+extra>0){
     const sSnap=await window._get(fbRef('students57/'+studentKey));
     const sv=sSnap.val()||{};
@@ -3011,6 +3031,45 @@ async function wpSettleBonus(planKey, studentKey, idx){
       'Arbeidsplan: «'+(step.title||'Trinn')+'» fullført'+(extra>0?' + ⭐ bonusoppgave':'')+(taxAmt>0?' (netto etter skatt)':''),net);
   }
   return true;
+}
+// Bonusoppgaver huket av i etterkant (lateBonusChecks) som ikke er betalt ennå.
+function wpLateBonusUnpaid(step,ss){
+  const late=(ss&&ss.lateBonusChecks)||{}, paid=(ss&&ss.bonusExtraPaidReqs)||{};
+  const idx=[]; let coins=0;
+  (step.reqs||[]).forEach((r,j)=>{
+    if(j>0&&r.bonus&&late[j]&&!paid[j]){ idx.push(j); coins+=(parseInt(r.bonusCoins)||0); }
+  });
+  return {idx,coins};
+}
+// Betal ut ekstra mynter for bonusoppgaver gjort etter at trinnet ble godkjent.
+// Idempotent: hver bonusoppgave merkes som betalt (bonusExtraPaidReqs/j).
+async function wpPayLateBonus(studentKey, idx){
+  const planKey=_wpApproveKey;
+  const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
+  const step=(p.steps||[])[idx]; if(!step) return;
+  const snap=await window._get(fbRef('workPlanProgress/'+studentKey+'/'+planKey));
+  const pr=snap.val()||{current:0,steps:{}};
+  const ss=(pr.steps&&pr.steps[idx])||{};
+  if(!ss.teacherApproved){ alert('Trinnet er ikke godkjent ennå.'); return; }
+  const late=wpLateBonusUnpaid(step,ss);
+  if(!late.idx.length){ refreshApproveModal(); return; }
+  if(!confirm('Betale ut ⭐ bonusoppgave'+(late.idx.length>1?'r':'')+' på trinn '+(idx+1)+(late.coins>0?' (🪙 '+late.coins+' før skatt)':'')+'?')) return;
+  const base='workPlanProgress/'+studentKey+'/'+planKey+'/steps/'+idx;
+  const upd={}; late.idx.forEach(j=>{ upd['bonusExtraPaidReqs/'+j]=true; });
+  upd['bonusExtraPaid']=(ss.bonusExtraPaid||0)+late.coins;
+  await window._update(fbRef(base),upd);
+  if(late.coins>0){
+    const sSnap=await window._get(fbRef('students57/'+studentKey));
+    const sv=sSnap.val()||{};
+    const _tax=((window._settings&&window._settings.taxRate)||20)/100;
+    const taxAmt=Math.floor(late.coins*_tax);
+    const net=late.coins-taxAmt;
+    await window._update(fbRef('students57/'+studentKey),{balance:(sv.balance||0)+net, badgeTaxContributed:(sv.badgeTaxContributed||0)+taxAmt});
+    if(taxAmt>0) await distributeToGoalsPortal(taxAmt);
+    await logTx(studentKey,'income','⭐',
+      'Arbeidsplan: bonusoppgave på «'+(step.title||'Trinn')+'»'+(taxAmt>0?' (netto etter skatt)':''),net);
+  }
+  refreshApproveModal();
 }
 // Lærer-ventil: frigi bonus uten foresattbekreftelse (når hjemmet ikke svarer).
 async function teacherReleaseBonus(studentKey, idx){
