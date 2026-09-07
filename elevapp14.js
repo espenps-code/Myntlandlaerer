@@ -2849,6 +2849,8 @@ function restSumCheck() {
     document.querySelector('#rest-sum-overlay .rest-sum-display').classList.add('ok');
     document.getElementById('rest-sum-actions').style.display = '';
     if (typeof playSuccessChime === 'function') playSuccessChime();
+    // Tellehjelp på: gå rett videre til tellebrettet – ingen ekstra knappetrykk
+    if (typeof tellehjelpOn === 'function' && tellehjelpOn()) setTimeout(restStartPayment, 700);
     return;
   }
   _restSumTries++;
@@ -2858,6 +2860,7 @@ function restSumCheck() {
     err.textContent = 'Riktig sum er ' + o.total + ' – legg sammen én og én neste gang!';
     document.querySelector('#rest-sum-overlay .rest-sum-display').classList.add('ok');
     document.getElementById('rest-sum-actions').style.display = '';
+    if (typeof tellehjelpOn === 'function' && tellehjelpOn()) setTimeout(restStartPayment, 1800);
   } else {
     err.textContent = guess < o.total ? 'Litt for lite – tell en gang til!' : 'Litt for mye – tell en gang til!';
     _restSumInput = ''; restSumRender();
