@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gangekurset – Myntland</title>
+<meta name="description" content="Myntlands gangekurs for 3.–5. trinn: forstå multiplikasjon gjennom grupper, rekker og tallinja, lær smarte strategier for hver gangetabell, øv med kortstokken – og ta Gangeprøven for å få gangesertifikatet.">
+<meta name="theme-color" content="#1e0f52">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gangekurset">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231e0f52'/%3E%3Ctext x='50' y='72' font-size='64' text-anchor='middle' fill='%23EF9F27' font-family='Arial' font-weight='bold'%3E×%3C/text%3E%3C/svg%3E">
+
+<!-- Delt Myntland-styling (palett + fonter), deretter kursets egen CSS -->
+<link rel="stylesheet" href="myntland.css">
+<link rel="stylesheet" href="gangekurs.css">
+</head>
+<body>
+
+<nav class="topnav ikke-print">
+  <div class="topnav-inner">
+    <a class="topnav-logo" href="index.html">Myntland <span>Gangekurset</span></a>
+    <div class="topnav-right">
+      <button class="topnav-btn sekundaer" id="nav-laerer" type="button">For læreren</button>
+      <button class="topnav-btn" id="nav-hjem" type="button">Kursoversikt</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- ================= HJEM ================= -->
+  <section class="skjerm aktiv" id="skjerm-hjem">
+    <div class="kort hero">
+      <div>
+        <span class="pill">3.–5. trinn · tabellene 1–10</span>
+        <h1>Gangekurset</h1>
+        <p class="stor">Bli gangemester! Først skjønner du <b>hva</b> ganging er, så lærer du <b>smarte triks</b> for hver tabell, og til slutt øver du til du kan alt på rams. Klarer du Gangeprøven, får du <b>gangesertifikatet</b>.</p>
+        <p class="muted" id="hjem-hilsen"></p>
+        <div class="knapperad">
+          <button class="knapp gronn" id="hjem-start" type="button">Fortsett kurset</button>
+          <button class="knapp hvit liten" id="hjem-navn" type="button">Bytt kallenavn</button>
+        </div>
+      </div>
+      <img src="gangekurs/gangemonster.webp" alt="Gangemonsteret holder et gangetegn">
+    </div>
+
+    <div class="kort" style="margin-top:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <h2>Din vei til sertifikatet</h2>
+        <div style="flex:1 1 220px;max-width:360px"><div class="fremdrift"><div id="hjem-fremdrift"></div></div></div>
+      </div>
+      <p class="muted">Trinnene låses opp ett og ett. Du kan alltid gå tilbake og øve mer på et trinn du har fullført.</p>
+
+      <div class="del-tittel"><span class="nr">1</span><div><b>Hva er ganging?</b><small>Grupper, rekker og hopp – ganging du kan se og ta på</small></div></div>
+      <div class="trapp" id="trapp-del1"></div>
+
+      <div class="del-tittel"><span class="nr">2</span><div><b>Smarte strategier</b><small>Én tabell om gangen – i den rekkefølgen som gjør det lettest</small></div></div>
+      <div class="trapp" id="trapp-del2"></div>
+
+      <div class="del-tittel"><span class="nr">3</span><div><b>Øv til du kan det</b><small>Kortstokken, mønstre i tabellen og oppgaver fra Myntland</small></div></div>
+      <div class="trapp" id="trapp-del3"></div>
+    </div>
+
+    <div class="kort provekort" id="provekort" style="margin-top:1rem">
+      <img src="gangekurs/diplom.webp" alt="">
+      <div>
+        <h2>Gangeprøven</h2>
+        <p id="provekort-tekst">Fullfør alle 12 trinnene for å låse opp Gangeprøven. Består du, får du gangesertifikatet med navnet ditt på.</p>
+      </div>
+      <div><button class="knapp lilla" id="prove-start" type="button" disabled>Ta Gangeprøven</button></div>
+    </div>
+
+    <div class="kort" id="diplomkort" style="margin-top:1rem;display:none">
+      <h2>🎓 Du har gangesertifikatet!</h2>
+      <p id="diplomkort-tekst"></p>
+      <div class="knapperad"><button class="knapp gronn" id="diplom-vis" type="button">Vis sertifikatet</button></div>
+    </div>
+  </section>
+
+  <!-- ================= TRINN (intro + oppgaver) ================= -->
+  <section class="skjerm" id="skjerm-trinn">
+    <div class="kort" id="trinn-intro"></div>
+    <div class="kort" id="trinn-oppgaver" style="display:none">
+      <div class="oppg-topp">
+        <span class="teller" id="oppg-teller"></span>
+        <div class="fremdrift"><div id="oppg-fremdrift"></div></div>
+        <button class="knapp hvit liten ikke-print" id="oppg-avbryt" type="button">Avslutt</button>
+      </div>
+      <div id="oppg-flate"></div>
+      <div class="tilbakemelding" id="oppg-feedback"></div>
+      <div class="knapperad" id="oppg-knapper"></div>
+    </div>
+    <div class="kort" id="trinn-ferdig" style="display:none"></div>
+  </section>
+
+  <!-- ================= GANGEPRØVEN ================= -->
+  <section class="skjerm" id="skjerm-prove">
+    <div class="kort" id="prove-flate"></div>
+  </section>
+
+  <!-- ================= DIPLOM ================= -->
+  <section class="skjerm" id="skjerm-diplom">
+    <div class="knapperad ikke-print" style="margin:0 0 1rem">
+      <button class="knapp gronn" id="diplom-print" type="button">🖨️ Skriv ut sertifikatet</button>
+      <button class="knapp hvit" id="diplom-tilbake" type="button">Tilbake</button>
+    </div>
+    <div class="kort"><div class="diplom" id="diplom"></div></div>
+  </section>
+
+  <!-- ================= FOR LÆREREN ================= -->
+  <section class="skjerm" id="skjerm-laerer">
+    <div class="kort laerer" id="laerer-innhold"></div>
+  </section>
+
+</main>
+
+<!-- Navn-modal -->
+<div class="modal-bak" id="navn-modal">
+  <div class="modal">
+    <h2>Hva er kallenavnet ditt?</h2>
+    <p class="muted">Bruk kallenavnet fra Myntland (f.eks. Stjerne eller Drage) – ikke det ekte navnet ditt. Navnet står på sertifikatet.</p>
+    <input id="navn-input" type="text" maxlength="24" placeholder="Kallenavn" autocomplete="off">
+    <div class="knapperad" style="margin-top:.2rem">
+      <button class="knapp gronn" id="navn-ok" type="button">Start!</button>
+    </div>
+  </div>
+</div>
+
+<div class="konfetti" id="konfetti"></div>
+
+<script src="gangekurs.js"></script>
+</body>
+</html>
