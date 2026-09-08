@@ -48,6 +48,7 @@ const EMOJI = ['🍎', '🪙', '⭐', '🍪', '🎈', '🐟', '🌸', '🧁'];
 
 /* ---------- skjermer ---------- */
 function visSkjerm(id) {
+  if (typeof stoppForklaring === 'function') stoppForklaring();
   $$('.skjerm').forEach(s => s.classList.toggle('aktiv', s.id === 'skjerm-' + id));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -476,6 +477,362 @@ function oppgTabell(t, u) {
 }
 
 /* ============================================================
+   ANIMERTE FORKLARINGER
+   Hvert trinn har en liste scener: {tekst, dur, tegn(stage)}.
+   tekst = det som leses inn (fil gangekurs/lyd/t<trinn>-<scene>.mp3)
+   og vises som undertekst. Finnes ikke lydfila, går scenen på timer (dur).
+   ============================================================ */
+const LYDSTI = 'gangekurs/lyd/';
+let lydPaa = true;
+
+/* --- tegnehjelpere --- */
+function fEl(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function fRekke(stage, rader, kol, opt) {
+  // opt: {start (ms), steg (ms per celle), radvis, innhold, klasse, del, id}
+  opt = opt || {};
+  const g = fEl('div', 'f-rekke ' + (opt.klasse || ''));
+  g.style.gridTemplateColumns = `repeat(${kol},auto)`;
+  if (opt.id) g.id = opt.id;
+  const start = opt.start || 0, steg = opt.steg == null ? 60 : opt.steg;
+  for (let r = 0; r < rader; r++) for (let c = 0; c < kol; c++) {
+    const d = fEl('div', 'f-celle popp' + (opt.del != null && c >= opt.del ? ' del' : ''), opt.innhold || '');
+    d.dataset.r = r; d.dataset.c = c;
+    const idx = opt.radvis === false ? c * rader + r : r * kol + c;
+    d.style.animationDelay = (start + idx * steg) + 'ms';
+    g.appendChild(d);
+  }
+  stage.appendChild(g);
+  return g;
+}
+function fTekst(stage, html, delay, cls) {
+  const t = fEl('div', 'f-tekst popp ' + (cls || ''), html);
+  t.style.animationDelay = (delay || 0) + 'ms';
+  stage.appendChild(t); return t;
+}
+function fEtikett(stage, html, delay, cls) {
+  const t = fEl('div', 'f-etikett popp ' + (cls || ''), html);
+  t.style.animationDelay = (delay || 0) + 'ms';
+  stage.appendChild(t); return t;
+}
+function fGrupper(stage, ant, per, emoji, start, steg) {
+  const g = fEl('div', 'f-grupper');
+  for (let i = 0; i < ant; i++) {
+    const t = fEl('div', 'f-tallerken popp'); t.style.animationDelay = (start + i * 400) + 'ms';
+    for (let j = 0; j < per; j++) { const s = fEl('span', 'popp', emoji); s.style.animationDelay = (start + i * 400 + 150 + j * (steg || 120)) + 'ms'; t.appendChild(s); }
+    g.appendChild(t);
+  }
+  stage.appendChild(g); return g;
+}
+function fRad(stage) { const r = fEl('div', 'f-rad'); stage.appendChild(r); return r; }
+function fTallinje(stage, n, k, opt) {
+  opt = opt || {};
+  const maks = n * k + (opt.luft == null ? n : opt.luft);
+  const W = 100; // prosent
+  const x = v => (4 + v * 92 / maks) + '%';
+  const l = fEl('div', 'f-tallinje');
+  l.appendChild(fEl('div', 'strek'));
+  for (let v = 0; v <= maks; v++) {
+    const m = fEl('div', 'merke'); m.style.left = x(v); l.appendChild(m);
+    if (maks <= 30 || v % n === 0) { const t = fEl('div', 'tall' + (v > 0 && v % n === 0 ? ' mål' : ''), v); t.style.left = x(v); if (v > 0 && v % n === 0) { t.classList.add('popp'); t.style.animationDelay = (opt.start + (v / n) * opt.steg + 300) + 'ms'; } l.appendChild(t); }
+  }
+  for (let i = 0; i < k; i++) {
+    const b = fEl('div', 'bue popp'); b.style.left = x(i * n); b.style.width = `calc(${x((i + 1) * n)} - ${x(i * n)})`; b.style.animationDelay = (opt.start + i * opt.steg) + 'ms'; l.appendChild(b);
+  }
+  const fig = fEl('div', 'figur', opt.figur || '🐸'); fig.style.left = x(0); l.appendChild(fig);
+  for (let i = 1; i <= k; i++) setTimeout(() => { fig.style.left = x(i * n); fig.classList.add('hopp'); setTimeout(() => fig.classList.remove('hopp'), 350); }, opt.start + (i - 1) * opt.steg + 100);
+  stage.appendChild(l); return l;
+}
+function fFlashkort(stage, tekst, delay, farge) {
+  const k = fEl('div', 'f-flash popp ' + (farge || ''), tekst); k.style.animationDelay = (delay || 0) + 'ms'; stage.appendChild(k); return k;
+}
+function senere(fn, ms) { const t = setTimeout(fn, ms); aktiveTimere.push(t); }
+let aktiveTimere = [];
+
+/* --- scenene --- */
+const FORKLARINGER = {
+1: [
+  { tekst: 'Ganging er å telle like grupper – fort. Se her: fire tallerkener, og tre epler på hver.', dur: 7000, tegn(s) {
+    fGrupper(s, 4, 3, '🍎', 300, 130);
+  } },
+  { tekst: 'Vi kunne telle tre pluss tre pluss tre pluss tre. Det blir tolv.', dur: 6000, tegn(s) {
+    fGrupper(s, 4, 3, '🍎', 0, 0);
+    fTekst(s, '3 + 3 + 3 + 3 = <b>12</b>', 800);
+  } },
+  { tekst: 'Men det er raskere å si: fire ganger tre. Fire grupper – med tre i hver. Fire ganger tre er tolv.', dur: 8000, tegn(s) {
+    fGrupper(s, 4, 3, '🍎', 0, 0);
+    fTekst(s, '<span class="f-a">4</span> · <span class="f-b">3</span> = <b>12</b>', 600);
+    fEtikett(s, '<span class="f-a">4 grupper</span> · <span class="f-b">3 i hver</span>', 2500);
+  } },
+  { tekst: 'Det første tallet sier hvor mange grupper. Det andre sier hvor mange i hver gruppe. Og prikken betyr «ganger».', dur: 8000, tegn(s) {
+    fTekst(s, '<span class="f-a f-stor">4</span> · <span class="f-b f-stor">3</span>', 0);
+    fEtikett(s, '<span class="f-a">↑ hvor mange grupper</span>', 800);
+    fEtikett(s, '<span class="f-b">↑ hvor mange i hver</span>', 2800);
+    fEtikett(s, '<span class="f-lilla">· betyr «ganger»</span>', 5000);
+  } },
+],
+2: [
+  { tekst: 'Når vi legger tingene i rekker med like mange i hver, ser vi gangestykket med én gang. Her er tre rekker med fire mynter.', dur: 8000, tegn(s) {
+    fRekke(s, 3, 4, { start: 300, steg: 120, innhold: '🪙' });
+    fEtikett(s, '<span class="f-a">3 rekker</span> · <span class="f-b">4 i hver</span>', 2200);
+    fTekst(s, '3 · 4 = <b>12</b>', 3500);
+  } },
+  { tekst: 'Og nå kommer den beste hemmeligheten i hele gangetabellen. Vi snur rekka!', dur: 6000, tegn(s) {
+    const g = fRekke(s, 3, 4, { steg: 0, innhold: '🪙', id: 'snu' });
+    senere(() => g.classList.add('snu'), 1500);
+  } },
+  { tekst: 'Nå er det fire rekker med tre. Men det er fortsatt tolv mynter! Derfor er tre ganger fire det samme som fire ganger tre.', dur: 9000, tegn(s) {
+    fRekke(s, 4, 3, { steg: 0, innhold: '🪙' });
+    fEtikett(s, '<span class="f-b">4 rekker</span> · <span class="f-a">3 i hver</span>', 500);
+    fTekst(s, '3 · 4 = 4 · 3 = <b>12</b>', 3000);
+  } },
+  { tekst: 'Kan du ett gangestykke, kan du alltid to. Det halverer alt du må lære.', dur: 6000, tegn(s) {
+    const r = fRad(s);
+    [['3 · 4', 12], ['4 · 3', 12], ['6 · 8', 48], ['8 · 6', 48]].forEach((p, i) => { const k = fFlashkort(r, `${p[0]} = ${p[1]}`, 300 + i * 500, i % 2 ? 'gronn' : ''); });
+    fEtikett(s, 'Ett stykke – to svar du kan!', 2800);
+  } },
+],
+3: [
+  { tekst: 'Ganging er også like lange hopp på tallinja. Frosken hopper med fem – fire ganger.', dur: 8000, tegn(s) {
+    fTallinje(s, 5, 4, { start: 1500, steg: 1200, figur: '🐸' });
+  } },
+  { tekst: 'Fem, ti, femten, tjue. Fire hopp med fem – frosken landet på tjue. Fire ganger fem er tjue.', dur: 8000, tegn(s) {
+    fTallinje(s, 5, 4, { start: 300, steg: 900, figur: '🐸' });
+    fTekst(s, '4 · 5 = <b>20</b>', 4500);
+  } },
+  { tekst: 'Når du teller fem, ti, femten, tjue, kaller vi det å telle med fem. Å kunne telle med to, fem og ti er superkrefter i ganging!', dur: 9000, tegn(s) {
+    const r = fRad(s);
+    fFlashkort(r, '2, 4, 6, 8, 10 …', 300, 'gul');
+    fFlashkort(r, '5, 10, 15, 20 …', 1800, 'gronn');
+    fFlashkort(r, '10, 20, 30, 40 …', 3300, 'lilla');
+    fEtikett(s, '💪 Superkrefter: telle med 2, 5 og 10', 5000);
+  } },
+],
+4: [
+  { tekst: 'Nå kan du mange måter å se ganging på. Se på tre ganger fire.', dur: 5000, tegn(s) {
+    fTekst(s, '<span class="f-stor">3 · 4</span>', 300);
+  } },
+  { tekst: 'Like grupper. Rekker. Hopp på tallinja. Og gjentatt pluss: fire pluss fire pluss fire. Alt sammen er tre ganger fire.', dur: 11000, tegn(s) {
+    const r = fRad(s); r.classList.add('fire');
+    const a = fEl('div', 'f-panel popp'); a.style.animationDelay = '300ms'; fGrupper(a, 3, 4, '⭐', 300, 60); a.appendChild(fEl('small', '', 'grupper')); r.appendChild(a);
+    const b = fEl('div', 'f-panel popp'); b.style.animationDelay = '2600ms'; fRekke(b, 3, 4, { start: 2600, steg: 60, innhold: '🪙', klasse: 'liten' }); b.appendChild(fEl('small', '', 'rekke')); r.appendChild(b);
+    const c = fEl('div', 'f-panel popp'); c.style.animationDelay = '4800ms'; c.appendChild(fEl('div', 'f-mini', '4 → 8 → 12')); c.appendChild(fEl('small', '', 'hopp')); r.appendChild(c);
+    const d = fEl('div', 'f-panel popp'); d.style.animationDelay = '7000ms'; d.appendChild(fEl('div', 'f-mini', '4 + 4 + 4')); d.appendChild(fEl('small', '', 'pluss')); r.appendChild(d);
+    fTekst(s, 'Alt er <b>3 · 4 = 12</b>', 9000);
+  } },
+  { tekst: 'Og du kan fortelle det som en historie: tre barn får fire mynter hver. Den som virkelig skjønner ganging, kan bytte mellom bildene. Er et stykke vanskelig – tegn det på en annen måte!', dur: 11000, tegn(s) {
+    fTekst(s, '👧👦🧒 &nbsp;får 🪙🪙🪙🪙 hver', 500, 'f-mindre');
+    fEtikett(s, '«Tre barn får fire mynter hver» = 3 · 4', 3000);
+    fEtikett(s, '💡 Vanskelig stykke? Tegn det på en annen måte!', 7000);
+  } },
+],
+5: [
+  { tekst: 'To-gangen er å doble. To ganger sju er sju pluss sju – fjorten.', dur: 7000, tegn(s) {
+    const r = fRad(s);
+    fRekke(r, 1, 7, { start: 300, steg: 100, innhold: '🪙' });
+    fRekke(r, 1, 7, { start: 2500, steg: 100, innhold: '🪙' });
+    fTekst(s, '2 · 7 = 7 + 7 = <b>14</b>', 4000);
+  } },
+  { tekst: 'Ti-gangen er tiere. Ti ganger sju er sju tiere – sytti. Bare sett en null bak!', dur: 8000, tegn(s) {
+    fRekke(s, 7, 10, { start: 300, steg: 25, innhold: '', klasse: 'liten' });
+    fTekst(s, '10 · 7 = 7 tiere = <b>7<span class="f-null popp" style="animation-delay:4500ms">0</span></b>', 3000);
+  } },
+  { tekst: 'Og fem-gangen er halvparten av ti-gangen. Ti ganger seks er seksti – så fem ganger seks er tretti.', dur: 8000, tegn(s) {
+    const g = fRekke(s, 6, 10, { start: 300, steg: 25, innhold: '', klasse: 'liten', del: 5 });
+    senere(() => g.classList.add('halv'), 3500);
+    fTekst(s, '10 · 6 = 60 &nbsp;→&nbsp; 5 · 6 = <b>30</b>', 4500);
+  } },
+  { tekst: 'Disse tre tabellene kan du nesten allerede – og de er nøkkelen til alle de andre.', dur: 6000, tegn(s) {
+    const r = fRad(s);
+    fFlashkort(r, '2-gangen', 300, 'gul'); fFlashkort(r, '5-gangen', 1000, 'gronn'); fFlashkort(r, '10-gangen', 1700, 'lilla');
+    fEtikett(s, '🔑 Nøkkelen til alle de andre', 3000);
+  } },
+],
+6: [
+  { tekst: 'Kan du to-gangen, kan du fire-gangen. Du dobler bare to ganger. Se: to rekker med seks er tolv.', dur: 8000, tegn(s) {
+    fRekke(s, 2, 6, { start: 300, steg: 100, innhold: '🪙' });
+    fTekst(s, '2 · 6 = <b>12</b>', 2500);
+  } },
+  { tekst: 'Dobbelt opp – fire rekker med seks. Tolv pluss tolv er tjuefire. Fire ganger seks er tjuefire.', dur: 8000, tegn(s) {
+    fRekke(s, 2, 6, { steg: 0, innhold: '🪙' });
+    fRekke(s, 2, 6, { start: 800, steg: 80, innhold: '🪙', klasse: 'blaa' });
+    fTekst(s, '4 · 6 = 12 + 12 = <b>24</b>', 3500);
+  } },
+  { tekst: 'Og åtte-gangen er fire-gangen doblet. Tjuefire pluss tjuefire er førtiåtte. Hver gang blir det dobbelt så mange.', dur: 9000, tegn(s) {
+    fRekke(s, 4, 6, { steg: 0, innhold: '🪙', klasse: 'liten' });
+    fRekke(s, 4, 6, { start: 800, steg: 50, innhold: '🪙', klasse: 'liten blaa' });
+    fTekst(s, '8 · 6 = 24 + 24 = <b>48</b>', 3500);
+    fEtikett(s, '2 · 6 → 4 · 6 → 8 · 6: dobbelt hver gang', 6000);
+  } },
+],
+7: [
+  { tekst: 'Tre-gangen: doble, og legg til én gang til. Tre ganger sju – først to ganger sju, det er fjorten.', dur: 8000, tegn(s) {
+    fRekke(s, 2, 7, { start: 300, steg: 100, innhold: '🪙' });
+    fTekst(s, '2 · 7 = <b>14</b>', 2800);
+  } },
+  { tekst: 'Så én rekke til med sju. Fjorten pluss sju er tjueen. Tre ganger sju er tjueen.', dur: 7000, tegn(s) {
+    fRekke(s, 2, 7, { steg: 0, innhold: '🪙' });
+    fRekke(s, 1, 7, { start: 800, steg: 100, innhold: '🪙', klasse: 'blaa' });
+    fTekst(s, '3 · 7 = 14 + 7 = <b>21</b>', 3000);
+  } },
+  { tekst: 'Og seks-gangen er tre-gangen doblet. Tjueen pluss tjueen er førtito. Husk også snu-regelen: seks ganger fire er det samme som fire ganger seks – som du allerede kan!', dur: 11000, tegn(s) {
+    fRekke(s, 3, 7, { steg: 0, innhold: '🪙', klasse: 'liten' });
+    fRekke(s, 3, 7, { start: 800, steg: 50, innhold: '🪙', klasse: 'liten blaa' });
+    fTekst(s, '6 · 7 = 21 + 21 = <b>42</b>', 3200);
+    fEtikett(s, '🔁 6 · 4 = 4 · 6 – det kan du fra før', 7500);
+  } },
+],
+8: [
+  { tekst: 'Ni er nesten ti. Se på ti rekker med sju – det er sytti.', dur: 6000, tegn(s) {
+    fRekke(s, 10, 7, { start: 300, steg: 30, innhold: '', klasse: 'liten', id: 'ni' });
+    fTekst(s, '10 · 7 = <b>70</b>', 3000);
+  } },
+  { tekst: 'Ta bort den siste rekka – én sjuer. Sytti minus sju er sekstitre. Ni ganger sju er sekstitre.', dur: 8000, tegn(s) {
+    const g = fRekke(s, 10, 7, { steg: 0, innhold: '', klasse: 'liten' });
+    senere(() => g.querySelectorAll('[data-r="9"]').forEach(c => c.classList.add('vekk')), 1500);
+    fTekst(s, '9 · 7 = 70 − 7 = <b>63</b>', 3500);
+  } },
+  { tekst: 'Og sjekk svaret: i ni-gangen blir sifrene alltid ni til sammen. Seks pluss tre er ni. Og tieren er én mindre enn tallet du ganger med.', dur: 10000, tegn(s) {
+    fTekst(s, '9 · 7 = <span class="f-a">6</span><span class="f-b">3</span>', 300);
+    fEtikett(s, '<span class="f-a">6</span> + <span class="f-b">3</span> = 9 ✓', 3000);
+    fEtikett(s, 'Tieren er 6 – én mindre enn 7 ✓', 6500);
+  } },
+],
+9: [
+  { tekst: 'Nå er det bare noen få stykker igjen – som sju ganger åtte. For dem bruker vi det kraftigste trikset av alle: del opp.', dur: 8000, tegn(s) {
+    fRekke(s, 7, 8, { start: 300, steg: 25, innhold: '', klasse: 'liten', id: 'delopp' });
+    fTekst(s, '7 · 8 = ?', 2500);
+  } },
+  { tekst: 'Del rekka ved fem. Da får du sju ganger fem – det er trettifem – og sju ganger tre – det er tjueen.', dur: 9000, tegn(s) {
+    const g = fRekke(s, 7, 8, { steg: 0, innhold: '', klasse: 'liten', del: 5 });
+    senere(() => g.classList.add('vis-del'), 1200);
+    fTekst(s, '7 · 5 = <b>35</b> &nbsp;og&nbsp; <span class="f-gronn">7 · 3 = <b>21</b></span>', 3500);
+  } },
+  { tekst: 'Trettifem pluss tjueen er femtiseks. Sju ganger åtte er femtiseks! Du kan dele hvor du vil – bare velg biter du kan.', dur: 9000, tegn(s) {
+    fRekke(s, 7, 8, { steg: 0, innhold: '', klasse: 'liten vis-del', del: 5 });
+    fTekst(s, '7 · 8 = 35 + 21 = <b>56</b>', 800);
+    fEtikett(s, '✂️ Del der du vil – velg biter du kan', 5000);
+  } },
+],
+10: [
+  { tekst: 'Her er hele gangetabellen. Se på den gule diagonalen – det er kvadrattallene: en, fire, ni, seksten …', dur: 9000, tegn(s) {
+    const t = fEl('div', 'f-tabell');
+    for (let r = 1; r <= 10; r++) for (let c = 1; c <= 10; c++) { const d = fEl('div', 'popp' + (r === c ? ' kv' : ''), r * c); d.style.animationDelay = ((r + c) * 120) + 'ms'; if (r === c) d.style.animationDelay = (2600 + r * 300) + 'ms'; t.appendChild(d); }
+    s.appendChild(t);
+  } },
+  { tekst: 'Speil du tabellen langs diagonalen, er tallene like. Tre ganger fire og fire ganger tre – det er snu-regelen!', dur: 8000, tegn(s) {
+    const t = fEl('div', 'f-tabell');
+    for (let r = 1; r <= 10; r++) for (let c = 1; c <= 10; c++) { const d = fEl('div', (r === c ? 'kv' : '') + ((r === 3 && c === 4) || (r === 4 && c === 3) ? ' blink' : '') + (c < r ? ' dim' : ''), r * c); t.appendChild(d); }
+    s.appendChild(t);
+    fTekst(s, '3 · 4 = 4 · 3 = 12', 2500, 'f-mindre');
+  } },
+  { tekst: 'Og hvert gangestykke har en familie: tre ganger fire er tolv, fire ganger tre er tolv, tolv delt på fire er tre, og tolv delt på tre er fire. Deling er ganging baklengs!', dur: 12000, tegn(s) {
+    const r = fRad(s);
+    fFlashkort(r, '3 · 4 = 12', 300, 'gul'); fFlashkort(r, '4 · 3 = 12', 2300, 'gul');
+    fFlashkort(r, '12 : 4 = 3', 4500, 'gronn'); fFlashkort(r, '12 : 3 = 4', 6700, 'gronn');
+    fEtikett(s, '👨‍👩‍👧‍👦 Gangefamilien: kan du ett, kan du fire', 9000);
+  } },
+],
+11: [
+  { tekst: 'Nå skal stykkene inn i hodet for godt. Kortstokken har alle femtifem stykkene. Hvert kort starter grått.', dur: 7000, tegn(s) {
+    const r = fRad(s);
+    ['3 · 7', '6 · 8', '4 · 9', '7 · 7'].forEach((k, i) => fFlashkort(r, k, 300 + i * 400, 'graa'));
+    fEtikett(s, '55 kort – alle grå til å begynne med', 2500);
+  } },
+  { tekst: 'Svarer du riktig, blir kortet gult. Svarer du riktig igjen en annen dag, blir det grønt. Da sitter det!', dur: 8000, tegn(s) {
+    const r = fRad(s);
+    const k = fFlashkort(r, '6 · 8', 0, 'graa');
+    senere(() => { k.className = 'f-flash gul'; k.textContent = '6 · 8 = 48'; }, 1500);
+    fEtikett(s, '☀️ i dag: gult', 1500);
+    senere(() => { k.className = 'f-flash gronn'; }, 4500);
+    fEtikett(s, '🌙 en annen dag: grønt ✓', 4500);
+  } },
+  { tekst: 'Svarer du feil, får du strategien – og kortet går tilbake. Øv fem minutter om gangen, gjerne hver dag. Det virker mye bedre enn én lang økt.', dur: 9000, tegn(s) {
+    const r = fRad(s);
+    const k = fFlashkort(r, '7 · 8', 0, 'gul');
+    senere(() => { k.className = 'f-flash graa rist'; }, 1500);
+    fEtikett(s, '💡 7 · 8 = 7 · 5 + 7 · 3', 1800);
+    fEtikett(s, '⏱️ 5 minutter hver dag > én lang økt', 5000);
+  } },
+],
+12: [
+  { tekst: 'Siste trinn! Nå bruker du ganging på ekte oppgaver – og på stykker utenfor tabellen, som seks ganger tolv.', dur: 7000, tegn(s) {
+    fTekst(s, '<span class="f-stor">6 · 12</span> = ?', 300);
+  } },
+  { tekst: 'Trikset er det samme som før: del opp i biter du kan. Seks ganger ti er seksti. Seks ganger to er tolv.', dur: 8000, tegn(s) {
+    const g = fRekke(s, 6, 12, { start: 200, steg: 20, innhold: '', klasse: 'liten', del: 10 });
+    senere(() => g.classList.add('vis-del'), 2000);
+    fTekst(s, '6 · 10 = <b>60</b> &nbsp;og&nbsp; <span class="f-gronn">6 · 2 = <b>12</b></span>', 3500);
+  } },
+  { tekst: 'Seksti pluss tolv er syttito. Seks ganger tolv er syttito. Den som klarer dette, er klar for Gangeprøven!', dur: 8000, tegn(s) {
+    fRekke(s, 6, 12, { steg: 0, innhold: '', klasse: 'liten vis-del', del: 10 });
+    fTekst(s, '6 · 12 = 60 + 12 = <b>72</b>', 800);
+    fEtikett(s, '🎓 Klar for Gangeprøven!', 4500);
+  } },
+],
+};
+
+/* --- spilleren --- */
+let aktivLyd = null;
+function stoppForklaring() {
+  aktiveTimere.forEach(clearTimeout); aktiveTimere = [];
+  if (aktivLyd) { try { aktivLyd.pause(); } catch (e) { /* */ } aktivLyd = null; }
+}
+function lagForklaringsspiller(mount, trinnId, bilde) {
+  const scener = FORKLARINGER[trinnId];
+  if (!scener || !scener.length) return;
+  const boks = fEl('div', 'f-spiller');
+  boks.innerHTML = `
+    <div class="f-scene" id="f-scene">
+      <img src="${bilde}" alt="" class="f-plakat">
+      <button type="button" class="f-play" id="f-play">▶ Se forklaringen</button>
+    </div>
+    <div class="f-undertekst" id="f-undertekst">Trykk på ▶ for å se forklaringen med bilder${lydPaa ? ' og lyd' : ''}.</div>
+    <div class="f-kontroll">
+      <button type="button" class="knapp hvit liten" id="f-forrige" disabled>◀ Forrige</button>
+      <div class="f-prikker" id="f-prikker">${scener.map((_, i) => `<i data-i="${i}"></i>`).join('')}</div>
+      <button type="button" class="knapp hvit liten" id="f-neste" disabled>Neste ▶</button>
+      <button type="button" class="knapp hvit liten" id="f-lyd" title="Lyd av/på">${lydPaa ? '🔊' : '🔇'}</button>
+    </div>`;
+  mount.appendChild(boks);
+  const stage = $('#f-scene', boks), ut = $('#f-undertekst', boks), prikker = $$('#f-prikker i', boks);
+  const bForrige = $('#f-forrige', boks), bNeste = $('#f-neste', boks), bLyd = $('#f-lyd', boks);
+  let i = -1, ferdig = false;
+
+  function visScene(n) {
+    stoppForklaring();
+    i = n; ferdig = false;
+    const sc = scener[i];
+    stage.innerHTML = ''; stage.classList.add('aktiv');
+    sc.tegn(stage);
+    ut.textContent = sc.tekst;
+    prikker.forEach((p, j) => p.classList.toggle('aktiv', j === i));
+    bForrige.disabled = i === 0; bNeste.disabled = false;
+    bNeste.textContent = i === scener.length - 1 ? 'Spill igjen ↺' : 'Neste ▶';
+    // lyd eller timer
+    let gikkVidere = false;
+    const videre = () => { if (gikkVidere) return; gikkVidere = true; if (i < scener.length - 1) visScene(i + 1); else avslutt(); };
+    if (lydPaa) {
+      const a = new Audio(LYDSTI + `t${trinnId}-${i + 1}.mp3`);
+      aktivLyd = a;
+      a.addEventListener('ended', () => senere(videre, 700));
+      a.addEventListener('error', () => { if (aktivLyd === a) senere(videre, sc.dur); });
+      a.play().catch(() => { if (aktivLyd === a) senere(videre, sc.dur); });
+    } else senere(videre, sc.dur);
+  }
+  function avslutt() {
+    ferdig = true;
+    stage.classList.remove('aktiv');
+    const p = fEl('button', 'f-play', '↺ Se igjen'); p.type = 'button'; p.onclick = () => visScene(0); stage.appendChild(p);
+    ut.textContent = 'Det var forklaringen. Nå kan du prøve selv!';
+  }
+  $('#f-play', boks).onclick = () => visScene(0);
+  bForrige.onclick = () => { if (i > 0) visScene(i - 1); };
+  bNeste.onclick = () => { if (i < 0) visScene(0); else if (i < scener.length - 1) visScene(i + 1); else visScene(0); };
+  bLyd.onclick = () => { lydPaa = !lydPaa; bLyd.textContent = lydPaa ? '🔊' : '🔇'; if (i >= 0 && !ferdig) visScene(i); };
+  return boks;
+}
+
+/* ============================================================
    TRINNENE
    Hvert trinn: intro (bilde + forklaring), «Gjør det med hendene»,
    «Snakk sammen» og en liste oppgaver som genereres ved start.
@@ -884,6 +1241,7 @@ function aapneTrinn(id) {
   intro.innerHTML = `
     <span class="pill" style="display:inline-block;background:var(--lilla-lys);color:var(--lilla);font-weight:900;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:.25rem .7rem">Trinn ${t.id} av 12</span>
     <h2 style="margin:.3rem 0 .6rem">${t.tittel}</h2>
+    <div id="f-mount"></div>
     <div class="intro-grid">
       <div>${t.intro}</div>
       <img src="${t.bilde}" alt="">
@@ -894,8 +1252,10 @@ function aapneTrinn(id) {
       <button class="knapp gronn" id="trinn-start" type="button">${t.kortstokk ? 'Åpne kortstokken' : (S.ferdig[id] ? 'Øv en gang til' : 'Start oppgavene')}</button>
       <button class="knapp hvit" id="trinn-tilbake" type="button">Tilbake</button>
     </div>`;
+  lagForklaringsspiller($('#f-mount', intro), id, t.bilde);
   $('#trinn-tilbake').onclick = visHjem;
   $('#trinn-start').onclick = () => {
+    stoppForklaring();
     if (t.kortstokk) { intro.style.display = 'none'; const f = $('#trinn-ferdig'); f.style.display = 'block'; visKortstokk(f, () => aapneTrinn(id)); }
     else startOppgaver(t);
   };

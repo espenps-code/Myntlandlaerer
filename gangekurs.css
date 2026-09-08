@@ -338,3 +338,69 @@ p{ margin:.5rem 0; }
   .diplom{ box-shadow:none; max-width:none; border-width:6px; page-break-inside:avoid; }
   .kort{ box-shadow:none; border:none; padding:0; }
 }
+
+/* ---------- animert forklaring ---------- */
+.f-spiller{ margin:.2rem 0 1rem; }
+.f-scene{
+  position:relative; min-height:280px; border:3px solid var(--navy); border-radius:18px; background:#fff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.6rem; padding:1rem; overflow:hidden;
+}
+.f-scene .f-plakat{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.55; }
+.f-play{
+  position:relative; z-index:2; font-family:inherit; font-weight:900; font-size:1.2rem; color:#fff; background:var(--lilla);
+  border:3px solid var(--navy); border-radius:999px; padding:.8rem 1.6rem; box-shadow:0 4px 0 var(--navy); cursor:pointer;
+}
+.f-play:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--navy); }
+.f-undertekst{
+  margin-top:.6rem; background:var(--navy); color:#fff; font-weight:800; font-size:clamp(1rem,2.2vw,1.2rem); border-radius:14px; padding:.7rem 1rem; min-height:3.2rem; line-height:1.4;
+}
+.f-kontroll{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.6rem; flex-wrap:wrap; }
+.f-prikker{ display:flex; gap:.4rem; flex:1; justify-content:center; }
+.f-prikker i{ width:12px; height:12px; border-radius:50%; background:#dcd9ee; border:2px solid var(--navy); display:block; }
+.f-prikker i.aktiv{ background:var(--gull); }
+
+@keyframes popp{ from{ opacity:0; transform:scale(.4); } 70%{ transform:scale(1.12); } to{ opacity:1; transform:scale(1); } }
+.f-scene .popp{ opacity:0; animation:popp .45s cubic-bezier(.2,.9,.3,1.3) forwards; }
+.f-rekke{ display:inline-grid; gap:5px; padding:8px; background:var(--krem); border:2px solid var(--navy); border-radius:14px; transition:transform .9s ease; }
+.f-rekke.snu{ transform:rotate(90deg); }
+.f-rekke .f-celle{ width:30px; height:30px; border-radius:50%; background:var(--gull); border:2px solid var(--gull-dyp); display:grid; place-items:center; font-size:.9rem; transition:filter .6s, background .5s, border-color .5s; }
+.f-rekke.liten .f-celle{ width:20px; height:20px; font-size:.7rem; }
+.f-rekke.liten{ gap:3px; }
+.f-rekke.blaa .f-celle{ background:var(--blaa); border-color:#0f3f75; }
+.f-rekke.vis-del .f-celle.del{ background:var(--gronn); border-color:var(--gronn-dyp); }
+.f-rekke.halv .f-celle.del{ filter:opacity(.15); }
+.f-celle.vekk{ filter:opacity(.12) grayscale(1); }
+.f-rad{ display:flex; gap:.8rem; flex-wrap:wrap; justify-content:center; align-items:center; }
+.f-rad.fire{ gap:.6rem; }
+.f-panel{ display:flex; flex-direction:column; align-items:center; gap:.3rem; background:var(--krem); border:2px solid var(--navy); border-radius:14px; padding:.5rem .6rem; }
+.f-panel small{ font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-size:.7rem; }
+.f-panel .f-tallerken{ width:44px; min-height:44px; padding:5px; font-size:.75rem; gap:1px; box-shadow:inset 0 0 0 3px var(--krem-dyp); }
+.f-mini{ font-family:'Fredoka One',cursive; font-size:1.2rem; color:var(--lilla); padding:.4rem; }
+.f-tekst{ font-family:'Fredoka One',cursive; font-size:clamp(1.5rem,4vw,2.2rem); color:var(--navy); text-align:center; }
+.f-tekst.f-mindre{ font-size:clamp(1.2rem,3vw,1.6rem); }
+.f-tekst b{ color:var(--lilla); }
+.f-stor{ font-size:1.6em; }
+.f-a{ color:var(--gull-dyp); } .f-b{ color:var(--blaa); } .f-lilla{ color:var(--lilla); } .f-gronn{ color:var(--gronn); }
+.f-null{ display:inline-block; color:var(--korall); }
+.f-etikett{ font-weight:900; color:var(--navy); background:var(--krem); border:2px solid var(--gull); border-radius:999px; padding:.3rem .9rem; text-align:center; }
+.f-grupper{ display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; }
+.f-tallerken{ width:96px; min-height:96px; border-radius:50%; background:#fff; border:3px solid var(--navy); box-shadow:inset 0 0 0 5px var(--krem-dyp); display:flex; flex-wrap:wrap; align-content:center; justify-content:center; gap:2px; padding:10px; font-size:1.3rem; }
+.f-flash{ font-family:'Fredoka One',cursive; font-size:1.4rem; color:var(--navy); background:#fff; border:3px solid var(--navy); border-radius:16px; padding:.6rem 1rem; box-shadow:0 4px 0 var(--navy); transition:background .5s; }
+.f-flash.gul{ background:#fdebc2; } .f-flash.gronn{ background:var(--gronn-lys); border-color:var(--gronn); } .f-flash.lilla{ background:var(--lilla-lys); } .f-flash.graa{ background:#f1f0f8; color:var(--muted); }
+.f-flash.rist{ animation:rist .4s; }
+.f-tabell{ display:grid; grid-template-columns:repeat(10,1fr); gap:3px; width:min(100%,420px); }
+.f-tabell div{ aspect-ratio:1; display:grid; place-items:center; font-weight:800; font-size:.7rem; border-radius:6px; background:#fff; border:2px solid #e3e0f2; }
+.f-tabell .kv{ background:var(--gull); border-color:var(--gull-dyp); }
+.f-tabell .dim{ opacity:.35; }
+.f-tabell .blink{ animation:blink 1s infinite; background:var(--lilla-lys); border-color:var(--lilla); color:var(--lilla); }
+@keyframes blink{ 50%{ background:var(--lilla); color:#fff; } }
+.f-tallinje{ position:relative; width:100%; height:120px; }
+.f-tallinje .strek{ position:absolute; left:4%; right:4%; top:76px; height:5px; background:var(--navy); border-radius:3px; }
+.f-tallinje .merke{ position:absolute; top:68px; width:2px; height:20px; background:var(--navy); transform:translateX(-50%); }
+.f-tallinje .tall{ position:absolute; top:92px; transform:translateX(-50%); font-weight:800; font-size:.8rem; color:var(--navy); }
+.f-tallinje .tall.mål{ color:var(--lilla); font-size:1rem; background:var(--lilla-lys); border-radius:999px; padding:0 .4rem; }
+.f-tallinje .bue{ position:absolute; top:34px; height:44px; border:4px solid var(--lilla); border-bottom:none; border-radius:50% 50% 0 0 / 100% 100% 0 0; opacity:.85; transform-origin:bottom center; }
+.f-tallinje .figur{ position:absolute; top:18px; font-size:2.2rem; transform:translateX(-50%); transition:left .5s cubic-bezier(.3,1.4,.6,1); z-index:2; }
+.f-tallinje .figur.hopp{ animation:hopp .35s; }
+@keyframes hopp{ 50%{ transform:translate(-50%,-22px); } }
+@media (max-width:520px){ .f-rekke .f-celle{ width:22px; height:22px; font-size:.7rem; } .f-rekke.liten .f-celle{ width:14px; height:14px; } .f-tallerken{ width:72px; min-height:72px; font-size:1rem; } .f-scene{ min-height:220px; } }
