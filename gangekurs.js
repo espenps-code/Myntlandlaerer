@@ -585,10 +585,13 @@ const FORKLARINGER = {
     fEtikett(s, '<span class="f-b">4 rekker</span> · <span class="f-a">3 i hver</span>', 500);
     fTekst(s, '3 · 4 = 4 · 3 = <b>12</b>', 3000);
   } },
-  { tekst: 'Kan du ett gangestykke, kan du alltid to. Det halverer alt du må lære.', dur: 6000, tegn(s) {
+  { tekst: 'Og her er et triks til: dobler du det ene tallet, dobles svaret. Tre ganger fire er tolv – så tre ganger åtte er tjuefire. Kan du ett stykke, kan du flere!', dur: 10000, tegn(s) {
     const r = fRad(s);
-    [['3 · 4', 12], ['4 · 3', 12], ['6 · 8', 48], ['8 · 6', 48]].forEach((p, i) => { const k = fFlashkort(r, `${p[0]} = ${p[1]}`, 300 + i * 500, i % 2 ? 'gronn' : ''); });
-    fEtikett(s, 'Ett stykke – to svar du kan!', 2800);
+    fRekke(r, 3, 4, { steg: 0, innhold: '🪙' });
+    fRekke(r, 3, 4, { start: 3500, steg: 80, innhold: '🪙', klasse: 'blaa' });
+    fTekst(s, '3 · 4 = <b>12</b>', 500);
+    fTekst(s, '3 · <span class="f-b">8</span> = <b>24</b>', 5500);
+    fEtikett(s, 'Dobbelt så mange i rekka → dobbelt så mange mynter', 7500);
   } },
 ],
 3: [
