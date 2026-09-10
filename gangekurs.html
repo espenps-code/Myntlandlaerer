@@ -276,6 +276,14 @@ b{ font-weight:800; }
 .rekke .celle.tom{ background:#f1f0f8; border-color:#dcd9ee; }
 .rekke .celle.del{ background:var(--gronn); border-color:var(--gronn-dyp); }
 .rekke.klikkbar .celle{ cursor:pointer; }
+/* dobling: nye rader popper inn i blått */
+.rekke .celle.ny{ background:var(--blaa); border-color:#0f3f75; animation:popp .45s ease-out both; }
+.dobling-boks{ display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap; }
+.dobling-knapp{ margin:.6rem 0; }
+.dobling-tegn{ display:flex; gap:.4rem; margin:.3rem 0 .6rem; flex-wrap:wrap; }
+.dobling-tegn span{ background:var(--krem); border:1.5px solid var(--krem-dyp); border-radius:999px; padding:.2rem .7rem; font-weight:800; color:var(--muted); font-size:.9rem; }
+.dobling-tegn span.naa{ background:var(--lilla-lys); border-color:var(--lilla); color:var(--lilla); }
+.dobling-tegn span.ok{ background:var(--gronn-lys); border-color:var(--gronn); color:var(--gronn-dyp); }
 .rekke-med-etiketter{ display:inline-grid; grid-template-columns:auto auto; gap:.35rem .7rem; align-items:center; }
 .rekke-etikett-topp{ grid-column:2; text-align:center; font-weight:800; color:var(--blaa); font-size:.9rem; }
 .rekke-etikett-side{ writing-mode:vertical-rl; transform:rotate(180deg); text-align:center; font-weight:800; color:var(--gull-dyp); font-size:.9rem; }
@@ -818,7 +826,7 @@ function kjorOppgave(t, flate, feedback, knapper, ferdig) {
   const vis = document.createElement('div'); vis.className = 'oppg-visual'; flate.appendChild(vis);
   const inn = document.createElement('div'); flate.appendChild(inn);
 
-  const typer = { input: oppgInput, mc: oppgMC, grupper: oppgGrupper, rekke: oppgRekke, tallinje: oppgTallinje, match: oppgMatch, del: oppgDel, tabell: oppgTabell };
+  const typer = { input: oppgInput, mc: oppgMC, grupper: oppgGrupper, rekke: oppgRekke, tallinje: oppgTallinje, match: oppgMatch, del: oppgDel, tabell: oppgTabell, dobling: oppgDobling };
   const nullstill = () => { feedback.className = 'tilbakemelding'; feedback.innerHTML = ''; };
   typer[t.type](t, { vis, inn, ok, galt, sp, nullstill });
 }
@@ -1018,6 +1026,58 @@ function oppgMatch(t, u) {
   }
   lag(vk, vl, 'v'); lag(hk, hl, 'h');
   u.inn.appendChild(boks);
+}
+
+/* dobling: regn ut, trykk «Doble!» så rekka vokser, regn ut igjen (2 → 4 → 8) */
+function oppgDobling(t, u) {
+  const n = t.n, kjede = t.kjede; // f.eks. [2,4], [4,8] eller [2,4,8]
+  let steg = 0;
+  const spor = document.createElement('div'); spor.className = 'dobling-tegn';
+  const info = document.createElement('div'); info.className = 'grupper-info';
+  const boks = document.createElement('div'); boks.className = 'dobling-boks';
+  const sum = document.createElement('div'); sum.className = 'delsum';
+  u.vis.appendChild(spor); u.vis.appendChild(info); u.vis.appendChild(boks); u.vis.appendChild(sum);
+  function tegnSpor() {
+    spor.innerHTML = kjede.map((a, i) => `<span class="${i < steg ? 'ok' : i === steg ? 'naa' : ''}">${a} · ${n}${i < steg ? ' = ' + a * n + ' ✓' : ''}</span>`).join('');
+  }
+  function tegnRekke() {
+    const a = kjede[steg], forrige = steg > 0 ? kjede[steg - 1] : 0;
+    let h = `<div class="rekke" style="grid-template-columns:repeat(${n},auto)">`;
+    for (let r = 0; r < a; r++) for (let c = 0; c < n; c++) h += `<div class="celle${r >= forrige ? ' ny' : ''}" style="animation-delay:${(r - forrige) * 60}ms">🪙</div>`;
+    boks.innerHTML = h + '</div>';
+  }
+  function sporsmal() {
+    if (aktivPanel) { aktivPanel.fjern(); aktivPanel = null; }
+    const a = kjede[steg], forrige = kjede[steg - 1], p = forrige * n;
+    tegnSpor(); tegnRekke();
+    if (steg === 0) {
+      info.innerHTML = `Først: <b>${a} rekker med ${n}</b>. Hvor mange mynter er det?`;
+      sum.innerHTML = '';
+    } else {
+      info.innerHTML = `Doblet! ${forrige} rekker ble <b>${a} rekker</b> – de nye er blå. Like mange til, altså.`;
+      sum.innerHTML = `${a} · ${n} = ${forrige} · ${n} + ${forrige} · ${n} = ${p} + ${p} = <span class="ukjent">?</span>`;
+    }
+    aktivPanel = tallpanel(u.inn, {
+      etikett: `${a} · ${n} =`,
+      onOk(v) {
+        if (v !== a * n) { u.galt(steg === 0 ? hint(a, n) : `Dobbelt av ${p}: ${p} + ${p} = ?`); return; }
+        aktivPanel.fjern(); aktivPanel = null; u.nullstill();
+        if (steg === kjede.length - 1) {
+          steg++; tegnSpor();
+          sum.innerHTML = steg > 1 ? `${a} · ${n} = ${p} + ${p} = <b>${a * n}</b>` : `${a} · ${n} = <b>${a * n}</b>`;
+          u.ok(t.ros || `Riktig! ${kjede.map(k => k + ' · ' + n + ' = ' + k * n).join(' → ')}. Hver gang dobbelt så mange!`);
+          return;
+        }
+        steg++; tegnSpor();
+        sum.innerHTML = `${a} · ${n} = <b>${a * n}</b>`;
+        info.innerHTML = `Riktig! Nå skal vi doble: like mange rekker til under. Da får vi <b>${kjede[steg]} · ${n}</b>.`;
+        const dobl = document.createElement('button'); dobl.type = 'button'; dobl.className = 'knapp lilla dobling-knapp'; dobl.textContent = 'Doble rekka! ⤵';
+        dobl.onclick = () => { dobl.remove(); sporsmal(); };
+        u.inn.appendChild(dobl); setTimeout(() => dobl.focus(), 250);
+      }
+    });
+  }
+  sporsmal();
 }
 
 /* del: del opp en rekke (distributiv lov) – velg delingssted, fyll inn to deler og sum */
@@ -1600,14 +1660,22 @@ const TRINN = [
   id: 6, del: 2, tittel: 'Dobling: 4- og 8-gangen', kort: '4 · 6 er 2 · 6 doblet. 8 · 6 er 4 · 6 doblet.', bilde: BILDER.imgRekker,
   intro: `<p class="forklaring">Kan du 2-gangen, kan du 4-gangen: <b>doble to ganger</b>. 4 · 6 → 2 · 6 = 12 → dobbelt = <span class="stykke">24</span>.</p>
   <p>Og 8-gangen er 4-gangen doblet: 8 · 6 → 4 · 6 = 24 → dobbelt = <span class="stykke">48</span>. Se på rekka: 2 rekker, 4 rekker, 8 rekker – hver gang blir det dobbelt så mange.</p>
+  <p>I oppgavene gjør du det selv: regn ut den lille rekka, trykk <b>Doble rekka!</b> – og regn ut den store.</p>
   <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-top:.5rem">${rekkeHTML(2, 6)}${rekkeHTML(4, 6)}</div>`,
   hender: `Legg 2 rekker med 7 mynter. Legg 2 rekker til under – nå har du 4 · 7. Hvor mange? Doble igjen om du har nok mynter: 8 · 7.`,
   snakk: `Hva mer kan vi doble oss frem til? (Hint: 3 → 6, og 6 → 12!) Hvorfor er dobling så lett å regne i hodet?`,
   oppgaver() {
     const o = [];
-    unike(() => rnd(3, 9), 4).forEach(n => o.push(inputStykke(4, n, { hint: `2 · ${n} = ${2 * n}. Dobbelt opp: ${2 * n} + ${2 * n}.` })));
+    const ns = unike(() => rnd(3, 9), 5);
+    // 4-gangen: først 2 · n, så doble til 4 · n
+    o.push({ type: 'dobling', q: 'Regn ut 2-gangen – og doble til 4-gangen.', n: ns[0], kjede: [2, 4] });
+    o.push({ type: 'dobling', q: 'En gang til: 2-gangen først, så doble.', n: ns[1], kjede: [2, 4] });
+    o.push(inputStykke(4, ns[2], { q: `Nå uten rekke: hva er <span class="stykke">4 · ${ns[2]}</span>? Tenk 2 · ${ns[2]} – og doble.`, hint: `2 · ${ns[2]} = ${2 * ns[2]}. Dobbelt opp: ${2 * ns[2]} + ${2 * ns[2]}.` }));
     o.push(mcTall('Hvilket stykke er det dobbelte av 4 · 7?', '8 · 7', ['4 · 14', '2 · 7', '4 · 8'], { hint: 'Dobbelt så mange rekker – 4 rekker blir 8 rekker.' }));
-    unike(() => rnd(3, 9), 3).forEach(n => o.push(inputStykke(8, n, { hint: `4 · ${n} = ${4 * n}. Dobbelt opp: ${4 * n} + ${4 * n}.` })));
+    // 8-gangen: først 4 · n, så doble til 8 · n
+    o.push({ type: 'dobling', q: 'Regn ut 4-gangen – og doble til 8-gangen.', n: ns[3], kjede: [4, 8] });
+    o.push({ type: 'dobling', q: 'Hele veien: 2-gangen → doble → doble igjen!', n: ns[4], kjede: [2, 4, 8] });
+    o.push(inputStykke(8, ns[2], { q: `Nå uten rekke: hva er <span class="stykke">8 · ${ns[2]}</span>? Du kan alt 4 · ${ns[2]} = ${4 * ns[2]}.`, hint: `4 · ${ns[2]} = ${4 * ns[2]}. Dobbelt opp: ${4 * ns[2]} + ${4 * ns[2]}.` }));
     o.push(tekstoppgave(8, rnd(3, 7), HISTORIER[4]));
     return o;
   }
