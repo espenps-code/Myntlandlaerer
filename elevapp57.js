@@ -1357,7 +1357,7 @@ async function doTransfer(type, amt) {
     const newUnits = getUnitsFromAmt(amt, curRate_ld);
     const upd = {
       balance: (s.balance||0) - amt,
-      fund_low_units:    Math.round(((s.fund_low_units||0) + newUnits) * 100) / 100,
+      fund_low_units:    roundUnits((s.fund_low_units||0) + newUnits),
       fund_low_invested: (s.fund_low_invested||0) + amt
     };
     await window._update(fbRef('students57/'+fbKey), upd);
@@ -1376,7 +1376,7 @@ async function doTransfer(type, amt) {
     if (amt > totalValue_lw) { alert(`Markedsverdi er 🪙 ${totalValue_lw}. Kan ikke ta ut mer.`); return; }
     // Selg proporsjonalt med andeler
     const ratio_lw     = amt / totalValue_lw;
-    const unitsSold_lw = Math.round(totalUnits_lw * ratio_lw * 100) / 100;
+    const unitsSold_lw = roundUnits(totalUnits_lw * ratio_lw);
     const invested_lw  = s.fund_low_invested || 0;
     const costBasis_lw = Math.round(invested_lw * ratio_lw); // andel av opprinnelig kostnad
     const gain_lw      = Math.max(0, amt - costBasis_lw);
@@ -1384,7 +1384,7 @@ async function doTransfer(type, amt) {
     const net_lw       = amt - taxAmt_lw;
     const upd = {
       balance:                (s.balance||0) + net_lw,
-      fund_low_units:         Math.max(0, Math.round((totalUnits_lw - unitsSold_lw) * 100) / 100),
+      fund_low_units:         Math.max(0, roundUnits(totalUnits_lw - unitsSold_lw)),
       fund_low_invested:      Math.max(0, invested_lw - costBasis_lw),
       badgeTaxContributed:    (s.badgeTaxContributed||0) + taxAmt_lw
     };
@@ -1409,7 +1409,7 @@ async function doTransfer(type, amt) {
     const newUnitsH = getUnitsFromAmt(amt, curRate_hd);
     const upd = {
       balance: (s.balance||0) - amt,
-      fund_high_units:    Math.round(((s.fund_high_units||0) + newUnitsH) * 100) / 100,
+      fund_high_units:    roundUnits((s.fund_high_units||0) + newUnitsH),
       fund_high_invested: (s.fund_high_invested||0) + amt
     };
     await window._update(fbRef('students57/'+fbKey), upd);
@@ -1427,7 +1427,7 @@ async function doTransfer(type, amt) {
     if (totalUnits_hw <= 0) { alert('Du har ingen andeler i fond høy risiko.'); return; }
     if (amt > totalValue_hw) { alert(`Markedsverdi er 🪙 ${totalValue_hw}. Kan ikke ta ut mer.`); return; }
     const ratio_hw      = amt / totalValue_hw;
-    const unitsSold_hw  = Math.round(totalUnits_hw * ratio_hw * 100) / 100;
+    const unitsSold_hw  = roundUnits(totalUnits_hw * ratio_hw);
     const invested_hw   = s.fund_high_invested || 0;
     const costBasis_hw  = Math.round(invested_hw * ratio_hw);
     const gain_hw       = Math.max(0, amt - costBasis_hw);
@@ -1435,7 +1435,7 @@ async function doTransfer(type, amt) {
     const net_hw        = amt - taxAmt_hw;
     const upd = {
       balance:                (s.balance||0) + net_hw,
-      fund_high_units:        Math.max(0, Math.round((totalUnits_hw - unitsSold_hw) * 100) / 100),
+      fund_high_units:        Math.max(0, roundUnits(totalUnits_hw - unitsSold_hw)),
       fund_high_invested:     Math.max(0, invested_hw - costBasis_hw),
       badgeTaxContributed:    (s.badgeTaxContributed||0) + taxAmt_hw
     };
@@ -1467,7 +1467,7 @@ function renderSpareTab(){refreshAllDisplays();renderTransactions();}
 //   fund_low_units  = antall andeler i fond lav risiko
 //   fund_high_units = antall andeler i fond høy risiko
 //   Verdi = andeler × nåværende kurs
-//   Kjøp:  andeler += investering / kurs  (avrundet til 4 desimaler)
+//   Kjøp:  andeler += investering / kurs  (avrundet til 6 desimaler)
 //   Salg:  selg X andeler → mottar X × kurs (minus skatt på gevinst)
 //
 // Bakoverkompatibilitet: fund_low / fund_high (gamle felt) ignoreres.
@@ -1476,8 +1476,13 @@ function renderSpareTab(){refreshAllDisplays();renderTransactions();}
 function getFondValue(units, currentRate) {
   return Math.round((units||0) * (currentRate||100));
 }
+// Andeler lagres med 6 desimaler. Med bare 2 desimaler kunne avrundingen gi
+// ±0,005 andel, som ved kurs over ~100 ble ±1 mynt – kjøp for 100 og selg
+// straks kunne gi 101 (eller 99). Med 6 desimaler er feilen < 0,001 mynt.
+const UNIT_PRECISION = 1e6;
+function roundUnits(u) { return Math.round((u||0) * UNIT_PRECISION) / UNIT_PRECISION; }
 function getUnitsFromAmt(amt, rate) {
-  return Math.round(amt / (rate||100) * 100) / 100; // 2 desimaler
+  return roundUnits(amt / (rate||100));
 }
 // Beholder getFondMarketValue som alias for bakoverkompatibilitet
 function getFondMarketValue(invested, buyRate, currentRate) {
@@ -1642,12 +1647,12 @@ async function checkLoanExpiry() {
         let ratio = Math.min(1, (owed / allNet) * 1.02); // litt buffer pga skatt
         if (ratio > 1) ratio = 1;
         const sellGross = Math.round(totalValue * ratio);
-        const unitsSold = Math.round(unitsLow * ratio * 100) / 100;
+        const unitsSold = roundUnits(unitsLow * ratio);
         const costBasis = Math.round(invLow * ratio);
         const gain      = Math.max(0, sellGross - costBasis);
         const taxAmt    = Math.round(gain * getFundTax());
         const net       = sellGross - taxAmt;
-        unitsLow = Math.max(0, Math.round((unitsLow - unitsSold) * 100) / 100);
+        unitsLow = Math.max(0, roundUnits(unitsLow - unitsSold));
         invLow   = Math.max(0, invLow - costBasis);
         if (net >= owed) {
           // overskudd legges på brukskonto
@@ -1675,12 +1680,12 @@ async function checkLoanExpiry() {
         let ratio = Math.min(1, (owed / allNet) * 1.02);
         if (ratio > 1) ratio = 1;
         const sellGross = Math.round(totalValue * ratio);
-        const unitsSold = Math.round(unitsHigh * ratio * 100) / 100;
+        const unitsSold = roundUnits(unitsHigh * ratio);
         const costBasis = Math.round(invHigh * ratio);
         const gain      = Math.max(0, sellGross - costBasis);
         const taxAmt    = Math.round(gain * getFundTax());
         const net       = sellGross - taxAmt;
-        unitsHigh = Math.max(0, Math.round((unitsHigh - unitsSold) * 100) / 100);
+        unitsHigh = Math.max(0, roundUnits(unitsHigh - unitsSold));
         invHigh   = Math.max(0, invHigh - costBasis);
         if (net >= owed) {
           bal += (net - owed);
