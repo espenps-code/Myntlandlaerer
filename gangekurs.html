@@ -284,6 +284,19 @@ b{ font-weight:800; }
 .dobling-tegn span{ background:var(--krem); border:1.5px solid var(--krem-dyp); border-radius:999px; padding:.2rem .7rem; font-weight:800; color:var(--muted); font-size:.9rem; }
 .dobling-tegn span.naa{ background:var(--lilla-lys); border-color:var(--lilla); color:var(--lilla); }
 .dobling-tegn span.ok{ background:var(--gronn-lys); border-color:var(--gronn); color:var(--gronn-dyp); }
+/* dobling: to like blokker stablet, pluss mellom, sum til høyre */
+.dobling-stabel{ display:inline-flex; flex-direction:column; align-items:flex-start; gap:.3rem; margin:.4rem 0 .6rem; }
+.dobling-stabel .blokk{ display:flex; align-items:center; gap:.9rem; }
+.dobling-stabel .blokk .rekke{ border-width:2.5px; }
+.dobling-stabel .blokk.gul .rekke{ border-color:var(--gull-dyp); background:var(--gull-lys); }
+.dobling-stabel .blokk.blaa .rekke{ border-color:var(--blaa); background:var(--blaa-lys); }
+.dobling-stabel .etk{ font-family:'Fredoka One',cursive; font-size:1.25rem; padding:.15rem .8rem; border-radius:999px; white-space:nowrap; }
+.dobling-stabel .blokk.gul .etk{ background:var(--gull-lys); color:var(--gull-dyp); border:2px solid var(--gull); }
+.dobling-stabel .blokk.blaa .etk{ background:var(--blaa-lys); color:var(--blaa); border:2px solid var(--blaa); }
+.dobling-stabel .blokk.ferdig .etk{ background:var(--gronn-lys); color:var(--gronn-dyp); border:2px solid var(--gronn); }
+.dobling-stabel .pluss{ font-family:'Fredoka One',cursive; font-size:2.4rem; color:var(--navy); line-height:1; text-align:center; }
+.delsum .g{ color:var(--gull-dyp); } .delsum .b{ color:var(--blaa); }
+.dobling-under{ font-weight:800; color:var(--muted); margin:-.2rem 0 .4rem; }
 .rekke-med-etiketter{ display:inline-grid; grid-template-columns:auto auto; gap:.35rem .7rem; align-items:center; }
 .rekke-etikett-topp{ grid-column:2; text-align:center; font-weight:800; color:var(--blaa); font-size:.9rem; }
 .rekke-etikett-side{ writing-mode:vertical-rl; transform:rotate(180deg); text-align:center; font-weight:800; color:var(--gull-dyp); font-size:.9rem; }
@@ -1028,7 +1041,7 @@ function oppgMatch(t, u) {
   u.inn.appendChild(boks);
 }
 
-/* dobling: regn ut, trykk «Doble!» så rekka vokser, regn ut igjen (2 → 4 → 8) */
+/* dobling: regn ut, trykk «Doble!» – så vises to like blokker stablet (forrige + like mange til), regn ut igjen (2 → 4 → 8) */
 function oppgDobling(t, u) {
   const n = t.n, kjede = t.kjede; // f.eks. [2,4], [4,8] eller [2,4,8]
   let steg = 0;
@@ -1036,41 +1049,64 @@ function oppgDobling(t, u) {
   const info = document.createElement('div'); info.className = 'grupper-info';
   const boks = document.createElement('div'); boks.className = 'dobling-boks';
   const sum = document.createElement('div'); sum.className = 'delsum';
-  u.vis.appendChild(spor); u.vis.appendChild(info); u.vis.appendChild(boks); u.vis.appendChild(sum);
+  const under = document.createElement('div'); under.className = 'dobling-under';
+  u.vis.appendChild(spor); u.vis.appendChild(info); u.vis.appendChild(boks); u.vis.appendChild(sum); u.vis.appendChild(under);
+  function celler(rader, kl, anim) {
+    let h = '';
+    for (let r = 0; r < rader; r++) for (let c = 0; c < n; c++) h += `<div class="celle${kl ? ' ' + kl : ''}"${anim ? ` style="animation-delay:${r * 60}ms"` : ''}>🪙</div>`;
+    return h;
+  }
+  function rekke(rader, kl, anim) { return `<div class="rekke" style="grid-template-columns:repeat(${n},auto)">${celler(rader, kl, anim)}</div>`; }
+  function plassPluss() {
+    const p = $('.pluss', boks), r = $('.rekke', boks);
+    if (p && r) p.style.width = r.offsetWidth + 'px';
+  }
   function tegnSpor() {
     spor.innerHTML = kjede.map((a, i) => `<span class="${i < steg ? 'ok' : i === steg ? 'naa' : ''}">${a} · ${n}${i < steg ? ' = ' + a * n + ' ✓' : ''}</span>`).join('');
   }
-  function tegnRekke() {
-    const a = kjede[steg], forrige = steg > 0 ? kjede[steg - 1] : 0;
-    let h = `<div class="rekke" style="grid-template-columns:repeat(${n},auto)">`;
-    for (let r = 0; r < a; r++) for (let c = 0; c < n; c++) h += `<div class="celle${r >= forrige ? ' ny' : ''}" style="animation-delay:${(r - forrige) * 60}ms">🪙</div>`;
-    boks.innerHTML = h + '</div>';
+  function tegnEnkel(rader) { boks.innerHTML = rekke(rader); }
+  function tegnStabel(forrige) {
+    const p = forrige * n;
+    boks.innerHTML = `<div class="dobling-stabel">
+      <div class="blokk gul">${rekke(forrige)}<span class="etk">${p}</span></div>
+      <div class="pluss">+</div>
+      <div class="blokk blaa">${rekke(forrige, 'ny', true)}<span class="etk">${p}</span></div>
+    </div>`;
+    requestAnimationFrame(plassPluss); setTimeout(plassPluss, 300);
+  }
+  function tegnSamlet(a, forrige) {
+    boks.innerHTML = `<div class="dobling-stabel"><div class="blokk ferdig">
+      <div class="rekke" style="grid-template-columns:repeat(${n},auto)">${celler(forrige)}${celler(a - forrige, 'ny')}</div>
+      <span class="etk">${a} · ${n} = ${a * n}</span></div></div>`;
   }
   function sporsmal() {
     if (aktivPanel) { aktivPanel.fjern(); aktivPanel = null; }
     const a = kjede[steg], forrige = kjede[steg - 1], p = forrige * n;
-    tegnSpor(); tegnRekke();
+    tegnSpor();
     if (steg === 0) {
+      tegnEnkel(a);
       info.innerHTML = `Først: <b>${a} rekker med ${n}</b>. Hvor mange mynter er det?`;
-      sum.innerHTML = '';
+      sum.innerHTML = ''; under.innerHTML = '';
     } else {
-      info.innerHTML = `Doblet! ${forrige} rekker ble <b>${a} rekker</b> – de nye er blå. Like mange til, altså.`;
-      sum.innerHTML = `${a} · ${n} = ${forrige} · ${n} + ${forrige} · ${n} = ${p} + ${p} = <span class="ukjent">?</span>`;
+      tegnStabel(forrige);
+      info.innerHTML = `Doblet! Like mange til – like mange mynter.`;
+      sum.innerHTML = `<span class="g">${p}</span> + <span class="b">${p}</span> = <span class="ukjent">?</span>`;
+      under.innerHTML = `Det er <b>${a} · ${n}</b>`;
     }
     aktivPanel = tallpanel(u.inn, {
       etikett: `${a} · ${n} =`,
       onOk(v) {
-        if (v !== a * n) { u.galt(steg === 0 ? hint(a, n) : `Dobbelt av ${p}: ${p} + ${p} = ?`); return; }
+        if (v !== a * n) { u.galt(steg === 0 ? hint(a, n) : `${p} + ${p} = ?`); return; }
         aktivPanel.fjern(); aktivPanel = null; u.nullstill();
+        if (steg > 0) { tegnSamlet(a, forrige); sum.innerHTML = `<span class="g">${p}</span> + <span class="b">${p}</span> = <b>${a * n}</b>`; under.innerHTML = ''; }
+        else sum.innerHTML = `${a} · ${n} = <b>${a * n}</b>`;
         if (steg === kjede.length - 1) {
           steg++; tegnSpor();
-          sum.innerHTML = steg > 1 ? `${a} · ${n} = ${p} + ${p} = <b>${a * n}</b>` : `${a} · ${n} = <b>${a * n}</b>`;
           u.ok(t.ros || `Riktig! ${kjede.map(k => k + ' · ' + n + ' = ' + k * n).join(' → ')}. Hver gang dobbelt så mange!`);
           return;
         }
         steg++; tegnSpor();
-        sum.innerHTML = `${a} · ${n} = <b>${a * n}</b>`;
-        info.innerHTML = `Riktig! Nå skal vi doble: like mange rekker til under. Da får vi <b>${kjede[steg]} · ${n}</b>.`;
+        info.innerHTML = `Riktig! Nå skal vi doble: like mange til. Da får vi <b>${kjede[steg]} · ${n}</b>.`;
         const dobl = document.createElement('button'); dobl.type = 'button'; dobl.className = 'knapp lilla dobling-knapp'; dobl.textContent = 'Doble rekka! ⤵';
         dobl.onclick = () => { dobl.remove(); sporsmal(); };
         u.inn.appendChild(dobl); setTimeout(() => dobl.focus(), 250);
