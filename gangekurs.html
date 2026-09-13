@@ -796,6 +796,17 @@ function rekkeHTML(rader, kol, opt) {
   }
   return h + '</div>';
 }
+/* stabel: to rekker med samme bredde stablet med pluss – «forrige rekker + ekstra rekker til» (brukt i intro til trinn 7) */
+function stabelHTML(forrige, ekstra, n) {
+  const celler = (rader, kl) => Array.from({ length: rader * n }, () => `<div class="celle${kl ? ' ' + kl : ''}">🪙</div>`).join('');
+  const rekke = (rader, kl) => `<div class="rekke" style="grid-template-columns:repeat(${n},auto)">${celler(rader, kl)}</div>`;
+  return `<div class="dobling-stabel">
+    <div class="blokk gul">${rekke(forrige)}<span class="etk">${forrige} · ${n} = ${forrige * n}</span></div>
+    <div class="pluss" style="align-self:flex-start;padding-left:${Math.max(0, n * 17.5 - 10)}px">+</div>
+    <div class="blokk blaa">${rekke(ekstra, 'b')}<span class="etk">${ekstra} · ${n} = ${ekstra * n}</span></div>
+    <div class="blokk ferdig"><span class="pluss" style="font-size:1.8rem">=</span><span class="etk">${forrige + ekstra} · ${n} = ${(forrige + ekstra) * n}</span></div>
+  </div>`;
+}
 function rekkeMedEtiketter(rader, kol) {
   return `<div class="rekke-med-etiketter">
     <div class="rekke-etikett-topp">${kol} i hver rekke</div>
@@ -1065,12 +1076,12 @@ function oppgDobling(t, u) {
     spor.innerHTML = kjede.map((a, i) => `<span class="${i < steg ? 'ok' : i === steg ? 'naa' : ''}">${a} · ${n}${i < steg ? ' = ' + a * n + ' ✓' : ''}</span>`).join('');
   }
   function tegnEnkel(rader) { boks.innerHTML = rekke(rader); }
-  function tegnStabel(forrige) {
-    const p = forrige * n;
+  /* Kjeden trenger ikke være ren dobling: [2,3] = «2 rekker + én rekke til» (3-gangen), [3,6] = dobling (6-gangen). */
+  function tegnStabel(forrige, ekstra) {
     boks.innerHTML = `<div class="dobling-stabel">
-      <div class="blokk gul">${rekke(forrige)}<span class="etk">${p}</span></div>
+      <div class="blokk gul">${rekke(forrige)}<span class="etk">${forrige * n}</span></div>
       <div class="pluss">+</div>
-      <div class="blokk blaa">${rekke(forrige, 'ny', true)}<span class="etk">${p}</span></div>
+      <div class="blokk blaa">${rekke(ekstra, 'ny', true)}<span class="etk">${ekstra * n}</span></div>
     </div>`;
     requestAnimationFrame(plassPluss); setTimeout(plassPluss, 300);
   }
@@ -1082,32 +1093,38 @@ function oppgDobling(t, u) {
   function sporsmal() {
     if (aktivPanel) { aktivPanel.fjern(); aktivPanel = null; }
     const a = kjede[steg], forrige = kjede[steg - 1], p = forrige * n;
+    const ekstra = a - forrige, q = ekstra * n, dobbel = ekstra === forrige;
     tegnSpor();
     if (steg === 0) {
       tegnEnkel(a);
       info.innerHTML = `Først: <b>${a} rekker med ${n}</b>. Hvor mange mynter er det?`;
       sum.innerHTML = ''; under.innerHTML = '';
     } else {
-      tegnStabel(forrige);
-      info.innerHTML = `Doblet! Like mange til – like mange mynter.`;
-      sum.innerHTML = `<span class="g">${p}</span> + <span class="b">${p}</span> = <span class="ukjent">?</span>`;
+      tegnStabel(forrige, ekstra);
+      info.innerHTML = dobbel ? `Doblet! Like mange til – like mange mynter.`
+        : `${ekstra === 1 ? 'Én rekke til' : ekstra + ' rekker til'} med ${n} – det er ${q} mynter til.`;
+      sum.innerHTML = `<span class="g">${p}</span> + <span class="b">${q}</span> = <span class="ukjent">?</span>`;
       under.innerHTML = `Det er <b>${a} · ${n}</b>`;
     }
     aktivPanel = tallpanel(u.inn, {
       etikett: `${a} · ${n} =`,
       onOk(v) {
-        if (v !== a * n) { u.galt(steg === 0 ? hint(a, n) : `${p} + ${p} = ?`); return; }
+        if (v !== a * n) { u.galt(steg === 0 ? hint(a, n) : `${p} + ${q} = ?`); return; }
         aktivPanel.fjern(); aktivPanel = null; u.nullstill();
-        if (steg > 0) { tegnSamlet(a, forrige); sum.innerHTML = `<span class="g">${p}</span> + <span class="b">${p}</span> = <b>${a * n}</b>`; under.innerHTML = ''; }
+        if (steg > 0) { tegnSamlet(a, forrige); sum.innerHTML = `<span class="g">${p}</span> + <span class="b">${q}</span> = <b>${a * n}</b>`; under.innerHTML = ''; }
         else sum.innerHTML = `${a} · ${n} = <b>${a * n}</b>`;
         if (steg === kjede.length - 1) {
           steg++; tegnSpor();
-          u.ok(t.ros || `Riktig! ${kjede.map(k => k + ' · ' + n + ' = ' + k * n).join(' → ')}. Hver gang dobbelt så mange!`);
+          const renDobling = kjede.every((k, i) => i === 0 || k === 2 * kjede[i - 1]);
+          u.ok(t.ros || `Riktig! ${kjede.map(k => k + ' · ' + n + ' = ' + k * n).join(' → ')}.${renDobling ? ' Hver gang dobbelt så mange!' : ' Bygg videre på det du kan!'}`);
           return;
         }
         steg++; tegnSpor();
-        info.innerHTML = `Riktig! Nå skal vi doble: like mange til. Da får vi <b>${kjede[steg]} · ${n}</b>.`;
-        const dobl = document.createElement('button'); dobl.type = 'button'; dobl.className = 'knapp lilla dobling-knapp'; dobl.textContent = 'Doble rekka! ⤵';
+        const nesteEkstra = kjede[steg] - a, nesteDobbel = nesteEkstra === a;
+        info.innerHTML = nesteDobbel ? `Riktig! Nå skal vi doble: like mange til. Da får vi <b>${kjede[steg]} · ${n}</b>.`
+          : `Riktig! Nå legger vi til ${nesteEkstra === 1 ? 'én rekke' : nesteEkstra + ' rekker'} til. Da får vi <b>${kjede[steg]} · ${n}</b>.`;
+        const dobl = document.createElement('button'); dobl.type = 'button'; dobl.className = 'knapp lilla dobling-knapp';
+        dobl.textContent = nesteDobbel ? 'Doble rekka! ⤵' : (nesteEkstra === 1 ? 'Legg til én rekke! ⤵' : `Legg til ${nesteEkstra} rekker! ⤵`);
         dobl.onclick = () => { dobl.remove(); sporsmal(); };
         u.inn.appendChild(dobl); setTimeout(() => dobl.focus(), 250);
       }
@@ -1718,15 +1735,25 @@ const TRINN = [
 },
 {
   id: 7, del: 2, tittel: '3- og 6-gangen', kort: '3 · 7 = dobbelt + én til. 6 · 7 = 3 · 7 doblet.', bilde: BILDER.imgGrupper,
-  intro: `<p class="forklaring"><b>3-gangen</b>: doble og legg til én gang til. 3 · 7 → 2 · 7 = 14 → 14 + 7 = <span class="stykke">21</span>.</p>
-  <p><b>6-gangen</b> er 3-gangen doblet: 6 · 7 → 3 · 7 = 21 → 21 + 21 = <span class="stykke">42</span>. Og husk snu-regelen: 6 · 4 er det samme som 4 · 6 – som du allerede kan!</p>`,
+  intro: `<p class="forklaring"><b>3-gangen</b>: doble – og legg til <b>én rekke til</b>. 3 · 7 → 2 · 7 = 14 → 14 + 7 = <span class="stykke">21</span>. Se på rekkene: de to gule rekkene kan du allerede, den blå er den ene rekka til.</p>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start;margin:.5rem 0 .9rem">${stabelHTML(2, 1, 7)}</div>
+  <p><b>6-gangen</b> er 3-gangen doblet: 6 · 7 → 3 · 7 = 21 → 21 + 21 = <span class="stykke">42</span>. Tre rekker – og tre rekker til.</p>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start;margin:.5rem 0 .9rem">${stabelHTML(3, 3, 7)}</div>
+  <p>Og husk snu-regelen: 6 · 4 er det samme som 4 · 6 – som du allerede kan! I oppgavene bygger du rekkene selv: regn ut den lille rekka, trykk <b>Legg til én rekke!</b> eller <b>Doble rekka!</b> – og regn ut den store.</p>`,
   hender: `Lag 3 grupper med 8 klosser. Ta de to første gruppene – det er 2 · 8 = 16. Legg til den siste – 16 + 8 = 24. Lag så 3 grupper til: 6 · 8.`,
   snakk: `Hvilken tabell er lettest for deg? Hvilken strategi bruker du? Forklar til en venn hvordan du finner 6 · 8.`,
   oppgaver() {
     const o = [];
-    unike(() => rnd(4, 9), 4).forEach(n => o.push(inputStykke(3, n, { hint: `2 · ${n} = ${2 * n}, og ${2 * n} + ${n}.` })));
+    const ns = unike(() => rnd(4, 9), 6);
+    // 3-gangen: 2 · n, så legg til én rekke → 3 · n
+    o.push({ type: 'dobling', q: 'Regn ut 2-gangen – og legg til én rekke til. Da har du 3-gangen!', n: ns[0], kjede: [2, 3] });
+    o.push({ type: 'dobling', q: 'En gang til: 2 rekker først, så én rekke til.', n: ns[1], kjede: [2, 3] });
+    o.push(inputStykke(3, ns[2], { q: `Nå uten rekke: hva er <span class="stykke">3 · ${ns[2]}</span>? Tenk 2 · ${ns[2]} – og én ${ns[2]}-er til.`, hint: `2 · ${ns[2]} = ${2 * ns[2]}, og ${2 * ns[2]} + ${ns[2]}.` }));
     o.push(mcTall('6 · 8 er det dobbelte av …', '3 · 8', ['6 · 4', '2 · 8', '6 · 6'], { hint: 'Halvparten av 6 rekker er 3 rekker.' }));
-    unike(() => rnd(4, 9), 3).forEach(n => o.push(inputStykke(6, n, { hint: `3 · ${n} = ${3 * n}. Dobbelt: ${3 * n} + ${3 * n}.` })));
+    // 6-gangen: 3 · n, så doble → 6 · n
+    o.push({ type: 'dobling', q: 'Regn ut 3-gangen – og doble til 6-gangen.', n: ns[3], kjede: [3, 6] });
+    o.push({ type: 'dobling', q: 'Hele veien: 2 rekker → én rekke til → doble!', n: ns[4], kjede: [2, 3, 6] });
+    o.push(inputStykke(6, ns[5], { q: `Nå uten rekke: hva er <span class="stykke">6 · ${ns[5]}</span>? Du kan 3 · ${ns[5]} = ${3 * ns[5]}.`, hint: `3 · ${ns[5]} = ${3 * ns[5]}. Dobbelt: ${3 * ns[5]} + ${3 * ns[5]}.` }));
     o.push(tekstoppgave(6, rnd(4, 9), HISTORIER[1]));
     return o;
   }
