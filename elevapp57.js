@@ -2030,14 +2030,15 @@ function handleScan(text){
     if(scanMode==='loginCard'&&d.type==='login'&&d.fbKey){handleLoginCardScan(d.fbKey,true);}
     else if(scanMode==='loginShop'&&d.type==='login'&&d.fbKey){handleShopLoginCardScan(d.fbKey);}
     // Belønning / hendelse / oppdrag: QR-en bærer bare en ID som slås opp i klassens låste register
-    else if((scanMode==='reward'||scanMode==='any')&&d.type==='q'&&d.id)handleRegisteredQr(String(d.id));
+    else if((scanMode==='reward'||scanMode==='any'||scanMode==='wpapprove')&&d.type==='q'&&d.id)handleRegisteredQr(String(d.id));
     // Gammelt format med beløp i selve koden godtas ikke lenger (kunne forfalskes)
     else if(d.type==='reward'||d.type==='job'||d.type==='event')showSuccess('⏳','Utgått QR-kode','','Be læreren skrive ut nye QR-kort');
+    // Gammel godkjennings-QR uten ID godtas ikke lenger (kunne lages hjemme)
+    else if(d.type==='wpApprove')showSuccess('⏳','Utgått QR-kode','','Be læreren skrive ut ny godkjennings-QR');
     else if(scanMode==='payment'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
     else if((scanMode==='payment'||scanMode==='reward')&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
     else if(scanMode==='any'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
     else if(scanMode==='any'&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
-    else if((scanMode==='wpapprove'||scanMode==='any')&&d.type==='wpApprove')doWpApproveScan();
     else showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');
   }catch(e){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');}
 }
@@ -2077,6 +2078,8 @@ async function handleRegisteredQr(id){
   let q=null;
   try{const snap=await window._get(window._ref(window._db,'classes/'+window._CLASS_ID+'/qr/'+id));q=snap.val();}catch(e){console.warn('QR-oppslag:',e);}
   if(!q||q.active===false){showSuccess('❌','Ugyldig QR','','Denne koden hører ikke til klassen din');return;}
+  // Godkjennings-QR for arbeidsplan: flerbruks, ingen utbetaling her – doWpApproveScan gjør resten
+  if(q.kind==='wpapprove'){await doWpApproveScan();return;}
   // Én gang per elev – med mindre læreren har merket koden som flerbruks (multi)
   if(!q.multi&&s.qrClaimed&&s.qrClaimed[id]){showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden');return;}
   // Merk som brukt FØR utbetaling, så et dobbelttrykk ikke gir dobbelt
