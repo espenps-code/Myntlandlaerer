@@ -2002,20 +2002,18 @@ function handleScan(text){
       desc:    raw.d,
       // ta med øvrige felt uendret hvis de finnes i kompakt form
       fbKey:   raw.fbKey, name: raw.name, price: raw.price, emoji: raw.emoji,
-      pay:     raw.pay,   title: raw.title
+      pay:     raw.pay,   title: raw.title, id: raw.id
     } : raw;
     if(scanMode==='loginCard'&&d.type==='login'&&d.fbKey){handleLoginCardScan(d.fbKey,true);}
     else if(scanMode==='loginShop'&&d.type==='login'&&d.fbKey){handleShopLoginCardScan(d.fbKey);}
+    // Belønning / hendelse / oppdrag: QR-en bærer bare en ID som slås opp i klassens låste register
+    else if((scanMode==='reward'||scanMode==='any')&&d.type==='q'&&d.id)handleRegisteredQr(String(d.id));
+    // Gammelt format med beløp i selve koden godtas ikke lenger (kunne forfalskes)
+    else if(d.type==='reward'||d.type==='job'||d.type==='event')showSuccess('⏳','Utgått QR-kode','','Be læreren skrive ut nye QR-kort');
     else if(scanMode==='payment'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
-    else if(scanMode==='reward'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc,d.rid);
-    else if(scanMode==='reward'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
     else if((scanMode==='payment'||scanMode==='reward')&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
-    else if(scanMode==='reward'&&d.type==='event')doEventHendelse(d.subtype,d.amount,d.desc);
     else if(scanMode==='any'&&d.type==='payment'&&d.amount>0){pendingPayAmount=d.amount;openPinConfirm(d.amount);}
-    else if(scanMode==='any'&&d.type==='reward'&&d.amount>0)doReward(d.amount,d.desc,d.rid);
-    else if(scanMode==='any'&&d.type==='job'&&d.pay>0)doJobReward(d.pay,d.title);
     else if(scanMode==='any'&&d.type==='purchase'&&d.price>0)initPurchase(d.fbKey,d.name,d.price,d.emoji||'🛒');
-    else if(scanMode==='any'&&d.type==='event')doEventHendelse(d.subtype,d.amount,d.desc);
     else if((scanMode==='wpapprove'||scanMode==='any')&&d.type==='wpApprove')doWpApproveScan();
     else showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');
   }catch(e){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');}
@@ -2044,6 +2042,28 @@ function pcp(v){
 function checkPin(){
   if(String(confirmPin)===String(window._currentStudent?.pin)){document.getElementById('pin-overlay').classList.remove('open');confirmPin='';doPayment(pendingPayAmount);}
   else{document.getElementById('pin-overlay-error').textContent='❌ Feil PIN';confirmPin='';for(let i=0;i<4;i++)document.getElementById('pdot-'+i).classList.remove('filled');}
+}
+
+// ── REGISTRERT QR (belønning / hendelse / oppdrag) ─────────────────────────
+// Slår opp ID-en under classes/{denne klassen}/qr/{id}. Finnes den ikke der,
+// hører koden til en annen klasse (eller er hjemmelaget) og avvises. Hver elev
+// kan bruke en gitt kode én gang (students57/{elev}/qrClaimed/{id}).
+async function handleRegisteredQr(id){
+  const s=window._currentStudent;
+  if(!s||!window._CLASS_ID||!id||/[.#$\[\]\/]/.test(id)){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');return;}
+  if(s.qrClaimed&&s.qrClaimed[id]){showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden');return;}
+  let q=null;
+  try{const snap=await window._get(window._ref(window._db,'classes/'+window._CLASS_ID+'/qr/'+id));q=snap.val();}catch(e){console.warn('QR-oppslag:',e);}
+  if(!q||q.active===false){showSuccess('❌','Ugyldig QR','','Denne koden hører ikke til klassen din');return;}
+  // Merk som brukt FØR utbetaling, så et dobbelttrykk ikke gir dobbelt
+  s.qrClaimed=s.qrClaimed||{};s.qrClaimed[id]=Date.now();
+  let ok=false;
+  if(q.kind==='reward'&&Number(q.amount)>0){await doReward(Number(q.amount),q.desc);ok=true;}
+  else if(q.kind==='job'&&Number(q.pay)>0){await doJobReward(Number(q.pay),q.title);ok=true;}
+  else if(q.kind==='event'&&Number(q.amount)>0){ok=(await doEventHendelse(q.subtype,Number(q.amount),q.desc))!==false;}
+  else{delete s.qrClaimed[id];showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');return;}
+  if(!ok){delete s.qrClaimed[id];return;}
+  try{const u={};u['qrClaimed/'+id]=s.qrClaimed[id];await window._update(fbRef('students57/'+s.fbKey),u);patchStudent(s.fbKey,{qrClaimed:s.qrClaimed});}catch(e){console.warn('qrClaimed:',e);}
 }
 
 // ── PAYMENTS & REWARDS ─────────────────────────────────────────────────────
@@ -2358,7 +2378,7 @@ async function doEventHendelse(subtype, amount, desc) {
   } else {
     if ((s.balance||0) < amount) {
       showSuccess('😕','Ikke nok mynter!','',`Saldo: ${s.balance||0}🪙 – trenger ${amount}🪙`);
-      return;
+      return false;
     }
     const newBal = (s.balance||0) - amount;
     await window._update(fbRef('students57/'+s.fbKey), {balance:newBal});
@@ -2368,6 +2388,7 @@ async function doEventHendelse(subtype, amount, desc) {
     refreshAllDisplays(); renderTransactions();
     showSuccess('🎲','Hendelse!','-'+amount+' 🪙','Saldo: '+newBal+'🪙');
   }
+  return true;
 }
 
 // ── SHOP 5-7 ──────────────────────────────────────────────────────────────

@@ -1732,10 +1732,28 @@ function printShoppingList() {
 // ══════════════════════════════════════════════════════════
 // QR REWARDS
 // ══════════════════════════════════════════════════════════
+// ── Låst QR-register ──────────────────────────────────────────────────────
+// QR-koder bærer ikke lenger beløp – bare en ID. Selve belønningen eller
+// hendelsen ligger i classes/{klasse}/qr/{id}, som bare lærere (medlemmer av
+// klassen) kan skrive til. Elevappen slår opp ID-en i SIN klasse – en QR fra
+// en annen klasse (eller en hjemmelaget) finnes ikke der og avvises.
+function registerQr14(id, data) {
+  const payload = JSON.stringify({ t:'q', id });
+  try {
+    if (window._CLASS_ID && window._fbReady && window._set) {
+      const clean = {};
+      Object.keys(data).forEach(k => { if (data[k] !== undefined && data[k] !== null) clean[k] = data[k]; });
+      clean.active = true; clean.updatedAt = Date.now();
+      Promise.resolve(window._set(window._ref(window._db, 'classes/' + window._CLASS_ID + '/qr/' + id), clean))
+        .catch(e => console.warn('QR-register:', e));
+    }
+  } catch(e) { console.warn('QR-register:', e); }
+  return payload;
+}
 function generateRewardQRCodes() {
   [10,50,100].forEach(amount => {
     const el = document.getElementById('qr-' + amount);
-    if (el && !el.children.length) try { new QRCode(el, { text:JSON.stringify({type:'reward',amount}), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
+    if (el && !el.children.length) try { new QRCode(el, { text:registerQr14('rw_std' + amount, { kind:'reward', amount, desc:'Belønning' }), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
   });
 }
 // ── Custom Rewards ─────────────────────────────────────────────────────────
@@ -1780,7 +1798,7 @@ function renderCustomRewards() {
   window._customRewards.forEach(r => {
     const el = document.getElementById('mini-qr-' + r.fbKey);
     if (el && !el.children.length) {
-      try { new QRCode(el, { text: JSON.stringify({type:'reward', amount:r.amount, desc:r.desc}), width:60, height:60, correctLevel:QRCode.CorrectLevel.L }); } catch(e){}
+      try { new QRCode(el, { text: registerQr14('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc }), width:60, height:60, correctLevel:QRCode.CorrectLevel.L }); } catch(e){}
     }
   });
 }
@@ -1845,7 +1863,7 @@ function printSingleQR(elId, label) {
   win.document.close();
 }
 function _printRewardCards(rewards) {
-  const payloads = rewards.map(r => JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }));
+  const payloads = rewards.map(r => registerQr14('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc }));
   const cardsHTML = rewards.map((r, i) =>
     `<div class="card">
       <div class="top"><span class="logo">🪙 MYNTLAND</span><span class="ribbon">Belønning</span></div>
@@ -3096,7 +3114,7 @@ function renderHendelser() {
 function showHendelseQR14(fbKey) {
   const h = (window._hendelser || []).find(x => x.fbKey === fbKey);
   if (!h) return;
-  const payload = JSON.stringify({ type: 'event', subtype: h.type, amount: h.amount, desc: h.desc });
+  const payload = registerQr14('ev_' + fbKey, { kind:'event', subtype:h.type, amount:h.amount, desc:h.desc });
   const modal = document.getElementById('modal-hend-qr');
   const box   = document.getElementById('modal-hend-qr-box');
   const title = document.getElementById('modal-hend-qr-title');
@@ -3126,7 +3144,7 @@ function printHendelseQRCard() {
   const btn = document.getElementById('hend-qr-print-btn');
   const h   = btn._hendelse;
   if (!h) { alert('Velg en hendelse først.'); return; }
-  const qrSVG = window.qrToSVG({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }, 25, 'L');
+  const qrSVG = window.qrToSVG(registerQr14('ev_' + h.fbKey, { kind:'event', subtype:h.type, amount:h.amount, desc:h.desc }), 25, 'L');
   printHendelserCards14([{ ...h, qrSVG: qrSVG }]);
 }
 
@@ -3135,7 +3153,7 @@ function printHendelser() {
   if (!all.length) { alert('Ingen hendelser å skrive ut.'); return; }
   const cards = all.map(h => ({
     ...h,
-    qrSVG: window.qrToSVG({ type:'event', subtype:h.type, amount:h.amount, desc:h.desc }, 25, 'L')
+    qrSVG: window.qrToSVG(registerQr14('ev_' + h.fbKey, { kind:'event', subtype:h.type, amount:h.amount, desc:h.desc }), 25, 'L')
   }));
   printHendelserCards14(cards);
 }

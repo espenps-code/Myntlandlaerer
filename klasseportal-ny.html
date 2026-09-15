@@ -3994,7 +3994,17 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   function makeReward(amount){
     amount=Math.max(1, parseInt(amount,10)||0); if(!amount) return;
     var rid=genRid();
-    var payload=JSON.stringify({ type:'reward', amount:amount, rid:rid });
+    // Låst QR-register: beløpet skrives til classes/{klasse}/qr/{id} (kun lærere
+    // kan skrive dit). QR-en bærer bare ID-en, og elevappen slår den opp i sin klasse.
+    var qid='kp_'+rid;
+    try{
+      if(window._CLASS_ID && !window._NO_CLASS && window._update && window._ref && window._db){
+        var entry={}; entry[qid]={ kind:'reward', amount:amount, desc:'Belønning', active:true, updatedAt:Date.now() };
+        Promise.resolve(window._update(window._ref(window._db,'classes/'+window._CLASS_ID+'/qr'), entry))
+          .catch(function(e){ console.warn('QR-register:', e); info.textContent='Klarte ikke å lagre belønningen. Er du koblet til klassen?'; });
+      } else { info.textContent='Koble skjermen til en klasse først.'; return; }
+    }catch(e){ console.warn('QR-register:', e); }
+    var payload=JSON.stringify({ t:'q', id:qid });
     qrBox.innerHTML='';
     if(typeof QRCode!=='undefined'){
       try{ new QRCode(qrBox, { text:payload, width:260, height:260, correctLevel: QRCode.CorrectLevel.L }); }

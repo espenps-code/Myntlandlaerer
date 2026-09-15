@@ -1409,7 +1409,7 @@ async function toggleApplicationsOpen(jobKey) {
 
 function showJobQR(fbKey) {
   const j = getJobs().find(x => x.fbKey === fbKey); if (!j) return;
-  const payload = JSON.stringify({ type:'job', jobKey: fbKey, title: j.title, pay: j.pay });
+  const payload = registerQr57('jb_' + fbKey, { kind:'job', jobKey:fbKey, title:j.title, pay:j.pay });
 
   // Sett tekst og åpne modalen FØR QR genereres – da er elementet synlig
   document.getElementById('modal-job-qr-title').textContent = `${j.emoji||'💼'} ${j.title}`;
@@ -1697,10 +1697,28 @@ function showShopItemQR(fbKey) {
 // ════════════════════════════════════════════════════════════
 // QR KODER
 // ════════════════════════════════════════════════════════════
+// ── Låst QR-register ──────────────────────────────────────────────────────
+// QR-koder bærer ikke lenger beløp – bare en ID. Selve belønningen, hendelsen
+// eller oppdraget ligger i classes/{klasse}/qr/{id}, som bare lærere (medlemmer
+// av klassen) kan skrive til. Elevappen slår opp ID-en i SIN klasse – en QR fra
+// en annen klasse (eller en hjemmelaget) finnes ikke der og avvises.
+function registerQr57(id, data) {
+  const payload = JSON.stringify({ t:'q', id });
+  try {
+    if (window._CLASS_ID && window._fbReady && window._set) {
+      const clean = {};
+      Object.keys(data).forEach(k => { if (data[k] !== undefined && data[k] !== null) clean[k] = data[k]; });
+      clean.active = true; clean.updatedAt = Date.now();
+      Promise.resolve(window._set(window._ref(window._db, 'classes/' + window._CLASS_ID + '/qr/' + id), clean))
+        .catch(e => console.warn('QR-register:', e));
+    }
+  } catch(e) { console.warn('QR-register:', e); }
+  return payload;
+}
 function generateRewardQRCodes() {
   [10,50,100].forEach(amount => {
     const el = document.getElementById('qr-' + amount);
-    if (el && !el.children.length) try { new QRCode(el, { text: JSON.stringify({ type:'reward', amount }), width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M }); } catch(e) {}
+    if (el && !el.children.length) try { new QRCode(el, { text: registerQr57('rw_std' + amount, { kind:'reward', amount, desc:'Belønning' }), width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M }); } catch(e) {}
   });
 }
 
@@ -1748,7 +1766,7 @@ function renderCustomRewards57() {
     if (el && !el.children.length) {
       try {
         new QRCode(el, {
-          text: JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }),
+          text: registerQr57('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc }),
           width: 60, height: 60, correctLevel: QRCode.CorrectLevel.L
         });
       } catch(e) {}
@@ -1779,7 +1797,7 @@ function printSingleQR(elId, label) {
   const dataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
   if (!dataUrl) { alert('QR ikke klar – vent litt og prøv igjen.'); return; }
   const amount = parseInt(label);
-  const payload = JSON.stringify({ type:'reward', amount });
+  const payload = registerQr57('rw_std' + amount, { kind:'reward', amount, desc:'Belønning' });
   // Skriv ut med samme design som egendefinerte belønninger
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>img.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style><script>(function(){var U=(window.opener&&window.opener.__MYNTCOIN__)||"https://myntland.no/mynt.webp";var E="🪙";function C(n){if(n.nodeType===3){var v=n.nodeValue;if(!v||v.indexOf(E)<0)return;var p=n.parentNode;if(!p)return;var t=p.nodeName;if(t==="SCRIPT"||t==="STYLE"||t==="TEXTAREA")return;var a=v.split(E),f=document.createDocumentFragment();for(var i=0;i<a.length;i++){if(a[i])f.appendChild(document.createTextNode(a[i]));if(i<a.length-1){var m=document.createElement("img");m.className="myntico";m.src=U;m.alt="mynt";f.appendChild(m);}}p.replaceChild(f,n);}else if(n.nodeType===1){var k=[].slice.call(n.childNodes);for(var j=0;j<k.length;j++)C(k[j]);}}function R(){try{C(document.body);}catch(e){}}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",R);}else{R();}})();</script>
@@ -1810,7 +1828,7 @@ function printSingleQR(elId, label) {
 }
 
 function _printRewardCards57(rewards) {
-  const payloads = rewards.map(r => JSON.stringify({ type:'reward', amount:r.amount, desc:r.desc }));
+  const payloads = rewards.map(r => registerQr57('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc }));
   const cardsHTML = rewards.map((r, i) =>
     `<div class="card">
       <div class="logo">🪙 Myntland</div>
@@ -3648,7 +3666,7 @@ function showHendelseQR(fbKey) {
 
   // Kompakt payload (kortere felt = får plass i QR selv med lange beskrivelser/æøå)
   // t=type, s=subtype, a=amount, d=desc. Elev-appen leser begge varianter.
-  const payload = JSON.stringify({ t: 'event', s: h.type, a: h.amount, d: h.desc });
+  const payload = registerQr57('ev_' + fbKey, { kind:'event', subtype:h.type, amount:h.amount, desc:h.desc });
 
   // Åpne modal FØRST, generer QR etterpå (dobbel rAF for synlighet)
   const modal = document.getElementById('modal-hend-qr');
@@ -3721,7 +3739,7 @@ function printHendelser() {
   const cards = all.map(h => ({
     ...h,
     qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=4&ecc=L&data=' +
-           encodeURIComponent(JSON.stringify({ t:'event', s:h.type, a:h.amount, d:h.desc }))
+           encodeURIComponent(registerQr57('ev_' + h.fbKey, { kind:'event', subtype:h.type, amount:h.amount, desc:h.desc }))
   }));
   openHendelserPrintWindow(cards);
 }

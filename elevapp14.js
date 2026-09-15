@@ -1212,15 +1212,17 @@ function handleScanResult(text) {
         openPinConfirm(data.amount);
       }
     } else if (scanMode === 'reward') {
-      if (data.type === 'reward' && data.amount > 0) doReward(data.amount, data.desc, data.rid);
-      else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
+      // Belønning / hendelse: QR-en bærer bare en ID som slås opp i klassens låste register
+      if ((data.t === 'q' || data.type === 'q') && data.id) handleRegisteredQr14(String(data.id));
+      // Gammelt format med beløp i selve koden godtas ikke lenger (kunne forfalskes)
+      else if (data.type === 'reward' || data.type === 'event' || data.t === 'event' || data.type === 'job') { playErrorBeep(); showSuccess('⏳','Utgått QR-kode','','Be læreren skrive ut nye QR-kort'); }
     } else if (scanMode === 'any') {
       if (data.type === 'payment' && data.amount > 0) {
         pendingPayAmount = data.amount;
         openPinConfirm(data.amount);
       }
-      else if (data.type === 'reward' && data.amount > 0) doReward(data.amount, data.desc, data.rid);
-      else if (data.type === 'event' && data.amount > 0) showEventConfirm(data);
+      else if ((data.t === 'q' || data.type === 'q') && data.id) handleRegisteredQr14(String(data.id));
+      else if (data.type === 'reward' || data.type === 'event' || data.t === 'event' || data.type === 'job') { playErrorBeep(); showSuccess('⏳','Utgått QR-kode','','Be læreren skrive ut nye QR-kort'); }
     } else if (scanMode === 'loginCard') {
       if (data.type === 'login' && data.fbKey) {
         playScanBeep();
@@ -1491,6 +1493,38 @@ async function declinePaymentRequest() {
   hidePaymentRequest();
 }
 
+// ── REGISTRERT QR (belønning / hendelse) ──────────────────────────────────
+// Slår opp ID-en under classes/{denne klassen}/qr/{id}. Finnes den ikke der,
+// hører koden til en annen klasse (eller er hjemmelaget) og avvises. Hver elev
+// kan bruke en gitt kode én gang (students14/{elev}/qrClaimed/{id}).
+async function markQrClaimed14(id) {
+  const s = window._currentStudent; if (!s || !id) return;
+  s.qrClaimed = s.qrClaimed || {}; s.qrClaimed[id] = Date.now();
+  try {
+    const u = {}; u['qrClaimed/' + id] = s.qrClaimed[id];
+    await window._update(window._ref(window._db, 'students14/' + s.fbKey), u);
+    const ix = (window._allStudents || []).findIndex(x => x.fbKey === s.fbKey);
+    if (ix !== -1) window._allStudents[ix].qrClaimed = s.qrClaimed;
+  } catch(e) { console.warn('qrClaimed:', e); }
+}
+async function handleRegisteredQr14(id) {
+  const s = window._currentStudent;
+  if (!s || !window._CLASS_ID || !id || /[.#$\[\]\/]/.test(id)) { playErrorBeep(); showSuccess('❌','Ugyldig kode','','Prøv å scanne igjen'); return; }
+  if (s.qrClaimed && s.qrClaimed[id]) { showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
+  let q = null;
+  try { const snap = await window._get(window._ref(window._db, 'classes/' + window._CLASS_ID + '/qr/' + id)); q = snap.val(); } catch(e) { console.warn('QR-oppslag:', e); }
+  if (!q || q.active === false) { playErrorBeep(); showSuccess('❌','Ugyldig kode','','Denne koden hører ikke til klassen din'); return; }
+  if (q.kind === 'reward' && Number(q.amount) > 0) {
+    await markQrClaimed14(id);           // merk som brukt FØR utbetaling
+    await doReward(Number(q.amount), q.desc);
+  } else if (q.kind === 'event' && Number(q.amount) > 0) {
+    // Merkes som brukt når eleven trykker «Godta» (se acceptEvent)
+    showEventConfirm({ type:'event', subtype:q.subtype, amount:Number(q.amount), desc:q.desc, _qid:id });
+  } else {
+    playErrorBeep(); showSuccess('❌','Ugyldig kode','','Prøv å scanne igjen');
+  }
+}
+
 async function doReward(amount, desc, rid) {
   const s = window._currentStudent;
   if (!s) return;
@@ -1592,6 +1626,10 @@ async function acceptEvent() {
   const isIncome = data.subtype === 'income';
   const delta = isIncome ? data.amount : -data.amount;
   const newBal = Math.max(0, s.balance + delta);
+  if (data._qid) {
+    if (s.qrClaimed && s.qrClaimed[data._qid]) { cancelEvent(); showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
+    await markQrClaimed14(data._qid);
+  }
   const tx = {
     type: isIncome ? 'income' : 'expense',
     icon: isIncome ? '🎉' : '💸',
