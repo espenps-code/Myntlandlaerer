@@ -993,7 +993,7 @@
   <div class="page-subtitle">Egne varer for 5–7. Vises i elevappen under «Butikk».</div>
   <div class="grid-2">
     <div class="card">
-      <div class="card-title">➕ Legg til vare</div>
+      <div class="card-title" id="s57-form-title">➕ Legg til vare</div>
       <div class="form-row"><label>Emoji</label><input type="text" id="s57-emoji" placeholder="🎮" maxlength="2"></div>
       <div class="form-row"><label>Varenavn</label><input type="text" id="s57-name" placeholder="f.eks. Videospill"></div>
       <div class="form-row"><label>Pris (mynter)</label><input type="number" id="s57-price" placeholder="50" min="1"></div>
@@ -1003,7 +1003,8 @@
           <option>Klær & Sko</option><option>Bøker & Spill</option><option>Annet</option>
         </select>
       </div>
-      <button class="btn btn-primary" onclick="addShop57Item()">Legg til vare</button>
+      <button class="btn btn-primary" id="s57-submit" onclick="addShop57Item()">Legg til vare</button>
+      <button class="btn btn-ghost" id="s57-cancel" onclick="cancelEditShop57()" style="display:none;margin-left:8px;">Avbryt</button>
       <div id="s57-alert" style="margin-top:1rem;"></div>
     </div>
     <div class="card">
@@ -1022,7 +1023,7 @@
       <span>🏪 Alle varer</span>
       <input type="text" placeholder="Søk vare…" style="width:180px;" oninput="filterShop57(this.value)">
     </div>
-    <table><thead><tr><th>Vare</th><th>Kategori</th><th>Pris</th><th>QR</th><th></th></tr></thead>
+    <table><thead><tr><th>Vare</th><th>Kategori</th><th>Pris</th><th>QR</th><th></th><th></th></tr></thead>
     <tbody id="shop57-table-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Laster…</td></tr></tbody></table>
   </div>
 </div>

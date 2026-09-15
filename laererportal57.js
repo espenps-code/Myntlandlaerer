@@ -1623,6 +1623,7 @@ function refreshJobSelects() {
 // BUTIKK 5-7
 // ════════════════════════════════════════════════════════════
 let shop57Filter = '';
+let shop57EditKey = null;   // fbKey til varen som redigeres (null = legg til ny)
 
 async function addShop57Item() {
   if (!ready()) return;
@@ -1632,10 +1633,41 @@ async function addShop57Item() {
   const cat     = document.getElementById('s57-category').value;
   const alertEl = document.getElementById('s57-alert');
   if (!name) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn varenavn.</div>'; return; }
-  await window._set(window._push(fbRef('shop57')), { emoji, name, price, category: cat, workspaceId: currentWorkspaceId() || 'main', created: Date.now() });
-  ['s57-emoji','s57-name','s57-price'].forEach(id => document.getElementById(id).value = '');
-  alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» lagt til!</div>`;
+  if (shop57EditKey) {
+    // Rediger eksisterende vare – samme nøkkel, så utskrevne QR-kort virker fortsatt
+    await window._update(fbRef('shop57/' + shop57EditKey), { emoji, name, price, category: cat, updated: Date.now() });
+    cancelEditShop57();
+    alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» er oppdatert!</div>`;
+  } else {
+    await window._set(window._push(fbRef('shop57')), { emoji, name, price, category: cat, workspaceId: currentWorkspaceId() || 'main', created: Date.now() });
+    ['s57-emoji','s57-name','s57-price'].forEach(id => document.getElementById(id).value = '');
+    alertEl.innerHTML = `<div class="alert alert-success">✅ «${name}» lagt til!</div>`;
+  }
   setTimeout(() => alertEl.innerHTML = '', 3000);
+}
+
+function editShop57(fbKey) {
+  const item = getShop().find(x => x.fbKey === fbKey); if (!item) return;
+  shop57EditKey = fbKey;
+  document.getElementById('s57-emoji').value = item.emoji || '';
+  document.getElementById('s57-name').value  = item.name || '';
+  document.getElementById('s57-price').value = item.price ?? '';
+  const sel = document.getElementById('s57-category');
+  if ([...sel.options].some(o => o.value === item.category)) sel.value = item.category;
+  document.getElementById('s57-form-title').textContent = `✏️ Rediger «${item.name}»`;
+  document.getElementById('s57-submit').textContent = 'Lagre endringer';
+  document.getElementById('s57-cancel').style.display = '';
+  document.getElementById('s57-alert').innerHTML = '';
+  document.getElementById('s57-form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('s57-name').focus();
+}
+
+function cancelEditShop57() {
+  shop57EditKey = null;
+  ['s57-emoji','s57-name','s57-price'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('s57-form-title').textContent = '➕ Legg til vare';
+  document.getElementById('s57-submit').textContent = 'Legg til vare';
+  document.getElementById('s57-cancel').style.display = 'none';
 }
 
 function filterShop57(v) { shop57Filter = v.toLowerCase(); renderShop57List(); }
@@ -1645,17 +1677,18 @@ function renderShop57List() {
   const countEl = document.getElementById('s57-count');
   if (countEl) countEl.textContent = getShop().length;
   const items = getShop().filter(x => !shop57Filter || x.name.toLowerCase().includes(shop57Filter) || (x.category||'').toLowerCase().includes(shop57Filter));
-  if (!items.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">Ingen varer ennå.</td></tr>'; return; }
+  if (!items.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Ingen varer ennå.</td></tr>'; return; }
   tbody.innerHTML = items.map(x => `<tr>
     <td><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.8rem;">${x.emoji}</span><strong>${x.name}</strong></div></td>
     <td><span class="badge badge-teal">${x.category}</span></td>
     <td><span class="balance-badge">🪙 ${x.price}</span></td>
     <td><button class="btn btn-primary btn-sm" onclick="showShopItemQR('${x.fbKey}')">⬛ QR</button></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="editShop57('${x.fbKey}')" title="Rediger vare">✏️</button></td>
     <td><button class="btn btn-coral btn-sm" onclick="removeShop57('${x.fbKey}')">🗑️</button></td>
   </tr>`).join('');
 }
 
-async function removeShop57(fbKey) { await window._remove(fbRef('shop57/' + fbKey)); }
+async function removeShop57(fbKey) { if (shop57EditKey === fbKey) cancelEditShop57(); await window._remove(fbRef('shop57/' + fbKey)); }
 
 function showShopItemQR(fbKey) {
   const item = getShop().find(x => x.fbKey === fbKey); if (!item) return;
