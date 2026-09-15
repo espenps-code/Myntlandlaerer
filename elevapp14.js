@@ -1510,16 +1510,17 @@ async function markQrClaimed14(id) {
 async function handleRegisteredQr14(id) {
   const s = window._currentStudent;
   if (!s || !window._CLASS_ID || !id || /[.#$\[\]\/]/.test(id)) { playErrorBeep(); showSuccess('❌','Ugyldig kode','','Prøv å scanne igjen'); return; }
-  if (s.qrClaimed && s.qrClaimed[id]) { showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
   let q = null;
   try { const snap = await window._get(window._ref(window._db, 'classes/' + window._CLASS_ID + '/qr/' + id)); q = snap.val(); } catch(e) { console.warn('QR-oppslag:', e); }
   if (!q || q.active === false) { playErrorBeep(); showSuccess('❌','Ugyldig kode','','Denne koden hører ikke til klassen din'); return; }
+  // Én gang per elev – med mindre læreren har merket koden som flerbruks (multi)
+  if (!q.multi && s.qrClaimed && s.qrClaimed[id]) { showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
   if (q.kind === 'reward' && Number(q.amount) > 0) {
     await markQrClaimed14(id);           // merk som brukt FØR utbetaling
     await doReward(Number(q.amount), q.desc);
   } else if (q.kind === 'event' && Number(q.amount) > 0) {
     // Merkes som brukt når eleven trykker «Godta» (se acceptEvent)
-    showEventConfirm({ type:'event', subtype:q.subtype, amount:Number(q.amount), desc:q.desc, _qid:id });
+    showEventConfirm({ type:'event', subtype:q.subtype, amount:Number(q.amount), desc:q.desc, _qid:id, _multi:!!q.multi });
   } else {
     playErrorBeep(); showSuccess('❌','Ugyldig kode','','Prøv å scanne igjen');
   }
@@ -1627,7 +1628,7 @@ async function acceptEvent() {
   const delta = isIncome ? data.amount : -data.amount;
   const newBal = Math.max(0, s.balance + delta);
   if (data._qid) {
-    if (s.qrClaimed && s.qrClaimed[data._qid]) { cancelEvent(); showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
+    if (!data._multi && s.qrClaimed && s.qrClaimed[data._qid]) { cancelEvent(); showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
     await markQrClaimed14(data._qid);
   }
   const tx = {

@@ -1750,11 +1750,30 @@ function registerQr14(id, data) {
   } catch(e) { console.warn('QR-register:', e); }
   return payload;
 }
+function stdRewardMulti14() { return !!(window._settings && window._settings.stdRewardMulti); }
 function generateRewardQRCodes() {
+  const multi = stdRewardMulti14();
+  const cb = document.getElementById('std-qr-multi'); if (cb) cb.checked = multi;
   [10,50,100].forEach(amount => {
     const el = document.getElementById('qr-' + amount);
-    if (el && !el.children.length) try { new QRCode(el, { text:registerQr14('rw_std' + amount, { kind:'reward', amount, desc:'Belønning' }), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
+    if (el && !el.children.length) try { new QRCode(el, { text:registerQr14('rw_std' + amount, { kind:'reward', amount, desc:'Belønning', multi }), width:120, height:120, correctLevel:QRCode.CorrectLevel.M }); } catch(e){}
   });
+}
+// Bryter for de faste kortene: skal samme elev kunne skanne dem flere ganger?
+// QR-bildet endres ikke – bare oppføringen i det låste registeret.
+async function setStdRewardMulti14(val) {
+  val = !!val;
+  if (!window._settings) window._settings = {};
+  window._settings.stdRewardMulti = val;
+  try { await window._update(fbRef('settings'), { stdRewardMulti: val }); } catch(e) { console.warn(e); }
+  [10,50,100].forEach(amount => registerQr14('rw_std' + amount, { kind:'reward', amount, desc:'Belønning', multi: val }));
+}
+// Bryter per egendefinert belønning
+async function toggleRewardMulti14(fbKey) {
+  const r = (window._customRewards || []).find(x => x.fbKey === fbKey); if (!r) return;
+  const val = !r.multi;
+  await window._update(fbRef('customRewards14/' + fbKey), { multi: val });
+  registerQr14('rw_' + fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: val });
 }
 // ── Custom Rewards ─────────────────────────────────────────────────────────
 async function addCustomReward() {
@@ -1765,9 +1784,11 @@ async function addCustomReward() {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et gyldig beløp.</div>'; return;
   }
   if (!ready()) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Firebase ikke klar.</div>'; return; }
+  const multi = !!(document.getElementById('custom-qr-multi') && document.getElementById('custom-qr-multi').checked);
   await window._set(window._push(fbRef('customRewards14')), {
-    amount, desc: desc || `+${amount} mynter`, created: Date.now()
+    amount, desc: desc || `+${amount} mynter`, multi, created: Date.now()
   });
+  if (document.getElementById('custom-qr-multi')) document.getElementById('custom-qr-multi').checked = false;
   document.getElementById('custom-qr-amount').value = '25';
   document.getElementById('custom-qr-desc').value   = '';
   alertEl.innerHTML = `<div class="alert alert-success">✅ Belønning på 🪙 ${amount} lagt til!</div>`;
@@ -1787,9 +1808,11 @@ function renderCustomRewards() {
       <div style="flex:1;">
         <div style="font-weight:800;font-size:.9rem;">+${r.amount} 🪙</div>
         <div style="font-size:.78rem;color:var(--muted);">${r.desc}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">${r.multi ? '🔁 Kan skannes flere ganger av samme elev' : '1️⃣ Én gang per elev'}</div>
       </div>
       <div id="mini-qr-${r.fbKey}" style="width:60px;height:60px;flex-shrink:0;"></div>
       <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="btn btn-sm" title="${r.multi ? 'Bytt til én gang per elev' : 'Tillat flere skanninger per elev'}" onclick="toggleRewardMulti14('${r.fbKey}')">${r.multi ? '🔁' : '1️⃣'}</button>
         <button class="btn btn-primary btn-sm" onclick="printCustomReward('${r.fbKey}')">🖨️</button>
         <button class="btn btn-coral btn-sm"   onclick="deleteCustomReward('${r.fbKey}')">🗑️</button>
       </div>
@@ -1798,7 +1821,7 @@ function renderCustomRewards() {
   window._customRewards.forEach(r => {
     const el = document.getElementById('mini-qr-' + r.fbKey);
     if (el && !el.children.length) {
-      try { new QRCode(el, { text: registerQr14('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc }), width:60, height:60, correctLevel:QRCode.CorrectLevel.L }); } catch(e){}
+      try { new QRCode(el, { text: registerQr14('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: !!r.multi }), width:60, height:60, correctLevel:QRCode.CorrectLevel.L }); } catch(e){}
     }
   });
 }
@@ -1863,7 +1886,7 @@ function printSingleQR(elId, label) {
   win.document.close();
 }
 function _printRewardCards(rewards) {
-  const payloads = rewards.map(r => registerQr14('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc }));
+  const payloads = rewards.map(r => registerQr14('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: !!r.multi }));
   const cardsHTML = rewards.map((r, i) =>
     `<div class="card">
       <div class="top"><span class="logo">🪙 MYNTLAND</span><span class="ribbon">Belønning</span></div>

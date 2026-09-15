@@ -814,6 +814,7 @@
   <div id="bel-tab-qrkoder" style="display:none;">
     <div class="page-title">⬛ QR-belønningskoder</div>
   <div class="page-subtitle">Generer QR-koder som elevene kan scanne for å tjene mynter</div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin:0 0 .75rem;cursor:pointer;"><input type="checkbox" id="std-qr-multi" onchange="setStdRewardMulti14(this.checked)"> 🔁 De faste kortene (+10/+50/+100) kan skannes flere ganger av samme elev <span style="color:var(--muted);">(ellers én gang per elev)</span></label>
   <div class="grid-3">
     <div class="qr-card"><div class="amount-label" style="color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><div style="font-size:.85rem;color:var(--muted);">Liten belønning</div><button class="btn btn-primary btn-sm" onclick="printSingleQR('qr-10','10 🪙')">🖨️ Skriv ut</button></div>
     <div class="qr-card"><div class="amount-label" style="color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><div style="font-size:.85rem;color:var(--muted);">Medium belønning</div><button class="btn btn-amber btn-sm" onclick="printSingleQR('qr-50','50 🪙')">🖨️ Skriv ut</button></div>
@@ -825,6 +826,7 @@
     <div class="form-grid">
       <div class="form-row"><label>Beløp (mynter)</label><input type="number" id="custom-qr-amount" value="25" min="1" max="9999"></div>
       <div class="form-row"><label>Beskrivelse</label><input type="text" id="custom-qr-desc" placeholder="f.eks. Ryddet klasserommet"></div>
+      <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="custom-qr-multi"> 🔁 Kan skannes flere ganger av samme elev</label></div>
     </div>
     <button class="btn btn-primary" onclick="addCustomReward()">➕ Legg til belønning</button>
     <div id="custom-reward-alert" style="margin-top:.75rem;"></div>

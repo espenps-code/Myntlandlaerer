@@ -1779,35 +1779,58 @@ function renderLoan(){
     <button class="big-btn bb-blue" onclick="takeLoan(${maxLoan})" ${maxLoan<=0?'disabled style="opacity:.4"':''}>📋 Ta opp lån</button>`;
   }
 }
+let _loanBusy=false; // sperre mot dobbeltklikk / kappløp på lån
+function calcMaxLoan(s){
+  const days=Object.keys(window._fundHistory||{}).sort();
+  const last=days.length ? window._fundHistory[days[days.length-1]] : null;
+  const totalAssets=(s.balance||0)+(s.savings||0)+getFondValue(s.fund_low_units||0,last?.low||100)+getFondValue(s.fund_high_units||0,last?.high||100);
+  return (s.balance||0) < 0 ? 0 : Math.max(50, Math.floor(totalAssets * getLoanFactor()));
+}
 function takeLoan(max){
+  if(_loanBusy) return;
   const sChk = window._currentStudent;
+  if (sChk && (sChk.loan||0) > 0) { alert('Du har allerede et aktivt lån. Betal det tilbake først.'); return; }
   if (sChk && (sChk.balance||0) < 0) {
     alert(`Du har gjeld på brukskontoen (${sChk.balance}🪙). Gjør opp gjelden før du kan ta opp nytt lån.`);
     return;
   }
   if (max <= 0) { alert('Du kan ikke ta opp lån akkurat nå.'); return; }
   showInputSheet('Ta opp lån',`Maks 🪙 ${max} · Rente: ${Math.round(getLoanRate()*100)}%`,async(amt)=>{
-    if(amt>max){alert(`Maks lån er 🪙 ${max}.`);return;}
-    const s=window._currentStudent;const newBal=(s.balance||0)+amt;
-    const loanDate=Date.now();
-    await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:amt,loanDate:loanDate});
-    patchStudent(s.fbKey,{balance:newBal,loan:amt,loanDate:loanDate});
-    await saveTx(s.fbKey,'income','📋','Lån opptatt',amt);
-    transactions.unshift({type:'income',icon:'📋',desc:'Lån opptatt',amount:amt,ts:Date.now()});
-    refreshAllDisplays();renderTransactions();renderLoan();showSuccess('💰','Lån innvilget!',`+${amt} 🪙`,'Husk å betale tilbake med renter!');
+    if(_loanBusy) return;
+    const s=window._currentStudent; if(!s) return;
+    // Sjekk på nytt i lagreøyeblikket – ikke stol på tallet som lå i knappen
+    if((s.loan||0) > 0){alert('Du har allerede et aktivt lån. Betal det tilbake først.');renderLoan();return;}
+    if((s.balance||0) < 0){alert(`Du har gjeld på brukskontoen (${s.balance}🪙). Gjør opp gjelden først.`);renderLoan();return;}
+    const maxNow=calcMaxLoan(s);
+    if(amt>maxNow){alert(`Maks lån er 🪙 ${maxNow}.`);renderLoan();return;}
+    _loanBusy=true;
+    try{
+      const newBal=(s.balance||0)+amt;
+      const loanDate=Date.now();
+      await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:amt,loanDate:loanDate});
+      patchStudent(s.fbKey,{balance:newBal,loan:amt,loanDate:loanDate});
+      await saveTx(s.fbKey,'income','📋','Lån opptatt',amt);
+      transactions.unshift({type:'income',icon:'📋',desc:'Lån opptatt',amount:amt,ts:Date.now()});
+      refreshAllDisplays();renderTransactions();renderLoan();showSuccess('💰','Lån innvilget!',`+${amt} 🪙`,'Husk å betale tilbake med renter!');
+    } finally { _loanBusy=false; renderLoan(); }
   });
 }
 async function repayLoan(){
+  if(_loanBusy) return;
   const s=window._currentStudent;if(!s)return;const loan=s.loan||0;if(!loan)return;
   const interest=Math.ceil(loan*getLoanRate());const total=loan+interest;
   if((s.balance||0)<total){alert(`Du trenger 🪙 ${total}. Du har 🪙 ${s.balance||0}.`);return;}
   if(!confirm(`Betal tilbake 🪙 ${total} (lån + ${Math.round(getLoanRate()*100)}% rente)?`))return;
-  const newBal=(s.balance||0)-total;
-  await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:0,loanDate:null});
-  patchStudent(s.fbKey,{balance:newBal,loan:0,loanDate:null});
-  await saveTx(s.fbKey,'expense','📋',`Lån nedbetalt (rente: ${interest}🪙)`,-total);
-  transactions.unshift({type:'expense',icon:'📋',desc:`Lån nedbetalt (rente: ${interest}🪙)`,amount:-total,ts:Date.now()});
-  refreshAllDisplays();renderTransactions();renderLoan();showSuccess('✅','Nedbetalt!',`-${total} 🪙`,`Rente betalt: ${interest}🪙`);
+  if(_loanBusy || !(window._currentStudent?.loan)) return; // kan ha endret seg mens confirm sto åpen
+  _loanBusy=true;
+  try{
+    const newBal=(s.balance||0)-total;
+    await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:0,loanDate:null});
+    patchStudent(s.fbKey,{balance:newBal,loan:0,loanDate:null});
+    await saveTx(s.fbKey,'expense','📋',`Lån nedbetalt (rente: ${interest}🪙)`,-total);
+    transactions.unshift({type:'expense',icon:'📋',desc:`Lån nedbetalt (rente: ${interest}🪙)`,amount:-total,ts:Date.now()});
+    refreshAllDisplays();renderTransactions();renderLoan();showSuccess('✅','Nedbetalt!',`-${total} 🪙`,`Rente betalt: ${interest}🪙`);
+  } finally { _loanBusy=false; }
 }
 
 // ── JOBS ───────────────────────────────────────────────────────────────────
@@ -2051,10 +2074,11 @@ function checkPin(){
 async function handleRegisteredQr(id){
   const s=window._currentStudent;
   if(!s||!window._CLASS_ID||!id||/[.#$\[\]\/]/.test(id)){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');return;}
-  if(s.qrClaimed&&s.qrClaimed[id]){showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden');return;}
   let q=null;
   try{const snap=await window._get(window._ref(window._db,'classes/'+window._CLASS_ID+'/qr/'+id));q=snap.val();}catch(e){console.warn('QR-oppslag:',e);}
   if(!q||q.active===false){showSuccess('❌','Ugyldig QR','','Denne koden hører ikke til klassen din');return;}
+  // Én gang per elev – med mindre læreren har merket koden som flerbruks (multi)
+  if(!q.multi&&s.qrClaimed&&s.qrClaimed[id]){showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden');return;}
   // Merk som brukt FØR utbetaling, så et dobbelttrykk ikke gir dobbelt
   s.qrClaimed=s.qrClaimed||{};s.qrClaimed[id]=Date.now();
   let ok=false;

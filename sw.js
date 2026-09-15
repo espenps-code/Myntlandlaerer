@@ -13,7 +13,7 @@
  * Oppdaterer du sw.js senere: øk versjonsnummeret i CACHE under,
  * så ryddes den gamle cachen bort automatisk.
  */
-const CACHE = 'myntland-elevapp-v14';
+const CACHE = 'myntland-elevapp-v15';
 
 /* Versjonerte bibliotek (uforanderlige URL-er) -> cache-first */
 const LIB_HOSTS = ['www.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net'];
