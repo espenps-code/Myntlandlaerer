@@ -3334,8 +3334,31 @@ function printGuardianLetters(){
 // ── GODKJENNINGS-QR ─────────────────────────────────────────
 // Én generell QR for alle arbeidsplaner. Den bærer ingen fag-info –
 // elevappen godkjenner trinnet eleven står på når QR-en scannes.
-function showWpQR(){
-  const payload=JSON.stringify({ type:'wpApprove' });
+// Koden er registrert i klassens låste QR-register (kind:'wpapprove') med en
+// tilfeldig ID som ligger i klassens innstillinger. En hjemmelaget kode finnes
+// ikke i registeret og avvises av elevappen. «Lag ny kode» bytter ID-en ut.
+function wpApproveId57(){ return (window._settings && window._settings.wpApproveId) || null; }
+async function ensureWpApproveId57(forceNew){
+  let id = wpApproveId57();
+  if (!id || forceNew) {
+    const old = id;
+    id = 'wp_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+    if (!window._settings) window._settings = {};
+    window._settings.wpApproveId = id;
+    try { await window._update(fbRef('settings'), { wpApproveId: id }); } catch(e) { console.warn(e); }
+    if (old) { try { await window._update(fbRef('classes/' + window._CLASS_ID + '/qr/' + old), { active:false, updatedAt:Date.now() }); } catch(e) { console.warn(e); } }
+  }
+  return id;
+}
+async function newWpQR(){
+  if (!confirm('Lage ny godkjennings-QR? Den gamle slutter å virke, så du må skrive ut den nye.')) return;
+  await ensureWpApproveId57(true);
+  showWpQR();
+}
+async function showWpQR(){
+  if (!window._CLASS_ID) { alert('Velg en klasse først.'); return; }
+  const id = await ensureWpApproveId57(false);
+  const payload = registerQr57(id, { kind:'wpapprove', desc:'Godkjenning arbeidsplan' });
   window._wpQrPayload=payload;
   const box=document.getElementById('modal-wp-qr-box');
   /* ═══════════════════════════════════════════════════════════════════
@@ -3357,7 +3380,7 @@ function showWpQR(){
 
 function printWpQR(){
   /* Myntland-stil utskrift — restylet 2026-05-24 (mindre QR, ramme, bakgrunn). */
-  const payload = window._wpQrPayload || JSON.stringify({ type:'wpApprove' });
+  const payload = window._wpQrPayload; if (!payload) { alert('Åpne godkjennings-QR-en først.'); return; }
   const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=4&data=' + encodeURIComponent(payload);
   const win = window.open('', '', 'width=520,height=700');
   win.document.write(
