@@ -278,7 +278,7 @@ function showBelonningTab(tab, btnEl) {
     btnEl.classList.add('active');
   }
   if (tab === 'sparemaal'  && typeof renderClassGoalsPage  === 'function') renderClassGoalsPage();
-  if (tab === 'qrkoder'    && typeof generateRewardQRCodes === 'function') { generateRewardQRCodes(); renderCustomRewards(); }
+  if (tab === 'qrkoder'    && typeof generateRewardQRCodes === 'function') { generateRewardQRCodes(); renderCustomRewards(); if (typeof renderLeselodd === 'function') renderLeselodd(); }
   if (tab === 'hendelser'  && typeof renderHendelser       === 'function') renderHendelser();
   if (tab === 'merker'     && typeof renderMerkerPage      === 'function') renderMerkerPage();
   if (tab === 'myntjakten' && typeof syncMyntjakten14Form  === 'function') syncMyntjakten14Form();
@@ -3432,3 +3432,234 @@ function renderMerkerPage() {
   }).join('');
 }
 
+
+// ════════════════════════════════════════════════════════════
+// LESELODD — engangs-QR-lodd, 8 per A4-ark, valgfritt antall ark
+// ════════════════════════════════════════════════════════════
+// Hvert lodd får en egen ID (ll<sett>_<n>) i det låste QR-registeret
+// (classes/{klasse}/qr/{id}) som en vanlig belønning, PLUSS en billett-
+// oppføring under classes/{klasse}/data/leselodd/{sett}/tickets/{n}.
+// Elevappen merker billetten som brukt (usedAt/usedBy) FØR utbetaling –
+// dermed kan ett lodd bare brukes én gang, av én elev. QR-registeret er
+// låst for elever (kun lærere skriver), billett-oppføringen er åpen for
+// klassens innloggede elever. Ett sett kan være flere ark (f.eks. 25 ark
+// = 200 lodd) – alle loddene i settet deler beløp og oversikt.
+window.LESEMONSTER_URL = 'https://myntland.no/lesemonster/lesemonster-';
+window.LESELODD_PER_ARK = 8;
+window.LESELODD_MAX_ARK = 50;
+
+function _llEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function _llRegister(id, data) {
+  if (typeof registerQr57 === 'function') return registerQr57(id, data);
+  if (typeof registerQr14 === 'function') return registerQr14(id, data);
+  return JSON.stringify({ t:'q', id });
+}
+function _llRef(sub) {
+  return window._ref(window._db, 'classes/' + window._CLASS_ID + '/data/leselodd' + (sub ? '/' + sub : ''));
+}
+function _llBatchKey() {
+  const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let k = '';
+  for (let i = 0; i < 7; i++) k += a[Math.floor(Math.random() * a.length)];
+  return k;
+}
+function _llAlert(html, ms) {
+  const el = document.getElementById('leselodd-alert'); if (!el) return;
+  el.innerHTML = html; if (ms) setTimeout(() => { el.innerHTML = ''; }, ms);
+}
+// Antall lodd i et sett (tickets er et objekt 1..n)
+function _llCount(rec) { return rec && rec.tickets ? Object.keys(rec.tickets).length : 0; }
+function _llSheets() {
+  const el = document.getElementById('leselodd-sheets');
+  let v = parseInt(el && el.value) || 1;
+  return Math.min(window.LESELODD_MAX_ARK, Math.max(1, v));
+}
+function updateLeseloddCount() {
+  const el = document.getElementById('leselodd-count');
+  if (el) el.textContent = _llSheets() * window.LESELODD_PER_ARK;
+}
+
+// ── Lytter (settes opp første gang fanen vises) ─────────────────────────────
+window._leselodd = window._leselodd || {};
+let _llSubscribed = false;
+function subscribeLeselodd() {
+  if (_llSubscribed || !window._CLASS_ID || !window._fbReady || !window._onValue) return;
+  _llSubscribed = true;
+  window._onValue(_llRef(''), snap => {
+    window._leselodd = snap.val() || {};
+    renderLeselodd();
+  });
+}
+
+// ── Lag nytt sett + skriv ut ─────────────────────────────────────────────────
+async function printLeselodd() {
+  const amount = parseInt((document.getElementById('leselodd-amount') || {}).value) || 0;
+  if (!amount || amount < 1) { _llAlert('<div class="alert alert-error">⚠️ Skriv inn et gyldig beløp.</div>', 3000); return; }
+  if (!window._CLASS_ID || !window._fbReady || !window._set) { _llAlert('<div class="alert alert-error">⚠️ Klassen er ikke klar ennå – prøv igjen om et øyeblikk.</div>', 3000); return; }
+  const sheets = _llSheets();
+  const n = sheets * window.LESELODD_PER_ARK;
+  const batch = _llBatchKey();
+  const tickets = {};
+  const payloads = [];
+  for (let i = 1; i <= n; i++) {
+    const id = 'll' + batch + '_' + i;
+    payloads.push(_llRegister(id, { kind:'reward', amount, desc:'Leselodd 📚', multi:false }));
+    tickets[i] = { id, monster: ((i - 1) % window.LESELODD_PER_ARK) + 1 };
+  }
+  const rec = { amount, createdAt: Date.now(), tickets };
+  if (typeof currentWorkspaceId === 'function') rec.workspaceId = currentWorkspaceId() || 'main';
+  try { await window._set(_llRef(batch), rec); }
+  catch(e) { console.warn('leselodd:', e); _llAlert('<div class="alert alert-error">⚠️ Klarte ikke å lagre loddene. Prøv igjen.</div>', 4000); return; }
+  _openLeseloddPrint(batch, rec, payloads);
+  _llAlert('<div class="alert alert-success">✅ ' + n + ' leselodd à 🪙 ' + amount + ' (' + sheets + ' ark) er klare til utskrift.</div>', 3500);
+}
+
+// Skriv ut et eksisterende sett på nytt (f.eks. hvis arket ble borte).
+// Brukte lodd skrives ikke ut igjen.
+function reprintLeselodd(batch) {
+  const rec = (window._leselodd || {})[batch]; if (!rec) return;
+  const n = _llCount(rec);
+  const payloads = [];
+  for (let i = 1; i <= n; i++) {
+    const t = rec.tickets && rec.tickets[i];
+    payloads.push(t && !t.usedAt ? JSON.stringify({ t:'q', id: t.id }) : null);
+  }
+  if (!payloads.some(Boolean)) { alert('Alle loddene i dette settet er brukt – ingenting å skrive ut.'); return; }
+  _openLeseloddPrint(batch, rec, payloads);
+}
+
+async function deleteLeselodd(batch) {
+  const rec = (window._leselodd || {})[batch]; if (!rec) return;
+  if (!confirm('Slette dette settet? Lodd som ikke er brukt ennå, slutter å virke.')) return;
+  try {
+    const ids = Object.values(rec.tickets || {}).map(t => t && t.id).filter(Boolean);
+    await Promise.all(ids.map(id =>
+      window._update(window._ref(window._db, 'classes/' + window._CLASS_ID + '/qr/' + id), { active:false, updatedAt: Date.now() }).catch(e => console.warn(e))
+    ));
+    await window._remove(_llRef(batch));
+  } catch(e) { console.warn('leselodd slett:', e); alert('Klarte ikke å slette settet. Prøv igjen.'); }
+}
+
+// ── Oversikt i portalen ──────────────────────────────────────────────────────
+function renderLeselodd() {
+  updateLeseloddCount();
+  const el = document.getElementById('leselodd-list'); if (!el) return;
+  subscribeLeselodd();
+  let batches = Object.entries(window._leselodd || {}).map(([k, v]) => ({ ...v, batch: k }));
+  if (typeof filterByWorkspace === 'function') batches = filterByWorkspace(batches);
+  batches.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  if (!batches.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Ingen leselodd er skrevet ut ennå.</p>'; return; }
+  const fmtDay = ts => ts ? new Date(ts).toLocaleDateString('nb-NO', { day:'numeric', month:'short' }) : '';
+  el.innerHTML = batches.map(b => {
+    const ts = b.createdAt ? new Date(b.createdAt).toLocaleDateString('nb-NO', { day:'numeric', month:'short', year:'numeric' }) : '';
+    const n = _llCount(b);
+    const sheets = Math.ceil(n / window.LESELODD_PER_ARK);
+    const usedList = [];
+    for (let i = 1; i <= n; i++) { const t = (b.tickets || {})[i]; if (t && t.usedAt) usedList.push({ i, t }); }
+    const used = usedList.length;
+    const pct = n ? Math.round(used / n * 100) : 0;
+    let detail;
+    if (n <= 16) {
+      // Små sett: én brikke per lodd
+      const dots = [];
+      for (let i = 1; i <= n; i++) {
+        const t = (b.tickets || {})[i] || {};
+        const isUsed = !!t.usedAt;
+        const m = t.monster || ((i - 1) % window.LESELODD_PER_ARK) + 1;
+        const who = isUsed ? (t.usedName ? _llEsc(t.usedName) : 'brukt') + ' · ' + fmtDay(t.usedAt) : 'ikke brukt';
+        dots.push('<span title="Lodd ' + i + ': ' + who + '" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:.72rem;font-weight:800;'
+          + (isUsed ? 'background:#DCFCE7;color:#166534;' : 'background:var(--bg);color:var(--muted);border:1px dashed #c9c4e6;')
+          + '"><img src="' + window.LESEMONSTER_URL + m + '.webp" alt="" style="width:16px;height:16px;border-radius:50%;object-fit:cover;">'
+          + (isUsed ? '✓ ' + _llEsc(t.usedName || '') : i) + '</span>');
+      }
+      detail = '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' + dots.join('') + '</div>';
+    } else {
+      // Store sett: framdriftslinje + utfoldbar liste over brukte lodd
+      const rows = usedList.slice().sort((a, b2) => (b2.t.usedAt || 0) - (a.t.usedAt || 0))
+        .map(({ i, t }) => '<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:#DCFCE7;color:#166534;font-size:.72rem;font-weight:800;margin:2px;">✓ ' + _llEsc(t.usedName || 'brukt') + ' <span style="opacity:.7;">· nr. ' + i + ' · ' + fmtDay(t.usedAt) + '</span></span>').join('');
+      detail = '<div style="margin-top:8px;height:8px;background:#e9e6f7;border-radius:6px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#1D9E75;border-radius:6px;"></div></div>'
+        + (used ? '<details style="margin-top:6px;font-size:.78rem;"><summary style="cursor:pointer;color:var(--muted);font-weight:700;">Vis hvem som har brukt lodd (' + used + ')</summary><div style="margin-top:4px;">' + rows + '</div></details>' : '');
+    }
+    return '<div style="padding:.9rem 1rem;background:var(--bg);border-radius:12px;margin-bottom:8px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      +   '<div style="width:36px;height:36px;background:var(--teal-light);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">📚</div>'
+      +   '<div style="flex:1;min-width:160px;">'
+      +     '<div style="font-weight:800;font-size:.9rem;">+' + Number(b.amount || 0) + ' 🪙 per lodd · ' + n + ' lodd (' + sheets + ' ark)</div>'
+      +     '<div style="font-size:.78rem;color:var(--muted);">Skrevet ut ' + ts + ' · ' + used + ' av ' + n + ' brukt</div>'
+      +   '</div>'
+      +   '<div style="display:flex;gap:4px;">'
+      +     '<button class="btn btn-primary btn-sm" title="Skriv ut de ubrukte loddene på nytt" onclick="reprintLeselodd(\'' + b.batch + '\')">🖨️</button>'
+      +     '<button class="btn btn-coral btn-sm" title="Slett settet" onclick="deleteLeselodd(\'' + b.batch + '\')">🗑️</button>'
+      +   '</div>'
+      + '</div>'
+      + detail
+      + '</div>';
+  }).join('');
+}
+
+// ── Utskriftssiden: 8 lodd per A4-side, så mange sider som settet trenger ────
+function _openLeseloddPrint(batch, rec, payloads) {
+  const amount = Number(rec.amount || 0);
+  const total = payloads.length;
+  const per = window.LESELODD_PER_ARK;
+  const banner = window.buildPdfDownloadBanner('', { twoSided:false });
+  const ticketHTML = (p, i) => {
+    const n = i + 1;
+    const m = ((i % per) + 1);
+    if (!p) return '<div class="ticket ticket-used"><div class="used-msg">Lodd ' + n + ' er allerede brukt</div></div>';
+    return '<div class="ticket">'
+      + '<div class="monster"><img src="' + window.LESEMONSTER_URL + m + '.webp" alt=""></div>'
+      + '<div class="mid">'
+      +   '<div class="brand">🪙 Myntland</div>'
+      +   '<div class="title">Leselodd</div>'
+      +   '<div class="amount">+' + amount + ' 🪙</div>'
+      +   '<div class="hint">Skann med bankkortet.<br>Gjelder én gang.</div>'
+      + '</div>'
+      + '<div class="stub"><div class="qr" id="llqr' + n + '"></div><div class="nr">Nr. ' + n + ' av ' + total + '</div></div>'
+      + '</div>';
+  };
+  // Del opp i sider à 8 lodd. Ved ny utskrift av et sett hopper vi over sider der alt er brukt.
+  const pages = [];
+  for (let s = 0; s < total; s += per) {
+    const slice = payloads.slice(s, s + per);
+    if (!slice.some(Boolean)) continue;
+    pages.push('<div class="page"><div class="grid">' + slice.map((p, j) => ticketHTML(p, s + j)).join('') + '</div></div>');
+  }
+  const win = window.open('', '_blank', 'width=900,height=800');
+  if (!win) { alert('Nettleseren blokkerte utskriftsvinduet. Tillat popup-vinduer for myntland.no og prøv igjen.'); return; }
+  win.document.write('<!DOCTYPE html><html lang="nb"><head><meta charset="UTF-8"><title>Leselodd – Myntland</title>'
+    + '<style>img.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style>'
+    + '<script>(function(){var U=(window.opener&&window.opener.__MYNTCOIN__)||"https://myntland.no/mynt.webp";var E="🪙";function C(n){if(n.nodeType===3){var v=n.nodeValue;if(!v||v.indexOf(E)<0)return;var p=n.parentNode;if(!p)return;var t=p.nodeName;if(t==="SCRIPT"||t==="STYLE"||t==="TEXTAREA")return;var a=v.split(E),f=document.createDocumentFragment();for(var i=0;i<a.length;i++){if(a[i])f.appendChild(document.createTextNode(a[i]));if(i<a.length-1){var m=document.createElement("img");m.className="myntico";m.src=U;m.alt="mynt";f.appendChild(m);}}p.replaceChild(f,n);}else if(n.nodeType===1){var k=[].slice.call(n.childNodes);for(var j=0;j<k.length;j++)C(k[j]);}}function R(){try{C(document.body);}catch(e){}}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",R);}else{R();}})();<\/script>'
+    + '<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">'
+    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'
+    + '<style>'
+    + '@media print{@page{size:A4 portrait;margin:0}body{padding:0}.page{padding:8mm;height:297mm;page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}}'
+    + '@media screen{.page{padding:8mm;border-bottom:1px dashed #c9c4e6}}'
+    + '*{box-sizing:border-box}'
+    + 'body{margin:0;font-family:"Nunito",sans-serif;background:#fff;color:#2A1F3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;width:194mm;margin:0 auto}'
+    + '.ticket{position:relative;height:65mm;border:0.7mm solid #534AB7;border-radius:5mm;background:#FFF8E7;display:grid;grid-template-columns:30mm minmax(0,1fr) 28mm;align-items:center;overflow:hidden;page-break-inside:avoid;break-inside:avoid}'
+    + '.ticket::before{content:"";position:absolute;inset:1.6mm;border:0.35mm dashed #C7C2EA;border-radius:3.8mm;pointer-events:none}'
+    + '.monster{display:flex;align-items:center;justify-content:center;height:100%;padding-left:3mm}'
+    + '.monster img{width:25mm;height:25mm;object-fit:cover;border-radius:50%;background:#fff;border:0.6mm solid #fff;box-shadow:0 0 0 0.6mm #F5C849}'
+    + '.mid{padding:2mm 1mm 2mm 2mm;text-align:left;line-height:1.1;min-width:0;overflow:hidden}'
+    + '.brand{font-family:"Fredoka One",cursive;font-size:3.4mm;color:#1e0f52;letter-spacing:.02em}'
+    + '.title{font-family:"Fredoka One",cursive;font-size:7mm;color:#534AB7;margin-top:1mm;letter-spacing:.01em}'
+    + '.amount{font-family:"Fredoka One",cursive;font-size:10mm;color:#EF9F27;margin-top:1mm;text-shadow:0 0.5mm 0 #fff}'
+    + '.hint{font-size:2.8mm;font-weight:800;color:#5a5080;margin-top:2mm;line-height:1.25}'
+    + '.stub{height:100%;border-left:0.5mm dashed #534AB7;background:#EEEDFE;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5mm;padding:2mm}'
+    + '.qr{width:22mm;height:22mm;background:#fff;padding:1mm;border-radius:2mm;display:flex;align-items:center;justify-content:center}'
+    + '.qr img,.qr canvas{width:20mm!important;height:20mm!important}'
+    + '.nr{font-size:2.6mm;font-weight:900;color:#534AB7;white-space:nowrap}'
+    + '.ticket-used{display:flex;align-items:center;justify-content:center;background:#f6f5fb;border-style:dashed;border-color:#c9c4e6}'
+    + '.used-msg{font-size:3.5mm;font-weight:800;color:#9a94b8}'
+    + banner.bannerCSS
+    + '</style></head><body>'
+    + banner.bannerHTML
+    + pages.join('')
+    + '<script>'
+    + 'var payloads=' + JSON.stringify(payloads) + ';'
+    + 'function makeAll(){var done=true;for(var i=0;i<payloads.length;i++){if(!payloads[i])continue;var el=document.getElementById("llqr"+(i+1));if(!el){done=false;continue;}if(el.children.length>0)continue;try{new QRCode(el,{text:payloads[i],width:76,height:76,correctLevel:QRCode.CorrectLevel.M});}catch(e){done=false;}}return done;}'
+    + 'var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>60){clearInterval(poll);}},150);'
+    + '<\/script></body></html>');
+  win.document.close();
+}

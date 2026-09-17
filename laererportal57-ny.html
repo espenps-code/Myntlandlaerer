@@ -1092,6 +1092,21 @@
       <p style="color:var(--muted);font-size:.85rem;">Ingen egendefinerte belønninger ennå.</p>
     </div>
   </div>
+
+  <div class="card" id="leselodd-card">
+    <div class="card-title">📚 Leselodd</div>
+    <p style="font-size:.85rem;color:var(--muted);margin:0 0 1rem;line-height:1.5;">Skriv ut 8 leselodd på ett A4-ark – hvert lodd har sitt eget lesemonster og en engangs-QR. Del ut et lodd når en elev har lest, så skanner eleven det med bankkortet sitt og får myntene. <strong>Hvert lodd virker bare én gang, for én elev.</strong> Du velger beløpet før du skriver ut.</p>
+    <div class="form-grid">
+      <div class="form-row"><label>Mynter per lodd</label><input type="number" id="leselodd-amount" value="50" min="1" max="9999"></div>
+      <div class="form-row"><label>Antall ark (8 lodd per ark)</label><input type="number" id="leselodd-sheets" value="1" min="1" max="50" oninput="updateLeseloddCount()"></div>
+    </div>
+    <button class="btn btn-primary" onclick="printLeselodd()">🖨️ Lag og skriv ut <span id="leselodd-count">8</span> leselodd</button>
+    <div id="leselodd-alert" style="margin-top:.75rem;"></div>
+    <div class="card-title" style="margin-top:1.25rem;">📋 Utskrevne leselodd</div>
+    <div id="leselodd-list">
+      <p style="color:var(--muted);font-size:.85rem;">Ingen leselodd er skrevet ut ennå.</p>
+    </div>
+  </div>
   </div>
 
   <!-- Tab: Hendelser -->
