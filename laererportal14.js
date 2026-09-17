@@ -269,7 +269,7 @@ function showPage(page) {
 
 // Bytt fane på Belønninger-siden
 function showBelonningTab(tab, btnEl) {
-  ['sparemaal','qrkoder','hendelser','merker','myntjakten'].forEach(t => {
+  ['sparemaal','qrkoder','hendelser','merker','myntjakten','leselodd'].forEach(t => {
     const el = document.getElementById('bel-tab-' + t);
     if (el) el.style.display = (t === tab) ? 'block' : 'none';
   });
@@ -278,7 +278,8 @@ function showBelonningTab(tab, btnEl) {
     btnEl.classList.add('active');
   }
   if (tab === 'sparemaal'  && typeof renderClassGoalsPage  === 'function') renderClassGoalsPage();
-  if (tab === 'qrkoder'    && typeof generateRewardQRCodes === 'function') { generateRewardQRCodes(); renderCustomRewards(); if (typeof renderLeselodd === 'function') renderLeselodd(); }
+  if (tab === 'qrkoder'    && typeof generateRewardQRCodes === 'function') { generateRewardQRCodes(); renderCustomRewards(); }
+  if (tab === 'leselodd'   && typeof renderLeselodd        === 'function') renderLeselodd();
   if (tab === 'hendelser'  && typeof renderHendelser       === 'function') renderHendelser();
   if (tab === 'merker'     && typeof renderMerkerPage      === 'function') renderMerkerPage();
   if (tab === 'myntjakten' && typeof syncMyntjakten14Form  === 'function') syncMyntjakten14Form();
