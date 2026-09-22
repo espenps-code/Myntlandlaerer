@@ -551,6 +551,18 @@
     .sheet { box-shadow:none; border:none; border-radius:0; padding:8mm 4mm; page-break-after:always; }
     .sheet:last-child { page-break-after:auto; }
     .sheet-head { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    /* Kopivennlig utskrift: mørke, solide streker på alt eleven skal skrive i,
+       slik at de overlever svart/hvitt-kopiering */
+    .sheet { --border:#555; --muted:#333; }
+    .name-line span { border-bottom:2.5px solid #222; }
+    .mg-ansbox, .tl-ansbox, .ct-ansbox, .fm-rulebox, .bv-blank, .kl-timeblank,
+    table.fm td.blank { border-color:#1e0f52; border-width:2.5px; }
+    .mg-line.q { border:2.5px solid #1e0f52; }
+    .instr { border-color:#1e0f52; }
+    .ct-field { border:2.5px solid #555; }
+    .fm-rule, .kl-timegiven { color:#1e0f52; box-shadow:none; }
+    .mg-badge, .tl-badge { background:#1e0f52; }
+    .bv-eq { color:#1e0f52; }
     .mg-grid { grid-template-columns:1fr 1fr; }
     .rh-grid { gap:4px 10mm; }
     .rh-wheel { max-width:none; width:62mm; }

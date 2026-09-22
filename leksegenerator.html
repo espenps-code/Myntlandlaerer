@@ -456,7 +456,7 @@ body {
 .pill-mul { background: #fff3cc; color: #7a5500; border-color: #7a5500; }
 .pill-div { background: #d0eaff; color: #003e7a; border-color: #003e7a; }
 .pill-txt { background: #f0e0ff; color: #5a0080; border-color: #5a0080; }
-.section-rule { flex: 1; height: 0.4mm; background: #ddd; }
+.section-rule { flex: 1; height: 0.5mm; background: #666; }
 
 /* Task grid */
 .tasks-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2mm 5mm; }
@@ -466,7 +466,7 @@ body {
   font-family: 'Fredoka One', cursive; font-size: 5mm; color: var(--ink);
   margin-bottom: 0.5mm; display: flex; align-items: baseline; gap: 1.5mm;
 }
-.task-num { font-size: 2.5mm; font-weight: 900; color: #bbb; min-width: 4mm; }
+.task-num { font-size: 2.5mm; font-weight: 900; color: #444; min-width: 4mm; }
 
 /* Grid writing field — bigger squares */
 .grid-field {
@@ -487,7 +487,7 @@ body {
   filter: drop-shadow(0 1mm 3mm rgba(0,0,0,0.18));
 }
 .txt-problem { font-size: 5mm; font-weight: 400; color: #222; line-height: 1.4; margin-bottom: 2mm; }
-.txt-answer-label { font-size: 2.5mm; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5mm; color: #888; margin-bottom: 1.5mm; clear: both; }
+.txt-answer-label { font-size: 2.5mm; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5mm; color: #555; margin-bottom: 1.5mm; clear: both; }
 .grid-field-tall {
   width: 100%;
   border: 0.5mm solid #333; border-radius: 1.5mm;
@@ -499,8 +499,8 @@ body {
 .ws-footer {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 2.5mm; padding-top: 2mm;
-  border-top: 0.4mm dashed #ccc;
-  font-size: 2.5mm; color: #aaa; font-weight: 800;
+  border-top: 0.4mm dashed #777;
+  font-size: 2.5mm; color: #666; font-weight: 800;
 }
 .footer-monster { width: 7mm; height: 7mm; object-fit: contain; filter: drop-shadow(0 0.5mm 1.5mm rgba(0,0,0,0.15)); }
 
@@ -712,7 +712,7 @@ function makeGridField(heightMm, widthMm) {
     <svg viewBox="0 0 ${widthMm} ${heightMm}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id="${id}" width="${cw}" height="${ch}" patternUnits="userSpaceOnUse">
-          <path d="M ${cw} 0 L 0 0 0 ${ch}" fill="none" stroke="#b0cceb" stroke-width="0.3"/>
+          <path d="M ${cw} 0 L 0 0 0 ${ch}" fill="none" stroke="#8c8c8c" stroke-width="0.35"/>
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill="url(#${id})"/>
@@ -727,7 +727,7 @@ function makeTallGridField(heightMm, widthMm = 178) {
     <svg viewBox="0 0 ${widthMm} ${heightMm}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id="${id}" width="${cw}" height="${ch}" patternUnits="userSpaceOnUse">
-          <path d="M ${cw} 0 L 0 0 0 ${ch}" fill="none" stroke="#b0cceb" stroke-width="0.3"/>
+          <path d="M ${cw} 0 L 0 0 0 ${ch}" fill="none" stroke="#8c8c8c" stroke-width="0.35"/>
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill="url(#${id})"/>
@@ -1174,7 +1174,7 @@ function buildPage(opts) {
   } = opts;
 
   const pageIndicator = pageLabel
-    ? `<span style="margin-right:3mm;color:#bbb;font-weight:800">${pageLabel}</span>`
+    ? `<span style="margin-right:3mm;color:#666;font-weight:800">${pageLabel}</span>`
     : '';
 
   return `

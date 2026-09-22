@@ -399,6 +399,21 @@
     .sheet { box-shadow:none; border:none; border-radius:0; padding:8mm 4mm; page-break-after:always; }
     .sheet:last-child { page-break-after:auto; }
     .sheet-head { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    /* Kopivennlig utskrift: mørke, solide streker på alt eleven skal skrive i,
+       slik at de overlever svart/hvitt-kopiering */
+    .sheet { --border:#555; --muted:#333; }
+    .name-line span { border-bottom:2.5px solid #222; }
+    table.grid td { border-color:#444; }
+    table.grid.cw td.cell { border-color:#1e0f52; }
+    .clues h4 { border-bottom-color:#444; }
+    table.scramble th { border-bottom-color:#444; }
+    table.scramble td { border-bottom:2px solid #555; }
+    table.scramble .ans-line, .blank { border-bottom:2.5px solid #111; }
+    .wordbank, .bankword { border-color:#1e0f52; }
+    .wordbank h4, .keycell .kc { color:#1e0f52; }
+    .keycell { border-color:#444; }
+    .keycell .kl.hidden::after { border-bottom:2px solid #222; }
+    .crypto-cell .box { border-color:#111; }
     @page { size:A4; margin:10mm 12mm; }
   }
 </style>
