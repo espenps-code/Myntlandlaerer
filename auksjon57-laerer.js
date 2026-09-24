@@ -129,8 +129,26 @@
           '</div>' +
           '<div><div id="aukt-list"><p style="color:var(--muted);font-size:.9rem;">Ingen auksjoner ennå.</p></div></div>' +
         '</div>';
+      // ── Underfaner «🛒 Butikk» / «🔨 Auksjon» (samme stil som Belønninger) ──
       var sub = page.querySelector('.page-subtitle');
-      if (sub && sub.nextSibling) page.insertBefore(card, sub.nextSibling); else page.appendChild(card);
+      var anchor = sub || page.querySelector('.page-title');
+      var tabShop = document.createElement('div');
+      tabShop.id = 'butikk-tab-butikk';
+      var node = anchor ? anchor.nextSibling : page.firstChild;
+      while (node) { var next = node.nextSibling; tabShop.appendChild(node); node = next; }
+      var tabAuk = document.createElement('div');
+      tabAuk.id = 'butikk-tab-auksjon';
+      tabAuk.style.display = 'none';
+      tabAuk.appendChild(card);
+      var tabs = document.createElement('div');
+      tabs.className = 'tabs';
+      tabs.style.marginBottom = '1rem';
+      tabs.innerHTML =
+        '<button class="tab active" onclick="showButikkTab(\'butikk\', this)">🛒 Butikk</button>' +
+        '<button class="tab" onclick="showButikkTab(\'auksjon\', this)">🔨 Auksjon <span id="aukt-tab-badge" style="display:none;margin-left:4px;background:var(--coral);color:#fff;border-radius:999px;padding:0 7px;font-size:.72rem;font-weight:800"></span></button>';
+      page.appendChild(tabs);
+      page.appendChild(tabShop);
+      page.appendChild(tabAuk);
 
       document.getElementById('aukt-dur').addEventListener('change', function () {
         document.getElementById('aukt-clock-row').style.display = this.value === 'clock' ? '' : 'none';
@@ -149,6 +167,27 @@
       document.body.appendChild(big);
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && bigId) window.auktBigClose(); });
     }
+  }
+
+  window.showButikkTab = function (tab, btnEl) {
+    ['butikk', 'auksjon'].forEach(function (t) {
+      var el = document.getElementById('butikk-tab-' + t);
+      if (el) el.style.display = (t === tab) ? 'block' : 'none';
+    });
+    if (btnEl && btnEl.closest) {
+      btnEl.closest('.tabs').querySelectorAll('.tab').forEach(function (b) { b.classList.remove('active'); });
+      btnEl.classList.add('active');
+    }
+    if (tab === 'butikk' && typeof renderShop57List === 'function') renderShop57List();
+    if (tab === 'auksjon') { fillShopSelect(); renderList(); }
+  };
+
+  function updateTabBadge() {
+    var badge = document.getElementById('aukt-tab-badge');
+    if (!badge) return;
+    var n = mine().filter(isLive).length;
+    badge.textContent = n + ' pågår';
+    badge.style.display = n ? 'inline-block' : 'none';
   }
 
   function fillShopSelect() {
@@ -252,6 +291,7 @@
   }
 
   function renderList() {
+    updateTabBadge();
     var el = document.getElementById('aukt-list');
     if (!el) return;
     var list = mine().slice().sort(function (x, y) {
