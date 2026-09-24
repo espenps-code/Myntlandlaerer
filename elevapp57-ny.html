@@ -31,7 +31,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
   import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getDatabase, ref, onValue, update, push, set, get }
+  import { getDatabase, ref, onValue, update, push, set, get, runTransaction }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
@@ -74,7 +74,7 @@
   if(!CLASS_ID){ console.error('Ingen klasse i lenka. Åpne elevappen via klasselenka fra læreren.'); }
 
   // ── Klasse-scoping: legg classes/{id}/data/ foran kjente rot-stier ────────
-  const CLASS_ROOTS = new Set(['students57','transactions57','workPlanProgress','workPlans','jobs','shop57','classGoals','settings','fundHistory','budgetSettings','workspaceSettings']);
+  const CLASS_ROOTS = new Set(['students57','transactions57','workPlanProgress','workPlans','jobs','shop57','classGoals','settings','fundHistory','budgetSettings','workspaceSettings','auctions57','auctionBids57']);
   function classScope(p){
     if(!window._CLASS_ID) return p;
     const clean = String(p).replace(/^\/+/,'');
@@ -94,6 +94,7 @@
     return update(r,obj);
   };
   window._push = push; window._set = set; window._get = get;
+  window._runTransaction = runTransaction; // brukes av auksjon57-elev.js
 
   // Scoped ref for lytterne under
   const SR = (p)=> ref(db, classScope(p));
@@ -813,6 +814,7 @@
 </div>
 
 <script defer src="elevapp57.js"></script>
+<script defer src="auksjon57-elev.js"></script>
 <script>
 /* Service worker: rask gjenapning av elevappen (cacher app-filer + bibliotek lokalt). */
 if ('serviceWorker' in navigator) {

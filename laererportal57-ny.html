@@ -22,7 +22,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
   import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getDatabase, ref as _ref0, set, push, onValue, remove, update as _update0, get }
+  import { getDatabase, ref as _ref0, set, push, onValue, remove, update as _update0, get, runTransaction }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
@@ -62,7 +62,7 @@
   // ── Multi-tenant: scope alle klasse-stier til classes/{id}/data/ ──────────
   const _params = new URLSearchParams(location.search);
   window._CLASS_ID = _params.get('class') || null;
-  const CLASS_ROOTS = new Set(['students57','transactions57','jobs','shop57','customRewards57','classGoals','hendelser','settings','budgetSettings','fundHistory','workPlans','workPlanProgress','guardianCodes','salaryLastPaid','fridaySalaryLastPaid','fridayBudgetLastPaid','interestLastPaid','wedEventsLastApplied','workspaceSettings','dayboard','teachers57','workspaces']);
+  const CLASS_ROOTS = new Set(['students57','transactions57','jobs','shop57','customRewards57','classGoals','hendelser','settings','budgetSettings','fundHistory','workPlans','workPlanProgress','guardianCodes','salaryLastPaid','fridaySalaryLastPaid','fridayBudgetLastPaid','interestLastPaid','wedEventsLastApplied','workspaceSettings','dayboard','teachers57','workspaces','auctions57','auctionBids57']);
   function classScope(pth){
     if(!window._CLASS_ID) return pth;
     const clean = String(pth).replace(/^\/+/,'');
@@ -83,6 +83,7 @@
   window._db = db; window._ref = ref; window._set = set; window._push = push;
   window._onValue = onValue; window._remove = remove; window._update = update;
   window._get = get; window._fbReady = true;
+  window._runTransaction = runTransaction; // brukes av auksjon57-laerer.js
 
   // ── Lyttere – startes etter innlogging ─────────────────────────────────────
   function startListeners() {
@@ -1775,6 +1776,7 @@
 </div>
 
 <script defer src="laererportal57.js"></script>
+<script defer src="auksjon57-laerer.js"></script>
 <script defer src="tilbakemelding.js"></script>
 <script defer src="omvisning.js"></script>
 
