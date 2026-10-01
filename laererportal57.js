@@ -3584,7 +3584,7 @@ async function printWpReport(){
     .pl-stairs{flex:0 0 26mm;height:8mm;display:flex;align-items:flex-end;gap:.8mm;}
     .pl-stairs i{flex:1;background:#e3ebe5;border-radius:1.2mm 1.2mm .5mm .5mm;}
     .pl-stairs i.on{background:#1D9E75;}
-    .pl-stairs i.half{background:repeating-linear-gradient(135deg,#EF9F27 0 1.2mm,#FAEEDA 1.2mm 2.4mm);}
+    .pl-stairs i.half{background:#FAEEDA;box-shadow:inset 0 0 0 .5mm #EF9F27;}
     .pl-count{flex:0 0 22mm;font-size:9pt;font-weight:700;color:#1a2e1a;text-align:right;}
     .pl-count b{font-family:'Fredoka One',Arial,sans-serif;font-weight:400;font-size:12pt;color:#085041;}
     .pl-pct{flex:0 0 17mm;text-align:center;font-weight:800;font-size:9pt;color:#085041;background:#E1F5EE;border-radius:999px;padding:1mm 0;}
