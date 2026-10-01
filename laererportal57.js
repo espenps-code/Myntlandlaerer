@@ -2786,7 +2786,7 @@ function renderWorkPlans(){
   }
   const active=plans.filter(p=>p.active!==false);
   const drafts=plans.filter(p=>p.active===false);
-  let html='';
+  let html='<div style="display:flex;justify-content:flex-end;margin-bottom:.4rem;"><button class="btn btn-amber" onclick="openWpReport()">🖨️ Skriv ut perioderapport</button></div>';
   html+='<div class="wp-cat-pill aktiv">✅ Aktive periodeplaner ('+active.length+')</div>';
   html+= active.length
     ? active.map(wpPlanCardHTML).join('')
@@ -3330,6 +3330,292 @@ function printGuardianLetters(){
     +'<style>'+css+'</style></head><body>'+letters.join('')
     +'<script>setTimeout(function(){window.print();},500);<\/script></body></html>');
   win.document.close();
+}
+
+// ── PERIODERAPPORT (utskrift, 2 elever per A4) ──────────────
+// Læreren velger planer + timer brukt per plan, og hvilke elever som skal ha rapport.
+// Hver rapport har tom linje for elevens ekte navn (lagres ikke i skyen), viser
+// fullførte trinn per plan og totalt, og har plass til foresattes underskrift.
+// Timer lagres på planen som reportHours slik at de huskes til neste gang.
+function wpReportPlans(){
+  return wpPlansForTeacher().filter(p=>(p.steps||[]).length>0)
+    .sort((a,b)=>((a.active===false)-(b.active===false))||wpPlanLabel(a).localeCompare(wpPlanLabel(b),'no'));
+}
+function openWpReport(){
+  const plans=wpReportPlans();
+  if(!plans.length){ alert('Det finnes ingen periodeplaner med trinn ennå.'); return; }
+  const t=window._currentTeacher;
+  let students=(window._students||[]).slice();
+  if(t?.class && t.role!=='admin') students=students.filter(s=>s.class===t.class);
+  students.sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
+  if(!students.length){ alert('Det er ingen elever i klassen ennå.'); return; }
+  closeWpReport();
+  const planRows=plans.map(p=>{
+    const n=(p.steps||[]).length;
+    const h=(p.reportHours!=null && p.reportHours!=='')?p.reportHours:'';
+    const draft=p.active===false;
+    return `<label class="wr-plan" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--bg);cursor:pointer;">
+      <input type="checkbox" class="wr-plan-cb" data-key="${wpEscAttr(p.fbKey)}" ${draft?'':'checked'} style="width:18px;height:18px;cursor:pointer;flex:0 0 auto;">
+      <span style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;">${wpFagIconHtml(p,28)}</span>
+      <span style="flex:1;min-width:0;">
+        <span style="display:block;font-weight:800;color:var(--teal-dark);">${wpEscAttr(wpPlanLabel(p))}</span>
+        <span style="display:block;font-size:.76rem;color:var(--muted);font-weight:700;">${n} trinn${draft?' · ikke publisert':''}</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:5px;flex:0 0 auto;" onclick="event.stopPropagation()">
+        <input type="number" class="wr-hours" data-key="${wpEscAttr(p.fbKey)}" min="0" max="999" step="0.5" value="${wpEscAttr(h)}" placeholder="–" style="width:64px;text-align:center;padding:6px;">
+        <span style="font-size:.8rem;color:var(--muted);font-weight:700;">timer</span>
+      </span>
+    </label>`;
+  }).join('');
+  const stuRows=students.map(s=>`<label style="display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--bg);cursor:pointer;">
+      <input type="checkbox" class="wr-stu-cb" data-key="${wpEscAttr(s.fbKey)}" checked onchange="wpReportCount()" style="width:18px;height:18px;cursor:pointer;flex:0 0 auto;">
+      <span style="flex:1;font-weight:700;">${wpEscAttr(s.firstname)} ${wpEscAttr(s.lastname||'')}</span>
+      <span class="class-badge">${wpEscAttr(s.class||'')}</span>
+    </label>`).join('');
+  const wrap=document.createElement('div');
+  wrap.id='modal-wp-report';
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;';
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) closeWpReport(); });
+  wrap.innerHTML=`
+    <div style="background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="padding:1rem 1.2rem;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:.6rem;">
+        <div style="font-size:1.4rem;">🖨️</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;color:var(--teal-dark);">Perioderapport til hjemmet</div>
+          <div style="font-size:.82rem;color:var(--muted);font-weight:700;">To elever per A4 · med plass til navn og foresattes underskrift</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeWpReport()" title="Lukk">✕</button>
+      </div>
+      <div style="padding:1rem 1.2rem;overflow-y:auto;flex:1;">
+        <div class="form-row"><label>Overskrift på rapporten <span style="font-weight:600;color:var(--muted);">(valgfritt)</span></label>
+          <input type="text" id="wr-title" maxlength="60" placeholder="F.eks. Periode 1 · høsten 2026"></div>
+        <div style="font-weight:800;color:var(--teal-dark);margin:.9rem 0 .35rem;">1 · Hvilke planer skal være med – og hvor mange timer er brukt?</div>
+        <div style="border:1.5px solid var(--border);border-radius:10px;overflow:hidden;">${planRows}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:.4rem;font-weight:600;">Timene huskes på planen til neste gang. La feltet stå tomt for å ikke vise timer.</div>
+        <div style="font-weight:800;color:var(--teal-dark);margin:1rem 0 .35rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="flex:1;">2 · Hvilke elever?</span>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="wpReportSelectAll(true)">✓ Alle</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="wpReportSelectAll(false)">✕ Ingen</button>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:10px;overflow:hidden;max-height:220px;overflow-y:auto;">${stuRows}</div>
+        <div id="wr-count" style="font-size:.82rem;font-weight:800;color:var(--teal-dark);margin-top:.4rem;"></div>
+        <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-weight:800;margin-top:1rem;">
+          <input type="checkbox" id="wr-comment" checked style="width:1.1rem;height:1.1rem;cursor:pointer;flex:none;">
+          ✏️ Plass til kommentar fra lærer
+        </label>
+        <div id="wr-alert" style="margin-top:.6rem;"></div>
+      </div>
+      <div style="padding:.9rem 1.2rem;border-top:1.5px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="closeWpReport()">Avbryt</button>
+        <button class="btn btn-primary btn-sm" id="wr-print-btn" onclick="printWpReport()">🖨️ Skriv ut rapport</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  wpReportCount();
+}
+function closeWpReport(){
+  const m=document.getElementById('modal-wp-report');
+  if(m && m.parentNode) m.parentNode.removeChild(m);
+}
+function wpReportSelectAll(check){
+  document.querySelectorAll('#modal-wp-report .wr-stu-cb').forEach(cb=>{ cb.checked=!!check; });
+  wpReportCount();
+}
+function wpReportCount(){
+  const n=document.querySelectorAll('#modal-wp-report .wr-stu-cb:checked').length;
+  const el=document.getElementById('wr-count');
+  if(el) el.textContent=n+' elever valgt · '+Math.ceil(n/2)+' A4-ark';
+  const btn=document.getElementById('wr-print-btn');
+  if(btn) btn.disabled=n===0;
+}
+function wpReportHoursTxt(h){
+  if(h==null || h==='' || isNaN(h)) return '';
+  const v=Math.round(Number(h)*10)/10;
+  return String(v).replace('.',',')+(v===1?' time':' timer');
+}
+async function printWpReport(){
+  const modal=document.getElementById('modal-wp-report'); if(!modal) return;
+  const alertEl=document.getElementById('wr-alert');
+  const hours={};
+  modal.querySelectorAll('.wr-hours').forEach(inp=>{
+    const raw=String(inp.value||'').replace(',','.').trim();
+    const v=raw===''?null:Math.max(0,Math.min(999,parseFloat(raw)));
+    hours[inp.dataset.key]=(v==null||isNaN(v))?null:v;
+  });
+  const planKeys=Array.from(modal.querySelectorAll('.wr-plan-cb:checked')).map(cb=>cb.dataset.key);
+  const stuKeys=new Set(Array.from(modal.querySelectorAll('.wr-stu-cb:checked')).map(cb=>cb.dataset.key));
+  if(!planKeys.length){ alertEl.innerHTML='<div class="alert alert-error">Velg minst én periodeplan.</div>'; return; }
+  if(!stuKeys.size){ alertEl.innerHTML='<div class="alert alert-error">Velg minst én elev.</div>'; return; }
+  const title=String(document.getElementById('wr-title').value||'').trim();
+  const withComment=!!document.getElementById('wr-comment').checked;
+
+  // Husk timene på planene (stille – utskriften går uansett).
+  try{
+    const upd={};
+    Object.keys(hours).forEach(k=>{
+      const p=(window._workPlans||[]).find(x=>x.fbKey===k);
+      const old=(p&&p.reportHours!=null&&p.reportHours!=='')?Number(p.reportHours):null;
+      if(old!==hours[k]){ upd['workPlans/'+k+'/reportHours']=hours[k]; if(p) p.reportHours=hours[k]; }
+    });
+    if(Object.keys(upd).length && typeof ready==='function' && ready()) await window._update(fbRef('/'),upd);
+  }catch(e){ console.warn('Kunne ikke lagre timer:',e); }
+
+  const plans=planKeys.map(k=>(window._workPlans||[]).find(x=>x.fbKey===k)).filter(Boolean);
+  const students=(window._students||[]).filter(s=>stuKeys.has(s.fbKey))
+    .sort((a,b)=>(a.class||'').localeCompare(b.class||'')||(a.firstname||'').localeCompare(b.firstname||'','no'));
+  const coin=window.__MYNTCOIN__||'https://myntland.no/mynt.webp';
+  const iconUrl=p=>{ try{ return new URL('fagikoner/ikon-'+wpPlanIcon(p)+'.webp', location.href).href; }catch(e){ return ''; } };
+
+  const reportFor=s=>{
+    let totDone=0, totSteps=0, totHours=0, anyHours=false;
+    const rows=[];
+    plans.forEach(p=>{
+      const assigned=wpAssignedStudents(p).some(x=>x.fbKey===s.fbKey);
+      if(!assigned) return;
+      const n=(p.steps||[]).length;
+      const pr=wpGetProgress(s.fbKey,p.fbKey);
+      const done=Math.min(n,pr.current||0);
+      let started=false;
+      if(done<n){
+        const chk=(pr.steps&&pr.steps[done]&&pr.steps[done].checks)||{};
+        started=Object.keys(chk).some(k=>chk[k]);
+      }
+      totDone+=done; totSteps+=n;
+      const h=hours[p.fbKey];
+      if(h!=null){ totHours+=h; anyHours=true; }
+      const pct=n?Math.round(done/n*100):0;
+      let stairs='';
+      for(let i=0;i<n;i++){
+        const cls=i<done?'on':(i===done&&started?'half':'');
+        stairs+=`<i class="${cls}" style="height:${(30+70*(i+1)/n).toFixed(0)}%"></i>`;
+      }
+      const theme=String(p.theme||'').trim();
+      rows.push(`<div class="pl">
+        <div class="pl-ico"><img src="${iconUrl(p)}" alt="" onerror="this.style.display='none'"></div>
+        <div class="pl-name"><b>${wpEscAttr(p.subject||'')}</b>${theme?`<span>${wpEscAttr(theme)}</span>`:''}</div>
+        <div class="pl-hours">${h!=null?'⏱ '+wpReportHoursTxt(h):''}</div>
+        <div class="pl-stairs">${stairs}</div>
+        <div class="pl-count"><b>${done}</b> av ${n} trinn</div>
+        <div class="pl-pct${done>=n?' full':''}">${done>=n?'🏆 ':''}${pct} %</div>
+      </div>`);
+    });
+    const totPct=totSteps?Math.round(totDone/totSteps*100):0;
+    let avatar='';
+    try{
+      if(s.avatarSeed!=null && typeof window.makeAnimalSVG==='function'){
+        avatar=window.makeAnimalSVG(s.avatarSeed,64).outerHTML;
+      }
+    }catch(e){ avatar=''; }
+    const praise = !totSteps ? '' : totPct>=100 ? 'Hele trappa er fullført – kjempeinnsats! 🎉'
+      : totPct>=75 ? 'Nesten helt til topps – sterkt jobbet!'
+      : totPct>=40 ? 'Godt på vei oppover trappa!'
+      : 'Trappa er påbegynt – vi fortsetter å klatre sammen.';
+    return `<div class="rep${rows.length>4?' tight':''}">
+      <div class="hd">
+        <div class="hd-l">
+          <div class="brand"><img src="${coin}" alt=""> Myntland · Periodeplan</div>
+          <h1>Perioderapport</h1>
+          ${title?`<div class="sub">${wpEscAttr(title)}</div>`:''}
+        </div>
+        <div class="hd-r">
+          <div class="av">${avatar}</div>
+          <div class="nick">${wpEscAttr(s.firstname||'')}<span>${wpEscAttr(s.class||'')}</span></div>
+        </div>
+      </div>
+      <div class="namefield"><span>Elevens navn</span><div class="line"></div></div>
+      <div class="plans">
+        ${rows.length?rows.join(''):'<div class="none">Eleven har ingen av de valgte periodeplanene.</div>'}
+      </div>
+      ${rows.length?`<div class="sum">
+        <div class="sum-txt"><b>Totalt ${totDone} av ${totSteps} trinn</b>${anyHours?` · ⏱ ${wpReportHoursTxt(totHours)} arbeidstid`:''}<span>${praise}</span></div>
+        <div class="bar"><div style="width:${totPct}%"></div></div>
+        <div class="sum-pct">${totPct} %</div>
+      </div>`:''}
+      ${withComment?`<div class="comment"><span>Kommentar fra lærer</span><div class="line"></div><div class="line"></div></div>`:''}
+      <div class="sign">
+        <div class="seen"><i></i> Vi har sett rapporten</div>
+        <div class="sg"><div class="line"></div><span>Foresattes underskrift</span></div>
+        <div class="sg date"><div class="line"></div><span>Dato</span></div>
+      </div>
+    </div>`;
+  };
+
+  let pages='';
+  for(let i=0;i<students.length;i+=2){
+    const a=students[i], b=students[i+1];
+    pages+=`<div class="sheet"><div class="half">${reportFor(a)}</div><div class="cut"><span>✂</span></div><div class="half">${b?reportFor(b):''}</div></div>`;
+  }
+  const css=`
+    @page{size:A4 portrait;margin:0;}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    html,body{width:210mm;background:#fff;}
+    body{font-family:'Nunito',Arial,sans-serif;color:#1a2e1a;}
+    .sheet{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;}
+    .sheet:last-of-type{page-break-after:auto;break-after:auto;}
+    .half{height:148.5mm;padding:7mm 10mm;}
+    .cut{position:absolute;left:6mm;right:6mm;top:148.5mm;border-top:1px dashed #b9cfc0;}
+    .cut span{position:absolute;left:0;top:-2.4mm;font-size:9pt;color:#9ab5a3;background:#fff;padding-right:1.5mm;line-height:1;}
+    .rep{height:100%;border:2px solid #1D9E75;border-radius:16px;padding:5mm 6.5mm 4mm;display:flex;flex-direction:column;position:relative;
+      background:linear-gradient(180deg,#E1F5EE 0,#E1F5EE 26mm,#fff 26mm);}
+    .hd{display:flex;align-items:flex-start;gap:5mm;}
+    .hd-l{flex:1;min-width:0;}
+    .brand{font-size:8.5pt;font-weight:800;color:#1D9E75;letter-spacing:.4px;display:flex;align-items:center;gap:1.5mm;}
+    .brand img{height:4.2mm;width:auto;}
+    h1{font-family:'Fredoka One',Arial,sans-serif;font-weight:400;font-size:21pt;color:#085041;line-height:1.05;margin-top:.8mm;}
+    .sub{font-weight:800;color:#1e0f52;font-size:10pt;margin-top:.6mm;}
+    .hd-r{display:flex;align-items:center;gap:2.5mm;flex:0 0 auto;}
+    .av{width:16mm;height:16mm;border-radius:50%;background:#fff;border:2px solid #EF9F27;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+    .av svg{width:13.5mm;height:13.5mm;}
+    .nick{font-family:'Fredoka One',Arial,sans-serif;font-size:12pt;color:#1e0f52;line-height:1.1;text-align:left;max-width:34mm;}
+    .nick span{display:block;font-family:'Nunito',Arial,sans-serif;font-weight:800;font-size:8pt;color:#5a7a5a;}
+    .namefield{display:flex;align-items:flex-end;gap:3mm;margin:4.5mm 0 3mm;}
+    .namefield span,.comment span{font-size:8.5pt;font-weight:800;color:#5a7a5a;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;}
+    .line{flex:1;border-bottom:1.5px solid #9ab5a3;height:6mm;}
+    .plans{display:flex;flex-direction:column;gap:1.8mm;}
+    .pl{display:flex;align-items:center;gap:3mm;background:#F7F9F7;border:1px solid #dcebe1;border-radius:10px;padding:1.8mm 3mm;}
+    .tight .pl{padding:1.1mm 3mm;}
+    .pl-ico{width:9mm;height:9mm;flex:0 0 auto;}
+    .pl-ico img{width:100%;height:100%;object-fit:contain;display:block;}
+    .tight .pl-ico{width:7mm;height:7mm;}
+    .pl-name{flex:1;min-width:0;line-height:1.15;}
+    .pl-name b{display:block;font-size:10.5pt;color:#085041;}
+    .pl-name span{display:block;font-size:8.5pt;font-weight:700;color:#5a7a5a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .pl-hours{flex:0 0 22mm;font-size:8.5pt;font-weight:800;color:#854F0B;}
+    .pl-stairs{flex:0 0 26mm;height:8mm;display:flex;align-items:flex-end;gap:.8mm;}
+    .pl-stairs i{flex:1;background:#e3ebe5;border-radius:1.2mm 1.2mm .5mm .5mm;}
+    .pl-stairs i.on{background:#1D9E75;}
+    .pl-stairs i.half{background:repeating-linear-gradient(135deg,#EF9F27 0 1.2mm,#FAEEDA 1.2mm 2.4mm);}
+    .pl-count{flex:0 0 22mm;font-size:9pt;font-weight:700;color:#1a2e1a;text-align:right;}
+    .pl-count b{font-family:'Fredoka One',Arial,sans-serif;font-weight:400;font-size:12pt;color:#085041;}
+    .pl-pct{flex:0 0 17mm;text-align:center;font-weight:800;font-size:9pt;color:#085041;background:#E1F5EE;border-radius:999px;padding:1mm 0;}
+    .pl-pct.full{background:#FAEEDA;color:#854F0B;}
+    .none{font-size:9.5pt;color:#5a7a5a;font-weight:700;padding:3mm;background:#F7F9F7;border-radius:10px;}
+    .sum{display:flex;align-items:center;gap:3.5mm;margin-top:3mm;background:#1e0f52;color:#fff;border-radius:12px;padding:2.4mm 4mm;}
+    .sum-txt{flex:0 0 auto;max-width:92mm;font-size:9.5pt;line-height:1.25;}
+    .sum-txt span{display:block;font-size:8.5pt;color:#c9c2ec;font-weight:700;}
+    .bar{flex:1;height:3.6mm;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden;}
+    .bar div{height:100%;background:linear-gradient(90deg,#1D9E75,#5DCAA5);border-radius:999px;}
+    .sum-pct{font-family:'Fredoka One',Arial,sans-serif;font-size:15pt;color:#F5C849;flex:0 0 auto;}
+    .comment{margin-top:2.5mm;}
+    .comment .line{height:6.5mm;}
+    .sign{display:flex;align-items:flex-end;gap:5mm;margin-top:auto;padding-top:3mm;}
+    .seen{flex:0 0 auto;display:flex;align-items:center;gap:2mm;font-size:9pt;font-weight:800;color:#085041;padding-bottom:3.5mm;}
+    .seen i{width:4.2mm;height:4.2mm;border:1.5px solid #1D9E75;border-radius:1.2mm;display:inline-block;}
+    .sg{flex:1;}
+    .sg.date{flex:0 0 32mm;}
+    .sg span{display:block;font-size:7.5pt;font-weight:800;color:#5a7a5a;text-transform:uppercase;letter-spacing:.6px;margin-top:1mm;}
+    @media screen{body{background:#e9efe9;} .sheet{margin:8mm auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.12);}}
+  `;
+  const win=window.open('','_blank');
+  if(!win){ alertEl.innerHTML='<div class="alert alert-error">Nettleseren blokkerte utskriftsvinduet. Tillat popup-vinduer for myntland.no og prøv igjen.</div>'; return; }
+  win.document.write('<!DOCTYPE html><html lang="no"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Perioderapport</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">'
+    +'<style>'+css+'</style></head><body>'+pages
+    +'<script>(function(){var go=function(){setTimeout(function(){window.print();},250);};'
+    +'if(document.fonts&&document.fonts.ready){Promise.race([document.fonts.ready,new Promise(function(r){setTimeout(r,1500);})]).then(go);}else{setTimeout(go,700);}})();<\/script>'
+    +'</body></html>');
+  win.document.close();
+  closeWpReport();
 }
 
 // ── GODKJENNINGS-QR ─────────────────────────────────────────
