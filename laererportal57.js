@@ -1126,15 +1126,129 @@ function renderSaldoTable() {
       <td data-label="Sparekonto"><span style="background:#dbeafe;color:#1e40af;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;">🪙 ${spare}</span></td>
       <td data-label="Fond lav"><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_low_units||0).toFixed(2)} andeler × 🪙${rateLow}">🪙 ${fl}</span></td>
       <td data-label="Fond høy"><span style="background:#ede9fe;color:#5b21b6;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.82rem;" title="${(s.fund_high_units||0).toFixed(2)} andeler × 🪙${rateHigh}">🪙 ${fh}</span></td>
-      <td data-label="Lån">${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}</td>
+      <td data-label="Lån">${loan > 0 ? `<span class="badge badge-coral">📉 ${loan}</span>` : '<span style="color:var(--muted);font-size:.8rem;">–</span>'}${lbActive(s) ? ` <span class="badge" style="background:#fde2e2;color:#9b1c1c;" title="${lbEsc(lbLabel(s))}">🔒 Sperret</span>` : ''}</td>
       <td data-label=""><div class="balance-actions">
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','add')" title="Legg til">➕</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','subtract')" title="Trekk fra">➖</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')" title="Sett saldo">✏️</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','reset')" title="Nullstill">🔄</button>
+        <button class="btn btn-ghost btn-sm" onclick="openLoanBlockModal('${s.fbKey}')" title="Lånesperre / konkurs">${lbActive(s) ? '🔒' : '🔓'}</button>
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// LÅNESPERRE OG KONKURS (per elev — students57/<key>/loanBlock)
+// loanBlock = { active:true, until:<ms|null>, reason:'...', setAt:<ms> }
+// Elevappen (elevapp57.js) sjekker feltet og sperrer nye lån.
+// ════════════════════════════════════════════════════════════
+let lbStudentId = null;
+function lbActive(s) {
+  const b = s && s.loanBlock;
+  if (!b || !b.active) return false;
+  if (b.until && Date.now() > b.until) return false;
+  return true;
+}
+function lbEsc(t) { return String(t||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function lbLabel(s) {
+  const b = (s && s.loanBlock) || {};
+  const til = b.until ? 'til og med ' + new Date(b.until - 1).toLocaleDateString('nb-NO', { day:'numeric', month:'long' }) : 'til du opphever den';
+  return 'Lånesperre ' + til + (b.reason ? ' · ' + b.reason : '');
+}
+function lbEnsureModal() {
+  if (document.getElementById('modal-loanblock')) return;
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.id = 'modal-loanblock';
+  ov.innerHTML = `
+  <div class="modal">
+    <div class="modal-title" id="lb-title">🔒 Lånesperre</div>
+    <div id="lb-status" style="font-size:.9rem;margin-bottom:.8rem;"></div>
+    <div class="form-row"><label>Antall uker med sperre (0 = til du opphever den)</label><input type="number" id="lb-weeks" value="6" min="0" max="52"></div>
+    <div class="form-row"><label>Grunn (eleven ser denne)</label><input type="text" id="lb-reason" maxlength="80" value="Konkurs"></div>
+    <label style="display:flex;gap:.5rem;align-items:flex-start;font-size:.88rem;margin:.4rem 0 .6rem 0;cursor:pointer;">
+      <input type="checkbox" id="lb-konkurs" style="margin-top:.2rem;" onchange="lbUpdateKonkursInfo()">
+      <span><b>Gjennomfør konkurs nå</b> — slett gjelda og nullstill brukskonto, sparekonto, fond og lån.</span>
+    </label>
+    <div id="lb-konkurs-info" style="display:none;font-size:.85rem;background:#fff4e5;border-left:4px solid #f59e0b;padding:.5rem .7rem;border-radius:6px;margin-bottom:.8rem;"></div>
+    <div class="form-row" id="lb-start-row" style="display:none;"><label>Startsaldo på brukskonto etter konkursen</label><input type="number" id="lb-start" value="0" min="0"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-loanblock')">Avbryt</button>
+      <button class="btn btn-ghost" id="lb-lift-btn" onclick="liftLoanBlock()" style="display:none;">🔓 Opphev sperre</button>
+      <button class="btn btn-primary" id="lb-save-btn" onclick="confirmLoanBlock()">Lagre sperre</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+}
+function lbUpdateKonkursInfo() {
+  const s = window._students.find(x => x.fbKey === lbStudentId);
+  const on = document.getElementById('lb-konkurs').checked;
+  const info = document.getElementById('lb-konkurs-info');
+  info.style.display = on ? 'block' : 'none';
+  document.getElementById('lb-start-row').style.display = on ? 'block' : 'none';
+  document.getElementById('lb-save-btn').textContent = on ? '⚖️ Gjennomfør konkurs og sperr' : 'Lagre sperre';
+  if (on && s) {
+    const fl = (s.fund_low_units || 0) > 0 ? ' · fond lav' : '';
+    const fh = (s.fund_high_units || 0) > 0 ? ' · fond høy' : '';
+    info.innerHTML = `⚠️ Dette kan ikke angres. Nullstiller brukskonto (🪙${s.balance||0}), sparekonto (🪙${s.savings||0}), lån (🪙${s.loan||0})${fl}${fh}.`;
+  }
+}
+function openLoanBlockModal(fbKey) {
+  lbEnsureModal();
+  lbStudentId = fbKey;
+  const s = window._students.find(x => x.fbKey === fbKey);
+  if (!s) return;
+  const active = lbActive(s);
+  document.getElementById('lb-title').textContent = `🔒 Lånesperre – ${s.firstname}`;
+  document.getElementById('lb-status').innerHTML = active
+    ? `<span style="color:#9b1c1c;font-weight:800;">Sperret nå:</span> ${lbEsc(lbLabel(s))}<br><span style="color:var(--muted);">Lagrer du på nytt, erstattes sperren.</span>`
+    : `<span style="color:var(--muted);">Eleven kan ta opp lån som vanlig. Med sperre viser elevappen «Banken har sperret deg for nye lån», og lån-knappen er låst.</span>`;
+  document.getElementById('lb-reason').value = (active && s.loanBlock.reason) || 'Konkurs';
+  document.getElementById('lb-konkurs').checked = false;
+  document.getElementById('lb-start').value = 0;
+  document.getElementById('lb-lift-btn').style.display = active ? 'inline-flex' : 'none';
+  lbUpdateKonkursInfo();
+  document.getElementById('modal-loanblock').classList.add('open');
+}
+async function confirmLoanBlock() {
+  const s = window._students.find(x => x.fbKey === lbStudentId);
+  if (!s) return;
+  const weeks  = Math.max(0, Math.min(52, parseInt(document.getElementById('lb-weeks').value) || 0));
+  const reason = (document.getElementById('lb-reason').value || '').trim().slice(0, 80);
+  const konkurs = document.getElementById('lb-konkurs').checked;
+  const now = Date.now();
+  let until = null;
+  if (weeks > 0) { const d = new Date(now + weeks * 7 * 86400000); d.setHours(23, 59, 59, 999); until = d.getTime() + 1; }
+  const loanBlock = { active: true, until, reason, setAt: now };
+  if (konkurs) {
+    if (!confirm(`Gjennomføre konkurs for ${s.firstname}? Alle kontoer nullstilles. Dette kan ikke angres.`)) return;
+    const start = Math.max(0, parseInt(document.getElementById('lb-start').value) || 0);
+    const before = (s.balance||0) + (s.savings||0);
+    await window._update(fbRef('students57/' + lbStudentId), {
+      balance: start, savings: 0, loan: 0, loanDate: null,
+      fund_low_units: 0, fund_low_invested: 0, fund_high_units: 0, fund_high_invested: 0,
+      withdrawalsThisWeek: 0, loanBlock, bankruptAt: now,
+      bankruptcies: (s.bankruptcies || 0) + 1
+    });
+    const diff = start - before;
+    await logTx(lbStudentId, diff >= 0 ? 'income' : 'expense', '⚖️',
+      `Konkurs: gjeld slettet og kontoer nullstilt (saldo før: 🪙${s.balance||0})`, diff);
+  } else {
+    await window._update(fbRef('students57/' + lbStudentId), { loanBlock });
+  }
+  await logTx(lbStudentId, 'expense', '🔒', lbLabel({ loanBlock }), 0);
+  closeModal('modal-loanblock');
+  if (typeof renderSaldoTable === 'function') renderSaldoTable();
+}
+async function liftLoanBlock() {
+  const s = window._students.find(x => x.fbKey === lbStudentId);
+  if (!s) return;
+  await window._update(fbRef('students57/' + lbStudentId), { loanBlock: null });
+  await logTx(lbStudentId, 'income', '🔓', 'Lånesperre opphevet av lærer', 0);
+  closeModal('modal-loanblock');
+  if (typeof renderSaldoTable === 'function') renderSaldoTable();
 }
 
 function openSaldoModal(fbKey, action) {

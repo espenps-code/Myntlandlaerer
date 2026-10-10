@@ -844,6 +844,7 @@ function switchTab(t,btn){
 // ── DISPLAY ────────────────────────────────────────────────────────────────
 function refreshAllDisplays(){
   const s=window._currentStudent;if(!s)return;
+  try{ if(!_loanBusy && document.getElementById('loan-section')) renderLoan(); }catch(e){}
   const bruk=s.balance||0,spare=s.savings||0;
   // Fondsverdi = andeler × nåværende kurs
   const histD=Object.keys(window._fundHistory||{}).sort();
@@ -1766,12 +1767,13 @@ function renderLoan(){
     const fondLowVal  = getFondValue(s.fund_low_units  || 0, rLow_ml);
     const fondHighVal = getFondValue(s.fund_high_units || 0, rHigh_ml);
     const totalAssets = (s.balance||0) + (s.savings||0) + fondLowVal + fondHighVal;
-    const maxLoan = (s.balance||0) < 0 ? 0 : Math.max(50, Math.floor(totalAssets * factor));
+    const loanBlocked = loanBlockActive(s);
+    const maxLoan = (loanBlocked || (s.balance||0) < 0) ? 0 : Math.max(50, Math.floor(totalAssets * factor));
     const debtBlock = (s.balance||0) < 0
       ? `<div class="warn-box">🔴 Du har gjeld på brukskontoen (${s.balance}🪙). Du kan ikke ta opp nytt lån før gjelden er gjort opp.</div>`
       : '';
     el.innerHTML=`<div class="loan-card loan-none"><div style="font-weight:800;margin-bottom:.3rem">✅ Ingen aktive lån</div><div style="font-size:.85rem;color:var(--teal-dark);font-weight:700">Brukskonto: 🪙 ${s.balance||0}</div></div>
-    ${debtBlock}
+    ${loanBlocked ? `<div class="warn-box">${loanBlockText(s)}</div>` : ''}${debtBlock}
     <div class="info-box">⚠️ Lån koster penger! ${Math.round(rate*100)}% rente betales ved tilbakebetaling. Maks lån: 🪙 ${maxLoan} (${factor}× totale verdier).</div>
     <div class="warn-box">🚨 Hvis du ikke betaler tilbake innen 14 dager, blir lånet tvangsinndratt med 25% gebyr. Banken trekker da fra brukskonto, sparekonto og fond i den rekkefølgen – også fond du har kjøpt for lånte penger.</div>
     <div class="card-block"><div style="font-weight:800;margin-bottom:.6rem">Lånevilkår</div>
@@ -1780,15 +1782,31 @@ function renderLoan(){
   }
 }
 let _loanBusy=false; // sperre mot dobbeltklikk / kappløp på lån
+// ── Lånesperre (settes av lærer per elev: students57/<key>/loanBlock) ──
+function loanBlockActive(s){
+  const b=s&&s.loanBlock;
+  if(!b||!b.active) return false;
+  if(b.until && Date.now()>b.until) return false;
+  return true;
+}
+function _lbEsc(t){return String(t||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+function loanBlockText(s,plain){
+  const b=(s&&s.loanBlock)||{};
+  const esc=plain?(t=>String(t||'')):_lbEsc;
+  const til=b.until?` til og med ${new Date(b.until-1).toLocaleDateString('nb-NO',{day:'numeric',month:'long'})}`:' til læreren opphever den';
+  return `🔒 Banken har sperret deg for nye lån${til}.${b.reason?' Grunn: '+esc(b.reason)+'.':''}`;
+}
 function calcMaxLoan(s){
   const days=Object.keys(window._fundHistory||{}).sort();
   const last=days.length ? window._fundHistory[days[days.length-1]] : null;
   const totalAssets=(s.balance||0)+(s.savings||0)+getFondValue(s.fund_low_units||0,last?.low||100)+getFondValue(s.fund_high_units||0,last?.high||100);
+  if(loanBlockActive(s)) return 0;
   return (s.balance||0) < 0 ? 0 : Math.max(50, Math.floor(totalAssets * getLoanFactor()));
 }
 function takeLoan(max){
   if(_loanBusy) return;
   const sChk = window._currentStudent;
+  if (sChk && loanBlockActive(sChk)) { alert(loanBlockText(sChk,true)); renderLoan(); return; }
   if (sChk && (sChk.loan||0) > 0) { alert('Du har allerede et aktivt lån. Betal det tilbake først.'); return; }
   if (sChk && (sChk.balance||0) < 0) {
     alert(`Du har gjeld på brukskontoen (${sChk.balance}🪙). Gjør opp gjelden før du kan ta opp nytt lån.`);
@@ -1805,6 +1823,11 @@ function takeLoan(max){
     if(amt>maxNow){alert(`Maks lån er 🪙 ${maxNow}.`);renderLoan();return;}
     _loanBusy=true;
     try{
+      // Fersk sjekk av lånesperre rett fra databasen (læreren kan ha satt den nå nettopp)
+      try{
+        const fresh=(await window._get(fbRef('students57/'+s.fbKey))).val()||{};
+        if(loanBlockActive(fresh)){ s.loanBlock=fresh.loanBlock; alert('🔒 Banken har sperret deg for nye lån. Snakk med læreren din.'); return; }
+      }catch(e){ console.warn('Kunne ikke sjekke lånesperre', e); }
       const newBal=(s.balance||0)+amt;
       const loanDate=Date.now();
       await window._update(fbRef('students57/'+s.fbKey),{balance:newBal,loan:amt,loanDate:loanDate});
@@ -2082,6 +2105,12 @@ async function handleRegisteredQr(id){
   if(q.kind==='wpapprove'){await doWpApproveScan();return;}
   // Én gang per elev – med mindre læreren har merket koden som flerbruks (multi)
   if(!q.multi&&s.qrClaimed&&s.qrClaimed[id]){showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden');return;}
+  // Leselodd (ll<sett>_<nr>): ett lodd kan bare brukes ÉN gang totalt – av én elev.
+  // Billetten ligger under classes/{klasse}/data/leselodd/{sett}/tickets/{nr} og
+  // merkes som brukt FØR utbetaling.
+  if(/^ll[a-z0-9]+_\d+$/.test(id)){
+    if(!(await claimLeselodd(id)))return;
+  }
   // Merk som brukt FØR utbetaling, så et dobbelttrykk ikke gir dobbelt
   s.qrClaimed=s.qrClaimed||{};s.qrClaimed[id]=Date.now();
   let ok=false;
@@ -2091,6 +2120,20 @@ async function handleRegisteredQr(id){
   else{delete s.qrClaimed[id];showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');return;}
   if(!ok){delete s.qrClaimed[id];return;}
   try{const u={};u['qrClaimed/'+id]=s.qrClaimed[id];await window._update(fbRef('students57/'+s.fbKey),u);patchStudent(s.fbKey,{qrClaimed:s.qrClaimed});}catch(e){console.warn('qrClaimed:',e);}
+}
+
+// Leselodd: sjekk og merk billetten som brukt. Returnerer true hvis eleven får loddet.
+async function claimLeselodd(id){
+  const s=window._currentStudent;if(!s)return false;
+  const m=/^ll([a-z0-9]+)_(\d+)$/.exec(id);if(!m)return false;
+  const path='classes/'+window._CLASS_ID+'/data/leselodd/'+m[1]+'/tickets/'+m[2];
+  let t=null;
+  try{const snap=await window._get(window._ref(window._db,path));t=snap.val();}catch(e){console.warn('leselodd-oppslag:',e);}
+  if(!t){showSuccess('❌','Ugyldig lodd','','Dette leseloddet finnes ikke lenger');return false;}
+  if(t.usedAt){showSuccess('📚','Loddet er brukt','',t.usedBy===s.fbKey?'Du har allerede brukt dette loddet':'Dette leseloddet er allerede brukt av noen andre');return false;}
+  try{await window._update(window._ref(window._db,path),{usedAt:Date.now(),usedBy:s.fbKey,usedName:String(s.firstname||'')});}
+  catch(e){console.warn('leselodd-claim:',e);showSuccess('❌','Noe gikk galt','','Prøv å scanne loddet igjen');return false;}
+  return true;
 }
 
 // ── PAYMENTS & REWARDS ─────────────────────────────────────────────────────
