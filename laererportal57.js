@@ -3372,7 +3372,7 @@ function printGuardianLetters(){
   const codes=window._guardianCodes||{};
   const letters=students.map(s=>{
     const code=codes[s.fbKey]?.code||'—';
-    const navn=wpEscAttr(s.firstname||'');
+    const navn=wpEscAttr(((s.firstname||'')+' '+(s.lastname||'')).trim());
     const klasse=wpEscAttr(s.class||'');
     return `<div class="sheet"><div class="letter">
       <div class="lt-ident">Til foresatte · ${navn} · ${klasse}</div>
@@ -3633,7 +3633,7 @@ async function printWpReport(){
         </div>
         <div class="hd-r">
           <div class="av">${avatar}</div>
-          <div class="nick">${wpEscAttr(s.firstname||'')}<span>${wpEscAttr(s.class||'')}</span></div>
+          <div class="nick">${wpEscAttr(((s.firstname||'')+' '+(s.lastname||'')).trim())}<span>${wpEscAttr(s.class||'')}</span></div>
         </div>
       </div>
       <div class="namefield"><span>Elevens navn</span><div class="line"></div></div>
