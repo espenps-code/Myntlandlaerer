@@ -2961,7 +2961,6 @@ function wpPlanCardHTML(p){
 let _wpAssignKey = null;
 function openPlanAssignModal(planKey){
   const p=(window._workPlans||[]).find(x=>x.fbKey===planKey); if(!p) return;
-  _wpAssignKey=planKey;
   const students=wpStudentsInClass(p.class);
   if(!students.length){
     alert('Det er ingen elever i klassen ennå. Legg til elever før du tildeler planen.');
@@ -2978,7 +2977,8 @@ function openPlanAssignModal(planKey){
   }).join('');
   const checkedCount = (assigned===null) ? students.length
     : students.filter(s=>assigned.has(s.fbKey)).length;
-  closePlanAssignModal();
+  closePlanAssignModal();          // rydd bort evt. gammelt vindu (nullstiller _wpAssignKey)
+  _wpAssignKey=planKey;            // ...og husk planen ETTERPÅ, ellers gjør «Lagre tildeling» ingenting
   const wrap=document.createElement('div');
   wrap.id='modal-wp-assign';
   wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;';
