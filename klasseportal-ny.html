@@ -1265,6 +1265,19 @@ h1.sticker{
   </div>
 </div>
 
+<!-- ====== LØNN: VISNINGSNAVN-OVERLAY ====== -->
+<div class="ovl" id="salNameOvl" style="z-index:80">
+  <div class="ovl-card" style="max-width:520px">
+    <div class="ovl-head"><h3>&#9999;&#65039; Hva skal stå på tavla?</h3><button class="ovl-x" id="salNameClose">&times;</button></div>
+    <div class="ovl-body">
+      <div class="set-sub" id="salNameInfo" style="margin-bottom:10px"></div>
+      <input type="text" id="salNameInput" maxlength="30" autocomplete="off" placeholder="Fornavn" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:24px;font-weight:700;color:var(--ink);border:3px solid var(--ink);border-radius:12px;padding:10px 12px;background:var(--paper)">
+      <div class="set-sub" style="margin-top:8px">Bare navnet som vises under «Ukas hjelpere». Lønna går til kortet som ble skannet.</div>
+      <button class="set-addtask" id="salNameSave" style="border-style:solid;background:var(--green);color:#fff;margin-top:14px">Lagre</button>
+    </div>
+  </div>
+</div>
+
 <!-- ====== BELØNNING-OVERLAY ====== -->
 <div class="ovl" id="rewardOverlay">
   <div class="ovl-card">
@@ -4411,9 +4424,36 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   }
   function linkHelper(slot, student){
     slot = +slot;
+    const prevNick = (sal.links[slot] && sal.links[slot].name) || '';
+    let cur = '';
+    try { cur = (window.portal.data.helpers[slot] || '').trim(); } catch(e){}
+    // Kallenavn som er skrevet inn automatisk tidligere, regnes ikke som et valgt visningsnavn
+    if (cur && (cur === prevNick || cur === fullName(student))) cur = '';
     sal.links[slot] = { key: student.fbKey, name: fullName(student) };
-    saveSal(); syncHelperName(slot, fullName(student)); renderSalaryUI();
+    saveSal(); renderSalaryUI();
+    openNamePrompt(slot, fullName(student), cur);
   }
+  /* --- visningsnavn (fornavn) for ordenselev, i stedet for kallenavn --- */
+  let _nameSlot = null;
+  function openNamePrompt(slot, nick, current){
+    const ovl = document.getElementById('salNameOvl');
+    const inp = document.getElementById('salNameInput');
+    const info = document.getElementById('salNameInfo');
+    if (!ovl || !inp){ return; }
+    _nameSlot = +slot;
+    if (info) info.textContent = '🔗 Koblet til kortet: ' + nick;
+    inp.value = current || '';
+    ovl.classList.add('open');
+    setTimeout(function(){ try { inp.focus(); inp.select(); } catch(e){} }, 80);
+  }
+  function saveNamePrompt(){
+    const ovl = document.getElementById('salNameOvl');
+    const inp = document.getElementById('salNameInput');
+    if (_nameSlot !== null && inp){ syncHelperName(_nameSlot, inp.value.trim()); renderSalaryUI(); }
+    _nameSlot = null;
+    if (ovl) ovl.classList.remove('open');
+  }
+  function closeNamePrompt(){ _nameSlot = null; const ovl = document.getElementById('salNameOvl'); if (ovl) ovl.classList.remove('open'); }
   function salAction(slot, act){
     slot = +slot;
     if (act === 'clear'){ sal.links[slot] = { key: '', name: '' }; saveSal(); syncHelperName(slot, ''); renderSalaryUI(); return; }
@@ -4551,6 +4591,10 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
     const lc = document.getElementById('salListClose'); const lo = document.getElementById('salListOvl');
     if (lc && lo) lc.onclick = function(){ lo.classList.remove('open'); };
     if (lo) lo.addEventListener('click', function(e){ if (e.target === lo) lo.classList.remove('open'); });
+    const ns = document.getElementById('salNameSave'); if (ns) ns.onclick = saveNamePrompt;
+    const nc = document.getElementById('salNameClose'); if (nc) nc.onclick = closeNamePrompt;
+    const no = document.getElementById('salNameOvl'); if (no) no.addEventListener('click', function(e){ if (e.target === no) closeNamePrompt(); });
+    const ni = document.getElementById('salNameInput'); if (ni) ni.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); saveNamePrompt(); } });
   })();
 
   if (link){ startData(); } else { fundPanel.style.display = 'none'; }
