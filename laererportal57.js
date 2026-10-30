@@ -1089,6 +1089,7 @@ function fondVerdi(units, rate) { return Math.round((units||0) * (rate||100)); }
 
 function renderSaldoTable() {
   const tbody = document.getElementById('saldo-table-body'); if (!tbody) return;
+  khEnsureSaldoButton();
   const rateLow  = window._curFundLow  || 100;
   const rateHigh = window._curFundHigh || 100;
   // Update summary
@@ -1133,6 +1134,7 @@ function renderSaldoTable() {
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','set')" title="Sett saldo">✏️</button>
         <button class="btn btn-ghost btn-sm" onclick="openSaldoModal('${s.fbKey}','reset')" title="Nullstill">🔄</button>
         <button class="btn btn-ghost btn-sm" onclick="openLoanBlockModal('${s.fbKey}')" title="Lånesperre / konkurs">${lbActive(s) ? '🔒' : '🔓'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openKontohistorikk('${s.fbKey}')" title="Kontohistorikk">📜</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -5012,4 +5014,263 @@ function _openLeseloddPrint(batch, rec, payloads) {
     + 'var att=0;var poll=setInterval(function(){att++;if(makeAll()||att>60){clearInterval(poll);}},150);'
     + '<\/script></body></html>');
   win.document.close();
+}
+
+// ════════════════════════════════════════════════════════════
+// KONTOHISTORIKK (lærervisning) — leser transactions57/<elev>
+// 📜 per elev i Saldo-tabellen + «⭐ Belønningsoversikt» for hele klassen.
+// ⚠️-flagg på belønninger: skannet utenfor skoletid, eller mange på kort tid.
+// Flaggene er et hint til en samtale, ikke et bevis — loggen viser kontoen
+// som skannet, ikke hvem som holdt kortet.
+// ════════════════════════════════════════════════════════════
+const KH_SCHOOL_START = 8 * 60;        // 08:00 (minutter etter midnatt)
+const KH_SCHOOL_END   = 15 * 60 + 30;  // 15:30
+const KH_BURST_COUNT  = 3;             // så mange belønninger …
+const KH_BURST_MIN    = 15;            // … innen så mange minutter gir flagg
+const KH_FLAG_OUTSIDE = 'Utenfor skoletid';
+const KH_FLAG_BURST   = 'Mange på kort tid';
+let khStudentId = null, khTx = [], khFilter = 'all', khDays = 7;
+let khClassCache = null, khClassCacheAt = 0;
+
+function khIsReward(t) {
+  if (!t || !(Number(t.amount) > 0)) return false;
+  return t.icon === '⭐' || /belønning|leselodd/i.test(String(t.desc || ''));
+}
+function khOutsideSchool(ts) {
+  const d = new Date(ts); const wd = d.getDay();
+  if (wd === 0 || wd === 6) return true;
+  const m = d.getHours() * 60 + d.getMinutes();
+  return m < KH_SCHOOL_START || m > KH_SCHOOL_END;
+}
+function khToList(obj) {
+  return Object.entries(obj || {})
+    .map(([k, v]) => Object.assign({}, v || {}, { _k: k }))
+    .filter(t => Number(t.ts) > 0)
+    .sort((a, b) => b.ts - a.ts);
+}
+// Setter t._flags på hver transaksjon (tom liste for alt som ikke er belønning)
+function khFlag(list) {
+  list.forEach(t => { t._flags = []; });
+  const rewards = list.filter(khIsReward).sort((a, b) => a.ts - b.ts);
+  rewards.forEach(t => { if (khOutsideSchool(t.ts)) t._flags.push(KH_FLAG_OUTSIDE); });
+  for (let i = 0; i < rewards.length; i++) {
+    let j = i;
+    while (j + 1 < rewards.length && rewards[j + 1].ts - rewards[i].ts <= KH_BURST_MIN * 60000) j++;
+    if (j - i + 1 >= KH_BURST_COUNT) {
+      for (let x = i; x <= j; x++) if (!rewards[x]._flags.includes(KH_FLAG_BURST)) rewards[x]._flags.push(KH_FLAG_BURST);
+    }
+  }
+  return list;
+}
+function khSince(days) { return days > 0 ? Date.now() - days * 86400000 : 0; }
+function khRewardStats(list, days) {
+  const since = khSince(days);
+  const r = (list || []).filter(t => khIsReward(t) && t.ts >= since);
+  return {
+    count: r.length,
+    sum: r.reduce((a, t) => a + (Number(t.amount) || 0), 0),
+    flags: r.filter(t => t._flags && t._flags.length).length
+  };
+}
+async function khLoadClass(force) {
+  if (!force && khClassCache && Date.now() - khClassCacheAt < 60000) return khClassCache;
+  const snap = await window._get(fbRef('transactions57'));
+  const all = snap.val() || {};
+  const out = {};
+  for (const sk in all) out[sk] = khFlag(khToList(all[sk]));
+  khClassCache = out; khClassCacheAt = Date.now();
+  return out;
+}
+function khMedian(nums) {
+  if (!nums.length) return 0;
+  const a = nums.slice().sort((x, y) => x - y); const m = Math.floor(a.length / 2);
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+}
+function khNum(n) { return String(Math.round(n * 10) / 10).replace('.', ','); }
+function khFmtDay(ts) { return new Date(ts).toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+function khFmtTime(ts) { return new Date(ts).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }); }
+function khName(fbKey) {
+  const s = (window._students || []).find(x => x.fbKey === fbKey);
+  return s ? ((s.firstname || '') + ' ' + (s.lastname || '')).trim() : 'Ukjent elev';
+}
+function khPeriodLabel(days) { return days > 0 ? 'siste ' + days + ' dager' : 'totalt'; }
+function khStat(label, value, bg, color) {
+  return `<div style="flex:1 1 120px;background:${bg};border-radius:10px;padding:.5rem .7rem;">
+    <div style="font-weight:800;font-size:1.05rem;color:${color};">${value}</div>
+    <div style="font-size:.74rem;color:var(--muted);">${label}</div></div>`;
+}
+
+// ── Saldo-sida: knapp for klasseoversikt (settes inn én gang) ──
+function khEnsureSaldoButton() {
+  if (document.getElementById('kh-overview-btn')) return;
+  const tb = document.getElementById('saldo-table-body');
+  const card = tb && tb.closest('.card');
+  const grp = card && card.querySelector('.card-title > div');
+  if (!grp) return;
+  const b = document.createElement('button');
+  b.id = 'kh-overview-btn'; b.className = 'btn btn-ghost btn-sm';
+  b.textContent = '⭐ Belønningsoversikt';
+  b.title = 'Se hvor mange belønninger hver elev har skannet';
+  b.onclick = openBelonningsoversikt;
+  grp.insertBefore(b, grp.firstChild);
+}
+
+// ── Modal: kontohistorikk for én elev ──
+function khEnsureModal() {
+  if (document.getElementById('modal-kontohistorikk')) return;
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay'; ov.id = 'modal-kontohistorikk';
+  ov.innerHTML = `
+  <div class="modal" style="max-width:660px;width:100%;">
+    <div class="modal-title" id="kh-title">📜 Kontohistorikk</div>
+    <div id="kh-summary" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem;"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:.6rem;">
+      <select id="kh-days" onchange="khDays=parseInt(this.value,10)||0;khRender()" style="padding:.35rem .5rem;border-radius:8px;border:1px solid var(--border);font:inherit;font-size:.85rem;">
+        <option value="7">Siste 7 dager</option><option value="30">Siste 30 dager</option><option value="0">Alt</option>
+      </select>
+      <span id="kh-filters" style="display:flex;gap:6px;flex-wrap:wrap;"></span>
+    </div>
+    <div id="kh-list" style="max-height:50vh;overflow-y:auto;border:1px solid var(--border);border-radius:10px;"></div>
+    <div style="font-size:.76rem;color:var(--muted);margin-top:.5rem;line-height:1.4;">
+      ⚠️ = belønning skannet i helg, før 08:00 eller etter 15:30, eller ${KH_BURST_COUNT}+ belønninger innen ${KH_BURST_MIN} minutter.
+      Loggen viser hvilken konto som skannet, ikke hvem som holdt kortet — bruk den som utgangspunkt for en samtale.
+    </div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-kontohistorikk')">Lukk</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+}
+function khSetFilter(f) { khFilter = f; khRender(); }
+async function openKontohistorikk(fbKey) {
+  khEnsureModal();
+  khStudentId = fbKey; khFilter = 'all'; khTx = [];
+  document.getElementById('kh-days').value = String(khDays);
+  document.getElementById('kh-title').textContent = '📜 Kontohistorikk – ' + khName(fbKey);
+  document.getElementById('kh-summary').innerHTML = '';
+  document.getElementById('kh-filters').innerHTML = '';
+  const box = document.getElementById('kh-list');
+  box.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);">Henter transaksjoner …</div>';
+  document.getElementById('modal-kontohistorikk').classList.add('open');
+  try {
+    const snap = await window._get(fbRef('transactions57/' + fbKey));
+    if (khStudentId !== fbKey) return;
+    khTx = khFlag(khToList(snap.val()));
+  } catch (e) {
+    console.warn('Kontohistorikk:', e);
+    box.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--coral);">Klarte ikke å hente transaksjonene. Sjekk nettet og prøv igjen.</div>';
+    return;
+  }
+  khRender();
+  // Klassemedian hentes i bakgrunnen
+  khLoadClass(false).then(() => { if (khStudentId === fbKey) khRender(); }).catch(e => console.warn('Klassehistorikk:', e));
+}
+function khRender() {
+  const box = document.getElementById('kh-list'); if (!box) return;
+  const since = khSince(khDays);
+  const inPeriod = khTx.filter(t => t.ts >= since);
+  const st = khRewardStats(khTx, khDays);
+  const inn = inPeriod.filter(t => Number(t.amount) > 0).reduce((a, t) => a + Number(t.amount), 0);
+  const ut  = inPeriod.filter(t => Number(t.amount) < 0).reduce((a, t) => a + Number(t.amount), 0);
+  let html = khStat('⭐ Belønninger ' + khPeriodLabel(khDays), st.count + ' stk · 🪙 ' + st.sum, '#fef3c7', '#92400e');
+  if (khClassCache) {
+    const counts = (window._students || []).map(s => khRewardStats(khClassCache[s.fbKey] || [], khDays).count);
+    html += khStat('Klassens median', khNum(khMedian(counts)) + ' stk', 'var(--teal-light)', 'var(--teal-dark)');
+  }
+  html += khStat('⚠️ Flaggede belønninger', String(st.flags), st.flags ? 'var(--coral-light)' : '#f3f4f6', st.flags ? 'var(--coral)' : 'var(--muted)');
+  html += khStat('Inn / ut ' + khPeriodLabel(khDays), '🪙 +' + inn + ' / ' + ut, '#f3f4f6', 'inherit');
+  document.getElementById('kh-summary').innerHTML = html;
+
+  const filters = [['all', 'Alle'], ['reward', '⭐ Belønninger'], ['in', '➕ Inn'], ['out', '➖ Ut'], ['flag', '⚠️ Flagget']];
+  document.getElementById('kh-filters').innerHTML = filters.map(([k, l]) =>
+    `<button class="btn ${khFilter === k ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="khSetFilter('${k}')">${l}</button>`).join('');
+
+  const rows = inPeriod.filter(t =>
+    khFilter === 'reward' ? khIsReward(t) :
+    khFilter === 'in'     ? Number(t.amount) > 0 :
+    khFilter === 'out'    ? Number(t.amount) < 0 :
+    khFilter === 'flag'   ? (t._flags && t._flags.length) : true);
+  if (!rows.length) {
+    box.innerHTML = `<div style="padding:1.5rem;text-align:center;color:var(--muted);">${khTx.length ? 'Ingen transaksjoner som passer filteret i denne perioden.' : 'Ingen transaksjoner registrert på denne eleven ennå.'}</div>`;
+    return;
+  }
+  let out = '', lastDay = '';
+  rows.forEach(t => {
+    const day = khFmtDay(t.ts);
+    if (day !== lastDay) {
+      out += `<div style="position:sticky;top:0;background:var(--bg);padding:.35rem .7rem;font-size:.75rem;font-weight:800;color:var(--muted);text-transform:capitalize;border-bottom:1px solid var(--border);">${lbEsc(day)}</div>`;
+      lastDay = day;
+    }
+    const amt = Number(t.amount) || 0;
+    const flagged = t._flags && t._flags.length;
+    out += `<div style="display:flex;gap:.6rem;align-items:center;padding:.45rem .7rem;border-bottom:1px solid var(--border);${flagged ? 'background:#fff4e5;' : ''}">
+      <div style="font-size:.78rem;color:var(--muted);width:3.1rem;flex-shrink:0;">${khFmtTime(t.ts)}</div>
+      <div style="font-size:1.1rem;width:1.5rem;text-align:center;flex-shrink:0;">${lbEsc(t.icon || '•')}</div>
+      <div style="flex:1;min-width:0;font-size:.86rem;">
+        <div style="overflow-wrap:anywhere;">${lbEsc(t.desc || '(uten beskrivelse)')}</div>
+        ${flagged ? `<div style="font-size:.72rem;color:#b45309;font-weight:700;">⚠️ ${lbEsc(t._flags.join(' · '))}</div>` : ''}
+      </div>
+      <div style="font-weight:800;font-size:.88rem;white-space:nowrap;color:${amt > 0 ? 'var(--teal-dark)' : amt < 0 ? 'var(--coral)' : 'var(--muted)'};">${amt > 0 ? '+' : ''}${amt} 🪙</div>
+    </div>`;
+  });
+  box.innerHTML = out;
+}
+
+// ── Modal: belønningsoversikt for hele klassen ──
+function khEnsureOverviewModal() {
+  if (document.getElementById('modal-khoversikt')) return;
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay'; ov.id = 'modal-khoversikt';
+  ov.innerHTML = `
+  <div class="modal" style="max-width:620px;width:100%;">
+    <div class="modal-title">⭐ Belønningsoversikt</div>
+    <div style="font-size:.86rem;color:var(--muted);margin-bottom:.6rem;">Hvor mange belønninger hver elev har skannet. Elever langt over klassens median er markert.</div>
+    <div style="margin-bottom:.6rem;">
+      <select id="kho-days" onchange="khRenderOverview()" style="padding:.35rem .5rem;border-radius:8px;border:1px solid var(--border);font:inherit;font-size:.85rem;">
+        <option value="7">Siste 7 dager</option><option value="30">Siste 30 dager</option><option value="0">Alt</option>
+      </select>
+    </div>
+    <div id="kho-list" style="max-height:55vh;overflow-y:auto;border:1px solid var(--border);border-radius:10px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="openBelonningsoversikt()">🔄 Oppdater</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-khoversikt')">Lukk</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+}
+async function openBelonningsoversikt() {
+  khEnsureOverviewModal();
+  const box = document.getElementById('kho-list');
+  box.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);">Henter klassens transaksjoner …</div>';
+  document.getElementById('modal-khoversikt').classList.add('open');
+  try { await khLoadClass(true); }
+  catch (e) {
+    console.warn('Belønningsoversikt:', e);
+    box.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--coral);">Klarte ikke å hente transaksjonene. Sjekk nettet og prøv igjen.</div>';
+    return;
+  }
+  khRenderOverview();
+}
+function khRenderOverview() {
+  const box = document.getElementById('kho-list'); if (!box || !khClassCache) return;
+  const days = parseInt(document.getElementById('kho-days').value, 10) || 0;
+  const rows = (window._students || []).map(s => Object.assign({ s }, khRewardStats(khClassCache[s.fbKey] || [], days)));
+  if (!rows.length) { box.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);">Ingen elever</div>'; return; }
+  const median = khMedian(rows.map(r => r.count));
+  const limit = Math.max(3, median * 2);
+  rows.sort((a, b) => b.count - a.count || b.sum - a.sum);
+  box.innerHTML = `<div style="padding:.45rem .7rem;font-size:.78rem;color:var(--muted);border-bottom:1px solid var(--border);">Klassens median ${khPeriodLabel(days)}: <b>${khNum(median)}</b> belønninger</div>` +
+    rows.map(r => {
+      const high = r.count >= limit;
+      const key = lbEsc(r.s.fbKey);
+      return `<div style="display:flex;gap:.6rem;align-items:center;padding:.5rem .7rem;border-bottom:1px solid var(--border);${high ? 'background:var(--coral-light);' : ''}">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:.88rem;">${lbEsc(((r.s.firstname || '') + ' ' + (r.s.lastname || '')).trim())}</div>
+          ${high ? '<div style="font-size:.72rem;color:var(--coral);font-weight:700;">Mye over klassens median</div>' : ''}
+        </div>
+        <div style="font-size:.85rem;white-space:nowrap;"><b>${r.count}</b> stk · 🪙 ${r.sum}</div>
+        <div style="font-size:.8rem;width:2.6rem;text-align:center;color:${r.flags ? '#b45309' : 'var(--muted)'};font-weight:700;" title="Flaggede belønninger">${r.flags ? '⚠️ ' + r.flags : '–'}</div>
+        <button class="btn btn-ghost btn-sm" title="Se kontohistorikk" onclick="closeModal('modal-khoversikt');openKontohistorikk('${key}')">📜</button>
+      </div>`;
+    }).join('');
 }
