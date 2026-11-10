@@ -1947,7 +1947,7 @@ function renderRewardHolds57() {
     if (!pill) {
       pill = document.createElement('button');
       pill.id = 'rh-pill'; pill.type = 'button';
-      pill.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:9000;background:#b45309;color:#fff;border:none;border-radius:999px;padding:.7rem 1.1rem;font-weight:800;font-family:inherit;font-size:.9rem;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;';
+      pill.style.cssText = 'position:fixed;right:16px;bottom:72px;z-index:9000;background:#b45309;color:#fff;border:none;border-radius:999px;padding:.7rem 1.1rem;font-weight:800;font-family:inherit;font-size:.9rem;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;';
       pill.onclick = openRewardHolds57;
       document.body.appendChild(pill);
     }
