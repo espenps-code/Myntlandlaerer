@@ -2095,6 +2095,26 @@ function checkPin(){
 // Slår opp ID-en under classes/{denne klassen}/qr/{id}. Finnes den ikke der,
 // hører koden til en annen klasse (eller er hjemmelaget) og avvises. Hver elev
 // kan bruke en gitt kode én gang (students57/{elev}/qrClaimed/{id}).
+// ── Belønningssperre: 3+ belønninger innen 15 min holdes tilbake til læreren godkjenner ──
+// Teller bare skannede belønnings-QR (ikke leselodd, arbeidsplan eller foresattgodkjenning).
+const RW_BURST_COUNT=3, RW_BURST_MIN=15;
+function rwScanList(s){const v=s&&s.rewardScanTs;const a=Array.isArray(v)?v:(v&&typeof v==='object'?Object.values(v):[]);return a.map(Number).filter(t=>t>0);}
+async function maybeHoldReward(qid,amount,desc){
+  const s=window._currentStudent;if(!s||!window._CLASS_ID)return false;
+  const now=Date.now();
+  const prev=rwScanList(s).filter(t=>now-t<3600000);
+  const inWin=prev.filter(t=>now-t<RW_BURST_MIN*60000).length;
+  const list=prev.concat(now).slice(-10);
+  s.rewardScanTs=list;
+  try{await window._update(fbRef('students57/'+s.fbKey),{rewardScanTs:list});patchStudent(s.fbKey,{rewardScanTs:list});}catch(e){console.warn('rewardScanTs:',e);}
+  if((window._settings&&window._settings.rewardBurstHold===false)||inWin<RW_BURST_COUNT-1)return false;
+  try{await window._set(window._push(window._ref(window._db,'classes/'+window._CLASS_ID+'/data/rewardHolds')),{sk:s.fbKey,name:String(s.firstname||''),amount:Number(amount),desc:String(desc||'Belønning'),qid:String(qid||''),ts:now});}
+  catch(e){console.warn('rewardHold:',e);return false;}
+  const d=`Belønning venter på godkjenning (+${amount} 🪙)`;
+  try{await saveTx(s.fbKey,'income','⏳',d,0);transactions.unshift({type:'income',icon:'⏳',desc:d,amount:0,ts:now});renderTransactions();}catch(e){}
+  showSuccess('😮','Oi! Her ble det mange belønninger!',`⏳ +${amount} 🪙 venter`,'Læreren får beskjed og må godkjenne før myntene kommer inn på kontoen din.');
+  return true;
+}
 // Samme kalenderdag (enhetens lokale tid) – brukes av «én gang per dag»-belønninger
 function qrSameDay(ts){const a=new Date(Number(ts)),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 async function handleRegisteredQr(id){
@@ -2122,7 +2142,7 @@ async function handleRegisteredQr(id){
   // Merk som brukt FØR utbetaling, så et dobbelttrykk ikke gir dobbelt
   s.qrClaimed=s.qrClaimed||{};s.qrClaimed[id]=Date.now();
   let ok=false;
-  if(q.kind==='reward'&&Number(q.amount)>0){await doReward(Number(q.amount),q.desc);ok=true;}
+  if(q.kind==='reward'&&Number(q.amount)>0){if(/^ll[a-z0-9]+_\d+$/.test(id)||!(await maybeHoldReward(id,Number(q.amount),q.desc)))await doReward(Number(q.amount),q.desc);ok=true;}
   else if(q.kind==='job'&&Number(q.pay)>0){await doJobReward(Number(q.pay),q.title);ok=true;}
   else if(q.kind==='event'&&Number(q.amount)>0){ok=(await doEventHendelse(q.subtype,Number(q.amount),q.desc))!==false;}
   else{delete s.qrClaimed[id];showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');return;}

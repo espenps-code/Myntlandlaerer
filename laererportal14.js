@@ -38,6 +38,7 @@ let loginPin = '', loginTarget = null;
 
 // Load teacher profiles for login screen
 function loadProfiles() {
+  if (typeof startRewardHolds14 === 'function') startRewardHolds14();   // varsel om belønninger som venter
   window._onValue(fbRef('teachers'), snap => {
     window._teachers = snap.val()
       ? Object.entries(snap.val()).map(([k,v]) => ({...v, fbKey:k}))
@@ -1787,9 +1788,139 @@ const REWARD_MODES14 = {
   multi: { icon:'🔁', text:'Kan skannes flere ganger av samme elev' }
 };
 function rewardMode14(r) { return r && r.multi ? 'multi' : (r && r.daily ? 'daily' : 'once'); }
+
+// ── Belønningssperre ─────────────────────────────────────────────────────────
+// Skanner en elev 3 eller flere belønnings-QR innen 15 minutter, holder
+// elevappen myntene tilbake og legger dem i classes/{klasse}/data/rewardHolds.
+// Her godkjenner læreren (utbetales med skatt som vanlig) eller avviser.
+// Arbeidsplan-bonus, foresattgodkjenning og leselodd går ikke via sperren.
+function rewardHoldOn14() { return !(window._settings && window._settings.rewardBurstHold === false); }
+async function setRewardHold14(val) {
+  val = !!val;
+  if (!window._settings) window._settings = {};
+  window._settings.rewardBurstHold = val;
+  try { await window._update(fbRef('settings'), { rewardBurstHold: val }); } catch(e) { console.warn(e); }
+}
+function rhRef14(k) { return window._ref(window._db, 'classes/' + window._CLASS_ID + '/data/rewardHolds' + (k ? '/' + k : '')); }
+function rhEsc14(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+let _rhStarted14 = false;
+window._rewardHolds = window._rewardHolds || [];
+function startRewardHolds14() {
+  if (_rhStarted14 || !window._CLASS_ID || !window._onValue || !window._ref || !window._db) return;
+  _rhStarted14 = true;
+  try {
+    window._onValue(rhRef14(), snap => {
+      const v = (snap && snap.val()) || {};
+      window._rewardHolds = Object.entries(v)
+        .map(([k, h]) => Object.assign({}, h || {}, { _k: k }))
+        .filter(h => h.sk && Number(h.amount) > 0)
+        .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      renderRewardHolds14();
+    }, err => { console.warn('rewardHolds:', err); _rhStarted14 = false; });
+  } catch(e) { console.warn('rewardHolds:', e); _rhStarted14 = false; }
+}
+function renderRewardHolds14() {
+  const list = window._rewardHolds || [];
+  // Varselknapp nederst til høyre – synlig på alle sider i portalen
+  let pill = document.getElementById('rh-pill');
+  if (list.length) {
+    if (!pill) {
+      pill = document.createElement('button');
+      pill.id = 'rh-pill'; pill.type = 'button';
+      pill.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:9000;background:#b45309;color:#fff;border:none;border-radius:999px;padding:.7rem 1.1rem;font-weight:800;font-family:inherit;font-size:.9rem;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;';
+      pill.onclick = openRewardHolds14;
+      document.body.appendChild(pill);
+    }
+    pill.textContent = '⏳ ' + list.length + (list.length === 1 ? ' belønning venter' : ' belønninger venter') + ' på godkjenning';
+  } else if (pill) pill.remove();
+  const box = document.getElementById('reward-holds-box'); if (!box) return;
+  if (!list.length) { box.innerHTML = ''; return; }
+  const nm = h => { const s = (window._students || []).find(x => x.fbKey === h.sk); return (s && s.firstname) || h.name || 'Ukjent elev'; };
+  const when = ts => {
+    const d = new Date(ts || 0);
+    const today = new Date().toDateString() === d.toDateString();
+    return (today ? 'i dag ' : d.toLocaleDateString('nb-NO', { day:'numeric', month:'short' }) + ' ') + 'kl. ' + d.toLocaleTimeString('nb-NO', { hour:'2-digit', minute:'2-digit' });
+  };
+  box.innerHTML = `<div class="card" style="border:2px solid #f59e0b;background:#fff8eb;">
+    <div class="card-title">⏳ Belønninger som venter på godkjenning (${list.length})</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem;">Disse ble skannet tett etter hverandre (3 eller flere innen 15 minutter), så myntene er holdt tilbake. Godkjenner du, betales de ut som vanlig med skatt til sparemålet.</div>
+    ${list.map(h => `<div style="display:flex;align-items:center;gap:10px;padding:.55rem .7rem;background:#fff;border-radius:10px;margin-bottom:6px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;">
+        <div style="font-weight:800;font-size:.9rem;">${rhEsc14(nm(h))} · +${Number(h.amount)} 🪙</div>
+        <div style="font-size:.76rem;color:var(--muted);">${rhEsc14(h.desc || 'Belønning')} · ${when(h.ts)}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="approveRewardHold14('${rhEsc14(h._k)}')">✅ Godkjenn</button>
+      <button class="btn btn-coral btn-sm" onclick="rejectRewardHold14('${rhEsc14(h._k)}')">✖ Avvis</button>
+    </div>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:.5rem;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="approveAllRewardHolds14()">✅ Godkjenn alle</button>
+      <button class="btn btn-ghost btn-sm" onclick="rejectAllRewardHolds14()">✖ Avvis alle</button>
+    </div>
+  </div>`;
+}
+function openRewardHolds14() {
+  try { showPage('belonninger'); } catch(e) {}
+  const btn = document.querySelector('button[onclick^="showBelonningTab(\'qrkoder\'"]');
+  try { showBelonningTab('qrkoder', btn); } catch(e) {}
+  setTimeout(() => { const b = document.getElementById('reward-holds-box'); if (b) b.scrollIntoView({ behavior:'smooth', block:'start' }); }, 200);
+}
+// Hent og fjern oppføringen FØR utbetaling, så samme belønning ikke kan godkjennes to ganger
+async function takeRewardHold14(k) {
+  if (!k) return null;
+  const snap = await window._get(rhRef14(k)); const h = snap && snap.val();
+  if (!h) return null;
+  await window._remove(rhRef14(k));
+  return h;
+}
+async function approveRewardHold14(k) {
+  try { const h = await takeRewardHold14(k); if (h) await payRewardHold14(h); }
+  catch(e) { console.warn('Godkjenn belønning:', e); alert('Klarte ikke å godkjenne belønningen. Prøv igjen.'); }
+}
+async function rejectRewardHold14(k) {
+  try {
+    const h = await takeRewardHold14(k); if (!h) return;
+    await logTx14(h.sk, 'expense', '✖', `Belønning avvist av lærer (+${Number(h.amount)} 🪙 ble ikke utbetalt)`, 0);
+  } catch(e) { console.warn('Avvis belønning:', e); }
+}
+async function approveAllRewardHolds14() {
+  const list = (window._rewardHolds || []).slice(); if (!list.length) return;
+  if (!confirm(`Godkjenne alle ${list.length} belønningene?`)) return;
+  for (const h of list) await approveRewardHold14(h._k);
+}
+async function rejectAllRewardHolds14() {
+  const list = (window._rewardHolds || []).slice(); if (!list.length) return;
+  if (!confirm(`Avvise alle ${list.length} belønningene? Myntene blir ikke utbetalt.`)) return;
+  for (const h of list) await rejectRewardHold14(h._k);
+}
+async function payRewardHold14(h) {
+  const snap = await window._get(fbRef('students14/' + h.sk)); const sv = snap && snap.val();
+  if (!sv) return;
+  const amount = Number(h.amount) || 0; if (amount <= 0) return;
+  const taxAmt = Math.floor(amount * 0.20), net = amount - taxAmt;   // 20 % som i elevappen 1–4
+  await window._update(fbRef('students14/' + h.sk), { balance: (sv.balance || 0) + net });
+  if (taxAmt > 0) {
+    // Samme fordeling som elevappen: elevens valgte sparemål i egen klasse, ellers likt
+    const active = (window._classGoals || []).filter(g => !g.completed && g.class === sv.class);
+    if (active.length) {
+      const chosen = sv.chosenGoalKey ? active.find(g => g.fbKey === sv.chosenGoalKey) : null;
+      const shares = chosen ? [[chosen, taxAmt]]
+        : active.map((g, i) => [g, Math.floor(taxAmt / active.length) + (i < taxAmt % active.length ? 1 : 0)]);
+      for (const [g, amt] of shares) {
+        if (amt <= 0) continue;
+        const gs = await window._get(fbRef('classGoals14/' + g.fbKey)); const gv = gs && gs.val();
+        if (!gv || gv.completed) continue;
+        const ns = (gv.saved || 0) + amt; const u = { saved: ns }; if (ns >= gv.target) u.completed = true;
+        await window._update(fbRef('classGoals14/' + g.fbKey), u);
+      }
+    }
+  }
+  await logTx14(h.sk, 'income', '⭐', `${h.desc || 'Belønning'} – godkjent av lærer (netto etter 20 % skatt)`, net);
+}
 async function generateRewardQRCodes() {
   const multi = stdRewardMulti14();
   const cb = document.getElementById('std-qr-multi'); if (cb) cb.checked = multi;
+  const hb = document.getElementById('reward-hold-toggle'); if (hb) hb.checked = rewardHoldOn14();
+  startRewardHolds14(); renderRewardHolds14();
   const k = await ensureStdRewardKey14();
   [10,50,100].forEach(amount => {
     const el = document.getElementById('qr-' + amount); if (!el) return;

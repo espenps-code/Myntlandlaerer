@@ -817,6 +817,8 @@
   <div class="page-subtitle">Generer QR-koder som elevene kan scanne for å tjene mynter</div>
   <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin:0 0 .75rem;cursor:pointer;"><input type="checkbox" id="std-qr-multi" onchange="setStdRewardMulti14(this.checked)"> 🔁 De faste kortene (+10/+50/+100) kan skannes flere ganger av samme elev <span style="color:var(--muted);">(ellers én gang per elev)</span></label>
   <div style="font-size:.78rem;color:var(--muted);margin:-.4rem 0 .75rem;">🔒 Disse kortene virker bare i denne klassen. Kort skrevet ut før 10. november 2026 virker ikke lenger – skriv dem ut på nytt.</div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin:0 0 .75rem;cursor:pointer;"><input type="checkbox" id="reward-hold-toggle" checked onchange="setRewardHold14(this.checked)"> ⏳ Hold tilbake myntene når en elev skanner 3 eller flere belønninger innen 15 minutter <span style="color:var(--muted);">(du godkjenner dem her)</span></label>
+  <div id="reward-holds-box"></div>
   <div class="grid-3">
     <div class="qr-card"><div class="amount-label" style="color:#1D9E75;">+10 🪙</div><div class="qr-wrap" id="qr-10"></div><div style="font-size:.85rem;color:var(--muted);">Liten belønning</div><button class="btn btn-primary btn-sm" onclick="printSingleQR('qr-10','10 🪙')">🖨️ Skriv ut</button></div>
     <div class="qr-card"><div class="amount-label" style="color:#EF9F27;">+50 🪙</div><div class="qr-wrap" id="qr-50"></div><div style="font-size:.85rem;color:var(--muted);">Medium belønning</div><button class="btn btn-amber btn-sm" onclick="printSingleQR('qr-50','50 🪙')">🖨️ Skriv ut</button></div>

@@ -1521,6 +1521,30 @@ async function claimLeselodd14(id) {
   catch(e) { console.warn('leselodd-claim:', e); playErrorBeep(); showSuccess('❌','Noe gikk galt','','Prøv å scanne loddet igjen'); return false; }
   return true;
 }
+// ── Belønningssperre: 3+ belønninger innen 15 min holdes tilbake til læreren godkjenner ──
+// Teller bare skannede belønnings-QR (ikke leselodd).
+const RW_BURST_COUNT = 3, RW_BURST_MIN = 15;
+function rwScanList14(s) { const v = s && s.rewardScanTs; const a = Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v) : []); return a.map(Number).filter(t => t > 0); }
+async function maybeHoldReward14(qid, amount, desc) {
+  const s = window._currentStudent; if (!s || !window._CLASS_ID) return false;
+  const now = Date.now();
+  const prev = rwScanList14(s).filter(t => now - t < 3600000);
+  const inWin = prev.filter(t => now - t < RW_BURST_MIN * 60000).length;
+  const list = prev.concat(now).slice(-10);
+  s.rewardScanTs = list;
+  try {
+    await window._update(window._ref(window._db, 'students14/' + s.fbKey), { rewardScanTs: list });
+    const ix = (window._allStudents || []).findIndex(x => x.fbKey === s.fbKey);
+    if (ix !== -1) window._allStudents[ix].rewardScanTs = list;
+  } catch(e) { console.warn('rewardScanTs:', e); }
+  if ((window._settings && window._settings.rewardBurstHold === false) || inWin < RW_BURST_COUNT - 1) return false;
+  try { await window._set(window._push(window._ref(window._db, 'classes/' + window._CLASS_ID + '/data/rewardHolds')), { sk: s.fbKey, name: String(s.firstname || ''), amount: Number(amount), desc: String(desc || 'Belønning'), qid: String(qid || ''), ts: now }); }
+  catch(e) { console.warn('rewardHold:', e); return false; }
+  const tx = { type: 'income', icon: '⏳', desc: `Belønning venter på godkjenning (+${amount} 🪙)`, amount: 0, ts: now };
+  try { await saveTransaction(s.fbKey, tx); transactions.unshift(tx); renderTransactions(); } catch(e) {}
+  showSuccess('😮', 'Oi! Her ble det mange belønninger!', `⏳ +${amount} 🪙 venter`, 'Læreren får beskjed og må godkjenne før myntene kommer inn på kontoen din.');
+  return true;
+}
 // Samme kalenderdag (enhetens lokale tid) – brukes av «én gang per dag»-belønninger
 function qrSameDay14(ts) { const a = new Date(Number(ts)), b = new Date(); return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 async function handleRegisteredQr14(id) {
@@ -1541,7 +1565,8 @@ async function handleRegisteredQr14(id) {
     // Leselodd (ll<sett>_<nr>): ett lodd kan bare brukes ÉN gang totalt – av én elev
     if (/^ll[a-z0-9]+_\d+$/.test(id) && !(await claimLeselodd14(id))) return;
     await markQrClaimed14(id);           // merk som brukt FØR utbetaling
-    await doReward(Number(q.amount), q.desc);
+    // Leselodd teller ikke i belønningssperren
+    if (/^ll[a-z0-9]+_\d+$/.test(id) || !(await maybeHoldReward14(id, Number(q.amount), q.desc))) await doReward(Number(q.amount), q.desc);
   } else if (q.kind === 'event' && Number(q.amount) > 0) {
     // Merkes som brukt når eleven trykker «Godta» (se acceptEvent)
     showEventConfirm({ type:'event', subtype:q.subtype, amount:Number(q.amount), desc:q.desc, _qid:id, _multi:!!q.multi });
