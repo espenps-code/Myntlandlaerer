@@ -1231,7 +1231,7 @@ async function confirmLoanBlock() {
     await window._update(fbRef('students57/' + lbStudentId), {
       balance: start, savings: 0, loan: 0, loanDate: null,
       fund_low_units: 0, fund_low_invested: 0, fund_high_units: 0, fund_high_invested: 0,
-      withdrawalsThisWeek: 0, loanBlock, bankruptAt: now,
+      withdrawalsThisWeek: 0, savingsLocked: 0, savingsPending: null, loanBlock, bankruptAt: now,
       bankruptcies: (s.bankruptcies || 0) + 1
     });
     const diff = start - before;
@@ -1292,7 +1292,11 @@ async function confirmSaldoAction() {
       fund_low_invested: 0,
       fund_high_units: 0,
       fund_high_invested: 0,
-      withdrawalsThisWeek: 0
+      withdrawalsThisWeek: 0,
+      // Renteberegningen (mandagsjobben) bruker savingsLocked/savingsPending –
+      // tømmes også, ellers kommer gamle sparepenger + rente tilbake ved neste innskudd
+      savingsLocked: 0,
+      savingsPending: null
     };
     await window._update(fbRef('students57/' + currentStudentId), fullReset);
     await logTx(currentStudentId, 'expense', '🔄', 'Alle kontoer nullstilt av lærer', -(s.balance||0));
@@ -1375,6 +1379,8 @@ async function confirmBulkAction() {
         updates[base + 'fund_high_units']    = 0;
         updates[base + 'fund_high_invested'] = 0;
         updates[base + 'withdrawalsThisWeek']= 0;
+        updates[base + 'savingsLocked']      = 0;     // renteberegningen nullstilles også
+        updates[base + 'savingsPending']     = null;
       }
       updates['students57/' + s.fbKey + '/balance'] = Math.max(0, newBal);
       if (txAmt !== 0) await logTx(s.fbKey, txAmt > 0 ? 'income' : 'expense', '💰', txDesc, txAmt);
