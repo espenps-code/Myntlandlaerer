@@ -1866,12 +1866,52 @@ function registerQr57(id, data) {
   return payload;
 }
 function stdRewardMulti57() { return !!(window._settings && window._settings.stdRewardMulti); }
-function generateRewardQRCodes() {
+// Standardkortene (+10/+50/+100) har en tilfeldig nøkkel per klasse (settings/stdRewardKey),
+// så et kort skrevet ut fra én klasse ikke virker i en annen. De gamle felles
+// ID-ene (rw_std10/50/100 – like i alle klasser) slås av i registeret.
+function stdRewardId57(amount) {
+  const k = window._settings && window._settings.stdRewardKey;
+  return k ? 'rw_std' + amount + '_' + k : null;
+}
+let _stdOldOff57 = '';
+async function ensureStdRewardKey57() {
+  if (!window._CLASS_ID) return null;
+  if (!window._settings) window._settings = {};
+  let k = window._settings.stdRewardKey;
+  if (!k) {
+    try { const snap = await window._get(fbRef('settings/stdRewardKey')); k = snap && snap.val(); } catch(e) { console.warn('stdRewardKey:', e); }
+    if (!k) {
+      k = Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-3);
+      try { await window._update(fbRef('settings'), { stdRewardKey: k }); } catch(e) { console.warn('stdRewardKey:', e); return null; }
+    }
+    window._settings.stdRewardKey = k;
+  }
+  if (_stdOldOff57 !== window._CLASS_ID) {
+    _stdOldOff57 = window._CLASS_ID;
+    const u = {};
+    [10,50,100].forEach(a => { u['rw_std' + a + '/active'] = false; });
+    try { await window._update(window._ref(window._db, 'classes/' + window._CLASS_ID + '/qr'), u); } catch(e) { console.warn('QR (gamle standardkort):', e); }
+  }
+  return k;
+}
+// Skannemodus for egendefinerte belønninger: én gang per elev, én gang per dag, eller ubegrenset
+const REWARD_MODES57 = {
+  once:  { icon:'1️⃣', text:'Én gang per elev' },
+  daily: { icon:'📅', text:'Én gang per dag per elev' },
+  multi: { icon:'🔁', text:'Kan skannes flere ganger av samme elev' }
+};
+function rewardMode57(r) { return r && r.multi ? 'multi' : (r && r.daily ? 'daily' : 'once'); }
+async function generateRewardQRCodes() {
   const multi = stdRewardMulti57();
   const cb = document.getElementById('std-qr-multi'); if (cb) cb.checked = multi;
+  const k = await ensureStdRewardKey57();
   [10,50,100].forEach(amount => {
-    const el = document.getElementById('qr-' + amount);
-    if (el && !el.children.length) try { new QRCode(el, { text: registerQr57('rw_std' + amount, { kind:'reward', amount, desc:'Belønning', multi }), width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M }); } catch(e) {}
+    const el = document.getElementById('qr-' + amount); if (!el) return;
+    if (!k) { el.innerHTML = ''; el.dataset.qid = ''; return; }
+    const id = stdRewardId57(amount);
+    if (el.dataset.qid === id && el.children.length) return;
+    el.innerHTML = ''; el.dataset.qid = id;
+    try { new QRCode(el, { text: registerQr57(id, { kind:'reward', amount, desc:'Belønning', multi }), width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M }); } catch(e) {}
   });
 }
 // Bryter for de faste kortene: skal samme elev kunne skanne dem flere ganger?
@@ -1881,14 +1921,16 @@ async function setStdRewardMulti57(val) {
   if (!window._settings) window._settings = {};
   window._settings.stdRewardMulti = val;
   try { await window._update(fbRef('settings'), { stdRewardMulti: val }); } catch(e) { console.warn(e); }
-  [10,50,100].forEach(amount => registerQr57('rw_std' + amount, { kind:'reward', amount, desc:'Belønning', multi: val }));
+  const k = await ensureStdRewardKey57(); if (!k) return;
+  [10,50,100].forEach(amount => registerQr57(stdRewardId57(amount), { kind:'reward', amount, desc:'Belønning', multi: val }));
 }
-// Bryter per egendefinert belønning
+// Bryter per egendefinert belønning: 1️⃣ én gang → 📅 én gang per dag → 🔁 flere ganger
 async function toggleRewardMulti57(fbKey) {
   const r = getRewards().find(x => x.fbKey === fbKey); if (!r) return;
-  const val = !r.multi;
-  await window._update(fbRef('customRewards57/' + fbKey), { multi: val });
-  registerQr57('rw_' + fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: val });
+  const next = { once:'daily', daily:'multi', multi:'once' }[rewardMode57(r)];
+  const multi = next === 'multi', daily = next === 'daily';
+  await window._update(fbRef('customRewards57/' + fbKey), { multi, daily });
+  registerQr57('rw_' + fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi, daily });
 }
 
 // ── Egendefinerte belønninger (57) ──────────────────────────────────────────
@@ -1900,11 +1942,14 @@ async function addCustomReward57() {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Skriv inn et gyldig beløp.</div>'; return;
   }
   if (!ready()) { alertEl.innerHTML = '<div class="alert alert-error">⚠️ Firebase ikke klar.</div>'; return; }
-  const multi = !!(document.getElementById('custom-qr-multi') && document.getElementById('custom-qr-multi').checked);
+  const modeEl = document.getElementById('custom-qr-mode');
+  const mode = modeEl ? modeEl.value : ((document.getElementById('custom-qr-multi') && document.getElementById('custom-qr-multi').checked) ? 'multi' : 'once');
+  const multi = mode === 'multi', daily = mode === 'daily';
   await window._set(window._push(fbRef('customRewards57')), {
     workspaceId: currentWorkspaceId() || 'main',
-    amount, desc: desc || `+${amount} mynter`, multi, created: Date.now()
+    amount, desc: desc || `+${amount} mynter`, multi, daily, created: Date.now()
   });
+  if (modeEl) modeEl.value = 'once';
   if (document.getElementById('custom-qr-multi')) document.getElementById('custom-qr-multi').checked = false;
   document.getElementById('custom-qr-amount').value = '75';
   document.getElementById('custom-qr-desc').value   = '';
@@ -1924,11 +1969,11 @@ function renderCustomRewards57() {
       <div style="flex:1;">
         <div style="font-weight:800;font-size:.9rem;">+${r.amount} 🪙</div>
         <div style="font-size:.78rem;color:var(--muted);">${r.desc}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">${r.multi ? '🔁 Kan skannes flere ganger av samme elev' : '1️⃣ Én gang per elev'}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">${REWARD_MODES57[rewardMode57(r)].icon} ${REWARD_MODES57[rewardMode57(r)].text}</div>
       </div>
       <div id="mini-qr57-${r.fbKey}" style="width:60px;height:60px;flex-shrink:0;"></div>
       <div style="display:flex;flex-direction:column;gap:4px;">
-        <button class="btn btn-sm" title="${r.multi ? 'Bytt til én gang per elev' : 'Tillat flere skanninger per elev'}" onclick="toggleRewardMulti57('${r.fbKey}')">${r.multi ? '🔁' : '1️⃣'}</button>
+        <button class="btn btn-sm" title="Bytt skannemodus: 1️⃣ én gang → 📅 én gang per dag → 🔁 flere ganger" onclick="toggleRewardMulti57('${r.fbKey}')">${REWARD_MODES57[rewardMode57(r)].icon}</button>
         <button class="btn btn-primary btn-sm" onclick="printCustomReward57('${r.fbKey}')">🖨️</button>
         <button class="btn btn-coral btn-sm"   onclick="deleteCustomReward57('${r.fbKey}')">🗑️</button>
       </div>
@@ -1939,7 +1984,7 @@ function renderCustomRewards57() {
     if (el && !el.children.length) {
       try {
         new QRCode(el, {
-          text: registerQr57('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: !!r.multi }),
+          text: registerQr57('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: !!r.multi, daily: !!r.daily && !r.multi }),
           width: 60, height: 60, correctLevel: QRCode.CorrectLevel.L
         });
       } catch(e) {}
@@ -1970,7 +2015,9 @@ function printSingleQR(elId, label) {
   const dataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
   if (!dataUrl) { alert('QR ikke klar – vent litt og prøv igjen.'); return; }
   const amount = parseInt(label);
-  const payload = registerQr57('rw_std' + amount, { kind:'reward', amount, desc:'Belønning', multi: stdRewardMulti57() });
+  const sid = stdRewardId57(amount);
+  if (!sid) { alert('QR ikke klar – vent litt og prøv igjen.'); return; }
+  const payload = registerQr57(sid, { kind:'reward', amount, desc:'Belønning', multi: stdRewardMulti57() });
   // Skriv ut med samme design som egendefinerte belønninger
   const win = window.open('', '_blank', 'width=800,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>img.myntico{height:1em;width:auto;vertical-align:-0.16em;margin:0 .04em}</style><script>(function(){var U=(window.opener&&window.opener.__MYNTCOIN__)||"https://myntland.no/mynt.webp";var E="🪙";function C(n){if(n.nodeType===3){var v=n.nodeValue;if(!v||v.indexOf(E)<0)return;var p=n.parentNode;if(!p)return;var t=p.nodeName;if(t==="SCRIPT"||t==="STYLE"||t==="TEXTAREA")return;var a=v.split(E),f=document.createDocumentFragment();for(var i=0;i<a.length;i++){if(a[i])f.appendChild(document.createTextNode(a[i]));if(i<a.length-1){var m=document.createElement("img");m.className="myntico";m.src=U;m.alt="mynt";f.appendChild(m);}}p.replaceChild(f,n);}else if(n.nodeType===1){var k=[].slice.call(n.childNodes);for(var j=0;j<k.length;j++)C(k[j]);}}function R(){try{C(document.body);}catch(e){}}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",R);}else{R();}})();</script>
@@ -2001,7 +2048,7 @@ function printSingleQR(elId, label) {
 }
 
 function _printRewardCards57(rewards) {
-  const payloads = rewards.map(r => registerQr57('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: !!r.multi }));
+  const payloads = rewards.map(r => registerQr57('rw_' + r.fbKey, { kind:'reward', amount:r.amount, desc:r.desc, multi: !!r.multi, daily: !!r.daily && !r.multi }));
   const cardsHTML = rewards.map((r, i) =>
     `<div class="card">
       <div class="logo">🪙 Myntland</div>
@@ -5029,7 +5076,7 @@ const KH_BURST_COUNT  = 3;             // så mange belønninger …
 const KH_BURST_MIN    = 15;            // … innen så mange minutter gir flagg
 const KH_FLAG_OUTSIDE = 'Utenfor skoletid';
 const KH_FLAG_BURST   = 'Mange på kort tid';
-let khStudentId = null, khTx = [], khFilter = 'all', khDays = 7;
+let khStudentId = null, khTx = [], khFilter = 'all', khDays = 0; // 0 = alt
 let khClassCache = null, khClassCacheAt = 0;
 
 function khIsReward(t) {
@@ -5061,6 +5108,41 @@ function khFlag(list) {
     }
   }
   return list;
+}
+// Kobler skannede QR-koder (students57/<elev>/qrClaimed/<id> = tidspunkt) til
+// transaksjonen som skjedde rett etter. qrClaimed lagrer siste skanning per kode.
+function khAttachCodes(list, s) {
+  const claims = Object.entries((s && s.qrClaimed) || {})
+    .map(([id, ts]) => ({ id, ts: Number(ts) || 0 })).filter(c => c.ts > 0);
+  if (!claims.length) return list;
+  const used = new Set();
+  list.slice().sort((a, b) => a.ts - b.ts).forEach(t => {
+    if (!(t.icon === '⭐' || t.icon === '💼' || t.icon === '🎲')) return;
+    let best = null;
+    claims.forEach(c => {
+      if (used.has(c.id)) return;
+      const d = t.ts - c.ts;
+      if (d >= -2000 && d <= 20000 && (!best || Math.abs(d) < Math.abs(t.ts - best.ts))) best = c;
+    });
+    if (best) { used.add(best.id); t._code = best.id; }
+  });
+  return list;
+}
+function khCodeLabel(id) {
+  let m;
+  if ((m = /^rw_std(\d+)$/.exec(id))) return 'Standardlapp +' + m[1];
+  if (/^kp_/.test(id)) return 'Belønning vist på klasseportalen';
+  if (/^ll/.test(id)) return 'Leselodd (' + id + ')';
+  if (/^rw_/.test(id)) {
+    const r = (window._customRewards57 || []).find(x => 'rw_' + x.fbKey === id);
+    return 'Egendefinert belønning' + (r ? ': ' + (r.desc || ('+' + r.amount)) : '');
+  }
+  if (/^jb_/.test(id)) {
+    const j = (window._jobs || []).find(x => 'jb_' + x.fbKey === id);
+    return 'Oppdrag' + (j ? ': ' + j.title : '');
+  }
+  if (/^ev_/.test(id)) return 'Hendelseskort';
+  return id;
 }
 function khSince(days) { return days > 0 ? Date.now() - days * 86400000 : 0; }
 function khRewardStats(list, days) {
@@ -5126,7 +5208,7 @@ function khEnsureModal() {
     <div id="kh-summary" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem;"></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:.6rem;">
       <select id="kh-days" onchange="khDays=parseInt(this.value,10)||0;khRender()" style="padding:.35rem .5rem;border-radius:8px;border:1px solid var(--border);font:inherit;font-size:.85rem;">
-        <option value="7">Siste 7 dager</option><option value="30">Siste 30 dager</option><option value="0">Alt</option>
+        <option value="0">Alt</option><option value="30">Siste 30 dager</option><option value="7">Siste 7 dager</option>
       </select>
       <span id="kh-filters" style="display:flex;gap:6px;flex-wrap:wrap;"></span>
     </div>
@@ -5154,7 +5236,7 @@ async function openKontohistorikk(fbKey) {
   try {
     const snap = await window._get(fbRef('transactions57/' + fbKey));
     if (khStudentId !== fbKey) return;
-    khTx = khFlag(khToList(snap.val()));
+    khTx = khAttachCodes(khFlag(khToList(snap.val())), (window._students || []).find(x => x.fbKey === fbKey));
   } catch (e) {
     console.warn('Kontohistorikk:', e);
     box.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--coral);">Klarte ikke å hente transaksjonene. Sjekk nettet og prøv igjen.</div>';
@@ -5207,6 +5289,7 @@ function khRender() {
       <div style="font-size:1.1rem;width:1.5rem;text-align:center;flex-shrink:0;">${lbEsc(t.icon || '•')}</div>
       <div style="flex:1;min-width:0;font-size:.86rem;">
         <div style="overflow-wrap:anywhere;">${lbEsc(t.desc || '(uten beskrivelse)')}</div>
+        ${t._code ? `<div style="font-size:.72rem;color:var(--muted);">QR: ${lbEsc(khCodeLabel(t._code))}</div>` : ''}
         ${flagged ? `<div style="font-size:.72rem;color:#b45309;font-weight:700;">⚠️ ${lbEsc(t._flags.join(' · '))}</div>` : ''}
       </div>
       <div style="font-weight:800;font-size:.88rem;white-space:nowrap;color:${amt > 0 ? 'var(--teal-dark)' : amt < 0 ? 'var(--coral)' : 'var(--muted)'};">${amt > 0 ? '+' : ''}${amt} 🪙</div>

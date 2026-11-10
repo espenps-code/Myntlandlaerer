@@ -1507,15 +1507,39 @@ async function markQrClaimed14(id) {
     if (ix !== -1) window._allStudents[ix].qrClaimed = s.qrClaimed;
   } catch(e) { console.warn('qrClaimed:', e); }
 }
+// Leselodd: billetten ligger under classes/{klasse}/data/leselodd/{sett}/tickets/{nr}
+// og merkes som brukt FØR utbetaling. Returnerer true hvis eleven får loddet.
+async function claimLeselodd14(id) {
+  const s = window._currentStudent; if (!s) return false;
+  const m = /^ll([a-z0-9]+)_(\d+)$/.exec(id); if (!m) return false;
+  const path = 'classes/' + window._CLASS_ID + '/data/leselodd/' + m[1] + '/tickets/' + m[2];
+  let t = null;
+  try { const snap = await window._get(window._ref(window._db, path)); t = snap.val(); } catch(e) { console.warn('leselodd-oppslag:', e); }
+  if (!t) { playErrorBeep(); showSuccess('❌','Ugyldig lodd','','Dette leseloddet finnes ikke lenger'); return false; }
+  if (t.usedAt) { showSuccess('📚','Loddet er brukt','', t.usedBy === s.fbKey ? 'Du har allerede brukt dette loddet' : 'Dette leseloddet er allerede brukt av noen andre'); return false; }
+  try { await window._update(window._ref(window._db, path), { usedAt: Date.now(), usedBy: s.fbKey, usedName: String(s.firstname || '') }); }
+  catch(e) { console.warn('leselodd-claim:', e); playErrorBeep(); showSuccess('❌','Noe gikk galt','','Prøv å scanne loddet igjen'); return false; }
+  return true;
+}
+// Samme kalenderdag (enhetens lokale tid) – brukes av «én gang per dag»-belønninger
+function qrSameDay14(ts) { const a = new Date(Number(ts)), b = new Date(); return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 async function handleRegisteredQr14(id) {
   const s = window._currentStudent;
   if (!s || !window._CLASS_ID || !id || /[.#$\[\]\/]/.test(id)) { playErrorBeep(); showSuccess('❌','Ugyldig kode','','Prøv å scanne igjen'); return; }
+  // Gamle standardkort (rw_std10/50/100) var like i alle klasser – nå har hver klasse egne
+  if (/^rw_std\d+$/.test(id)) { playErrorBeep(); showSuccess('⏳','Utgått QR-kode','','Be læreren skrive ut nye belønningskort'); return; }
   let q = null;
   try { const snap = await window._get(window._ref(window._db, 'classes/' + window._CLASS_ID + '/qr/' + id)); q = snap.val(); } catch(e) { console.warn('QR-oppslag:', e); }
   if (!q || q.active === false) { playErrorBeep(); showSuccess('❌','Ugyldig kode','','Denne koden hører ikke til klassen din'); return; }
   // Én gang per elev – med mindre læreren har merket koden som flerbruks (multi)
-  if (!q.multi && s.qrClaimed && s.qrClaimed[id]) { showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
+  // «Én gang per dag» (daily): stopp bare hvis forrige skanning var i dag
+  if (!q.multi && s.qrClaimed && s.qrClaimed[id]) {
+    if (!q.daily) { showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden'); return; }
+    if (qrSameDay14(s.qrClaimed[id])) { showSuccess('📅','Allerede skannet i dag','','Du kan skanne denne igjen i morgen'); return; }
+  }
   if (q.kind === 'reward' && Number(q.amount) > 0) {
+    // Leselodd (ll<sett>_<nr>): ett lodd kan bare brukes ÉN gang totalt – av én elev
+    if (/^ll[a-z0-9]+_\d+$/.test(id) && !(await claimLeselodd14(id))) return;
     await markQrClaimed14(id);           // merk som brukt FØR utbetaling
     await doReward(Number(q.amount), q.desc);
   } else if (q.kind === 'event' && Number(q.amount) > 0) {

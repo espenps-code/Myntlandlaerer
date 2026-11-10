@@ -2095,16 +2095,24 @@ function checkPin(){
 // Slår opp ID-en under classes/{denne klassen}/qr/{id}. Finnes den ikke der,
 // hører koden til en annen klasse (eller er hjemmelaget) og avvises. Hver elev
 // kan bruke en gitt kode én gang (students57/{elev}/qrClaimed/{id}).
+// Samme kalenderdag (enhetens lokale tid) – brukes av «én gang per dag»-belønninger
+function qrSameDay(ts){const a=new Date(Number(ts)),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 async function handleRegisteredQr(id){
   const s=window._currentStudent;
   if(!s||!window._CLASS_ID||!id||/[.#$\[\]\/]/.test(id)){showSuccess('❌','Ugyldig QR','','Prøv å scanne igjen');return;}
+  // Gamle standardkort (rw_std10/50/100) var like i alle klasser – nå har hver klasse egne
+  if(/^rw_std\d+$/.test(id)){showSuccess('⏳','Utgått QR-kode','','Be læreren skrive ut nye belønningskort');return;}
   let q=null;
   try{const snap=await window._get(window._ref(window._db,'classes/'+window._CLASS_ID+'/qr/'+id));q=snap.val();}catch(e){console.warn('QR-oppslag:',e);}
   if(!q||q.active===false){showSuccess('❌','Ugyldig QR','','Denne koden hører ikke til klassen din');return;}
   // Godkjennings-QR for arbeidsplan: flerbruks, ingen utbetaling her – doWpApproveScan gjør resten
   if(q.kind==='wpapprove'){await doWpApproveScan();return;}
   // Én gang per elev – med mindre læreren har merket koden som flerbruks (multi)
-  if(!q.multi&&s.qrClaimed&&s.qrClaimed[id]){showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden');return;}
+  // «Én gang per dag» (daily): stopp bare hvis forrige skanning var i dag
+  if(!q.multi&&s.qrClaimed&&s.qrClaimed[id]){
+    if(!q.daily){showSuccess('🔁','Allerede skannet','','Du har allerede brukt denne koden');return;}
+    if(qrSameDay(s.qrClaimed[id])){showSuccess('📅','Allerede skannet i dag','','Du kan skanne denne igjen i morgen');return;}
+  }
   // Leselodd (ll<sett>_<nr>): ett lodd kan bare brukes ÉN gang totalt – av én elev.
   // Billetten ligger under classes/{klasse}/data/leselodd/{sett}/tickets/{nr} og
   // merkes som brukt FØR utbetaling.
