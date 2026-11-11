@@ -110,6 +110,13 @@ input{ font-family:inherit; color:inherit; }
 .name-row{ display:flex; align-items:center; gap:10px; }
 .badge{ width:56px; height:56px; border-radius:50%; border:var(--border); display:grid; place-items:center; font-weight:700; font-size:30px; flex:none; }
 .name-row input{ width:100%; min-width:0; font-size:28px; font-weight:500; padding:8px 14px; border:3px solid var(--ink); border-radius:14px; background:#fff; }
+.stpick{ padding:0; cursor:pointer; background:var(--cream-2); box-shadow:0 4px 0 rgba(42,31,61,.2); }
+.stpick img{ width:44px; height:44px; object-fit:contain; }
+.actimg{ width:var(--s,104px); height:var(--s,104px); object-fit:contain; }
+.pick-item .none{ width:104px; height:104px; border-radius:50%; border:4px dashed var(--ink-soft); display:grid; place-items:center; font-size:40px; font-weight:700; color:var(--ink-soft); }
+.st-ico{ position:relative; width:56px; height:56px; flex:none; margin:-2px 4px -2px -4px; }
+.st-ico img{ width:100%; height:100%; object-fit:contain; }
+.st-ico i{ position:absolute; right:-8px; bottom:-7px; width:26px; height:26px; border-radius:50%; background:var(--gold); border:3px solid var(--ink); font-style:normal; font-size:15px; font-weight:700; display:grid; place-items:center; }
 .pick{ display:flex; align-items:center; gap:10px; width:100%; border:3px solid var(--ink); border-radius:40px; background:#fff; padding:3px 16px 3px 4px; font-size:28px; font-weight:500; --s:48px; }
 .pick::after{ content:"▾"; margin-left:auto; font-size:24px; }
 #picker{ position:absolute; inset:0; z-index:50; background:rgba(42,31,61,.5); display:flex; align-items:center; justify-content:center; }
@@ -263,7 +270,7 @@ input{ font-family:inherit; color:inherit; }
         </div>
         <div class="col">
           <h2>Stasjoner og grupper</h2>
-          <div class="names-head"><span>Navn på stasjonen</span><span>Gruppa som starter her (trykk for å bytte)</span></div>
+          <div class="names-head"><span>Trykk på tallet for aktivitetsikon · navn</span><span>Gruppa som starter her</span></div>
           <div class="names" id="names"></div>
           <p class="privacy">🔒 Ingenting lagres på nett. Oppsettet huskes bare i denne nettleseren, og mikrofonen brukes kun til å måle hvor høy lyden er – ingenting tas opp.</p>
         </div>
@@ -331,15 +338,22 @@ var ICON_SETS = ['Dyr og fugler','Litt av hvert','Natur og friluftsliv'];
 var ICONS = [['Rev','🦊'],['Ugle','🦉'],['Ekorn','🐿️'],['Gaupe','🐱'],['Oter','🦦'],['Lundefugl','🐧'],['Hval','🐳'],['Bjørn','🐻'],['Pinnsvin','🦔'],['Ørn','🦅'],
   ['Rakett','🚀'],['Fyrtårn','🗼'],['Kaktus','🌵'],['Robot','🤖'],['Vaffel','🧇'],['Seilbåt','⛵'],['Paraply','☂️'],['Gitar','🎸'],['Luftballong','🎈'],['Sykkel','🚲'],
   ['Fjell','🏔️'],['Gran','🌲'],['Bål','🔥'],['Kano','🛶'],['Sopp','🍄'],['Blåbær','🫐'],['Nordlys','🌌'],['Telt','⛺'],['Snøfnugg','❄️'],['Regnbue','🌈']];
+/* Aktivitetsikoner til stasjonene: Myntlands fagikoner (mappa fagikoner/). Velger læreren et ikon uten å skrive navn, får stasjonen ikonets navn. */
+var ACTS = [['book','Lesing'],['arbeid','Skriving'],['math','Matte'],['digital','Digitalt'],['lek','Spill og lek'],['art','Tegning'],['music','Musikk'],['nature','Utforsking'],['engelsk','Engelsk'],
+  ['samfunn','Samarbeid'],['sosial','Samtale'],['gym','Bevegelse'],['krle','KRLE'],['mathelse','Mat og helse'],['svomming','Svømming'],['valgfag','Valgfritt'],['annet','Annet']];
+function actOf(i){ var k = cfg.stIcons[i]; if(!k) return -1; for(var a=0;a<ACTS.length;a++) if(ACTS[a][0]===k) return a; return -1; }
+function actImg(a, cls){ return '<img class="'+(cls||'')+'" src="fagikoner/ikon-'+ACTS[a][0]+'.webp" alt="" onerror="this.style.display=\'none\'">'; }
 function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)*50)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
 (function(){ var im = new Image(); im.onerror = function(){ document.getElementById('canvas').classList.add('no-sprite'); }; im.src = 'stasjoner-ikoner.webp'; })();
 var KEY = 'myntland-stasjoner-v1';
 var cfg = { stations:4, work:10, swap:2, rounds:4, roundsAuto:true, cleanup:3, sound:true, music:true, musicName:'', animals:true, sens:45,
-            stNames:[], icons:[0,10,20,1,11,21,2,12] };
+            stNames:[], stIcons:[], icons:[0,10,20,1,11,21,2,12] };
 try{ var saved = JSON.parse(localStorage.getItem(KEY)); if(saved && typeof saved==='object'){ for(var k in cfg){ if(saved[k]!==undefined) cfg[k]=saved[k]; } } }catch(e){}
 (function(){ var ok = Array.isArray(cfg.icons) && cfg.icons.length===8, seen={}; if(ok) cfg.icons.forEach(function(v){ if(!(v>=0 && v<ICONS.length) || seen[v]) ok=false; seen[v]=1; }); if(!ok) cfg.icons=[0,10,20,1,11,21,2,12]; })();
+if(!Array.isArray(cfg.stIcons)) cfg.stIcons = [];
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} }
-function stName(i){ return (cfg.stNames[i]||'').trim() || ('Stasjon '+(i+1)); }
+function stDefault(i){ var a = actOf(i); return a>=0 ? ACTS[a][1] : 'Stasjon '+(i+1); }
+function stName(i){ return (cfg.stNames[i]||'').trim() || stDefault(i); }
 function grName(i){ return ICONS[cfg.icons[i]][0]; }
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -389,13 +403,14 @@ function buildSteppers(){
 function buildNames(){
   var h='';
   for(var i=0;i<cfg.stations;i++){
-    h += '<div class="name-row"><span class="badge" style="background:var(--cream-2)">'+(i+1)+'</span>'+
-         '<input type="text" maxlength="22" data-st="'+i+'" placeholder="Stasjon '+(i+1)+'" value="'+esc(cfg.stNames[i]||'')+'" aria-label="Navn på stasjon '+(i+1)+'"></div>'+
+    h += '<div class="name-row"><button class="badge stpick" data-sti="'+i+'" aria-label="Velg aktivitetsikon for stasjon '+(i+1)+'" title="Velg aktivitetsikon">'+(actOf(i)>=0 ? actImg(actOf(i)) : (i+1))+'</button>'+
+         '<input type="text" maxlength="22" data-st="'+i+'" placeholder="'+esc(stDefault(i))+'" value="'+esc(cfg.stNames[i]||'')+'" aria-label="Navn på stasjon '+(i+1)+'"></div>'+
          '<div class="name-row"><button class="pick" data-gr="'+i+'" aria-label="Bytt ikon for gruppa som starter på stasjon '+(i+1)+'">'+icoHtml(cfg.icons[i])+esc(grName(i))+'</button></div>';
   }
   $('names').innerHTML = h;
   // to kolonner med par blir trangt ved mange stasjoner: bruk én bred rad per stasjon
   $('names').style.gridTemplateColumns = '1fr 300px';
+  $('names').querySelectorAll('.stpick').forEach(function(b){ b.onclick = function(){ openStPicker(+b.dataset.sti); }; });
   $('names').querySelectorAll('.pick').forEach(function(b){ b.onclick = function(){ openPicker(+b.dataset.gr); }; });
   $('names').querySelectorAll('input').forEach(function(inp){
     inp.oninput = function(){ cfg.stNames[+inp.dataset.st]=inp.value; save(); };
@@ -416,6 +431,17 @@ function openPicker(g){
   $('pickBody').innerHTML = h;
   $('pickBody').querySelectorAll('.pick-item').forEach(function(b){
     b.onclick = function(){ var i = +b.dataset.i, owner = cfg.icons.indexOf(i); if(owner>=0 && owner!==g) cfg.icons[owner] = cfg.icons[g]; cfg.icons[g] = i; save(); $('picker').hidden = true; buildNames(); };
+  });
+  $('picker').hidden = false;
+}
+function openStPicker(st){
+  $('pickTitle').textContent = 'Velg aktivitet for stasjon ' + (st+1);
+  var cur = actOf(st), h = '<h3>Velger du et ikon uten å skrive navn, får stasjonen navnet til ikonet.</h3><div class="pick-row" style="grid-template-columns:repeat(9,1fr)">';
+  for(var a=0;a<ACTS.length;a++) h += '<button class="pick-item'+(a===cur ? ' sel' : '')+'" data-a="'+a+'">'+actImg(a,'actimg')+ACTS[a][1]+'</button>';
+  h += '<button class="pick-item'+(cur<0 ? ' sel' : '')+'" data-a="-1"><span class="none">'+(st+1)+'</span>Bare tall</button></div>';
+  $('pickBody').innerHTML = h;
+  $('pickBody').querySelectorAll('.pick-item').forEach(function(b){
+    b.onclick = function(){ var a = +b.dataset.a; cfg.stIcons[st] = a>=0 ? ACTS[a][0] : ''; save(); $('picker').hidden = true; buildNames(); };
   });
   $('picker').hidden = false;
 }
@@ -685,7 +711,7 @@ function buildBoard(){
   for(var i=0;i<N;i++){
     var a = angleOf(i), x = geo.cx + geo.rx*Math.cos(a), y = geo.cy + geo.ry*Math.sin(a);
     html += '<div class="paper st" data-i="'+i+'" style="left:'+x.toFixed(0)+'px; top:'+y.toFixed(0)+'px; width:'+w+'px; height:'+h+'px">'+
-         '<div class="st-head"><span class="badge" style="background:var(--gold)">'+(i+1)+'</span><b>'+esc(stName(i))+'</b></div><div class="st-mid"></div></div>';
+         '<div class="st-head">'+(actOf(i)>=0 ? '<span class="st-ico">'+actImg(actOf(i))+'<i>'+(i+1)+'</i></span>' : '<span class="badge" style="background:var(--gold)">'+(i+1)+'</span>')+'<b>'+esc(stName(i))+'</b></div><div class="st-mid"></div></div>';
   }
   grid.innerHTML = html;
   var ring = '<ellipse cx="'+geo.cx+'" cy="'+geo.cy+'" rx="'+geo.rx+'" ry="'+geo.ry+'"/>';
