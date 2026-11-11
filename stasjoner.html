@@ -225,6 +225,31 @@ input{ font-family:inherit; color:inherit; }
 #done .paper{ padding:50px 90px; text-align:center; }
 #done h2{ font-size:110px; font-weight:700; }
 #done p{ font-size:42px; margin:10px 0 30px; color:var(--ink-soft); }
+#done .paper{ position:relative; max-width:1500px; }
+#done.has-report h2{ font-size:84px; }
+#done.has-report .paper{ padding:34px 60px 36px; }
+.report{ display:grid; grid-template-columns:1fr 560px; gap:36px; text-align:left; margin:14px 0 26px; align-items:start; }
+.rep-main{ background:var(--cream); border:var(--border); border-radius:22px; padding:20px 28px; }
+.rep-main .lead{ font-size:32px; font-weight:500; }
+.rep-main .big{ font-size:92px; font-weight:700; line-height:1; margin:4px 0; }
+.rep-main .big small{ display:block; font-size:38px; font-weight:600; color:var(--ink-soft); margin-top:6px; }
+.rep-main ul{ list-style:none; font-size:28px; margin-top:12px; color:var(--ink-soft); }
+.rep-main li{ margin:4px 0; }
+.rep-main li b{ color:var(--ink); }
+.rep-herd{ display:flex; align-items:flex-end; gap:14px; height:112px; margin-top:6px; }
+.rep-herd span{ display:block; width:var(--w); }
+.rep-herd svg{ display:block; width:100%; height:auto; overflow:visible; }
+.record .rep-herd span{ animation:jump .5s ease-in-out infinite alternate; animation-delay:var(--ad); }
+@keyframes jump{ to{ transform:translateY(-22px) rotate(4deg); } }
+.rep-top h3{ font-size:34px; font-weight:700; margin-bottom:8px; }
+.rep-top ol{ list-style:none; }
+.rep-top li{ display:grid; grid-template-columns:54px 1fr auto; align-items:center; gap:10px; font-size:28px; font-weight:500; padding:7px 14px; border:3px solid transparent; border-radius:16px; }
+.rep-top li i{ font-style:normal; width:46px; height:46px; border-radius:50%; border:3px solid var(--ink); background:var(--cream-2); display:grid; place-items:center; font-weight:700; }
+.rep-top li b{ font-size:32px; }
+.rep-top li.now{ background:#ffe9a3; border-color:var(--ink); }
+.rep-top li.now i{ background:var(--gold); }
+.rep-top .lnk{ margin:10px 0 0; }
+.rec-banner{ display:inline-block; background:var(--gold); border:var(--border); border-radius:60px; padding:6px 40px; font-size:52px; font-weight:700; box-shadow:0 8px 0 rgba(42,31,61,.2); animation:pulse 1s ease-in-out infinite; margin-bottom:6px; }
 .confetti{ position:absolute; top:-40px; width:18px; height:28px; border-radius:5px; animation:fall linear forwards; }
 @keyframes fall{ to{ transform:translateY(1200px) rotate(720deg); } }
 
@@ -345,7 +370,7 @@ input{ font-family:inherit; color:inherit; }
     <div id="cleanup" hidden></div>
     <div class="flash paper" id="flash"></div>
     <div id="done" hidden>
-      <div class="paper"><h2>Ferdig! 🌟</h2><p>Bra jobba, alle sammen.</p><button class="btn go" id="againBtn" style="font-size:40px">Tilbake til menyen</button></div>
+      <div class="paper"><div id="recBanner" class="rec-banner" hidden>🏆 Ny rekord!</div><h2>Ferdig! 🌟</h2><p id="doneTxt">Bra jobba, alle sammen.</p><div id="report" hidden></div><button class="btn go" id="againBtn" style="font-size:40px">Tilbake til menyen</button></div>
     </div>
   </section>
 
@@ -687,8 +712,14 @@ function drawMeters(){
   var thr = cfg.sens/100, loud = mic.level > thr;
   document.querySelectorAll('.meter i').forEach(function(i){ i.style.width = Math.round(mic.level*100)+'%'; i.classList.toggle('loud', loud); });
 }
+/* Statistikk til sluttrapporten: hvor lenge dyrene fikk beite i fred mens elevene jobbet. */
+var stats = { total:0, peace:0, streak:0, best:0, flees:0, maxHerd:0 };
+function resetStats(){ stats.total = stats.peace = stats.streak = stats.best = stats.flees = stats.maxHerd = 0; }
 function herdTick(dt){
   var thr = cfg.sens/100, lvl = mic.level;
+  stats.total += dt;
+  if(herd.list.length){ stats.peace += dt; stats.streak += dt; if(stats.streak > stats.best) stats.best = stats.streak; if(herd.list.length > stats.maxHerd) stats.maxHerd = herd.list.length; }
+  else stats.streak = 0;
   if(lvl > thr){
     herd.loud += dt; herd.calm = Math.max(0, herd.calm - dt*2);
     if(herd.loud > 1.2 && herd.list.length){ flee(); }
@@ -725,7 +756,7 @@ function addAnimal(){
   an.arrive = setTimeout(function(){ if(an.state==='walking') setAnimalState(an,'grazing'); }, secs*1000);
 }
 function flee(){
-  herd.fledAt = Date.now(); herd.calm = 0; herd.loud = 0; herd.nextAt = 10;
+  stats.flees++; herd.fledAt = Date.now(); herd.calm = 0; herd.loud = 0; herd.nextAt = 10;
   clearHerd(false);
 }
 function clearHerd(instant){
@@ -855,7 +886,7 @@ function tokenClass(cls){ $('tokens').className = 'tokens' + (cls ? ' '+cls : ''
 
 function start(){
   save(); audio(); musicStop();
-  run = { phases:buildPhases(), idx:-1, endAt:0, pausedLeft:null, stored:0 };
+  run = { phases:buildPhases(), idx:-1, endAt:0, pausedLeft:null, stored:0 }; resetStats();
   $('setup').hidden = true; $('board').hidden = false; $('done').hidden = true; $('cleanup').hidden = true;
   $('grid').hidden = false; $('tokens').hidden = false; $('ring').style.display=''; $('hub').classList.remove('at-top');
   buildBoard(); placeTokens(0, 0, 0); placeThreshold(); musicUi();
@@ -966,6 +997,41 @@ function finish(){
   var d = $('done'); d.querySelectorAll('.confetti').forEach(function(c){ c.remove(); });
   for(var i=0;i<60;i++){ var c=document.createElement('div'); c.className='confetti'; c.style.left=(Math.random()*1920)+'px'; c.style.background=COLORS[i%8]; c.style.animationDuration=(2.5+Math.random()*3)+'s'; c.style.animationDelay=(Math.random()*1.5)+'s'; d.appendChild(c); }
   herd.listening = false;
+  showReport();
+}
+/* ---------- sluttrapport og topp 5 (lagres bare i denne nettleseren) ---------- */
+var REC_KEY = 'myntland-stasjoner-rekorder-v1';
+function loadRecs(){ try{ var r = JSON.parse(localStorage.getItem(REC_KEY)); return Array.isArray(r) ? r : []; }catch(e){ return []; } }
+function fmtDur(sec){ sec = Math.round(sec); var m = Math.floor(sec/60), r = sec%60; return m ? (m+' min'+(r ? ' '+r+' s' : '')) : (r+' s'); }
+function fmtDate(iso){ var d = new Date(iso), mn = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des']; return isNaN(d) ? '' : d.getDate()+'. '+mn[d.getMonth()]; }
+function showReport(){
+  var box = $('report'), done = $('done'); $('recBanner').hidden = true; done.classList.remove('has-report','record');
+  if(stats.total < 20){ box.hidden = true; $('doneTxt').hidden = false; return; }          // dyrene var av, eller økta var for kort til å måle
+  var pct = Math.max(0, Math.min(100, Math.round(stats.peace/stats.total*100)));
+  var me = { d:new Date().toISOString(), pct:pct, sec:Math.round(stats.peace), tot:Math.round(stats.total), flees:stats.flees };
+  var old = loadRecs(), bestBefore = old.length ? old[0] : null;
+  var all = old.concat([me]).sort(function(a,b){ return (b.pct-a.pct) || (b.sec-a.sec); }).slice(0,5);
+  try{ localStorage.setItem(REC_KEY, JSON.stringify(all)); }catch(e){}
+  var isRecord = !!bestBefore && all[0]===me, isFirst = !bestBefore;
+  var herdHtml = ['hare','sheep','deer','elk'].map(function(k,i){ return '<span style="--w:'+[70,112,128,170][i]+'px; --ad:'+(-i*.13)+'s">'+ANIMALS[k]+'</span>'; }).join('');
+  var h = '<div class="report"><div class="rep-main"><div class="lead">Dyrene fikk spise i fred i</div>'+
+    '<div class="big">'+fmtDur(stats.peace)+'<small>'+pct+' % av arbeidstida</small></div>'+
+    '<ul><li>Lengste rolige strekk: <b>'+fmtDur(stats.best)+'</b></li>'+
+    '<li>'+(stats.flees===0 ? '<b>Dyrene ble ikke skremt en eneste gang!</b>' : 'Dyrene ble skremt <b>'+stats.flees+(stats.flees===1 ? ' gang' : ' ganger')+'</b>')+'</li>'+
+    '<li>Flest dyr på enga samtidig: <b>'+stats.maxHerd+'</b></li></ul><div class="rep-herd">'+herdHtml+'</div></div>'+
+    '<div class="rep-top"><h3>🏆 Topp 5</h3><ol>';
+  all.forEach(function(r,i){ h += '<li class="'+(r===me ? 'now' : '')+'"><i>'+(i+1)+'</i><span>'+(r===me ? 'I dag' : fmtDate(r.d))+' · '+fmtDur(r.sec)+'</span><b>'+r.pct+' %</b></li>'; });
+  h += '</ol>'+(all.indexOf(me)<0 ? '<p style="font-size:24px; margin:8px 0 0">Dagens økt kom ikke inn på lista denne gangen.</p>' : '')+'<button class="lnk" id="recReset">Nullstill lista</button></div></div>';
+  box.innerHTML = h; box.hidden = false; $('doneTxt').hidden = true; done.classList.add('has-report');
+  var rb = $('recReset'), armed = 0;
+  rb.onclick = function(){ if(Date.now()-armed < 3000){ try{ localStorage.removeItem(REC_KEY); }catch(e){} box.querySelector('.rep-top ol').innerHTML = ''; rb.hidden = true; return; } armed = Date.now(); rb.textContent = 'Trykk en gang til for å slette'; };
+  if(isRecord || isFirst){
+    $('recBanner').textContent = isRecord ? '🏆 Ny rekord!' : '🌟 Første på lista!'; $('recBanner').hidden = false;
+    if(isRecord){
+      done.classList.add('record'); setTimeout(function(){ chime([784,988,1175,1568,1175,1568], .16, 1.1); }, 1300);
+      for(var i=0;i<90;i++){ var c=document.createElement('div'); c.className='confetti'; c.style.left=(Math.random()*1920)+'px'; c.style.background=COLORS[i%8]; c.style.animationDuration=(2.5+Math.random()*3.5)+'s'; c.style.animationDelay=(1+Math.random()*3)+'s'; done.appendChild(c); }
+    }
+  }
 }
 function backToMenu(){
   clearInterval(tickTimer); run = null; stopMic(); herd.listening=false; musicStop(); $('bigPlay').hidden = true;
@@ -1007,7 +1073,7 @@ document.addEventListener('visibilitychange', function(){ if(run && !document.hi
 
 /* test-/forhåndsvisningskrok: stasjoner.html?demo gir korte tider (sekunder i stedet for minutter) */
 if(/[?&]demo/.test(location.search)){ window.__demo = true; var _bp = buildPhases; buildPhases = function(){ return _bp().map(function(p){ p.dur = p.dur/60*4; return p; }); }; }
-window.__st = { herd:herd, addAnimal:addAnimal, flee:flee, mic:mic, music:music };
+window.__st = { herd:herd, addAnimal:addAnimal, flee:flee, mic:mic, music:music, stats:stats };
 
 buildSteppers(); buildNames(); refreshSetup(); updateMicUi(); musicUi();
 })();
