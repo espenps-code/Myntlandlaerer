@@ -177,7 +177,10 @@ input{ font-family:inherit; color:inherit; }
 .st-head{ display:flex; align-items:center; gap:12px; padding:6px 14px; height:60px; border-bottom:var(--border); background:var(--cream-2); }
 .st-head .badge{ width:44px; height:44px; font-size:26px; }
 .st-head b{ font-size:32px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.st-mid{ flex:1; }
+.st-mid{ flex:1; display:flex; min-height:0; }
+.st-act{ width:50%; display:grid; place-items:center; padding:8px; border-right:3px dashed var(--cream-3); min-height:0; }
+.st-act img{ width:100%; height:100%; object-fit:contain; min-height:0; }
+.st-act .bignum{ font-size:calc(var(--ch) * .42); font-weight:700; line-height:1; color:var(--cream-3); -webkit-text-stroke:3px var(--ink-soft); }
 
 /* gruppene (brikker som ligger oppå kortene) */
 .tokens{ position:absolute; inset:0; pointer-events:none; z-index:12; }
@@ -499,7 +502,8 @@ var TRACKS = [
   { id:'cinematic-theme',     file:'cinematic-theme.mp3',     title:'Cinematic Theme', artist:'nastelbom' },
   { id:'inspiring-cinematic', file:'inspiring-cinematic.mp3', title:'Inspiring Cinematic Music', artist:'tunetank' }
 ];
-var music = { own:null, url:null, cur:null, kind:null, playing:false, timer:null, gain:null, step:0, nextT:0, noise:null, players:{} };
+var music = { own:null, url:null, cur:null, kind:null, playing:false, syn:null, noise:null, players:{} };
+var FADE_OUT = 4000;   /* musikken tones rolig ut de siste sekundene av byttet og ryddinga */
 var MEL = [72,0,76,0,79,0,76,0, 81,0,79,0,76,0,0,0, 77,0,81,0,79,0,76,0, 74,0,0,0,67,69,71,0,
            72,0,76,0,79,0,84,0, 83,0,81,0,79,0,0,0, 81,0,77,0,74,0,79,0, 72,0,0,0,0,0,0,0];
 var BASS = [48,55,48,55, 45,52,45,52, 41,48,41,48, 43,50,43,50, 48,55,48,55, 43,50,43,50, 41,48,43,50, 48,55,48,0];
@@ -508,38 +512,41 @@ function hz(m){ return 440*Math.pow(2,(m-69)/12); }
 function tone(f, t, dur, type, vol){
   var a = actx, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = f;
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t+.015); g.gain.exponentialRampToValueAtTime(.001, t+dur);
-  o.connect(g); g.connect(music.gain); o.start(t); o.stop(t+dur+.03);
+  o.connect(g); g.connect(synOut); o.start(t); o.stop(t+dur+.03);
 }
 function drum(t, kind){
-  var a = actx, g = a.createGain(); g.connect(music.gain);
+  var a = actx, g = a.createGain(); g.connect(synOut);
   if(kind==='kick'){ var o = a.createOscillator(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(45,t+.12); g.gain.setValueAtTime(.5,t); g.gain.exponentialRampToValueAtTime(.001,t+.16); o.connect(g); o.start(t); o.stop(t+.18); return; }
   if(!music.noise){ var b = a.createBuffer(1, a.sampleRate*.2, a.sampleRate), d = b.getChannelData(0); for(var i=0;i<d.length;i++) d[i] = Math.random()*2-1; music.noise = b; }
   var n = a.createBufferSource(), f = a.createBiquadFilter(); n.buffer = music.noise; f.type='highpass'; f.frequency.value = 1800;
   g.gain.setValueAtTime(.16,t); g.gain.exponentialRampToValueAtTime(.001,t+.1); n.connect(f); f.connect(g); n.start(t); n.stop(t+.12);
 }
-function sched(){
-  var a = actx; if(!a || !music.gain) return;
-  while(music.nextT < a.currentTime + .3){
-    var st = music.step, t = music.nextT;
+var synOut = null;
+function sched(syn){
+  var a = actx; if(!a) return; synOut = syn.gain;
+  while(syn.nextT < a.currentTime + .3){
+    var st = syn.step, t = syn.nextT;
     if(MEL[st]){ tone(hz(MEL[st]), t, STEP*1.7, 'triangle', .22); tone(hz(MEL[st]), t, STEP*1.2, 'square', .035); }
     if(st%2===0 && BASS[st/2]) tone(hz(BASS[st/2]), t, STEP*1.5, 'triangle', .26);
     if(st%4===0) drum(t,'kick'); if(st%4===2) drum(t,'snare');
-    music.step = (st+1) % MEL.length; music.nextT += STEP;
+    syn.step = (st+1) % MEL.length; syn.nextT += STEP;
   }
 }
 function synthStart(){
-  var a = audio(); if(!a) return;
-  music.gain = a.createGain(); music.gain.gain.setValueAtTime(0, a.currentTime); music.gain.gain.linearRampToValueAtTime(.55, a.currentTime+.5); music.gain.connect(a.destination);
-  music.step = 0; music.nextT = a.currentTime + .1; clearInterval(music.timer); music.timer = setInterval(sched, 60); sched();
+  var a = audio(); if(!a) return; synthStop(300);
+  var syn = { gain:a.createGain(), step:0, nextT:a.currentTime+.1, timer:null };
+  syn.gain.gain.setValueAtTime(0, a.currentTime); syn.gain.gain.linearRampToValueAtTime(.55, a.currentTime+.5); syn.gain.connect(a.destination);
+  syn.timer = setInterval(function(){ sched(syn); }, 60); sched(syn); music.syn = syn;
 }
-function synthStop(){
-  clearInterval(music.timer); music.timer = null; var g = music.gain; music.gain = null; if(!g || !actx) return;
-  try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value, actx.currentTime); g.gain.linearRampToValueAtTime(0, actx.currentTime+.7); }catch(e){}
-  setTimeout(function(){ try{ g.disconnect(); }catch(e){} }, 1200);
+/* marsjen spiller videre mens den tones ut over ms millisekunder */
+function synthStop(ms){
+  var syn = music.syn; music.syn = null; if(!syn || !actx) return; ms = ms || 800;
+  try{ var g = syn.gain.gain; g.cancelScheduledValues(actx.currentTime); g.setValueAtTime(g.value, actx.currentTime); g.linearRampToValueAtTime(0, actx.currentTime + ms/1000); }catch(e){}
+  setTimeout(function(){ clearInterval(syn.timer); try{ syn.gain.disconnect(); }catch(e){} }, ms + 150);
 }
-function fadeEl(el, to, done){
-  clearInterval(el._fade);
-  el._fade = setInterval(function(){ var v = el.volume + (to>el.volume ? .06 : -.06);
+function fadeEl(el, to, done, ms){
+  clearInterval(el._fade); var d = .9 / ((ms || 750) / 50);
+  el._fade = setInterval(function(){ var v = el.volume + (to>el.volume ? d : -d);
     if((to>0 && v>=to) || (to===0 && v<=0)){ el.volume = to; clearInterval(el._fade); if(done) done(); } else el.volume = Math.max(0, Math.min(1, v)); }, 50);
 }
 function playerFor(id){
@@ -559,10 +566,10 @@ function musicStart(sel, force){
   var pr = el.play(); fadeEl(el, .9);
   if(pr && pr.catch) pr.catch(function(){ if(music.playing && music.cur===el){ music.cur = null; synthStart(); } });
 }
-function musicStop(){
+function musicStop(ms){
   music.kind = null; $('trySwap').textContent = '▶'; $('tryClean').textContent = '▶';
-  if(!music.playing) return; music.playing = false; synthStop();
-  if(music.cur){ var el = music.cur; music.cur = null; fadeEl(el, 0, function(){ el.pause(); }); }
+  if(!music.playing) return; music.playing = false; synthStop(ms);
+  if(music.cur){ var el = music.cur; music.cur = null; fadeEl(el, 0, function(){ el.pause(); }, ms); }
 }
 function phaseMusic(){ if(!run || run.pausedLeft!==null) return null; var t = run.phases[run.idx].type; return (t==='lineup' || t==='walk') ? 'swap' : (t==='cleanup' ? 'clean' : null); }
 /* sørger for at riktig musikk spiller for fasen vi er i (bytte, rydding eller stille) */
@@ -770,12 +777,13 @@ var geo = null;
 function buildBoard(){
   var N = cfg.stations;
   var w = N<=4 ? 400 : (N<=6 ? 360 : 330), h = N<=4 ? 230 : (N<=6 ? 205 : 192);
-  geo = { N:N, cx:960, cy:432, rx:960-34-w/2, ry:432-16-h/2, start:(N===2 ? Math.PI : -Math.PI/2), dy:30 };
+  geo = { N:N, cx:960, cy:432, rx:960-34-w/2, ry:432-16-h/2, start:(N===2 ? Math.PI : -Math.PI/2), dy:30, dx:w/4 };   /* dx: gruppa står i høyre halvdel av kortet */
   var grid = $('grid'), html='';
   for(var i=0;i<N;i++){
     var a = angleOf(i), x = geo.cx + geo.rx*Math.cos(a), y = geo.cy + geo.ry*Math.sin(a);
-    html += '<div class="paper st" data-i="'+i+'" style="left:'+x.toFixed(0)+'px; top:'+y.toFixed(0)+'px; width:'+w+'px; height:'+h+'px">'+
-         '<div class="st-head">'+(actOf(i)>=0 ? '<span class="st-ico">'+actImg(actOf(i))+'<i>'+(i+1)+'</i></span>' : '<span class="badge" style="background:var(--gold)">'+(i+1)+'</span>')+'<b>'+esc(stName(i))+'</b></div><div class="st-mid"></div></div>';
+    html += '<div class="paper st" data-i="'+i+'" style="left:'+x.toFixed(0)+'px; top:'+y.toFixed(0)+'px; width:'+w+'px; height:'+h+'px; --ch:'+h+'px">'+
+         '<div class="st-head"><span class="badge" style="background:var(--gold)">'+(i+1)+'</span><b>'+esc(stName(i))+'</b></div>'+
+         '<div class="st-mid"><div class="st-act">'+(actOf(i)>=0 ? actImg(actOf(i)) : '<span class="bignum">'+(i+1)+'</span>')+'</div></div></div>';
   }
   grid.innerHTML = html;
   var ring = '<ellipse cx="'+geo.cx+'" cy="'+geo.cy+'" rx="'+geo.rx+'" ry="'+geo.ry+'"/>';
@@ -791,10 +799,10 @@ function buildBoard(){
     tk += '<div class="token" data-g="'+g+'" style="--ad:'+(-Math.random()*2).toFixed(2)+'s">'+icoHtml(cfg.icons[g])+'<div class="chip">'+esc(grName(g))+'</div></div>';
   }
   $('tokens').innerHTML = tk;
-  $('tokens').style.setProperty('--ts', N<=4 ? 1.2 : (N<=6 ? 1.05 : 0.95));
+  $('tokens').style.setProperty('--ts', N<=4 ? 1.2 : (N<=6 ? 1 : 0.88));
 }
 function angleOf(station){ return geo.start + station*2*Math.PI/geo.N; }
-function posAt(a){ return { x: geo.cx + geo.rx*Math.cos(a), y: geo.cy + geo.ry*Math.sin(a) + geo.dy }; }
+function posAt(a){ return { x: geo.cx + geo.rx*Math.cos(a) + geo.dx, y: geo.cy + geo.ry*Math.sin(a) + geo.dy }; }
 /* frac: 0 = på stasjonen for denne runden, 1 = framme ved neste.
    ext:  0 = gruppa står samlet, 1 = rekka er stilt opp bak lederikonet (bakover langs stien). */
 function placeTokens(round, frac, ext){
@@ -890,6 +898,12 @@ function tick(){
   var last = (ph.type==='work' || ph.type==='cleanup') && s<=10;
   $('clock').classList.toggle('last10', last);
   if(last && s<=3 && run.lastBeep!==s && run.pausedLeft===null){ run.lastBeep = s; chime([880], 0, .25); }
+  if(run.pausedLeft===null){
+    var nx = run.phases[run.idx+1], endsMusic = !nx || !((ph.type==='lineup' && nx.type==='walk'));     // bytte: musikken går videre fra rekke til gåing
+    var want = phaseMusic();
+    if(want && endsMusic && left <= FADE_OUT){ if(music.playing && music.kind===want) musicStop(FADE_OUT); }
+    else if(want && cfg.music && !(music.playing && music.kind===want)) ensureMusic(want);              // f.eks. etter +1 minutt
+  }
   if(ph.type==='cleanup' && run.pausedLeft===null) cleanupTick(ph.dur*1000 + (run.extra||0) - left);
 }
 
