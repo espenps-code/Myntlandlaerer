@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stasjonstavla – Myntland</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='114' fill='%231e0f52'/%3E%3Ctext x='256' y='360' font-family='Arial Black,sans-serif' font-size='320' font-weight='900' text-anchor='middle' fill='%23EF9F27'%3EM%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ MYNTLAND STASJONSTAVLA ============
+   Samme uttrykk som klasseportalen: kremfargede kort,
+   tykk mørk kant, Fredoka og landskap i bakgrunnen.
+   Alt ligger i denne ene fila (ingen ekstra .css/.js).
+   Ingen data sendes noe sted. Innstillingene huskes i
+   nettleseren (localStorage). Mikrofonlyden måles bare
+   lokalt – ingenting tas opp eller lagres.
+   ================================================ */
+:root{
+  --cream:#fbf2d6; --cream-2:#f6e8bf; --cream-3:#f1dda8;
+  --ink:#2a1f3d; --ink-soft:#4a3c63;
+  --gold:#e3a82a; --gold-deep:#c8901a;
+  --red:#e64b3b; --green:#7bb026; --green-deep:#5d9417;
+  --teal:#27b3c6; --paper:#fffaf0;
+  --shadow:0 10px 0 rgba(42,31,61,.18), 0 16px 30px rgba(42,31,61,.16);
+  --border:4px solid var(--ink);
+  --radius:26px;
+  --font:'Fredoka', system-ui, sans-serif;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+body{ font-family:var(--font); background:#0d0a16; color:var(--ink); overflow:hidden; -webkit-font-smoothing:antialiased; }
+button{ font-family:inherit; color:inherit; cursor:pointer; }
+input{ font-family:inherit; color:inherit; }
+[hidden]{ display:none !important; }
+
+.stage{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(120% 120% at 50% 0%, #1a1430, #0a0712); }
+.canvas{ position:relative; width:1920px; height:1080px; flex:none; transform-origin:center center; overflow:hidden;
+  background:linear-gradient(180deg,#bfeaf2 0%, #cdeede 42%, #dcefc7 70%, #e7f3bf 100%); }
+
+/* ---------- landskap ---------- */
+.scene{ position:absolute; inset:0; pointer-events:none; z-index:0; }
+.sun{ position:absolute; top:-90px; right:-90px; width:340px; height:340px; border-radius:50%;
+  background:radial-gradient(circle, #ffe9a3 0%, #ffd96b 38%, rgba(255,217,107,0) 70%); animation:sunpulse 7s ease-in-out infinite; }
+@keyframes sunpulse{ 50%{ transform:scale(1.08); opacity:.92; } }
+.cloud{ position:absolute; height:46px; background:rgba(255,255,255,.9); border-radius:100px; box-shadow:0 0 0 14px rgba(255,255,255,.45);
+  animation:drift linear infinite; }
+@keyframes drift{ from{ transform:translateX(-400px);} to{ transform:translateX(2300px);} }
+.mtn{ position:absolute; bottom:150px; width:0; height:0; border-style:solid; border-color:transparent; opacity:.5; }
+.mtn.m1{ left:1%;  border-width:0 320px 400px 320px; border-bottom-color:#a3c1d6; }
+.mtn.m2{ left:28%; border-width:0 440px 540px 440px; border-bottom-color:#93b6cf; }
+.mtn.m3{ left:60%; border-width:0 380px 460px 380px; border-bottom-color:#abc7da; }
+.hill{ position:absolute; left:-5%; right:-5%; bottom:0; height:250px; background:linear-gradient(180deg,#a5cc3c,#84ad1f);
+  border-top:4px solid #5d8410; border-radius:50% 50% 0 0 / 70px 70px 0 0; }
+.hill.front{ height:120px; background:linear-gradient(180deg,#8fbb1e,#76a017); border-radius:50% 50% 0 0 / 30px 30px 0 0; z-index:6; }
+.tuft{ position:absolute; bottom:96px; width:26px; height:20px; z-index:7;
+  background:
+    linear-gradient(100deg, transparent 44%, #5d8410 45% 55%, transparent 56%),
+    linear-gradient(80deg, transparent 44%, #5d8410 45% 55%, transparent 56%),
+    linear-gradient(90deg, transparent 44%, #5d8410 45% 55%, transparent 56%); }
+
+/* ---------- felles kort og knapper ---------- */
+.paper{ background:var(--paper); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+.btn{ border:var(--border); border-radius:20px; background:var(--cream); font-weight:600; font-size:30px; padding:14px 26px;
+  box-shadow:0 6px 0 rgba(42,31,61,.22); transition:transform .08s, box-shadow .08s; }
+.btn:active{ transform:translateY(4px); box-shadow:0 2px 0 rgba(42,31,61,.22); }
+.btn:focus-visible, input:focus-visible{ outline:5px solid var(--teal); outline-offset:3px; }
+.btn.go{ background:var(--green); color:#fff; text-shadow:0 2px 0 rgba(42,31,61,.35); }
+.btn.gold{ background:var(--gold); }
+.btn.round{ width:76px; height:76px; padding:0; border-radius:50%; font-size:34px; display:grid; place-items:center; }
+.btn.off{ background:#ddd6c4; opacity:.75; }
+
+/* ---------- LÆRERMENY ---------- */
+#setup{ position:absolute; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; padding:16px; }
+.setup-card{ width:1760px; max-height:1048px; padding:28px 44px 26px; display:flex; flex-direction:column; gap:18px; }
+.setup-head{ display:flex; align-items:center; justify-content:space-between; }
+.setup-head h1{ font-size:64px; font-weight:700; line-height:1; }
+.setup-head h1 small{ display:block; font-size:28px; font-weight:500; color:var(--ink-soft); margin-top:8px; }
+.total{ background:var(--cream-2); border:var(--border); border-radius:20px; padding:10px 24px; font-size:30px; font-weight:600; text-align:center; }
+.total b{ font-size:44px; display:block; line-height:1; }
+.setup-cols{ display:grid; grid-template-columns:780px 1fr; gap:36px; min-height:0; }
+.col h2{ font-size:32px; font-weight:600; margin-bottom:12px; }
+.row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:5px 0; border-bottom:3px dashed var(--cream-3); font-size:32px; font-weight:500; }
+.row:last-child{ border-bottom:0; }
+.lnk{ border:3px solid var(--ink); border-radius:30px; background:var(--cream); font-size:21px; font-weight:600; padding:1px 14px; margin-left:4px; }
+.lnk:active{ transform:translateY(2px); }
+.row .hint{ display:block; font-size:22px; color:var(--ink-soft); font-weight:400; }
+.stepper{ display:flex; align-items:center; gap:10px; flex:none; }
+.stepper button{ width:64px; height:64px; border-radius:50%; border:var(--border); background:var(--cream); font-size:40px; font-weight:700; line-height:1;
+  box-shadow:0 5px 0 rgba(42,31,61,.22); }
+.stepper button:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(42,31,61,.22); }
+.stepper output{ min-width:120px; text-align:center; font-size:44px; font-weight:700; }
+.switch{ position:relative; width:112px; height:60px; border-radius:60px; border:var(--border); background:#ddd6c4; flex:none; transition:background .2s; }
+.switch::after{ content:""; position:absolute; top:4px; left:4px; width:44px; height:44px; border-radius:50%; background:var(--paper); border:var(--border); transition:left .2s; }
+.switch[aria-checked="true"]{ background:var(--green); }
+.switch[aria-checked="true"]::after{ left:56px; }
+.mic-box{ background:var(--cream); border:var(--border); border-radius:20px; padding:12px 18px; font-size:24px; flex:1; max-width:1100px; }
+.col{ display:flex; flex-direction:column; min-height:0; }
+.privacy{ margin-top:auto; padding-top:8px; font-size:21px; color:var(--ink-soft); }
+.mic-box label{ display:flex; align-items:center; gap:14px; font-weight:500; }
+.mic-box input[type=range]{ flex:1; height:36px; accent-color:var(--green-deep); }
+.meter{ position:relative; height:26px; border:3px solid var(--ink); border-radius:20px; background:#fff; overflow:hidden; margin-top:10px; }
+.meter i{ position:absolute; left:0; top:0; bottom:0; width:0%; background:var(--green); transition:width .1s linear; }
+.meter i.loud{ background:var(--red); }
+.meter s{ position:absolute; top:-3px; bottom:-3px; width:5px; background:var(--ink); }
+.mic-note{ font-size:21px; color:var(--ink-soft); margin-top:8px; }
+.names{ display:grid; grid-template-columns:1fr 1fr; gap:7px 18px; }
+.name-row{ display:flex; align-items:center; gap:10px; }
+.badge{ width:56px; height:56px; border-radius:50%; border:var(--border); display:grid; place-items:center; font-weight:700; font-size:30px; flex:none; }
+.name-row input{ width:100%; min-width:0; font-size:28px; font-weight:500; padding:8px 14px; border:3px solid var(--ink); border-radius:14px; background:#fff; }
+.pick{ display:flex; align-items:center; gap:10px; width:100%; border:3px solid var(--ink); border-radius:40px; background:#fff; padding:3px 16px 3px 4px; font-size:28px; font-weight:500; --s:48px; }
+.pick::after{ content:"▾"; margin-left:auto; font-size:24px; }
+#picker{ position:absolute; inset:0; z-index:50; background:rgba(42,31,61,.5); display:flex; align-items:center; justify-content:center; }
+.picker-card{ width:1560px; padding:26px 40px 30px; position:relative; }
+.picker-card h2{ font-size:44px; font-weight:700; margin-bottom:6px; }
+.picker-card h3{ font-size:26px; font-weight:600; color:var(--ink-soft); margin:12px 0 4px; }
+.picker-card .close{ position:absolute; right:24px; top:20px; }
+.pick-row{ display:grid; grid-template-columns:repeat(10,1fr); gap:8px; }
+.pick-item{ display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:4px solid transparent; border-radius:22px; padding:8px 2px 6px; font-size:23px; font-weight:500; --s:104px; position:relative; }
+.pick-item:hover{ background:var(--cream); }
+.pick-item.sel{ border-color:var(--ink); background:var(--cream-2); }
+.pick-item.used .ico{ opacity:.4; }
+.pick-item.used::after{ content:attr(data-used); position:absolute; top:6px; right:10px; width:40px; height:40px; border-radius:50%; border:3px solid var(--ink); background:var(--gold); display:grid; place-items:center; font-weight:700; font-size:22px; }
+.tree{ position:absolute; transform-origin:bottom center; animation:sway 6s ease-in-out infinite alternate; animation-delay:var(--ad); filter:drop-shadow(0 6px 0 rgba(42,31,61,.12)); }
+.tree svg{ display:block; width:100%; height:auto; }
+@keyframes sway{ from{ transform:rotate(-1.2deg);} to{ transform:rotate(1.2deg);} }
+.names-head{ display:flex; justify-content:space-between; font-size:22px; color:var(--ink-soft); margin-bottom:6px; padding:0 4px; }
+.setup-foot{ display:flex; justify-content:space-between; align-items:center; gap:20px; }
+.setup-foot .btn.go{ font-size:44px; padding:18px 60px; margin-left:auto; flex:none; }
+.setup-foot p{ font-size:23px; color:var(--ink-soft); max-width:980px; }
+
+/* ---------- TAVLA ---------- */
+#board{ position:absolute; inset:0; z-index:10; }
+.hub{ position:absolute; left:960px; top:432px; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:14px; z-index:13; }
+.hub.at-top{ top:18px; transform:translateX(-50%); flex-direction:row; gap:26px; }
+.clock{ padding:8px 40px 18px; text-align:center; min-width:600px; transition:background .4s; position:relative; overflow:hidden; }
+.clock .phase{ font-size:34px; font-weight:600; line-height:1.1; }
+.clock .time{ font-size:112px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; letter-spacing:2px; }
+.clock .round{ font-size:26px; font-weight:500; color:var(--ink-soft); line-height:1.15; }
+.clock .round b{ color:var(--ink); font-weight:600; }
+.clock .bar{ position:absolute; left:0; bottom:0; height:12px; background:var(--ink); opacity:.28; width:0%; }
+.clock.p-lineup{ background:#ffd96b; }
+.clock.p-walk{ background:#bfe58a; }
+.clock.p-cleanup{ background:#a9e3ec; }
+.clock.last10 .time{ animation:pulse 1s ease-in-out infinite; color:#b3261a; }
+.clock.paused .time{ opacity:.45; }
+@keyframes pulse{ 50%{ transform:scale(1.06); } }
+.ctrls{ display:flex; gap:12px; align-items:center; }
+.mini-meter{ position:absolute; left:26px; top:20px; width:220px; padding:8px 16px 14px; border-radius:18px; z-index:13; }
+.mini-meter .meter{ height:20px; margin:0; }
+.mini-meter span{ display:block; font-size:19px; font-weight:500; text-align:center; margin-bottom:3px; }
+
+.ring{ position:absolute; inset:0; z-index:9; pointer-events:none; }
+.ring ellipse{ fill:none; stroke:var(--ink); stroke-opacity:.22; stroke-width:10; stroke-dasharray:4 30; stroke-linecap:round; }
+.ring polygon{ fill:var(--ink); opacity:.3; }
+.ring.switching ellipse{ stroke:var(--gold-deep); stroke-opacity:.9; stroke-width:14; }
+.ring.switching polygon{ fill:var(--gold-deep); opacity:1; }
+.ring.walking ellipse{ animation:march 1.2s linear infinite; }
+@keyframes march{ to{ stroke-dashoffset:-34; } }
+.grid{ position:absolute; inset:0; z-index:10; }
+.st{ position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; overflow:hidden; }
+.st-head{ display:flex; align-items:center; gap:12px; padding:6px 14px; height:60px; border-bottom:var(--border); background:var(--cream-2); }
+.st-head .badge{ width:44px; height:44px; font-size:26px; }
+.st-head b{ font-size:32px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.st-mid{ flex:1; }
+
+/* gruppene (brikker som ligger oppå kortene) */
+.tokens{ position:absolute; inset:0; pointer-events:none; z-index:12; }
+.ico{ width:var(--s,100px); height:var(--s,100px); border-radius:50%; flex:none; display:grid; place-items:center;
+  background-image:url('stasjoner-ikoner.webp'); background-size:1000% 300%; background-repeat:no-repeat; }
+.ico span{ display:none; font-size:calc(var(--s,100px) * .56); line-height:1; }
+.no-sprite .ico{ background:var(--cream-2); border:var(--border); }      /* reserve hvis bildefila mangler: emoji */
+.no-sprite .ico span{ display:block; }
+.token{ position:absolute; transform:translate(-50%,-50%) scale(var(--ts,1)); display:flex; flex-direction:column; align-items:center; z-index:2; }
+.token .ico{ filter:drop-shadow(0 6px 0 rgba(42,31,61,.2)); animation:idle 2.6s ease-in-out infinite; animation-delay:var(--ad); }
+.chip{ border:var(--border); border-radius:40px; padding:0 18px; margin-top:-12px; font-size:27px; font-weight:600; white-space:nowrap; background:var(--paper); box-shadow:0 4px 0 rgba(42,31,61,.2); position:relative; }
+.fol{ position:absolute; transform:translate(-50%,-50%) scale(var(--fs,0)); z-index:1; --s:62px; }
+.fol .ico{ filter:drop-shadow(0 4px 0 rgba(42,31,61,.2)); }
+@keyframes idle{ 50%{ transform:translateY(-5px); } }
+.tokens.lineup .token .ico{ animation:none; }
+.tokens.walk .ico{ animation:step .36s ease-in-out infinite alternate; animation-delay:var(--ad); }
+@keyframes step{ from{ transform:translateY(0) rotate(-6deg);} to{ transform:translateY(-8px) rotate(6deg);} }
+
+/* stor beskjed ved fasebytte */
+.flash{ position:absolute; left:50%; top:47%; z-index:30; transform:translate(-50%,-50%) scale(.6); opacity:0; pointer-events:none;
+  padding:30px 70px; text-align:center; font-size:92px; font-weight:700; line-height:1.1; white-space:nowrap; }
+.flash small{ display:block; font-size:44px; font-weight:500; color:var(--ink-soft); margin-top:8px; }
+.flash.show{ animation:flash 2.4s ease forwards; }
+@keyframes flash{ 0%{opacity:0; transform:translate(-50%,-50%) scale(.6);} 10%{opacity:1; transform:translate(-50%,-50%) scale(1.06);} 16%{transform:translate(-50%,-50%) scale(1);} 82%{opacity:1; transform:translate(-50%,-50%) scale(1);} 100%{opacity:0; transform:translate(-50%,-50%) scale(.9);} }
+
+/* ---------- RYDDING ---------- */
+#cleanup{ position:absolute; left:0; right:0; top:200px; bottom:0; z-index:11; }
+.shelf{ position:absolute; left:50%; top:104px; width:760px; height:490px; transform:translateX(-50%);
+  background:#b9783f; border:6px solid var(--ink); border-radius:22px; box-shadow:var(--shadow); padding:22px; display:grid; grid-template-rows:repeat(3,1fr); gap:20px; }
+.shelf::before{ content:"Hylla"; position:absolute; top:-58px; left:50%; transform:translateX(-50%); background:var(--paper); border:var(--border); border-radius:16px; padding:2px 26px; font-size:32px; font-weight:600; }
+.shelf-row{ background:#8d5527; border:4px solid var(--ink); border-radius:12px; box-shadow:inset 0 14px 0 rgba(42,31,61,.22); border-bottom-width:12px; border-bottom-color:#5e3716; }
+.item{ position:absolute; z-index:14; font-size:96px; line-height:1; width:110px; height:110px; display:grid; place-items:center;
+  transform:translate(-50%,-50%) rotate(var(--r)); transition:left 1.5s cubic-bezier(.5,-0.3,.4,1), top 1.5s cubic-bezier(.3,-0.6,.4,1), transform 1.5s ease, filter .3s;
+  filter:drop-shadow(0 8px 0 rgba(42,31,61,.18)); animation:wiggle 1.8s ease-in-out infinite; animation-delay:var(--ad); }
+@keyframes wiggle{ 50%{ margin-top:-10px; } }
+.item.stored{ transform:translate(-50%,-50%) rotate(0) scale(.78); animation:none; filter:none; }
+
+/* ---------- FERDIG ---------- */
+#done{ position:absolute; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; background:rgba(42,31,61,.35); }
+#done .paper{ padding:50px 90px; text-align:center; }
+#done h2{ font-size:110px; font-weight:700; }
+#done p{ font-size:42px; margin:10px 0 30px; color:var(--ink-soft); }
+.confetti{ position:absolute; top:-40px; width:18px; height:28px; border-radius:5px; animation:fall linear forwards; }
+@keyframes fall{ to{ transform:translateY(1200px) rotate(720deg); } }
+
+/* ---------- DYRENE ---------- */
+.meadow{ position:absolute; left:0; right:0; bottom:0; height:300px; z-index:5; pointer-events:none; }
+.animal{ position:absolute; bottom:var(--b); left:var(--x); width:var(--w); transform:translateX(-50%); transition:left var(--t,7s) linear; z-index:var(--z); }
+.animal .flip{ transform:scaleX(var(--dir,1)); }
+.animal svg{ display:block; width:100%; height:auto; overflow:visible; }
+.animal .head{ transform:rotate(0deg); transition:transform .5s ease; }
+.animal.grazing .head{ animation:nibble 1.5s ease-in-out infinite; animation-delay:var(--ad); }
+@keyframes nibble{ 0%,100%{ transform:rotate(var(--g)); } 50%{ transform:rotate(calc(var(--g) - 10deg)); } }
+.animal.walking .flip > svg{ animation:bob .4s ease-in-out infinite alternate; }
+.animal.running .flip > svg{ animation:bob .13s ease-in-out infinite alternate; }
+@keyframes bob{ from{ transform:translateY(0) rotate(-2deg);} to{ transform:translateY(-10px) rotate(2deg);} }
+.animal.alert::after{ content:"!"; position:absolute; left:50%; top:-46px; transform:translateX(-50%); background:#fff; border:3px solid var(--ink); border-radius:50%; width:40px; height:40px; display:grid; place-items:center; font-weight:700; font-size:28px; }
+.hush{ position:absolute; left:50%; bottom:128px; transform:translateX(-50%); z-index:8; padding:8px 28px; font-size:30px; font-weight:600; border-radius:40px; opacity:0; transition:opacity .5s; pointer-events:none; }
+.hush.show{ opacity:1; }
+</style>
+</head>
+<body>
+<div class="stage"><div class="canvas" id="canvas">
+
+  <!-- Landskap -->
+  <div class="scene" aria-hidden="true">
+    <div class="sun"></div>
+    <div class="cloud" style="top:70px; width:230px; animation-duration:95s; animation-delay:-20s"></div>
+    <div class="cloud" style="top:150px; width:160px; animation-duration:120s; animation-delay:-70s"></div>
+    <div class="cloud" style="top:40px; width:190px; animation-duration:140s; animation-delay:-110s"></div>
+    <div class="mtn m1"></div><div class="mtn m2"></div><div class="mtn m3"></div>
+    <div class="hill"></div>
+  </div>
+  <div class="meadow" id="meadow" aria-hidden="true"></div>
+  <div class="hill front" aria-hidden="true"></div>
+  <div class="hush paper" id="hush" aria-live="polite"></div>
+
+  <!-- ============ LÆRERMENY ============ -->
+  <section id="setup">
+    <div class="paper setup-card">
+      <div class="setup-head">
+        <h1>Stasjonstavla<small>Sett opp økta – tavla styrer tida, byttene og ryddinga.</small></h1>
+        <div class="total">Økta varer<b id="totalTime">–</b></div>
+      </div>
+      <div class="setup-cols">
+        <div class="col">
+          <h2>Tid</h2>
+          <div class="row"><span>Antall stasjoner</span><div class="stepper" data-key="stations" data-min="2" data-max="8" data-step="1"></div></div>
+          <div class="row"><span>Minutter per stasjon</span><div class="stepper" data-key="work" data-min="1" data-max="45" data-step="1"></div></div>
+          <div class="row"><span>Minutter på bytte<span class="hint">Første halvdel: still på rekke. Andre halvdel: gå.</span></span><div class="stepper" data-key="swap" data-min="0.5" data-max="5" data-step="0.5"></div></div>
+          <div class="row"><span>Antall runder<span class="hint">Like mange som stasjoner = alle innom alt.</span></span><div class="stepper" data-key="rounds" data-min="1" data-max="8" data-step="1"></div></div>
+          <div class="row"><span>Rydding til slutt<span class="hint">Minutter. 0 = ingen rydding.</span></span><div class="stepper" data-key="cleanup" data-min="0" data-max="10" data-step="1"></div></div>
+          <div class="row"><span>Lydsignal ved bytte</span><button class="switch" role="switch" data-toggle="sound" aria-label="Lydsignal ved bytte"></button></div>
+          <div class="row"><span>Musikk under bytte<span class="hint"><span id="musicName">Innebygd marsj</span> <button class="lnk" id="musicPick">Velg egen lydfil</button><button class="lnk" id="musicBuiltin" hidden>Bruk innebygd</button><button class="lnk" id="musicTry">▶ Prøv</button><input type="file" id="musicFile" accept="audio/*" hidden></span></span><button class="switch" role="switch" data-toggle="music" aria-label="Musikk under bytte"></button></div>
+          <div class="row"><span>Dyr som beiter når det er stille<span class="hint">Bruker mikrofonen til å måle lydnivået.</span></span><button class="switch" role="switch" data-toggle="animals" aria-label="Dyr som beiter når det er stille"></button></div>
+        </div>
+        <div class="col">
+          <h2>Stasjoner og grupper</h2>
+          <div class="names-head"><span>Navn på stasjonen</span><span>Gruppa som starter her (trykk for å bytte)</span></div>
+          <div class="names" id="names"></div>
+          <p class="privacy">🔒 Ingenting lagres på nett. Oppsettet huskes bare i denne nettleseren, og mikrofonen brukes kun til å måle hvor høy lyden er – ingenting tas opp.</p>
+        </div>
+      </div>
+      <div class="setup-foot">
+        <div class="mic-box" id="micBox">
+          <label>Dyrene tåler: lite lyd <input type="range" id="sens" min="15" max="85" step="1" aria-label="Hvor mye lyd dyrene tåler"> mye lyd</label>
+          <div class="meter" id="setupMeter"><i></i><s></s></div>
+          <div class="mic-note" id="micNote">Trykk «Test mikrofonen» og snakk med vanlig arbeidsstemme. Dra streken så den står litt til høyre for den grønne søyla. <button class="btn" id="micTest" style="font-size:22px; padding:6px 16px; margin-left:6px">🎤 Test mikrofonen</button></div>
+        </div>
+        <button class="btn go" id="startBtn">▶ Start økta</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="picker" hidden>
+    <div class="paper picker-card" role="dialog" aria-label="Velg ikon til gruppa">
+      <h2 id="pickTitle">Velg ikon</h2>
+      <button class="btn round close" id="pickClose" aria-label="Lukk">✕</button>
+      <div id="pickBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAVLA ============ -->
+  <section id="board" hidden>
+    <svg class="ring" id="ring" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+    <div class="paper mini-meter" id="miniMeter"><span>Lydnivå</span><div class="meter"><i></i><s></s></div></div>
+    <div class="hub" id="hub">
+      <div class="paper clock" id="clock">
+        <div class="phase" id="phaseTxt">Jobb på stasjonen</div>
+        <div class="time" id="timeTxt" role="timer">00:00</div>
+        <div class="round"><b id="roundTxt">Runde 1 av 4</b> · <span id="afterTxt"></span></div>
+        <div class="bar" id="bar"></div>
+      </div>
+      <div class="ctrls">
+        <button class="btn round" id="micBtn" title="Dyr og lydmåler av/på" aria-label="Dyr og lydmåler av/på">🎤</button>
+        <button class="btn round" id="sndBtn" title="Lydsignal av/på" aria-label="Lydsignal av/på">🔔</button>
+        <button class="btn round" id="musBtn" title="Byttemusikk av/på" aria-label="Byttemusikk av/på">🎵</button>
+        <button class="btn round" id="plusBtn" title="Ett minutt ekstra" aria-label="Ett minutt ekstra" style="font-size:26px">+1</button>
+        <button class="btn round" id="pauseBtn" title="Pause" aria-label="Pause">⏸</button>
+        <button class="btn round" id="skipBtn" title="Hopp til neste del" aria-label="Hopp til neste del">⏭</button>
+        <button class="btn round" id="fsBtn" title="Fullskjerm" aria-label="Fullskjerm">⛶</button>
+        <button class="btn round" id="quitBtn" title="Avslutt og gå til menyen" aria-label="Avslutt og gå til menyen">✕</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="tokens" id="tokens"></div>
+    <div id="cleanup" hidden></div>
+    <div class="flash paper" id="flash"></div>
+    <div id="done" hidden>
+      <div class="paper"><h2>Ferdig! 🌟</h2><p>Bra jobba, alle sammen.</p><button class="btn go" id="againBtn" style="font-size:40px">Tilbake til menyen</button></div>
+    </div>
+  </section>
+
+</div></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= Oppsett og lagring ================= */
+var COLORS = ['#f26d5b','#5aa9e6','#8cc63f','#f4c430','#b79cf0','#f39a3d','#f29ac0','#3cc4b8'];
+/* 30 gruppeikoner. Rekkefølgen følger bildefila stasjoner-ikoner.webp (10 per rad). */
+var ICON_SETS = ['Dyr og fugler','Litt av hvert','Natur og friluftsliv'];
+var ICONS = [['Rev','🦊'],['Ugle','🦉'],['Ekorn','🐿️'],['Gaupe','🐱'],['Oter','🦦'],['Lundefugl','🐧'],['Hval','🐳'],['Bjørn','🐻'],['Pinnsvin','🦔'],['Ørn','🦅'],
+  ['Rakett','🚀'],['Fyrtårn','🗼'],['Kaktus','🌵'],['Robot','🤖'],['Vaffel','🧇'],['Seilbåt','⛵'],['Paraply','☂️'],['Gitar','🎸'],['Luftballong','🎈'],['Sykkel','🚲'],
+  ['Fjell','🏔️'],['Gran','🌲'],['Bål','🔥'],['Kano','🛶'],['Sopp','🍄'],['Blåbær','🫐'],['Nordlys','🌌'],['Telt','⛺'],['Snøfnugg','❄️'],['Regnbue','🌈']];
+function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)*50)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
+(function(){ var im = new Image(); im.onerror = function(){ document.getElementById('canvas').classList.add('no-sprite'); }; im.src = 'stasjoner-ikoner.webp'; })();
+var KEY = 'myntland-stasjoner-v1';
+var cfg = { stations:4, work:10, swap:2, rounds:4, roundsAuto:true, cleanup:3, sound:true, music:true, musicName:'', animals:true, sens:45,
+            stNames:[], icons:[0,10,20,1,11,21,2,12] };
+try{ var saved = JSON.parse(localStorage.getItem(KEY)); if(saved && typeof saved==='object'){ for(var k in cfg){ if(saved[k]!==undefined) cfg[k]=saved[k]; } } }catch(e){}
+(function(){ var ok = Array.isArray(cfg.icons) && cfg.icons.length===8, seen={}; if(ok) cfg.icons.forEach(function(v){ if(!(v>=0 && v<ICONS.length) || seen[v]) ok=false; seen[v]=1; }); if(!ok) cfg.icons=[0,10,20,1,11,21,2,12]; })();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} }
+function stName(i){ return (cfg.stNames[i]||'').trim() || ('Stasjon '+(i+1)); }
+function grName(i){ return ICONS[cfg.icons[i]][0]; }
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fmtNum(n){ return String(n).replace('.',','); }
+
+/* ---------- skalering som i klasseportalen ---------- */
+var canvas = $('canvas');
+function fit(){ var s = Math.min(window.innerWidth/1920, window.innerHeight/1080); canvas.style.transform = 'scale('+s+')'; }
+window.addEventListener('resize', fit); fit();
+
+/* ---------- gresstuster ---------- */
+(function(){ var sc = document.querySelector('.scene'); for(var i=0;i<16;i++){ var t=document.createElement('div'); t.className='tuft'; t.style.left=(40+i*122+Math.random()*50)+'px'; t.style.bottom=(100+Math.random()*90)+'px'; sc.appendChild(t);} })();
+
+/* ---------- trær (gran og bjørk) på bakken bak enga ---------- */
+(function(){
+  var O = 'stroke="#2a1f3d" stroke-width="4" stroke-linejoin="round"';
+  var gran = '<svg viewBox="0 0 120 200"><g '+O+'><rect x="52" y="160" width="16" height="36" rx="4" fill="#8a5a2b"/><path d="M60 6 L92 70 H76 L104 120 H84 L114 168 H6 L36 120 H16 L44 70 H28 Z" fill="#3f8f4e"/></g><path d="M60 22 L74 52 H46 Z M50 84 H70 M40 132 H80" stroke="#5aa862" stroke-width="5" fill="#5aa862" stroke-linecap="round"/></svg>';
+  var bjork = '<svg viewBox="0 0 140 200"><g '+O+'><rect x="62" y="96" width="16" height="100" rx="5" fill="#fffaf0"/><path d="M70 6 C104 4 132 30 126 62 C140 84 118 118 88 112 C76 124 52 122 46 108 C16 112 2 82 16 60 C8 28 38 6 70 6 Z" fill="#8cc63f"/></g><path d="M62 130 h8 M70 152 h8 M62 172 h7" stroke="#2a1f3d" stroke-width="4" stroke-linecap="round"/><path d="M40 44 q14 -16 32 -12 M84 70 q16 4 26 -10" stroke="#a9db5c" stroke-width="6" fill="none" stroke-linecap="round"/></svg>';
+  var spots = [[60,'g',230],[150,'b',190],[235,'g',170],[330,'g',140],[470,'b',120],[610,'g',150],[790,'g',115],[1010,'b',125],[1180,'g',145],[1330,'g',120],[1470,'b',150],[1590,'g',180],[1690,'g',215],[1790,'b',200],[1870,'g',240]];
+  var sc = document.querySelector('.scene');
+  spots.forEach(function(sp,i){
+    var t = document.createElement('div'); t.className = 'tree'; var edge = Math.abs(sp[0]-960)/960;
+    var w = Math.round(sp[2]*0.82); t.style.width = w+'px'; t.style.left = (sp[0]-w/2)+'px'; t.style.bottom = (228 - edge*edge*52 - (i%3)*12)+'px';
+    t.style.setProperty('--ad', (-i*0.7)+'s'); t.innerHTML = sp[1]==='g' ? gran : bjork; sc.appendChild(t);
+  });
+})();
+
+/* ================= Lærermenyen ================= */
+function buildSteppers(){
+  document.querySelectorAll('.stepper').forEach(function(el){
+    var key = el.dataset.key, min=+el.dataset.min, max=+el.dataset.max, step=+el.dataset.step;
+    el.innerHTML = '<button aria-label="Mindre">−</button><output></output><button aria-label="Mer">+</button>';
+    var out = el.querySelector('output');
+    function show(){ out.textContent = (key==='cleanup' && cfg[key]===0) ? 'Av' : fmtNum(cfg[key]); }
+    el._show = show;
+    var btns = el.querySelectorAll('button');
+    function change(d){
+      var v = Math.round((cfg[key]+d*step)*10)/10; v = Math.max(min, Math.min(max, v)); cfg[key]=v;
+      if(key==='rounds') cfg.roundsAuto = (cfg.rounds===cfg.stations);
+      if(key==='stations'){ if(cfg.roundsAuto) cfg.rounds = cfg.stations; buildNames(); }
+      refreshSetup();
+    }
+    btns[0].onclick=function(){ change(-1); }; btns[1].onclick=function(){ change(1); };
+    show();
+  });
+}
+function buildNames(){
+  var h='';
+  for(var i=0;i<cfg.stations;i++){
+    h += '<div class="name-row"><span class="badge" style="background:var(--cream-2)">'+(i+1)+'</span>'+
+         '<input type="text" maxlength="22" data-st="'+i+'" placeholder="Stasjon '+(i+1)+'" value="'+esc(cfg.stNames[i]||'')+'" aria-label="Navn på stasjon '+(i+1)+'"></div>'+
+         '<div class="name-row"><button class="pick" data-gr="'+i+'" aria-label="Bytt ikon for gruppa som starter på stasjon '+(i+1)+'">'+icoHtml(cfg.icons[i])+esc(grName(i))+'</button></div>';
+  }
+  $('names').innerHTML = h;
+  // to kolonner med par blir trangt ved mange stasjoner: bruk én bred rad per stasjon
+  $('names').style.gridTemplateColumns = '1fr 300px';
+  $('names').querySelectorAll('.pick').forEach(function(b){ b.onclick = function(){ openPicker(+b.dataset.gr); }; });
+  $('names').querySelectorAll('input').forEach(function(inp){
+    inp.oninput = function(){ cfg.stNames[+inp.dataset.st]=inp.value; save(); };
+  });
+}
+/* ---------- ikonvelger ---------- */
+function openPicker(g){
+  $('pickTitle').textContent = 'Velg ikon til gruppa som starter på ' + stName(g);
+  var h='';
+  for(var set=0; set<3; set++){
+    h += '<h3>'+ICON_SETS[set]+'</h3><div class="pick-row">';
+    for(var k=0;k<10;k++){
+      var i = set*10+k, owner = cfg.icons.indexOf(i), cls = 'pick-item' + (owner===g ? ' sel' : (owner>=0 && owner<cfg.stations ? ' used' : ''));
+      h += '<button class="'+cls+'" data-i="'+i+'"'+(cls.indexOf('used')>0 ? ' data-used="'+(owner+1)+'" title="Brukes av gruppa på stasjon '+(owner+1)+' – velger du den, bytter de to gruppene ikon"' : '')+'>'+icoHtml(i)+ICONS[i][0]+'</button>';
+    }
+    h += '</div>';
+  }
+  $('pickBody').innerHTML = h;
+  $('pickBody').querySelectorAll('.pick-item').forEach(function(b){
+    b.onclick = function(){ var i = +b.dataset.i, owner = cfg.icons.indexOf(i); if(owner>=0 && owner!==g) cfg.icons[owner] = cfg.icons[g]; cfg.icons[g] = i; save(); $('picker').hidden = true; buildNames(); };
+  });
+  $('picker').hidden = false;
+}
+$('pickClose').onclick = function(){ $('picker').hidden = true; };
+$('picker').onclick = function(e){ if(e.target===this) this.hidden = true; };
+
+function totalMinutes(){ return cfg.rounds*cfg.work + (cfg.rounds-1)*cfg.swap + cfg.cleanup; }
+function refreshSetup(){
+  document.querySelectorAll('.stepper').forEach(function(el){ el._show(); });
+  document.querySelectorAll('[data-toggle]').forEach(function(b){ b.setAttribute('aria-checked', cfg[b.dataset.toggle] ? 'true':'false'); });
+  $('totalTime').textContent = fmtNum(totalMinutes())+' min';
+  $('micBox').hidden = !cfg.animals;
+  $('sens').value = cfg.sens;
+  placeThreshold();
+  save();
+}
+document.querySelectorAll('[data-toggle]').forEach(function(b){
+  b.onclick = function(){ cfg[b.dataset.toggle] = !cfg[b.dataset.toggle]; if(b.dataset.toggle==='animals' && !cfg.animals) stopMic(); refreshSetup(); };
+});
+$('sens').oninput = function(){ cfg.sens = +this.value; placeThreshold(); save(); };
+function placeThreshold(){ document.querySelectorAll('.meter s').forEach(function(s){ s.style.left = 'calc('+cfg.sens+'% - 2px)'; }); }
+$('micTest').onclick = function(){ startMic(); };
+
+/* ================= Lydsignaler ================= */
+var actx = null;
+function audio(){ if(!actx){ var AC = window.AudioContext||window.webkitAudioContext; if(AC) actx = new AC(); } if(actx && actx.state==='suspended') actx.resume(); return actx; }
+function chime(freqs, gap, len){
+  if(!cfg.sound) return; var a = audio(); if(!a) return;
+  freqs.forEach(function(f,i){
+    var o=a.createOscillator(), g=a.createGain(), t=a.currentTime+i*(gap||.18);
+    o.type='sine'; o.frequency.value=f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.35,t+.02); g.gain.exponentialRampToValueAtTime(.001,t+(len||.9));
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+(len||.9)+.05);
+  });
+}
+
+/* ================= Byttemusikk =================
+   To kilder: en innebygd marsj som lages her i koden (ingen fil), eller lærerens egen lydfil.
+   Egen fil blir liggende i denne nettleseren (IndexedDB) – den lastes ikke opp noe sted. */
+var music = { el:null, url:null, playing:false, timer:null, gain:null, step:0, nextT:0, fade:null, noise:null };
+var MEL = [72,0,76,0,79,0,76,0, 81,0,79,0,76,0,0,0, 77,0,81,0,79,0,76,0, 74,0,0,0,67,69,71,0,
+           72,0,76,0,79,0,84,0, 83,0,81,0,79,0,0,0, 81,0,77,0,74,0,79,0, 72,0,0,0,0,0,0,0];
+var BASS = [48,55,48,55, 45,52,45,52, 41,48,41,48, 43,50,43,50, 48,55,48,55, 43,50,43,50, 41,48,43,50, 48,55,48,0];
+var STEP = 60/112/2;
+function hz(m){ return 440*Math.pow(2,(m-69)/12); }
+function tone(f, t, dur, type, vol){
+  var a = actx, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t+.015); g.gain.exponentialRampToValueAtTime(.001, t+dur);
+  o.connect(g); g.connect(music.gain); o.start(t); o.stop(t+dur+.03);
+}
+function drum(t, kind){
+  var a = actx, g = a.createGain(); g.connect(music.gain);
+  if(kind==='kick'){ var o = a.createOscillator(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(45,t+.12); g.gain.setValueAtTime(.5,t); g.gain.exponentialRampToValueAtTime(.001,t+.16); o.connect(g); o.start(t); o.stop(t+.18); return; }
+  if(!music.noise){ var b = a.createBuffer(1, a.sampleRate*.2, a.sampleRate), d = b.getChannelData(0); for(var i=0;i<d.length;i++) d[i] = Math.random()*2-1; music.noise = b; }
+  var n = a.createBufferSource(), f = a.createBiquadFilter(); n.buffer = music.noise; f.type='highpass'; f.frequency.value = 1800;
+  g.gain.setValueAtTime(.16,t); g.gain.exponentialRampToValueAtTime(.001,t+.1); n.connect(f); f.connect(g); n.start(t); n.stop(t+.12);
+}
+function sched(){
+  var a = actx; if(!a || !music.gain) return;
+  while(music.nextT < a.currentTime + .3){
+    var st = music.step, t = music.nextT;
+    if(MEL[st]){ tone(hz(MEL[st]), t, STEP*1.7, 'triangle', .22); tone(hz(MEL[st]), t, STEP*1.2, 'square', .035); }
+    if(st%2===0 && BASS[st/2]) tone(hz(BASS[st/2]), t, STEP*1.5, 'triangle', .26);
+    if(st%4===0) drum(t,'kick'); if(st%4===2) drum(t,'snare');
+    music.step = (st+1) % MEL.length; music.nextT += STEP;
+  }
+}
+function synthStart(){
+  var a = audio(); if(!a) return;
+  music.gain = a.createGain(); music.gain.gain.setValueAtTime(0, a.currentTime); music.gain.gain.linearRampToValueAtTime(.55, a.currentTime+.5); music.gain.connect(a.destination);
+  music.step = 0; music.nextT = a.currentTime + .1; clearInterval(music.timer); music.timer = setInterval(sched, 60); sched();
+}
+function synthStop(){
+  clearInterval(music.timer); music.timer = null; var g = music.gain; music.gain = null; if(!g || !actx) return;
+  try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value, actx.currentTime); g.gain.linearRampToValueAtTime(0, actx.currentTime+.7); }catch(e){}
+  setTimeout(function(){ try{ g.disconnect(); }catch(e){} }, 1200);
+}
+function fadeEl(to, done){
+  clearInterval(music.fade); var el = music.el; if(!el) return;
+  music.fade = setInterval(function(){ var v = el.volume + (to>el.volume ? .06 : -.06);
+    if((to>0 && v>=to) || (to===0 && v<=0)){ el.volume = to; clearInterval(music.fade); if(done) done(); } else el.volume = Math.max(0, Math.min(1, v)); }, 50);
+}
+function musicStart(force){
+  if(music.playing || (!cfg.music && !force)) return; music.playing = true;
+  if(music.el){ music.el.volume = 0; var pr = music.el.play(); fadeEl(.9); if(pr && pr.catch) pr.catch(function(){ if(music.playing) synthStart(); }); }
+  else synthStart();
+}
+function musicStop(){
+  if(!music.playing) return; music.playing = false; synthStop();
+  if(music.el && !music.el.paused){ var el = music.el; fadeEl(0, function(){ el.pause(); }); }
+  var tb = document.getElementById('musicTry'); if(tb) tb.textContent = '▶ Prøv';
+}
+function idb(cb){ try{ var r = indexedDB.open('myntland-stasjoner', 1); r.onupgradeneeded = function(){ r.result.createObjectStore('files'); }; r.onsuccess = function(){ cb(r.result); }; r.onerror = function(){ cb(null); }; }catch(e){ cb(null); } }
+function setMusicFile(blob, name){
+  musicStop(); if(music.url){ try{ URL.revokeObjectURL(music.url); }catch(e){} } music.url = null; music.el = null;
+  if(blob){ music.url = URL.createObjectURL(blob); music.el = new Audio(music.url); music.el.loop = true; cfg.musicName = name || 'Egen lydfil'; } else cfg.musicName = '';
+  save(); musicUi();
+}
+function musicUi(){
+  var nm = cfg.musicName && music.el ? cfg.musicName : 'Innebygd marsj';
+  $('musicName').textContent = '♪ ' + (nm.length>26 ? nm.slice(0,24)+'…' : nm);
+  $('musicBuiltin').hidden = !music.el; $('musBtn').classList.toggle('off', !cfg.music);
+}
+$('musicPick').onclick = function(){ $('musicFile').click(); };
+$('musicFile').onchange = function(){
+  var f = this.files && this.files[0]; this.value = ''; if(!f) return;
+  setMusicFile(f, f.name.replace(/\.[^.]+$/, ''));
+  if(f.size < 40*1024*1024) idb(function(db){ if(!db) return; try{ db.transaction('files','readwrite').objectStore('files').put(f, 'music'); }catch(e){} });
+};
+$('musicBuiltin').onclick = function(){ setMusicFile(null); idb(function(db){ if(!db) return; try{ db.transaction('files','readwrite').objectStore('files').delete('music'); }catch(e){} }); };
+$('musicTry').onclick = function(){ if(music.playing){ musicStop(); } else { audio(); musicStart(true); this.textContent = '⏹ Stopp'; } };
+idb(function(db){ if(!db) return; try{ var q = db.transaction('files').objectStore('files').get('music'); q.onsuccess = function(){ if(q.result){ var keep = cfg.musicName; setMusicFile(q.result, keep); } }; }catch(e){} });
+
+/* ================= Mikrofon og dyr ================= */
+var mic = { on:false, stream:null, analyser:null, buf:null, level:0, timer:null };
+var herd = { list:[], calm:0, loud:0, nextAt:6, listening:false, fledAt:0 };
+var SPOTS = [170, 420, 660, 900, 1130, 1370, 1600, 1790];
+var ORDER = ['hare','sheep','deer','sheep','hare','deer','sheep','elk'];
+
+function startMic(){
+  if(mic.on || !cfg.animals) return Promise.resolve();
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ micFail('Denne nettleseren gir ikke tilgang til mikrofon.'); return Promise.resolve(); }
+  return navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false } }).then(function(stream){
+    var a = audio(); if(!a){ micFail('Fikk ikke startet lydmåleren.'); return; }
+    mic.stream = stream; mic.analyser = a.createAnalyser(); mic.analyser.fftSize = 1024;
+    a.createMediaStreamSource(stream).connect(mic.analyser);   // kobles IKKE til høyttaler – bare måling
+    mic.buf = new Float32Array(mic.analyser.fftSize); mic.on = true; mic.level = 0;
+    mic.timer = setInterval(sample, 100);
+    $('micNote').firstChild.textContent = 'Mikrofonen er på. Snakk med vanlig arbeidsstemme og dra streken så den står litt til høyre for den grønne søyla. ';
+    updateMicUi();
+  }).catch(function(){ micFail('Fikk ikke tilgang til mikrofonen. Sjekk at nettleseren har lov til å bruke den.'); });
+}
+function micFail(msg){ $('micNote').firstChild.textContent = '⚠️ '+msg+' '; updateMicUi(); }
+function stopMic(){
+  if(mic.timer) clearInterval(mic.timer); mic.timer=null;
+  if(mic.stream) mic.stream.getTracks().forEach(function(t){ t.stop(); });
+  mic.stream=null; mic.analyser=null; mic.on=false; mic.level=0; drawMeters(); clearHerd(true); updateMicUi();
+}
+function updateMicUi(){
+  $('micBtn').classList.toggle('off', !mic.on);
+  $('miniMeter').style.visibility = mic.on ? 'visible' : 'hidden';
+}
+function sample(){
+  if(!mic.analyser) return;
+  mic.analyser.getFloatTimeDomainData(mic.buf);
+  var sum=0; for(var i=0;i<mic.buf.length;i++) sum += mic.buf[i]*mic.buf[i];
+  var rms = Math.sqrt(sum/mic.buf.length), db = 20*Math.log10(rms||1e-7);
+  var lvl = Math.max(0, Math.min(1, (db+62)/50));         // ca. −62 dB = 0, −12 dB = 1
+  mic.level = mic.level*0.75 + lvl*0.25;
+  drawMeters();
+  if(herd.listening) herdTick(0.1);
+}
+function drawMeters(){
+  var thr = cfg.sens/100, loud = mic.level > thr;
+  document.querySelectorAll('.meter i').forEach(function(i){ i.style.width = Math.round(mic.level*100)+'%'; i.classList.toggle('loud', loud); });
+}
+function herdTick(dt){
+  var thr = cfg.sens/100, lvl = mic.level;
+  if(lvl > thr){
+    herd.loud += dt; herd.calm = Math.max(0, herd.calm - dt*2);
+    if(herd.loud > 1.2 && herd.list.length){ flee(); }
+  } else {
+    herd.loud = Math.max(0, herd.loud - dt*2); herd.calm += dt;
+    if(herd.calm >= herd.nextAt && herd.list.length < ORDER.length){ addAnimal(); herd.calm = 0; herd.nextAt = 14; }
+  }
+  var nervous = lvl > thr*0.82;
+  herd.list.forEach(function(an){ if(an.state==='grazing' || an.state==='alert'){ setAnimalState(an, nervous ? 'alert' : 'grazing'); } });
+  var hush = $('hush');
+  if(Date.now() - herd.fledAt < 6000){ hush.textContent = '🤫 Dyrene ble skremt. De kommer tilbake når det blir rolig.'; hush.classList.add('show'); }
+  else hush.classList.remove('show');
+}
+function setAnimalState(an, st){ if(an.state===st) return; an.state = st; an.el.classList.remove('grazing','alert','walking','running'); an.el.classList.add(st); }
+function addAnimal(){
+  var used = herd.list.map(function(a){ return a.spot; });
+  var free = SPOTS.map(function(_,i){ return i; }).filter(function(i){ return used.indexOf(i)<0; });
+  if(!free.length) return;
+  var spot = free[Math.floor(Math.random()*free.length)], kind = ORDER[herd.list.length % ORDER.length];
+  var fromLeft = SPOTS[spot] < 960 ? true : false; if(Math.random()<.25) fromLeft = !fromLeft;
+  var el = document.createElement('div'); el.className = 'animal walking';
+  var depth = Math.random();                                // 0 = bak, 1 = foran
+  var W = { hare:96, sheep:170, deer:200, elk:280 }[kind] * (0.85 + depth*0.3);
+  el.style.setProperty('--w', W+'px'); el.style.setProperty('--b', (150 - depth*70)+'px'); el.style.setProperty('--z', String(Math.round(depth*4)+1));
+  el.style.setProperty('--dir', fromLeft ? '1' : '-1'); el.style.setProperty('--ad', (-Math.random()*1.5)+'s');
+  el.style.setProperty('--t', '0s'); el.style.setProperty('--x', (fromLeft ? -200 : 2120)+'px');
+  el.innerHTML = '<div class="flip">'+ANIMALS[kind]+'</div>';
+  $('meadow').appendChild(el);
+  var an = { el:el, spot:spot, state:'walking', kind:kind };
+  herd.list.push(an);
+  void el.offsetWidth;
+  var dist = Math.abs(SPOTS[spot] - (fromLeft ? -200 : 2120)), secs = Math.max(4, dist/130);
+  el.style.setProperty('--t', secs+'s'); el.style.setProperty('--x', SPOTS[spot]+'px');
+  an.arrive = setTimeout(function(){ if(an.state==='walking') setAnimalState(an,'grazing'); }, secs*1000);
+}
+function flee(){
+  herd.fledAt = Date.now(); herd.calm = 0; herd.loud = 0; herd.nextAt = 10;
+  clearHerd(false);
+}
+function clearHerd(instant){
+  herd.list.forEach(function(an){
+    clearTimeout(an.arrive);
+    if(instant){ an.el.remove(); return; }
+    var cur = an.el.getBoundingClientRect(), cv = canvas.getBoundingClientRect();
+    var x = (cur.left + cur.width/2 - cv.left) / (cv.width/1920);
+    var toLeft = x < 960;
+    an.el.style.setProperty('--t','0s'); an.el.style.setProperty('--x', x+'px'); void an.el.offsetWidth;
+    an.el.style.setProperty('--dir', toLeft ? '-1':'1');
+    setAnimalState(an,'running');
+    an.el.style.setProperty('--t','1.1s'); an.el.style.setProperty('--x', (toLeft ? -300 : 2220)+'px');
+    setTimeout(function(){ an.el.remove(); }, 1300);
+  });
+  herd.list = [];
+  if(instant){ herd.calm=0; herd.loud=0; herd.nextAt=6; $('hush').classList.remove('show'); }
+}
+
+/* Dyrene er tegnet i kode (SVG). «head»-gruppa vippes ned når dyret beiter. */
+var S = 'stroke="#2a1f3d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"';
+var ANIMALS = {
+  sheep:'<svg viewBox="0 0 150 112"><g '+S+'>'+
+    '<rect x="40" y="70" width="9" height="34" rx="4" fill="#2a1f3d"/><rect x="56" y="72" width="9" height="34" rx="4" fill="#2a1f3d"/><rect x="84" y="72" width="9" height="34" rx="4" fill="#2a1f3d"/><rect x="98" y="70" width="9" height="34" rx="4" fill="#2a1f3d"/>'+
+    '<g fill="#fffaf0"><circle cx="38" cy="52" r="18"/><circle cx="54" cy="36" r="18"/><circle cx="76" cy="31" r="19"/><circle cx="97" cy="39" r="18"/><circle cx="106" cy="57" r="17"/><circle cx="91" cy="71" r="17"/><circle cx="68" cy="75" r="18"/><circle cx="46" cy="69" r="17"/></g>'+
+    '<ellipse cx="72" cy="54" rx="40" ry="25" fill="#fffaf0" stroke="none"/>'+
+    '<g class="head" style="transform-origin:106px 50px; --g:62deg"><ellipse cx="108" cy="36" rx="9" ry="5" fill="#4a3c63" transform="rotate(-25 108 36)"/><ellipse cx="123" cy="46" rx="14" ry="17" fill="#4a3c63"/><circle cx="116" cy="31" r="9" fill="#fffaf0"/><circle cx="127" cy="42" r="3.2" fill="#fff" stroke="none"/></g>'+
+    '</g></svg>',
+  deer:'<svg viewBox="0 0 175 135"><g '+S+'>'+
+    '<rect x="44" y="76" width="7" height="50" rx="3" fill="#8a5a2b"/><rect x="56" y="78" width="7" height="50" rx="3" fill="#8a5a2b"/><rect x="94" y="78" width="7" height="50" rx="3" fill="#8a5a2b"/><rect x="106" y="76" width="7" height="50" rx="3" fill="#8a5a2b"/>'+
+    '<ellipse cx="76" cy="66" rx="43" ry="23" fill="#c48a4a"/><circle cx="33" cy="58" r="8" fill="#fffaf0"/>'+
+    '<g fill="#fffaf0" stroke="none" opacity=".85"><circle cx="60" cy="58" r="3"/><circle cx="74" cy="54" r="3"/><circle cx="88" cy="59" r="3"/></g>'+
+    '<g class="head" style="transform-origin:106px 60px; --g:108deg"><path d="M104 62 L122 24" stroke-width="24" fill="none"/><path d="M104 62 L122 24" stroke="#c48a4a" stroke-width="16" fill="none"/>'+
+    '<ellipse cx="115" cy="9" rx="5" ry="11" fill="#c48a4a" transform="rotate(-22 115 9)"/><ellipse cx="130" cy="22" rx="16" ry="10.5" fill="#c48a4a"/><circle cx="133" cy="19" r="2.8" fill="#2a1f3d" stroke="none"/><circle cx="144" cy="24" r="3.4" fill="#2a1f3d" stroke="none"/></g>'+
+    '</g></svg>',
+  hare:'<svg viewBox="0 0 104 84"><g '+S+'>'+
+    '<circle cx="16" cy="52" r="7" fill="#fffaf0"/><ellipse cx="46" cy="54" rx="28" ry="20" fill="#b89b7a"/><ellipse cx="30" cy="70" rx="15" ry="8" fill="#b89b7a"/><rect x="62" y="60" width="8" height="18" rx="4" fill="#b89b7a"/>'+
+    '<g class="head" style="transform-origin:64px 46px; --g:38deg"><ellipse cx="67" cy="15" rx="5" ry="16" fill="#b89b7a" transform="rotate(-12 67 15)"/><ellipse cx="78" cy="15" rx="5" ry="16" fill="#b89b7a" transform="rotate(8 78 15)"/><circle cx="75" cy="38" r="13.5" fill="#b89b7a"/><circle cx="80" cy="35" r="2.8" fill="#2a1f3d" stroke="none"/><circle cx="88" cy="40" r="2.4" fill="#2a1f3d" stroke="none"/></g>'+
+    '</g></svg>',
+  elk:'<svg viewBox="0 0 215 175"><g '+S+'>'+
+    '<rect x="54" y="96" width="10" height="70" rx="4" fill="#4a3320"/><rect x="70" y="98" width="10" height="70" rx="4" fill="#4a3320"/><rect x="124" y="98" width="10" height="70" rx="4" fill="#4a3320"/><rect x="140" y="96" width="10" height="70" rx="4" fill="#4a3320"/>'+
+    '<ellipse cx="100" cy="82" rx="56" ry="30" fill="#6b4a2e"/><circle cx="130" cy="64" r="24" fill="#6b4a2e"/><ellipse cx="112" cy="80" rx="40" ry="24" fill="#6b4a2e" stroke="none"/>'+
+    '<g class="head" style="transform-origin:140px 72px; --g:74deg"><path d="M140 74 L164 50" stroke-width="30" fill="none"/><path d="M140 74 L164 50" stroke="#6b4a2e" stroke-width="22" fill="none"/>'+
+    '<path d="M156 36 C146 10 168 2 176 14 L181 5 L185 16 L192 9 L192 23 C188 34 170 38 156 36 Z" fill="#e8d5a8"/>'+
+    '<ellipse cx="176" cy="50" rx="23" ry="13" fill="#6b4a2e"/><ellipse cx="193" cy="56" rx="11" ry="10" fill="#8a6644"/><path d="M172 62 q2 12 8 6" fill="#6b4a2e"/><circle cx="174" cy="45" r="3" fill="#2a1f3d" stroke="none"/></g>'+
+    '</g></svg>'
+};
+
+/* ================= Selve økta ================= */
+var run = null;   // { phases, idx, endAt, pausedLeft, groups... }
+var tickTimer = null, wake = null;
+
+
+function buildPhases(){
+  var p = [], sw = cfg.swap*60/2;
+  for(var r=0;r<cfg.rounds;r++){
+    p.push({ type:'work', round:r, dur:cfg.work*60 });
+    if(r < cfg.rounds-1){ p.push({ type:'lineup', round:r, dur:sw }); p.push({ type:'walk', round:r, dur:sw }); }
+  }
+  if(cfg.cleanup>0) p.push({ type:'cleanup', dur:cfg.cleanup*60 });
+  p.push({ type:'done', dur:0 });
+  return p;
+}
+function stationOf(group, round){ return (group + round) % cfg.stations; }
+
+/* Stasjonene står i en ring (med klokka i midten). Gruppene går alltid ett hakk med klokka. */
+var geo = null;
+function buildBoard(){
+  var N = cfg.stations;
+  var w = N<=4 ? 400 : (N<=6 ? 360 : 330), h = N<=4 ? 230 : (N<=6 ? 205 : 192);
+  geo = { N:N, cx:960, cy:432, rx:960-34-w/2, ry:432-16-h/2, start:(N===2 ? Math.PI : -Math.PI/2), dy:30 };
+  var grid = $('grid'), html='';
+  for(var i=0;i<N;i++){
+    var a = angleOf(i), x = geo.cx + geo.rx*Math.cos(a), y = geo.cy + geo.ry*Math.sin(a);
+    html += '<div class="paper st" data-i="'+i+'" style="left:'+x.toFixed(0)+'px; top:'+y.toFixed(0)+'px; width:'+w+'px; height:'+h+'px">'+
+         '<div class="st-head"><span class="badge" style="background:var(--gold)">'+(i+1)+'</span><b>'+esc(stName(i))+'</b></div><div class="st-mid"></div></div>';
+  }
+  grid.innerHTML = html;
+  var ring = '<ellipse cx="'+geo.cx+'" cy="'+geo.cy+'" rx="'+geo.rx+'" ry="'+geo.ry+'"/>';
+  for(var j=0;j<N;j++){
+    var m = angleOf(j) + Math.PI/N, px = geo.cx + geo.rx*Math.cos(m), py = geo.cy + geo.ry*Math.sin(m);
+    var rot = Math.atan2(geo.ry*Math.cos(m), -geo.rx*Math.sin(m))*180/Math.PI;
+    ring += '<polygon points="-16,-20 24,0 -16,20" transform="translate('+px.toFixed(1)+' '+py.toFixed(1)+') rotate('+rot.toFixed(1)+')"/>';
+  }
+  $('ring').innerHTML = ring;
+  var tk='';
+  for(var g=0;g<N;g++){
+    for(var k=3;k>=1;k--) tk += '<div class="fol" data-g="'+g+'" data-k="'+k+'" style="--ad:'+(-k*0.12).toFixed(2)+'s">'+icoHtml(cfg.icons[g])+'</div>';
+    tk += '<div class="token" data-g="'+g+'" style="--ad:'+(-Math.random()*2).toFixed(2)+'s">'+icoHtml(cfg.icons[g])+'<div class="chip">'+esc(grName(g))+'</div></div>';
+  }
+  $('tokens').innerHTML = tk;
+  $('tokens').style.setProperty('--ts', N<=4 ? 1.2 : (N<=6 ? 1.05 : 0.95));
+}
+function angleOf(station){ return geo.start + station*2*Math.PI/geo.N; }
+function posAt(a){ return { x: geo.cx + geo.rx*Math.cos(a), y: geo.cy + geo.ry*Math.sin(a) + geo.dy }; }
+/* frac: 0 = på stasjonen for denne runden, 1 = framme ved neste.
+   ext:  0 = gruppa står samlet, 1 = rekka er stilt opp bak lederikonet (bakover langs stien). */
+function placeTokens(round, frac, ext){
+  frac = frac||0; ext = ext||0;
+  var step = 2*Math.PI/geo.N, lead = {};
+  document.querySelectorAll('.token').forEach(function(t){
+    var a = angleOf(stationOf(+t.dataset.g, round)) + frac*step, p = posAt(a); lead[t.dataset.g] = a;
+    t.style.left = p.x.toFixed(1)+'px'; t.style.top = p.y.toFixed(1)+'px';
+  });
+  document.querySelectorAll('.fol').forEach(function(f){
+    var a = lead[f.dataset.g], k = +f.dataset.k;
+    for(var i=0;i<k;i++){ var ds = Math.sqrt(Math.pow(geo.rx*Math.sin(a),2) + Math.pow(geo.ry*Math.cos(a),2)); a -= ext*(i===0 ? 96 : 70)/ds; }   // ca. 70 px mellom hver i rekka
+    var p = posAt(a);
+    f.style.left = p.x.toFixed(1)+'px'; f.style.top = (p.y+14).toFixed(1)+'px'; f.style.setProperty('--fs', ext.toFixed(3));
+  });
+}
+function ease(p){ return p<.5 ? 2*p*p : 1 - Math.pow(-2*p+2, 2)/2; }
+function animFrame(){
+  if(!run){ return; } var ph = run.phases[run.idx];
+  var left = run.pausedLeft!==null ? run.pausedLeft : (run.endAt - Date.now()), el = ph.dur*1000 - left;
+  if(ph.type==='lineup'){ placeTokens(ph.round, 0, ease(Math.max(0, Math.min(1, el/1600)))); }
+  else if(ph.type==='walk'){
+    var p = Math.max(0, Math.min(1, el/(ph.dur*850)));                       // framme litt før tida er ute
+    placeTokens(ph.round, ease(p), p<.8 ? 1 : (1-p)/.2);                     // rekka samler seg igjen ved stasjonen
+  }
+  else { run.anim = false; return; }
+  requestAnimationFrame(animFrame);
+}
+function startAnim(){ if(run && !run.anim){ run.anim = true; requestAnimationFrame(animFrame); } }
+function tokenClass(cls){ $('tokens').className = 'tokens' + (cls ? ' '+cls : ''); }
+
+function start(){
+  save(); audio(); musicStop();
+  run = { phases:buildPhases(), idx:-1, endAt:0, pausedLeft:null, stored:0 };
+  $('setup').hidden = true; $('board').hidden = false; $('done').hidden = true; $('cleanup').hidden = true;
+  $('grid').hidden = false; $('tokens').hidden = false; $('ring').style.display=''; $('hub').classList.remove('at-top');
+  buildBoard(); placeTokens(0, 0, 0); placeThreshold(); musicUi();
+  $('sndBtn').classList.toggle('off', !cfg.sound);
+  if(cfg.animals) startMic(); else updateMicUi();
+  try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }catch(e){}
+  next();
+  clearInterval(tickTimer); tickTimer = setInterval(tick, 200);
+}
+function flash(big, small){ var f=$('flash'); f.innerHTML = big + (small ? '<small>'+small+'</small>' : ''); f.classList.remove('show'); void f.offsetWidth; f.classList.add('show'); }
+
+function next(){
+  run.idx++; var ph = run.phases[run.idx]; run.pausedLeft = null; setPauseUi(false);
+  run.endAt = Date.now() + ph.dur*1000; run.lastBeep = null;
+  var clock = $('clock'); clock.className = 'paper clock p-'+ph.type;
+  $('ring').classList.toggle('switching', ph.type==='lineup' || ph.type==='walk'); $('ring').classList.toggle('walking', ph.type==='walk');
+  herd.listening = (ph.type==='work');
+  if(ph.type==='lineup' || ph.type==='walk') musicStart(); else musicStop();
+  if(ph.type!=='work'){ herd.list.forEach(function(an){ if(an.state==='alert') setAnimalState(an,'grazing'); }); $('hush').classList.remove('show'); }
+  var R = cfg.rounds;
+
+  if(ph.type==='work'){
+    tokenClass(null); placeTokens(ph.round, 0, 0);
+    $('roundTxt').textContent = 'Runde '+(ph.round+1)+' av '+R;
+    $('afterTxt').textContent = ph.round < R-1 ? 'etterpå: bytte' : (cfg.cleanup>0 ? 'etterpå: rydding' : 'siste runde');
+    $('phaseTxt').textContent = 'Jobb på stasjonen';
+    if(ph.round>0){ chime([523,659,784]); flash('Sett i gang! ✏️', 'Runde '+(ph.round+1)+' av '+R); }
+    else chime([523,784]);
+  }
+  else if(ph.type==='lineup'){
+    $('afterTxt').textContent = 'etterpå: gå til neste stasjon';
+    $('phaseTxt').textContent = '🤫 Still på rekke';
+    tokenClass('lineup'); startAnim(); chime([784,659,523]);
+    flash('Bytte! Still på rekke 🤫', 'Stå stille og vent på signalet');
+  }
+  else if(ph.type==='walk'){
+    $('afterTxt').textContent = 'etterpå: runde '+(ph.round+2)+' av '+R;
+    $('phaseTxt').textContent = '➡️ Gå til neste stasjon';
+    tokenClass('walk'); startAnim(); chime([659,784]);
+    flash('Gå til neste stasjon ➡️', 'Følg pilene – rekka går rolig sammen');
+  }
+  else if(ph.type==='cleanup'){
+    $('roundTxt').textContent = 'Rydding'; $('afterTxt').textContent = 'alt skal på plass i hylla';
+    $('phaseTxt').textContent = '🧹 Ryddetid';
+    buildCleanup(ph.dur); chime([523,659,784,1047]);
+    flash('Ryddetid! 🧹', 'Få alt på plass før klokka er ferdig');
+  }
+  else if(ph.type==='done'){ finish(); }
+  tick();
+}
+
+function tick(){
+  if(!run) return; var ph = run.phases[run.idx]; if(ph.type==='done') return;
+  var left = run.pausedLeft!==null ? run.pausedLeft : (run.endAt - Date.now());
+  if(left <= 0){ next(); return; }
+  var s = Math.ceil(left/1000), m = Math.floor(s/60), ss = s%60;
+  $('timeTxt').textContent = (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+  $('bar').style.width = Math.max(0, Math.min(100, 100 - left/(ph.dur*1000+ (run.extra||0))*100))+'%';
+  var last = (ph.type==='work' || ph.type==='cleanup') && s<=10;
+  $('clock').classList.toggle('last10', last);
+  if(last && s<=3 && run.lastBeep!==s && run.pausedLeft===null){ run.lastBeep = s; chime([880], 0, .25); }
+  if(ph.type==='cleanup' && run.pausedLeft===null) cleanupTick(ph.dur*1000 + (run.extra||0) - left);
+}
+
+/* ---------- rydding: tingene flyr opp i hylla ---------- */
+var THINGS = ['✏️','📏','✂️','📚','🖍️','📐','📓','🧮','🖌️','📒','🎲','📕'];
+function buildCleanup(dur){
+  $('grid').hidden = true; $('tokens').hidden = true; $('ring').style.display='none'; $('hub').classList.add('at-top');
+  var c = $('cleanup'); c.hidden = false;
+  var h = '<div class="shelf"><div class="shelf-row"></div><div class="shelf-row"></div><div class="shelf-row"></div></div>';
+  run.items = [];
+  THINGS.forEach(function(t,i){
+    var left = i%2===0 ? 90 + Math.random()*400 : 1430 + Math.random()*400;       // strødd på begge sider av hylla
+    var top = 80 + Math.random()*420;
+    h += '<div class="item" data-i="'+i+'" style="left:'+left.toFixed(0)+'px; top:'+top.toFixed(0)+'px; --r:'+(Math.random()*50-25).toFixed(0)+'deg; --ad:'+(-Math.random()*1.8).toFixed(2)+'s">'+t+'</div>';
+  });
+  c.innerHTML = h;
+  var usable = Math.max(4, dur - 4);                       // siste ting lander litt før klokka er ute
+  run.flyAt = THINGS.map(function(_,i){ return (i+0.6)/THINGS.length * usable * 1000; });
+  run.stored = 0; run.extra = 0;
+}
+function cleanupTick(elapsed){
+  while(run.stored < THINGS.length && elapsed >= run.flyAt[run.stored]){
+    var i = run.stored++, el = $('cleanup').querySelector('.item[data-i="'+i+'"]'); if(!el) continue;
+    var shelf = $('cleanup').querySelector('.shelf'), rw = shelf.children[Math.floor(i/4)], col = i%4;
+    el.style.left = (960 - shelf.offsetWidth/2 + rw.offsetLeft + rw.offsetWidth*(col+0.5)/4)+'px';
+    el.style.top = (shelf.offsetTop + rw.offsetTop + rw.offsetHeight/2 - 4)+'px';
+    el.classList.add('stored');
+    if(cfg.sound) chime([660+i*40], 0, .2);
+  }
+}
+function finish(){
+  $('clock').className = 'paper clock'; $('timeTxt').textContent = '00:00'; $('phaseTxt').textContent = 'Ferdig!'; $('bar').style.width='100%';
+  $('done').hidden = false; chime([523,659,784,1047,1319], .14, 1.2);
+  var d = $('done'); d.querySelectorAll('.confetti').forEach(function(c){ c.remove(); });
+  for(var i=0;i<60;i++){ var c=document.createElement('div'); c.className='confetti'; c.style.left=(Math.random()*1920)+'px'; c.style.background=COLORS[i%8]; c.style.animationDuration=(2.5+Math.random()*3)+'s'; c.style.animationDelay=(Math.random()*1.5)+'s'; d.appendChild(c); }
+  herd.listening = false;
+}
+function backToMenu(){
+  clearInterval(tickTimer); run = null; stopMic(); herd.listening=false; musicStop();
+  try{ if(wake){ wake.release(); wake=null; } }catch(e){}
+  $('board').hidden = true; $('setup').hidden = false; $('flash').classList.remove('show'); refreshSetup();
+  $('micNote').firstChild.textContent = 'Trykk «Test mikrofonen» og snakk med vanlig arbeidsstemme. Dra streken så den står litt til høyre for den grønne søyla. ';
+}
+
+/* ---------- knappene på tavla ---------- */
+function setPauseUi(p){ $('pauseBtn').textContent = p ? '▶' : '⏸'; $('pauseBtn').classList.toggle('gold', p); $('clock').classList.toggle('paused', p); }
+$('pauseBtn').onclick = function(){
+  if(!run || run.phases[run.idx].type==='done') return;
+  if(run.pausedLeft===null){ run.pausedLeft = run.endAt - Date.now(); herd.wasListening = herd.listening; herd.listening=false; musicStop(); setPauseUi(true); $('phaseTxt').dataset.txt = $('phaseTxt').textContent; $('phaseTxt').textContent = '⏸ Pause'; }
+  else { run.endAt = Date.now() + run.pausedLeft; run.pausedLeft = null; herd.listening = herd.wasListening; setPauseUi(false); (function(){ var t = run.phases[run.idx].type; if(t==='lineup' || t==='walk') musicStart(); })(); $('phaseTxt').textContent = $('phaseTxt').dataset.txt; }
+  tick();
+};
+$('skipBtn').onclick = function(){ if(run && run.phases[run.idx].type!=='done'){ var ph=run.phases[run.idx]; if(ph.type==='cleanup'){ cleanupTick(1e12); } next(); } };
+$('plusBtn').onclick = function(){
+  if(!run) return; var ph = run.phases[run.idx]; if(ph.type==='done') return;
+  if(run.pausedLeft!==null) run.pausedLeft += 60000; else run.endAt += 60000;
+  ph.dur += 60; if(ph.type==='cleanup'){ run.flyAt = run.flyAt.map(function(t,i){ return i < run.stored ? t : t + 60000*((i+0.6)/THINGS.length); }); }
+  tick();
+};
+$('sndBtn').onclick = function(){ cfg.sound = !cfg.sound; this.classList.toggle('off', !cfg.sound); save(); if(cfg.sound) chime([784]); };
+$('musBtn').onclick = function(){ cfg.music = !cfg.music; save(); musicUi(); if(!cfg.music) musicStop(); else if(run){ var t = run.phases[run.idx].type; if(t==='lineup' || t==='walk') musicStart(); } };
+$('micBtn').onclick = function(){ if(mic.on){ cfg.animals=false; stopMic(); } else { cfg.animals=true; startMic(); } save(); };
+$('fsBtn').onclick = function(){ try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(e){} };
+var quitArmed = 0;
+$('quitBtn').onclick = function(){
+  var b=this; if(Date.now()-quitArmed < 3000){ quitArmed=0; b.textContent='✕'; b.classList.remove('gold'); backToMenu(); return; }
+  quitArmed = Date.now(); b.textContent='?'; b.classList.add('gold'); b.title='Trykk en gang til for å avslutte';
+  setTimeout(function(){ if(quitArmed){ quitArmed=0; b.textContent='✕'; b.classList.remove('gold'); } }, 3000);
+};
+$('againBtn').onclick = backToMenu;
+$('startBtn').onclick = start;
+document.addEventListener('visibilitychange', function(){ if(run && !document.hidden){ tick(); try{ if(navigator.wakeLock && !wake) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }catch(e){} } });
+
+/* test-/forhåndsvisningskrok: stasjoner.html?demo gir korte tider (sekunder i stedet for minutter) */
+if(/[?&]demo/.test(location.search)){ window.__demo = true; var _bp = buildPhases; buildPhases = function(){ return _bp().map(function(p){ p.dur = p.dur/60*4; return p; }); }; }
+window.__st = { herd:herd, addAnimal:addAnimal, flee:flee, mic:mic, music:music };
+
+buildSteppers(); buildNames(); refreshSetup(); updateMicUi(); musicUi();
+})();
+</script>
+</body>
+</html>
