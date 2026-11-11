@@ -589,9 +589,12 @@ function synthStop(ms){
   setTimeout(function(){ clearInterval(syn.timer); try{ syn.gain.disconnect(); }catch(e){} }, ms + 150);
 }
 function fadeEl(el, to, done, ms){
-  clearInterval(el._fade); var d = .9 / ((ms || 750) / 50);
-  el._fade = setInterval(function(){ var v = el.volume + (to>el.volume ? d : -d);
-    if((to>0 && v>=to) || (to===0 && v<=0)){ el.volume = to; clearInterval(el._fade); if(done) done(); } else el.volume = Math.max(0, Math.min(1, v)); }, 50);
+  /* Volumet holdes i el._v og ikke lest fra el.volume: på iPad/iPhone kan ikke nettsider endre volumet
+     (el.volume står alltid på 1), og da må uttoningen likevel ende med at musikken stopper. */
+  clearInterval(el._fade); var d = .9 / ((ms || 750) / 50); if(typeof el._v !== 'number') el._v = 0;
+  el._fade = setInterval(function(){ var v = el._v + (to>el._v ? d : -d);
+    if((to>0 && v>=to) || (to===0 && v<=0)){ el._v = to; try{ el.volume = to; }catch(e){} clearInterval(el._fade); if(done) done(); }
+    else { el._v = Math.max(0, Math.min(1, v)); try{ el.volume = el._v; }catch(e){} } }, 50);
 }
 function playerFor(id){
   if(id==='own') return music.own;
@@ -606,9 +609,19 @@ function musicStart(sel, force){
   music.playing = true; music.cur = null;
   var el = sel==='builtin' ? null : playerFor(sel);
   if(!el){ synthStart(); return; }                                  // innebygd marsj, også som reserve
-  music.cur = el; clearInterval(el._fade); el.volume = 0;
+  music.cur = el; clearInterval(el._fade); el._v = 0; el.muted = false; try{ el.volume = 0; }catch(e){}
   var pr = el.play(); fadeEl(el, .9);
   if(pr && pr.catch) pr.catch(function(){ if(music.playing && music.cur===el){ music.cur = null; synthStart(); } });
+}
+/* iPad/iPhone lar bare lyd starte etter et trykk. Sangene «låses opp» stille når læreren trykker
+   «Åpne tavla», slik at de kan starte av seg selv når byttet kommer. */
+function unlockMusic(){
+  [cfg.musicSwap, cfg.musicClean].forEach(function(id){
+    if(id==='none' || id==='builtin') return; var el = playerFor(id); if(!el || !el.paused || el._unlocked) return;
+    el.muted = true; var pr; try{ pr = el.play(); }catch(e){ return; }
+    var fin = function(){ if(music.cur!==el){ el.pause(); try{ el.currentTime = 0; }catch(e){} } el.muted = false; el._unlocked = true; };
+    if(pr && pr.then) pr.then(fin, function(){ el.muted = false; }); else fin();
+  });
 }
 function musicStop(ms){
   music.kind = null; $('trySwap').textContent = '▶'; $('tryClean').textContent = '▶';
@@ -885,7 +898,7 @@ function startAnim(){ if(run && !run.anim){ run.anim = true; requestAnimationFra
 function tokenClass(cls){ $('tokens').className = 'tokens' + (cls ? ' '+cls : ''); }
 
 function start(){
-  save(); audio(); musicStop();
+  save(); audio(); musicStop(); unlockMusic();
   run = { phases:buildPhases(), idx:-1, endAt:0, pausedLeft:null, stored:0 }; resetStats();
   $('setup').hidden = true; $('board').hidden = false; $('done').hidden = true; $('cleanup').hidden = true;
   $('grid').hidden = false; $('tokens').hidden = false; $('ring').style.display=''; $('hub').classList.remove('at-top');
@@ -1060,7 +1073,9 @@ $('plusBtn').onclick = function(){
 $('sndBtn').onclick = function(){ cfg.sound = !cfg.sound; this.classList.toggle('off', !cfg.sound); save(); if(cfg.sound) chime([784]); };
 $('musBtn').onclick = function(){ cfg.music = !cfg.music; save(); $('musBtn').classList.toggle('off', !cfg.music); if(!cfg.music) musicStop(); else ensureMusic(phaseMusic()); };
 $('micBtn').onclick = function(){ if(mic.on){ cfg.animals=false; stopMic(); } else { cfg.animals=true; startMic(); } save(); };
-$('fsBtn').onclick = function(){ try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(e){} };
+$('fsBtn').onclick = function(){ try{ var d = document, el = d.documentElement;
+  if(d.fullscreenElement || d.webkitFullscreenElement){ (d.exitFullscreen || d.webkitExitFullscreen).call(d); }
+  else { (el.requestFullscreen || el.webkitRequestFullscreen).call(el); } }catch(e){} };
 var quitArmed = 0;
 $('quitBtn').onclick = function(){
   var b=this; if(Date.now()-quitArmed < 3000){ quitArmed=0; b.textContent='✕'; b.classList.remove('gold'); backToMenu(); return; }
