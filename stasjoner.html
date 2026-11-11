@@ -879,8 +879,8 @@ function next(){
     $('roundTxt').textContent = 'Runde '+(ph.round+1)+' av '+R;
     $('afterTxt').textContent = ph.round < R-1 ? 'etterpå: bytte' : (cfg.cleanup>0 ? 'etterpå: rydding' : 'siste runde');
     $('phaseTxt').textContent = 'Jobb på stasjonen';
-    if(ph.round>0){ chime([523,659,784]); flash('Sett i gang! ✏️', 'Runde '+(ph.round+1)+' av '+R); }
-    else chime([523,784]);
+    chime(ph.round>0 ? [523,659,784] : [523,784]);
+    flash('<span class="fl-hush"><img src="fagikoner/sett-i-gang.webp" alt=""></span>Sett i gang!', 'Runde '+(ph.round+1)+' av '+R);
   }
   else if(ph.type==='lineup'){
     $('afterTxt').textContent = 'etterpå: gå videre';
