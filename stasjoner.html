@@ -160,7 +160,9 @@ input{ font-family:inherit; color:inherit; }
 .clock.last10 .time{ animation:pulse 1s ease-in-out infinite; color:#b3261a; }
 .clock.paused .time{ opacity:.45; }
 @keyframes pulse{ 50%{ transform:scale(1.06); } }
-.ctrls{ display:flex; gap:12px; align-items:center; }
+#bigPlay{ font-size:44px; padding:12px 56px; animation:readypulse 1.6s ease-in-out infinite; }
+@keyframes readypulse{ 50%{ transform:scale(1.06); } }
+.ctrls{ position:absolute; left:50%; bottom:16px; transform:translateX(-50%); display:flex; gap:14px; align-items:center; z-index:15; }
 .mini-meter{ position:absolute; left:26px; top:20px; width:220px; padding:8px 16px 14px; border-radius:18px; z-index:13; }
 .mini-meter .meter{ height:20px; margin:0; }
 .mini-meter span{ display:block; font-size:19px; font-weight:500; text-align:center; margin-bottom:3px; }
@@ -238,7 +240,7 @@ input{ font-family:inherit; color:inherit; }
 .animal.running .flip > svg{ animation:bob .13s ease-in-out infinite alternate; }
 @keyframes bob{ from{ transform:translateY(0) rotate(-2deg);} to{ transform:translateY(-10px) rotate(2deg);} }
 .animal.alert::after{ content:"!"; position:absolute; left:50%; top:-46px; transform:translateX(-50%); background:#fff; border:3px solid var(--ink); border-radius:50%; width:40px; height:40px; display:grid; place-items:center; font-weight:700; font-size:28px; }
-.hush{ position:absolute; left:50%; bottom:44px; transform:translateX(-50%); z-index:14; padding:10px 40px 10px 14px; font-size:32px; font-weight:600; border-radius:70px; opacity:0; transition:opacity .5s; pointer-events:none; }
+.hush{ position:absolute; left:50%; bottom:112px; transform:translateX(-50%); z-index:14; padding:10px 40px 10px 14px; font-size:32px; font-weight:600; border-radius:70px; opacity:0; transition:opacity .5s; pointer-events:none; }
 .hush.show{ opacity:1; }
 .hush{ display:flex; align-items:center; gap:18px; white-space:nowrap; }
 .hush img{ width:104px; height:104px; flex:none; object-fit:contain; margin:-8px 0; }
@@ -301,7 +303,7 @@ input{ font-family:inherit; color:inherit; }
           <div class="meter" id="setupMeter"><i></i><s></s></div>
           <div class="mic-note" id="micNote">Trykk «Test mikrofonen» og snakk med vanlig arbeidsstemme. Dra streken så den står litt til høyre for den grønne søyla. <button class="btn" id="micTest" style="font-size:22px; padding:6px 16px; margin-left:6px">🎤 Test mikrofonen</button></div>
         </div>
-        <button class="btn go" id="startBtn">▶ Start økta</button>
+        <button class="btn go" id="startBtn">Åpne tavla</button>
       </div>
     </div>
   </section>
@@ -326,16 +328,17 @@ input{ font-family:inherit; color:inherit; }
         <div class="round"><b id="roundTxt">Runde 1 av 4</b> · <span id="afterTxt"></span></div>
         <div class="bar" id="bar"></div>
       </div>
-      <div class="ctrls">
-        <button class="btn round" id="micBtn" title="Dyr og lydmåler av/på" aria-label="Dyr og lydmåler av/på">🎤</button>
-        <button class="btn round" id="sndBtn" title="Lydsignal av/på" aria-label="Lydsignal av/på">🔔</button>
-        <button class="btn round" id="musBtn" title="Musikk av/på" aria-label="Musikk av/på">🎵</button>
-        <button class="btn round" id="plusBtn" title="Ett minutt ekstra" aria-label="Ett minutt ekstra" style="font-size:26px">+1</button>
-        <button class="btn round" id="pauseBtn" title="Pause" aria-label="Pause">⏸</button>
-        <button class="btn round" id="skipBtn" title="Hopp til neste del" aria-label="Hopp til neste del">⏭</button>
-        <button class="btn round" id="fsBtn" title="Fullskjerm" aria-label="Fullskjerm">⛶</button>
-        <button class="btn round" id="quitBtn" title="Avslutt og gå til menyen" aria-label="Avslutt og gå til menyen">✕</button>
-      </div>
+      <button class="btn go" id="bigPlay" hidden>▶ Start økta</button>
+    </div>
+    <div class="ctrls" id="ctrls">
+      <button class="btn round" id="micBtn" title="Dyr og lydmåler av/på" aria-label="Dyr og lydmåler av/på">🎤</button>
+      <button class="btn round" id="sndBtn" title="Lydsignal av/på" aria-label="Lydsignal av/på">🔔</button>
+      <button class="btn round" id="musBtn" title="Musikk av/på" aria-label="Musikk av/på">🎵</button>
+      <button class="btn round" id="plusBtn" title="Ett minutt ekstra" aria-label="Ett minutt ekstra" style="font-size:26px">+1</button>
+      <button class="btn round" id="pauseBtn" title="Pause" aria-label="Pause">⏸</button>
+      <button class="btn round" id="skipBtn" title="Hopp til neste del" aria-label="Hopp til neste del">⏭</button>
+      <button class="btn round" id="fsBtn" title="Fullskjerm" aria-label="Fullskjerm">⛶</button>
+      <button class="btn round" id="quitBtn" title="Avslutt og gå til menyen" aria-label="Avslutt og gå til menyen">✕</button>
     </div>
     <div class="grid" id="grid"></div>
     <div class="tokens" id="tokens"></div>
@@ -587,7 +590,7 @@ function musicStop(ms){
   if(!music.playing) return; music.playing = false; synthStop(ms);
   if(music.cur){ var el = music.cur; music.cur = null; fadeEl(el, 0, function(){ el.pause(); }, ms); }
 }
-function phaseMusic(){ if(!run || run.pausedLeft!==null) return null; var t = run.phases[run.idx].type; return (t==='lineup' || t==='walk') ? 'swap' : (t==='cleanup' ? 'clean' : null); }
+function phaseMusic(){ if(!run || run.ready || run.pausedLeft!==null) return null; var t = run.phases[run.idx].type; return (t==='lineup' || t==='walk') ? 'swap' : (t==='cleanup' ? 'clean' : null); }
 /* sørger for at riktig musikk spiller for fasen vi er i (bytte, rydding eller stille) */
 function ensureMusic(kind){
   if(kind && music.playing && music.kind===kind) return;
@@ -837,7 +840,7 @@ function placeTokens(round, frac, ext){
 }
 function ease(p){ return p<.5 ? 2*p*p : 1 - Math.pow(-2*p+2, 2)/2; }
 function animFrame(){
-  if(!run){ return; } var ph = run.phases[run.idx];
+  if(!run || run.ready){ if(run) run.anim = false; return; } var ph = run.phases[run.idx];
   var left = run.pausedLeft!==null ? run.pausedLeft : (run.endAt - Date.now()), el = ph.dur*1000 - left;
   if(ph.type==='lineup'){ placeTokens(ph.round, 0, ease(Math.max(0, Math.min(1, el/1600)))); }
   else if(ph.type==='walk'){
@@ -859,7 +862,13 @@ function start(){
   $('sndBtn').classList.toggle('off', !cfg.sound);
   if(cfg.animals) startMic(); else updateMicUi();
   try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }catch(e){}
-  next();
+  /* Tavla åpnes uten at klokka går, så læreren kan vise og forklare. Økta starter med ▶. */
+  run.ready = true; run.idx = 0;
+  var p0 = run.phases[0], m0 = Math.floor(p0.dur/60), s0 = Math.round(p0.dur%60);
+  $('clock').className = 'paper clock'; $('ring').classList.remove('switching','walking'); tokenClass(null);
+  $('timeTxt').textContent = (m0<10?'0':'')+m0+':'+(s0<10?'0':'')+s0; $('bar').style.width = '0%';
+  $('phaseTxt').textContent = 'Klar til start'; $('roundTxt').textContent = 'Runde 1 av '+cfg.rounds; $('afterTxt').textContent = 'trykk ▶ når dere er klare';
+  $('bigPlay').hidden = false; $('pauseBtn').textContent = '▶'; $('pauseBtn').classList.add('gold');
   clearInterval(tickTimer); tickTimer = setInterval(tick, 200);
 }
 function flash(big, small){ var f=$('flash'); f.innerHTML = big + (small ? '<small>'+small+'</small>' : ''); f.classList.remove('show'); void f.offsetWidth; f.classList.add('show'); }
@@ -904,8 +913,9 @@ function next(){
   tick();
 }
 
+function begin(){ if(!run || !run.ready) return; run.ready = false; run.idx = -1; $('bigPlay').hidden = true; audio(); next(); }
 function tick(){
-  if(!run) return; var ph = run.phases[run.idx]; if(ph.type==='done') return;
+  if(!run || run.ready) return; var ph = run.phases[run.idx]; if(ph.type==='done') return;
   var left = run.pausedLeft!==null ? run.pausedLeft : (run.endAt - Date.now());
   if(left <= 0){ next(); return; }
   var s = Math.ceil(left/1000), m = Math.floor(s/60), ss = s%60;
@@ -958,7 +968,7 @@ function finish(){
   herd.listening = false;
 }
 function backToMenu(){
-  clearInterval(tickTimer); run = null; stopMic(); herd.listening=false; musicStop();
+  clearInterval(tickTimer); run = null; stopMic(); herd.listening=false; musicStop(); $('bigPlay').hidden = true;
   try{ if(wake){ wake.release(); wake=null; } }catch(e){}
   $('board').hidden = true; $('setup').hidden = false; $('flash').classList.remove('show'); refreshSetup();
   $('micNote').firstChild.textContent = 'Trykk «Test mikrofonen» og snakk med vanlig arbeidsstemme. Dra streken så den står litt til høyre for den grønne søyla. ';
@@ -966,15 +976,17 @@ function backToMenu(){
 
 /* ---------- knappene på tavla ---------- */
 function setPauseUi(p){ $('pauseBtn').textContent = p ? '▶' : '⏸'; $('pauseBtn').classList.toggle('gold', p); $('clock').classList.toggle('paused', p); }
+$('bigPlay').onclick = begin;
 $('pauseBtn').onclick = function(){
+  if(run && run.ready){ begin(); return; }
   if(!run || run.phases[run.idx].type==='done') return;
   if(run.pausedLeft===null){ run.pausedLeft = run.endAt - Date.now(); herd.wasListening = herd.listening; herd.listening=false; musicStop(); setPauseUi(true); $('phaseTxt').dataset.txt = $('phaseTxt').textContent; $('phaseTxt').textContent = '⏸ Pause'; }
   else { run.endAt = Date.now() + run.pausedLeft; run.pausedLeft = null; herd.listening = herd.wasListening; setPauseUi(false); ensureMusic(phaseMusic()); $('phaseTxt').textContent = $('phaseTxt').dataset.txt; }
   tick();
 };
-$('skipBtn').onclick = function(){ if(run && run.phases[run.idx].type!=='done'){ var ph=run.phases[run.idx]; if(ph.type==='cleanup'){ cleanupTick(1e12); } next(); } };
+$('skipBtn').onclick = function(){ if(run && run.ready){ begin(); return; } if(run && run.phases[run.idx].type!=='done'){ var ph=run.phases[run.idx]; if(ph.type==='cleanup'){ cleanupTick(1e12); } next(); } };
 $('plusBtn').onclick = function(){
-  if(!run) return; var ph = run.phases[run.idx]; if(ph.type==='done') return;
+  if(!run || run.ready) return; var ph = run.phases[run.idx]; if(ph.type==='done') return;
   if(run.pausedLeft!==null) run.pausedLeft += 60000; else run.endAt += 60000;
   ph.dur += 60; if(ph.type==='cleanup'){ run.flyAt = run.flyAt.map(function(t,i){ return i < run.stored ? t : t + 60000*((i+0.6)/THINGS.length); }); }
   tick();
