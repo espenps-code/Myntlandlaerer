@@ -238,8 +238,18 @@ input{ font-family:inherit; color:inherit; }
 .animal.running .flip > svg{ animation:bob .13s ease-in-out infinite alternate; }
 @keyframes bob{ from{ transform:translateY(0) rotate(-2deg);} to{ transform:translateY(-10px) rotate(2deg);} }
 .animal.alert::after{ content:"!"; position:absolute; left:50%; top:-46px; transform:translateX(-50%); background:#fff; border:3px solid var(--ink); border-radius:50%; width:40px; height:40px; display:grid; place-items:center; font-weight:700; font-size:28px; }
-.hush{ position:absolute; left:50%; bottom:128px; transform:translateX(-50%); z-index:8; padding:8px 28px; font-size:30px; font-weight:600; border-radius:40px; opacity:0; transition:opacity .5s; pointer-events:none; }
+.hush{ position:absolute; left:50%; bottom:44px; transform:translateX(-50%); z-index:14; padding:10px 40px 10px 14px; font-size:32px; font-weight:600; border-radius:70px; opacity:0; transition:opacity .5s; pointer-events:none; }
 .hush.show{ opacity:1; }
+.hush{ display:flex; align-items:center; gap:18px; white-space:nowrap; }
+.hush svg{ width:96px; height:96px; flex:none; }
+.hush b{ display:block; font-size:44px; font-weight:700; line-height:1.05; }
+.hushbig{ display:none; }
+.hushbig svg, .fl-hush svg{ display:block; width:100%; height:100%; }
+.clock.p-lineup{ display:grid; grid-template-columns:auto 1fr; column-gap:24px; align-items:center; padding-left:26px; }
+.clock.p-lineup .hushbig{ display:block; grid-row:1 / span 3; width:184px; height:184px; animation:hushpulse 1.8s ease-in-out infinite; }
+.clock.p-lineup .phase{ font-size:42px; font-weight:700; }
+@keyframes hushpulse{ 50%{ transform:scale(1.07) rotate(-3deg); } }
+.fl-hush{ display:block; width:250px; height:250px; margin:0 auto 4px; }
 </style>
 </head>
 <body>
@@ -310,6 +320,7 @@ input{ font-family:inherit; color:inherit; }
     <div class="paper mini-meter" id="miniMeter"><span>Lydnivå</span><div class="meter"><i></i><s></s></div></div>
     <div class="hub" id="hub">
       <div class="paper clock" id="clock">
+        <div class="hushbig" id="clockHush" aria-hidden="true"></div>
         <div class="phase" id="phaseTxt">Jobb på stasjonen</div>
         <div class="time" id="timeTxt" role="timer">00:00</div>
         <div class="round"><b id="roundTxt">Runde 1 av 4</b> · <span id="afterTxt"></span></div>
@@ -476,6 +487,22 @@ document.querySelectorAll('[data-toggle]').forEach(function(b){
 $('sens').oninput = function(){ cfg.sens = +this.value; placeThreshold(); save(); };
 function placeThreshold(){ document.querySelectorAll('.meter s').forEach(function(s){ s.style.left = 'calc('+cfg.sens+'% - 2px)'; }); }
 $('micTest').onclick = function(){ startMic(); };
+
+/* ---------- eget hysj-tegn (tegnet i kode, skarpt i alle størrelser) ---------- */
+var HUSH = '<svg viewBox="0 0 200 200" role="img" aria-label="Hysj"><g stroke="#2a1f3d" stroke-linejoin="round" stroke-linecap="round">'+
+  '<circle cx="100" cy="100" r="88" fill="#ffd96b" stroke-width="9"/>'+
+  '<circle cx="46" cy="118" r="15" fill="#f39a3d" stroke="none" opacity=".55"/><circle cx="154" cy="118" r="15" fill="#f39a3d" stroke="none" opacity=".55"/>'+
+  '<path d="M50 62 q16 -12 32 -3 M118 59 q16 -9 32 3" fill="none" stroke-width="7"/>'+
+  '<ellipse cx="68" cy="88" rx="11" ry="13" fill="#2a1f3d" stroke="none"/><ellipse cx="132" cy="88" rx="11" ry="13" fill="#2a1f3d" stroke="none"/>'+
+  '<circle cx="72" cy="83" r="4" fill="#fff" stroke="none"/><circle cx="136" cy="83" r="4" fill="#fff" stroke="none"/>'+
+  '<ellipse cx="100" cy="130" rx="15" ry="11" fill="#2a1f3d" stroke="none"/>'+
+  '<rect x="87" y="72" width="26" height="92" rx="13" fill="#fff3c9" stroke-width="7"/>'+
+  '<path d="M92 84 h16" fill="none" stroke-width="5" opacity=".5"/>'+
+  '<path d="M70 156 q0 -20 20 -20 h36 q14 0 14 14 v14 q0 22 -22 22 h-26 q-22 0 -22 -22 Z" fill="#fff3c9" stroke-width="7"/>'+
+  '<path d="M113 148 v18 M126 150 v16" fill="none" stroke-width="5" opacity=".55"/>'+
+  '</g></svg>';
+$('clockHush').innerHTML = HUSH;
+$('hush').innerHTML = HUSH + '<span><b>Hysj!</b>Dyrene ble skremt. De kommer tilbake når det blir rolig.</span>';
 
 /* ================= Lydsignaler ================= */
 var actx = null;
@@ -680,7 +707,7 @@ function herdTick(dt){
   var nervous = lvl > thr*0.82;
   herd.list.forEach(function(an){ if(an.state==='grazing' || an.state==='alert'){ setAnimalState(an, nervous ? 'alert' : 'grazing'); } });
   var hush = $('hush');
-  if(Date.now() - herd.fledAt < 6000){ hush.textContent = '🤫 Dyrene ble skremt. De kommer tilbake når det blir rolig.'; hush.classList.add('show'); }
+  if(Date.now() - herd.fledAt < 7000){ hush.classList.add('show'); }
   else hush.classList.remove('show');
 }
 function setAnimalState(an, st){ if(an.state===st) return; an.state = st; an.el.classList.remove('grazing','alert','walking','running'); an.el.classList.add(st); }
@@ -867,10 +894,10 @@ function next(){
     else chime([523,784]);
   }
   else if(ph.type==='lineup'){
-    $('afterTxt').textContent = 'etterpå: gå til neste stasjon';
-    $('phaseTxt').textContent = '🤫 Still på rekke';
+    $('afterTxt').textContent = 'etterpå: gå videre';
+    $('phaseTxt').textContent = 'Still på rekke';
     tokenClass('lineup'); startAnim(); chime([784,659,523]);
-    flash('Bytte! Still på rekke 🤫', 'Stå stille og vent på signalet');
+    flash('<span class="fl-hush">'+HUSH+'</span>Bytte! Still på rekke', 'Stå stille og vent på signalet');
   }
   else if(ph.type==='walk'){
     $('afterTxt').textContent = 'etterpå: runde '+(ph.round+2)+' av '+R;
