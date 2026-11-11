@@ -1180,6 +1180,7 @@ h1.sticker{
       <button id="tbWheel" title="Lykkehjul">&#127905;</button>
       <button id="tbGames" title="Tavlespill">&#127918;</button>
       <button id="tbBreak" title="Brain break">&#129496;</button>
+      <button id="tbStations" title="Stasjonstavla">&#128260;</button>
       <button id="tbMusic" title="Musikk">&#127925;</button>
       <div class="tb-sep" aria-hidden="true"></div>
       <button id="tbFs" title="Fullskjerm">&#9974;</button>
@@ -1402,6 +1403,14 @@ h1.sticker{
   <div class="ovl-card" style="width:min(97vw,1280px);max-height:96vh;padding:0;overflow:hidden;display:flex;flex-direction:column;">
     <div class="ovl-head"><h3>&#9201;&#65039; Timer</h3><button class="ovl-x" id="timerClose">&times;</button></div>
     <iframe id="timerFrame" title="Klassetimer" style="border:0;display:block;width:100%;aspect-ratio:16/9;max-height:calc(96vh - 70px);background:#cdeede;"></iframe>
+  </div>
+</div>
+
+<!-- ====== STASJONSTAVLA (stasjoner.html i ramme) ====== -->
+<div class="ovl" id="stationOverlay">
+  <div class="ovl-card" style="width:min(96vw,calc((100vh - 190px) * 16 / 9));max-width:none;padding:0;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="ovl-head"><h3>&#128260; Stasjonstavla</h3><button class="ovl-x" id="stationClose" title="Lukk stasjonstavla">&times;</button></div>
+    <iframe id="stationFrame" title="Stasjonstavla" allow="microphone; autoplay; fullscreen" allowfullscreen style="border:0;display:block;width:100%;aspect-ratio:16/9;background:#cdeede;"></iframe>
   </div>
 </div>
 
@@ -4041,6 +4050,15 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
       tBtn.onclick=function(){ tFrame.src='klassetimer.html'; tOvl.classList.add('open'); };
       document.getElementById('timerClose').onclick=function(){ tOvl.classList.remove('open'); tFrame.src='about:blank'; };
       tOvl.addEventListener('click', function(e){ if(e.target===tOvl){ tOvl.classList.remove('open'); tFrame.src='about:blank'; } });
+    }
+  })();
+  /* Stasjonstavla åpnes i ramme. Lukkes bare med krysset (ikke ved trykk utenfor), så en økt som pågår ikke forsvinner ved et uhell.
+     Når den lukkes, tømmes ramma – da slås også mikrofonen og musikken av. */
+  (function(){
+    var sOvl=document.getElementById('stationOverlay'), sBtn=document.getElementById('tbStations'), sFrame=document.getElementById('stationFrame');
+    if(sOvl&&sBtn&&sFrame){
+      sBtn.onclick=function(){ if(!sOvl.classList.contains('open')){ sFrame.src='stasjoner.html'; sOvl.classList.add('open'); } };
+      document.getElementById('stationClose').onclick=function(){ sOvl.classList.remove('open'); sFrame.src='about:blank'; };
     }
   })();
   /* Brain breaks styres nå av sitt eget skript (pausevelger + ramme), som Tavlespill. */
