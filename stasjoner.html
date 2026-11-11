@@ -82,10 +82,16 @@ input{ font-family:inherit; color:inherit; }
 .total b{ font-size:44px; display:block; line-height:1; }
 .setup-cols{ display:grid; grid-template-columns:780px 1fr; gap:36px; min-height:0; }
 .col h2{ font-size:32px; font-weight:600; margin-bottom:12px; }
-.row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:5px 0; border-bottom:3px dashed var(--cream-3); font-size:32px; font-weight:500; }
+.row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:3px 0; border-bottom:3px dashed var(--cream-3); font-size:32px; font-weight:500; }
 .row:last-child{ border-bottom:0; }
 .lnk{ border:3px solid var(--ink); border-radius:30px; background:var(--cream); font-size:21px; font-weight:600; padding:1px 14px; margin-left:4px; }
 .lnk:active{ transform:translateY(2px); }
+.mrow{ display:flex; align-items:center; gap:8px; flex:none; }
+.mrow select{ font-family:inherit; color:inherit; font-size:25px; font-weight:500; width:400px; padding:7px 10px; border:3px solid var(--ink); border-radius:14px; background:#fff; }
+.mrow .lnk{ font-size:24px; width:58px; height:50px; padding:0; margin:0; }
+.setup-head h1 small .lnk{ font-size:20px; }
+.credits li{ font-size:28px; margin:6px 0 6px 30px; }
+.credits p{ font-size:25px; color:var(--ink-soft); margin-top:14px; }
 .row .hint{ display:block; font-size:22px; color:var(--ink-soft); font-weight:400; }
 .stepper{ display:flex; align-items:center; gap:10px; flex:none; }
 .stepper button{ width:64px; height:64px; border-radius:50%; border:var(--border); background:var(--cream); font-size:40px; font-weight:700; line-height:1;
@@ -253,7 +259,7 @@ input{ font-family:inherit; color:inherit; }
   <section id="setup">
     <div class="paper setup-card">
       <div class="setup-head">
-        <h1>Stasjonstavla<small>Sett opp økta – tavla styrer tida, byttene og ryddinga.</small></h1>
+        <h1>Stasjonstavla<small>Sett opp økta – tavla styrer tida, byttene og ryddinga. <button class="lnk" id="credBtn">♪ Om musikken</button></small></h1>
         <div class="total">Økta varer<b id="totalTime">–</b></div>
       </div>
       <div class="setup-cols">
@@ -265,8 +271,9 @@ input{ font-family:inherit; color:inherit; }
           <div class="row"><span>Antall runder<span class="hint">Like mange som stasjoner = alle innom alt.</span></span><div class="stepper" data-key="rounds" data-min="1" data-max="8" data-step="1"></div></div>
           <div class="row"><span>Rydding til slutt<span class="hint">Minutter. 0 = ingen rydding.</span></span><div class="stepper" data-key="cleanup" data-min="0" data-max="10" data-step="1"></div></div>
           <div class="row"><span>Lydsignal ved bytte</span><button class="switch" role="switch" data-toggle="sound" aria-label="Lydsignal ved bytte"></button></div>
-          <div class="row"><span>Musikk under bytte<span class="hint"><span id="musicName">Innebygd marsj</span> <button class="lnk" id="musicPick">Velg egen lydfil</button><button class="lnk" id="musicBuiltin" hidden>Bruk innebygd</button><button class="lnk" id="musicTry">▶ Prøv</button><input type="file" id="musicFile" accept="audio/*" hidden></span></span><button class="switch" role="switch" data-toggle="music" aria-label="Musikk under bytte"></button></div>
-          <div class="row"><span>Dyr som beiter når det er stille<span class="hint">Bruker mikrofonen til å måle lydnivået.</span></span><button class="switch" role="switch" data-toggle="animals" aria-label="Dyr som beiter når det er stille"></button></div>
+          <div class="row"><span>Byttemusikk</span><span class="mrow"><select id="selSwap" aria-label="Musikk under bytte"></select><button class="lnk" id="trySwap" aria-label="Prøv byttemusikken">▶</button></span></div>
+          <div class="row"><span>Ryddemusikk</span><span class="mrow"><select id="selClean" aria-label="Musikk under rydding"></select><button class="lnk" id="tryClean" aria-label="Prøv ryddemusikken">▶</button></span><input type="file" id="musicFile" accept="audio/*" hidden></div>
+          <div class="row"><span>Dyr som beiter når det er stille</span><button class="switch" role="switch" data-toggle="animals" aria-label="Dyr som beiter når det er stille"></button></div>
         </div>
         <div class="col">
           <h2>Stasjoner og grupper</h2>
@@ -308,7 +315,7 @@ input{ font-family:inherit; color:inherit; }
       <div class="ctrls">
         <button class="btn round" id="micBtn" title="Dyr og lydmåler av/på" aria-label="Dyr og lydmåler av/på">🎤</button>
         <button class="btn round" id="sndBtn" title="Lydsignal av/på" aria-label="Lydsignal av/på">🔔</button>
-        <button class="btn round" id="musBtn" title="Byttemusikk av/på" aria-label="Byttemusikk av/på">🎵</button>
+        <button class="btn round" id="musBtn" title="Musikk av/på" aria-label="Musikk av/på">🎵</button>
         <button class="btn round" id="plusBtn" title="Ett minutt ekstra" aria-label="Ett minutt ekstra" style="font-size:26px">+1</button>
         <button class="btn round" id="pauseBtn" title="Pause" aria-label="Pause">⏸</button>
         <button class="btn round" id="skipBtn" title="Hopp til neste del" aria-label="Hopp til neste del">⏭</button>
@@ -347,11 +354,12 @@ function actImg(a, cls){ return '<img class="'+(cls||'')+'" src="fagikoner/ikon-
 function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)*50)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
 (function(){ var im = new Image(); im.onerror = function(){ document.getElementById('canvas').classList.add('no-sprite'); }; im.src = 'stasjoner-ikoner.webp'; })();
 var KEY = 'myntland-stasjoner-v1';
-var cfg = { stations:4, work:10, swap:2, rounds:4, roundsAuto:true, cleanup:3, sound:true, music:true, musicName:'', animals:true, sens:45,
+var cfg = { stations:4, work:10, swap:2, rounds:4, roundsAuto:true, cleanup:3, sound:true, music:true, musicSwap:'fun-kids', musicClean:'fun-vibe', musicName:'', animals:true, sens:45,
             stNames:[], stIcons:[], icons:[0,10,20,1,11,21,2,12] };
 try{ var saved = JSON.parse(localStorage.getItem(KEY)); if(saved && typeof saved==='object'){ for(var k in cfg){ if(saved[k]!==undefined) cfg[k]=saved[k]; } } }catch(e){}
 (function(){ var ok = Array.isArray(cfg.icons) && cfg.icons.length===8, seen={}; if(ok) cfg.icons.forEach(function(v){ if(!(v>=0 && v<ICONS.length) || seen[v]) ok=false; seen[v]=1; }); if(!ok) cfg.icons=[0,10,20,1,11,21,2,12]; })();
 if(!Array.isArray(cfg.stIcons)) cfg.stIcons = [];
+cfg.music = true;   /* 🎵-knappen på tavla demper bare for økta som pågår */
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} }
 function stDefault(i){ var a = actOf(i); return a>=0 ? ACTS[a][1] : 'Stasjon '+(i+1); }
 function stName(i){ return (cfg.stNames[i]||'').trim() || stDefault(i); }
@@ -478,10 +486,20 @@ function chime(freqs, gap, len){
   });
 }
 
-/* ================= Byttemusikk =================
-   To kilder: en innebygd marsj som lages her i koden (ingen fil), eller lærerens egen lydfil.
-   Egen fil blir liggende i denne nettleseren (IndexedDB) – den lastes ikke opp noe sted. */
-var music = { el:null, url:null, playing:false, timer:null, gain:null, step:0, nextT:0, fade:null, noise:null };
+/* ================= Musikk under bytte og rydding =================
+   Kilder: sangene i mappa musikk/ (fra Pixabay), en innebygd marsj som lages her i koden,
+   eller lærerens egen lydfil. Egen fil blir liggende i denne nettleseren (IndexedDB) – den lastes ikke opp. */
+var TRACKS = [
+  { id:'fun-kids',  file:'fun-kids.mp3',  title:'Fun Kids',  artist:'leberch' },
+  { id:'fun-time',  file:'fun-time.mp3',  title:'Fun Time',  artist:'leberch' },
+  { id:'fun-music', file:'fun-music.mp3', title:'Fun Music', artist:'paulyudin' },
+  { id:'fun-vibe',  file:'fun-vibe.mp3',  title:'Fun Vibe',  artist:'The_Mountain' },
+  { id:'background-lnplusmusic', file:'background-lnplusmusic.mp3', title:'Background Music', artist:'lnplusmusic' },
+  { id:'background-nastelbom',   file:'background-nastelbom.mp3',   title:'Background Music', artist:'nastelbom' },
+  { id:'cinematic-theme',     file:'cinematic-theme.mp3',     title:'Cinematic Theme', artist:'nastelbom' },
+  { id:'inspiring-cinematic', file:'inspiring-cinematic.mp3', title:'Inspiring Cinematic Music', artist:'tunetank' }
+];
+var music = { own:null, url:null, cur:null, kind:null, playing:false, timer:null, gain:null, step:0, nextT:0, noise:null, players:{} };
 var MEL = [72,0,76,0,79,0,76,0, 81,0,79,0,76,0,0,0, 77,0,81,0,79,0,76,0, 74,0,0,0,67,69,71,0,
            72,0,76,0,79,0,84,0, 83,0,81,0,79,0,0,0, 81,0,77,0,74,0,79,0, 72,0,0,0,0,0,0,0];
 var BASS = [48,55,48,55, 45,52,45,52, 41,48,41,48, 43,50,43,50, 48,55,48,55, 43,50,43,50, 41,48,43,50, 48,55,48,0];
@@ -519,41 +537,86 @@ function synthStop(){
   try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value, actx.currentTime); g.gain.linearRampToValueAtTime(0, actx.currentTime+.7); }catch(e){}
   setTimeout(function(){ try{ g.disconnect(); }catch(e){} }, 1200);
 }
-function fadeEl(to, done){
-  clearInterval(music.fade); var el = music.el; if(!el) return;
-  music.fade = setInterval(function(){ var v = el.volume + (to>el.volume ? .06 : -.06);
-    if((to>0 && v>=to) || (to===0 && v<=0)){ el.volume = to; clearInterval(music.fade); if(done) done(); } else el.volume = Math.max(0, Math.min(1, v)); }, 50);
+function fadeEl(el, to, done){
+  clearInterval(el._fade);
+  el._fade = setInterval(function(){ var v = el.volume + (to>el.volume ? .06 : -.06);
+    if((to>0 && v>=to) || (to===0 && v<=0)){ el.volume = to; clearInterval(el._fade); if(done) done(); } else el.volume = Math.max(0, Math.min(1, v)); }, 50);
 }
-function musicStart(force){
-  if(music.playing || (!cfg.music && !force)) return; music.playing = true;
-  if(music.el){ music.el.volume = 0; var pr = music.el.play(); fadeEl(.9); if(pr && pr.catch) pr.catch(function(){ if(music.playing) synthStart(); }); }
-  else synthStart();
+function playerFor(id){
+  if(id==='own') return music.own;
+  if(music.players[id]) return music.players[id];
+  for(var i=0;i<TRACKS.length;i++) if(TRACKS[i].id===id){ var a = new Audio('musikk/'+TRACKS[i].file); a.loop = true; a.preload = 'none'; return (music.players[id] = a); }
+  return null;
+}
+/* sel: 'none', 'builtin', 'own' eller id-en til en sang i TRACKS */
+function musicStart(sel, force){
+  if(music.playing) musicStop();
+  if((!cfg.music && !force) || !sel || sel==='none') return;
+  music.playing = true; music.cur = null;
+  var el = sel==='builtin' ? null : playerFor(sel);
+  if(!el){ synthStart(); return; }                                  // innebygd marsj, også som reserve
+  music.cur = el; clearInterval(el._fade); el.volume = 0;
+  var pr = el.play(); fadeEl(el, .9);
+  if(pr && pr.catch) pr.catch(function(){ if(music.playing && music.cur===el){ music.cur = null; synthStart(); } });
 }
 function musicStop(){
+  music.kind = null; $('trySwap').textContent = '▶'; $('tryClean').textContent = '▶';
   if(!music.playing) return; music.playing = false; synthStop();
-  if(music.el && !music.el.paused){ var el = music.el; fadeEl(0, function(){ el.pause(); }); }
-  var tb = document.getElementById('musicTry'); if(tb) tb.textContent = '▶ Prøv';
+  if(music.cur){ var el = music.cur; music.cur = null; fadeEl(el, 0, function(){ el.pause(); }); }
+}
+function phaseMusic(){ if(!run || run.pausedLeft!==null) return null; var t = run.phases[run.idx].type; return (t==='lineup' || t==='walk') ? 'swap' : (t==='cleanup' ? 'clean' : null); }
+/* sørger for at riktig musikk spiller for fasen vi er i (bytte, rydding eller stille) */
+function ensureMusic(kind){
+  if(kind && music.playing && music.kind===kind) return;
+  musicStop(); if(!kind) return;
+  musicStart(kind==='swap' ? cfg.musicSwap : cfg.musicClean); if(music.playing) music.kind = kind;
 }
 function idb(cb){ try{ var r = indexedDB.open('myntland-stasjoner', 1); r.onupgradeneeded = function(){ r.result.createObjectStore('files'); }; r.onsuccess = function(){ cb(r.result); }; r.onerror = function(){ cb(null); }; }catch(e){ cb(null); } }
 function setMusicFile(blob, name){
-  musicStop(); if(music.url){ try{ URL.revokeObjectURL(music.url); }catch(e){} } music.url = null; music.el = null;
-  if(blob){ music.url = URL.createObjectURL(blob); music.el = new Audio(music.url); music.el.loop = true; cfg.musicName = name || 'Egen lydfil'; } else cfg.musicName = '';
+  musicStop(); if(music.url){ try{ URL.revokeObjectURL(music.url); }catch(e){} } music.url = null; music.own = null;
+  if(blob){ music.url = URL.createObjectURL(blob); music.own = new Audio(music.url); music.own.loop = true; cfg.musicName = name || 'Egen lydfil'; }
   save(); musicUi();
 }
 function musicUi(){
-  var nm = cfg.musicName && music.el ? cfg.musicName : 'Innebygd marsj';
-  $('musicName').textContent = '♪ ' + (nm.length>26 ? nm.slice(0,24)+'…' : nm);
-  $('musicBuiltin').hidden = !music.el; $('musBtn').classList.toggle('off', !cfg.music);
+  [['selSwap','musicSwap'],['selClean','musicClean']].forEach(function(pr){
+    var sel = $(pr[0]), h = '<option value="none">Ingen musikk</option><option value="builtin">Innebygd marsj</option>';
+    TRACKS.forEach(function(t){ h += '<option value="'+t.id+'">'+esc(t.title)+' – '+esc(t.artist)+'</option>'; });
+    var nm = cfg.musicName.length>22 ? cfg.musicName.slice(0,20)+'…' : cfg.musicName;
+    h += music.own ? '<option value="own">Egen: '+esc(nm)+'</option><option value="pick">Bytt egen lydfil …</option>' : '<option value="pick">Egen lydfil …</option>';
+    sel.innerHTML = h;
+    var v = cfg[pr[1]]; if(v==='own' && !music.own) v = 'builtin';
+    sel.value = v; if(sel.value!==v){ sel.value = 'builtin'; }
+  });
+  $('musBtn').classList.toggle('off', !cfg.music);
 }
-$('musicPick').onclick = function(){ $('musicFile').click(); };
+var pickFor = null;
+[['selSwap','musicSwap'],['selClean','musicClean']].forEach(function(pr){
+  $(pr[0]).onchange = function(){
+    musicStop();
+    if(this.value==='pick'){ pickFor = pr[1]; musicUi(); $('musicFile').click(); return; }
+    cfg[pr[1]] = this.value; save();
+  };
+});
 $('musicFile').onchange = function(){
   var f = this.files && this.files[0]; this.value = ''; if(!f) return;
+  if(pickFor) cfg[pickFor] = 'own';
   setMusicFile(f, f.name.replace(/\.[^.]+$/, ''));
   if(f.size < 40*1024*1024) idb(function(db){ if(!db) return; try{ db.transaction('files','readwrite').objectStore('files').put(f, 'music'); }catch(e){} });
 };
-$('musicBuiltin').onclick = function(){ setMusicFile(null); idb(function(db){ if(!db) return; try{ db.transaction('files','readwrite').objectStore('files').delete('music'); }catch(e){} }); };
-$('musicTry').onclick = function(){ if(music.playing){ musicStop(); } else { audio(); musicStart(true); this.textContent = '⏹ Stopp'; } };
-idb(function(db){ if(!db) return; try{ var q = db.transaction('files').objectStore('files').get('music'); q.onsuccess = function(){ if(q.result){ var keep = cfg.musicName; setMusicFile(q.result, keep); } }; }catch(e){} });
+[['trySwap','musicSwap'],['tryClean','musicClean']].forEach(function(pr){
+  $(pr[0]).onclick = function(){
+    var k = 'try-'+pr[1]; if(music.playing && music.kind===k){ musicStop(); return; }
+    audio(); musicStart(cfg[pr[1]], true); if(music.playing){ music.kind = k; this.textContent = '⏹'; }
+  };
+});
+$('credBtn').onclick = function(){
+  $('pickTitle').textContent = 'Om musikken';
+  var h = '<div class="credits"><ul>';
+  TRACKS.forEach(function(t){ h += '<li><b>'+esc(t.title)+'</b> av '+esc(t.artist)+'</li>'; });
+  $('pickBody').innerHTML = h + '</ul><p>Sangene er hentet fra Pixabay og brukes under Pixabay Content License. Den innebygde marsjen er laget for Myntland. Velger du egen lydfil, blir den bare liggende i nettleseren på denne maskinen.</p></div>';
+  $('picker').hidden = false;
+};
+idb(function(db){ if(!db) return; try{ var q = db.transaction('files').objectStore('files').get('music'); q.onsuccess = function(){ if(q.result) setMusicFile(q.result, cfg.musicName); }; }catch(e){} });
 
 /* ================= Mikrofon og dyr ================= */
 var mic = { on:false, stream:null, analyser:null, buf:null, level:0, timer:null };
@@ -783,7 +846,7 @@ function next(){
   var clock = $('clock'); clock.className = 'paper clock p-'+ph.type;
   $('ring').classList.toggle('switching', ph.type==='lineup' || ph.type==='walk'); $('ring').classList.toggle('walking', ph.type==='walk');
   herd.listening = (ph.type==='work');
-  if(ph.type==='lineup' || ph.type==='walk') musicStart(); else musicStop();
+  ensureMusic(phaseMusic());
   if(ph.type!=='work'){ herd.list.forEach(function(an){ if(an.state==='alert') setAnimalState(an,'grazing'); }); $('hush').classList.remove('show'); }
   var R = cfg.rounds;
 
@@ -876,7 +939,7 @@ function setPauseUi(p){ $('pauseBtn').textContent = p ? '▶' : '⏸'; $('pauseB
 $('pauseBtn').onclick = function(){
   if(!run || run.phases[run.idx].type==='done') return;
   if(run.pausedLeft===null){ run.pausedLeft = run.endAt - Date.now(); herd.wasListening = herd.listening; herd.listening=false; musicStop(); setPauseUi(true); $('phaseTxt').dataset.txt = $('phaseTxt').textContent; $('phaseTxt').textContent = '⏸ Pause'; }
-  else { run.endAt = Date.now() + run.pausedLeft; run.pausedLeft = null; herd.listening = herd.wasListening; setPauseUi(false); (function(){ var t = run.phases[run.idx].type; if(t==='lineup' || t==='walk') musicStart(); })(); $('phaseTxt').textContent = $('phaseTxt').dataset.txt; }
+  else { run.endAt = Date.now() + run.pausedLeft; run.pausedLeft = null; herd.listening = herd.wasListening; setPauseUi(false); ensureMusic(phaseMusic()); $('phaseTxt').textContent = $('phaseTxt').dataset.txt; }
   tick();
 };
 $('skipBtn').onclick = function(){ if(run && run.phases[run.idx].type!=='done'){ var ph=run.phases[run.idx]; if(ph.type==='cleanup'){ cleanupTick(1e12); } next(); } };
@@ -887,7 +950,7 @@ $('plusBtn').onclick = function(){
   tick();
 };
 $('sndBtn').onclick = function(){ cfg.sound = !cfg.sound; this.classList.toggle('off', !cfg.sound); save(); if(cfg.sound) chime([784]); };
-$('musBtn').onclick = function(){ cfg.music = !cfg.music; save(); musicUi(); if(!cfg.music) musicStop(); else if(run){ var t = run.phases[run.idx].type; if(t==='lineup' || t==='walk') musicStart(); } };
+$('musBtn').onclick = function(){ cfg.music = !cfg.music; save(); $('musBtn').classList.toggle('off', !cfg.music); if(!cfg.music) musicStop(); else ensureMusic(phaseMusic()); };
 $('micBtn').onclick = function(){ if(mic.on){ cfg.animals=false; stopMic(); } else { cfg.animals=true; startMic(); } save(); };
 $('fsBtn').onclick = function(){ try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(e){} };
 var quitArmed = 0;
