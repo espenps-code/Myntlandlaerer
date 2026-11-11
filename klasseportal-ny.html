@@ -4057,7 +4057,14 @@ window.__resources = {"mascotBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEU
   (function(){
     var sOvl=document.getElementById('stationOverlay'), sBtn=document.getElementById('tbStations'), sFrame=document.getElementById('stationFrame');
     if(sOvl&&sBtn&&sFrame){
-      sBtn.onclick=function(){ if(!sOvl.classList.contains('open')){ sFrame.src='stasjoner.html'; sOvl.classList.add('open'); } };
+      /* Klassens ID og navn følger med, så stasjonstavla husker oppsett og topp 5 per klasse (bare i nettleseren). */
+      var stationUrl=function(){
+        var cid=window._CLASS_ID||'', navn='';
+        if(!cid || window._NO_CLASS) return 'stasjoner.html';
+        try{ var lk=JSON.parse(localStorage.getItem('myntland-portal-link-v1-'+cid)||'null'); navn=(lk&&lk.className)||''; }catch(e){}
+        return 'stasjoner.html?class='+encodeURIComponent(cid)+(navn ? '&navn='+encodeURIComponent(navn) : '');
+      };
+      sBtn.onclick=function(){ if(!sOvl.classList.contains('open')){ sFrame.src=stationUrl(); sOvl.classList.add('open'); } };
       document.getElementById('stationClose').onclick=function(){ sOvl.classList.remove('open'); sFrame.src='about:blank'; };
     }
   })();

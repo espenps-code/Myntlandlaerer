@@ -90,6 +90,7 @@ input{ font-family:inherit; color:inherit; }
 .mrow select{ font-family:inherit; color:inherit; font-size:25px; font-weight:500; width:400px; padding:7px 10px; border:3px solid var(--ink); border-radius:14px; background:#fff; }
 .mrow .lnk{ font-size:24px; width:58px; height:50px; padding:0; margin:0; }
 .setup-head h1 small .lnk{ font-size:20px; }
+.class-pill{ display:inline-block; vertical-align:middle; font-size:30px; font-weight:600; background:var(--gold); border:var(--border); border-radius:40px; padding:2px 22px; margin-left:10px; }
 .credits li{ font-size:28px; margin:6px 0 6px 30px; }
 .credits p{ font-size:25px; color:var(--ink-soft); margin-top:14px; }
 .row .hint{ display:block; font-size:22px; color:var(--ink-soft); font-weight:400; }
@@ -299,7 +300,7 @@ input{ font-family:inherit; color:inherit; }
   <section id="setup">
     <div class="paper setup-card">
       <div class="setup-head">
-        <h1>Stasjonstavla<small>Sett opp økta – tavla styrer tida, byttene og ryddinga. <button class="lnk" id="credBtn">♪ Om musikken</button></small></h1>
+        <h1>Stasjonstavla <span class="class-pill" id="classPill" hidden></span><small>Sett opp økta – tavla styrer tida, byttene og ryddinga. <button class="lnk" id="credBtn">♪ Om musikken</button></small></h1>
         <div class="total">Økta varer<b id="totalTime">–</b></div>
       </div>
       <div class="setup-cols">
@@ -395,10 +396,15 @@ function actOf(i){ var k = cfg.stIcons[i]; if(!k) return -1; for(var a=0;a<ACTS.
 function actImg(a, cls){ return '<img class="'+(cls||'')+'" src="fagikoner/ikon-'+ACTS[a][0]+'.webp" alt="" onerror="this.style.display=\'none\'">'; }
 function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)*50)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
 (function(){ var im = new Image(); im.onerror = function(){ document.getElementById('canvas').classList.add('no-sprite'); }; im.src = 'stasjoner-ikoner.webp'; })();
-var KEY = 'myntland-stasjoner-v1';
+/* Åpnes tavla fra klasseportalen, følger klassens ID med i adressen (?class=…&navn=…).
+   Da huskes oppsett og topp 5 hver for seg per klasse – fortsatt bare i denne nettleseren. */
+var QS = (function(){ try{ return new URLSearchParams(location.search); }catch(e){ return { get:function(){ return null; } }; } })();
+var CLASS_ID = (QS.get('class') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64); if(CLASS_ID==='__ingen_klasse__') CLASS_ID = '';
+var CLASS_NAME = CLASS_ID ? (QS.get('navn') || '').trim().slice(0, 40) : '';
+var BASE_KEY = 'myntland-stasjoner-v1', KEY = BASE_KEY + (CLASS_ID ? '-'+CLASS_ID : '');
 var cfg = { stations:4, work:10, swap:2, rounds:4, roundsAuto:true, cleanup:3, sound:true, music:true, musicSwap:'fun-kids', musicClean:'fun-vibe', musicName:'', animals:true, sens:45,
             stNames:[], stIcons:[], icons:[0,10,20,1,11,21,2,12] };
-try{ var saved = JSON.parse(localStorage.getItem(KEY)); if(saved && typeof saved==='object'){ for(var k in cfg){ if(saved[k]!==undefined) cfg[k]=saved[k]; } } }catch(e){}
+try{ var saved = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(BASE_KEY)); if(saved && typeof saved==='object'){ for(var k in cfg){ if(saved[k]!==undefined) cfg[k]=saved[k]; } } }catch(e){}
 (function(){ var ok = Array.isArray(cfg.icons) && cfg.icons.length===8, seen={}; if(ok) cfg.icons.forEach(function(v){ if(!(v>=0 && v<ICONS.length) || seen[v]) ok=false; seen[v]=1; }); if(!ok) cfg.icons=[0,10,20,1,11,21,2,12]; })();
 if(!Array.isArray(cfg.stIcons)) cfg.stIcons = [];
 cfg.music = true;   /* 🎵-knappen på tavla demper bare for økta som pågår */
@@ -1013,7 +1019,7 @@ function finish(){
   showReport();
 }
 /* ---------- sluttrapport og topp 5 (lagres bare i denne nettleseren) ---------- */
-var REC_KEY = 'myntland-stasjoner-rekorder-v1';
+var REC_KEY = 'myntland-stasjoner-rekorder-v1' + (CLASS_ID ? '-'+CLASS_ID : '');
 function loadRecs(){ try{ var r = JSON.parse(localStorage.getItem(REC_KEY)); return Array.isArray(r) ? r : []; }catch(e){ return []; } }
 function fmtDur(sec){ sec = Math.round(sec); var m = Math.floor(sec/60), r = sec%60; return m ? (m+' min'+(r ? ' '+r+' s' : '')) : (r+' s'); }
 function fmtDate(iso){ var d = new Date(iso), mn = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des']; return isNaN(d) ? '' : d.getDate()+'. '+mn[d.getMonth()]; }
@@ -1032,7 +1038,7 @@ function showReport(){
     '<ul><li>Lengste rolige strekk: <b>'+fmtDur(stats.best)+'</b></li>'+
     '<li>'+(stats.flees===0 ? '<b>Dyrene ble ikke skremt en eneste gang!</b>' : 'Dyrene ble skremt <b>'+stats.flees+(stats.flees===1 ? ' gang' : ' ganger')+'</b>')+'</li>'+
     '<li>Flest dyr på enga samtidig: <b>'+stats.maxHerd+'</b></li></ul><div class="rep-herd">'+herdHtml+'</div></div>'+
-    '<div class="rep-top"><h3>🏆 Topp 5</h3><ol>';
+    '<div class="rep-top"><h3>🏆 Topp 5'+(CLASS_NAME ? ' – '+esc(CLASS_NAME) : '')+'</h3><ol>';
   all.forEach(function(r,i){ h += '<li class="'+(r===me ? 'now' : '')+'"><i>'+(i+1)+'</i><span>'+(r===me ? 'I dag' : fmtDate(r.d))+' · '+fmtDur(r.sec)+'</span><b>'+r.pct+' %</b></li>'; });
   h += '</ol>'+(all.indexOf(me)<0 ? '<p style="font-size:24px; margin:8px 0 0">Dagens økt kom ikke inn på lista denne gangen.</p>' : '')+'<button class="lnk" id="recReset">Nullstill lista</button></div></div>';
   box.innerHTML = h; box.hidden = false; $('doneTxt').hidden = true; done.classList.add('has-report');
@@ -1090,6 +1096,7 @@ document.addEventListener('visibilitychange', function(){ if(run && !document.hi
 if(/[?&]demo/.test(location.search)){ window.__demo = true; var _bp = buildPhases; buildPhases = function(){ return _bp().map(function(p){ p.dur = p.dur/60*4; return p; }); }; }
 window.__st = { herd:herd, addAnimal:addAnimal, flee:flee, mic:mic, music:music, stats:stats };
 
+if(CLASS_NAME){ $('classPill').textContent = CLASS_NAME; $('classPill').hidden = false; }
 buildSteppers(); buildNames(); refreshSetup(); updateMicUi(); musicUi();
 })();
 </script>
