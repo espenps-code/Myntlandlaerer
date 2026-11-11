@@ -338,9 +338,10 @@ var ICON_SETS = ['Dyr og fugler','Litt av hvert','Natur og friluftsliv'];
 var ICONS = [['Rev','🦊'],['Ugle','🦉'],['Ekorn','🐿️'],['Gaupe','🐱'],['Oter','🦦'],['Lundefugl','🐧'],['Hval','🐳'],['Bjørn','🐻'],['Pinnsvin','🦔'],['Ørn','🦅'],
   ['Rakett','🚀'],['Fyrtårn','🗼'],['Kaktus','🌵'],['Robot','🤖'],['Vaffel','🧇'],['Seilbåt','⛵'],['Paraply','☂️'],['Gitar','🎸'],['Luftballong','🎈'],['Sykkel','🚲'],
   ['Fjell','🏔️'],['Gran','🌲'],['Bål','🔥'],['Kano','🛶'],['Sopp','🍄'],['Blåbær','🫐'],['Nordlys','🌌'],['Telt','⛺'],['Snøfnugg','❄️'],['Regnbue','🌈']];
-/* Aktivitetsikoner til stasjonene: Myntlands fagikoner (mappa fagikoner/). Velger læreren et ikon uten å skrive navn, får stasjonen ikonets navn. */
-var ACTS = [['book','Lesing'],['arbeid','Skriving'],['math','Matte'],['digital','Digitalt'],['lek','Spill og lek'],['art','Tegning'],['music','Musikk'],['nature','Utforsking'],['engelsk','Engelsk'],
-  ['samfunn','Samarbeid'],['sosial','Samtale'],['gym','Bevegelse'],['krle','KRLE'],['mathelse','Mat og helse'],['svomming','Svømming'],['valgfag','Valgfritt'],['annet','Annet']];
+/* Aktivitetsikoner til stasjonene: Myntlands fagikoner pluss ti egne stasjonsikoner (alle i mappa fagikoner/). Velger læreren et ikon uten å skrive navn, får stasjonen ikonets navn. */
+var ACTS = [['laererstasjon','Lærerstasjon'],['book','Lesing'],['arbeid','Skriving'],['math','Matte'],['lytting','Lytting'],['digital','Digitalt'],['video','Video'],['brettspill','Brettspill'],['kortspill','Kortspill'],['puslespill','Puslespill'],
+  ['lek','Spill og lek'],['klipp','Klipp og lim'],['art','Tegning'],['eksperiment','Eksperiment'],['nature','Utforsking'],['maaling','Måling'],['klokka','Klokka'],['music','Musikk'],['gym','Bevegelse'],['samfunn','Samarbeid'],
+  ['sosial','Samtale'],['engelsk','Engelsk'],['krle','KRLE'],['mathelse','Mat og helse'],['svomming','Svømming'],['valgfag','Valgfritt'],['annet','Annet']];
 function actOf(i){ var k = cfg.stIcons[i]; if(!k) return -1; for(var a=0;a<ACTS.length;a++) if(ACTS[a][0]===k) return a; return -1; }
 function actImg(a, cls){ return '<img class="'+(cls||'')+'" src="fagikoner/ikon-'+ACTS[a][0]+'.webp" alt="" onerror="this.style.display=\'none\'">'; }
 function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)*50)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
@@ -436,7 +437,7 @@ function openPicker(g){
 }
 function openStPicker(st){
   $('pickTitle').textContent = 'Velg aktivitet for stasjon ' + (st+1);
-  var cur = actOf(st), h = '<h3>Velger du et ikon uten å skrive navn, får stasjonen navnet til ikonet.</h3><div class="pick-row" style="grid-template-columns:repeat(9,1fr)">';
+  var cur = actOf(st), h = '<h3>Velger du et ikon uten å skrive navn, får stasjonen navnet til ikonet.</h3><div class="pick-row">';
   for(var a=0;a<ACTS.length;a++) h += '<button class="pick-item'+(a===cur ? ' sel' : '')+'" data-a="'+a+'">'+actImg(a,'actimg')+ACTS[a][1]+'</button>';
   h += '<button class="pick-item'+(cur<0 ? ' sel' : '')+'" data-a="-1"><span class="none">'+(st+1)+'</span>Bare tall</button></div>';
   $('pickBody').innerHTML = h;
