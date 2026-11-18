@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lærerveiledning – Spelling Express | Myntland</title>
+<link rel="icon" type="image/png" sizes="32x32" href="spelling-express-ikoner/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="spelling-express-ikoner/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+:root{
+  --blue:#1a5fa5; --blue-light:#dbeafe; --blue-dark:#123f6e;
+  --green:#1D9E75; --green-light:#E1F5EE; --green-dark:#085041;
+  --amber:#EF9F27; --amber-light:#FAEEDA; --amber-dark:#c27a12;
+  --coral:#D85A30; --coral-light:#FAECE7;
+  --purple:#534AB7; --purple-light:#EEEDFE;
+  --bg:#F7F9F7; --text:#1a2e1a; --muted:#5a7a5a; --line:#e4ebe4;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Nunito,system-ui,sans-serif;color:var(--text);background:var(--bg);font-size:18px;line-height:1.6}
+h1,h2,h3{font-family:"Fredoka One",Nunito,sans-serif;font-weight:400;color:var(--blue-dark);line-height:1.15}
+a{color:var(--blue);font-weight:800}
+img{max-width:100%}
+.hero{background:linear-gradient(160deg,#8fd3f4 0%,#e9f7ff 70%);padding:40px 22px 60px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;left:-10%;right:-10%;bottom:-60px;height:120px;background:#7fbf5a;border-radius:50%}
+.hero .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:30px;position:relative;z-index:1}
+.hero img.logo{width:190px;height:190px;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18));flex:none}
+.hero .kicker{font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);font-size:14px}
+.hero h1{font-size:clamp(40px,6vw,64px);margin:4px 0 8px}
+.hero h1 b{color:var(--coral);font-weight:400}
+.hero p{font-size:20px;font-weight:700;color:#2f4a5f;margin:0 0 16px;max-width:620px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:12px 18px;font:inherit;font-weight:900;font-size:16px;background:#fff;color:var(--blue-dark);box-shadow:0 4px 0 rgba(18,63,110,.2);text-decoration:none;cursor:pointer}
+.btn.blue{background:var(--blue);color:#fff;box-shadow:0 4px 0 var(--blue-dark)}
+.btn img{width:24px;height:24px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.layout{max-width:1100px;margin:0 auto;padding:30px 22px 60px;display:grid;grid-template-columns:230px 1fr;gap:34px}
+@media (max-width:860px){.layout{grid-template-columns:1fr}.toc{position:static!important}.hero .in{flex-direction:column;text-align:center}.hero p{margin-left:auto;margin-right:auto}.btns{justify-content:center}}
+.toc{position:sticky;top:20px;align-self:start;background:#fff;border-radius:20px;padding:18px;box-shadow:0 6px 20px rgba(18,63,110,.07)}
+.toc b{font-family:"Fredoka One";font-weight:400;color:var(--blue-dark);font-size:18px}
+.toc ol{margin:10px 0 0;padding-left:20px;font-size:15px;line-height:1.9}
+.toc a{text-decoration:none;font-weight:800}
+main section{background:#fff;border-radius:24px;padding:28px 30px;margin-bottom:22px;box-shadow:0 6px 20px rgba(18,63,110,.07)}
+main h2{font-size:32px;margin:0 0 10px;display:flex;align-items:center;gap:12px}
+main h2 img{width:46px;height:46px}
+main h3{font-size:22px;margin:22px 0 6px}
+.lead{font-size:20px;font-weight:700;color:#2f4a5f}
+.shot{border-radius:16px;box-shadow:0 8px 24px rgba(18,63,110,.16);display:block;margin:14px 0 6px;width:100%}
+.cap{font-size:14px;color:var(--muted);font-weight:700;margin:0 0 10px}
+.steps{counter-reset:s;list-style:none;padding:0;margin:12px 0}
+.steps li{counter-increment:s;position:relative;padding:0 0 14px 52px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:"Fredoka One";display:grid;place-items:center;font-size:18px}
+.stops{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:14px}
+@media (max-width:700px){.stops{grid-template-columns:1fr}}
+.stop{border-radius:20px;padding:18px;color:#fff;position:relative;overflow:hidden}
+.stop .n{font-family:"Fredoka One";font-size:14px;letter-spacing:1px;opacity:.9}
+.stop h3{color:#fff;margin:2px 0 6px;font-size:26px}
+.stop p{margin:0 0 6px;font-weight:700;font-size:16px}
+.stop .skill{display:inline-block;background:rgba(255,255,255,.22);border-radius:999px;padding:3px 12px;font-size:14px;font-weight:900}
+.stop img.ic{position:absolute;right:10px;bottom:8px;width:84px;height:84px;opacity:.95}
+.stop .txt{padding-right:84px}
+.s1{background:linear-gradient(140deg,#EF9F27,#D85A30)} .s2{background:linear-gradient(140deg,#2b8bd6,#1a5fa5)}
+.s3{background:linear-gradient(140deg,#25b58a,#085041)} .s4{background:linear-gradient(140deg,#7a6fe0,#3c3489)}
+.tip{display:flex;gap:14px;align-items:flex-start;background:var(--amber-light);border-radius:16px;padding:14px 16px;margin:14px 0}
+.tip img{width:40px;height:40px;flex:none}
+.tip.green{background:var(--green-light)} .tip.blue{background:var(--blue-light)} .tip.purple{background:var(--purple-light)}
+.tip p{margin:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:700px){.grid2{grid-template-columns:1fr}}
+.card{border:2px solid var(--line);border-radius:18px;padding:16px}
+.card h3{margin-top:0}
+table{width:100%;border-collapse:collapse;font-size:16px;margin-top:8px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+details{border:2px solid var(--line);border-radius:14px;padding:12px 16px;margin:10px 0}
+summary{font-weight:900;cursor:pointer;color:var(--blue-dark)}
+details p{margin:8px 0 0}
+code,kbd{background:#eef2f6;border-radius:6px;padding:1px 6px;font-size:.92em}
+.foot{text-align:center;color:var(--muted);font-weight:700;font-size:14px;padding:10px 0 30px}
+@media print{
+  body{background:#fff;font-size:12pt}
+  .hero{padding:10px 0 20px;background:none}.hero::after{display:none}
+  .hero img.logo{width:110px;height:110px}
+  .toc,.btns,.noprint{display:none!important}
+  .layout{display:block;padding:0}
+  main section{box-shadow:none;border:1px solid #ddd;break-inside:avoid-page;page-break-inside:avoid;padding:16px 18px}
+  .shot{box-shadow:none;border:1px solid #ddd;max-height:9cm;width:auto;margin-left:auto;margin-right:auto}
+  .stop{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  a{color:var(--text);text-decoration:none}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="in">
+    <img class="logo" src="spelling-express-ikoner/logo.webp" alt="">
+    <div>
+      <div class="kicker">Lærerveiledning · Myntland</div>
+      <h1>Spelling <b>Express</b></h1>
+      <p>Engelsk rettskriving som togspill. Elevene laster toget, bygger broen, kjører opp fjellet og henter passasjerer – ett riktig stavet ord om gangen.</p>
+      <div class="btns">
+        <a class="btn blue" href="spelling-express-laerer.html"><img src="spelling-express-ikoner/lim.webp" alt="">Lag gloseliste</a>
+        <a class="btn" href="spelling-express.html"><img src="spelling-express-ikoner/logo.webp" alt="">Åpne elevsiden</a>
+        <button class="btn noprint" onclick="window.print()"><img src="spelling-express-ikoner/skriver.webp" alt="">Skriv ut veiledningen</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <b>Innhold</b>
+    <ol>
+      <li><a href="#om">Hva er Spelling Express?</a></li>
+      <li><a href="#kom-i-gang">Kom i gang</a></li>
+      <li><a href="#lage-liste">Lage gloselister</a></li>
+      <li><a href="#dele">Dele med elevene</a></li>
+      <li><a href="#stoppene">De fire stoppene</a></li>
+      <li><a href="#belonning">Stjerner og verkstedet</a></li>
+      <li><a href="#undervisning">Tips til undervisningen</a></li>
+      <li><a href="#personvern">Personvern</a></li>
+      <li><a href="#sporsmal">Spørsmål og svar</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="om">
+      <h2><img src="spelling-express-ikoner/logo.webp" alt="">Hva er Spelling Express?</h2>
+      <p class="lead">Spelling Express er et spill for å øve på engelske gloser og rettskriving. Læreren lager ukas gloseliste og deler den med en kode – elevene øver på sin egen iPad.</p>
+      <p>Hver liste blir en togreise med fire stopp. Stoppene bygger på hverandre, fra å kjenne igjen ordene til å stave dem selv og bruke dem i en setning:</p>
+      <table>
+        <tr><th>Stopp</th><th>Eleven øver på</th></tr>
+        <tr><td><b>1. Lasteplassen</b></td><td>Koble det norske ordet til det engelske (gjenkjenne)</td></tr>
+        <tr><td><b>2. Broen</b></td><td>Sette sammen ordet av bokstaver (stavemønster)</td></tr>
+        <tr><td><b>3. Fjellbakken</b></td><td>Skrive hele ordet selv (aktiv staving)</td></tr>
+        <tr><td><b>4. Endestasjonen</b></td><td>Velge riktig ord i en setning (forstå og bruke)</td></tr>
+      </table>
+      <div class="tip green"><img src="spelling-express-ikoner/sjekk.webp" alt=""><p><b>Hvorfor det virker:</b> Eleven møter de samme ordene mange ganger på ulike måter. Ord eleven bommer på, kommer tilbake senere i samme runde, slik at de vanskelige ordene får mest øving.</p></div>
+      <p>Spelling Express passer fra ca. 3. til 7. trinn. Listebanken har egne temaer for 1.–4. og 5.–7. trinn.</p>
+    </section>
+
+    <section id="kom-i-gang">
+      <h2><img src="spelling-express-ikoner/verksted.webp" alt="">Kom i gang</h2>
+      <ol class="steps">
+        <li><b>Åpne lærersiden</b> – <a href="spelling-express-laerer.html">myntland.no/spelling-express-laerer.html</a>, eller kortet «Spelling Express» under lærerverktøy på forsiden av Myntland.</li>
+        <li><b>Logg inn</b> med Google eller med e-post og passord. Første gang trykker du «Lag ny konto». Har du glemt passordet, sender «Glemt passordet?» en lenke på e-post.</li>
+        <li><b>Lag ukas liste</b> og trykk «Lagre og del». Du får en kode på 6 tegn og en QR-kode.</li>
+        <li><b>Gi koden til elevene.</b> De åpner <a href="spelling-express.html">myntland.no/spelling-express.html</a> på iPaden, skriver inn koden og er i gang.</li>
+      </ol>
+      <div class="tip blue"><img src="spelling-express-ikoner/laas.webp" alt=""><p>Det er bare læreren som trenger konto. Elevene logger ikke inn og oppgir ingen opplysninger om seg selv.</p></div>
+    </section>
+
+    <section id="lage-liste">
+      <h2><img src="spelling-express-ikoner/lim.webp" alt="">Lage gloselister</h2>
+      <p>Trykk «Ny liste», gi lista et navn (for eksempel «Uke 47 – Dyr») og velg trinn. Så fyller du inn ordene. Det finnes tre raske måter:</p>
+      <div class="grid2">
+        <div class="card"><h3>Skriv bare engelsk</h3><p>Skriv det engelske ordet, så foreslår siden det norske. Trykk «Bruk». Det går også motsatt vei.</p></div>
+        <div class="card"><h3>Lim inn</h3><p>Lim inn fra ukeplanen, Word eller Excel. Én linje per ord, for eksempel <code>dog – hund</code>. Siden finner selv ut hva som er norsk og engelsk.</p></div>
+        <div class="card"><h3>Listebanken</h3><p>32 ferdige temaer – farger, dyr, skolen, uregelrette verb, jul og mye mer. Velg ordene du vil ha med.</p></div>
+        <div class="card"><h3>Setninger</h3><p>Under hvert ord kan du skrive en setning der ordet står. Ordene fra listebanken har ferdige setninger.</p></div>
+      </div>
+      <img class="shot" src="spelling-express-veiledning/listebank.webp" alt="Listebanken med temaer og ord">
+      <p class="cap">Listebanken: velg et tema, huk av ordene og trykk «Legg til valgte».</p>
+      <h3>Siden passer på for deg</h3>
+      <p>Mens du skriver, kontrollerer siden lista og viser små merker under ordene:</p>
+      <ul>
+        <li><b>Mulige skrivefeil:</b> «Mente du <i>because</i>?» – trykk «Bytt» for å rette.</li>
+        <li><b>Britisk og amerikansk staving:</b> For ord som <i>colour/color</i> kan du godta begge med ett trykk.</li>
+        <li><b>Ugyldige tegn:</b> æ, ø, å og tall kan ikke være med i det engelske ordet.</li>
+        <li><b>Setningen må inneholde ordet</b> – ellers får du en rød melding.</li>
+        <li><b>Doble ord og svært lange ord</b> blir markert.</li>
+      </ul>
+      <img class="shot" src="spelling-express-veiledning/laerer.webp" alt="Lærersiden med kontroll av ord og setninger">
+      <p class="cap">Røde merker må rettes før du kan lagre. Grønne merker er forslag du kan bruke.</p>
+      <div class="tip purple"><img src="spelling-express-ikoner/stjerne.webp" alt=""><p><b>Utfordringsord:</b> Trykk på stjernen ved et ord for å gjøre det til et utfordringsord. Elevene velger selv om de vil øve på bare grunnordene eller alle ordene. Det gjør det lett å differensiere med én og samme liste.</p></div>
+      <div class="tip"><img src="spelling-express-ikoner/ende.webp" alt=""><p><b>Stopp 4 krever setninger.</b> Endestasjonen blir med når minst tre ord i lista har en setning. Nederst på lærersiden ser du hvor mange setninger lista har.</p></div>
+    </section>
+
+    <section id="dele">
+      <h2><img src="spelling-express-ikoner/lenke.webp" alt="">Dele med elevene</h2>
+      <p>Når lista er lagret, får du alt du trenger for å dele den:</p>
+      <img class="shot" src="spelling-express-veiledning/deling.webp" alt="Kode, QR-kode og lenke til lista" style="max-width:700px">
+      <ul>
+        <li><b>Koden</b> (6 tegn) – skriv den på tavla. Elevene taster den inn på elevsiden.</li>
+        <li><b>QR-koden</b> – elevene skanner den med kameraet på iPaden og kommer rett inn i lista.</li>
+        <li><b>Lenken</b> – legg den i Teams, Showbie eller ukeplanen.</li>
+        <li><b>QR-plakat</b> – «Skriv ut QR-plakat» gir et A4-ark med navn, kode og stor QR-kode.</li>
+      </ul>
+      <p>Lista lagres under <b>Mine øvelister</b> på elevens iPad, så eleven kan øve på den igjen senere uten å skrive koden på nytt. Elevene kan også lage egne øvelister.</p>
+      <div class="tip blue"><img src="spelling-express-ikoner/lagre.webp" alt=""><p><b>Endret lista etter at elevene har hentet den?</b> Lagre, og be elevene skrive inn koden én gang til. Da får de den nye versjonen – stjernene de har fått, blir ikke borte.</p></div>
+      <div class="tip green"><img src="spelling-express-ikoner/logo.webp" alt=""><p><b>Legg spillet på hjemskjermen:</b> I Safari trykker eleven på del-knappen og velger «Legg til på Hjem-skjermen». Da får spillet eget ikon og åpnes i fullskjerm.</p></div>
+    </section>
+
+    <section id="stoppene">
+      <h2><img src="spelling-express-ikoner/kasser.webp" alt="">De fire stoppene</h2>
+      <p>Eleven ser stoppene på reisekartet. Hvert stopp låses opp når det forrige er fullført, og gir én til tre stjerner.</p>
+      <img class="shot" src="spelling-express-veiledning/reisekart.webp" alt="Reisekartet med fire stopp">
+      <div class="stops">
+        <div class="stop s1"><img class="ic" src="spelling-express-ikoner/kasser.webp" alt=""><div class="txt"><span class="n">STOPP 1</span><h3>Lasteplassen</h3><p>Vognene har norske ord, kassene engelske. Eleven drar riktig kasse til riktig vogn – fire om gangen.</p><span class="skill">Gjenkjenne</span></div></div>
+        <div class="stop s2"><img class="ic" src="spelling-express-ikoner/bro.webp" alt=""><div class="txt"><span class="n">STOPP 2</span><h3>Broen</h3><p>Eleven ser det norske ordet og drar bokstavene på plass. Hvert riktig ord legger en planke på broen.</p><span class="skill">Sette sammen</span></div></div>
+        <div class="stop s3"><img class="ic" src="spelling-express-ikoner/fjell.webp" alt=""><div class="txt"><span class="n">STOPP 3</span><h3>Fjellbakken</h3><p>Eleven skriver hele ordet selv på et skjermtastatur. Toget kjører oppover for hvert riktig ord – og sklir litt tilbake ved feil.</p><span class="skill">Stave selv</span></div></div>
+        <div class="stop s4"><img class="ic" src="spelling-express-ikoner/ende.webp" alt=""><div class="txt"><span class="n">STOPP 4</span><h3>Endestasjonen</h3><p>Passasjerene har en setning der ett ord mangler. Eleven drar riktig ord inn, og passasjeren går på toget.</p><span class="skill">Bruke i setning</span></div></div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div><img class="shot" src="spelling-express-veiledning/lasteplassen.webp" alt="Lasteplassen"><p class="cap">Lasteplassen: riktig kasse på riktig vogn.</p></div>
+        <div><img class="shot" src="spelling-express-veiledning/broen.webp" alt="Broen"><p class="cap">Broen: dra bokstavene på plass.</p></div>
+        <div><img class="shot" src="spelling-express-veiledning/fjellbakken.webp" alt="Fjellbakken"><p class="cap">Fjellbakken: skriv ordet med skjermtastaturet.</p></div>
+        <div><img class="shot" src="spelling-express-veiledning/endestasjonen.webp" alt="Endestasjonen"><p class="cap">Endestasjonen: hvilket ord mangler?</p></div>
+      </div>
+      <h3>Når eleven svarer feil</h3>
+      <ul>
+        <li>Første feil: «Nesten! Prøv igjen.»</li>
+        <li>Andre feil: riktig svar vises, og ordet kommer tilbake litt senere i samme runde.</li>
+        <li>På Endestasjonen kan eleven trykke «Vis hint» og se det norske ordet. Da teller ikke ordet som riktig på første forsøk.</li>
+        <li>Bokstavene må dras på plass – det holder ikke å trykke. Det gir litt mer tid til å tenke.</li>
+      </ul>
+    </section>
+
+    <section id="belonning">
+      <h2><img src="spelling-express-ikoner/ticket.webp" alt="">Stjerner og verkstedet</h2>
+      <div class="grid2">
+        <div>
+          <h3>Stjerner</h3>
+          <p>Stjernene viser hvor mange ord eleven fikk riktig på første forsøk:</p>
+          <ul><li>3 stjerner: minst 90 %</li><li>2 stjerner: minst 70 %</li><li>1 stjerne: stoppet er fullført</li></ul>
+          <h3>Billetter</h3>
+          <p>Eleven får én billett for hvert ord som er riktig på første forsøk, og tre ekstra for en feilfri runde.</p>
+        </div>
+        <div>
+          <img class="shot" src="spelling-express-veiledning/verksted.webp" alt="Verkstedet">
+          <p class="cap">I verkstedet bruker eleven billettene på nye lokomotiver, farger og et eget navn på toget.</p>
+        </div>
+      </div>
+      <p>Det finnes fire lokomotiver: damplok, diesel, ellok og lyntog. Billettene er ikke koblet til myntene i Myntland.</p>
+    </section>
+
+    <section id="undervisning">
+      <h2><img src="spelling-express-ikoner/boker.webp" alt="">Tips til undervisningen</h2>
+      <div class="grid2">
+        <div class="card"><h3>Ukas gloser</h3><p>Lag én liste per uke. Elevene tar Lasteplassen og Broen tidlig i uka og Fjellbakken og Endestasjonen mot slutten, før gloseprøven.</p></div>
+        <div class="card"><h3>Stasjonsarbeid</h3><p>Bruk spillet som én av stasjonene. Ett stopp tar typisk 5–10 minutter, så det passer fint inn i en rotasjon.</p></div>
+        <div class="card"><h3>Lekse</h3><p>Lenken fungerer også hjemme. Del lenken i ukeplanen, så kan elevene øve på samme liste.</p></div>
+        <div class="card"><h3>Differensiering</h3><p>Merk vanskelige ord som utfordringsord. Elever som trenger det, øver på grunnordene; de som vil ha mer, velger «Alle ord».</p></div>
+        <div class="card"><h3>Gjennomgang på tavla</h3><p>Åpne elevsiden på smartboardet og spill Lasteplassen sammen med klassen når nye ord introduseres.</p></div>
+        <div class="card"><h3>Gode setninger</h3><p>Lag setninger som gir sammenheng, så bare ett ord passer: «The dog is barking at the cat» er bedre enn «I like the dog».</p></div>
+      </div>
+    </section>
+
+    <section id="personvern">
+      <h2><img src="spelling-express-ikoner/laas.webp" alt="">Personvern</h2>
+      <ul>
+        <li><b>Elevene har ingen konto</b> og oppgir ikke navn eller andre opplysninger.</li>
+        <li><b>Gloselistene inneholder bare ord og setninger</b> – ingen opplysninger om elevene.</li>
+        <li><b>Lærerkontoen</b> lagrer navn og e-post for innlogging (Firebase Authentication).</li>
+        <li><b>Listene lagres i Firebase i EU</b> (Belgia). Den som har koden, kan lese akkurat den lista, men ingen kan bla gjennom andres lister. Bare læreren som eier en liste, kan endre eller slette den.</li>
+        <li><b>Elevens framgang</b> – stjerner, billetter og tog – lagres bare på elevens egen iPad, ikke på noen server.</li>
+        <li>Ingen reklame og ingen analyseverktøy.</li>
+      </ul>
+      <div class="tip"><img src="spelling-express-ikoner/sjekk.webp" alt=""><p>Siden ingenting lagres om elevene, skal ikke elevenes navn skrives inn i lister eller setninger.</p></div>
+    </section>
+
+    <section id="sporsmal">
+      <h2><img src="spelling-express-ikoner/se.webp" alt="">Spørsmål og svar</h2>
+      <details><summary>Eleven ser ikke stopp 4 (Endestasjonen)</summary><p>Stopp 4 vises når minst tre ord i lista har en setning. Legg inn setninger på lærersiden, lagre, og be eleven hente lista på nytt med koden.</p></details>
+      <details><summary>Jeg har endret lista – får elevene endringene?</summary><p>Elevene har en kopi av lista på iPaden. Be dem skrive inn koden én gang til, så får de den nye versjonen. Stjernene beholdes.</p></details>
+      <details><summary>«Fant ingen liste med den koden»</summary><p>Sjekk at koden er skrevet riktig. Koden bruker aldri bokstavene I og O eller tallene 0 og 1, så de kan ikke forveksles. Er lista slettet, virker ikke koden lenger.</p></details>
+      <details><summary>Kan ordene ha mellomrom, bindestrek eller apostrof?</summary><p>Ja. «ice cream», «t-shirt» og «o'clock» fungerer. Mellomrom og tegn vises ferdig utfylt, så eleven bare staver bokstavene.</p></details>
+      <details><summary>Store bokstaver (Monday, English)?</summary><p>Spillet bruker små bokstaver, så «Monday» blir «monday». Snakk gjerne med elevene om at ukedager og språk skrives med stor bokstav på engelsk.</p></details>
+      <details><summary>Britisk eller amerikansk staving?</summary><p>For ord som colour/color, favourite/favorite og grey/gray foreslår lærersiden å godta begge. Da er begge riktige når eleven skriver selv.</p></details>
+      <details><summary>Eleven har fått ny iPad – er framgangen borte?</summary><p>Framgangen ligger på iPaden. Lista hentes enkelt igjen med koden, men stjerner og billetter starter på nytt.</p></details>
+      <details><summary>Kan to lærere dele samme liste?</summary><p>Koden kan brukes av alle elever, også i andre klasser. Bare læreren som laget lista kan endre den. Vil en kollega ha sin egen versjon, kan de lime inn ordene i en ny liste på sin egen konto.</p></details>
+      <details><summary>Fungerer det uten internett?</summary><p>Eleven trenger nett for å hente en liste og åpne spillet. Selve spillingen krever bare at siden er lastet.</p></details>
+    </section>
+
+    <p class="foot">Spelling Express er en del av Myntland · <a href="index.html">myntland.no</a></p>
+  </main>
+</div>
+</body>
+</html>
