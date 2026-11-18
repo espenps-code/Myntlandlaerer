@@ -164,25 +164,33 @@ input{ font-family:inherit; color:inherit; }
 #bigPlay{ font-size:44px; padding:12px 56px; animation:readypulse 1.6s ease-in-out infinite; }
 @keyframes readypulse{ 50%{ transform:scale(1.06); } }
 .ctrls{ position:absolute; left:50%; bottom:16px; transform:translateX(-50%); display:flex; gap:14px; align-items:center; z-index:15; }
-.mini-meter{ position:absolute; left:26px; top:20px; width:220px; padding:8px 16px 14px; border-radius:18px; z-index:13; }
+.mini-meter{ width:210px; padding:6px 16px 12px; border-radius:18px; margin-right:6px; box-shadow:0 6px 0 rgba(42,31,61,.22); }
 .mini-meter .meter{ height:20px; margin:0; }
 .mini-meter span{ display:block; font-size:19px; font-weight:500; text-align:center; margin-bottom:3px; }
 
 .ring{ position:absolute; inset:0; z-index:9; pointer-events:none; }
-.ring ellipse{ fill:none; stroke:var(--ink); stroke-opacity:.22; stroke-width:10; stroke-dasharray:4 30; stroke-linecap:round; }
+.ring .path{ fill:none; stroke:var(--ink); stroke-opacity:.22; stroke-width:10; stroke-dasharray:4 30; stroke-linecap:round; }
 .ring polygon{ fill:var(--ink); opacity:.3; }
-.ring.switching ellipse{ stroke:var(--gold-deep); stroke-opacity:.9; stroke-width:14; }
+.ring.switching .path{ stroke:var(--gold-deep); stroke-opacity:.9; stroke-width:14; }
 .ring.switching polygon{ fill:var(--gold-deep); opacity:1; }
-.ring.walking ellipse{ animation:march 1.2s linear infinite; }
+.ring.walking .path{ animation:march 1.2s linear infinite; }
 @keyframes march{ to{ stroke-dashoffset:-34; } }
 .grid{ position:absolute; inset:0; z-index:10; }
 .st{ position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; overflow:hidden; }
 .st-head{ display:flex; align-items:center; gap:12px; padding:6px 14px; height:60px; border-bottom:var(--border); background:var(--cream-2); }
 .st-head .badge{ width:44px; height:44px; font-size:26px; }
 .st-head b{ font-size:32px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.grid.big .st-head{ height:76px; padding:8px 18px; gap:16px; }
+.grid.big .st-head .badge{ width:56px; height:56px; font-size:32px; }
+.grid.big .st-head b{ font-size:44px; }
+.st-act img.own{ object-fit:cover; border:var(--border); border-radius:18px; background:#fff; }
+.stpick img.own{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.pick-item img.own{ width:104px; height:104px; object-fit:cover; border:4px solid var(--ink); border-radius:18px; }
+.own-row{ display:flex; align-items:center; gap:18px; margin-top:14px; padding-top:14px; border-top:3px dashed var(--cream-3); font-size:24px; color:var(--ink-soft); }
+.own-row .btn{ font-size:26px; padding:10px 22px; flex:none; }
 .st-mid{ flex:1; display:flex; min-height:0; }
-.st-act{ width:50%; display:grid; place-items:center; padding:8px; border-right:3px dashed var(--cream-3); min-height:0; }
-.st-act img{ width:100%; height:100%; object-fit:contain; min-height:0; }
+.st-act{ position:relative; width:50%; display:grid; place-items:center; border-right:3px dashed var(--cream-3); min-height:0; }
+.st-act img{ position:absolute; left:8px; top:8px; width:calc(100% - 16px); height:calc(100% - 16px); object-fit:contain; }
 .st-act .bignum{ font-size:calc(var(--ch) * .42); font-weight:700; line-height:1; color:var(--cream-3); -webkit-text-stroke:3px var(--ink-soft); }
 
 /* gruppene (brikker som ligger oppå kortene) */
@@ -195,7 +203,7 @@ input{ font-family:inherit; color:inherit; }
 .token{ position:absolute; transform:translate(-50%,-50%) scale(var(--ts,1)); display:flex; flex-direction:column; align-items:center; z-index:2; }
 .token .ico{ filter:drop-shadow(0 6px 0 rgba(42,31,61,.2)); animation:idle 2.6s ease-in-out infinite; animation-delay:var(--ad); }
 .chip{ border:var(--border); border-radius:40px; padding:0 18px; margin-top:-12px; font-size:27px; font-weight:600; white-space:nowrap; background:var(--paper); box-shadow:0 4px 0 rgba(42,31,61,.2); position:relative; }
-.fol{ position:absolute; transform:translate(-50%,-50%) scale(var(--fs,0)); z-index:1; --s:62px; }
+.fol{ position:absolute; transform:translate(-50%,-50%) scale(var(--fs,0)); z-index:1; --s:calc(62px * max(1, var(--ts,1) * .85)); }
 .fol .ico{ filter:drop-shadow(0 4px 0 rgba(42,31,61,.2)); }
 @keyframes idle{ 50%{ transform:translateY(-5px); } }
 .tokens.lineup .token .ico{ animation:none; }
@@ -345,7 +353,6 @@ input{ font-family:inherit; color:inherit; }
   <!-- ============ TAVLA ============ -->
   <section id="board" hidden>
     <svg class="ring" id="ring" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
-    <div class="paper mini-meter" id="miniMeter"><span>Lydnivå</span><div class="meter"><i></i><s></s></div></div>
     <div class="hub" id="hub">
       <div class="paper clock" id="clock">
         <div class="hushbig" id="clockHush" aria-hidden="true"></div>
@@ -357,6 +364,7 @@ input{ font-family:inherit; color:inherit; }
       <button class="btn go" id="bigPlay" hidden>▶ Start økta</button>
     </div>
     <div class="ctrls" id="ctrls">
+      <div class="paper mini-meter" id="miniMeter"><span>Lydnivå</span><div class="meter"><i></i><s></s></div></div>
       <button class="btn round" id="micBtn" title="Dyr og lydmåler av/på" aria-label="Dyr og lydmåler av/på">🎤</button>
       <button class="btn round" id="sndBtn" title="Lydsignal av/på" aria-label="Lydsignal av/på">🔔</button>
       <button class="btn round" id="musBtn" title="Musikk av/på" aria-label="Musikk av/på">🎵</button>
@@ -393,6 +401,40 @@ var ACTS = [['laererstasjon','Lærerstasjon'],['book','Lesing'],['arbeid','Skriv
   ['lek','Spill og lek'],['klipp','Klipp og lim'],['art','Tegning'],['eksperiment','Eksperiment'],['nature','Utforsking'],['maaling','Måling'],['klokka','Klokka'],['music','Musikk'],['gym','Bevegelse'],['samfunn','Samarbeid'],
   ['sosial','Samtale'],['engelsk','Engelsk'],['krle','KRLE'],['mathelse','Mat og helse'],['svomming','Svømming'],['valgfag','Valgfritt'],['annet','Annet']];
 function actOf(i){ var k = cfg.stIcons[i]; if(!k) return -1; for(var a=0;a<ACTS.length;a++) if(ACTS[a][0]===k) return a; return -1; }
+/* Egne bilder til stasjonene: forminskes og lagres bare i denne nettleseren (IndexedDB), per klasse og stasjon. */
+var ownImgs = {};
+function ownKey(i){ return 'stimg|'+CLASS_ID+'|'+i; }
+function hasOwn(i){ return cfg.stIcons[i]==='own' && !!ownImgs[i]; }
+function ownImg(i, cls){ return '<img class="own '+(cls||'')+'" src="'+ownImgs[i]+'" alt="">'; }
+function stPic(i, cls){ return hasOwn(i) ? ownImg(i, cls) : (actOf(i)>=0 ? actImg(actOf(i), cls) : ''); }
+function loadOwnImgs(){
+  idb(function(db){ if(!db) return; var left = 8, any = false;
+    for(var i=0;i<8;i++) (function(i){ try{ var q = db.transaction('files').objectStore('files').get(ownKey(i));
+      q.onsuccess = function(){ if(q.result){ ownImgs[i] = URL.createObjectURL(q.result); any = true; } if(--left===0 && any) buildNames(); };
+      q.onerror = function(){ if(--left===0 && any) buildNames(); }; }catch(e){} })(i);
+  });
+}
+function setOwnImg(st, file, done){
+  var url = URL.createObjectURL(file), im = new Image();
+  im.onload = function(){
+    var max = 640, k = Math.min(1, max/Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(im.naturalWidth*k)); c.height = Math.max(1, Math.round(im.naturalHeight*k));
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); try{ URL.revokeObjectURL(url); }catch(e){}
+    c.toBlob(function(blob){ if(!blob){ done(false); return; }
+      if(ownImgs[st]){ try{ URL.revokeObjectURL(ownImgs[st]); }catch(e){} }
+      ownImgs[st] = URL.createObjectURL(blob); cfg.stIcons[st] = 'own'; save();
+      idb(function(db){ if(db){ try{ db.transaction('files','readwrite').objectStore('files').put(blob, ownKey(st)); }catch(e){} } });
+      done(true);
+    }, 'image/webp', .85);
+  };
+  im.onerror = function(){ try{ URL.revokeObjectURL(url); }catch(e){} done(false); };
+  im.src = url;
+}
+function removeOwnImg(st){
+  if(ownImgs[st]){ try{ URL.revokeObjectURL(ownImgs[st]); }catch(e){} delete ownImgs[st]; }
+  if(cfg.stIcons[st]==='own') cfg.stIcons[st] = ''; save();
+  idb(function(db){ if(db){ try{ db.transaction('files','readwrite').objectStore('files').delete(ownKey(st)); }catch(e){} } });
+}
 function actImg(a, cls){ return '<img class="'+(cls||'')+'" src="fagikoner/ikon-'+ACTS[a][0]+'.webp" alt="" onerror="this.style.display=\'none\'">'; }
 function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)*50)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
 (function(){ var im = new Image(); im.onerror = function(){ document.getElementById('canvas').classList.add('no-sprite'); }; im.src = 'stasjoner-ikoner.webp'; })();
@@ -409,7 +451,7 @@ try{ var saved = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(BA
 if(!Array.isArray(cfg.stIcons)) cfg.stIcons = [];
 cfg.music = true;   /* 🎵-knappen på tavla demper bare for økta som pågår */
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} }
-function stDefault(i){ var a = actOf(i); return a>=0 ? ACTS[a][1] : 'Stasjon '+(i+1); }
+function stDefault(i){ var a = (cfg.stIcons[i]==='own') ? -1 : actOf(i); return a>=0 ? ACTS[a][1] : 'Stasjon '+(i+1); }
 function stName(i){ return (cfg.stNames[i]||'').trim() || stDefault(i); }
 function grName(i){ return ICONS[cfg.icons[i]][0]; }
 function $(id){ return document.getElementById(id); }
@@ -460,7 +502,7 @@ function buildSteppers(){
 function buildNames(){
   var h='';
   for(var i=0;i<cfg.stations;i++){
-    h += '<div class="name-row"><button class="badge stpick" data-sti="'+i+'" aria-label="Velg aktivitetsikon for stasjon '+(i+1)+'" title="Velg aktivitetsikon">'+(actOf(i)>=0 ? actImg(actOf(i)) : (i+1))+'</button>'+
+    h += '<div class="name-row"><button class="badge stpick" data-sti="'+i+'" aria-label="Velg aktivitetsikon for stasjon '+(i+1)+'" title="Velg aktivitetsikon eller eget bilde">'+(stPic(i) || (i+1))+'</button>'+
          '<input type="text" maxlength="22" data-st="'+i+'" placeholder="'+esc(stDefault(i))+'" value="'+esc(cfg.stNames[i]||'')+'" aria-label="Navn på stasjon '+(i+1)+'"></div>'+
          '<div class="name-row"><button class="pick" data-gr="'+i+'" aria-label="Bytt ikon for gruppa som starter på stasjon '+(i+1)+'">'+icoHtml(cfg.icons[i])+esc(grName(i))+'</button></div>';
   }
@@ -493,13 +535,23 @@ function openPicker(g){
 }
 function openStPicker(st){
   $('pickTitle').textContent = 'Velg aktivitet for stasjon ' + (st+1);
-  var cur = actOf(st), h = '<h3>Velger du et ikon uten å skrive navn, får stasjonen navnet til ikonet.</h3><div class="pick-row">';
+  var own = hasOwn(st), cur = own ? -2 : actOf(st), h = '<h3>Velger du et ikon uten å skrive navn, får stasjonen navnet til ikonet.</h3><div class="pick-row">';
   for(var a=0;a<ACTS.length;a++) h += '<button class="pick-item'+(a===cur ? ' sel' : '')+'" data-a="'+a+'">'+actImg(a,'actimg')+ACTS[a][1]+'</button>';
-  h += '<button class="pick-item'+(cur<0 ? ' sel' : '')+'" data-a="-1"><span class="none">'+(st+1)+'</span>Bare tall</button></div>';
+  h += '<button class="pick-item'+(cur===-1 ? ' sel' : '')+'" data-a="-1"><span class="none">'+(st+1)+'</span>Bare tall</button>';
+  if(ownImgs[st]) h += '<button class="pick-item'+(own ? ' sel' : '')+'" data-a="-2">'+ownImg(st)+'Eget bilde</button>';
+  h += '</div><div class="own-row"><button class="btn" id="ownPick">🖼️ '+(ownImgs[st] ? 'Bytt eget bilde' : 'Last opp eget bilde')+'</button>'+
+       (ownImgs[st] ? '<button class="btn" id="ownDel">Fjern bildet</button>' : '')+
+       '<span>Bildet lagres bare i nettleseren på denne maskinen – det lastes ikke opp noe sted.</span><input type="file" id="ownFile" accept="image/*" hidden></div>';
   $('pickBody').innerHTML = h;
   $('pickBody').querySelectorAll('.pick-item').forEach(function(b){
-    b.onclick = function(){ var a = +b.dataset.a; cfg.stIcons[st] = a>=0 ? ACTS[a][0] : ''; save(); $('picker').hidden = true; buildNames(); };
+    b.onclick = function(){ var a = +b.dataset.a; cfg.stIcons[st] = a===-2 ? 'own' : (a>=0 ? ACTS[a][0] : ''); save(); $('picker').hidden = true; buildNames(); };
   });
+  $('ownPick').onclick = function(){ $('ownFile').click(); };
+  $('ownFile').onchange = function(){
+    var f = this.files && this.files[0]; if(!f) return; var btn = $('ownPick'); btn.textContent = 'Henter bildet …';
+    setOwnImg(st, f, function(ok){ if(ok){ $('picker').hidden = true; buildNames(); } else { btn.textContent = '⚠️ Fikk ikke lest bildet – prøv et annet'; } });
+  };
+  if($('ownDel')) $('ownDel').onclick = function(){ removeOwnImg(st); buildNames(); openStPicker(st); };
   $('picker').hidden = false;
 }
 $('pickClose').onclick = function(){ $('picker').hidden = true; };
@@ -715,7 +767,7 @@ function stopMic(){
 }
 function updateMicUi(){
   $('micBtn').classList.toggle('off', !mic.on);
-  $('miniMeter').style.visibility = mic.on ? 'visible' : 'hidden';
+  $('miniMeter').style.display = mic.on ? '' : 'none';
 }
 function sample(){
   if(!mic.analyser) return;
@@ -845,21 +897,28 @@ function stationOf(group, round){ return (group + round) % cfg.stations; }
 var geo = null;
 function buildBoard(){
   var N = cfg.stations;
-  var w = N<=4 ? 400 : (N<=6 ? 360 : 330), h = N<=4 ? 230 : (N<=6 ? 205 : 192);
-  geo = { N:N, cx:960, cy:432, rx:960-34-w/2, ry:432-16-h/2, start:(N===2 ? Math.PI : -Math.PI/2), dy:30, dx:w/4 };   /* dx: gruppa står i høyre halvdel av kortet */
+  /* Kortstørrelse og plassering etter antall stasjoner. Klokka står i midten (ca. 600 × 320 med startknappen),
+     så kort rett over/under klokka kan ikke bli høyere enn 250. Med 2 og 4 stasjoner står kortene på sidene / i hjørnene og kan bli mye større. */
+  var L = { 2:[560,520,1.7], 3:[520,250,1.3], 4:[600,390,1.6], 5:[420,240,1.15], 6:[400,235,1.1], 7:[330,192,.88], 8:[330,192,.88] }[N];
+  var w = L[0], h = L[1], big = N<=4, headH = big ? 76 : 60;
+  geo = { N:N, cx:960, cy:432, rx:960-34-w/2, ry:432-16-h/2, start:-Math.PI/2, dy:headH/2, dx:w/4, ts:L[2] };   /* dx: gruppa står i høyre halvdel av kortet */
+  if(N===2){ geo.start = Math.PI; geo.ry = 300; }                                                    // venstre og høyre; stien går i bue over og under klokka
+  if(N===4){ var x0 = 34+w/2, x1 = 1920-34-w/2, y0 = 16+h/2, y1 = 848-h/2; geo.pts = [{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}]; }   // de fire hjørnene, sti i rektangel
+  $('grid').classList.toggle('big', big);
   var grid = $('grid'), html='';
   for(var i=0;i<N;i++){
-    var a = angleOf(i), x = geo.cx + geo.rx*Math.cos(a), y = geo.cy + geo.ry*Math.sin(a);
+    var c0 = centerT(i), x = c0.x, y = c0.y;
     html += '<div class="paper st" data-i="'+i+'" style="left:'+x.toFixed(0)+'px; top:'+y.toFixed(0)+'px; width:'+w+'px; height:'+h+'px; --ch:'+h+'px">'+
          '<div class="st-head"><span class="badge" style="background:var(--gold)">'+(i+1)+'</span><b>'+esc(stName(i))+'</b></div>'+
-         '<div class="st-mid"><div class="st-act">'+(actOf(i)>=0 ? actImg(actOf(i)) : '<span class="bignum">'+(i+1)+'</span>')+'</div></div></div>';
+         '<div class="st-mid"><div class="st-act">'+(stPic(i) || '<span class="bignum">'+(i+1)+'</span>')+'</div></div></div>';
   }
   grid.innerHTML = html;
-  var ring = '<ellipse cx="'+geo.cx+'" cy="'+geo.cy+'" rx="'+geo.rx+'" ry="'+geo.ry+'"/>';
+  var ring = geo.pts
+    ? '<rect class="path" x="'+geo.pts[0].x+'" y="'+geo.pts[0].y+'" width="'+(geo.pts[1].x-geo.pts[0].x)+'" height="'+(geo.pts[2].y-geo.pts[1].y)+'" rx="60"/>'
+    : '<ellipse class="path" cx="'+geo.cx+'" cy="'+geo.cy+'" rx="'+geo.rx+'" ry="'+geo.ry+'"/>';
   for(var j=0;j<N;j++){
-    var m = angleOf(j) + Math.PI/N, px = geo.cx + geo.rx*Math.cos(m), py = geo.cy + geo.ry*Math.sin(m);
-    var rot = Math.atan2(geo.ry*Math.cos(m), -geo.rx*Math.sin(m))*180/Math.PI;
-    ring += '<polygon points="-16,-20 24,0 -16,20" transform="translate('+px.toFixed(1)+' '+py.toFixed(1)+') rotate('+rot.toFixed(1)+')"/>';
+    var m0 = centerT(j+.49), m1 = centerT(j+.51), rot = Math.atan2(m1.y-m0.y, m1.x-m0.x)*180/Math.PI;
+    ring += '<polygon points="-16,-20 24,0 -16,20" transform="translate('+((m0.x+m1.x)/2).toFixed(1)+' '+((m0.y+m1.y)/2).toFixed(1)+') rotate('+rot.toFixed(1)+')"/>';
   }
   $('ring').innerHTML = ring;
   var tk='';
@@ -868,23 +927,30 @@ function buildBoard(){
     tk += '<div class="token" data-g="'+g+'" style="--ad:'+(-Math.random()*2).toFixed(2)+'s">'+icoHtml(cfg.icons[g])+'<div class="chip">'+esc(grName(g))+'</div></div>';
   }
   $('tokens').innerHTML = tk;
-  $('tokens').style.setProperty('--ts', N<=4 ? 1.2 : (N<=6 ? 1 : 0.88));
+  $('tokens').style.setProperty('--ts', geo.ts);
 }
-function angleOf(station){ return geo.start + station*2*Math.PI/geo.N; }
-function posAt(a){ return { x: geo.cx + geo.rx*Math.cos(a) + geo.dx, y: geo.cy + geo.ry*Math.sin(a) + geo.dy }; }
+/* Stien gruppene følger. t er «stasjonsnummer med desimaler»: 0 = stasjon 1, 0.5 = midt mellom stasjon 1 og 2 osv.
+   Vanligvis en ellipse; med fire stasjoner et rektangel mellom de fire hjørnekortene. */
+function centerT(t){
+  var N = geo.N;
+  if(geo.pts){ t = ((t % N) + N) % N; var i = Math.floor(t), f = t - i, a = geo.pts[i], b = geo.pts[(i+1)%N]; return { x:a.x+(b.x-a.x)*f, y:a.y+(b.y-a.y)*f }; }
+  var ang = geo.start + t*2*Math.PI/N; return { x: geo.cx + geo.rx*Math.cos(ang), y: geo.cy + geo.ry*Math.sin(ang) };
+}
+function speedT(t){ var a = centerT(t-.01), b = centerT(t+.01); return Math.max(1, Math.sqrt(Math.pow(b.x-a.x,2)+Math.pow(b.y-a.y,2))/.02); }   // piksler per stasjonssteg
+function posT(t){ var c = centerT(t); return { x:c.x+geo.dx, y:c.y+geo.dy }; }
 /* frac: 0 = på stasjonen for denne runden, 1 = framme ved neste.
    ext:  0 = gruppa står samlet, 1 = rekka er stilt opp bak lederikonet (bakover langs stien). */
 function placeTokens(round, frac, ext){
   frac = frac||0; ext = ext||0;
-  var step = 2*Math.PI/geo.N, lead = {};
+  var lead = {};
   document.querySelectorAll('.token').forEach(function(t){
-    var a = angleOf(stationOf(+t.dataset.g, round)) + frac*step, p = posAt(a); lead[t.dataset.g] = a;
+    var tt = stationOf(+t.dataset.g, round) + frac, p = posT(tt); lead[t.dataset.g] = tt;
     t.style.left = p.x.toFixed(1)+'px'; t.style.top = p.y.toFixed(1)+'px';
   });
   document.querySelectorAll('.fol').forEach(function(f){
-    var a = lead[f.dataset.g], k = +f.dataset.k;
-    for(var i=0;i<k;i++){ var ds = Math.sqrt(Math.pow(geo.rx*Math.sin(a),2) + Math.pow(geo.ry*Math.cos(a),2)); a -= ext*(i===0 ? 96 : 70)/ds; }   // ca. 70 px mellom hver i rekka
-    var p = posAt(a);
+    var tt = lead[f.dataset.g], k = +f.dataset.k;
+    for(var i=0;i<k;i++){ tt -= ext*(i===0 ? 96 : 70)*Math.max(1, geo.ts*.85)/speedT(tt-.02); }   // ca. 70 px mellom hver i rekka
+    var p = posT(tt);
     f.style.left = p.x.toFixed(1)+'px'; f.style.top = (p.y+14).toFixed(1)+'px'; f.style.setProperty('--fs', ext.toFixed(3));
   });
 }
@@ -1097,7 +1163,7 @@ if(/[?&]demo/.test(location.search)){ window.__demo = true; var _bp = buildPhase
 window.__st = { herd:herd, addAnimal:addAnimal, flee:flee, mic:mic, music:music, stats:stats };
 
 if(CLASS_NAME){ $('classPill').textContent = CLASS_NAME; $('classPill').hidden = false; }
-buildSteppers(); buildNames(); refreshSetup(); updateMicUi(); musicUi();
+buildSteppers(); buildNames(); refreshSetup(); updateMicUi(); musicUi(); loadOwnImgs();
 })();
 </script>
 </body>
