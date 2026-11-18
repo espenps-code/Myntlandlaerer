@@ -488,6 +488,9 @@ for(let i=0;i<220;i++){
   const x=-60+rnd()*360, z=(rnd()>.4? -7-rnd()*34 : 13+rnd()*30);
   if (inCanyon(x)) continue;
   if (x>-10&&x<16&&z<0&&z>-14) continue;
+  if (x>78&&x<98&&z<-3&&z>-18) continue;      // anleggsplassen ved broen
+  if (x>252&&x<276&&z<-2&&z>-16) continue;     // toppstasjonen
+  if (x>282&&x<328&&z<-2&&z>-26) continue;     // endestasjonen og byen
   tree(x,z,.7+rnd()*.9);
 }
 // skyer
@@ -511,6 +514,23 @@ for(let x=-120;x<330;x+=1.1){
 for(let x=-120;x<330;x+=2){ const x2=x+2; if (x2>X.bridgeA && x<X.bridgeB) continue; railPiece(x,x2); }
 // grusbed
 for(let x=-120;x<330;x+=4){ if (x+4>X.bridgeA && x<X.bridgeB) continue; const b=mesh(new THREE.BoxGeometry(4.05,.14,3.4),M(0xb9a98c),x+2,trackH(x+2)-.02,0,scene,false); b.rotation.z=Math.atan(trackSlope(x+2)); }
+
+// 3D-modeller fra Higgsfield (Tripo). Erstatter kodetegnede bygg når de har lastet.
+const gltfLoader=new GLTFLoader();
+function placeModel(url,{size,x,z,y,rotY=0,remove=[],onDone}){
+  gltfLoader.load(url,gltf=>{
+    const m=gltf.scene;
+    m.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+    m.rotation.y=rotY;
+    const b0=new THREE.Box3().setFromObject(m), s0=b0.getSize(new THREE.Vector3());
+    m.scale.setScalar(size/Math.max(s0.x,s0.z));
+    const b=new THREE.Box3().setFromObject(m), c=b.getCenter(new THREE.Vector3());
+    m.position.x+=x-c.x; m.position.z+=z-c.z; m.position.y+=y-b.min.y;
+    for(const r of remove) r.parent&&r.parent.remove(r);
+    scene.add(m); m.updateMatrixWorld(true);
+    onDone&&onDone(m,new THREE.Box3().setFromObject(m));
+  },undefined,err=>console.warn('Modell lastet ikke:',url,err));
+}
 
 // LASTEPLASSEN
 const DOCK=new THREE.Vector3(X.dock,0,-5.2);
@@ -567,6 +587,7 @@ new GLTFLoader().load('spelling-express-modeller/lasteplassen.glb', gltf=>{
   const stone=M(0x8f8f86);
   for(const x of [X.bridgeA-1.5,X.bridgeB+1.5]){ mesh(new THREE.BoxGeometry(3,9,4.4),stone,x,-4.5,0); }
   sign('BROEN',X.bridgeA-7,3.4,-3.4,3.4);
+  placeModel('spelling-express-modeller/broen.glb',{size:10,x:X.bridgeA-14,z:-10.5,y:terrainH(X.bridgeA-14,-10.5)-.5,rotY:Math.PI});
   mesh(new THREE.CylinderGeometry(.12,.12,3,6),M(0x6b4a2f),X.bridgeA-7,1.5,-3.4);
 }
 const bridgeG=new THREE.Group(); scene.add(bridgeG);
@@ -599,12 +620,14 @@ function addPlank(i){
   // toppstasjon
   const tx=X.top, ty=TOPH;
   mesh(new THREE.BoxGeometry(12,1,4.2),M(0xc2b49a),tx,ty+.5,-5);
-  mesh(new THREE.BoxGeometry(6,3.6,4.4),M(0x1a5fa5),tx+3,ty+2.6,-7);
+  const hut=mesh(new THREE.BoxGeometry(6,3.6,4.4),M(0x1a5fa5),tx+3,ty+2.6,-7);
   const r=mesh(new THREE.ConeGeometry(4.6,2.2,4),M(0xD85A30),tx+3,ty+5.5,-7); r.rotation.y=Math.PI/4; r.scale.set(1,1,.85);
-  sign('TOPPEN',tx+3,ty+3.2,-4.7,4);
+  const tsign=sign('TOPPEN',tx+3,ty+3.2,-4.7,4);
   // flagg
-  mesh(new THREE.CylinderGeometry(.1,.1,6,6),M(0xdddddd),tx-4,ty+3,-4.5);
+  const fpole=mesh(new THREE.CylinderGeometry(.1,.1,6,6),M(0xdddddd),tx-4,ty+3,-4.5);
   const fl=mesh(new THREE.BoxGeometry(2,1.2,.05),M(0xD85A30),tx-3,ty+5.3,-4.5); fl.userData.flag=true;
+  placeModel('spelling-express-modeller/toppen.glb',{size:8,x:tx+4,z:-9.6,y:terrainH(tx+4,-9.6)-.4,rotY:-Math.PI/2,remove:[hut,r,fpole,fl],
+    onDone:(m,b)=>{ tsign.position.set(tx-3.5,ty+2.6,-4.4); }});
   // snøflekker og steiner langs bakken
   for(let i=0;i<40;i++){ const x=X.slopeA+rnd()*(X.top-X.slopeA+20), z=(rnd()>.5?1:-1)*(4+rnd()*12); const s=mesh(new THREE.DodecahedronGeometry(.4+rnd()*.9,0),M(0x9a9a92),x,terrainH(x,z)+.2,z); s.rotation.set(rnd()*3,rnd()*3,0); }
 }
@@ -621,10 +644,12 @@ const passengers=[];
   for(let i=-ENDE.len/2+2;i<=ENDE.len/2-2;i+=5.5) mesh(new THREE.CylinderGeometry(.15,.15,3.4,6),M(0x3c3489),ENDE.x+i,y+2.7,-6.6);
   sign('ENDESTASJONEN',ENDE.x,y+5.4,-3.9,7);
   // stasjonsbygning + liten by bak
-  mesh(new THREE.BoxGeometry(10,5,5),M(0xEF9F27),ENDE.x,y+2.5,-10.5);
-  const r=mesh(new THREE.ConeGeometry(7.6,2.6,4),M(0xD85A30),ENDE.x,y+6.3,-10.5); r.rotation.y=Math.PI/4; r.scale.set(1,1,.62);
-  mesh(new THREE.CylinderGeometry(.9,.9,.2,20),M(0xffffff),ENDE.x,y+3.8,-7.95).rotation.x=Math.PI/2;
-  for(const dx of [-3,3]) mesh(new THREE.BoxGeometry(1.4,1.6,.1),M(0xbfe8ff,{roughness:.2}),ENDE.x+dx,y+2.2,-7.97);
+  const eparts=[];
+  eparts.push(mesh(new THREE.BoxGeometry(10,5,5),M(0xEF9F27),ENDE.x,y+2.5,-10.5));
+  const r=mesh(new THREE.ConeGeometry(7.6,2.6,4),M(0xD85A30),ENDE.x,y+6.3,-10.5); r.rotation.y=Math.PI/4; r.scale.set(1,1,.62); eparts.push(r);
+  const clk=mesh(new THREE.CylinderGeometry(.9,.9,.2,20),M(0xffffff),ENDE.x,y+3.8,-7.95); clk.rotation.x=Math.PI/2; eparts.push(clk);
+  for(const dx of [-3,3]) eparts.push(mesh(new THREE.BoxGeometry(1.4,1.6,.1),M(0xbfe8ff,{roughness:.2}),ENDE.x+dx,y+2.2,-7.97));
+  placeModel('spelling-express-modeller/endestasjonen.glb',{size:15,x:ENDE.x,z:-12.2,y:terrainH(ENDE.x,-12.2)-.3,rotY:-Math.PI/2,remove:eparts});
   const hc=[0x1a5fa5,0x1D9E75,0xe84a8a,0xf2c94c,0xD85A30,0x534AB7];
   for(let k=0;k<9;k++){
     const hx=ENDE.x-26+k*7+rnd()*2, hz=-17-rnd()*8, hy=terrainH(hx,hz), w=3+rnd()*2, h=3+rnd()*3;
