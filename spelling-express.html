@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a5fa5">
+<title>Spelling Express – Myntland</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+:root{
+  --blue:#1a5fa5; --blue-light:#dbeafe; --blue-dark:#123f6e;
+  --green:#1D9E75; --green-light:#E1F5EE; --green-dark:#085041;
+  --amber:#EF9F27; --amber-light:#FAEEDA; --amber-dark:#c27a12;
+  --coral:#D85A30; --coral-light:#FAECE7;
+  --purple:#534AB7; --purple-light:#EEEDFE;
+  --bg:#F7F9F7; --text:#1a2e1a; --muted:#5a7a5a; --border:#c8dfc8;
+  --card:rgba(255,255,255,.94);
+  --shadow:0 10px 30px rgba(18,63,110,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font-family:Nunito,system-ui,sans-serif;color:var(--text);background:linear-gradient(#8fd3f4,#e9f7ff);-webkit-user-select:none;user-select:none;touch-action:manipulation}
+h1,h2,h3,.fred{font-family:"Fredoka One",Nunito,sans-serif;font-weight:400;letter-spacing:.3px}
+button{font:inherit;cursor:pointer}
+#scene{position:fixed;inset:0;display:block}
+
+/* ---------- topplinje ---------- */
+.top{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;z-index:9;pointer-events:none}
+.top > *{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;background:var(--card);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:999px;padding:6px 16px 6px 8px;box-shadow:var(--shadow)}
+.brand .badge{width:44px;height:44px;display:grid;place-items:center;margin:-6px 0}
+.brand .badge img{width:44px;height:44px}
+img.ico{width:24px;height:24px;object-fit:contain;vertical-align:middle;flex:none}
+img.ico.s{width:18px;height:18px}
+img.ico.l{width:30px;height:30px}
+.btn{display:inline-flex;align-items:center;gap:8px}
+.starrow{display:inline-flex;gap:2px;align-items:center}
+.starrow img{width:22px;height:22px}
+.starrow img.off{filter:grayscale(1) brightness(1.6);opacity:.55}
+.bigstars img{width:64px;height:64px}
+.bigstars img.off{filter:grayscale(1) brightness(1.6);opacity:.5}
+.brand .t{font-family:"Fredoka One";font-size:21px;color:var(--blue-dark)}
+.brand .t b{color:var(--coral);font-weight:400}
+.top .right{display:flex;gap:8px;align-items:center}
+.chip{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:900;box-shadow:var(--shadow);display:flex;align-items:center;gap:6px;font-size:17px}
+.btn{border:0;border-radius:16px;padding:12px 18px;font-weight:900;font-size:17px;background:#fff;color:var(--blue-dark);box-shadow:0 4px 0 rgba(18,63,110,.22);transition:transform .06s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(18,63,110,.22)}
+.btn.blue{background:var(--blue);color:#fff;box-shadow:0 4px 0 var(--blue-dark)}
+.btn.green{background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-dark)}
+.btn.amber{background:var(--amber);color:#fff;box-shadow:0 4px 0 var(--amber-dark)}
+.btn.coral{background:var(--coral);color:#fff;box-shadow:0 4px 0 #9c3b1c}
+.btn.ghost{background:transparent;box-shadow:none;color:var(--blue)}
+.btn.small{padding:8px 12px;font-size:15px;border-radius:12px}
+.btn:disabled{opacity:.45;pointer-events:none}
+
+/* ---------- skjermer (overlegg) ---------- */
+.screen{position:fixed;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:calc(70px + env(safe-area-inset-top)) 18px 18px;background:linear-gradient(rgba(143,211,244,.55),rgba(233,247,255,.55));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow:auto}
+.screen.hidden{display:none}
+.panelbox{background:var(--card);border-radius:28px;box-shadow:var(--shadow);padding:24px;width:min(980px,100%);max-height:100%;overflow:auto}
+.home{display:grid;grid-template-columns:1fr 1.25fr;gap:22px}
+@media (max-width:760px){.home{grid-template-columns:1fr}}
+.hero h1{font-size:44px;margin:0;color:var(--blue-dark);line-height:1.05}
+.hero h1 b{color:var(--coral);font-weight:400}
+.hero p{font-size:18px;color:var(--muted);margin:8px 0 18px;font-weight:700}
+.codebox{background:var(--blue-light);border-radius:22px;padding:18px}
+.codebox label{font-weight:900;font-size:14px;letter-spacing:1px;text-transform:uppercase;color:var(--blue)}
+.codeinput{display:flex;gap:8px;margin:10px 0 12px}
+.codeinput input{flex:1;min-width:0;font-family:"Fredoka One";font-size:32px;letter-spacing:8px;text-transform:uppercase;text-align:center;padding:10px;border-radius:16px;border:3px solid #fff;background:#fff;color:var(--blue-dark);-webkit-user-select:text;user-select:text;outline:none}
+.codeinput input:focus{border-color:var(--blue)}
+.msg{min-height:22px;font-weight:800;color:var(--coral);font-size:15px}
+.lists h2{margin:0 0 10px;font-size:24px;color:var(--blue-dark);display:flex;justify-content:space-between;align-items:center}
+.listgrid{display:grid;gap:10px}
+.lcard{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--blue-light);border-radius:18px;padding:12px 14px;cursor:pointer;transition:transform .08s,border-color .15s}
+.lcard:hover{border-color:var(--blue)}
+.lcard:active{transform:scale(.98)}
+.lcard .ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--amber-light);flex:none}
+.lcard .ic img{width:42px;height:42px}
+.lcard .tt{font-weight:900;font-size:18px}
+.lcard .sub{font-size:14px;color:var(--muted);font-weight:700}
+.lcard .stars{margin-left:auto;font-size:15px;font-weight:900;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.lcard .x{border:0;background:none;font-size:18px;opacity:.4;padding:6px}
+.empty{color:var(--muted);font-weight:700;padding:14px;border:2px dashed var(--border);border-radius:18px;text-align:center}
+
+/* reisekart */
+.map h2{margin:0;font-size:30px;color:var(--blue-dark)}
+.map .sub{color:var(--muted);font-weight:800;margin:2px 0 16px}
+.route{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;position:relative}
+@media (max-width:700px){.route{grid-template-columns:1fr}}
+.stop{border-radius:24px;padding:18px;color:#fff;position:relative;min-height:220px;display:flex;flex-direction:column;cursor:pointer;transition:transform .1s;overflow:hidden}
+.stop:active{transform:scale(.98)}
+.stop .num{font-family:"Fredoka One";font-size:15px;opacity:.85;letter-spacing:1px}
+.stop h3{font-size:28px;margin:2px 0 4px}
+.stop p{margin:0 0 10px;font-weight:700;font-size:15px;opacity:.95}
+.stop .art{margin-top:auto;width:110px;height:110px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+.stop .st{position:absolute;right:16px;bottom:16px;background:rgba(255,255,255,.9);border-radius:999px;padding:4px 8px}
+.stop.s1{background:linear-gradient(140deg,#EF9F27,#D85A30)}
+.stop.s2{background:linear-gradient(140deg,#2b8bd6,#1a5fa5)}
+.stop.s3{background:linear-gradient(140deg,#25b58a,#085041)}
+.stop.locked{filter:grayscale(.85);opacity:.7;cursor:not-allowed}
+.stop.locked::after{content:"";position:absolute;right:14px;top:12px;width:44px;height:44px;background:url(spelling-express-ikoner/laas.webp) center/contain no-repeat}
+.levelrow{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap;font-weight:800}
+.seg{display:inline-flex;background:var(--blue-light);border-radius:14px;padding:4px}
+.seg button{border:0;background:transparent;padding:8px 14px;border-radius:10px;font-weight:900;color:var(--blue)}
+.seg button.on{background:#fff;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.rowbtns{display:flex;gap:10px;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
+
+/* ---------- oppgavepanel ---------- */
+#task{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(900px,97vw);background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:26px;box-shadow:var(--shadow);padding:14px 18px 16px;z-index:6;transition:transform .35s cubic-bezier(.2,.9,.3,1.2),opacity .3s}
+#task.hidden{transform:translate(-50%,140%);opacity:0;pointer-events:none}
+.thead{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.thead .lbl{font-size:13px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.thead .no{font-family:"Fredoka One";font-size:34px;color:var(--blue-dark);line-height:1.05}
+.thead .prog{margin-left:auto;text-align:right}
+.dots{display:flex;gap:4px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap;max-width:280px}
+.dot{width:12px;height:12px;border-radius:50%;background:#e3e9e3}
+.dot.ok{background:var(--green)}
+.dot.now{background:var(--amber);box-shadow:0 0 0 3px var(--amber-light)}
+.slots{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:8px 0 12px;min-height:66px}
+.slot{width:54px;height:64px;border-radius:14px;border:3px dashed #c4cfdc;background:#fff;display:grid;place-items:center;font-family:"Fredoka One";font-size:34px;color:var(--blue-dark);transition:background .15s,border-color .15s,transform .15s}
+.slot.gap{width:22px;border:0;background:transparent}
+.slot.fixed{border-style:solid;border-color:#9fb6cf;background:var(--blue-light)}
+.slot.filled{border-style:solid;border-color:var(--amber-dark);background:var(--amber-light);cursor:grab}
+.slot.hot{border-color:var(--blue);background:var(--blue-light);transform:scale(1.07)}
+.slots.good .slot:not(.gap){border-color:var(--green);background:var(--green-light)}
+.slots.bad .slot:not(.gap){border-color:var(--coral);background:var(--coral-light)}
+.tray{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;min-height:68px}
+.tile{width:58px;height:64px;border-radius:14px;background:linear-gradient(#ffd27a,#EF9F27);box-shadow:0 5px 0 var(--amber-dark);display:grid;place-items:center;font-family:"Fredoka One";font-size:34px;color:var(--blue-dark);cursor:grab;touch-action:none;transition:opacity .15s}
+.tile.ghost{opacity:.25}
+.tile.drag{position:fixed;z-index:50;pointer-events:none;transform:scale(1.15) rotate(-4deg);box-shadow:0 14px 24px rgba(0,0,0,.25)}
+.hint{text-align:center;font-weight:900;min-height:24px;margin-top:4px;font-size:16px;color:var(--muted)}
+.hint.warn{color:var(--coral)}
+.hint.good{color:var(--green)}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+.kbd{display:flex;flex-direction:column;gap:7px;align-items:center}
+.kbd .r{display:flex;gap:6px}
+.key{width:min(58px,8.4vw);height:54px;border:0;border-radius:12px;background:#fff;box-shadow:0 4px 0 #b9c7d6;font-family:"Fredoka One";font-size:26px;color:var(--blue-dark);touch-action:manipulation}
+.key:active{transform:translateY(3px);box-shadow:0 1px 0 #b9c7d6}
+.key.wide{width:min(120px,16vw);font-family:Nunito;font-weight:900;font-size:17px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.key.go{background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-dark)}
+.key.back{background:var(--coral-light)}
+.exitbtn{position:fixed;left:14px;top:calc(64px + env(safe-area-inset-top));z-index:6}
+
+/* ---------- modaler ---------- */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(18,40,70,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal.hidden{display:none}
+.card{background:#fff;border-radius:26px;padding:24px;width:min(560px,100%);max-height:94vh;overflow:auto;box-shadow:var(--shadow)}
+.card h2{margin:0 0 6px;font-size:30px;color:var(--blue-dark)}
+.card p{font-size:17px;line-height:1.45;margin:6px 0 12px}
+.center{text-align:center}
+.bigstars{display:flex;justify-content:center;gap:8px;margin:8px 0}
+.statrow{display:flex;justify-content:center;gap:18px;font-weight:900;font-size:17px;flex-wrap:wrap}
+.statrow span{display:inline-flex;align-items:center;gap:6px}
+.card h2{display:flex;align-items:center;gap:10px}
+.card.center h2{justify-content:center}
+.btnrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+textarea{width:100%;min-height:200px;font:inherit;font-size:17px;padding:12px;border-radius:14px;border:2px solid var(--border);-webkit-user-select:text;user-select:text}
+input.txt{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius:12px;border:2px solid var(--border);-webkit-user-select:text;user-select:text}
+.lbl2{font-weight:900;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:12px 0 6px;display:block}
+
+/* verksted */
+.shop{width:min(900px,100%)}
+.shopgrid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+@media (max-width:760px){.shopgrid{grid-template-columns:1fr}}
+#preview{width:100%;height:300px;border-radius:20px;background:linear-gradient(#cfeaf8,#f4fbff);display:block}
+.locos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.loco{border:3px solid transparent;background:var(--blue-light);border-radius:16px;padding:8px 4px;text-align:center;font-weight:900;font-size:14px;position:relative}
+.loco img{width:60px;height:44px;object-fit:contain;display:block;margin:0 auto 2px}
+.loco.on{border-color:var(--blue);background:#fff}
+.loco .pr{display:flex;justify-content:center;align-items:center;gap:3px;font-size:12px;color:var(--muted)}
+.loco.locked{opacity:.65}
+.sws{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:42px;height:42px;border-radius:12px;border:3px solid #fff;box-shadow:0 0 0 2px #dfe6ee;cursor:pointer;position:relative}
+.sw.on{box-shadow:0 0 0 3px var(--blue-dark)}
+.sw.lock::after{content:"";position:absolute;right:-9px;bottom:-9px;width:22px;height:22px;background:url(spelling-express-ikoner/ticket.webp) center/contain no-repeat}
+.sw.lock{opacity:.55}
+.price{font-size:12px;font-weight:900;color:var(--muted)}
+.toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:var(--blue-dark);color:#fff;padding:10px 18px;border-radius:999px;font-weight:900;z-index:60;transition:opacity .3s;pointer-events:none}
+.toast.hide{opacity:0}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div class="top">
+  <div class="brand"><div class="badge"><img class="" src="spelling-express-ikoner/logo.webp" alt=""></div><div class="t">Spelling <b>Express</b></div></div>
+  <div class="right">
+    <div class="chip" id="tickets" title="Billetter"><img class="ico" src="spelling-express-ikoner/ticket.webp" alt=""><span>0</span></div>
+    <button class="btn small" id="btnShop"><img class="ico" src="spelling-express-ikoner/verksted.webp" alt="">Verksted</button>
+  </div>
+</div>
+
+<button class="btn small exitbtn hidden" id="btnExit" style="display:none">← Reisekart</button>
+
+<!-- HJEM -->
+<section class="screen" id="scrHome">
+  <div class="panelbox home">
+    <div class="hero">
+      <img src="spelling-express-ikoner/logo.webp" alt="" style="width:120px;height:120px;margin:-10px 0 4px -8px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.15))"><h1>Spelling<br><b>Express</b></h1>
+      <p>Last toget, bygg broen og kjør helt til toppen – ett riktig stavet ord om gangen.</p>
+      <div class="codebox">
+        <label for="code">Kode fra læreren</label>
+        <div class="codeinput">
+          <input id="code" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123" inputmode="text">
+          <button class="btn blue" id="btnFetch">Hent</button>
+        </div>
+        <div class="msg" id="codeMsg"></div>
+      </div>
+    </div>
+    <div class="lists">
+      <h2>Mine øvelister <button class="btn small ghost" id="btnOwn"><img class="ico" src="spelling-express-ikoner/blyant.webp" alt="">Lag egen</button></h2>
+      <div class="listgrid" id="myLists"></div>
+    </div>
+  </div>
+</section>
+
+<!-- REISEKART -->
+<section class="screen hidden" id="scrMap">
+  <div class="panelbox map">
+    <h2 id="mapTitle">Liste</h2>
+    <div class="sub" id="mapSub">8 ord</div>
+    <div class="levelrow" id="levelRow" style="display:none">
+      <span>Ord:</span>
+      <div class="seg"><button data-l="base" class="on">Grunnord</button><button data-l="all">Alle ord (med utfordring)</button></div>
+    </div>
+    <div class="route">
+      <div class="stop s1" data-st="laste"><span class="num">STOPP 1</span><h3>Lasteplassen</h3><p>Dra bokstavene på plass og last toget.</p><img class="art" src="spelling-express-ikoner/kasser.webp" alt=""><div class="st"></div></div>
+      <div class="stop s2" data-st="bro"><span class="num">STOPP 2</span><h3>Broen</h3><p>Første bokstav er gitt – men pass opp for ekstra bokstaver!</p><img class="art" src="spelling-express-ikoner/bro.webp" alt=""><div class="st"></div></div>
+      <div class="stop s3" data-st="fjell"><span class="num">STOPP 3</span><h3>Fjellbakken</h3><p>Skriv hele ordet selv og kjør toget til toppen.</p><img class="art" src="spelling-express-ikoner/fjell.webp" alt=""><div class="st"></div></div>
+    </div>
+    <div class="rowbtns">
+      <button class="btn" id="btnBack">← Mine øvelister</button>
+      <button class="btn ghost" id="btnWords"><img class="ico" src="spelling-express-ikoner/se.webp" alt="">Se ordene</button>
+    </div>
+  </div>
+</section>
+
+<!-- OPPGAVE -->
+<div id="task" class="hidden">
+  <div class="thead">
+    <div>
+      <div class="lbl">Skriv på engelsk</div>
+      <div class="no" id="noWord">–</div>
+    </div>
+    <div class="prog"><div class="lbl" id="progTxt">Ord 1 av 8</div><div class="dots" id="dots"></div></div>
+  </div>
+  <div class="slots" id="slots"></div>
+  <div class="tray" id="tray"></div>
+  <div class="kbd" id="kbd" style="display:none"></div>
+  <div class="hint" id="hint"></div>
+</div>
+
+<!-- RESULTAT -->
+<div class="modal hidden" id="mDone">
+  <div class="card center">
+    <h2 id="doneTitle">Lasten er levert!</h2>
+    <div class="bigstars" id="doneStars"></div>
+    <div class="statrow"><span id="doneFirst"></span><span id="doneTickets"></span></div>
+    <p id="doneTxt"></p>
+    <div class="btnrow">
+      <button class="btn" id="btnDoneMap">Til reisekartet</button>
+      <button class="btn" id="btnDoneAgain">Prøv igjen</button>
+      <button class="btn green" id="btnDoneNext">Neste stopp →</button>
+    </div>
+  </div>
+</div>
+
+<!-- EGEN LISTE -->
+<div class="modal hidden" id="mOwn">
+  <div class="card">
+    <h2>Lag egen øveliste</h2>
+    <p>Én linje per ord: <b>norsk = engelsk</b>. Listen lagres bare på denne iPaden.</p>
+    <label class="lbl2" for="ownTitle">Navn på lista</label>
+    <input class="txt" id="ownTitle" maxlength="40" placeholder="F.eks. Ord jeg øver på">
+    <label class="lbl2" for="ownText">Ordene</label>
+    <textarea id="ownText" placeholder="hund = dog&#10;katt = cat&#10;fordi = because"></textarea>
+    <div class="msg" id="ownMsg"></div>
+    <div class="btnrow"><button class="btn" id="btnOwnCancel">Avbryt</button><button class="btn blue" id="btnOwnSave">Lagre lista</button></div>
+  </div>
+</div>
+
+<!-- SE ORDENE -->
+<div class="modal hidden" id="mWords">
+  <div class="card">
+    <h2>Ordene i lista</h2>
+    <div id="wordsList" style="font-size:18px;line-height:1.8;font-weight:700"></div>
+    <div class="btnrow"><button class="btn blue" id="btnWordsClose">Lukk</button></div>
+  </div>
+</div>
+
+<!-- VERKSTED -->
+<div class="modal hidden" id="mShop">
+  <div class="card shop">
+    <h2><img class="ico l" src="spelling-express-ikoner/verksted.webp" alt="">Verkstedet</h2>
+    <div class="shopgrid">
+      <div>
+        <canvas id="preview"></canvas>
+        <div class="locos" id="locoPick"></div>
+      </div>
+      <div>
+        <label class="lbl2" for="locoName">Navn på toget</label>
+        <input class="txt" id="locoName" maxlength="14" placeholder="F.eks. Lynet">
+        <label class="lbl2">Hovedfarge</label><div class="sws" id="swBody"></div>
+        <label class="lbl2">Detaljer og striper</label><div class="sws" id="swTrim"></div>
+        <label class="lbl2">Hjul</label><div class="sws" id="swWheel"></div>
+        <label class="lbl2">Tak og pipe</label><div class="sws" id="swDetail"></div>
+        <div class="msg" id="shopMsg" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="btnrow"><button class="btn blue" id="btnShopClose">Ferdig</button></div>
+  </div>
+</div>
+
+<div class="toast hide" id="toast"></div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
+
+/* ================= OPPSETT ================= */
+const DB = 'https://spelling-express-default-rtdb.europe-west1.firebasedatabase.app';
+const CODE_RE = /^[A-HJ-NP-Z2-9]{6}$/;
+const $ = id => document.getElementById(id);
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem('spx_'+k); return v==null?d:JSON.parse(v);}catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('spx_'+k, JSON.stringify(v)); }catch(e){} }
+};
+let lists   = store.get('lists', {});       // {id:{title,words,source,saved,progress:{laste,bro,fjell}}}
+let tickets = store.get('tickets', 0);
+let garage  = store.get('garage', null) || {
+  current:'damp', owned:['damp'], name:'',
+  paint:{ damp:{body:'#D85A30',trim:'#EF9F27',wheel:'#2b2b33',detail:'#2b2b33'},
+          diesel:{body:'#1a5fa5',trim:'#EF9F27',wheel:'#2b2b33',detail:'#e6e6e6'},
+          el:{body:'#1D9E75',trim:'#ffffff',wheel:'#2b2b33',detail:'#9aa3ad'},
+          lyn:{body:'#ffffff',trim:'#D85A30',wheel:'#2b2b33',detail:'#123f6e'} },
+  colors:[]
+};
+const LOCOS = [
+  {id:'damp',  name:'Damplok', price:0},
+  {id:'diesel',name:'Diesel',  price:25},
+  {id:'el',    name:'Ellok',   price:50},
+  {id:'lyn',   name:'Lyntog',  price:90},
+];
+const ICO = (n,c='ico')=>`<img class="${c}" src="spelling-express-ikoner/${n}.webp" alt="">`;
+const PALETTE = {
+  body:  [['#D85A30',0],['#1a5fa5',0],['#1D9E75',0],['#2e2e3a',0],['#ffffff',0],['#EF9F27',4],['#534AB7',4],['#e84a8a',6],['#7cc242',6],['#f2c94c',8],['#00b4d8',8],['#111111',10]],
+  trim:  [['#EF9F27',0],['#ffffff',0],['#2e2e3a',0],['#D85A30',3],['#c0c7cf',3],['#5ad1ff',5],['#f2c94c',5],['#e84a8a',6]],
+  wheel: [['#2b2b33',0],['#D85A30',0],['#EF9F27',3],['#ffffff',3],['#c0c7cf',4],['#1a5fa5',4]],
+  detail:[['#2b2b33',0],['#9aa3ad',0],['#e6e6e6',0],['#b87333',4],['#f2c94c',6],['#123f6e',3]]
+};
+function saveAll(){ store.set('lists',lists); store.set('tickets',tickets); store.set('garage',garage); }
+function setTickets(n){ tickets=n; $('tickets').querySelector('span').textContent=tickets; saveAll(); }
+setTickets(tickets);
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.remove('hide'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.add('hide'),2200); }
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ================= LYD (korte effekter, ingen opplesing) ================= */
+let ac=null;
+function audio(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(ac&&ac.state==='suspended') ac.resume(); return ac; }
+function tone(f,d,type='sine',v=.12,w=0){ const a=audio(); if(!a) return; const o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.value=f; g.gain.setValueAtTime(v,a.currentTime+w); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+w+d); o.connect(g).connect(a.destination); o.start(a.currentTime+w); o.stop(a.currentTime+w+d+.02); }
+const sfx = {
+  pick(){ tone(520,.05,'square',.04); }, drop(){ tone(380,.07,'square',.05); },
+  ok(){ tone(660,.14,'triangle',.16); tone(880,.2,'triangle',.16,.11); },
+  bad(){ tone(200,.25,'sawtooth',.07); },
+  clank(){ tone(140,.12,'square',.1); tone(90,.16,'square',.08,.06); },
+  thump(){ tone(110,.2,'sine',.22); },
+  whistle(){ tone(740,.9,'triangle',.1); tone(932,.9,'triangle',.07); },
+  plank(){ tone(300,.08,'square',.08); tone(240,.1,'square',.07,.08); }
+};
+
+/* ================= 3D-VERDEN ================= */
+const canvas=$('scene');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xbfe6f7);
+scene.fog=new THREE.Fog(0xcfeaf7,90,230);
+const camera=new THREE.PerspectiveCamera(40,1,.1,600);
+scene.add(new THREE.HemisphereLight(0xe3f4ff,0x5f8f4a,1.15));
+const sun=new THREE.DirectionalLight(0xffffff,1.55);
+sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-60,right:60,top:40,bottom:-40,near:1,far:200});
+scene.add(sun); scene.add(sun.target);
+
+const M = (c,o={}) => new THREE.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.85,metalness:0},o));
+function mesh(geo,mat,x=0,y=0,z=0,parent=scene,shadow=true){ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=shadow; m.receiveShadow=true; parent.add(m); return m; }
+let seed=11; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const smooth=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+
+/* Sporprofil: flatt → bro over elva → stigning opp fjellet */
+const X = { dock:3, bridgeA:100, bridgeB:124, broStart:88, slopeA:150, slopeB:236, fjellStart:140, top:262 };
+const TOPH = 19;
+function trackH(x){ return TOPH*smooth((x-X.slopeA)/(X.slopeB-X.slopeA)); }
+function trackSlope(x){ const e=.25; return (trackH(x+e)-trackH(x-e))/(2*e); }
+function inCanyon(x){ return x>X.bridgeA-3 && x<X.bridgeB+3; }
+
+// terreng
+function terrainH(x,z){
+  let h = trackH(x);
+  const az=Math.abs(z);
+  const away = smooth((az-4)/10);
+  const hn=Math.sin(x*12.9898+z*78.233)*43758.5453; const n=hn-Math.floor(hn);
+  h += away*(Math.sin(x*.07)*1.2+Math.cos(z*.13+x*.02)*1.0) + (n-.5)*.35*away;
+  if (z<-12) h += (-z-12)*.45;                          // åser bak
+  if (x>X.slopeA-20) h += Math.max(0,(-z-6))*.25;       // fjellside
+  // elvejuv
+  const c = smooth((x-(X.bridgeA-6))/6) * (1-smooth((x-(X.bridgeB))/6));
+  h -= c*9;
+  return h;
+}
+{
+  const g=new THREE.PlaneGeometry(460,190,180,76); g.rotateX(-Math.PI/2); g.translate(130,0,0);
+  const p=g.attributes.position, col=[];
+  const cGrass=new THREE.Color(0x7fbf5a), cGrass2=new THREE.Color(0x6aae4c), cRock=new THREE.Color(0x9a9a8a), cSnow=new THREE.Color(0xf4f7fb), cDirt=new THREE.Color(0xb59a6c);
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i), z=p.getZ(i); const h=terrainH(x,z); p.setY(i,h);
+    let c = (rnd()>.5?cGrass:cGrass2).clone();
+    if (inCanyon(x) && h < trackH(x)-1.5) c = cRock.clone().lerp(cDirt,rnd()*.4);
+    if (h>26) c=cRock.clone(); if (h>36) c=cSnow.clone();
+    col.push(c.r,c.g,c.b);
+  }
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  g.computeVertexNormals();
+  const t=mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.95}),0,0,0,scene,false);
+}
+// elv
+{
+  const w=mesh(new THREE.BoxGeometry(X.bridgeB-X.bridgeA+10,.4,200),M(0x3fa7d9,{transparent:true,opacity:.85,roughness:.3}),(X.bridgeA+X.bridgeB)/2,-7.6,0,scene,false);
+  w.receiveShadow=true;
+}
+// fjell i bakgrunnen
+for(let i=0;i<22;i++){
+  const r=10+rnd()*14, h=18+rnd()*26, x=-90+i*19+rnd()*8, z=-70-rnd()*30;
+  const m=mesh(new THREE.ConeGeometry(r,h,5+Math.floor(rnd()*3)),M(rnd()>.5?0x8796ab:0x99a6b8),x,h/2-2,z);
+  m.rotation.y=rnd()*3;
+  mesh(new THREE.ConeGeometry(r*.38,h*.33,m.geometry.parameters.radialSegments),M(0xffffff),0,h*.34,0,m);
+}
+// trær
+function tree(x,z,s=1){
+  const y=terrainH(x,z); if (y<-2) return;
+  const g=new THREE.Group(); g.position.set(x,y,z); scene.add(g);
+  mesh(new THREE.CylinderGeometry(.18*s,.26*s,1*s,5),M(0x7a5232),0,.5*s,0,g);
+  const c=rnd()>.35?0x2f7d3a:0x3f9a45;
+  mesh(new THREE.ConeGeometry(1.15*s,2.2*s,6),M(c),0,1.9*s,0,g);
+  mesh(new THREE.ConeGeometry(.8*s,1.7*s,6),M(c),0,2.85*s,0,g);
+}
+for(let i=0;i<220;i++){
+  const x=-60+rnd()*360, z=(rnd()>.4? -7-rnd()*34 : 13+rnd()*30);
+  if (inCanyon(x)) continue;
+  if (x>-10&&x<16&&z<0&&z>-14) continue;
+  tree(x,z,.7+rnd()*.9);
+}
+// skyer
+const clouds=[];
+for(let i=0;i<16;i++){
+  const g=new THREE.Group(); g.position.set(-80+rnd()*400,30+rnd()*12,-40-rnd()*40); scene.add(g);
+  for(let k=0;k<4;k++){ const s=mesh(new THREE.IcosahedronGeometry(2.2+rnd()*2,0),M(0xffffff),k*2.6-3,rnd(),rnd()*1.5,g,false); }
+  clouds.push(g);
+}
+// spor
+const sleeperGeo=new THREE.BoxGeometry(.5,.18,2.6), sleeperMat=M(0x6b4a2f);
+const railMat=M(0x9aa3ad,{metalness:.4,roughness:.45});
+function railPiece(x1,x2,parent=scene){
+  const y1=trackH(x1), y2=trackH(x2), len=Math.hypot(x2-x1,y2-y1), ang=Math.atan2(y2-y1,x2-x1);
+  for(const z of [-.75,.75]){ const r=mesh(new THREE.BoxGeometry(len+.02,.18,.16),railMat,(x1+x2)/2,(y1+y2)/2+.27,z,parent); r.rotation.z=ang; }
+}
+for(let x=-120;x<330;x+=1.1){
+  if (x>X.bridgeA-.3 && x<X.bridgeB+.3) continue;
+  const s=mesh(sleeperGeo,sleeperMat,x,trackH(x)+.09,0); s.rotation.z=Math.atan(trackSlope(x));
+}
+for(let x=-120;x<330;x+=2){ const x2=x+2; if (x2>X.bridgeA && x<X.bridgeB) continue; railPiece(x,x2); }
+// grusbed
+for(let x=-120;x<330;x+=4){ if (x+4>X.bridgeA && x<X.bridgeB) continue; const b=mesh(new THREE.BoxGeometry(4.05,.14,3.4),M(0xb9a98c),x+2,trackH(x+2)-.02,0,scene,false); b.rotation.z=Math.atan(trackSlope(x+2)); }
+
+// LASTEPLASSEN
+const DOCK=new THREE.Vector3(X.dock,0,-5.2);
+const CRATE_COLORS=[0xD85A30,0x1a5fa5,0xEF9F27,0x1D9E75,0x534AB7,0xe84a8a,0x00a3b4,0xf46036,0x8d6e63,0x3d5a80];
+function signTex(text,bg='#fffaf0',fg='#123f6e'){
+  const c=document.createElement('canvas'); c.width=512; c.height=128; const x=c.getContext('2d');
+  x.fillStyle=bg; x.fillRect(0,0,512,128); x.fillStyle=fg; x.font='bold 62px Nunito, sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,256,68);
+  return new THREE.CanvasTexture(c);
+}
+function sign(text,x,y,z,w=5,parent=scene){
+  const wood=M(0x6b4a2f);
+  return mesh(new THREE.BoxGeometry(w,1.2,.15),[wood,wood,wood,wood,new THREE.MeshStandardMaterial({map:signTex(text)}),wood],x,y,z,parent);
+}
+{
+  mesh(new THREE.BoxGeometry(11,1,4.6),M(0xc2b49a),DOCK.x,.5,DOCK.z-.4);
+  for(let i=-5;i<=5;i+=2.5) mesh(new THREE.BoxGeometry(.35,1.1,.35),M(0x6b4a2f),DOCK.x+i,.55,DOCK.z+1.85);
+  mesh(new THREE.BoxGeometry(11.6,.3,5.2),M(0xD85A30),DOCK.x,4.7,DOCK.z-.6);
+  mesh(new THREE.BoxGeometry(11.6,.25,.3),M(0xEF9F27),DOCK.x,4.5,DOCK.z+2);
+  for(const dx of [-5.3,5.3]) for(const dz of [1.6,-2.6]) mesh(new THREE.CylinderGeometry(.16,.16,3.7,6),M(0x5b4636),DOCK.x+dx,2.85,DOCK.z+dz);
+  sign('LASTEPLASSEN',DOCK.x,5.6,DOCK.z+1.75);
+  for(let i=0;i<6;i++) mesh(new THREE.BoxGeometry(1.2,1.2,1.2),M(CRATE_COLORS[i]),DOCK.x+1.4+(i%3)*1.3,1.6+Math.floor(i/3)*1.2,DOCK.z-1.4);
+  // liten stasjonsbygning
+  const hx=DOCK.x-9;
+  mesh(new THREE.BoxGeometry(5,3.4,4),M(0xEF9F27),hx,1.7,DOCK.z-1);
+  const roof=mesh(new THREE.ConeGeometry(4.1,2,4),M(0xD85A30),hx,4.4,DOCK.z-1); roof.rotation.y=Math.PI/4; roof.scale.set(1,1,.8);
+  mesh(new THREE.BoxGeometry(1,1.8,.1),M(0x1D9E75),hx,.9,DOCK.z+1.02);
+  for(const dx of [-1.6,1.6]) mesh(new THREE.BoxGeometry(.9,.8,.1),M(0xbfe8ff,{roughness:.2}),hx+dx,2,DOCK.z+1.02);
+}
+// BROEN – landkar og skilt
+{
+  const stone=M(0x8f8f86);
+  for(const x of [X.bridgeA-1.5,X.bridgeB+1.5]){ mesh(new THREE.BoxGeometry(3,9,4.4),stone,x,-4.5,0); }
+  sign('BROEN',X.bridgeA-7,3.4,-3.4,3.4);
+  mesh(new THREE.CylinderGeometry(.12,.12,3,6),M(0x6b4a2f),X.bridgeA-7,1.5,-3.4);
+}
+const bridgeG=new THREE.Group(); scene.add(bridgeG);
+const bridgeParts=[];
+function resetBridge(n){
+  for(const p of bridgeParts) bridgeG.remove(p); bridgeParts.length=0;
+  bridge.n=n; bridge.done=0;
+}
+const bridge={n:8,done:0};
+function addPlank(i){
+  const span=X.bridgeB-X.bridgeA, w=span/bridge.n, x1=X.bridgeA+i*w, x2=x1+w;
+  const g=new THREE.Group(); bridgeG.add(g); bridgeParts.push(g);
+  const deck=mesh(new THREE.BoxGeometry(w+.02,.35,3.4),M(i%2?0x8a5a35:0x9b6a40),(x1+x2)/2,-.1,0,g);
+  // bjelker under
+  mesh(new THREE.BoxGeometry(w+.02,.4,.3),M(0x5b3d24),(x1+x2)/2,-.45,-1.4,g);
+  mesh(new THREE.BoxGeometry(w+.02,.4,.3),M(0x5b3d24),(x1+x2)/2,-.45,1.4,g);
+  // rekkverk
+  for(const z of [-1.75,1.75]){ mesh(new THREE.BoxGeometry(w+.02,.14,.14),M(0xD85A30),(x1+x2)/2,1.0,z,g); mesh(new THREE.BoxGeometry(.14,1.1,.14),M(0xD85A30),x1+.1,.5,z,g); }
+  // skinner
+  for(const z of [-.75,.75]) mesh(new THREE.BoxGeometry(w+.02,.18,.16),railMat,(x1+x2)/2,.27,z,g);
+  // pilar ned i elva annenhver
+  if (i%2===1 || bridge.n<4) mesh(new THREE.BoxGeometry(.6,8,.6),M(0x5b3d24),x2,-4.3,0,g);
+  g.position.y=8; g.userData.t=0;
+  anim(.7,t=>{ g.position.y=8*(1-easeOutBack(t)); },()=>{ g.position.y=0; sfx.plank(); });
+}
+// FJELLBAKKEN
+{
+  sign('FJELLBAKKEN',X.slopeA-6,3.6,-3.4,5);
+  mesh(new THREE.CylinderGeometry(.12,.12,3,6),M(0x6b4a2f),X.slopeA-6,1.5,-3.4);
+  // toppstasjon
+  const tx=X.top, ty=TOPH;
+  mesh(new THREE.BoxGeometry(12,1,4.2),M(0xc2b49a),tx,ty+.5,-5);
+  mesh(new THREE.BoxGeometry(6,3.6,4.4),M(0x1a5fa5),tx+3,ty+2.6,-7);
+  const r=mesh(new THREE.ConeGeometry(4.6,2.2,4),M(0xD85A30),tx+3,ty+5.5,-7); r.rotation.y=Math.PI/4; r.scale.set(1,1,.85);
+  sign('TOPPEN',tx+3,ty+3.2,-4.7,4);
+  // flagg
+  mesh(new THREE.CylinderGeometry(.1,.1,6,6),M(0xdddddd),tx-4,ty+3,-4.5);
+  const fl=mesh(new THREE.BoxGeometry(2,1.2,.05),M(0xD85A30),tx-3,ty+5.3,-4.5); fl.userData.flag=true;
+  // snøflekker og steiner langs bakken
+  for(let i=0;i<40;i++){ const x=X.slopeA+rnd()*(X.top-X.slopeA+20), z=(rnd()>.5?1:-1)*(4+rnd()*12); const s=mesh(new THREE.DodecahedronGeometry(.4+rnd()*.9,0),M(0x9a9a92),x,terrainH(x,z)+.2,z); s.rotation.set(rnd()*3,rnd()*3,0); }
+}
+
+/* ================= TOG ================= */
+const wheels=[];
+const trainCars=[];   // {g, back, len}
+let train={x:0,targetX:0,speed:0,mode:'ease'};
+const locoMats={ body:M('#D85A30'), trim:M('#EF9F27'), wheel:M('#2b2b33'), detail:M('#2b2b33'), dark:M(0x2b2b33), glass:M(0xbfe8ff,{roughness:.15,metalness:.1}), light:M(0xfff3a0,{emissive:0xffe066,emissiveIntensity:.7}) };
+const nameCanvas=document.createElement('canvas'); nameCanvas.width=256; nameCanvas.height=64;
+const nameTex=new THREE.CanvasTexture(nameCanvas);
+function drawName(trim){
+  const x=nameCanvas.getContext('2d'); x.fillStyle=trim; x.fillRect(0,0,256,64);
+  x.fillStyle='#123f6e'; x.font='bold 36px Nunito, sans-serif'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText((garage.name||'EXPRESS').toUpperCase().slice(0,14),128,34); nameTex.needsUpdate=true;
+}
+function addWheel(parent,mats,x,z,r,list){ const w=mesh(new THREE.CylinderGeometry(r,r,.3,12),mats.wheel,x,r,z,parent); w.rotation.x=Math.PI/2; list.push({m:w,r}); const hub=mesh(new THREE.CylinderGeometry(r*.35,r*.35,.34,8),mats.trim,0,0,0,w); return w; }
+function namePlate(parent,x,y,w=1.5,zz=1.04){
+  for(const z of [-zz,zz]){ const p=mesh(new THREE.PlaneGeometry(w,.38),new THREE.MeshStandardMaterial({map:nameTex}),x,y,z,parent,false); if(z<0) p.rotation.y=Math.PI; }
+}
+/* bygg lokomotiv – returnerer {g, wheels, chimney:Vector3|null, len} */
+function buildLoco(type,mats){
+  const g=new THREE.Group(), ws=[];
+  let chimney=null, len=6.4;
+  if(type==='damp'){
+    mesh(new THREE.BoxGeometry(5.6,.4,1.9),mats.dark,0,.9,0,g);
+    const boiler=mesh(new THREE.CylinderGeometry(.85,.85,3.4,12),mats.body,.9,1.95,0,g); boiler.rotation.z=Math.PI/2;
+    for(const x of [-.2,.9,2]){ const b=mesh(new THREE.CylinderGeometry(.9,.9,.18,12),mats.trim,x,1.95,0,g); b.rotation.z=Math.PI/2; }
+    const f=mesh(new THREE.CylinderGeometry(.7,.7,.15,12),mats.dark,2.65,1.95,0,g); f.rotation.z=Math.PI/2;
+    mesh(new THREE.CylinderGeometry(.25,.32,1.1,8),mats.detail,2.0,3.25,0,g);
+    mesh(new THREE.CylinderGeometry(.42,.28,.3,8),mats.detail,2.0,3.9,0,g);
+    mesh(new THREE.SphereGeometry(.35,8,6,0,Math.PI*2,0,Math.PI/2),mats.trim,.9,2.8,0,g);
+    mesh(new THREE.BoxGeometry(1.9,2.2,2),mats.body,-1.75,2.2,0,g);
+    mesh(new THREE.BoxGeometry(2.3,.25,2.4),mats.detail,-1.75,3.4,0,g);
+    for(const z of [-1.01,1.01]) mesh(new THREE.BoxGeometry(1,.8,.05),mats.glass,-1.65,2.6,z,g);
+    const cc=mesh(new THREE.ConeGeometry(.9,1.1,4),mats.trim,3.1,.85,0,g); cc.rotation.z=-Math.PI/2; cc.rotation.x=Math.PI/4; cc.scale.set(1,1,.6);
+    mesh(new THREE.BoxGeometry(.3,.35,.35),mats.light,2.75,2.9,0,g);
+    for(const x of [-1.6,-.2,1.2]) for(const z of [-.9,.9]) addWheel(g,mats,x,z,.62,ws);
+    for(const z of [-.9,.9]) addWheel(g,mats,2.3,z,.4,ws);
+    // stempelstang
+    for(const z of [-1.08,1.08]) mesh(new THREE.BoxGeometry(2.9,.12,.08),mats.trim,-.2,.65,z,g);
+    namePlate(g,-1.75,1.6);
+    chimney=new THREE.Vector3(2.0,4.1,0);
+  } else if(type==='diesel'){
+    mesh(new THREE.BoxGeometry(6.2,.45,2),mats.dark,0,1.0,0,g);
+    mesh(new THREE.BoxGeometry(3.6,1.7,1.6),mats.body,1.1,2.05,0,g);
+    mesh(new THREE.BoxGeometry(3.62,.25,1.62),mats.trim,1.1,1.55,0,g);
+    for(let i=0;i<5;i++) mesh(new THREE.BoxGeometry(.08,.9,1.64),mats.dark,.0+i*.55,2.15,0,g);
+    mesh(new THREE.BoxGeometry(1.9,2.5,2.1),mats.body,-1.95,2.45,0,g);
+    mesh(new THREE.BoxGeometry(2.1,.25,2.3),mats.detail,-1.95,3.8,0,g);
+    mesh(new THREE.BoxGeometry(1.92,.3,2.12),mats.trim,-1.95,1.6,0,g);
+    for(const z of [-1.06,1.06]) mesh(new THREE.BoxGeometry(1.1,.75,.05),mats.glass,-1.8,2.95,z,g);
+    mesh(new THREE.BoxGeometry(.05,.75,1.6),mats.glass,-.99,2.95,0,g);
+    mesh(new THREE.CylinderGeometry(.18,.18,.6,8),mats.detail,1.8,3.1,0,g);
+    mesh(new THREE.BoxGeometry(.3,.3,.35),mats.light,3.0,1.9,0,g);
+    const nose=mesh(new THREE.BoxGeometry(.5,.8,1.7),mats.trim,3.0,1.45,0,g);
+    for(const bx of [-1.8,1.8]){ mesh(new THREE.BoxGeometry(2.2,.35,1.6),mats.dark,bx,.65,0,g); for(const x of [bx-.7,bx+.7]) for(const z of [-.9,.9]) addWheel(g,mats,x,z,.48,ws); }
+    namePlate(g,1.1,2.3,1.6);
+    chimney=new THREE.Vector3(1.8,3.4,0);
+  } else if(type==='el'){
+    const body=mesh(new THREE.BoxGeometry(6,2.3,2.1),mats.body,0,2.25,0,g);
+    mesh(new THREE.BoxGeometry(6.02,.35,2.12),mats.trim,0,1.45,0,g);
+    mesh(new THREE.BoxGeometry(6.02,.18,2.12),mats.trim,0,2.9,0,g);
+    for(const x of [-3.0,3.0]){ const n=mesh(new THREE.BoxGeometry(.4,2.0,2.0),mats.body,x+(x>0?.15:-.15),2.15,0,g); }
+    for(const x of [-3.22,3.22]) mesh(new THREE.BoxGeometry(.05,.8,1.7),mats.glass,x,2.75,0,g);
+    for(let i=0;i<4;i++) for(const z of [-1.06,1.06]) mesh(new THREE.BoxGeometry(.7,.5,.05),mats.glass,-1.8+i*1.2,2.6,z,g);
+    mesh(new THREE.BoxGeometry(5.6,.25,1.8),mats.detail,0,3.5,0,g);
+    // strømavtaker
+    const pg=new THREE.Group(); pg.position.set(-.8,3.65,0); g.add(pg);
+    const a1=mesh(new THREE.BoxGeometry(1.6,.08,.08),mats.detail,0,.45,0,pg); a1.rotation.z=.6;
+    const a2=mesh(new THREE.BoxGeometry(1.6,.08,.08),mats.detail,.6,.45,0,pg); a2.rotation.z=-.6;
+    mesh(new THREE.BoxGeometry(.15,.08,1.4),mats.dark,.3,.95,0,pg);
+    mesh(new THREE.BoxGeometry(.3,.3,.35),mats.light,3.25,1.7,.55,g); mesh(new THREE.BoxGeometry(.3,.3,.35),mats.light,3.25,1.7,-.55,g);
+    for(const bx of [-1.9,1.9]){ mesh(new THREE.BoxGeometry(2.2,.35,1.6),mats.dark,bx,.65,0,g); for(const x of [bx-.7,bx+.7]) for(const z of [-.9,.9]) addWheel(g,mats,x,z,.48,ws); }
+    namePlate(g,0,1.9,1.8);
+  } else { // lyntog
+    const sh=new THREE.Shape();
+    sh.moveTo(-3.4,.85); sh.lineTo(-3.4,3.2); sh.lineTo(.9,3.2);
+    sh.quadraticCurveTo(3.4,3.15,4.6,1.35); sh.lineTo(4.55,.85); sh.lineTo(-3.4,.85);
+    const geo=new THREE.ExtrudeGeometry(sh,{depth:1.9,bevelEnabled:true,bevelThickness:.12,bevelSize:.1,bevelSegments:2,curveSegments:10});
+    geo.translate(0,0,-.95);
+    mesh(geo,mats.body,0,0,0,g);
+    for(const z of [-1.1,1.1]){ mesh(new THREE.BoxGeometry(6.6,.28,.04),mats.trim,-.1,1.5,z,g); mesh(new THREE.BoxGeometry(5.0,.5,.04),mats.detail,-.9,2.45,z,g); }
+    const wsc=mesh(new THREE.BoxGeometry(1.5,.06,1.6),mats.glass,2.6,2.92,0,g); wsc.rotation.z=-.52;
+    mesh(new THREE.BoxGeometry(3.8,.14,1.5),mats.detail,-1.3,3.36,0,g);
+    mesh(new THREE.BoxGeometry(.2,.2,.5),mats.light,4.45,1.2,0,g);
+    mesh(new THREE.BoxGeometry(7.6,.35,1.7),mats.dark,.4,.8,0,g);
+    for(const bx of [-2.2,2.4]){ mesh(new THREE.BoxGeometry(2.2,.35,1.6),mats.dark,bx,.65,0,g); for(const x of [bx-.7,bx+.7]) for(const z of [-.9,.9]) addWheel(g,mats,x,z,.45,ws); }
+    namePlate(g,-1.6,1.85,1.8,1.13);
+    len=7.8;
+  }
+  return {g,wheels:ws,chimney,len};
+}
+let locoObj=null;
+function applyPaint(){
+  const p=garage.paint[garage.current];
+  locoMats.body.color.set(p.body); locoMats.trim.color.set(p.trim); locoMats.wheel.color.set(p.wheel); locoMats.detail.color.set(p.detail);
+  drawName(p.trim);
+}
+function wagonG(){
+  const g=new THREE.Group(), ws=[];
+  mesh(new THREE.BoxGeometry(3.6,.35,1.9),M(0x6b4a2f),0,1.0,0,g);
+  for(const z of [-.95,.95]) mesh(new THREE.BoxGeometry(3.6,.5,.1),M(0x8a5a35),0,1.4,z,g);
+  for(const x of [-1.8,1.8]) mesh(new THREE.BoxGeometry(.1,.5,1.9),M(0x8a5a35),x,1.4,0,g);
+  mesh(new THREE.BoxGeometry(.6,.25,.4),locoMats.dark,2.05,.9,0,g);
+  for(const x of [-1.1,1.1]) for(const z of [-.9,.9]) addWheel(g,locoMats,x,z,.45,ws);
+  return {g,ws};
+}
+function wordTexture(word,color){
+  const c=document.createElement('canvas'); c.width=256; c.height=256; const x=c.getContext('2d');
+  x.fillStyle=color; x.fillRect(0,0,256,256);
+  x.strokeStyle='rgba(0,0,0,.22)'; x.lineWidth=14; x.strokeRect(10,10,236,236);
+  x.beginPath(); x.moveTo(10,10); x.lineTo(246,246); x.moveTo(246,10); x.lineTo(10,246); x.stroke();
+  x.fillStyle='#fffaf0'; x.fillRect(12,82,232,92);
+  x.fillStyle='#123f6e'; let fs=68; x.font=`bold ${fs}px Nunito, sans-serif`;
+  while(x.measureText(word).width>220 && fs>18){ fs-=2; x.font=`bold ${fs}px Nunito, sans-serif`; }
+  x.textAlign='center'; x.textBaseline='middle'; x.fillText(word,128,130);
+  return new THREE.CanvasTexture(c);
+}
+function crate(word,idx){
+  const color='#'+CRATE_COLORS[idx%CRATE_COLORS.length].toString(16).padStart(6,'0');
+  return new THREE.Mesh(new THREE.BoxGeometry(1.5,1.2,1.5),new THREE.MeshStandardMaterial({map:wordTexture(word,color),flatShading:true}));
+}
+const WAGON_LEN=4.2;
+function clearTrain(){
+  for(const c of trainCars) scene.remove(c.g);
+  trainCars.length=0; wheels.length=0;
+}
+function buildTrain(wagonWords){
+  clearTrain(); applyPaint();
+  locoObj=buildLoco(garage.current,locoMats);
+  scene.add(locoObj.g); wheels.push(...locoObj.wheels);
+  trainCars.push({g:locoObj.g,back:0,front:locoObj.len/2});
+  for(const w of wagonWords) addWagon(w,false);
+}
+function addWagon(word,animate){
+  const {g,ws}=wagonG(); scene.add(g); wheels.push(...ws);
+  const idx=trainCars.length-1;
+  const back = locoObj.len/2 + .3 + WAGON_LEN*idx + WAGON_LEN/2;
+  const car={g,back,word}; trainCars.push(car);
+  if(word && !animate){ const c=crate(word,idx); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; c.castShadow=true; g.add(c); }
+  return car;
+}
+function placeCar(c,frontX){
+  const x=frontX-c.back;
+  c.g.position.set(x,trackH(x),0);
+  c.g.rotation.z=Math.atan(trackSlope(x));
+}
+function trainLen(){ return locoObj ? locoObj.len/2 + (trainCars.length-1)*WAGON_LEN + 2 : 6; }
+
+/* damp/røyk */
+const puffs=[], puffGeo=new THREE.IcosahedronGeometry(.32,0);
+function puff(str=1){
+  if(!locoObj||!locoObj.chimney) return;
+  const m=new THREE.Mesh(puffGeo,new THREE.MeshStandardMaterial({color:garage.current==='damp'?0xffffff:0x777777,flatShading:true,transparent:true,opacity:.85}));
+  const wp=locoObj.chimney.clone(); locoObj.g.localToWorld(wp); m.position.copy(wp);
+  m.userData={life:0,vy:1.6+Math.random()*.6,vx:-.5-Math.random()*.6*str,s:(garage.current==='damp'?.65:.4)+Math.random()*.4};
+  scene.add(m); puffs.push(m);
+}
+
+/* animasjon */
+const anims=[];
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const easeOutBack=t=>{ const c1=1.4,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); };
+function anim(dur,fn,done){ anims.push({t:0,dur,fn,done}); }
+
+/* kamera */
+const look=new THREE.Vector3(0,2,0); let camDist=30; let camMode='idle'; let idleT=0;
+function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+addEventListener('resize',resize); resize();
+
+const clock=new THREE.Clock(); let puffT=0;
+function loop(){
+  const dt=Math.min(clock.getDelta(),.05);
+  // tog
+  if(locoObj){
+    const prev=train.x;
+    if(train.mode==='drive'){ train.speed=Math.min(train.speed+dt*5,18); train.x+=train.speed*dt; if(train.x>=train.targetX){ train.x=train.targetX; train.mode='ease'; train.speed=0; } }
+    else { train.x += (train.targetX-train.x)*Math.min(1,dt*1.7); }
+    for(const c of trainCars) placeCar(c,train.x);
+    const dx=train.x-prev;
+    for(const w of wheels) w.m.rotation.y -= dx/w.r;
+    puffT+=dt; const moving=Math.abs(dx)>.01;
+    if(puffT>(moving?.16:1.0)){ puffT=0; puff(moving?1.3:.5); }
+  }
+  for(let i=puffs.length-1;i>=0;i--){ const p=puffs[i],u=p.userData; u.life+=dt; p.position.y+=u.vy*dt; p.position.x+=u.vx*dt; p.scale.setScalar(u.s*(1+u.life*1.8)); p.material.opacity=Math.max(0,.85-u.life*.45); if(u.life>2){ scene.remove(p); p.material.dispose(); puffs.splice(i,1); } }
+  for(const c of clouds){ c.position.x+=dt*.6; if(c.position.x>330) c.position.x=-90; }
+  for(let i=anims.length-1;i>=0;i--){ const a=anims[i]; a.t+=dt; const t=Math.min(1,a.t/a.dur); a.fn(t); if(t>=1){ anims.splice(i,1); a.done&&a.done(); } }
+  // kamera
+  const aspect=camera.aspect;
+  let tgt, want;
+  if(camMode==='idle'||!locoObj){
+    idleT+=dt*.05; tgt=new THREE.Vector3(30+Math.sin(idleT)*40,6,0); want=48;
+  } else {
+    const front=train.x+(locoObj.len/2);
+    const back=train.x-trainLen();
+    let left=back, right=front+3;
+    if(camMode==='laste') left=Math.min(left,DOCK.x-6);
+    if(camMode==='bro'){ right=Math.max(right,X.bridgeB+2); }
+    if(camMode==='fjell'){ right=Math.max(right,front+10); }
+    const span=right-left;
+    tgt=new THREE.Vector3((left+right)/2, trackH((left+right)/2)+1.5, 0);
+    want=Math.max(26,(span*1.05)/Math.max(.7,aspect)+9)*(aspect<1?1.5:1);
+    want=Math.min(want,95);
+  }
+  camDist+=(want-camDist)*Math.min(1,dt*1.5);
+  look.lerp(tgt,Math.min(1,dt*2));
+  const lowerUI = camMode!=='idle' ? (innerHeight>innerWidth?-3:-4.5) : -1;
+  camera.position.set(look.x+camDist*.16, look.y+camDist*.36, look.z+camDist*.95);
+  camera.lookAt(look.x, look.y+lowerUI, look.z);
+  sun.position.set(look.x+25,look.y+40,20); sun.target.position.set(look.x,look.y,0);
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* ================= LISTER ================= */
+function cleanWords(arr){
+  return (arr||[]).filter(w=>w && w.no && w.en).map(w=>({no:String(w.no).trim(), en:String(w.en).trim().toLowerCase(), extra:!!w.extra}))
+    .filter(w=>/^[a-z' \-\/]+$/.test(w.en) && w.en.replace(/[^a-z]/g,'').length>0);
+}
+async function fetchList(code){
+  const c=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!CODE_RE.test(c)){ $('codeMsg').textContent='Koden har 6 tegn – sjekk at du har skrevet den riktig.'; $('code').classList.add('shake'); setTimeout(()=>$('code').classList.remove('shake'),450); return; }
+  $('codeMsg').style.color='var(--muted)'; $('codeMsg').textContent='Henter lista …';
+  try{
+    const r=await fetch(`${DB}/lists/${c}.json`); const d=await r.json();
+    if(!d||!d.words){ $('codeMsg').style.color=''; $('codeMsg').textContent='Fant ingen liste med den koden. Spør læreren om koden er riktig.'; return; }
+    const words=cleanWords(Array.isArray(d.words)?d.words:Object.values(d.words));
+    if(words.length<2){ $('codeMsg').style.color=''; $('codeMsg').textContent='Lista er tom.'; return; }
+    const old=lists[c];
+    lists[c]={title:d.title||'Gloseliste', words, source:'kode', saved:Date.now(), progress: old?old.progress:{} , trinn:d.trinn||''};
+    saveAll(); $('code').value=''; $('codeMsg').textContent='';
+    renderHome(); openMap(c);
+  }catch(e){ $('codeMsg').style.color=''; $('codeMsg').textContent='Fikk ikke kontakt. Er iPaden koblet til nettet?'; }
+}
+function starStr(n){ let h=''; for(let i=0;i<3;i++) h+=`<img class="${i<n?'':'off'}" src="spelling-express-ikoner/stjerne.webp" alt="">`; return h; }
+function renderHome(){
+  const box=$('myLists'); box.innerHTML='';
+  const ids=Object.keys(lists).sort((a,b)=>(lists[b].saved||0)-(lists[a].saved||0));
+  if(!ids.length){ box.innerHTML='<div class="empty">Ingen lister ennå. Skriv inn koden du har fått av læreren, eller lag din egen liste.</div>'; return; }
+  for(const id of ids){
+    const L=lists[id], p=L.progress||{};
+    const tot=(p.laste||0)+(p.bro||0)+(p.fjell||0);
+    const d=document.createElement('div'); d.className='lcard';
+    d.innerHTML=`<div class="ic">${ICO(L.source==='egen'?'blyant':'logo')}</div><div><div class="tt">${esc(L.title)}</div><div class="sub">${L.words.length} ord · ${L.source==='egen'?'egen liste':'kode '+id}</div></div><div class="stars">${tot}/9 ${ICO('stjerne','ico s')}</div><button class="x" aria-label="Fjern lista"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+    d.onclick=e=>{ const xb=e.target.closest('.x'); if(xb){ e.stopPropagation(); if(d.dataset.sure){ delete lists[id]; saveAll(); renderHome(); } else { d.dataset.sure=1; xb.textContent='Fjerne?'; xb.style.opacity=1; xb.style.color='var(--coral)'; xb.style.fontWeight=900; xb.style.fontSize='14px'; } return; } openMap(id); };
+    box.appendChild(d);
+  }
+}
+
+/* ================= SKJERMER ================= */
+let curId=null, curLevel='base';
+function show(id){ for(const s of ['scrHome','scrMap']) $(s).classList.toggle('hidden', s!==id); }
+function goHome(){ show('scrHome'); camMode='idle'; renderHome(); $('task').classList.add('hidden'); $('btnExit').style.display='none'; }
+function activeWords(){ const L=lists[curId]; const hasExtra=L.words.some(w=>w.extra); return (curLevel==='all'||!hasExtra)? L.words : L.words.filter(w=>!w.extra); }
+function openMap(id){
+  curId=id; const L=lists[id]; const p=L.progress||(L.progress={});
+  $('mapTitle').textContent=L.title;
+  const hasExtra=L.words.some(w=>w.extra);
+  $('levelRow').style.display=hasExtra?'flex':'none';
+  [...$('levelRow').querySelectorAll('button')].forEach(b=>b.classList.toggle('on',b.dataset.l===curLevel));
+  $('mapSub').textContent = `${activeWords().length} ord` + (L.source==='egen'?' · egen liste':'');
+  const unlocked={laste:true, bro:(p.laste||0)>0, fjell:(p.bro||0)>0};
+  for(const el of document.querySelectorAll('.stop')){
+    const st=el.dataset.st; el.classList.toggle('locked',!unlocked[st]);
+    el.querySelector('.st').innerHTML='<span class="starrow">'+starStr(p[st]||0)+'</span>';
+  }
+  show('scrMap'); camMode='idle'; $('task').classList.add('hidden'); $('btnExit').style.display='none'; $('mDone').classList.add('hidden');
+}
+$('levelRow').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; curLevel=b.dataset.l; openMap(curId); });
+for(const el of document.querySelectorAll('.stop')) el.addEventListener('click',()=>{ if(el.classList.contains('locked')){ toast('Fullfør stoppet før for å låse opp'); return; } audio(); startStation(el.dataset.st); });
+$('btnBack').onclick=goHome;
+$('btnFetch').onclick=()=>{ audio(); fetchList($('code').value); };
+$('code').addEventListener('keydown',e=>{ if(e.key==='Enter') fetchList($('code').value); });
+$('code').addEventListener('input',e=>{ e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''); });
+$('btnWords').onclick=()=>{ const L=lists[curId]; $('wordsList').innerHTML=L.words.map(w=>`<div>${esc(w.no)} = <b>${esc(w.en)}</b>${w.extra?' <span style="color:var(--purple);font-size:14px">'+ICO('stjerne','ico s')+' utfordring</span>':''}</div>`).join(''); $('mWords').classList.remove('hidden'); };
+$('btnWordsClose').onclick=()=>$('mWords').classList.add('hidden');
+$('btnOwn').onclick=()=>{ $('ownTitle').value=''; $('ownText').value=''; $('ownMsg').textContent=''; $('mOwn').classList.remove('hidden'); };
+$('btnOwnCancel').onclick=()=>$('mOwn').classList.add('hidden');
+$('btnOwnSave').onclick=()=>{
+  const words=cleanWords($('ownText').value.split('\n').map(l=>{ const m=l.split(/\s*[=\-–:]\s*|\t/); return m.length>=2?{no:m[0],en:m.slice(1).join(' ')}:null; }).filter(Boolean));
+  if(words.length<2){ $('ownMsg').textContent='Skriv minst to ord, for eksempel «hund = dog». Det engelske ordet kan bare ha bokstaver.'; return; }
+  const id='EGEN-'+Math.random().toString(36).slice(2,7).toUpperCase();
+  lists[id]={title:$('ownTitle').value.trim()||'Min øveliste',words,source:'egen',saved:Date.now(),progress:{}};
+  saveAll(); $('mOwn').classList.add('hidden'); renderHome(); openMap(id);
+};
+$('btnExit').onclick=()=>{ roundId++; anims.length=0; openMap(curId); };
+
+/* ================= SPILLRUNDE ================= */
+let roundId=0;
+function later(fn,ms){ const r=roundId; setTimeout(()=>{ if(r===roundId) fn(); },ms); }
+let R=null; // runde
+const shuffle=a=>{ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; } return b; };
+const mainSpelling = en => en.split('/')[0].trim();
+const accepts = (en,guess) => en.split('/').map(s=>s.trim()).includes(guess);
+
+function startStation(st){
+  roundId++; anims.length=0;
+  const words=activeWords();
+  R={st, words, missed:new Set(), queue:shuffle(words.map((w,i)=>({...w,i}))), done:0, first:0, total:words.length, cur:null, tries:0, busy:false, results:{}};
+  show(null); $('scrHome').classList.add('hidden'); $('scrMap').classList.add('hidden');
+  $('btnExit').style.display='block';
+  camMode=st;
+  const crates = st==='laste' ? [] : words.slice(0,Math.min(6,words.length)).map(w=>mainSpelling(w.en));
+  buildTrain(crates);
+  if(st==='laste'){ train.x=-40; train.targetX=DOCK.x+locoObj.len/2+.5; train.mode='ease'; }
+  if(st==='bro'){ resetBridge(R.total); } else { bridgeDoneAll(); }
+  if(st==='bro'){ train.x=X.broStart-30; train.targetX=X.bridgeA-locoObj.len/2-1.2; train.mode='ease'; }
+  if(st==='fjell'){ train.x=X.fjellStart-30; train.targetX=X.slopeA-locoObj.len/2; R.fjellStart=train.targetX; R.fjellEnd=X.top-locoObj.len/2+2; train.mode='ease'; }
+  for(const c of trainCars) placeCar(c,train.x);
+  look.set(train.x,2,0);
+  sfx.whistle();
+  later(nextWord,1800);
+}
+function bridgeDoneAll(){ // vis ferdig bro (for de andre stoppene)
+  for(const p of bridgeParts) bridgeG.remove(p); bridgeParts.length=0;
+  const save=bridge.n; bridge.n=8;
+  for(let i=0;i<8;i++){
+    const span=X.bridgeB-X.bridgeA, w=span/8, x1=X.bridgeA+i*w, x2=x1+w;
+    const g=new THREE.Group(); bridgeG.add(g); bridgeParts.push(g);
+    mesh(new THREE.BoxGeometry(w+.02,.35,3.4),M(i%2?0x8a5a35:0x9b6a40),(x1+x2)/2,-.1,0,g);
+    for(const z of [-1.75,1.75]){ mesh(new THREE.BoxGeometry(w+.02,.14,.14),M(0xD85A30),(x1+x2)/2,1.0,z,g); mesh(new THREE.BoxGeometry(.14,1.1,.14),M(0xD85A30),x1+.1,.5,z,g); }
+    for(const z of [-.75,.75]) mesh(new THREE.BoxGeometry(w+.02,.18,.16),railMat,(x1+x2)/2,.27,z,g);
+    if(i%2===1) mesh(new THREE.BoxGeometry(.6,8,.6),M(0x5b3d24),x2,-4.3,0,g);
+  }
+  bridge.n=save;
+}
+
+function renderDots(){
+  const d=$('dots'); d.innerHTML='';
+  for(let i=0;i<R.total;i++){ const s=document.createElement('div'); s.className='dot'+(i<R.done?' ok':i===R.done?' now':''); d.appendChild(s); }
+  $('progTxt').textContent=`Ord ${Math.min(R.done+1,R.total)} av ${R.total}`;
+}
+function nextWord(){
+  if(!R.queue.length){ finishStation(); return; }
+  R.cur=R.queue.shift(); R.tries=0; R.busy=false;
+  $('noWord').textContent=R.cur.no;
+  $('hint').textContent=''; $('hint').className='hint';
+  renderDots();
+  if(R.st==='fjell') buildKeyboardTask(); else buildTileTask();
+  $('task').classList.remove('hidden');
+}
+
+/* ---------- dra-og-slipp-bokstaver ---------- */
+let slotEls=[], target='', fixed=[];
+function buildTileTask(){
+  $('kbd').style.display='none'; $('tray').style.display='flex';
+  target=mainSpelling(R.cur.en);
+  const chars=[...target];
+  const slots=$('slots'); slots.className='slots'; slots.innerHTML=''; slotEls=[];
+  fixed=chars.map((c,i)=> !/[a-z]/.test(c) || (R.st==='bro' && i===0));
+  chars.forEach((c,i)=>{
+    const s=document.createElement('div'); s.className='slot'; s.dataset.i=i;
+    if(c===' '){ s.className='slot gap'; }
+    else if(fixed[i]){ s.className='slot fixed'; s.textContent=c; }
+    s.addEventListener('pointerdown',e=>slotPointer(e,i));
+    slots.appendChild(s); slotEls.push({el:s,ch:fixed[i]?c:null,tile:null});
+  });
+  let letters=chars.filter((c,i)=>!fixed[i]);
+  if(R.st==='bro'){ const abc='abcdefghijklmnoprstuvwy'; const n=letters.length>6?3:2; for(let k=0;k<n;k++) letters.push(abc[Math.floor(Math.random()*abc.length)]); }
+  let order=shuffle(letters); if(order.join('')===letters.join('') && letters.length>2) order=shuffle(letters);
+  const tray=$('tray'); tray.innerHTML='';
+  for(const l of order){
+    const t=document.createElement('div'); t.className='tile'; t.textContent=l;
+    t.addEventListener('pointerdown',e=>tilePointer(e,t));
+    tray.appendChild(t);
+  }
+}
+let drag=null;
+function tilePointer(e,t){
+  if(R.busy || t.classList.contains('ghost')) return;
+  e.preventDefault(); audio();
+  startDrag(e,t.textContent,{fromTile:t});
+}
+function slotPointer(e,i){
+  const s=slotEls[i]; if(R.busy||fixed[i]||!s.tile) return;
+  e.preventDefault();
+  const ch=s.ch, tile=s.tile; s.ch=null; s.tile=null; s.el.textContent=''; s.el.classList.remove('filled');
+  startDrag(e,ch,{fromTile:tile,fromSlot:i});
+}
+function startDrag(e,ch,src){
+  const ghost=document.createElement('div'); ghost.className='tile drag'; ghost.textContent=ch; document.body.appendChild(ghost);
+  src.fromTile.classList.add('ghost');
+  drag={ch,src,ghost,x0:e.clientX,y0:e.clientY,moved:false,pid:e.pointerId};
+  moveGhost(e.clientX,e.clientY); sfx.pick();
+  addEventListener('pointermove',onMove,{passive:false}); addEventListener('pointerup',onUp); addEventListener('pointercancel',onUp);
+}
+function moveGhost(x,y){ drag.ghost.style.left=(x-29)+'px'; drag.ghost.style.top=(y-40)+'px'; }
+function slotAt(x,y){
+  let best=-1, bd=1e9;
+  slotEls.forEach((s,i)=>{ if(fixed[i]||s.el.classList.contains('gap')) return; const r=s.el.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; const d=Math.hypot(x-cx,y-cy); if(d<bd){ bd=d; best=i; } });
+  return bd<70?best:-1;
+}
+function onMove(e){
+  if(!drag||e.pointerId!==drag.pid) return; e.preventDefault();
+  if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>8) drag.moved=true;
+  moveGhost(e.clientX,e.clientY);
+  const i=slotAt(e.clientX,e.clientY);
+  slotEls.forEach((s,k)=>s.el.classList.toggle('hot',k===i));
+}
+function onUp(e){
+  if(!drag||e.pointerId!==drag.pid) return;
+  removeEventListener('pointermove',onMove); removeEventListener('pointerup',onUp); removeEventListener('pointercancel',onUp);
+  slotEls.forEach(s=>s.el.classList.remove('hot'));
+  const d=drag; drag=null; d.ghost.remove();
+  let i;
+  if(!d.moved){
+    // trykk: fra brett → neste ledige rute, fra rute → tilbake til brettet
+    i = d.src.fromSlot!=null ? -1 : slotEls.findIndex((s,k)=>!fixed[k]&&!s.el.classList.contains('gap')&&!s.ch);
+  } else i=slotAt(e.clientX,e.clientY);
+  if(i>=0){
+    const s=slotEls[i];
+    if(s.ch){ // bytt: den gamle går tilbake
+      if(d.src.fromSlot!=null){ const o=slotEls[d.src.fromSlot]; o.ch=s.ch; o.tile=s.tile; o.el.textContent=s.ch; o.el.classList.add('filled'); }
+      else s.tile.classList.remove('ghost');
+    }
+    s.ch=d.ch; s.tile=d.src.fromTile; s.el.textContent=d.ch; s.el.classList.add('filled'); sfx.drop();
+    s.el.animate([{transform:'scale(1.15)'},{transform:'scale(1)'}],{duration:160});
+  } else {
+    d.src.fromTile.classList.remove('ghost');
+  }
+  if(slotEls.every((s,k)=>fixed[k]||s.el.classList.contains('gap')||s.ch)) later(checkTiles,220);
+}
+function currentGuessTiles(){ return slotEls.map((s,k)=>s.el.classList.contains('gap')?' ':(s.ch||'')).join(''); }
+function checkTiles(){
+  if(R.busy) return;
+  if(!slotEls.every((s,k)=>fixed[k]||s.el.classList.contains('gap')||s.ch)) return;
+  judge(currentGuessTiles());
+}
+function clearTiles(){
+  slotEls.forEach((s,k)=>{ if(fixed[k]||!s.ch) return; s.tile.classList.remove('ghost'); s.ch=null; s.tile=null; s.el.textContent=''; s.el.classList.remove('filled'); });
+}
+
+/* ---------- tastatur (Fjellbakken) ---------- */
+let typed=[];
+function buildKeyboardTask(){
+  $('tray').style.display='none'; $('kbd').style.display='flex';
+  target=mainSpelling(R.cur.en); typed=[];
+  const chars=[...target];
+  const slots=$('slots'); slots.className='slots'; slots.innerHTML=''; slotEls=[];
+  fixed=chars.map(c=>!/[a-z]/.test(c));
+  chars.forEach((c,i)=>{ const s=document.createElement('div'); s.className='slot'+(c===' '?' gap':fixed[i]?' fixed':''); if(fixed[i]&&c!==' ') s.textContent=c; slots.appendChild(s); slotEls.push({el:s,ch:fixed[i]?c:null}); });
+  if(!buildKeyboardTask.made){
+    const rows=['qwertyuiop','asdfghjkl','zxcvbnm'];
+    const k=$('kbd'); k.innerHTML='';
+    rows.forEach((r,ri)=>{ const row=document.createElement('div'); row.className='r';
+      if(ri===2){ const b=document.createElement('button'); b.className='key wide back'; b.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9l6 6M18 9l-6 6"/></svg><span>Slett</span>'; b.onclick=()=>keyPress('⌫'); row.appendChild(b); }
+      for(const ch of r){ const b=document.createElement('button'); b.className='key'; b.textContent=ch; b.onclick=()=>keyPress(ch); row.appendChild(b); }
+      if(ri===2){ const b=document.createElement('button'); b.className='key wide go'; b.innerHTML='<span>Sjekk</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'; b.onclick=()=>keyPress('ok'); row.appendChild(b); }
+      k.appendChild(row); });
+    buildKeyboardTask.made=true;
+  }
+}
+function openSlots(){ return slotEls.map((s,i)=>i).filter(i=>!fixed[i]); }
+function keyPress(ch){
+  if(R.busy||R.st!=='fjell') return; audio();
+  const open=openSlots();
+  if(ch==='⌫'){ if(typed.length){ typed.pop(); } }
+  else if(ch==='ok'){ if(typed.length===open.length) judge(guessFromTyped()); else { $('hint').className='hint warn'; $('hint').textContent='Fyll ut alle rutene først.'; } return; }
+  else if(typed.length<open.length){ typed.push(ch); sfx.pick(); }
+  redrawTyped();
+  if(ch!=='⌫' && typed.length===open.length) later(()=>judge(guessFromTyped()),350);
+}
+function redrawTyped(){ openSlots().forEach((si,k)=>{ const s=slotEls[si]; s.el.textContent=typed[k]||''; s.el.classList.toggle('filled',!!typed[k]); }); }
+function guessFromTyped(){ const open=openSlots(); const arr=slotEls.map((s,i)=>fixed[i]?(s.ch):''); open.forEach((si,k)=>arr[si]=typed[k]||''); return arr.join(''); }
+addEventListener('keydown',e=>{ if(!R||R.st!=='fjell'||$('task').classList.contains('hidden')) return; if(document.activeElement && /input|textarea/i.test(document.activeElement.tagName)) return; if(/^[a-zA-Z]$/.test(e.key)) keyPress(e.key.toLowerCase()); else if(e.key==='Backspace') keyPress('⌫'); else if(e.key==='Enter') keyPress('ok'); });
+
+/* ---------- vurdering ---------- */
+function judge(guess){
+  if(R.busy) return;
+  const slots=$('slots');
+  if(accepts(R.cur.en,guess)){
+    R.busy=true; slots.classList.add('good'); sfx.ok();
+    if(R.tries===0 && !R.missed.has(R.cur.i)){ R.first++; }
+    R.results[R.cur.i]=R.tries===0;
+    $('hint').className='hint good'; $('hint').textContent=['Riktig!','Supert!','Helt rett!','Bra jobba!'][Math.floor(Math.random()*4)];
+    later(()=>{ $('task').classList.add('hidden'); reward(); },650);
+  } else {
+    R.tries++; R.missed.add(R.cur.i); R.busy=true; slots.classList.add('bad','shake'); sfx.bad();
+    if(R.st==='fjell') slideBack();
+    later(()=>{
+      slots.classList.remove('bad','shake');
+      if(R.tries>=2){
+        $('hint').className='hint warn'; $('hint').innerHTML=`Ordet er <b style="font-family:'Fredoka One';font-size:22px;letter-spacing:2px">${esc(mainSpelling(R.cur.en))}</b> – det kommer tilbake litt senere.`;
+        later(()=>{ R.queue.splice(Math.min(2,R.queue.length),0,{...R.cur}); R.busy=false; nextWord(); },2800);
+      } else {
+        R.busy=false;
+        if(R.st==='fjell'){ typed=[]; redrawTyped(); }
+        else clearTiles();
+        $('hint').className='hint warn'; $('hint').textContent='Nesten! Prøv igjen.';
+      }
+    },650);
+  }
+}
+function reward(){
+  R.done++;
+  const word=mainSpelling(R.cur.en);
+  if(R.st==='laste'){
+    const car=addWagon(word,true);
+    const restBack=car.back;
+    // ny vogn ruller inn bakfra og kobles på
+    const g=car.g; car.back=car.back+24;
+    anim(1.3,t=>{ car.back=restBack+24*(1-ease(t)); },()=>{
+      car.back=restBack; sfx.clank();
+      train.targetX = DOCK.x + restBack;
+      later(()=>{
+        const c=crate(word,trainCars.length-2); c.castShadow=true; scene.add(c);
+        const start=new THREE.Vector3(DOCK.x,1.6,DOCK.z);
+        anim(1.0,t=>{ const end=new THREE.Vector3(); g.localToWorld(end.set(0,1.85,0)); c.position.lerpVectors(start,end,ease(t)); c.position.y+=Math.sin(t*Math.PI)*3; c.rotation.y=t*Math.PI*.5; },()=>{
+          scene.remove(c); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; g.add(c); sfx.thump();
+          for(let i=0;i<4;i++) setTimeout(()=>puff(1.4),i*110);
+          later(nextWord,650);
+        });
+      },1200);
+    });
+  } else if(R.st==='bro'){
+    addPlank(R.done-1);
+    later(nextWord,1100);
+  } else {
+    const step=(R.fjellEnd-R.fjellStart)/R.total;
+    train.targetX=Math.min(R.fjellEnd, Math.max(train.targetX, R.fjellStart+step*R.done));
+    for(let i=0;i<5;i++) setTimeout(()=>puff(1.6),i*120);
+    later(nextWord,1300);
+  }
+}
+function slideBack(){
+  const back=Math.max(R.fjellStart, train.targetX-2.2);
+  train.targetX=back;
+}
+function finishStation(){
+  $('task').classList.add('hidden');
+  const pct=R.first/R.total;
+  const stars= pct>=.9?3: pct>=.7?2:1;
+  const bonus = R.first===R.total?3:0;
+  const earned=R.first+bonus;
+  setTickets(tickets+earned);
+  const L=lists[curId]; L.progress=L.progress||{}; L.progress[R.st]=Math.max(L.progress[R.st]||0,stars); L.saved=Date.now(); saveAll();
+  sfx.whistle();
+  const titles={laste:'Lasten er levert!',bro:'Broen er ferdig!',fjell:'Du kom helt til toppen!'};
+  if(R.st==='laste'){ train.mode='drive'; train.targetX=train.x+60; }
+  if(R.st==='bro'){ train.mode='drive'; train.targetX=X.bridgeB+trainLen()+8; }
+  if(R.st==='fjell'){ train.targetX=R.fjellEnd; }
+  later(()=>{
+    $('doneTitle').textContent=titles[R.st];
+    $('doneStars').innerHTML=starStr(stars);
+    $('doneFirst').innerHTML=`${ICO('sjekk')} ${R.first} av ${R.total} riktige på første forsøk`;
+    $('doneTickets').innerHTML=`${ICO('ticket')} +${earned} billetter`;
+    $('doneTxt').textContent= bonus? 'Feilfri tur – du fikk 3 ekstra billetter!' : (stars<3?'Prøv igjen for flere stjerner, eller kjør videre.':'');
+    const next={laste:'bro',bro:'fjell',fjell:null}[R.st];
+    $('btnDoneNext').style.display=next?'inline-block':'none';
+    $('btnDoneNext').onclick=()=>{ $('mDone').classList.add('hidden'); startStation(next); };
+    $('mDone').classList.remove('hidden');
+  },R.st==='fjell'?2200:3800);
+}
+$('btnDoneMap').onclick=()=>{ $('mDone').classList.add('hidden'); openMap(curId); };
+$('btnDoneAgain').onclick=()=>{ $('mDone').classList.add('hidden'); startStation(R.st); };
+
+/* ================= VERKSTED ================= */
+const pv={};
+function initPreview(){
+  if(pv.r) return;
+  const c=$('preview');
+  pv.r=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true}); pv.r.setPixelRatio(Math.min(devicePixelRatio,2));
+  pv.s=new THREE.Scene(); pv.s.add(new THREE.HemisphereLight(0xffffff,0x88aa77,1.3)); const d=new THREE.DirectionalLight(0xffffff,1.4); d.position.set(5,8,6); pv.s.add(d);
+  pv.c=new THREE.PerspectiveCamera(32,1,.1,100); pv.c.position.set(9,5,11); pv.c.lookAt(0,1.6,0);
+  const turn=new THREE.Mesh(new THREE.CylinderGeometry(5.2,5.4,.4,32),M(0xdbeafe)); turn.position.y=-.2; pv.s.add(turn);
+  for(let x=-4.6;x<=4.6;x+=1.1){ const sl=new THREE.Mesh(sleeperGeo,sleeperMat); sl.position.set(x,.09,0); pv.s.add(sl); }
+  for(const z of [-.75,.75]){ const r=new THREE.Mesh(new THREE.BoxGeometry(9.6,.18,.16),railMat); r.position.set(0,.27,z); pv.s.add(r); }
+  pv.holder=new THREE.Group(); pv.s.add(pv.holder);
+  const tick=()=>{ if($('mShop').classList.contains('hidden')){ pv.raf=null; return; } pv.holder.rotation.y+=.008; const w=c.clientWidth,h=c.clientHeight; if(c.width!==Math.floor(w*pv.r.getPixelRatio())){ pv.r.setSize(w,h,false); pv.c.aspect=w/h; pv.c.updateProjectionMatrix(); } pv.r.render(pv.s,pv.c); pv.raf=requestAnimationFrame(tick); };
+  pv.tick=tick;
+}
+function refreshPreview(){
+  applyPaint();
+  while(pv.holder.children.length) pv.holder.remove(pv.holder.children[0]);
+  const o=buildLoco(garage.current,locoMats); o.g.position.x=garage.current==='lyn'?-.6:0; pv.holder.add(o.g);
+}
+function renderShop(){
+  $('locoName').value=garage.name||'';
+  const lp=$('locoPick'); lp.innerHTML='';
+  for(const L of LOCOS){
+    const have=garage.owned.includes(L.id);
+    const b=document.createElement('button'); b.className='loco'+(garage.current===L.id?' on':'')+(have?'':' locked');
+    b.innerHTML=`<img src="spelling-express-ikoner/${L.id}.webp" alt="">${L.name}<span class="pr">${have?(garage.current===L.id?'I bruk':'Velg'):ICO('ticket','ico s')+' '+L.price}</span>`;
+    b.onclick=()=>{
+      if(!have){ if(tickets<L.price){ $('shopMsg').textContent=`Du trenger ${L.price} billetter for ${L.name}. Du har ${tickets}.`; sfx.bad(); return; }
+        setTickets(tickets-L.price); garage.owned.push(L.id); toast(`${L.name} er ditt!`); sfx.ok(); }
+      garage.current=L.id; saveAll(); renderShop(); refreshPreview();
+    };
+    lp.appendChild(b);
+  }
+  const p=garage.paint[garage.current];
+  for(const [key,el] of [['body','swBody'],['trim','swTrim'],['wheel','swWheel'],['detail','swDetail']]){
+    const box=$(el); box.innerHTML='';
+    for(const [c,price] of PALETTE[key]){
+      const id=key+c, have=price===0||garage.colors.includes(id);
+      const d=document.createElement('div'); d.className='sw'+(p[key]===c?' on':'')+(have?'':' lock'); d.style.background=c; d.title=have?'':price+' billetter';
+      d.onclick=()=>{
+        if(!have){ if(tickets<price){ $('shopMsg').textContent=`Denne fargen koster ${price} billetter. Du har ${tickets}.`; sfx.bad(); return; } setTickets(tickets-price); garage.colors.push(id); sfx.ok(); }
+        p[key]=c; $('shopMsg').textContent=''; saveAll(); renderShop(); refreshPreview();
+      };
+      box.appendChild(d);
+    }
+  }
+}
+$('btnShop').onclick=()=>{ audio(); $('shopMsg').textContent=''; $('mShop').classList.remove('hidden'); initPreview(); renderShop(); refreshPreview(); if(!pv.raf) pv.tick(); };
+$('locoName').oninput=e=>{ garage.name=e.target.value; drawName(garage.paint[garage.current].trim); saveAll(); };
+$('btnShopClose').onclick=()=>{ $('mShop').classList.add('hidden'); applyPaint(); rebuildLocoInPlace(); };
+function rebuildLocoInPlace(){
+  if(!locoObj) return;
+  const words=trainCars.slice(1).map(c=>c.word);
+  const x=train.x;
+  // bygg lokomotivet på nytt, behold vognene
+  scene.remove(locoObj.g);
+  for(const w of locoObj.wheels){ const i=wheels.indexOf(w); if(i>=0) wheels.splice(i,1); }
+  locoObj=buildLoco(garage.current,locoMats); scene.add(locoObj.g); wheels.push(...locoObj.wheels);
+  trainCars[0]={g:locoObj.g,back:0};
+  let i=0; for(const c of trainCars.slice(1)){ c.back=locoObj.len/2+.3+WAGON_LEN*i+WAGON_LEN/2; i++; }
+  for(const c of trainCars) placeCar(c,x);
+}
+
+/* ================= START ================= */
+renderHome();
+const urlCode=new URLSearchParams(location.search).get('kode');
+if(urlCode){ $('code').value=urlCode.toUpperCase(); fetchList(urlCode); history.replaceState(null,'',location.pathname); }
+</script>
+</body>
+</html>

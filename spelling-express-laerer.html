@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spelling Express – lærersiden | Myntland</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+:root{
+  --blue:#1a5fa5; --blue-light:#dbeafe; --blue-dark:#123f6e;
+  --green:#1D9E75; --green-light:#E1F5EE; --green-dark:#085041;
+  --amber:#EF9F27; --amber-light:#FAEEDA; --amber-dark:#c27a12;
+  --coral:#D85A30; --coral-light:#FAECE7;
+  --purple:#534AB7; --purple-light:#EEEDFE;
+  --bg:#F7F9F7; --text:#1a2e1a; --muted:#5a7a5a; --border:#c8dfc8; --line:#e4ebe4;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Nunito,system-ui,sans-serif;color:var(--text);background:var(--bg)}
+h1,h2,h3{font-family:"Fredoka One",Nunito,sans-serif;font-weight:400;margin:0}
+button{font:inherit;cursor:pointer}
+a{color:var(--blue)}
+header{background:linear-gradient(120deg,#1a5fa5,#123f6e);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
+header .badge{width:52px;height:52px;display:grid;place-items:center;margin:-8px 0}
+header .badge img{width:52px;height:52px}
+img.ico{width:24px;height:24px;object-fit:contain;flex:none}
+img.ico.s{width:18px;height:18px}
+img.ico.l{width:34px;height:34px}
+.mcard h2{display:flex;align-items:center;gap:10px}
+.tdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+header h1{font-size:24px}
+header h1 b{color:#ffc56b;font-weight:400}
+header .sub{font-weight:800;opacity:.85;font-size:14px}
+header .sp{flex:1}
+header .user{display:flex;align-items:center;gap:10px;font-weight:800;font-size:14px}
+.btn{border:0;border-radius:14px;padding:11px 16px;font-weight:900;font-size:16px;background:#fff;color:var(--blue-dark);box-shadow:0 3px 0 rgba(18,63,110,.2);transition:transform .06s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(18,63,110,.2)}
+.btn.blue{background:var(--blue);color:#fff;box-shadow:0 3px 0 var(--blue-dark)}
+.btn.green{background:var(--green);color:#fff;box-shadow:0 3px 0 var(--green-dark)}
+.btn.coral{background:var(--coral);color:#fff;box-shadow:0 3px 0 #9c3b1c}
+.btn.soft{background:var(--blue-light);box-shadow:none}
+.btn.ghost{background:transparent;box-shadow:none;color:var(--blue)}
+.btn.small{padding:7px 11px;font-size:14px;border-radius:11px}
+.btn:disabled{opacity:.45;pointer-events:none}
+.wrap{max-width:1240px;margin:0 auto;padding:22px}
+.card{background:#fff;border-radius:22px;box-shadow:0 6px 24px rgba(18,63,110,.08);padding:22px}
+.login{max-width:560px;margin:50px auto;text-align:center}
+.login h2{font-size:34px;color:var(--blue-dark);margin-bottom:8px}
+.login p{font-size:17px;line-height:1.5;color:var(--muted);font-weight:700}
+.gbtn{display:inline-flex;align-items:center;gap:10px;border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px 20px;font-weight:900;font-size:17px}
+.gbtn img{width:22px;height:22px}
+.layout{display:grid;grid-template-columns:290px 1fr;gap:20px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.side h3{font-size:20px;color:var(--blue-dark);margin-bottom:10px}
+.mylist{display:grid;gap:8px;margin-top:12px}
+.li{border:2px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;background:#fff}
+.li:hover{border-color:var(--blue-light)}
+.li.on{border-color:var(--blue);background:var(--blue-light)}
+.li .t{font-weight:900}
+.li .m{font-size:13px;color:var(--muted);font-weight:700}
+.li .c{font-family:"Fredoka One";letter-spacing:2px;color:var(--blue);font-size:14px}
+.muted{color:var(--muted);font-weight:700}
+.editor .row1{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+label.l{display:block;font-weight:900;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+input.txt,select.txt{font:inherit;font-size:17px;padding:10px 12px;border-radius:12px;border:2px solid var(--border);background:#fff;width:100%}
+input.txt:focus,select.txt:focus,textarea:focus{outline:none;border-color:var(--blue)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 8px}
+table.words{width:100%;border-collapse:separate;border-spacing:0 6px}
+table.words th{text-align:left;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0 6px}
+table.words td{padding:0 4px;vertical-align:top}
+table.words td.n{width:30px;color:var(--muted);font-weight:900;padding-top:12px;text-align:right}
+table.words input.w{font:inherit;font-size:17px;padding:9px 11px;border-radius:11px;border:2px solid var(--line);width:100%;background:#fff}
+table.words input.w:focus{outline:none;border-color:var(--blue)}
+table.words input.w.err{border-color:var(--coral);background:var(--coral-light)}
+table.words input.w.en{font-weight:800}
+.notes{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 2px;min-height:0}
+.note{font-size:13px;font-weight:800;border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:6px}
+.note.err{background:var(--coral-light);color:#9c3b1c}
+.note.warn{background:var(--amber-light);color:#8a5600}
+.note.info{background:#eef2f6;color:#4b5b6b}
+.note.sug{background:var(--green-light);color:var(--green-dark)}
+.note button{border:0;background:#fff;border-radius:999px;padding:2px 9px;font-weight:900;font-size:12px;color:inherit}
+.star{border:2px solid var(--line);background:#fff;border-radius:11px;width:44px;height:42px;display:grid;place-items:center;padding:0}
+.star img{width:26px;height:26px;filter:grayscale(1);opacity:.4}
+.star.on{border-color:var(--purple);background:var(--purple-light)}
+.star.on img{filter:none;opacity:1}
+.del{border:0;background:none;font-size:18px;opacity:.35;padding:10px 6px}
+.del:hover{opacity:.8}
+.foot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:2px solid var(--line)}
+.status{font-weight:900}
+.status.ok{color:var(--green)}
+.status.bad{color:var(--coral)}
+.share{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;background:var(--green-light);border-radius:20px;padding:18px;margin-top:16px}
+@media (max-width:640px){.share{grid-template-columns:1fr}}
+.share .code{font-family:"Fredoka One";font-size:52px;letter-spacing:8px;color:var(--green-dark);line-height:1}
+.share .qr{background:#fff;border-radius:16px;padding:10px;width:180px;height:180px}
+.share .qr svg,.share .qr img{width:100%;height:100%}
+.share .link{font-weight:800;word-break:break-all;font-size:14px;color:var(--green-dark)}
+.share .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.modal{position:fixed;inset:0;background:rgba(18,40,70,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:30}
+.modal.hidden{display:none}
+.mcard{background:#fff;border-radius:22px;padding:22px;width:min(760px,100%);max-height:92vh;overflow:auto}
+.mcard h2{color:var(--blue-dark);font-size:26px;margin-bottom:4px}
+textarea{width:100%;min-height:200px;font:inherit;font-size:16px;padding:12px;border-radius:14px;border:2px solid var(--border)}
+.ptable{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px}
+.ptable td,.ptable th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.ptable th{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.bank{display:grid;grid-template-columns:220px 1fr;gap:16px}
+@media (max-width:640px){.bank{grid-template-columns:1fr}}
+.themes{display:grid;gap:6px;max-height:60vh;overflow:auto;padding-right:4px}
+.theme{border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff;text-align:left;font-weight:800;font-size:15px}
+.theme.on{border-color:var(--blue);background:var(--blue-light)}
+.theme small{display:block;color:var(--muted);font-size:12px}
+.bwords{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;max-height:52vh;overflow:auto}
+.bw{display:flex;gap:8px;align-items:center;border:2px solid var(--line);border-radius:12px;padding:7px 10px;font-weight:700;cursor:pointer}
+.bw input{width:18px;height:18px}
+.bw b{font-weight:900}
+.seg{display:inline-flex;background:var(--blue-light);border-radius:12px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:9px;font-weight:900;color:var(--blue)}
+.seg button.on{background:#fff}
+.btnrow{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.empty{border:2px dashed var(--border);border-radius:18px;padding:30px;text-align:center}
+.empty h2{color:var(--blue-dark);font-size:26px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--blue-dark);color:#fff;padding:10px 18px;border-radius:999px;font-weight:900;z-index:60;transition:opacity .3s;pointer-events:none}
+.toast.hide{opacity:0}
+.help{font-size:14px;color:var(--muted);font-weight:700;line-height:1.5}
+#printArea{display:none}
+@media print{
+  body > *:not(#printArea){display:none !important}
+  #printArea{display:block !important;text-align:center;padding:30px;font-family:Nunito,sans-serif}
+  #printArea h1{font-family:"Fredoka One";font-size:40px;margin:0 0 6px;color:#123f6e}
+  #printArea .pc{font-family:"Fredoka One";font-size:80px;letter-spacing:14px;margin:18px 0;color:#085041}
+  #printArea .pq{width:340px;height:340px;margin:0 auto}
+  #printArea .pq svg{width:100%;height:100%}
+  #printArea p{font-size:20px}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html"><div class="badge"><img class="" src="spelling-express-ikoner/logo.webp" alt=""></div><div><h1>Spelling <b>Express</b></h1><div class="sub">Lærersiden · Myntland</div></div></a>
+  <div class="sp"></div>
+  <a class="btn small soft" href="spelling-express.html" target="_blank" rel="noopener">Åpne elevsiden</a>
+  <div class="user" id="userBox" style="display:none"><span id="userName"></span><button class="btn small" id="btnLogout">Logg ut</button></div>
+</header>
+
+<div class="wrap" id="viewLogin" style="display:none">
+  <div class="card login">
+    <img src="spelling-express-ikoner/logo.webp" alt="" style="width:130px;height:130px">
+    <h2>Lag gloselister til Spelling Express</h2>
+    <p>Lag ukas engelske gloseliste, og del den med elevene med en kode eller QR. Elevene trenger ingen konto – de skriver bare inn koden.</p>
+    <button class="gbtn" id="btnLogin"><img alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path fill='%23FFC107' d='M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z'/><path fill='%23FF3D00' d='M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z'/><path fill='%234CAF50' d='M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z'/><path fill='%231976D2' d='M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z'/></svg>">Logg inn med Google</button>
+    <p class="help" style="margin-top:16px">Listene lagres på kontoen din, så du finner dem igjen neste uke. Gloselistene inneholder ingen opplysninger om elevene.</p>
+    <div class="muted" id="loginMsg" style="color:var(--coral)"></div>
+  </div>
+</div>
+
+<div class="wrap" id="viewApp" style="display:none">
+  <div class="layout">
+    <aside class="card side">
+      <h3>Mine lister</h3>
+      <button class="btn blue" id="btnNew" style="width:100%;justify-content:center">+ Ny liste</button>
+      <div class="mylist" id="myLists"></div>
+    </aside>
+    <main>
+      <div class="card empty" id="emptyState">
+        <img src="spelling-express-ikoner/blyant.webp" alt="" style="width:110px;height:110px">
+        <h2>Lag en ny gloseliste</h2>
+        <p class="muted">Trykk «Ny liste», eller velg en liste du har laget før.</p>
+      </div>
+      <div class="card editor" id="editor" style="display:none">
+        <div class="row1">
+          <div style="flex:1;min-width:220px"><label class="l" for="title">Navn på lista</label><input class="txt" id="title" maxlength="60" placeholder="F.eks. Uke 47 – Dyr"></div>
+          <div style="width:160px"><label class="l" for="trinn">Trinn</label>
+            <select class="txt" id="trinn"><option value="">Velg</option><option>1.–2. trinn</option><option>3.–4. trinn</option><option>5. trinn</option><option>6. trinn</option><option>7. trinn</option></select></div>
+        </div>
+        <div class="tools">
+          <button class="btn soft" id="btnPaste"><img class="ico" src="spelling-express-ikoner/lim.webp" alt="">Lim inn ord</button>
+          <button class="btn soft" id="btnBank"><img class="ico" src="spelling-express-ikoner/boker.webp" alt="">Listebanken</button>
+          <span class="help" style="align-self:center">Tips: skriv bare det engelske ordet – da foreslår vi det norske.</span>
+        </div>
+        <table class="words">
+          <thead><tr><th></th><th>Norsk</th><th>Engelsk (det eleven skal stave)</th><th title="Utfordringsord"><img class="ico s" src="spelling-express-ikoner/stjerne.webp" alt=""></th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <button class="btn ghost" id="btnAddRow">+ Legg til ord</button>
+        <div class="foot">
+          <div><div class="status" id="status"></div><div class="help" id="statusSub"></div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnCopy" title="Lag en kopi med ny kode"><img class="ico" src="spelling-express-ikoner/kopier.webp" alt="">Kopier</button>
+            <button class="btn ghost" id="btnDelete" style="color:var(--coral)"><img class="ico" src="spelling-express-ikoner/slett.webp" alt=""><span>Slett</span></button>
+            <button class="btn green" id="btnSave"><img class="ico" src="spelling-express-ikoner/lagre.webp" alt=""><span>Lagre og del</span></button>
+          </div>
+        </div>
+        <div class="share" id="share" style="display:none">
+          <div class="qr" id="qr"></div>
+          <div>
+            <div class="muted">Elevene skriver inn koden</div>
+            <div class="code" id="shareCode">——</div>
+            <div class="link" id="shareLink"></div>
+            <div class="btns">
+              <button class="btn small" id="btnCopyLink"><img class="ico s" src="spelling-express-ikoner/lenke.webp" alt="">Kopier lenke</button>
+              <button class="btn small" id="btnPrint"><img class="ico s" src="spelling-express-ikoner/skriver.webp" alt="">Skriv ut QR-plakat</button>
+            </div>
+            <div class="help" style="margin-top:8px">Endringer du lagrer, kommer med når eleven henter lista på nytt med samme kode.</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Lim inn -->
+<div class="modal hidden" id="mPaste">
+  <div class="mcard">
+    <h2><img class="ico l" src="spelling-express-ikoner/lim.webp" alt="">Lim inn ord</h2>
+    <p class="help">Lim inn fra ukeplanen, Word eller Excel. Én linje per ord. Det går fint med «dog – hund», «hund = dog», to kolonner, eller bare det engelske ordet.</p>
+    <textarea id="pasteText" placeholder="dog – hund&#10;katt = cat&#10;because&#10;horse	hest"></textarea>
+    <div id="pastePreview"></div>
+    <div class="btnrow">
+      <button class="btn ghost" id="btnSwap" style="display:none">Bytt kolonner</button>
+      <button class="btn" id="btnPasteCancel">Avbryt</button>
+      <button class="btn blue" id="btnPasteAdd" disabled>Legg til ordene</button>
+    </div>
+  </div>
+</div>
+
+<!-- Listebank -->
+<div class="modal hidden" id="mBank">
+  <div class="mcard" style="width:min(920px,100%)">
+    <h2><img class="ico l" src="spelling-express-ikoner/boker.webp" alt="">Listebanken</h2>
+    <div style="margin:6px 0 12px"><div class="seg" id="bankTrinn"><button data-t="" class="on">Alle</button><button data-t="1-4">1.–4. trinn</button><button data-t="5-7">5.–7. trinn</button></div></div>
+    <div class="bank">
+      <div class="themes" id="themes"></div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b id="bankName"></b><span><button class="btn small ghost" id="bankAll">Velg alle</button><button class="btn small ghost" id="bankNone">Fjern alle</button></span></div>
+        <div class="bwords" id="bwords"></div>
+      </div>
+    </div>
+    <div class="btnrow"><button class="btn" id="btnBankCancel">Lukk</button><button class="btn blue" id="btnBankAdd">Legg til valgte</button></div>
+  </div>
+</div>
+
+<div id="printArea"><h1 id="pTitle"></h1><p>Åpne <b>Spelling Express</b> og skriv inn koden – eller skann QR-koden med kameraet.</p><div class="pc" id="pCode"></div><div class="pq" id="pQr"></div></div>
+<div class="toast hide" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getDatabase, ref, get, set, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+// Ordbank for Spelling Express (lærersiden) – temaer, ordbok og britisk/amerikansk staving.
+// Format per tema: "engelsk=norsk; engelsk=norsk"
+const THEMES = [
+  {id:'farger',  name:'Farger', trinn:'1-4', w:'red=rød; blue=blå; green=grønn; yellow=gul; black=svart; white=hvit; brown=brun; pink=rosa; orange=oransje; purple=lilla; grey=grå; gold=gull; silver=sølv'},
+  {id:'tall1',   name:'Tall 1–12', trinn:'1-4', w:'one=en; two=to; three=tre; four=fire; five=fem; six=seks; seven=sju; eight=åtte; nine=ni; ten=ti; eleven=elleve; twelve=tolv'},
+  {id:'tall2',   name:'Tall 13–100', trinn:'5-7', w:'thirteen=tretten; fourteen=fjorten; fifteen=femten; sixteen=seksten; seventeen=sytten; eighteen=atten; nineteen=nitten; twenty=tjue; thirty=tretti; forty=førti; fifty=femti; sixty=seksti; seventy=sytti; eighty=åtti; ninety=nitti; hundred=hundre; thousand=tusen'},
+  {id:'dager',   name:'Ukedager', trinn:'1-4', w:'monday=mandag; tuesday=tirsdag; wednesday=onsdag; thursday=torsdag; friday=fredag; saturday=lørdag; sunday=søndag; week=uke; weekend=helg; today=i dag; tomorrow=i morgen; yesterday=i går'},
+  {id:'maaneder',name:'Måneder og årstider', trinn:'5-7', w:'january=januar; february=februar; march=mars; april=april; may=mai; june=juni; july=juli; august=august; september=september; october=oktober; november=november; december=desember; spring=vår; summer=sommer; autumn=høst; winter=vinter; month=måned; year=år'},
+  {id:'vaer',    name:'Vær', trinn:'1-4', w:'sun=sol; rain=regn; snow=snø; wind=vind; cloud=sky; sunny=solfylt; rainy=regnfullt; windy=vindfullt; cold=kald; hot=varm; storm=storm; fog=tåke; ice=is; rainbow=regnbue; weather=vær'},
+  {id:'familie', name:'Familie', trinn:'1-4', w:'mother=mor; father=far; mum=mamma; dad=pappa; sister=søster; brother=bror; grandmother=bestemor; grandfather=bestefar; aunt=tante; uncle=onkel; cousin=fetter; baby=baby; family=familie; parents=foreldre; daughter=datter; son=sønn'},
+  {id:'kroppen', name:'Kroppen', trinn:'1-4', w:'head=hode; hair=hår; eye=øye; ear=øre; nose=nese; mouth=munn; tooth=tann; teeth=tenner; neck=nakke; arm=arm; hand=hånd; finger=finger; leg=bein; knee=kne; foot=fot; feet=føtter; toe=tå; back=rygg; stomach=mage; face=ansikt'},
+  {id:'klaer',   name:'Klær', trinn:'1-4', w:'shirt=skjorte; trousers=bukse; jeans=olabukse; dress=kjole; skirt=skjørt; jacket=jakke; coat=frakk; sweater=genser; shoes=sko; socks=sokker; hat=hatt; cap=caps; scarf=skjerf; gloves=hansker; boots=støvler; pyjamas=pyjamas; shorts=shorts'},
+  {id:'mat',     name:'Mat og drikke', trinn:'1-4', w:'bread=brød; butter=smør; cheese=ost; milk=melk; water=vann; juice=jus; egg=egg; fish=fisk; meat=kjøtt; chicken=kylling; rice=ris; pasta=pasta; pizza=pizza; soup=suppe; cake=kake; ice cream=iskrem; sugar=sukker; salt=salt; breakfast=frokost; lunch=lunsj; dinner=middag; sandwich=smørbrød'},
+  {id:'frukt',   name:'Frukt og grønnsaker', trinn:'1-4', w:'apple=eple; banana=banan; orange=appelsin; pear=pære; grapes=druer; strawberry=jordbær; lemon=sitron; cherry=kirsebær; potato=potet; carrot=gulrot; tomato=tomat; onion=løk; cucumber=agurk; peas=erter; corn=mais; vegetables=grønnsaker; fruit=frukt'},
+  {id:'husdyr',  name:'Dyr på gården og hjemme', trinn:'1-4', w:'dog=hund; cat=katt; horse=hest; cow=ku; pig=gris; sheep=sau; goat=geit; hen=høne; duck=and; rabbit=kanin; mouse=mus; bird=fugl; fish=fisk; hamster=hamster; puppy=valp; kitten=kattunge; animal=dyr'},
+  {id:'villedyr',name:'Ville dyr', trinn:'5-7', w:'lion=løve; tiger=tiger; elephant=elefant; giraffe=sjiraff; monkey=ape; bear=bjørn; wolf=ulv; fox=rev; snake=slange; crocodile=krokodille; zebra=sebra; whale=hval; shark=hai; eagle=ørn; owl=ugle; deer=hjort; moose=elg; penguin=pingvin; dolphin=delfin; butterfly=sommerfugl'},
+  {id:'skole',   name:'Skolen', trinn:'1-4', w:'school=skole; teacher=lærer; pupil=elev; classroom=klasserom; book=bok; pencil=blyant; pen=penn; eraser=viskelær; ruler=linjal; desk=pult; chair=stol; bag=sekk; paper=papir; scissors=saks; glue=lim; board=tavle; lesson=time; homework=lekser; break=friminutt'},
+  {id:'fag',     name:'Skolefag', trinn:'5-7', w:'english=engelsk; norwegian=norsk; maths=matte; science=naturfag; history=historie; geography=geografi; music=musikk; art=kunst; physical education=kroppsøving; religion=religion; subject=fag; timetable=timeplan'},
+  {id:'huset',   name:'Huset', trinn:'1-4', w:'house=hus; home=hjem; room=rom; kitchen=kjøkken; bathroom=bad; bedroom=soverom; living room=stue; door=dør; window=vindu; floor=gulv; wall=vegg; roof=tak; stairs=trapp; garden=hage; table=bord; bed=seng; sofa=sofa; lamp=lampe; fridge=kjøleskap'},
+  {id:'byen',    name:'I byen', trinn:'5-7', w:'town=by; city=storby; street=gate; road=vei; shop=butikk; supermarket=matbutikk; library=bibliotek; hospital=sykehus; church=kirke; park=park; bank=bank; cinema=kino; restaurant=restaurant; museum=museum; station=stasjon; bridge=bro; square=torg; police station=politistasjon'},
+  {id:'transport',name:'Transport', trinn:'1-4', w:'car=bil; bus=buss; train=tog; plane=fly; boat=båt; ship=skip; bike=sykkel; taxi=taxi; truck=lastebil; tractor=traktor; ferry=ferje; ticket=billett; wheel=hjul; engine=motor; driver=sjåfør; journey=reise'},
+  {id:'fritid',  name:'Fritid og sport', trinn:'5-7', w:'football=fotball; handball=håndball; skiing=skigåing; swimming=svømming; dancing=dans; running=løping; game=spill; ball=ball; team=lag; match=kamp; goal=mål; win=vinne; lose=tape; play=leke; music=musikk; guitar=gitar; piano=piano; hobby=hobby; friend=venn'},
+  {id:'folelser',name:'Følelser', trinn:'5-7', w:'happy=glad; sad=lei seg; angry=sint; scared=redd; tired=trøtt; hungry=sulten; thirsty=tørst; bored=lei; excited=spent; nervous=nervøs; proud=stolt; surprised=overrasket; worried=bekymret; calm=rolig; lonely=ensom; kind=snill'},
+  {id:'yrker',   name:'Yrker', trinn:'5-7', w:'doctor=lege; nurse=sykepleier; teacher=lærer; farmer=bonde; police officer=politi; firefighter=brannkonstabel; cook=kokk; pilot=pilot; dentist=tannlege; artist=kunstner; builder=snekker; fisherman=fisker; shop assistant=butikkmedarbeider; vet=dyrlege; scientist=forsker'},
+  {id:'natur',   name:'Naturen', trinn:'5-7', w:'tree=tre; flower=blomst; grass=gress; forest=skog; mountain=fjell; river=elv; lake=innsjø; sea=hav; beach=strand; island=øy; sky=himmel; star=stjerne; moon=måne; stone=stein; leaf=blad; field=jorde; hill=bakke; valley=dal'},
+  {id:'tid',     name:'Tid og klokka', trinn:'5-7', w:'time=tid; clock=klokke; watch=armbåndsur; hour=time; minute=minutt; second=sekund; morning=morgen; afternoon=ettermiddag; evening=kveld; night=natt; half=halv; quarter=kvart; early=tidlig; late=sent; o\'clock=klokka'},
+  {id:'verb',    name:'Vanlige verb', trinn:'5-7', w:'go=gå; walk=gå; run=løpe; jump=hoppe; swim=svømme; eat=spise; drink=drikke; sleep=sove; read=lese; write=skrive; speak=snakke; listen=lytte; look=se; see=se; play=leke; work=jobbe; help=hjelpe; buy=kjøpe; sell=selge; open=åpne; close=lukke; think=tenke; know=vite; want=ville ha; like=like; love=elske'},
+  {id:'uregelrette',name:'Uregelrette verb (fortid)', trinn:'5-7', w:'was=var; were=var; went=gikk; saw=så; ate=spiste; drank=drakk; came=kom; took=tok; gave=ga; made=lagde; said=sa; got=fikk; had=hadde; did=gjorde; ran=løp; swam=svømte; wrote=skrev; read=leste; bought=kjøpte; thought=tenkte; found=fant; told=fortalte; knew=visste; slept=sov'},
+  {id:'adjektiv',name:'Motsetninger', trinn:'5-7', w:'big=stor; small=liten; long=lang; short=kort; old=gammel; new=ny; young=ung; fast=rask; slow=sakte; hot=varm; cold=kald; good=god; bad=dårlig; happy=glad; sad=lei seg; easy=lett; difficult=vanskelig; full=full; empty=tom; open=åpen; closed=stengt; loud=høy; quiet=stille; strong=sterk; weak=svak'},
+  {id:'sporreord',name:'Spørreord', trinn:'5-7', w:'what=hva; who=hvem; where=hvor; when=når; why=hvorfor; how=hvordan; which=hvilken; whose=hvem sin; how many=hvor mange; how much=hvor mye'},
+  {id:'preposisjoner',name:'Preposisjoner', trinn:'5-7', w:'in=i; on=på; under=under; over=over; behind=bak; in front of=foran; next to=ved siden av; between=mellom; above=over; below=under; near=nær; inside=inni; outside=utenfor; into=inn i; from=fra; to=til'},
+  {id:'smaaord', name:'Vanlige småord', trinn:'5-7', w:'because=fordi; and=og; but=men; or=eller; very=veldig; always=alltid; never=aldri; sometimes=noen ganger; often=ofte; again=igjen; also=også; only=bare; maybe=kanskje; together=sammen; something=noe; nothing=ingenting; everyone=alle; people=folk; please=vær så snill; thank you=takk; sorry=unnskyld; beautiful=vakker; different=forskjellig; important=viktig; favourite=favoritt'},
+  {id:'jul',     name:'Jul', trinn:'1-4', w:'christmas=jul; christmas tree=juletre; present=gave; star=stjerne; candle=lys; angel=engel; snowman=snømann; reindeer=reinsdyr; santa=julenisse; cookies=småkaker; stocking=julestrømpe; bell=bjelle; elf=alv; sleigh=slede'},
+  {id:'paaske',  name:'Påske', trinn:'1-4', w:'easter=påske; egg=egg; chick=kylling; bunny=påskehare; chocolate=sjokolade; basket=kurv; spring=vår; flower=blomst; holiday=ferie; cabin=hytte'},
+  {id:'halloween',name:'Halloween', trinn:'5-7', w:'pumpkin=gresskar; ghost=spøkelse; witch=heks; bat=flaggermus; spider=edderkopp; skeleton=skjelett; costume=kostyme; candy=godteri; scary=skummel; moon=måne; night=natt; broom=kost'}
+];
+
+// Britisk ↔ amerikansk staving
+const BRIT_AM = {
+  colour:'color', favourite:'favorite', grey:'gray', mum:'mom', centre:'center', theatre:'theater', neighbour:'neighbor',
+  honour:'honor', humour:'humor', metre:'meter', litre:'liter', pyjamas:'pajamas', aeroplane:'airplane', jewellery:'jewelry',
+  travelling:'traveling', cancelled:'canceled', organise:'organize', realise:'realize', apologise:'apologize', recognise:'recognize',
+  practise:'practice', licence:'license', defence:'defense', programme:'program', tyre:'tire', cheque:'check', maths:'math',
+  flavour:'flavor', behaviour:'behavior', labour:'labor', harbour:'harbor', rumour:'rumor', catalogue:'catalog', dialogue:'dialog',
+  colourful:'colorful', favourites:'favorites', colours:'colors', neighbours:'neighbors'
+};
+
+// Ekstra vanlige ord som ikke står i temaene (for stavekontroll og forslag)
+const EXTRA = 'about=om; after=etter; before=før; all=alle; another=en annen; any=noen; around=rundt; ask=spørre; away=borte; baby=baby; because=fordi; been=vært; best=best; better=bedre; bring=ta med; brought=tok med; build=bygge; came=kom; can=kan; could=kunne; come=komme; country=land; day=dag; does=gjør; done=gjort; down=ned; draw=tegne; dream=drøm; each=hver; earth=jorda; enough=nok; every=hver; everything=alt; example=eksempel; find=finne; first=første; follow=følge; forget=glemme; get=få; girl=jente; boy=gutt; give=gi; great=flott; group=gruppe; grow=vokse; hear=høre; here=her; high=høy; idea=idé; just=bare; keep=beholde; laugh=le; learn=lære; leave=forlate; letter=brev; life=liv; light=lys; little=liten; live=bo; make=lage; man=mann; men=menn; woman=kvinne; women=kvinner; child=barn; children=barn; many=mange; money=penger; more=mer; most=mest; much=mye; name=navn; need=trenge; next=neste; now=nå; number=tall; often=ofte; other=annen; our=vår; out=ut; own=egen; part=del; place=sted; question=spørsmål; quite=ganske; really=virkelig; remember=huske; right=riktig; same=samme; say=si; should=burde; show=vise; since=siden; start=starte; still=fortsatt; stop=stoppe; story=historie; take=ta; tell=fortelle; than=enn; that=det; their=deres; them=dem; then=da; there=der; these=disse; they=de; thing=ting; this=dette; those=de; through=gjennom; tried=prøvde; try=prøve; turn=snu; until=til; use=bruke; usually=vanligvis; want=ville; was=var; way=vei; well=vel; went=gikk; what=hva; while=mens; whole=hel; with=med; without=uten; word=ord; world=verden; would=ville; wrong=feil; your=din; you=du; we=vi; she=hun; he=han; it=den; they=de; my=min; his=hans; her=hennes; yes=ja; no=nei; hello=hei; goodbye=ha det; birthday=bursdag; party=fest; present=gave; holiday=ferie; summer holiday=sommerferie; computer=datamaskin; phone=telefon; tablet=nettbrett; picture=bilde; film=film; song=sang; colour=farge; color=farge; shape=form; circle=sirkel; square=firkant; triangle=trekant; money=penger; price=pris; cheap=billig; expensive=dyr; save=spare; spend=bruke; coin=mynt; wallet=lommebok';
+
+function parsePairs(str){ return str.split(';').map(x=>x.trim()).filter(Boolean).map(x=>{ const i=x.indexOf('='); return [x.slice(0,i).trim(), x.slice(i+1).trim()]; }); }
+
+const EN2NO = new Map();
+const NO2EN = new Map();
+for (const t of THEMES) for (const [en,no] of parsePairs(t.w)) { if(!EN2NO.has(en)) EN2NO.set(en,no); if(!NO2EN.has(no)) NO2EN.set(no,en); }
+for (const [en,no] of parsePairs(EXTRA)) { if(!EN2NO.has(en)) EN2NO.set(en,no); if(!NO2EN.has(no)) NO2EN.set(no,en); }
+for (const [b,a] of Object.entries(BRIT_AM)) { if(EN2NO.has(b) && !EN2NO.has(a)) EN2NO.set(a,EN2NO.get(b)); }
+function themeWords(t){ return parsePairs(t.w).map(([en,no])=>({en,no})); }
+
+
+const app = initializeApp({
+  apiKey: "AIzaSyAa7amg562LHiDs8qL1wgU-wLVipXAoG0I",
+  authDomain: "spelling-express.firebaseapp.com",
+  databaseURL: "https://spelling-express-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "spelling-express",
+  storageBucket: "spelling-express.firebasestorage.app",
+  messagingSenderId: "514338475572",
+  appId: "1:514338475572:web:7d92b01ee92c8f6ed18461"
+});
+const auth = getAuth(app), db = getDatabase(app);
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.remove('hide'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.add('hide'),2400); }
+const ALPH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const STUDENT_URL = new URL('spelling-express.html', location.href).href.split('?')[0];
+
+let user=null, myLists={}, cur=null; // cur={code|null, title, trinn, words:[{no,en,extra}], dirty}
+
+/* ---------- innlogging ---------- */
+$('btnLogin').onclick=async()=>{
+  $('loginMsg').textContent='';
+  const p=new GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
+  try{ await signInWithPopup(auth,p); }
+  catch(e){
+    if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment') { await signInWithRedirect(auth,p); return; }
+    if(e.code!=='auth/popup-closed-by-user' && e.code!=='auth/cancelled-popup-request') $('loginMsg').textContent='Innloggingen feilet ('+e.code+'). Prøv igjen.';
+  }
+};
+$('btnLogout').onclick=()=>signOut(auth);
+onAuthStateChanged(auth,async u=>{
+  user=u;
+  $('viewLogin').style.display=u?'none':'block';
+  $('viewApp').style.display=u?'block':'none';
+  $('userBox').style.display=u?'flex':'none';
+  if(u){ $('userName').textContent=u.displayName||u.email||''; await loadMyLists(); }
+});
+
+/* ---------- mine lister ---------- */
+async function loadMyLists(){
+  const s=await get(ref(db,`teachers/${user.uid}/lists`));
+  myLists=s.val()||{};
+  renderMyLists();
+}
+function renderMyLists(){
+  const box=$('myLists'); box.innerHTML='';
+  const codes=Object.keys(myLists).sort((a,b)=>(myLists[b].updated||0)-(myLists[a].updated||0));
+  if(!codes.length){ box.innerHTML='<div class="help" style="padding:8px 2px">Ingen lister ennå.</div>'; return; }
+  for(const c of codes){
+    const L=myLists[c]; const d=document.createElement('div'); d.className='li'+(cur&&cur.code===c?' on':'');
+    const dt=L.updated?new Date(L.updated).toLocaleDateString('nb-NO',{day:'numeric',month:'short'}):'';
+    d.innerHTML=`<div class="t">${esc(L.title)}</div><div class="m"><span class="c">${c}</span> · ${L.n||0} ord · ${dt}</div>`;
+    d.onclick=()=>openList(c);
+    box.appendChild(d);
+  }
+}
+async function openList(code){
+  if(cur&&cur.dirty&&!confirmLeave()) return;
+  const s=await get(ref(db,`lists/${code}`)); const d=s.val();
+  if(!d){ toast('Fant ikke lista'); return; }
+  const words=(Array.isArray(d.words)?d.words:Object.values(d.words||{})).map(w=>({no:w.no||'',en:w.en||'',extra:!!w.extra}));
+  cur={code,title:d.title||'',trinn:d.trinn||'',words,dirty:false};
+  showEditor(); renderShare();
+}
+let leaveArmed=false;
+function confirmLeave(){ if(leaveArmed){ leaveArmed=false; return true; } leaveArmed=true; toast('Du har ulagrede endringer – trykk en gang til for å forlate lista'); setTimeout(()=>leaveArmed=false,4000); return false; }
+$('btnNew').onclick=()=>{ if(cur&&cur.dirty&&!confirmLeave()) return; cur={code:null,title:'',trinn:'',words:[{no:'',en:'',extra:false},{no:'',en:'',extra:false},{no:'',en:'',extra:false}],dirty:false}; showEditor(); $('share').style.display='none'; $('title').focus(); };
+
+/* ---------- redigering ---------- */
+function showEditor(){
+  $('emptyState').style.display='none'; $('editor').style.display='block';
+  $('title').value=cur.title; $('trinn').value=cur.trinn;
+  $('btnDelete').style.display=cur.code?'inline-flex':'none';
+  $('btnCopy').style.display=cur.code?'inline-flex':'none';
+  renderRows(); renderMyLists();
+}
+function markDirty(){ cur.dirty=true; updateStatus(); }
+$('title').oninput=e=>{ cur.title=e.target.value; markDirty(); };
+$('trinn').onchange=e=>{ cur.trinn=e.target.value; markDirty(); };
+
+function renderRows(){
+  const tb=$('rows'); tb.innerHTML='';
+  cur.words.forEach((w,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="n">${i+1}</td>
+      <td style="width:38%"><input class="w no" data-i="${i}" value="${esc(w.no)}" placeholder="norsk" autocomplete="off"></td>
+      <td><input class="w en" data-i="${i}" value="${esc(w.en)}" placeholder="engelsk" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="notes" id="notes${i}"></div></td>
+      <td style="width:50px"><button class="star${w.extra?' on':''}" data-i="${i}" title="Utfordringsord – bare med når eleven velger «Alle ord»"><img src="spelling-express-ikoner/stjerne.webp" alt="Utfordringsord"></button></td>
+      <td style="width:34px"><button class="del" data-i="${i}" title="Fjern ordet"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td>`;
+    tb.appendChild(tr);
+  });
+  for(const el of tb.querySelectorAll('input.no')){ el.oninput=e=>{ cur.words[+e.target.dataset.i].no=e.target.value; markDirty(); renderNotes(+e.target.dataset.i); }; el.onkeydown=keyNav; }
+  for(const el of tb.querySelectorAll('input.en')){ el.oninput=e=>{ cur.words[+e.target.dataset.i].en=e.target.value; markDirty(); renderNotes(+e.target.dataset.i); }; el.onkeydown=keyNav; el.onblur=e=>{ const i=+e.target.dataset.i; const w=cur.words[i]; if(w&&w.en&&!w.no){ const s=EN2NO.get(norm(w.en)); if(s){ /* forslag vises som knapp */ } } }; }
+  for(const el of tb.querySelectorAll('.star')) el.onclick=e=>{ const i=+e.currentTarget.dataset.i; cur.words[i].extra=!cur.words[i].extra; e.currentTarget.classList.toggle('on'); markDirty(); };
+  for(const el of tb.querySelectorAll('.del')) el.onclick=e=>{ const i=+e.currentTarget.dataset.i; cur.words.splice(i,1); if(!cur.words.length) cur.words.push({no:'',en:'',extra:false}); markDirty(); renderRows(); };
+  cur.words.forEach((w,i)=>renderNotes(i));
+  updateStatus();
+}
+function keyNav(e){
+  if(e.key!=='Enter') return; e.preventDefault();
+  const i=+e.target.dataset.i, isEn=e.target.classList.contains('en');
+  if(isEn){ if(i===cur.words.length-1){ cur.words.push({no:'',en:'',extra:false}); renderRows(); } focusCell(i+1,'no'); }
+  else focusCell(i,'en');
+}
+function focusCell(i,cls){ const el=document.querySelector(`#rows input.${cls}[data-i="${i}"]`); if(el) el.focus(); }
+$('btnAddRow').onclick=()=>{ cur.words.push({no:'',en:'',extra:false}); markDirty(); renderRows(); focusCell(cur.words.length-1,'no'); };
+
+/* ---------- kontroll ---------- */
+const norm=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+const DICT=[...EN2NO.keys()];
+function lev(a,b){ if(Math.abs(a.length-b.length)>2) return 9; const m=a.length,n=b.length; const d=Array.from({length:m+1},(_,i)=>[i]); for(let j=1;j<=n;j++) d[0][j]=j; for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1), (i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])?d[i-2][j-2]+1:9); return d[m][n]; }
+function suggestSpelling(w){ let best=null,bd=3; for(const d of DICT){ if(d===w) return null; const x=lev(w,d); if(x<bd){ bd=x; best=d; } } return bd<=(w.length>5?2:1)?best:null; }
+function checkWord(w,i){
+  const out=[]; const en=norm(w.en), no=String(w.no||'').trim();
+  if(!en && !no) return out;
+  if(!no) { const s=EN2NO.get(en.split('/')[0]); out.push(s?{t:'sug',m:`Norsk: «${s}»`,act:'Bruk',fn:()=>{ w.no=s; }}:{t:'err',m:'Mangler norsk ord'}); }
+  if(!en){ const s=NO2EN.get(no.toLowerCase()); out.push(s?{t:'sug',m:`Engelsk: «${s}»`,act:'Bruk',fn:()=>{ w.en=s; }}:{t:'err',m:'Mangler engelsk ord'}); return out; }
+  if(/[æøå]/.test(en)) out.push({t:'err',m:'Engelsk ord kan ikke ha æ, ø eller å'});
+  else if(/[^a-z' \-\/]/i.test(en)) out.push({t:'err',m:'Bare bokstaver, mellomrom, bindestrek og apostrof'});
+  if(/[A-Z]/.test(w.en)) out.push({t:'info',m:'Store bokstaver blir små i spillet'});
+  if(en.replace(/[^a-z]/g,'').length>14) out.push({t:'warn',m:'Langt ord – kan bli trangt på iPaden'});
+  const dup=cur.words.findIndex((x,k)=>k!==i&&norm(x.en)&&norm(x.en)===en); if(dup>=0&&dup<i) out.push({t:'warn',m:`Står også på linje ${dup+1}`});
+  const main=en.split('/')[0];
+  if(!en.includes('/') && !/[^a-z' \-]/.test(en)){
+    if(BRIT_AM[main]) out.push({t:'sug',m:`Godta også amerikansk «${BRIT_AM[main]}»?`,act:'Ja',fn:()=>{ w.en=main+'/'+BRIT_AM[main]; }});
+    const rev=Object.entries(BRIT_AM).find(([b,a])=>a===main); if(rev) out.push({t:'sug',m:`Godta også britisk «${rev[0]}»?`,act:'Ja',fn:()=>{ w.en=rev[0]+'/'+main; }});
+    if(!EN2NO.has(main) && !main.includes(' ')){ const s=suggestSpelling(main); if(s) out.push({t:'warn',m:`Mente du «${s}»?`,act:'Bytt',fn:()=>{ w.en=s; }}); }
+    if(EN2NO.has(main) && no && !EN2NO.get(main).toLowerCase().split(/[ ,]/).includes(no.toLowerCase().split(' ')[0]) && NO2EN.has(no.toLowerCase()) && NO2EN.get(no.toLowerCase())!==main){
+      out.push({t:'info',m:`Ordboka sier «${no}» = «${NO2EN.get(no.toLowerCase())}»`});
+    }
+  }
+  return out;
+}
+function renderNotes(i){
+  const w=cur.words[i]; const box=$('notes'+i); if(!box) return;
+  const notes=checkWord(w,i); box.innerHTML='';
+  const enEl=document.querySelector(`#rows input.en[data-i="${i}"]`), noEl=document.querySelector(`#rows input.no[data-i="${i}"]`);
+  enEl&&enEl.classList.toggle('err',notes.some(n=>n.t==='err'&&!/norsk/.test(n.m)));
+  noEl&&noEl.classList.toggle('err',notes.some(n=>n.t==='err'&&/norsk/.test(n.m)));
+  for(const n of notes){
+    const s=document.createElement('span'); s.className='note '+n.t; s.textContent=n.m;
+    if(n.act){ const b=document.createElement('button'); b.textContent=n.act; b.onclick=()=>{ n.fn(); markDirty(); renderRows(); }; s.appendChild(b); }
+    box.appendChild(s);
+  }
+  updateStatus();
+}
+function validWords(){ return cur.words.filter(w=>norm(w.en)||String(w.no).trim()); }
+function updateStatus(){
+  if(!cur) return;
+  const ws=validWords(); let err=0,warn=0;
+  cur.words.forEach((w,i)=>{ for(const n of checkWord(w,i)){ if(n.t==='err'||(n.t==='sug'&&/^(Norsk|Engelsk):/.test(n.m))) err++; else if(n.t==='warn') warn++; } });
+  const st=$('status'), sub=$('statusSub');
+  if(ws.length<2){ st.className='status bad'; st.textContent='Lista trenger minst 2 ord'; sub.textContent=''; }
+  else if(err){ st.className='status bad'; st.textContent=`${ws.length} ord · ${err} må fikses før du kan lagre`; sub.textContent='Se de røde og grønne merkene under ordene.'; }
+  else { st.className='status ok'; st.textContent=`${ws.length} ord · klar til å lagres`+(warn?` (${warn} ting å se på)`:''); sub.textContent=cur.dirty?'Ulagrede endringer':(cur.code?'Lagret':''); }
+  $('btnSave').disabled = ws.length<2 || err>0 || (!cur.dirty && !!cur.code);
+}
+
+/* ---------- lagring ---------- */
+function newCode(){ let c=''; const a=new Uint32Array(6); crypto.getRandomValues(a); for(const x of a) c+=ALPH[x%ALPH.length]; return c; }
+async function freeCode(){ for(let k=0;k<8;k++){ const c=newCode(); const s=await get(ref(db,`lists/${c}`)); if(!s.exists()) return c; } throw new Error('Fant ingen ledig kode'); }
+$('btnSave').onclick=async()=>{
+  const words=validWords().map(w=>{ const o={no:String(w.no).trim(),en:norm(w.en)}; if(w.extra) o.extra=true; return o; });
+  const title=($('title').value.trim()||'Gloseliste').slice(0,60);
+  $('btnSave').disabled=true; $('btnSave').querySelector('span').textContent='Lagrer …';
+  try{
+    const code=cur.code||await freeCode();
+    const now=Date.now();
+    const data={owner:user.uid,title,trinn:cur.trinn||'',words,updated:now};
+    if(!cur.code) data.created=now;
+    if(cur.code) await update(ref(db,`lists/${code}`),data); else await set(ref(db,`lists/${code}`),data);
+    await set(ref(db,`teachers/${user.uid}/lists/${code}`),{title,n:words.length,updated:now});
+    myLists[code]={title,n:words.length,updated:now};
+    cur.code=code; cur.title=title; cur.words=words.map(w=>({...w,extra:!!w.extra})); cur.dirty=false;
+    showEditor(); renderShare(); toast('Lagret! Koden er '+code);
+  }catch(e){ console.error(e); toast('Klarte ikke å lagre: '+(e.code||e.message)); }
+  $('btnSave').querySelector('span').textContent='Lagre og del'; updateStatus();
+};
+let delArmed=false;
+$('btnDelete').onclick=async()=>{
+  if(!cur.code) return;
+  const dl=$('btnDelete').querySelector('span');
+  if(!delArmed){ delArmed=true; dl.textContent='Trykk igjen for å slette'; setTimeout(()=>{ delArmed=false; dl.textContent='Slett'; },4000); return; }
+  delArmed=false; dl.textContent='Slett';
+  try{ await remove(ref(db,`lists/${cur.code}`)); await remove(ref(db,`teachers/${user.uid}/lists/${cur.code}`)); delete myLists[cur.code]; toast('Lista er slettet. Elever som har hentet den, beholder sin kopi.'); cur=null; $('editor').style.display='none'; $('emptyState').style.display='block'; renderMyLists(); }
+  catch(e){ toast('Klarte ikke å slette'); }
+};
+$('btnCopy').onclick=()=>{ cur={code:null,title:(cur.title||'Gloseliste')+' (kopi)',trinn:cur.trinn,words:cur.words.map(w=>({...w})),dirty:true}; showEditor(); $('share').style.display='none'; toast('Kopi laget – lagre for å få ny kode'); };
+
+/* ---------- deling ---------- */
+function qrSvg(text,cell=6){ const q=qrcode(0,'M'); q.addData(text); q.make(); return q.createSvgTag({cellSize:cell,margin:2,scalable:true}); }
+function renderShare(){
+  if(!cur||!cur.code){ $('share').style.display='none'; return; }
+  const link=`${STUDENT_URL}?kode=${cur.code}`;
+  $('share').style.display='grid'; $('shareCode').textContent=cur.code; $('shareLink').textContent=link;
+  $('qr').innerHTML=qrSvg(link);
+}
+$('btnCopyLink').onclick=async()=>{ try{ await navigator.clipboard.writeText($('shareLink').textContent); toast('Lenken er kopiert'); }catch(e){ toast('Merk lenken og kopier den selv'); } };
+$('btnPrint').onclick=()=>{ $('pTitle').textContent=cur.title; $('pCode').textContent=cur.code; $('pQr').innerHTML=qrSvg($('shareLink').textContent,10); window.print(); };
+
+/* ---------- lim inn ---------- */
+let pasteRows=[], swapped=false;
+const hasNo=s=>/[æøå]/i.test(s);
+function scoreEn(s){ s=norm(s); let v=0; if(EN2NO.has(s)) v+=3; if(NO2EN.has(s)) v-=3; if(hasNo(s)) v-=4; return v; }
+function parsePaste(text){
+  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const rows=[];
+  for(let l of lines){
+    l=l.replace(/^\s*(\d+[.)]|[-•*])\s*/,'');
+    let parts=l.split(/\t|\s+[=\-–—:]\s+|\s*[=:;]\s*|\s*[–—]\s*/).map(x=>x.trim()).filter(Boolean);
+    if(parts.length===1){ const p=parts[0]; if(scoreEn(p)>=0){ rows.push({en:p,no:EN2NO.get(norm(p))||''}); } else rows.push({no:p,en:NO2EN.get(p.toLowerCase())||''}); continue; }
+    const [a,b]=[parts[0],parts.slice(1).join(' ')];
+    rows.push({a,b});
+  }
+  // finn retning for parene samlet
+  let sA=0,sB=0; for(const r of rows) if(r.a!==undefined){ sA+=scoreEn(r.a); sB+=scoreEn(r.b); }
+  const aIsEn = sA>=sB;
+  return rows.map(r=>{
+    if(r.a===undefined) return r;
+    const d=scoreEn(r.a)-scoreEn(r.b);
+    const en1 = d>=3 ? true : d<=-3 ? false : aIsEn;   // tydelig for denne linja, ellers flertallet
+    return en1?{en:r.a,no:r.b}:{en:r.b,no:r.a};
+  });
+}
+function renderPaste(){
+  pasteRows=parsePaste($('pasteText').value);
+  if(swapped) pasteRows=pasteRows.map(r=>({en:r.no,no:r.en}));
+  const pv=$('pastePreview');
+  if(!pasteRows.length){ pv.innerHTML=''; $('btnPasteAdd').disabled=true; $('btnSwap').style.display='none'; return; }
+  pv.innerHTML=`<table class="ptable"><tr><th>Norsk</th><th>Engelsk</th></tr>${pasteRows.map(r=>`<tr><td>${esc(r.no)||'<span class="muted">–</span>'}</td><td><b>${esc(r.en)||'<span class="muted">–</span>'}</b></td></tr>`).join('')}</table>`;
+  $('btnPasteAdd').disabled=false; $('btnPasteAdd').textContent=`Legg til ${pasteRows.length} ord`; $('btnSwap').style.display='inline-flex';
+}
+$('btnPaste').onclick=()=>{ $('pasteText').value=''; swapped=false; renderPaste(); $('mPaste').classList.remove('hidden'); $('pasteText').focus(); };
+$('pasteText').oninput=renderPaste;
+$('btnSwap').onclick=()=>{ swapped=!swapped; renderPaste(); };
+$('btnPasteCancel').onclick=()=>$('mPaste').classList.add('hidden');
+$('btnPasteAdd').onclick=()=>{ addWords(pasteRows.map(r=>({no:r.no||'',en:r.en||'',extra:false}))); $('mPaste').classList.add('hidden'); };
+function addWords(ws){
+  cur.words=cur.words.filter(w=>norm(w.en)||String(w.no).trim());
+  const have=new Set(cur.words.map(w=>norm(w.en)));
+  let added=0; for(const w of ws){ if(norm(w.en)&&have.has(norm(w.en))) continue; cur.words.push(w); have.add(norm(w.en)); added++; }
+  if(cur.words.length<1) cur.words.push({no:'',en:'',extra:false});
+  markDirty(); renderRows(); toast(`${added} ord lagt til`);
+}
+
+/* ---------- listebank ---------- */
+let bankT='', bankTheme=null;
+function renderThemes(){
+  const box=$('themes'); box.innerHTML='';
+  for(const t of THEMES.filter(t=>!bankT||t.trinn===bankT)){
+    const b=document.createElement('button'); b.className='theme'+(bankTheme===t?' on':''); b.innerHTML=`<span class="tdot" style="background:${t.trinn==='1-4'?'var(--amber)':'var(--blue)'}"></span>${esc(t.name)}<small>${t.trinn==='1-4'?'1.–4. trinn':'5.–7. trinn'} · ${themeWords(t).length} ord</small>`;
+    b.onclick=()=>{ bankTheme=t; renderThemes(); renderBankWords(); }; box.appendChild(b);
+  }
+}
+function renderBankWords(){
+  const box=$('bwords'); box.innerHTML='';
+  if(!bankTheme){ $('bankName').textContent='Velg et tema'; return; }
+  $('bankName').textContent=bankTheme.name;
+  const have=new Set(cur.words.map(w=>norm(w.en)));
+  for(const w of themeWords(bankTheme)){
+    const l=document.createElement('label'); l.className='bw';
+    l.innerHTML=`<input type="checkbox" ${have.has(w.en)?'disabled':'checked'} data-en="${esc(w.en)}" data-no="${esc(w.no)}"><span><b>${esc(w.en)}</b> · ${esc(w.no)}${have.has(w.en)?' <span class="muted">(med)</span>':''}</span>`;
+    box.appendChild(l);
+  }
+}
+$('btnBank').onclick=()=>{ if(!bankTheme) bankTheme=THEMES[0]; renderThemes(); renderBankWords(); $('mBank').classList.remove('hidden'); };
+$('bankTrinn').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; bankT=b.dataset.t; [...$('bankTrinn').children].forEach(x=>x.classList.toggle('on',x===b)); renderThemes(); };
+$('bankAll').onclick=()=>$('bwords').querySelectorAll('input:not(:disabled)').forEach(c=>c.checked=true);
+$('bankNone').onclick=()=>$('bwords').querySelectorAll('input:not(:disabled)').forEach(c=>c.checked=false);
+$('btnBankCancel').onclick=()=>$('mBank').classList.add('hidden');
+$('btnBankAdd').onclick=()=>{
+  const ws=[...$('bwords').querySelectorAll('input:checked:not(:disabled)')].map(c=>({en:c.dataset.en,no:c.dataset.no,extra:false}));
+  if(!ws.length){ toast('Velg minst ett ord'); return; }
+  if(!$('title').value.trim() && bankTheme){ $('title').value=bankTheme.name; cur.title=bankTheme.name; }
+  addWords(ws); $('mBank').classList.add('hidden');
+};
+addEventListener('beforeunload',e=>{ if(cur&&cur.dirty){ e.preventDefault(); e.returnValue=''; } });
+</script>
+</body>
+</html>
