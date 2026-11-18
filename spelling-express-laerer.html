@@ -81,6 +81,12 @@ table.words input.w{font:inherit;font-size:17px;padding:9px 11px;border-radius:1
 table.words input.w:focus{outline:none;border-color:var(--blue)}
 table.words input.w.err{border-color:var(--coral);background:var(--coral-light)}
 table.words input.w.en{font-weight:800}
+table.words tr.srow td{padding-top:0}
+table.words input.w.sent{font-size:15px;padding:7px 11px;border-style:dashed;background:#fbfdfb}
+table.words input.w.sent:focus{border-style:solid}
+table.words tr.wrow td{padding-top:6px}
+.stop4{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:14px;margin-top:4px;color:var(--muted)}
+.stop4.on{color:var(--green-dark)}
 .notes{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 2px;min-height:0}
 .note{font-size:13px;font-weight:800;border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:6px}
 .note.err{background:var(--coral-light);color:#9c3b1c}
@@ -195,12 +201,12 @@ textarea{width:100%;min-height:200px;font:inherit;font-size:16px;padding:12px;bo
           <span class="help" style="align-self:center">Tips: skriv bare det engelske ordet – da foreslår vi det norske.</span>
         </div>
         <table class="words">
-          <thead><tr><th></th><th>Norsk</th><th>Engelsk (det eleven skal stave)</th><th title="Utfordringsord"><img class="ico s" src="spelling-express-ikoner/stjerne.webp" alt=""></th><th></th></tr></thead>
+          <thead><tr><th></th><th>Norsk</th><th>Engelsk (det eleven skal stave) · setning under er valgfri</th><th title="Utfordringsord"><img class="ico s" src="spelling-express-ikoner/stjerne.webp" alt=""></th><th></th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <button class="btn ghost" id="btnAddRow">+ Legg til ord</button>
         <div class="foot">
-          <div><div class="status" id="status"></div><div class="help" id="statusSub"></div></div>
+          <div><div class="status" id="status"></div><div class="help" id="statusSub"></div><div class="stop4" id="stop4"></div></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn ghost" id="btnCopy" title="Lag en kopi med ny kode"><img class="ico" src="spelling-express-ikoner/kopier.webp" alt="">Kopier</button>
             <button class="btn ghost" id="btnDelete" style="color:var(--coral)"><img class="ico" src="spelling-express-ikoner/slett.webp" alt=""><span>Slett</span></button>
@@ -229,7 +235,7 @@ textarea{width:100%;min-height:200px;font:inherit;font-size:16px;padding:12px;bo
 <div class="modal hidden" id="mPaste">
   <div class="mcard">
     <h2><img class="ico l" src="spelling-express-ikoner/lim.webp" alt="">Lim inn ord</h2>
-    <p class="help">Lim inn fra ukeplanen, Word eller Excel. Én linje per ord. Det går fint med «dog – hund», «hund = dog», to kolonner, eller bare det engelske ordet.</p>
+    <p class="help">Lim inn fra ukeplanen, Word eller Excel. Én linje per ord. Det går fint med «dog – hund», «hund = dog», to kolonner, eller bare det engelske ordet. Vil du ha med setning, legg den til som tredje del: «dog – hund – The dog is barking.»</p>
     <textarea id="pasteText" placeholder="dog – hund&#10;katt = cat&#10;because&#10;horse	hest"></textarea>
     <div id="pastePreview"></div>
     <div class="btnrow">
@@ -322,6 +328,549 @@ for (const [en,no] of parsePairs(EXTRA)) { if(!EN2NO.has(en)) EN2NO.set(en,no); 
 for (const [b,a] of Object.entries(BRIT_AM)) { if(EN2NO.has(b) && !EN2NO.has(a)) EN2NO.set(a,EN2NO.get(b)); }
 function themeWords(t){ return parsePairs(t.w).map(([en,no])=>({en,no})); }
 
+// Ferdige eksempelsetninger til ordene i listebanken (Spelling Express, stopp 4).
+// Ordet står ordrett i setningen. Én linje per ord: ord|setning
+const SENT_RAW = `
+red|Strawberries are red and sweet.
+blue|The sky is blue today.
+green|Frogs are often green.
+yellow|A banana is yellow.
+black|My cat is black with white paws.
+white|Snow is cold and white.
+brown|The bear has thick brown fur.
+pink|The pig is pink and fat.
+orange|She peels an orange for lunch.
+purple|Grapes can be green or purple.
+grey|The elephant is big and grey.
+gold|The winner gets a gold medal.
+silver|The spoon is made of silver.
+one|I have one nose.
+two|A bike has two wheels.
+three|A triangle has three sides.
+four|A dog has four legs.
+five|I have five fingers on each hand.
+six|An insect has six legs.
+seven|There are seven days in a week.
+eight|A spider has eight legs.
+nine|My little brother is nine years old.
+ten|I can count to ten.
+eleven|A football team has eleven players.
+twelve|There are twelve months in a year.
+thirteen|My sister is thirteen years old.
+fourteen|Two times seven is fourteen.
+fifteen|We have a break of fifteen minutes.
+sixteen|Eight plus eight is sixteen.
+seventeen|My cousin is seventeen and drives a car.
+eighteen|You can vote when you are eighteen.
+nineteen|Ten plus nine is nineteen.
+twenty|There are twenty pupils in my class.
+thirty|Some months have thirty days.
+forty|Grandpa is forty years older than me.
+fifty|Half of a hundred is fifty.
+sixty|There are sixty minutes in an hour.
+seventy|My grandmother is seventy years old.
+eighty|The old tree is eighty years old.
+ninety|Ninety is ten less than a hundred.
+hundred|The book has a hundred pages.
+thousand|Ten times a hundred is a thousand.
+monday|The school week starts on Monday.
+tuesday|Tuesday comes after Monday.
+wednesday|Wednesday is in the middle of the week.
+thursday|We have swimming on Thursday.
+friday|On Friday we have pizza for dinner.
+saturday|On Saturday I sleep late.
+sunday|Sunday is the last day of the week.
+week|There are seven days in a week.
+weekend|We go skiing at the weekend.
+today|It is my birthday today.
+tomorrow|We have a test tomorrow.
+yesterday|It rained all day yesterday.
+january|The year starts in January.
+february|February is the shortest month.
+march|Spring begins in March.
+april|We often have Easter in April.
+may|The flowers bloom in May.
+june|School ends in June.
+july|We go on holiday in July.
+august|School starts again in August.
+september|The leaves turn yellow in September.
+october|Halloween is at the end of October.
+november|It is dark and rainy in November.
+december|Christmas is in December.
+spring|The birds come back in the spring.
+summer|We swim in the sea in the summer.
+autumn|The leaves fall in the autumn.
+winter|It snows a lot in the winter.
+month|My birthday is next month.
+year|There are twelve months in a year.
+sun|The sun is shining today.
+rain|Take an umbrella, it will rain.
+snow|We build a snowman in the snow.
+wind|The wind blows my hat away.
+cloud|A dark cloud covers the sun.
+sunny|It is a warm and sunny day.
+rainy|It is a wet and rainy day.
+windy|It is too windy to go sailing.
+cold|Put on a jacket, it is cold outside.
+hot|The soup is too hot to eat.
+storm|The storm broke the old tree.
+fog|We can not see the boats in the fog.
+ice|The lake is covered with ice.
+rainbow|After the rain we see a rainbow.
+weather|What is the weather like today?
+mother|My mother reads me a story.
+father|My father drives me to school.
+mum|Mum makes pancakes on Sunday.
+dad|Dad plays football with me.
+sister|My sister has long hair.
+brother|My little brother is five.
+grandmother|My grandmother knits warm socks.
+grandfather|My grandfather has a white beard.
+aunt|My aunt is my mother's sister.
+uncle|My uncle lives on a farm.
+cousin|My cousin is coming to visit.
+baby|The baby is crying.
+family|There are five people in my family.
+parents|My parents work at the hospital.
+daughter|She is the daughter of the king.
+son|He is the son of a fisherman.
+head|I wear a hat on my head.
+hair|She brushes her long hair.
+eye|He closes one eye.
+ear|I hear with my ear.
+nose|I smell with my nose.
+mouth|Open your mouth wide.
+tooth|The baby has one tooth.
+teeth|I brush my teeth every morning.
+neck|The giraffe has a long neck.
+arm|She broke her arm.
+hand|Raise your hand if you know the answer.
+finger|I have a ring on my finger.
+leg|The dog hurt its leg.
+knee|I fell and hurt my knee.
+foot|This shoe is too small for my foot.
+feet|My feet are cold.
+toe|I hit my big toe on the door.
+back|I carry my bag on my back.
+stomach|I have eaten too much, my stomach hurts.
+face|Wash your face before bed.
+shirt|He wears a white shirt to the party.
+trousers|My trousers are too long.
+jeans|I like my blue jeans.
+dress|She wears a red dress.
+skirt|The girl has a short skirt.
+jacket|Put on your jacket, it is cold.
+coat|He hangs his coat on the hook.
+sweater|Grandma knitted me a warm sweater.
+shoes|Take off your shoes in the hall.
+socks|I have new socks on my feet.
+hat|He wears a hat in the sun.
+cap|The boy wears a cap backwards.
+scarf|I wear a scarf around my neck.
+gloves|Wear your gloves in the snow.
+boots|I wear rubber boots in the rain.
+pyjamas|I put on my pyjamas before bed.
+shorts|I wear shorts in the summer.
+bread|I eat bread with cheese.
+butter|Put butter on the bread.
+cheese|Mice love cheese.
+milk|I drink a glass of milk.
+water|I am thirsty, can I have some water?
+juice|I drink orange juice for breakfast.
+egg|I eat a boiled egg for breakfast.
+fish|The fish swims in the sea.
+meat|The lion eats meat.
+chicken|We have chicken and rice for dinner.
+rice|They eat rice with chopsticks.
+pasta|Spaghetti is a kind of pasta.
+pizza|We order a pizza with cheese.
+soup|The tomato soup is hot.
+cake|We eat cake on my birthday.
+ice cream|I want chocolate ice cream.
+sugar|There is too much sugar in this drink.
+salt|Can you pass me the salt?
+breakfast|I eat breakfast at seven o'clock.
+lunch|We eat lunch at school.
+dinner|We eat dinner at five o'clock.
+sandwich|I have a cheese sandwich in my lunch box.
+apple|An apple a day keeps the doctor away.
+banana|Monkeys love to eat a banana.
+pear|A pear is green and sweet.
+grapes|These grapes are sweet.
+strawberry|The strawberry is small and red.
+lemon|A lemon tastes sour.
+cherry|There is a cherry on top of the cake.
+potato|We boil a potato for dinner.
+carrot|The rabbit eats a carrot.
+tomato|A tomato is red and round.
+onion|Cutting an onion makes me cry.
+cucumber|A cucumber is long and green.
+peas|I eat peas with my fish.
+corn|We grill corn in the summer.
+vegetables|Vegetables are good for you.
+fruit|I eat fruit every day.
+dog|The dog is barking at the cat.
+cat|The cat says meow.
+horse|I ride a horse at the stable.
+cow|The cow gives us milk.
+pig|The pig rolls in the mud.
+sheep|The sheep gives us wool.
+goat|The goat climbs on the rocks.
+hen|The hen lays an egg.
+duck|The duck swims in the pond.
+rabbit|The rabbit has long ears.
+mouse|The mouse eats the cheese.
+bird|The bird sings in the tree.
+hamster|My hamster runs in its wheel.
+puppy|The puppy is only six weeks old.
+kitten|The kitten plays with a ball of yarn.
+animal|What is your favourite animal?
+lion|The lion is the king of the animals.
+tiger|The tiger has orange and black stripes.
+elephant|The elephant has a long trunk.
+giraffe|The giraffe has a very long neck.
+monkey|The monkey climbs in the tree.
+bear|The bear sleeps all winter.
+wolf|The wolf howls at the moon.
+fox|The red fox has a bushy tail.
+snake|The snake has no legs.
+crocodile|The crocodile has big teeth.
+zebra|The zebra has black and white stripes.
+whale|The whale is the biggest animal in the sea.
+shark|The shark has sharp teeth.
+eagle|The eagle flies high in the sky.
+owl|The owl hunts at night.
+deer|The deer runs into the forest.
+moose|The moose has big antlers.
+penguin|The penguin can swim but not fly.
+dolphin|The dolphin jumps out of the water.
+butterfly|The butterfly has colourful wings.
+school|I walk to school every day.
+teacher|Our teacher writes on the board.
+pupil|There is a new pupil in our class.
+classroom|Our classroom is on the second floor.
+book|I read a book about dinosaurs.
+pencil|I write with a pencil.
+pen|Can I borrow your pen?
+eraser|I use an eraser to fix my mistake.
+ruler|Draw a straight line with a ruler.
+desk|My books are on my desk.
+chair|Please sit down on your chair.
+bag|I carry my books in my bag.
+paper|Write your name on the paper.
+scissors|Cut the paper with scissors.
+glue|Use glue to stick the picture.
+board|The teacher writes on the board.
+lesson|The English lesson starts at nine.
+homework|I do my homework after school.
+break|We play football in the break.
+english|We speak English in the lesson.
+norwegian|My first language is Norwegian.
+maths|In maths we learn to count.
+science|In science we learn about plants.
+history|In history we learn about the Vikings.
+geography|In geography we look at maps.
+music|We sing songs in music.
+art|We paint pictures in art.
+physical education|We play games in physical education.
+religion|We learn about different religions in religion.
+subject|My favourite subject is English.
+timetable|Look at the timetable to see the next lesson.
+house|We live in a red house.
+home|I go home after school.
+room|My room is small but nice.
+kitchen|Dad cooks dinner in the kitchen.
+bathroom|I brush my teeth in the bathroom.
+bedroom|There is a big bed in my bedroom.
+living room|We watch TV in the living room.
+door|Please close the door.
+window|I look out of the window.
+floor|My socks are on the floor.
+wall|There is a picture on the wall.
+roof|The cat is on the roof.
+stairs|I walk up the stairs.
+garden|We grow flowers in the garden.
+table|Put the plates on the table.
+bed|I go to bed at nine.
+sofa|We sit on the sofa.
+lamp|Turn on the lamp, it is dark.
+fridge|The milk is in the fridge.
+town|We live in a small town.
+city|London is a very big city.
+street|I live on a quiet street.
+road|Look both ways before you cross the road.
+shop|I buy sweets at the shop.
+supermarket|We buy food at the supermarket.
+library|I borrow books at the library.
+hospital|The doctor works at the hospital.
+church|The church has a tall tower.
+park|We play in the park.
+bank|You keep your money in a bank.
+cinema|We watch a film at the cinema.
+restaurant|We eat dinner at a restaurant.
+museum|We see old things at the museum.
+station|The train stops at the station.
+bridge|The car drives over the bridge.
+square|There is a market on the square.
+police station|The police officer works at the police station.
+car|Dad drives a blue car.
+bus|I take the bus to school.
+train|The train is late today.
+plane|The plane flies over the clouds.
+boat|We go fishing in a small boat.
+ship|The big ship sails across the sea.
+bike|I ride my bike to school.
+taxi|We take a taxi to the airport.
+truck|The truck carries heavy boxes.
+tractor|The farmer drives a tractor.
+ferry|We take the ferry to the island.
+ticket|I need a ticket for the train.
+wheel|The car has a flat wheel.
+engine|The engine makes a loud noise.
+driver|The bus driver says hello.
+journey|We had a long journey by train.
+football|We play football after school.
+handball|She plays handball on a team.
+skiing|We go skiing in the mountains.
+swimming|I go swimming every Wednesday.
+dancing|She loves dancing to music.
+running|Running makes me tired.
+game|Let us play a game.
+ball|Kick the ball to me.
+team|Our team won the match.
+match|The football match starts at six.
+goal|He scored a goal.
+win|I hope we win the game.
+lose|Nobody likes to lose.
+play|We play in the garden.
+guitar|He plays the guitar in a band.
+piano|She plays the piano every day.
+hobby|My hobby is drawing.
+friend|My best friend lives next door.
+happy|I am happy when the sun shines.
+sad|She is sad because her cat is ill.
+angry|He is angry because he lost the game.
+scared|I am scared of spiders.
+tired|I am tired after the long walk.
+hungry|I am hungry, can I have a sandwich?
+thirsty|I am thirsty, can I have some water?
+bored|I am bored, there is nothing to do.
+excited|I am so excited about my birthday!
+nervous|I am nervous before the test.
+proud|Mum is proud of me.
+surprised|She was surprised by the party.
+worried|Dad is worried because I am late.
+calm|The sea is calm today.
+lonely|The new boy feels lonely.
+kind|It is kind of you to help me.
+doctor|The doctor helps sick people.
+nurse|The nurse works at the hospital.
+farmer|The farmer feeds the cows.
+police officer|The police officer helps people.
+firefighter|The firefighter puts out the fire.
+cook|The cook makes food in the restaurant.
+pilot|The pilot flies the plane.
+dentist|The dentist checks my teeth.
+artist|The artist paints a picture.
+builder|The builder builds a new house.
+fisherman|The fisherman catches fish.
+shop assistant|The shop assistant helps me find shoes.
+vet|We take our sick dog to the vet.
+scientist|The scientist works in a lab.
+tree|The bird sits in the tree.
+flower|She picks a flower for her mum.
+grass|The cow eats the grass.
+forest|We walk in the forest.
+mountain|We climb the mountain.
+river|The river runs into the sea.
+lake|We swim in the lake.
+sea|The fish swim in the sea.
+beach|We build sandcastles on the beach.
+island|They live on a small island.
+sky|The sky is full of stars.
+star|I can see a bright star.
+moon|The moon is round tonight.
+stone|He throws a stone into the water.
+leaf|A yellow leaf falls from the tree.
+field|The horses run in the field.
+hill|We ride our sledges down the hill.
+valley|The river runs through the valley.
+time|What time is it?
+clock|The clock on the wall says three.
+watch|I got a new watch for my birthday.
+hour|The film is one hour long.
+minute|Wait a minute, please.
+second|One minute has sixty seconds, not one second more.
+morning|I eat breakfast in the morning.
+afternoon|We play football in the afternoon.
+evening|We watch TV in the evening.
+night|The owl hunts at night.
+half|I eat half of the pizza.
+quarter|The bus comes at a quarter past eight.
+early|I get up early on school days.
+late|Hurry, we are late for school!
+o'clock|School starts at eight o'clock.
+go|We go to school by bus.
+walk|We walk the dog every day.
+run|I run very fast.
+jump|The frog can jump high.
+swim|Fish swim in the water.
+eat|I eat an apple.
+drink|I drink a glass of water.
+sleep|I sleep in my bed.
+read|Yesterday I read a long book.
+write|I write my name on the paper.
+speak|I speak English and Norwegian.
+listen|Listen to the teacher.
+look|Look at the picture.
+see|I can see the sea from my window.
+work|My parents work every day.
+help|Can you help me with my homework?
+buy|I want to buy a new ball.
+sell|They sell fish at the market.
+open|Please open the window.
+close|Please close the door.
+think|I think it will rain.
+know|I know the answer.
+want|I want a dog for my birthday.
+like|I like chocolate.
+love|I love my family.
+was|I was tired yesterday.
+were|We were at the beach last summer.
+went|We went to the cinema on Saturday.
+saw|I saw a whale yesterday.
+ate|We ate pizza last night.
+drank|He drank all the milk.
+came|My cousin came to visit.
+took|She took the bus to school.
+gave|Grandma gave me a present.
+made|We made a cake for Mum.
+said|He said hello to me.
+got|I got a bike for my birthday.
+had|We had fun at the party.
+did|I did my homework.
+ran|The dog ran after the ball.
+swam|We swam in the lake.
+wrote|I wrote a letter to my friend.
+bought|Dad bought a new car.
+thought|I thought it was Monday.
+found|I found a coin on the floor.
+told|She told me a secret.
+knew|I knew the answer.
+slept|The baby slept all night.
+big|An elephant is big.
+small|A mouse is small.
+long|The snake is very long.
+short|My hair is short.
+old|My grandfather is old.
+new|I have a new bike.
+young|The puppy is young.
+fast|The car is very fast.
+slow|The snail is slow.
+good|This cake is very good.
+bad|I had a bad dream.
+easy|The test was easy.
+difficult|This puzzle is difficult.
+full|The glass is full of water.
+empty|The box is empty.
+closed|The shop is closed on Sunday.
+loud|The music is too loud.
+quiet|Be quiet, the baby is sleeping.
+strong|My dad is very strong.
+weak|I feel weak when I am ill.
+what|What is your name?
+who|Who is your teacher?
+where|Where do you live?
+when|When is your birthday?
+why|Why are you sad?
+how|How are you today?
+which|Which colour do you like?
+whose|Whose bag is this?
+how many|How many brothers do you have?
+how much|How much is the ice cream?
+in|The cat is in the box.
+on|The book is on the table.
+under|The dog is under the table.
+over|The plane flies over the house.
+behind|The ball is behind the sofa.
+in front of|The car is in front of the house.
+next to|I sit next to my friend.
+between|The ball is between the two chairs.
+above|The lamp hangs above the table.
+below|The fish swim below the boat.
+near|We live near the school.
+inside|Stay inside, it is raining.
+outside|We play outside in the snow.
+into|The frog jumps into the water.
+from|I am from Norway.
+to|I go to school by bike.
+because|I am happy because it is Friday.
+and|I like apples and pears.
+but|I like dogs, but I do not like cats.
+or|Do you want milk or juice?
+very|The elephant is very big.
+always|I always brush my teeth.
+never|I never eat fish.
+sometimes|Sometimes we go to the cinema.
+often|We often play football.
+again|Can you say that again?
+also|I like football. I also like handball.
+only|I have only one sister.
+maybe|Maybe it will snow tomorrow.
+together|We play together after school.
+something|I have something for you.
+nothing|There is nothing in the box.
+everyone|Everyone in the class likes music.
+people|Many people live in the city.
+please|Can I have some water, please?
+thank you|Thank you for the present.
+sorry|I am sorry I am late.
+beautiful|The flowers are beautiful.
+different|We are all different.
+important|It is important to sleep well.
+favourite|Blue is my favourite colour.
+christmas|Christmas is in December.
+christmas tree|We decorate the Christmas tree together.
+present|I got a present for my birthday.
+candle|We light a candle on the table.
+angel|There is an angel on top of the tree.
+snowman|We build a snowman in the garden.
+reindeer|The reindeer pulls the sleigh.
+santa|Santa brings presents to the children.
+cookies|We bake cookies for Christmas.
+stocking|There are sweets in my stocking.
+bell|I hear the bell ring.
+elf|The elf helps Santa make toys.
+sleigh|Santa rides in a sleigh.
+easter|We paint eggs at Easter.
+chick|The little chick is yellow.
+bunny|The Easter bunny hides the eggs.
+chocolate|I love chocolate eggs.
+basket|We put the eggs in a basket.
+holiday|We go to the mountains on holiday.
+cabin|We stay in a cabin in the mountains.
+pumpkin|We carve a face in the pumpkin.
+ghost|The ghost says boo!
+witch|The witch has a black hat.
+bat|The bat flies at night.
+spider|The spider makes a web.
+skeleton|The skeleton has many bones.
+costume|I wear a scary costume for Halloween.
+candy|The children get candy at Halloween.
+scary|The film was very scary.
+broom|The witch flies on a broom.
+`;
+const SENT = new Map(SENT_RAW.trim().split('\n').map(l=>{ const i=l.indexOf('|'); return [l.slice(0,i).trim(), l.slice(i+1).trim()]; }));
+// Finn ordet i setningen (hele ord, uavhengig av store/små bokstaver). Godtar alternativer som colour/color.
+function findInSentence(sentence, en){
+  for(const v of String(en||'').split('/').map(x=>x.trim()).filter(Boolean)){
+    const esc=v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const m=new RegExp(`(^|[^A-Za-z'])(${esc})(?=$|[^A-Za-z'])`,'i').exec(sentence||'');
+    if(m){ const start=m.index+m[1].length; return {before:sentence.slice(0,start), word:m[2], after:sentence.slice(start+m[2].length)}; }
+  }
+  return null;
+}
+
 
 const app = initializeApp({
   apiKey: "AIzaSyAa7amg562LHiDs8qL1wgU-wLVipXAoG0I",
@@ -412,7 +961,7 @@ async function openList(code){
   if(cur&&cur.dirty&&!confirmLeave()) return;
   const s=await get(ref(db,`lists/${code}`)); const d=s.val();
   if(!d){ toast('Fant ikke lista'); return; }
-  const words=(Array.isArray(d.words)?d.words:Object.values(d.words||{})).map(w=>({no:w.no||'',en:w.en||'',extra:!!w.extra}));
+  const words=(Array.isArray(d.words)?d.words:Object.values(d.words||{})).map(w=>({no:w.no||'',en:w.en||'',extra:!!w.extra,s:w.s||''}));
   cur={code,title:d.title||'',trinn:d.trinn||'',words,dirty:false};
   showEditor(); renderShare();
 }
@@ -435,14 +984,18 @@ $('trinn').onchange=e=>{ cur.trinn=e.target.value; markDirty(); };
 function renderRows(){
   const tb=$('rows'); tb.innerHTML='';
   cur.words.forEach((w,i)=>{
-    const tr=document.createElement('tr');
+    const tr=document.createElement('tr'); tr.className='wrow';
     tr.innerHTML=`<td class="n">${i+1}</td>
       <td style="width:38%"><input class="w no" data-i="${i}" value="${esc(w.no)}" placeholder="norsk" autocomplete="off"></td>
       <td><input class="w en" data-i="${i}" value="${esc(w.en)}" placeholder="engelsk" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="notes" id="notes${i}"></div></td>
       <td style="width:50px"><button class="star${w.extra?' on':''}" data-i="${i}" title="Utfordringsord – bare med når eleven velger «Alle ord»"><img src="spelling-express-ikoner/stjerne.webp" alt="Utfordringsord"></button></td>
       <td style="width:34px"><button class="del" data-i="${i}" title="Fjern ordet"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td>`;
     tb.appendChild(tr);
+    const sr=document.createElement('tr'); sr.className='srow';
+    sr.innerHTML=`<td></td><td colspan="2"><input class="w sent" data-i="${i}" value="${esc(w.s||'')}" placeholder="Setning med ordet (valgfri) – brukes på Endestasjonen, f.eks. «The dog is barking.»" autocomplete="off" spellcheck="false"><div class="notes" id="snotes${i}"></div></td><td></td><td></td>`;
+    tb.appendChild(sr);
   });
+  for(const el of tb.querySelectorAll('input.sent')){ el.oninput=e=>{ cur.words[+e.target.dataset.i].s=e.target.value; markDirty(); renderNotes(+e.target.dataset.i); }; }
   for(const el of tb.querySelectorAll('input.no')){ el.oninput=e=>{ cur.words[+e.target.dataset.i].no=e.target.value; markDirty(); renderNotes(+e.target.dataset.i); }; el.onkeydown=keyNav; }
   for(const el of tb.querySelectorAll('input.en')){ el.oninput=e=>{ cur.words[+e.target.dataset.i].en=e.target.value; markDirty(); renderNotes(+e.target.dataset.i); }; el.onkeydown=keyNav; el.onblur=e=>{ const i=+e.target.dataset.i; const w=cur.words[i]; if(w&&w.en&&!w.no){ const s=EN2NO.get(norm(w.en)); if(s){ /* forslag vises som knapp */ } } }; }
   for(const el of tb.querySelectorAll('.star')) el.onclick=e=>{ const i=+e.currentTarget.dataset.i; cur.words[i].extra=!cur.words[i].extra; e.currentTarget.classList.toggle('on'); markDirty(); };
@@ -485,25 +1038,41 @@ function checkWord(w,i){
   }
   return out;
 }
+function checkSentence(w){
+  const out=[]; const en=norm(w.en), sent=String(w.s||'').trim();
+  if(!en) return out;
+  if(sent){
+    if(!findInSentence(sent,en)) out.push({t:'err',m:`Ordet «${en.split('/')[0]}» står ikke i setningen`});
+    else if(sent.split(/\s+/).length<3) out.push({t:'warn',m:'Kort setning – gi gjerne litt mer sammenheng'});
+  } else {
+    const f=SENT.get(en.split('/')[0]);
+    if(f) out.push({t:'sug',m:`Ferdig setning: «${f}»`,act:'Bruk',fn:()=>{ w.s=f; }});
+  }
+  return out;
+}
 function renderNotes(i){
   const w=cur.words[i]; const box=$('notes'+i); if(!box) return;
   const notes=checkWord(w,i); box.innerHTML='';
   const enEl=document.querySelector(`#rows input.en[data-i="${i}"]`), noEl=document.querySelector(`#rows input.no[data-i="${i}"]`);
   enEl&&enEl.classList.toggle('err',notes.some(n=>n.t==='err'&&!/norsk/.test(n.m)));
   noEl&&noEl.classList.toggle('err',notes.some(n=>n.t==='err'&&/norsk/.test(n.m)));
-  for(const n of notes){
-    const s=document.createElement('span'); s.className='note '+n.t; s.textContent=n.m;
+  const mk=(n,into)=>{ const s=document.createElement('span'); s.className='note '+n.t; s.textContent=n.m;
     if(n.act){ const b=document.createElement('button'); b.textContent=n.act; b.onclick=()=>{ n.fn(); markDirty(); renderRows(); }; s.appendChild(b); }
-    box.appendChild(s);
-  }
+    into.appendChild(s); };
+  for(const n of notes) mk(n,box);
+  const sb=$('snotes'+i); if(sb){ sb.innerHTML=''; const sn=checkSentence(w); for(const n of sn) mk(n,sb);
+    const se=document.querySelector(`#rows input.sent[data-i="${i}"]`); se&&se.classList.toggle('err',sn.some(n=>n.t==='err')); }
   updateStatus();
 }
 function validWords(){ return cur.words.filter(w=>norm(w.en)||String(w.no).trim()); }
 function updateStatus(){
   if(!cur) return;
   const ws=validWords(); let err=0,warn=0;
-  cur.words.forEach((w,i)=>{ for(const n of checkWord(w,i)){ if(n.t==='err'||(n.t==='sug'&&/^(Norsk|Engelsk):/.test(n.m))) err++; else if(n.t==='warn') warn++; } });
+  cur.words.forEach((w,i)=>{ for(const n of [...checkWord(w,i),...checkSentence(w)]){ if(n.t==='err'||(n.t==='sug'&&/^(Norsk|Engelsk):/.test(n.m))) err++; else if(n.t==='warn') warn++; } });
   const st=$('status'), sub=$('statusSub');
+  const nsent=ws.filter(w=>w.s&&findInSentence(w.s,norm(w.en))).length;
+  $('stop4').className='stop4'+(nsent>=3?' on':'');
+  $('stop4').textContent= nsent>=3 ? `Endestasjonen er med: ${nsent} setninger` : `Endestasjonen: legg inn setning på minst 3 ord (${nsent} nå)`;
   if(ws.length<2){ st.className='status bad'; st.textContent='Lista trenger minst 2 ord'; sub.textContent=''; }
   else if(err){ st.className='status bad'; st.textContent=`${ws.length} ord · ${err} må fikses før du kan lagre`; sub.textContent='Se de røde og grønne merkene under ordene.'; }
   else { st.className='status ok'; st.textContent=`${ws.length} ord · klar til å lagres`+(warn?` (${warn} ting å se på)`:''); sub.textContent=cur.dirty?'Ulagrede endringer':(cur.code?'Lagret':''); }
@@ -514,7 +1083,7 @@ function updateStatus(){
 function newCode(){ let c=''; const a=new Uint32Array(6); crypto.getRandomValues(a); for(const x of a) c+=ALPH[x%ALPH.length]; return c; }
 async function freeCode(){ for(let k=0;k<8;k++){ const c=newCode(); const s=await get(ref(db,`lists/${c}`)); if(!s.exists()) return c; } throw new Error('Fant ingen ledig kode'); }
 $('btnSave').onclick=async()=>{
-  const words=validWords().map(w=>{ const o={no:String(w.no).trim(),en:norm(w.en)}; if(w.extra) o.extra=true; return o; });
+  const words=validWords().map(w=>{ const o={no:String(w.no).trim(),en:norm(w.en)}; if(w.extra) o.extra=true; const st=String(w.s||'').trim().replace(/\s+/g,' '); if(st && findInSentence(st,o.en)) o.s=st.slice(0,200); return o; });
   const title=($('title').value.trim()||'Gloseliste').slice(0,60);
   $('btnSave').disabled=true; $('btnSave').querySelector('span').textContent='Lagrer …';
   try{
@@ -561,10 +1130,13 @@ function parsePaste(text){
   const rows=[];
   for(let l of lines){
     l=l.replace(/^\s*(\d+[.)]|[-•*])\s*/,'');
-    let parts=l.split(/\t|\s+[=\-–—:]\s+|\s*[=:;]\s*|\s*[–—]\s*/).map(x=>x.trim()).filter(Boolean);
+    let parts = l.includes('\t') ? l.split('\t').map(x=>x.trim()).filter(Boolean) : l.split(/\s+[=\-–—]\s+|\s*=\s*|\s*[–—]\s*/).map(x=>x.trim()).filter(Boolean);
+    if(parts.length===1 && /:|;/.test(l)) parts=l.split(/\s*[:;]\s*/).map(x=>x.trim()).filter(Boolean);
+    let sent='';
+    if(parts.length>=3 && parts.slice(2).join(' ').includes(' ')){ sent=parts.slice(2).join(' – '); parts=parts.slice(0,2); }
     if(parts.length===1){ const p=parts[0]; if(scoreEn(p)>=0){ rows.push({en:p,no:EN2NO.get(norm(p))||''}); } else rows.push({no:p,en:NO2EN.get(p.toLowerCase())||''}); continue; }
     const [a,b]=[parts[0],parts.slice(1).join(' ')];
-    rows.push({a,b});
+    rows.push({a,b,sent});
   }
   // finn retning for parene samlet
   let sA=0,sB=0; for(const r of rows) if(r.a!==undefined){ sA+=scoreEn(r.a); sB+=scoreEn(r.b); }
@@ -573,22 +1145,23 @@ function parsePaste(text){
     if(r.a===undefined) return r;
     const d=scoreEn(r.a)-scoreEn(r.b);
     const en1 = d>=3 ? true : d<=-3 ? false : aIsEn;   // tydelig for denne linja, ellers flertallet
-    return en1?{en:r.a,no:r.b}:{en:r.b,no:r.a};
+    return en1?{en:r.a,no:r.b,s:r.sent||''}:{en:r.b,no:r.a,s:r.sent||''};
   });
 }
 function renderPaste(){
   pasteRows=parsePaste($('pasteText').value);
-  if(swapped) pasteRows=pasteRows.map(r=>({en:r.no,no:r.en}));
+  if(swapped) pasteRows=pasteRows.map(r=>({en:r.no,no:r.en,s:r.s}));
   const pv=$('pastePreview');
   if(!pasteRows.length){ pv.innerHTML=''; $('btnPasteAdd').disabled=true; $('btnSwap').style.display='none'; return; }
-  pv.innerHTML=`<table class="ptable"><tr><th>Norsk</th><th>Engelsk</th></tr>${pasteRows.map(r=>`<tr><td>${esc(r.no)||'<span class="muted">–</span>'}</td><td><b>${esc(r.en)||'<span class="muted">–</span>'}</b></td></tr>`).join('')}</table>`;
+  const hasS=pasteRows.some(r=>r.s);
+  pv.innerHTML=`<table class="ptable"><tr><th>Norsk</th><th>Engelsk</th>${hasS?'<th>Setning</th>':''}</tr>${pasteRows.map(r=>`<tr><td>${esc(r.no)||'<span class="muted">–</span>'}</td><td><b>${esc(r.en)||'<span class="muted">–</span>'}</b></td>${hasS?`<td>${esc(r.s||'')}</td>`:''}</tr>`).join('')}</table>`;
   $('btnPasteAdd').disabled=false; $('btnPasteAdd').textContent=`Legg til ${pasteRows.length} ord`; $('btnSwap').style.display='inline-flex';
 }
 $('btnPaste').onclick=()=>{ $('pasteText').value=''; swapped=false; renderPaste(); $('mPaste').classList.remove('hidden'); $('pasteText').focus(); };
 $('pasteText').oninput=renderPaste;
 $('btnSwap').onclick=()=>{ swapped=!swapped; renderPaste(); };
 $('btnPasteCancel').onclick=()=>$('mPaste').classList.add('hidden');
-$('btnPasteAdd').onclick=()=>{ addWords(pasteRows.map(r=>({no:r.no||'',en:r.en||'',extra:false}))); $('mPaste').classList.add('hidden'); };
+$('btnPasteAdd').onclick=()=>{ addWords(pasteRows.map(r=>({no:r.no||'',en:r.en||'',extra:false,s:r.s||''}))); $('mPaste').classList.add('hidden'); };
 function addWords(ws){
   cur.words=cur.words.filter(w=>norm(w.en)||String(w.no).trim());
   const have=new Set(cur.words.map(w=>norm(w.en)));
@@ -623,7 +1196,7 @@ $('bankAll').onclick=()=>$('bwords').querySelectorAll('input:not(:disabled)').fo
 $('bankNone').onclick=()=>$('bwords').querySelectorAll('input:not(:disabled)').forEach(c=>c.checked=false);
 $('btnBankCancel').onclick=()=>$('mBank').classList.add('hidden');
 $('btnBankAdd').onclick=()=>{
-  const ws=[...$('bwords').querySelectorAll('input:checked:not(:disabled)')].map(c=>({en:c.dataset.en,no:c.dataset.no,extra:false}));
+  const ws=[...$('bwords').querySelectorAll('input:checked:not(:disabled)')].map(c=>({en:c.dataset.en,no:c.dataset.no,extra:false,s:SENT.get(c.dataset.en)||''}));
   if(!ws.length){ toast('Velg minst ett ord'); return; }
   if(!$('title').value.trim() && bankTheme){ $('title').value=bankTheme.name; cur.title=bankTheme.name; }
   addWords(ws); $('mBank').classList.add('hidden');

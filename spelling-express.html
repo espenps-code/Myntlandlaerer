@@ -97,6 +97,10 @@ img.ico.l{width:30px;height:30px}
 .stop.s1{background:linear-gradient(140deg,#EF9F27,#D85A30)}
 .stop.s2{background:linear-gradient(140deg,#2b8bd6,#1a5fa5)}
 .stop.s3{background:linear-gradient(140deg,#25b58a,#085041)}
+.stop.s4{background:linear-gradient(140deg,#7a6fe0,#3c3489)}
+.route.four{grid-template-columns:repeat(4,1fr)}
+@media (max-width:980px){.route.four{grid-template-columns:repeat(2,1fr)}}
+.stop .art{max-width:100%}
 .stop.locked{filter:grayscale(.85);opacity:.7;cursor:not-allowed}
 .stop.locked::after{content:"";position:absolute;right:14px;top:12px;width:44px;height:44px;background:url(spelling-express-ikoner/laas.webp) center/contain no-repeat}
 .levelrow{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap;font-weight:800}
@@ -160,6 +164,18 @@ img.ico.l{width:30px;height:30px}
 .ccard.ghost{opacity:.25}
 .ccard.drag{position:fixed;z-index:50;pointer-events:none;transform:scale(1.1) rotate(-3deg);box-shadow:0 14px 24px rgba(0,0,0,.25)}
 .wcard .ccard{position:absolute;top:0;left:50%;transform:translateX(-50%);cursor:default;box-shadow:0 3px 0 rgba(0,0,0,.25),inset 0 0 0 4px rgba(0,0,0,.14)}
+.sentence{font-family:"Fredoka One";font-size:clamp(28px,4.2vw,42px);color:var(--blue-dark);line-height:1.35;text-align:center;margin:6px 0 4px}
+.gapbox{display:inline-block;min-width:150px;height:1.25em;vertical-align:middle;border:3px dashed #9fb6cf;border-radius:12px;margin:0 6px;padding:0 12px;line-height:1.1em;color:var(--green-dark);background:#fff;transition:background .15s,border-color .15s,transform .15s}
+.gapbox.hot{border-color:var(--blue);background:var(--blue-light);transform:scale(1.06)}
+.gapbox.filled{border-style:solid;border-color:var(--amber-dark);background:var(--amber-light)}
+.gapbox.good{border-color:var(--green);background:var(--green-light)}
+.gapbox.bad{border-color:var(--coral);background:var(--coral-light)}
+.opts{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin:10px 0 2px}
+.opt{padding:12px 22px;border-radius:14px;background:linear-gradient(#8a80ec,#534AB7);color:#fff;font-family:"Fredoka One";font-size:28px;box-shadow:0 5px 0 #3c3489;touch-action:none;cursor:grab}
+.opt.ghost{opacity:.25}
+.opt.drag{position:fixed;z-index:50;pointer-events:none;transform:scale(1.1) rotate(-3deg);box-shadow:0 14px 24px rgba(0,0,0,.25)}
+.hintrow{display:flex;justify-content:center;gap:10px;align-items:center;min-height:30px}
+.hintno{font-weight:900;color:var(--purple);font-size:18px}
 .exitbtn{position:fixed;left:14px;top:calc(64px + env(safe-area-inset-top));z-index:6}
 
 /* ---------- modaler ---------- */
@@ -248,6 +264,7 @@ input.txt{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius
       <div class="stop s1" data-st="laste"><span class="num">STOPP 1</span><h3>Lasteplassen</h3><p>Finn riktig kasse til hver vogn og dra den på plass.</p><img class="art" src="spelling-express-ikoner/kasser.webp" alt=""><div class="st"></div></div>
       <div class="stop s2" data-st="bro"><span class="num">STOPP 2</span><h3>Broen</h3><p>Dra bokstavene på plass. Hvert ord blir en planke på broen.</p><img class="art" src="spelling-express-ikoner/bro.webp" alt=""><div class="st"></div></div>
       <div class="stop s3" data-st="fjell"><span class="num">STOPP 3</span><h3>Fjellbakken</h3><p>Skriv hele ordet selv og kjør toget til toppen.</p><img class="art" src="spelling-express-ikoner/fjell.webp" alt=""><div class="st"></div></div>
+      <div class="stop s4" data-st="ende" style="display:none"><span class="num">STOPP 4</span><h3>Endestasjonen</h3><p>Hjelp passasjerene: dra ordet som mangler inn i setningen.</p><img class="art" src="spelling-express-ikoner/ende.webp" alt=""><div class="st"></div></div>
     </div>
     <div class="rowbtns">
       <button class="btn" id="btnBack">← Mine øvelister</button>
@@ -263,6 +280,7 @@ input.txt{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius
     <div class="lbl" id="taskLbl">Skriv på engelsk</div>
     <div class="no" id="noWord">–</div>
   </div>
+  <div id="sentWrap" style="display:none"><div class="sentence" id="sentence"></div><div class="hintrow"><button class="btn small ghost" id="btnHint">Vis hint</button><span class="hintno" id="hintNo"></span></div><div class="opts" id="opts"></div></div>
   <div class="match" id="match" style="display:none"><div class="mwagons" id="mWagons"></div><div class="mcrates" id="mCrates"></div></div>
   <div class="slots" id="slots"></div>
   <div class="tray" id="tray"></div>
@@ -566,6 +584,51 @@ function addPlank(i){
   for(let i=0;i<40;i++){ const x=X.slopeA+rnd()*(X.top-X.slopeA+20), z=(rnd()>.5?1:-1)*(4+rnd()*12); const s=mesh(new THREE.DodecahedronGeometry(.4+rnd()*.9,0),M(0x9a9a92),x,terrainH(x,z)+.2,z); s.rotation.set(rnd()*3,rnd()*3,0); }
 }
 
+// ENDESTASJONEN
+const ENDE={x:304, len:26};
+const passengers=[];
+{
+  const y=TOPH;
+  mesh(new THREE.BoxGeometry(ENDE.len,1,4.4),M(0xc2b49a),ENDE.x,y+.5,-5);
+  for(let i=-ENDE.len/2+1;i<=ENDE.len/2-1;i+=3.2) mesh(new THREE.BoxGeometry(.3,1.05,.3),M(0x6b4a2f),ENDE.x+i,y+.52,-2.82);
+  // tak over perrongen
+  mesh(new THREE.BoxGeometry(ENDE.len-2,.3,3.2),M(0x534AB7),ENDE.x,y+4.4,-5.4);
+  for(let i=-ENDE.len/2+2;i<=ENDE.len/2-2;i+=5.5) mesh(new THREE.CylinderGeometry(.15,.15,3.4,6),M(0x3c3489),ENDE.x+i,y+2.7,-6.6);
+  sign('ENDESTASJONEN',ENDE.x,y+5.4,-3.9,7);
+  // stasjonsbygning + liten by bak
+  mesh(new THREE.BoxGeometry(10,5,5),M(0xEF9F27),ENDE.x,y+2.5,-10.5);
+  const r=mesh(new THREE.ConeGeometry(7.6,2.6,4),M(0xD85A30),ENDE.x,y+6.3,-10.5); r.rotation.y=Math.PI/4; r.scale.set(1,1,.62);
+  mesh(new THREE.CylinderGeometry(.9,.9,.2,20),M(0xffffff),ENDE.x,y+3.8,-7.95).rotation.x=Math.PI/2;
+  for(const dx of [-3,3]) mesh(new THREE.BoxGeometry(1.4,1.6,.1),M(0xbfe8ff,{roughness:.2}),ENDE.x+dx,y+2.2,-7.97);
+  const hc=[0x1a5fa5,0x1D9E75,0xe84a8a,0xf2c94c,0xD85A30,0x534AB7];
+  for(let k=0;k<9;k++){
+    const hx=ENDE.x-26+k*7+rnd()*2, hz=-17-rnd()*8, hy=terrainH(hx,hz), w=3+rnd()*2, h=3+rnd()*3;
+    mesh(new THREE.BoxGeometry(w,h,w),M(hc[k%hc.length]),hx,hy+h/2,hz);
+    const rr=mesh(new THREE.ConeGeometry(w*.8,1.8,4),M(0x5b3d24),hx,hy+h+.9,hz); rr.rotation.y=Math.PI/4;
+  }
+  // stoppbukk
+  mesh(new THREE.BoxGeometry(.6,1.2,2.6),M(0xD85A30),ENDE.x+ENDE.len/2+6,y+.6,0);
+}
+const SKIN=[0xf1c9a5,0xd9a273,0xa86b45,0x6d4530,0xf6d7c3];
+const CLOTH=[0xD85A30,0x1a5fa5,0x1D9E75,0xEF9F27,0x534AB7,0xe84a8a,0x00a3b4,0x7cc242];
+function makePassenger(k){
+  const g=new THREE.Group();
+  const c=CLOTH[k%CLOTH.length];
+  mesh(new THREE.CylinderGeometry(.32,.42,1.1,8),M(c),0,.55,0,g);
+  mesh(new THREE.SphereGeometry(.3,10,8),M(SKIN[k%SKIN.length]),0,1.35,0,g);
+  if(k%3===0) mesh(new THREE.CylinderGeometry(.33,.33,.22,10),M(0x2b2b33),0,1.6,0,g);
+  if(k%2===1) mesh(new THREE.BoxGeometry(.45,.35,.18),M(0x6b4a2f),.42,.35,0,g);  // koffert
+  return g;
+}
+function setupPassengers(n){
+  for(const p of passengers) scene.remove(p); passengers.length=0;
+  for(let k=0;k<n;k++){
+    const g=makePassenger(k); const x=ENDE.x-ENDE.len/2+2+k*((ENDE.len-4)/Math.max(1,n-1||1));
+    g.position.set(n===1?ENDE.x:x, TOPH+1, -4.3-(k%2)*.7); g.rotation.y=(Math.random()-.5)*.6;
+    scene.add(g); passengers.push(g);
+  }
+}
+
 /* ================= TOG ================= */
 const wheels=[];
 const trainCars=[];   // {g, back, len}
@@ -700,19 +763,34 @@ function clearTrain(){
   for(const c of trainCars) scene.remove(c.g);
   trainCars.length=0; wheels.length=0;
 }
+function coachG(k){
+  const g=new THREE.Group(), ws=[];
+  const col=[0x1a5fa5,0x1D9E75,0xEF9F27,0x534AB7][k%4];
+  mesh(new THREE.BoxGeometry(3.8,.3,1.9),M(0x2b2b33),0,.85,0,g);
+  mesh(new THREE.BoxGeometry(3.7,1.6,1.95),M(col),0,1.85,0,g);
+  mesh(new THREE.BoxGeometry(3.9,.22,2.15),M(0xe6e6e6),0,2.75,0,g);
+  const wins=[];
+  for(let i=0;i<3;i++){ const wm=new THREE.MeshStandardMaterial({color:0x4b6b8a,emissive:0xffd27a,emissiveIntensity:0,roughness:.3});
+    for(const z of [-.99,.99]) mesh(new THREE.BoxGeometry(.7,.55,.04),wm,-1.15+i*1.15,2.1,z,g,false);
+    wins.push(wm); }
+  mesh(new THREE.BoxGeometry(.6,.25,.4),locoMats.dark,2.05,.9,0,g);
+  for(const x of [-1.2,1.2]) for(const z of [-.9,.9]) addWheel(g,locoMats,x,z,.45,ws);
+  return {g,ws,wins};
+}
 // wagons: [{label, crate}] – crate: null = tom vogn, '' = kasse uten tekst, 'ord' = kasse med ord
 function buildTrain(wagons){
   clearTrain(); applyPaint();
   locoObj=buildLoco(garage.current,locoMats);
   scene.add(locoObj.g); wheels.push(...locoObj.wheels);
   trainCars.push({g:locoObj.g,back:0,front:locoObj.len/2});
-  for(const w of wagons) addWagon(w.label||'',w.crate);
+  for(const w of wagons) addWagon(w.label||'',w.crate,w.coach);
 }
-function addWagon(label,crateWord){
-  const {g,ws}=wagonG(label); scene.add(g); wheels.push(...ws);
+function addWagon(label,crateWord,coach){
+  const made = coach ? coachG(trainCars.length) : wagonG(label);
+  const {g,ws}=made; scene.add(g); wheels.push(...ws);
   const idx=trainCars.length-1;
   const back = locoObj.len/2 + .3 + WAGON_LEN*idx + WAGON_LEN/2;
-  const car={g,back,label,crate:crateWord}; trainCars.push(car);
+  const car={g,back,label,crate:crateWord,wins:made.wins,lit:0}; trainCars.push(car);
   if(crateWord!=null){ const c=crate(crateWord,idx); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; c.castShadow=true; g.add(c); }
   return car;
 }
@@ -773,6 +851,7 @@ function loop(){
     if(camMode==='laste') left=Math.min(left,DOCK.x-6);
     if(camMode==='bro'){ right=Math.max(right,X.bridgeB+2); }
     if(camMode==='fjell'){ right=Math.max(right,front+10); }
+    if(camMode==='ende'){ left=Math.min(left,ENDE.x-ENDE.len/2-2); right=Math.max(right,ENDE.x+ENDE.len/2+2); }
     const span=right-left;
     tgt=new THREE.Vector3((left+right)/2, trackH((left+right)/2)+1.5, 0);
     want=Math.max(26,(span*1.05)/Math.max(.7,aspect)+9)*(aspect<1?1.5:1);
@@ -791,7 +870,7 @@ loop();
 
 /* ================= LISTER ================= */
 function cleanWords(arr){
-  return (arr||[]).filter(w=>w && w.no && w.en).map(w=>({no:String(w.no).trim(), en:String(w.en).trim().toLowerCase(), extra:!!w.extra}))
+  return (arr||[]).filter(w=>w && w.no && w.en).map(w=>({no:String(w.no).trim(), en:String(w.en).trim().toLowerCase(), extra:!!w.extra, s:String(w.s||'').trim()}))
     .filter(w=>/^[a-z' \-\/]+$/.test(w.en) && w.en.replace(/[^a-z]/g,'').length>0);
 }
 async function fetchList(code){
@@ -809,6 +888,15 @@ async function fetchList(code){
     renderHome(); openMap(c);
   }catch(e){ $('codeMsg').style.color=''; $('codeMsg').textContent='Fikk ikke kontakt. Er iPaden koblet til nettet?'; }
 }
+function findInSentence(sentence, en){
+  for(const v of String(en||'').split('/').map(x=>x.trim()).filter(Boolean)){
+    const e=v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const m=new RegExp(`(^|[^A-Za-z'])(${e})(?=$|[^A-Za-z'])`,'i').exec(sentence||'');
+    if(m){ const st=m.index+m[1].length; return {before:sentence.slice(0,st), word:m[2], after:sentence.slice(st+m[2].length)}; }
+  }
+  return null;
+}
+const sentWords = L => L.words.filter(w=>w.s && findInSentence(w.s,w.en));
 function starStr(n){ let h=''; for(let i=0;i<3;i++) h+=`<img class="${i<n?'':'off'}" src="spelling-express-ikoner/stjerne.webp" alt="">`; return h; }
 function renderHome(){
   const box=$('myLists'); box.innerHTML='';
@@ -816,9 +904,10 @@ function renderHome(){
   if(!ids.length){ box.innerHTML='<div class="empty">Ingen lister ennå. Skriv inn koden du har fått av læreren, eller lag din egen liste.</div>'; return; }
   for(const id of ids){
     const L=lists[id], p=L.progress||{};
-    const tot=(p.laste||0)+(p.bro||0)+(p.fjell||0);
+    const has4=sentWords(L).length>=3;
+    const tot=(p.laste||0)+(p.bro||0)+(p.fjell||0)+(has4?(p.ende||0):0);
     const d=document.createElement('div'); d.className='lcard';
-    d.innerHTML=`<div class="ic">${ICO(L.source==='egen'?'blyant':'logo')}</div><div><div class="tt">${esc(L.title)}</div><div class="sub">${L.words.length} ord · ${L.source==='egen'?'egen liste':'kode '+id}</div></div><div class="stars">${tot}/9 ${ICO('stjerne','ico s')}</div><button class="x" aria-label="Fjern lista"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+    d.innerHTML=`<div class="ic">${ICO(L.source==='egen'?'blyant':'logo')}</div><div><div class="tt">${esc(L.title)}</div><div class="sub">${L.words.length} ord · ${L.source==='egen'?'egen liste':'kode '+id}</div></div><div class="stars">${tot}/${has4?12:9} ${ICO('stjerne','ico s')}</div><button class="x" aria-label="Fjern lista"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
     d.onclick=e=>{ const xb=e.target.closest('.x'); if(xb){ e.stopPropagation(); if(d.dataset.sure){ delete lists[id]; saveAll(); renderHome(); } else { d.dataset.sure=1; xb.textContent='Fjerne?'; xb.style.opacity=1; xb.style.color='var(--coral)'; xb.style.fontWeight=900; xb.style.fontSize='14px'; } return; } openMap(id); };
     box.appendChild(d);
   }
@@ -828,6 +917,7 @@ function renderHome(){
 let curId=null, curLevel='base';
 function show(id){ for(const s of ['scrHome','scrMap']) $(s).classList.toggle('hidden', s!==id); }
 function goHome(){ show('scrHome'); camMode='idle'; renderHome(); $('task').classList.add('hidden'); $('btnExit').style.display='none'; }
+function sentActive(){ return activeWords().filter(w=>w.s && findInSentence(w.s,w.en)); }
 function activeWords(){ const L=lists[curId]; const hasExtra=L.words.some(w=>w.extra); return (curLevel==='all'||!hasExtra)? L.words : L.words.filter(w=>!w.extra); }
 function openMap(id){
   curId=id; const L=lists[id]; const p=L.progress||(L.progress={});
@@ -836,7 +926,10 @@ function openMap(id){
   $('levelRow').style.display=hasExtra?'flex':'none';
   [...$('levelRow').querySelectorAll('button')].forEach(b=>b.classList.toggle('on',b.dataset.l===curLevel));
   $('mapSub').textContent = `${activeWords().length} ord` + (L.source==='egen'?' · egen liste':'');
-  const unlocked={laste:true, bro:(p.laste||0)>0, fjell:(p.bro||0)>0};
+  const has4=sentActive().length>=3;
+  document.querySelector('.stop[data-st=ende]').style.display=has4?'':'none';
+  document.querySelector('.route').classList.toggle('four',has4);
+  const unlocked={laste:true, bro:(p.laste||0)>0, fjell:(p.bro||0)>0, ende:(p.fjell||0)>0};
   for(const el of document.querySelectorAll('.stop')){
     const st=el.dataset.st; el.classList.toggle('locked',!unlocked[st]);
     el.querySelector('.st').innerHTML='<span class="starrow">'+starStr(p[st]||0)+'</span>';
@@ -872,7 +965,7 @@ const accepts = (en,guess) => en.split('/').map(s=>s.trim()).includes(guess);
 
 function startStation(st){
   roundId++; anims.length=0;
-  const words=activeWords();
+  const words= st==='ende' ? sentActive() : activeWords();
   R={st, words, missed:new Set(), queue:shuffle(words.map((w,i)=>({...w,i}))), done:0, first:0, total:words.length, cur:null, tries:0, busy:false, results:{}};
   show(null); $('scrHome').classList.add('hidden'); $('scrMap').classList.add('hidden');
   $('btnExit').style.display='block';
@@ -884,10 +977,17 @@ function startStation(st){
     R.carOf={}; R.wagonOrder.forEach((wi,k)=>R.carOf[wi]=trainCars[k+1]);
     const center=(locoObj.len/2 - trainLen())/2;
     train.x=-60; train.targetX=DOCK.x-center; train.mode='ease';
+  } else if(st==='ende'){
+    const nc=Math.min(6,Math.max(2,Math.ceil(words.length/3)));
+    buildTrain(Array.from({length:nc},()=>({coach:true})));
+    setupPassengers(words.length);
+    const center=(locoObj.len/2 - trainLen())/2;
+    train.x=ENDE.x-70; train.targetX=ENDE.x-center; train.mode='ease';
   } else {
     buildTrain(words.slice(0,Math.min(6,words.length)).map(()=>({label:'',crate:''})));
   }
   if(st==='bro'){ resetBridge(R.total); } else { bridgeDoneAll(); }
+  if(st!=='ende') setupPassengers(0);
   if(st==='bro'){ train.x=X.broStart-30; train.targetX=X.bridgeA-locoObj.len/2-1.2; train.mode='ease'; }
   if(st==='fjell'){ train.x=X.fjellStart-30; train.targetX=X.slopeA-locoObj.len/2; R.fjellStart=train.targetX; R.fjellEnd=X.top-locoObj.len/2+2; train.mode='ease'; }
   for(const c of trainCars) placeCar(c,train.x);
@@ -918,11 +1018,50 @@ function nextWord(){
   if(R.st==='laste'){ nextBatch(); return; }
   if(!R.queue.length){ finishStation(); return; }
   R.cur=R.queue.shift(); R.tries=0; R.busy=false;
-  $('noWord').textContent=R.cur.no; $('noWord').style.display=''; $('taskLbl').textContent='Skriv på engelsk'; $('match').style.display='none'; $('slots').style.display='flex';
+  $('noWord').textContent=R.cur.no; $('noWord').style.display=''; $('taskLbl').textContent='Skriv på engelsk'; $('match').style.display='none'; $('slots').style.display='flex'; $('sentWrap').style.display='none';
   $('hint').textContent=''; $('hint').className='hint';
   renderDots();
+  if(R.st==='ende'){ buildSentenceTask(); $('task').classList.remove('hidden'); return; }
   if(R.st==='fjell') buildKeyboardTask(); else { buildTileTask(); if(R.done===0){ $('hint').textContent='Dra bokstavene opp i rutene.'; } }
   $('task').classList.remove('hidden');
+}
+
+/* ---------- Endestasjonen: ordet som mangler i setningen ---------- */
+function buildSentenceTask(){
+  $('noWord').style.display='none'; $('slots').style.display='none'; $('tray').style.display='none'; $('kbd').style.display='none'; $('match').style.display='none';
+  $('sentWrap').style.display='block'; $('taskLbl').textContent='Hvilket ord mangler?';
+  const f=findInSentence(R.cur.s,R.cur.en);
+  $('sentence').innerHTML=`${esc(f.before)}<span class="gapbox" id="gapbox"></span>${esc(f.after)}`;
+  $('hintNo').textContent=''; $('btnHint').style.display=''; R.hinted=false;
+  const all=lists[curId].words.filter(w=>mainSpelling(w.en)!==mainSpelling(R.cur.en));
+  const notIn=all.filter(w=>!findInSentence(R.cur.s,w.en));
+  const pool=shuffle(notIn.length>=3?notIn:all).slice(0,3).map(w=>mainSpelling(w.en));
+  const opts=shuffle([...new Set([mainSpelling(R.cur.en),...pool])]);
+  const box=$('opts'); box.innerHTML='';
+  for(const o of opts){ const d=document.createElement('div'); d.className='opt'; d.textContent=o; d.addEventListener('pointerdown',e=>optDown(e,d)); box.appendChild(d); }
+  if(R.done===0) { $('hint').className='hint'; $('hint').textContent='Dra ordet som mangler inn i den tomme ruta.'; }
+}
+$('btnHint').onclick=()=>{ if(!R||R.st!=='ende') return; R.hinted=true; R.missed.add(R.cur.i); $('hintNo').textContent='Norsk: '+R.cur.no; $('btnHint').style.display='none'; };
+let odrag=null;
+function optDown(e,d){
+  if(R.busy||d.classList.contains('ghost')) return;
+  e.preventDefault(); audio();
+  const r=d.getBoundingClientRect(); const g=d.cloneNode(true); g.classList.add('drag'); document.body.appendChild(g);
+  d.classList.add('ghost');
+  odrag={d,g,dx:e.clientX-r.left,dy:e.clientY-r.top,x0:e.clientX,y0:e.clientY,moved:false,pid:e.pointerId};
+  oMoveTo(e.clientX,e.clientY); sfx.pick();
+  addEventListener('pointermove',oMove,{passive:false}); addEventListener('pointerup',oUp); addEventListener('pointercancel',oUp);
+}
+function oMoveTo(x,y){ odrag.g.style.left=(x-odrag.dx)+'px'; odrag.g.style.top=(y-odrag.dy)+'px'; }
+function overGap(x,y){ const r=$('gapbox').getBoundingClientRect(); return x>=r.left-30&&x<=r.right+30&&y>=r.top-30&&y<=r.bottom+30; }
+function oMove(e){ if(!odrag||e.pointerId!==odrag.pid) return; e.preventDefault(); if(Math.hypot(e.clientX-odrag.x0,e.clientY-odrag.y0)>8) odrag.moved=true; oMoveTo(e.clientX,e.clientY); $('gapbox').classList.toggle('hot',overGap(e.clientX,e.clientY)); }
+function oUp(e){
+  if(!odrag||e.pointerId!==odrag.pid) return;
+  removeEventListener('pointermove',oMove); removeEventListener('pointerup',oUp); removeEventListener('pointercancel',oUp);
+  const d=odrag; odrag=null; d.g.remove(); $('gapbox').classList.remove('hot');
+  if(!d.moved || !overGap(e.clientX,e.clientY)){ d.d.classList.remove('ghost'); if(!d.moved){ $('hint').className='hint'; $('hint').textContent='Dra ordet inn i den tomme ruta.'; } return; }
+  const gb=$('gapbox'); gb.textContent=d.d.textContent; gb.classList.add('filled'); R.dragged=d.d; sfx.drop();
+  judge(d.d.textContent);
 }
 
 /* ---------- Lasteplassen: riktig kasse på riktig vogn ---------- */
@@ -1139,7 +1278,7 @@ addEventListener('keydown',e=>{ if(!R||R.st!=='fjell'||$('task').classList.conta
 /* ---------- vurdering ---------- */
 function judge(guess){
   if(R.busy) return;
-  const slots=$('slots');
+  const slots= R.st==='ende' ? $('gapbox') : $('slots');
   if(accepts(R.cur.en,guess)){
     R.busy=true; slots.classList.add('good'); sfx.ok();
     if(R.tries===0 && !R.missed.has(R.cur.i)){ R.first++; }
@@ -1157,6 +1296,7 @@ function judge(guess){
       } else {
         R.busy=false;
         if(R.st==='fjell'){ typed=[]; redrawTyped(); }
+        else if(R.st==='ende'){ const gb=$('gapbox'); gb.textContent=''; gb.className='gapbox'; if(R.dragged){ R.dragged.classList.remove('ghost'); } }
         else clearTiles();
         $('hint').className='hint warn'; $('hint').textContent='Nesten! Prøv igjen.';
       }
@@ -1166,7 +1306,10 @@ function judge(guess){
 function reward(){
   R.done++;
   const word=mainSpelling(R.cur.en);
-  if(R.st==='bro'){
+  if(R.st==='ende'){
+    boardPassenger(R.done-1);
+    later(nextWord,1500);
+  } else if(R.st==='bro'){
     addPlank(R.done-1);
     later(nextWord,1100);
   } else {
@@ -1175,6 +1318,15 @@ function reward(){
     for(let i=0;i<5;i++) setTimeout(()=>puff(1.6),i*120);
     later(nextWord,1300);
   }
+}
+function boardPassenger(k){
+  const p=passengers[k]; if(!p) return;
+  const coaches=trainCars.slice(1); if(!coaches.length) return;
+  const car=coaches.reduce((a,b)=> (a.lit<=b.lit?a:b));          // vogna med færrest passasjerer
+  const start=p.position.clone();
+  anim(1.1,t=>{ const end=new THREE.Vector3(car.g.position.x,TOPH+1,-1.4); p.position.lerpVectors(start,end,ease(t)); p.position.y=TOPH+1+Math.abs(Math.sin(t*Math.PI*4))*.25; },()=>{
+    anim(.35,t=>p.scale.setScalar(1-t),()=>{ scene.remove(p); if(car.wins&&car.wins[car.lit%3]) car.wins[car.lit%3].emissiveIntensity=.9; car.lit++; sfx.thump(); });
+  });
 }
 function slideBack(){
   const back=Math.max(R.fjellStart, train.targetX-2.2);
@@ -1189,22 +1341,23 @@ function finishStation(){
   setTickets(tickets+earned);
   const L=lists[curId]; L.progress=L.progress||{}; L.progress[R.st]=Math.max(L.progress[R.st]||0,stars); L.saved=Date.now(); saveAll();
   sfx.whistle();
-  $('match').style.display='none';
-  const titles={laste:'Lasten er levert!',bro:'Broen er ferdig!',fjell:'Du kom helt til toppen!'};
+  $('match').style.display='none'; $('sentWrap').style.display='none';
+  const titles={laste:'Lasten er levert!',bro:'Broen er ferdig!',fjell:'Du kom helt til toppen!',ende:'Alle passasjerene er med!'};
   if(R.st==='laste'){ train.mode='drive'; train.targetX=train.x+60; }
   if(R.st==='bro'){ train.mode='drive'; train.targetX=X.bridgeB+trainLen()+8; }
   if(R.st==='fjell'){ train.targetX=R.fjellEnd; }
+  if(R.st==='ende'){ train.targetX=ENDE.x+ENDE.len/2+5-locoObj.len/2; }
   later(()=>{
     $('doneTitle').textContent=titles[R.st];
     $('doneStars').innerHTML=starStr(stars);
     $('doneFirst').innerHTML=`${ICO('sjekk')} ${R.first} av ${R.total} riktige på første forsøk`;
     $('doneTickets').innerHTML=`${ICO('ticket')} +${earned} billetter`;
     $('doneTxt').textContent= bonus? 'Feilfri tur – du fikk 3 ekstra billetter!' : (stars<3?'Prøv igjen for flere stjerner, eller kjør videre.':'');
-    const next={laste:'bro',bro:'fjell',fjell:null}[R.st];
+    const next={laste:'bro',bro:'fjell',fjell:(sentActive().length>=3?'ende':null),ende:null}[R.st];
     $('btnDoneNext').style.display=next?'inline-block':'none';
     $('btnDoneNext').onclick=()=>{ $('mDone').classList.add('hidden'); startStation(next); };
     $('mDone').classList.remove('hidden');
-  },R.st==='fjell'?2200:3800);
+  },(R.st==='fjell'||R.st==='ende')?2200:3800);
 }
 $('btnDoneMap').onclick=()=>{ $('mDone').classList.add('hidden'); openMap(curId); };
 $('btnDoneAgain').onclick=()=>{ $('mDone').classList.add('hidden'); startStation(R.st); };
