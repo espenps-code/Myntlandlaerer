@@ -129,10 +129,10 @@ input{ font-family:inherit; color:inherit; }
 #picker{ position:absolute; inset:0; z-index:50; background:rgba(42,31,61,.5); display:flex; align-items:center; justify-content:center; }
 .picker-card{ width:1560px; padding:26px 40px 30px; position:relative; }
 .picker-card h2{ font-size:44px; font-weight:700; margin-bottom:6px; }
-.picker-card h3{ font-size:26px; font-weight:600; color:var(--ink-soft); margin:12px 0 4px; }
+.picker-card h3{ font-size:25px; font-weight:600; color:var(--ink-soft); margin:8px 0 2px; }
 .picker-card .close{ position:absolute; right:24px; top:20px; }
 .pick-row{ display:grid; grid-template-columns:repeat(10,1fr); gap:8px; }
-.pick-item{ display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:4px solid transparent; border-radius:22px; padding:8px 2px 6px; font-size:23px; font-weight:500; --s:104px; position:relative; }
+.pick-item{ display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:4px solid transparent; border-radius:22px; padding:5px 2px 4px; font-size:22px; font-weight:500; --s:96px; position:relative; }
 .pick-item:hover{ background:var(--cream); }
 .pick-item.sel{ border-color:var(--ink); background:var(--cream-2); }
 .pick-item.used .ico{ opacity:.4; }
@@ -196,7 +196,7 @@ input{ font-family:inherit; color:inherit; }
 /* gruppene (brikker som ligger oppå kortene) */
 .tokens{ position:absolute; inset:0; pointer-events:none; z-index:12; }
 .ico{ width:var(--s,100px); height:var(--s,100px); border-radius:50%; flex:none; display:grid; place-items:center;
-  background-image:url('stasjoner-ikoner.webp'); background-size:1000% 300%; background-repeat:no-repeat; }
+  background-image:url('stasjoner-ikoner.webp?v=2'); background-size:1000% 400%; background-repeat:no-repeat; }
 .ico span{ display:none; font-size:calc(var(--s,100px) * .56); line-height:1; }
 .no-sprite .ico{ background:var(--cream-2); border:var(--border); }      /* reserve hvis bildefila mangler: emoji */
 .no-sprite .ico span{ display:block; }
@@ -391,11 +391,12 @@ input{ font-family:inherit; color:inherit; }
 
 /* ================= Oppsett og lagring ================= */
 var COLORS = ['#f26d5b','#5aa9e6','#8cc63f','#f4c430','#b79cf0','#f39a3d','#f29ac0','#3cc4b8'];
-/* 30 gruppeikoner. Rekkefølgen følger bildefila stasjoner-ikoner.webp (10 per rad). */
-var ICON_SETS = ['Dyr og fugler','Litt av hvert','Natur og friluftsliv'];
+/* 34 gruppeikoner. Rekkefølgen følger bildefila stasjoner-ikoner.webp (10 per rad). */
+var ICON_SETS = ['Dyr og fugler','Litt av hvert','Natur og friluftsliv','Kjæledyr'];
 var ICONS = [['Rev','🦊'],['Ugle','🦉'],['Ekorn','🐿️'],['Gaupe','🐱'],['Oter','🦦'],['Lundefugl','🐧'],['Hval','🐳'],['Bjørn','🐻'],['Pinnsvin','🦔'],['Ørn','🦅'],
   ['Rakett','🚀'],['Fyrtårn','🗼'],['Kaktus','🌵'],['Robot','🤖'],['Vaffel','🧇'],['Seilbåt','⛵'],['Paraply','☂️'],['Gitar','🎸'],['Luftballong','🎈'],['Sykkel','🚲'],
-  ['Fjell','🏔️'],['Gran','🌲'],['Bål','🔥'],['Kano','🛶'],['Sopp','🍄'],['Blåbær','🫐'],['Nordlys','🌌'],['Telt','⛺'],['Snøfnugg','❄️'],['Regnbue','🌈']];
+  ['Fjell','🏔️'],['Gran','🌲'],['Bål','🔥'],['Kano','🛶'],['Sopp','🍄'],['Blåbær','🫐'],['Nordlys','🌌'],['Telt','⛺'],['Snøfnugg','❄️'],['Regnbue','🌈'],
+  ['Hund','🐶'],['Katt','🐱'],['Kanin','🐰'],['Hamster','🐹']];
 /* Aktivitetsikoner til stasjonene: Myntlands fagikoner pluss ti egne stasjonsikoner (alle i mappa fagikoner/). Velger læreren et ikon uten å skrive navn, får stasjonen ikonets navn. */
 var ACTS = [['laererstasjon','Lærerstasjon'],['book','Lesing'],['arbeid','Skriving'],['math','Matte'],['lytting','Lytting'],['digital','Digitalt'],['video','Video'],['brettspill','Brettspill'],['kortspill','Kortspill'],['puslespill','Puslespill'],
   ['lek','Spill og lek'],['klipp','Klipp og lim'],['art','Tegning'],['eksperiment','Eksperiment'],['nature','Utforsking'],['maaling','Måling'],['klokka','Klokka'],['music','Musikk'],['gym','Bevegelse'],['samfunn','Samarbeid'],
@@ -436,8 +437,8 @@ function removeOwnImg(st){
   idb(function(db){ if(db){ try{ db.transaction('files','readwrite').objectStore('files').delete(ownKey(st)); }catch(e){} } });
 }
 function actImg(a, cls){ return '<img class="'+(cls||'')+'" src="fagikoner/ikon-'+ACTS[a][0]+'.webp" alt="" onerror="this.style.display=\'none\'">'; }
-function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)*50)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
-(function(){ var im = new Image(); im.onerror = function(){ document.getElementById('canvas').classList.add('no-sprite'); }; im.src = 'stasjoner-ikoner.webp'; })();
+function icoHtml(i){ return '<span class="ico" style="background-position:'+((i%10)/9*100).toFixed(3)+'% '+(Math.floor(i/10)/3*100).toFixed(3)+'%"><span>'+ICONS[i][1]+'</span></span>'; }
+(function(){ var im = new Image(); im.onerror = function(){ document.getElementById('canvas').classList.add('no-sprite'); }; im.src = 'stasjoner-ikoner.webp?v=2'; })();
 /* Åpnes tavla fra klasseportalen, følger klassens ID med i adressen (?class=…&navn=…).
    Da huskes oppsett og topp 5 hver for seg per klasse – fortsatt bare i denne nettleseren. */
 var QS = (function(){ try{ return new URLSearchParams(location.search); }catch(e){ return { get:function(){ return null; } }; } })();
@@ -519,9 +520,9 @@ function buildNames(){
 function openPicker(g){
   $('pickTitle').textContent = 'Velg ikon til gruppa som starter på ' + stName(g);
   var h='';
-  for(var set=0; set<3; set++){
+  for(var set=0; set<ICON_SETS.length; set++){
     h += '<h3>'+ICON_SETS[set]+'</h3><div class="pick-row">';
-    for(var k=0;k<10;k++){
+    for(var k=0;k<10 && set*10+k<ICONS.length;k++){
       var i = set*10+k, owner = cfg.icons.indexOf(i), cls = 'pick-item' + (owner===g ? ' sel' : (owner>=0 && owner<cfg.stations ? ' used' : ''));
       h += '<button class="'+cls+'" data-i="'+i+'"'+(cls.indexOf('used')>0 ? ' data-used="'+(owner+1)+'" title="Brukes av gruppa på stasjon '+(owner+1)+' – velger du den, bytter de to gruppene ikon"' : '')+'>'+icoHtml(i)+ICONS[i][0]+'</button>';
     }
