@@ -351,8 +351,10 @@ input.txt{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius
 
 <div class="toast hide" id="toast"></div>
 
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 /* ================= OPPSETT ================= */
 const DB = 'https://spelling-express-default-rtdb.europe-west1.firebasedatabase.app';
@@ -512,6 +514,7 @@ for(let x=-120;x<330;x+=4){ if (x+4>X.bridgeA && x<X.bridgeB) continue; const b=
 
 // LASTEPLASSEN
 const DOCK=new THREE.Vector3(X.dock,0,-5.2);
+let DOCK_TOP=1.6, DOCK_FRONT=-5.2;
 const CRATE_COLORS=[0xD85A30,0x1a5fa5,0xEF9F27,0x1D9E75,0x534AB7,0xe84a8a,0x00a3b4,0xf46036,0x8d6e63,0x3d5a80];
 function signTex(text,bg='#fffaf0',fg='#123f6e'){
   const c=document.createElement('canvas'); c.width=512; c.height=128; const x=c.getContext('2d');
@@ -522,6 +525,7 @@ function sign(text,x,y,z,w=5,parent=scene){
   const wood=M(0x6b4a2f);
   return mesh(new THREE.BoxGeometry(w,1.2,.15),[wood,wood,wood,wood,new THREE.MeshStandardMaterial({map:signTex(text)}),wood],x,y,z,parent);
 }
+const dockStart=scene.children.length;
 {
   mesh(new THREE.BoxGeometry(11,1,4.6),M(0xc2b49a),DOCK.x,.5,DOCK.z-.4);
   for(let i=-5;i<=5;i+=2.5) mesh(new THREE.BoxGeometry(.35,1.1,.35),M(0x6b4a2f),DOCK.x+i,.55,DOCK.z+1.85);
@@ -537,6 +541,27 @@ function sign(text,x,y,z,w=5,parent=scene){
   mesh(new THREE.BoxGeometry(1,1.8,.1),M(0x1D9E75),hx,.9,DOCK.z+1.02);
   for(const dx of [-1.6,1.6]) mesh(new THREE.BoxGeometry(.9,.8,.1),M(0xbfe8ff,{roughness:.2}),hx+dx,2,DOCK.z+1.02);
 }
+const dockParts=scene.children.slice(dockStart);
+// 3D-modell fra Higgsfield (Tripo) – erstatter den kodetegnede rampa når den har lastet
+new GLTFLoader().load('spelling-express-modeller/lasteplassen.glb', gltf=>{
+  const m=gltf.scene;
+  m.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+  m.rotation.y=-Math.PI/2;
+  const box0=new THREE.Box3().setFromObject(m); const sz=box0.getSize(new THREE.Vector3());
+  const k=12/Math.max(sz.x,sz.z); m.scale.setScalar(k);
+  const box=new THREE.Box3().setFromObject(m); const c=box.getCenter(new THREE.Vector3());
+  const depth=box.max.z-box.min.z;
+  m.position.x+=DOCK.x-c.x; m.position.y+=-box.min.y; m.position.z+=(-2.9-depth/2)-c.z;
+  for(const p of dockParts) scene.remove(p);
+  scene.add(m);
+  m.updateMatrixWorld(true);
+  // finn toppen av perrongen like innenfor forkanten
+  const rc=new THREE.Raycaster(new THREE.Vector3(DOCK.x-2.5,30,-3.9),new THREE.Vector3(0,-1,0));
+  const hit=rc.intersectObject(m,true).filter(h=>h.point.y<4)[0];
+  if(hit){ DOCK_TOP=hit.point.y+.6; } DOCK_FRONT=-3.9;
+  const sg=sign('LASTEPLASSEN',DOCK.x-1.5,box.max.y-box.min.y+1.0,-4.6,5);
+}, undefined, err=>console.warn('Lasteplassen-modellen lastet ikke, bruker reserve', err));
+
 // BROEN – landkar og skilt
 {
   const stone=M(0x8f8f86);
@@ -1143,7 +1168,7 @@ function loadCrate(i){
   train.targetX = DOCK.x + car.back;      // kjør vogna fram til rampa
   later(()=>{
     const c=crate(mainSpelling(R.words[i].en),i); c.castShadow=true; scene.add(c);
-    const start=new THREE.Vector3(DOCK.x,1.6,DOCK.z);
+    const start=new THREE.Vector3(DOCK.x,DOCK_TOP,DOCK_FRONT);
     anim(1.0,t=>{ const end=new THREE.Vector3(); car.g.localToWorld(end.set(0,1.85,0)); c.position.lerpVectors(start,end,ease(t)); c.position.y+=Math.sin(t*Math.PI)*3; c.rotation.y=t*Math.PI*.5; },()=>{
       scene.remove(c); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; car.g.add(c); sfx.thump();
       for(let k=0;k<3;k++) setTimeout(()=>puff(1.3),k*110);
