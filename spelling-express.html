@@ -119,7 +119,8 @@ img.ico.l{width:30px;height:30px}
 /* ---------- oppgavepanel ---------- */
 #task{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(900px,97vw);background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:26px;box-shadow:var(--shadow);padding:14px 18px 16px;z-index:6;transition:transform .35s cubic-bezier(.2,.9,.3,1.2),opacity .3s}
 #task.hidden{transform:translate(-50%,140%);opacity:0;pointer-events:none}
-.thead{position:relative;text-align:center;margin:0 0 4px;padding:0 120px}
+.thead{position:relative;text-align:center;margin:0 0 4px;padding:0 120px;min-height:44px}
+.thead .prog{z-index:2}
 @media (max-width:640px){.thead{padding:22px 0 0}}
 .thead .lbl{font-size:13px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
 .thead .no{font-family:"Fredoka One";font-size:clamp(46px,7.5vw,76px);color:var(--blue-dark);line-height:1.05;margin:2px 0 4px;word-break:break-word}
