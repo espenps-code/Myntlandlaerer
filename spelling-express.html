@@ -108,10 +108,11 @@ img.ico.l{width:30px;height:30px}
 /* ---------- oppgavepanel ---------- */
 #task{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(900px,97vw);background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:26px;box-shadow:var(--shadow);padding:14px 18px 16px;z-index:6;transition:transform .35s cubic-bezier(.2,.9,.3,1.2),opacity .3s}
 #task.hidden{transform:translate(-50%,140%);opacity:0;pointer-events:none}
-.thead{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.thead{position:relative;text-align:center;margin:0 0 4px;padding:0 120px}
+@media (max-width:640px){.thead{padding:22px 0 0}}
 .thead .lbl{font-size:13px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
-.thead .no{font-family:"Fredoka One";font-size:34px;color:var(--blue-dark);line-height:1.05}
-.thead .prog{margin-left:auto;text-align:right}
+.thead .no{font-family:"Fredoka One";font-size:clamp(46px,7.5vw,76px);color:var(--blue-dark);line-height:1.05;margin:2px 0 4px;word-break:break-word}
+.thead .prog{position:absolute;right:0;top:0;text-align:right}
 .dots{display:flex;gap:4px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap;max-width:280px}
 .dot{width:12px;height:12px;border-radius:50%;background:#e3e9e3}
 .dot.ok{background:var(--green)}
@@ -239,11 +240,9 @@ input.txt{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius
 <!-- OPPGAVE -->
 <div id="task" class="hidden">
   <div class="thead">
-    <div>
-      <div class="lbl">Skriv på engelsk</div>
-      <div class="no" id="noWord">–</div>
-    </div>
     <div class="prog"><div class="lbl" id="progTxt">Ord 1 av 8</div><div class="dots" id="dots"></div></div>
+    <div class="lbl">Skriv på engelsk</div>
+    <div class="no" id="noWord">–</div>
   </div>
   <div class="slots" id="slots"></div>
   <div class="tray" id="tray"></div>
@@ -883,7 +882,7 @@ function nextWord(){
   $('noWord').textContent=R.cur.no;
   $('hint').textContent=''; $('hint').className='hint';
   renderDots();
-  if(R.st==='fjell') buildKeyboardTask(); else buildTileTask();
+  if(R.st==='fjell') buildKeyboardTask(); else { buildTileTask(); if(R.done===0){ $('hint').textContent='Dra bokstavene opp i rutene.'; } }
   $('task').classList.remove('hidden');
 }
 
@@ -951,8 +950,9 @@ function onUp(e){
   const d=drag; drag=null; d.ghost.remove();
   let i;
   if(!d.moved){
-    // trykk: fra brett → neste ledige rute, fra rute → tilbake til brettet
-    i = d.src.fromSlot!=null ? -1 : slotEls.findIndex((s,k)=>!fixed[k]&&!s.el.classList.contains('gap')&&!s.ch);
+    // bare trykk: bokstaven blir liggende / går tilbake til brettet – den må dras på plass
+    i=-1;
+    if(d.src.fromSlot==null){ $('hint').className='hint'; $('hint').textContent='Dra bokstaven opp i en rute.'; }
   } else i=slotAt(e.clientX,e.clientY);
   if(i>=0){
     const s=slotEls[i];
