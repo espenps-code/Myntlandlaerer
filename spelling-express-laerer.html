@@ -152,6 +152,12 @@ textarea{width:100%;min-height:200px;font:inherit;font-size:16px;padding:12px;bo
   #printArea .pq{width:340px;height:340px;margin:0 auto}
   #printArea .pq svg{width:100%;height:100%}
   #printArea p{font-size:20px}
+  #printArea .pbrand{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 26px}
+  #printArea .pbrand img{width:110px;height:110px}
+  #printArea .pbrand span{font-family:"Fredoka One";font-size:46px;color:#123f6e}
+  #printArea .pbrand b{color:#e0582b;font-weight:normal}
+  #printArea{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{background:#fff !important}
 }
 </style>
 </head>
@@ -269,7 +275,7 @@ textarea{width:100%;min-height:200px;font:inherit;font-size:16px;padding:12px;bo
   </div>
 </div>
 
-<div id="printArea"><h1 id="pTitle"></h1><p>Åpne <b>Spelling Express</b> og skriv inn koden – eller skann QR-koden med kameraet.</p><div class="pc" id="pCode"></div><div class="pq" id="pQr"></div></div>
+<div id="printArea"><div class="pbrand"><img id="pLogo" src="spelling-express-ikoner/logo.webp" alt=""><span>Spelling <b>Express</b></span></div><h1 id="pTitle"></h1><p>Åpne <b>Spelling Express</b> og skriv inn koden – eller skann QR-koden med kameraet.</p><div class="pc" id="pCode"></div><div class="pq" id="pQr"></div></div>
 <div class="toast hide" id="toast"></div>
 
 <script type="module">
@@ -1126,7 +1132,7 @@ function renderShare(){
   $('qr').innerHTML=qrSvg(link);
 }
 $('btnCopyLink').onclick=async()=>{ try{ await navigator.clipboard.writeText($('shareLink').textContent); toast('Lenken er kopiert'); }catch(e){ toast('Merk lenken og kopier den selv'); } };
-$('btnPrint').onclick=()=>{ $('pTitle').textContent=cur.title; $('pCode').textContent=cur.code; $('pQr').innerHTML=qrSvg($('shareLink').textContent,10); window.print(); };
+$('btnPrint').onclick=()=>{ $('pTitle').textContent=cur.title; $('pCode').textContent=cur.code; $('pQr').innerHTML=qrSvg($('shareLink').textContent,10); const lg=$('pLogo'); if(lg.complete) window.print(); else { lg.onload=lg.onerror=()=>{lg.onload=null;window.print();}; } };
 
 /* ---------- lim inn ---------- */
 let pasteRows=[], swapped=false;
