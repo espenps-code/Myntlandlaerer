@@ -141,6 +141,25 @@ img.ico.l{width:30px;height:30px}
 .key.wide{width:min(120px,16vw);font-family:Nunito;font-weight:900;font-size:17px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .key.go{background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-dark)}
 .key.back{background:var(--coral-light)}
+.match{display:flex;flex-direction:column;gap:16px;align-items:center;margin:4px 0 2px}
+.mwagons,.mcrates{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.wcard{width:172px;height:128px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:transform .15s}
+.wcard .body{width:100%;height:64px;border-radius:10px 10px 6px 6px;background:linear-gradient(#a8743f,#7a5232);box-shadow:inset 0 -6px 0 rgba(0,0,0,.18),inset 0 0 0 3px rgba(0,0,0,.12);display:grid;place-items:center;position:relative}
+.wcard .body::before,.wcard .body::after{content:"";position:absolute;bottom:-14px;width:24px;height:24px;border-radius:50%;background:#2b2b33;box-shadow:inset 0 0 0 7px #D85A30}
+.wcard .body::before{left:22px}.wcard .body::after{right:22px}
+.wcard .no{background:#fffaf0;border-radius:8px;padding:3px 12px;font-family:"Fredoka One";font-size:24px;color:var(--blue-dark);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wcard .drop{position:absolute;top:0;left:50%;transform:translateX(-50%);width:118px;height:58px;border:3px dashed rgba(26,95,165,.35);border-radius:10px}
+.wcard.hot{transform:scale(1.07)}
+.wcard.hot .drop{border-color:var(--blue);background:var(--blue-light)}
+.wcard.done .drop{border:0}
+.wcard.bad{animation:shake .45s}
+.wcard.pulse .drop{animation:pulse .7s 4;border-color:var(--green)}
+@keyframes pulse{50%{background:var(--green-light);transform:translateX(-50%) scale(1.08)}}
+.ccard{min-width:118px;height:58px;padding:0 10px;border-radius:9px;display:grid;place-items:center;box-shadow:0 5px 0 rgba(0,0,0,.25),inset 0 0 0 4px rgba(0,0,0,.14);touch-action:none;cursor:grab;position:relative}
+.ccard .lab{background:#fffaf0;border-radius:6px;padding:2px 10px;font-family:"Fredoka One";font-size:24px;color:var(--blue-dark)}
+.ccard.ghost{opacity:.25}
+.ccard.drag{position:fixed;z-index:50;pointer-events:none;transform:scale(1.1) rotate(-3deg);box-shadow:0 14px 24px rgba(0,0,0,.25)}
+.wcard .ccard{position:absolute;top:0;left:50%;transform:translateX(-50%);cursor:default;box-shadow:0 3px 0 rgba(0,0,0,.25),inset 0 0 0 4px rgba(0,0,0,.14)}
 .exitbtn{position:fixed;left:14px;top:calc(64px + env(safe-area-inset-top));z-index:6}
 
 /* ---------- modaler ---------- */
@@ -226,8 +245,8 @@ input.txt{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius
       <div class="seg"><button data-l="base" class="on">Grunnord</button><button data-l="all">Alle ord (med utfordring)</button></div>
     </div>
     <div class="route">
-      <div class="stop s1" data-st="laste"><span class="num">STOPP 1</span><h3>Lasteplassen</h3><p>Dra bokstavene på plass og last toget.</p><img class="art" src="spelling-express-ikoner/kasser.webp" alt=""><div class="st"></div></div>
-      <div class="stop s2" data-st="bro"><span class="num">STOPP 2</span><h3>Broen</h3><p>Første bokstav er gitt – men pass opp for ekstra bokstaver!</p><img class="art" src="spelling-express-ikoner/bro.webp" alt=""><div class="st"></div></div>
+      <div class="stop s1" data-st="laste"><span class="num">STOPP 1</span><h3>Lasteplassen</h3><p>Finn riktig kasse til hver vogn og dra den på plass.</p><img class="art" src="spelling-express-ikoner/kasser.webp" alt=""><div class="st"></div></div>
+      <div class="stop s2" data-st="bro"><span class="num">STOPP 2</span><h3>Broen</h3><p>Dra bokstavene på plass. Hvert ord blir en planke på broen.</p><img class="art" src="spelling-express-ikoner/bro.webp" alt=""><div class="st"></div></div>
       <div class="stop s3" data-st="fjell"><span class="num">STOPP 3</span><h3>Fjellbakken</h3><p>Skriv hele ordet selv og kjør toget til toppen.</p><img class="art" src="spelling-express-ikoner/fjell.webp" alt=""><div class="st"></div></div>
     </div>
     <div class="rowbtns">
@@ -241,9 +260,10 @@ input.txt{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius
 <div id="task" class="hidden">
   <div class="thead">
     <div class="prog"><div class="lbl" id="progTxt">Ord 1 av 8</div><div class="dots" id="dots"></div></div>
-    <div class="lbl">Skriv på engelsk</div>
+    <div class="lbl" id="taskLbl">Skriv på engelsk</div>
     <div class="no" id="noWord">–</div>
   </div>
+  <div class="match" id="match" style="display:none"><div class="mwagons" id="mWagons"></div><div class="mcrates" id="mCrates"></div></div>
   <div class="slots" id="slots"></div>
   <div class="tray" id="tray"></div>
   <div class="kbd" id="kbd" style="display:none"></div>
@@ -641,8 +661,17 @@ function applyPaint(){
   locoMats.body.color.set(p.body); locoMats.trim.color.set(p.trim); locoMats.wheel.color.set(p.wheel); locoMats.detail.color.set(p.detail);
   drawName(p.trim);
 }
-function wagonG(){
+function labelTex(text){
+  const c=document.createElement('canvas'); c.width=512; c.height=128; const x=c.getContext('2d');
+  x.fillStyle='#fffaf0'; x.fillRect(0,0,512,128); x.strokeStyle='#123f6e'; x.lineWidth=8; x.strokeRect(4,4,504,120);
+  x.fillStyle='#123f6e'; let fs=72; x.font=`bold ${fs}px Nunito, sans-serif`;
+  while(x.measureText(text).width>470 && fs>24){ fs-=2; x.font=`bold ${fs}px Nunito, sans-serif`; }
+  x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,256,68);
+  return new THREE.CanvasTexture(c);
+}
+function wagonG(label){
   const g=new THREE.Group(), ws=[];
+  if(label){ const mat=new THREE.MeshStandardMaterial({map:labelTex(label)}); for(const z of [-1.02,1.02]){ const pl=mesh(new THREE.PlaneGeometry(3.0,.75),mat,0,1.42,z,g,false); if(z<0) pl.rotation.y=Math.PI; } }
   mesh(new THREE.BoxGeometry(3.6,.35,1.9),M(0x6b4a2f),0,1.0,0,g);
   for(const z of [-.95,.95]) mesh(new THREE.BoxGeometry(3.6,.5,.1),M(0x8a5a35),0,1.4,z,g);
   for(const x of [-1.8,1.8]) mesh(new THREE.BoxGeometry(.1,.5,1.9),M(0x8a5a35),x,1.4,0,g);
@@ -655,6 +684,7 @@ function wordTexture(word,color){
   x.fillStyle=color; x.fillRect(0,0,256,256);
   x.strokeStyle='rgba(0,0,0,.22)'; x.lineWidth=14; x.strokeRect(10,10,236,236);
   x.beginPath(); x.moveTo(10,10); x.lineTo(246,246); x.moveTo(246,10); x.lineTo(10,246); x.stroke();
+  if(!word) return new THREE.CanvasTexture(c);
   x.fillStyle='#fffaf0'; x.fillRect(12,82,232,92);
   x.fillStyle='#123f6e'; let fs=68; x.font=`bold ${fs}px Nunito, sans-serif`;
   while(x.measureText(word).width>220 && fs>18){ fs-=2; x.font=`bold ${fs}px Nunito, sans-serif`; }
@@ -670,19 +700,20 @@ function clearTrain(){
   for(const c of trainCars) scene.remove(c.g);
   trainCars.length=0; wheels.length=0;
 }
-function buildTrain(wagonWords){
+// wagons: [{label, crate}] – crate: null = tom vogn, '' = kasse uten tekst, 'ord' = kasse med ord
+function buildTrain(wagons){
   clearTrain(); applyPaint();
   locoObj=buildLoco(garage.current,locoMats);
   scene.add(locoObj.g); wheels.push(...locoObj.wheels);
   trainCars.push({g:locoObj.g,back:0,front:locoObj.len/2});
-  for(const w of wagonWords) addWagon(w,false);
+  for(const w of wagons) addWagon(w.label||'',w.crate);
 }
-function addWagon(word,animate){
-  const {g,ws}=wagonG(); scene.add(g); wheels.push(...ws);
+function addWagon(label,crateWord){
+  const {g,ws}=wagonG(label); scene.add(g); wheels.push(...ws);
   const idx=trainCars.length-1;
   const back = locoObj.len/2 + .3 + WAGON_LEN*idx + WAGON_LEN/2;
-  const car={g,back,word}; trainCars.push(car);
-  if(word && !animate){ const c=crate(word,idx); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; c.castShadow=true; g.add(c); }
+  const car={g,back,label,crate:crateWord}; trainCars.push(car);
+  if(crateWord!=null){ const c=crate(crateWord,idx); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; c.castShadow=true; g.add(c); }
   return car;
 }
 function placeCar(c,frontX){
@@ -846,9 +877,16 @@ function startStation(st){
   show(null); $('scrHome').classList.add('hidden'); $('scrMap').classList.add('hidden');
   $('btnExit').style.display='block';
   camMode=st;
-  const crates = st==='laste' ? [] : words.slice(0,Math.min(6,words.length)).map(w=>mainSpelling(w.en));
-  buildTrain(crates);
-  if(st==='laste'){ train.x=-40; train.targetX=DOCK.x+locoObj.len/2+.5; train.mode='ease'; }
+  if(st==='laste'){
+    // én vogn per ord, merket med det norske ordet
+    R.wagonOrder=shuffle(R.queue.map(w=>w.i));
+    buildTrain(R.wagonOrder.map(i=>({label:words[i].no, crate:null})));
+    R.carOf={}; R.wagonOrder.forEach((wi,k)=>R.carOf[wi]=trainCars[k+1]);
+    const center=(locoObj.len/2 - trainLen())/2;
+    train.x=-60; train.targetX=DOCK.x-center; train.mode='ease';
+  } else {
+    buildTrain(words.slice(0,Math.min(6,words.length)).map(()=>({label:'',crate:''})));
+  }
   if(st==='bro'){ resetBridge(R.total); } else { bridgeDoneAll(); }
   if(st==='bro'){ train.x=X.broStart-30; train.targetX=X.bridgeA-locoObj.len/2-1.2; train.mode='ease'; }
   if(st==='fjell'){ train.x=X.fjellStart-30; train.targetX=X.slopeA-locoObj.len/2; R.fjellStart=train.targetX; R.fjellEnd=X.top-locoObj.len/2+2; train.mode='ease'; }
@@ -877,13 +915,101 @@ function renderDots(){
   $('progTxt').textContent=`Ord ${Math.min(R.done+1,R.total)} av ${R.total}`;
 }
 function nextWord(){
+  if(R.st==='laste'){ nextBatch(); return; }
   if(!R.queue.length){ finishStation(); return; }
   R.cur=R.queue.shift(); R.tries=0; R.busy=false;
-  $('noWord').textContent=R.cur.no;
+  $('noWord').textContent=R.cur.no; $('noWord').style.display=''; $('taskLbl').textContent='Skriv på engelsk'; $('match').style.display='none'; $('slots').style.display='flex';
   $('hint').textContent=''; $('hint').className='hint';
   renderDots();
   if(R.st==='fjell') buildKeyboardTask(); else { buildTileTask(); if(R.done===0){ $('hint').textContent='Dra bokstavene opp i rutene.'; } }
   $('task').classList.remove('hidden');
+}
+
+/* ---------- Lasteplassen: riktig kasse på riktig vogn ---------- */
+const crateColor=i=>'#'+CRATE_COLORS[i%CRATE_COLORS.length].toString(16).padStart(6,'0');
+function nextBatch(){
+  if(R.done>=R.total){ finishStation(); return; }
+  R.batch=R.queue.splice(0,4); R.cmiss={};
+  $('noWord').style.display='none'; $('taskLbl').textContent='Dra riktig kasse til hver vogn';
+  $('slots').style.display='none'; $('tray').style.display='none'; $('kbd').style.display='none'; $('match').style.display='flex';
+  $('hint').className='hint'; $('hint').textContent= R.done===0 ? 'Vognene har norske ord. Finn kassen med det engelske ordet.' : '';
+  renderDots(); $('progTxt').textContent=`${R.done} av ${R.total} kasser`;
+  const W=$('mWagons'), C=$('mCrates'); W.innerHTML=''; C.innerHTML='';
+  for(const w of R.batch){
+    const d=document.createElement('div'); d.className='wcard'; d.dataset.i=w.i;
+    d.innerHTML=`<div class="drop"></div><div class="body"><span class="no">${esc(w.no)}</span></div>`;
+    W.appendChild(d);
+  }
+  for(const w of shuffle(R.batch)){
+    const c=document.createElement('div'); c.className='ccard'; c.dataset.i=w.i; c.style.background=crateColor(w.i);
+    c.innerHTML=`<span class="lab">${esc(mainSpelling(w.en))}</span>`;
+    c.addEventListener('pointerdown',e=>crateDown(e,c));
+    C.appendChild(c);
+  }
+  $('task').classList.remove('hidden');
+}
+let cdrag=null;
+function crateDown(e,c){
+  if(c.classList.contains('ghost')) return;
+  e.preventDefault(); audio();
+  const r=c.getBoundingClientRect();
+  const g=c.cloneNode(true); g.classList.add('drag'); g.style.width=r.width+'px'; document.body.appendChild(g);
+  c.classList.add('ghost');
+  cdrag={c,g,dx:e.clientX-r.left,dy:e.clientY-r.top,x0:e.clientX,y0:e.clientY,moved:false,pid:e.pointerId};
+  cmoveTo(e.clientX,e.clientY); sfx.pick();
+  addEventListener('pointermove',cMove,{passive:false}); addEventListener('pointerup',cUp); addEventListener('pointercancel',cUp);
+}
+function cmoveTo(x,y){ cdrag.g.style.left=(x-cdrag.dx)+'px'; cdrag.g.style.top=(y-cdrag.dy)+'px'; }
+function wagonAt(x,y){
+  for(const w of document.querySelectorAll('#mWagons .wcard:not(.done)')){ const r=w.getBoundingClientRect(); if(x>=r.left-14&&x<=r.right+14&&y>=r.top-24&&y<=r.bottom+14) return w; }
+  return null;
+}
+function cMove(e){
+  if(!cdrag||e.pointerId!==cdrag.pid) return; e.preventDefault();
+  if(Math.hypot(e.clientX-cdrag.x0,e.clientY-cdrag.y0)>8) cdrag.moved=true;
+  cmoveTo(e.clientX,e.clientY);
+  const w=wagonAt(e.clientX,e.clientY);
+  document.querySelectorAll('#mWagons .wcard').forEach(x=>x.classList.toggle('hot',x===w));
+}
+function cUp(e){
+  if(!cdrag||e.pointerId!==cdrag.pid) return;
+  removeEventListener('pointermove',cMove); removeEventListener('pointerup',cUp); removeEventListener('pointercancel',cUp);
+  document.querySelectorAll('#mWagons .wcard').forEach(x=>x.classList.remove('hot'));
+  const d=cdrag; cdrag=null; d.g.remove();
+  const w = d.moved ? wagonAt(e.clientX,e.clientY) : null;
+  if(!w){ d.c.classList.remove('ghost'); if(!d.moved){ $('hint').className='hint'; $('hint').textContent='Dra kassen bort til riktig vogn.'; } return; }
+  const ci=+d.c.dataset.i, wi=+w.dataset.i;
+  if(ci===wi){
+    sfx.ok(); w.classList.add('done'); d.c.classList.remove('ghost'); d.c.style.pointerEvents='none'; w.appendChild(d.c);
+    R.done++; if(!R.missed.has(ci)) R.first++;
+    renderDots(); $('progTxt').textContent=`${R.done} av ${R.total} kasser`;
+    $('hint').className='hint good'; $('hint').textContent=['Riktig!','Supert!','Helt rett!','Bra jobba!'][Math.floor(Math.random()*4)];
+    loadCrate(ci);
+    if(R.batch.every(b=>document.querySelector(`#mWagons .wcard[data-i="${b.i}"]`).classList.contains('done'))){
+      later(()=>{ $('task').classList.add('hidden'); later(nextBatch, R.done>=R.total?1600:900); },700);
+    }
+  } else {
+    sfx.bad(); d.c.classList.remove('ghost'); R.missed.add(ci);
+    w.classList.remove('bad'); void w.offsetWidth; w.classList.add('bad');
+    R.cmiss[ci]=(R.cmiss[ci]||0)+1;
+    const word=R.words[ci];
+    if(R.cmiss[ci]>=2){
+      $('hint').className='hint warn'; $('hint').innerHTML=`<b>${esc(mainSpelling(word.en))}</b> betyr <b>${esc(word.no)}</b>.`;
+      const right=document.querySelector(`#mWagons .wcard[data-i="${ci}"]`); right.classList.remove('pulse'); void right.offsetWidth; right.classList.add('pulse');
+    } else { $('hint').className='hint warn'; $('hint').textContent='Den kassen hører ikke til den vogna. Prøv igjen!'; }
+  }
+}
+function loadCrate(i){
+  const car=R.carOf[i]; if(!car) return;
+  train.targetX = DOCK.x + car.back;      // kjør vogna fram til rampa
+  later(()=>{
+    const c=crate(mainSpelling(R.words[i].en),i); c.castShadow=true; scene.add(c);
+    const start=new THREE.Vector3(DOCK.x,1.6,DOCK.z);
+    anim(1.0,t=>{ const end=new THREE.Vector3(); car.g.localToWorld(end.set(0,1.85,0)); c.position.lerpVectors(start,end,ease(t)); c.position.y+=Math.sin(t*Math.PI)*3; c.rotation.y=t*Math.PI*.5; },()=>{
+      scene.remove(c); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; car.g.add(c); sfx.thump();
+      for(let k=0;k<3;k++) setTimeout(()=>puff(1.3),k*110);
+    });
+  },700);
 }
 
 /* ---------- dra-og-slipp-bokstaver ---------- */
@@ -893,7 +1019,7 @@ function buildTileTask(){
   target=mainSpelling(R.cur.en);
   const chars=[...target];
   const slots=$('slots'); slots.className='slots'; slots.innerHTML=''; slotEls=[];
-  fixed=chars.map((c,i)=> !/[a-z]/.test(c) || (R.st==='bro' && i===0));
+  fixed=chars.map(c=> !/[a-z]/.test(c));
   chars.forEach((c,i)=>{
     const s=document.createElement('div'); s.className='slot'; s.dataset.i=i;
     if(c===' '){ s.className='slot gap'; }
@@ -902,7 +1028,6 @@ function buildTileTask(){
     slots.appendChild(s); slotEls.push({el:s,ch:fixed[i]?c:null,tile:null});
   });
   let letters=chars.filter((c,i)=>!fixed[i]);
-  if(R.st==='bro'){ const abc='abcdefghijklmnoprstuvwy'; const n=letters.length>6?3:2; for(let k=0;k<n;k++) letters.push(abc[Math.floor(Math.random()*abc.length)]); }
   let order=shuffle(letters); if(order.join('')===letters.join('') && letters.length>2) order=shuffle(letters);
   const tray=$('tray'); tray.innerHTML='';
   for(const l of order){
@@ -1041,25 +1166,7 @@ function judge(guess){
 function reward(){
   R.done++;
   const word=mainSpelling(R.cur.en);
-  if(R.st==='laste'){
-    const car=addWagon(word,true);
-    const restBack=car.back;
-    // ny vogn ruller inn bakfra og kobles på
-    const g=car.g; car.back=car.back+24;
-    anim(1.3,t=>{ car.back=restBack+24*(1-ease(t)); },()=>{
-      car.back=restBack; sfx.clank();
-      train.targetX = DOCK.x + restBack;
-      later(()=>{
-        const c=crate(word,trainCars.length-2); c.castShadow=true; scene.add(c);
-        const start=new THREE.Vector3(DOCK.x,1.6,DOCK.z);
-        anim(1.0,t=>{ const end=new THREE.Vector3(); g.localToWorld(end.set(0,1.85,0)); c.position.lerpVectors(start,end,ease(t)); c.position.y+=Math.sin(t*Math.PI)*3; c.rotation.y=t*Math.PI*.5; },()=>{
-          scene.remove(c); c.position.set(0,1.85,0); c.rotation.y=Math.PI/2; g.add(c); sfx.thump();
-          for(let i=0;i<4;i++) setTimeout(()=>puff(1.4),i*110);
-          later(nextWord,650);
-        });
-      },1200);
-    });
-  } else if(R.st==='bro'){
+  if(R.st==='bro'){
     addPlank(R.done-1);
     later(nextWord,1100);
   } else {
@@ -1082,6 +1189,7 @@ function finishStation(){
   setTickets(tickets+earned);
   const L=lists[curId]; L.progress=L.progress||{}; L.progress[R.st]=Math.max(L.progress[R.st]||0,stars); L.saved=Date.now(); saveAll();
   sfx.whistle();
+  $('match').style.display='none';
   const titles={laste:'Lasten er levert!',bro:'Broen er ferdig!',fjell:'Du kom helt til toppen!'};
   if(R.st==='laste'){ train.mode='drive'; train.targetX=train.x+60; }
   if(R.st==='bro'){ train.mode='drive'; train.targetX=X.bridgeB+trainLen()+8; }
@@ -1154,7 +1262,6 @@ $('locoName').oninput=e=>{ garage.name=e.target.value; drawName(garage.paint[gar
 $('btnShopClose').onclick=()=>{ $('mShop').classList.add('hidden'); applyPaint(); rebuildLocoInPlace(); };
 function rebuildLocoInPlace(){
   if(!locoObj) return;
-  const words=trainCars.slice(1).map(c=>c.word);
   const x=train.x;
   // bygg lokomotivet på nytt, behold vognene
   scene.remove(locoObj.g);
