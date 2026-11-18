@@ -153,6 +153,9 @@ img.ico.l{width:30px;height:30px}
 .key.wide{width:min(120px,16vw);font-family:Nunito;font-weight:900;font-size:17px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .key.go{background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-dark)}
 .key.back{background:var(--coral-light)}
+.key.shift{display:inline-flex;align-items:center;justify-content:center}
+.key.shift.on{background:var(--orange,#EF9F27);color:#fff;box-shadow:0 4px 0 #b8741a}
+#kbd.caps .key:not(.wide):not(.shift){text-transform:uppercase}
 .match{display:flex;flex-direction:column;gap:16px;align-items:center;margin:4px 0 2px}
 .mwagons,.mcrates{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
 .wcard{width:172px;height:128px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:transform .15s}
@@ -927,9 +930,12 @@ function loop(){
 loop();
 
 /* ================= LISTER ================= */
-function cleanWords(arr){
-  return (arr||[]).filter(w=>w && w.no && w.en).map(w=>({no:String(w.no).trim(), en:String(w.en).trim().toLowerCase(), extra:!!w.extra, s:String(w.s||'').trim()}))
-    .filter(w=>/^[a-z' \-\/]+$/.test(w.en) && w.en.replace(/[^a-z]/g,'').length>0);
+// Engelske ord som alltid skrives med stor forbokstav
+const CAPWORDS={"monday": "mandag", "tuesday": "tirsdag", "wednesday": "onsdag", "thursday": "torsdag", "friday": "fredag", "saturday": "lørdag", "sunday": "søndag", "january": "januar", "february": "februar", "march": "mars", "april": "april", "may": "mai", "june": "juni", "july": "juli", "august": "august", "september": "september", "october": "oktober", "november": "november", "december": "desember", "english": "engelsk", "norwegian": "norsk", "christmas": "jul", "christmas tree": "juletre", "santa": "julenisse", "easter": "påske"};
+const fixCaps = (en,no) => en.split('/').map(v=>{ const t=v.trim(), n=CAPWORDS[t]; return n && String(no||'').trim().toLowerCase()===n.toLowerCase() ? t.split(' ').map((x,i)=>i?x:x.charAt(0).toUpperCase()+x.slice(1)).join(' ') : t; }).join('/');
+function cleanWords(arr, keepCase=true){
+  return (arr||[]).filter(w=>w && w.no && w.en).map(w=>{ let en=String(w.en).trim().replace(/\s+/g,' '); if(!keepCase) en=en.toLowerCase(); return {no:String(w.no).trim(), en:fixCaps(en,w.no), extra:!!w.extra, s:String(w.s||'').trim()}; })
+    .filter(w=>/^[A-Za-z' \-\/]+$/.test(w.en) && w.en.replace(/[^A-Za-z]/g,'').length>0);
 }
 async function fetchList(code){
   const c=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -1005,7 +1011,7 @@ $('btnWordsClose').onclick=()=>$('mWords').classList.add('hidden');
 $('btnOwn').onclick=()=>{ $('ownTitle').value=''; $('ownText').value=''; $('ownMsg').textContent=''; $('mOwn').classList.remove('hidden'); };
 $('btnOwnCancel').onclick=()=>$('mOwn').classList.add('hidden');
 $('btnOwnSave').onclick=()=>{
-  const words=cleanWords($('ownText').value.split('\n').map(l=>{ const m=l.split(/\s*[=\-–:]\s*|\t/); return m.length>=2?{no:m[0],en:m.slice(1).join(' ')}:null; }).filter(Boolean));
+  const words=cleanWords($('ownText').value.split('\n').map(l=>{ const m=l.split(/\s*[=\-–:]\s*|\t/); return m.length>=2?{no:m[0],en:m.slice(1).join(' ')}:null; }).filter(Boolean), false);
   if(words.length<2){ $('ownMsg').textContent='Skriv minst to ord, for eksempel «hund = dog». Det engelske ordet kan bare ha bokstaver.'; return; }
   const id='EGEN-'+Math.random().toString(36).slice(2,7).toUpperCase();
   lists[id]={title:$('ownTitle').value.trim()||'Min øveliste',words,source:'egen',saved:Date.now(),progress:{}};
@@ -1216,7 +1222,7 @@ function buildTileTask(){
   target=mainSpelling(R.cur.en);
   const chars=[...target];
   const slots=$('slots'); slots.className='slots'; slots.innerHTML=''; slotEls=[];
-  fixed=chars.map(c=> !/[a-z]/.test(c));
+  fixed=chars.map(c=> !/[A-Za-z]/.test(c));
   chars.forEach((c,i)=>{
     const s=document.createElement('div'); s.className='slot'; s.dataset.i=i;
     if(c===' '){ s.className='slot gap'; }
@@ -1303,15 +1309,16 @@ function clearTiles(){
 let typed=[];
 function buildKeyboardTask(){
   $('tray').style.display='none'; $('kbd').style.display='flex';
-  target=mainSpelling(R.cur.en); typed=[];
+  target=mainSpelling(R.cur.en); typed=[]; setShift(false);
   const chars=[...target];
   const slots=$('slots'); slots.className='slots'; slots.innerHTML=''; slotEls=[];
-  fixed=chars.map(c=>!/[a-z]/.test(c));
+  fixed=chars.map(c=>!/[A-Za-z]/.test(c));
   chars.forEach((c,i)=>{ const s=document.createElement('div'); s.className='slot'+(c===' '?' gap':fixed[i]?' fixed':''); if(fixed[i]&&c!==' ') s.textContent=c; slots.appendChild(s); slotEls.push({el:s,ch:fixed[i]?c:null}); });
   if(!buildKeyboardTask.made){
     const rows=['qwertyuiop','asdfghjkl','zxcvbnm'];
     const k=$('kbd'); k.innerHTML='';
     rows.forEach((r,ri)=>{ const row=document.createElement('div'); row.className='r';
+      if(ri===1){ const b=document.createElement('button'); b.className='key shift'; b.id='kShift'; b.setAttribute('aria-label','Stor bokstav'); b.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 3l9 9h-5v8H8v-8H3z"/></svg>'; b.onclick=()=>keyPress('⇧'); row.appendChild(b); }
       if(ri===2){ const b=document.createElement('button'); b.className='key wide back'; b.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M12 9l6 6M18 9l-6 6"/></svg><span>Slett</span>'; b.onclick=()=>keyPress('⌫'); row.appendChild(b); }
       for(const ch of r){ const b=document.createElement('button'); b.className='key'; b.textContent=ch; b.onclick=()=>keyPress(ch); row.appendChild(b); }
       if(ri===2){ const b=document.createElement('button'); b.className='key wide go'; b.innerHTML='<span>Sjekk</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'; b.onclick=()=>keyPress('ok'); row.appendChild(b); }
@@ -1319,19 +1326,22 @@ function buildKeyboardTask(){
     buildKeyboardTask.made=true;
   }
 }
+let shiftOn=false;
+function setShift(v){ shiftOn=v; const k=$('kbd'); if(k) k.classList.toggle('caps',v); const b=$('kShift'); if(b) b.classList.toggle('on',v); }
 function openSlots(){ return slotEls.map((s,i)=>i).filter(i=>!fixed[i]); }
 function keyPress(ch){
   if(R.busy||R.st!=='fjell') return; audio();
   const open=openSlots();
+  if(ch==='⇧'){ setShift(!shiftOn); sfx.pick(); return; }
   if(ch==='⌫'){ if(typed.length){ typed.pop(); } }
   else if(ch==='ok'){ if(typed.length===open.length) judge(guessFromTyped()); else { $('hint').className='hint warn'; $('hint').textContent='Fyll ut alle rutene først.'; } return; }
-  else if(typed.length<open.length){ typed.push(ch); sfx.pick(); }
+  else if(typed.length<open.length){ if(shiftOn){ ch=ch.toUpperCase(); setShift(false); } typed.push(ch); sfx.pick(); }
   redrawTyped();
   if(ch!=='⌫' && typed.length===open.length) later(()=>judge(guessFromTyped()),350);
 }
 function redrawTyped(){ openSlots().forEach((si,k)=>{ const s=slotEls[si]; s.el.textContent=typed[k]||''; s.el.classList.toggle('filled',!!typed[k]); }); }
 function guessFromTyped(){ const open=openSlots(); const arr=slotEls.map((s,i)=>fixed[i]?(s.ch):''); open.forEach((si,k)=>arr[si]=typed[k]||''); return arr.join(''); }
-addEventListener('keydown',e=>{ if(!R||R.st!=='fjell'||$('task').classList.contains('hidden')) return; if(document.activeElement && /input|textarea/i.test(document.activeElement.tagName)) return; if(/^[a-zA-Z]$/.test(e.key)) keyPress(e.key.toLowerCase()); else if(e.key==='Backspace') keyPress('⌫'); else if(e.key==='Enter') keyPress('ok'); });
+addEventListener('keydown',e=>{ if(!R||R.st!=='fjell'||$('task').classList.contains('hidden')) return; if(document.activeElement && /input|textarea/i.test(document.activeElement.tagName)) return; if(/^[a-zA-Z]$/.test(e.key)){ if(e.key!==e.key.toLowerCase()) setShift(true); keyPress(e.key.toLowerCase()); } else if(e.key==='Backspace') keyPress('⌫'); else if(e.key==='Enter') keyPress('ok'); });
 
 /* ---------- vurdering ---------- */
 function judge(guess){
@@ -1344,6 +1354,7 @@ function judge(guess){
     $('hint').className='hint good'; $('hint').textContent=['Riktig!','Supert!','Helt rett!','Bra jobba!'][Math.floor(Math.random()*4)];
     later(()=>{ $('task').classList.add('hidden'); reward(); },650);
   } else {
+    const caseOnly = R.st==='fjell' && accepts(R.cur.en.toLowerCase(), guess.toLowerCase());
     R.tries++; R.missed.add(R.cur.i); R.busy=true; slots.classList.add('bad','shake'); sfx.bad();
     if(R.st==='fjell') slideBack();
     later(()=>{
@@ -1356,7 +1367,7 @@ function judge(guess){
         if(R.st==='fjell'){ typed=[]; redrawTyped(); }
         else if(R.st==='ende'){ const gb=$('gapbox'); gb.textContent=''; gb.className='gapbox'; if(R.dragged){ R.dragged.classList.remove('ghost'); } }
         else clearTiles();
-        $('hint').className='hint warn'; $('hint').textContent='Nesten! Prøv igjen.';
+        $('hint').className='hint warn'; $('hint').textContent= caseOnly ? 'Nesten! Husk stor forbokstav – trykk pil opp-tasten først.' : 'Nesten! Prøv igjen.';
       }
     },650);
   }
