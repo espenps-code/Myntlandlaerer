@@ -159,9 +159,21 @@ textarea{width:100%;min-height:200px;font:inherit;font-size:16px;padding:12px;bo
   #printArea{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   html,body{background:#fff !important}
 }
+
+/* ===== Low poly 3D-landskap bak siden – menyen står som et skilt ===== */
+html{background:#2a3566}
+body{background:linear-gradient(180deg,#1b2a52 0%,#3b3f7a 34%,#a3607a 56%,#e08a6a 74%,#f5b46a 100%) fixed;min-height:100vh}
+#bg3d{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;pointer-events:none}
+header,.wrap{position:relative;z-index:1}
+header{box-shadow:0 4px 18px rgba(10,20,50,.35)}
+.wrap{padding-bottom:max(34vh,220px)}
+.login{margin-top:28px}
+#viewApp{padding-top:64px}
+@media (min-width:901px){#viewApp .layout{align-items:stretch}}
 </style>
 </head>
 <body>
+<canvas id="bg3d" aria-hidden="true"></canvas>
 <header>
   <a class="logo" href="index.html"><div class="badge"><img class="" src="spelling-express-ikoner/logo.webp" alt=""></div><div><h1>Spelling <b>Express</b></h1><div class="sub">Lærersiden · Myntland</div></div></a>
   <div class="sp"></div>
@@ -1221,6 +1233,254 @@ $('btnBankAdd').onclick=()=>{
   addWords(ws); $('mBank').classList.add('hidden');
 };
 addEventListener('beforeunload',e=>{ if(cur&&cur.dirty){ e.preventDefault(); e.returnValue=''; } });
+</script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
+/* ---------- Bakgrunn: low poly 3D-landskap der menyen står som et skilt ---------- */
+const teacherScene = (()=>{
+  let ready=false, running=false, renderer, scene, camera, clock;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.getElementById('bg3d');
+  function signEl(){
+    const vl=document.getElementById('viewLogin'), va=document.getElementById('viewApp');
+    if(va && va.offsetParent!==null) return va.querySelector('.layout');
+    if(vl && vl.offsetParent!==null) return vl.querySelector('.card.login');
+    return null;
+  }
+  let train, wheels=[], chimney, puffs=[], puffTimer=0, stars, clouds=[], sign={};
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const signPlane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
+  const tmp = new THREE.Vector3();
+
+  // enkel tilfeldighet som blir lik hver gang
+  let seed = 7; const rnd = ()=>{ seed=(seed*16807)%2147483647; return (seed-1)/2147483646; };
+  const sm=(e0,e1,v)=>{const t=Math.min(1,Math.max(0,(v-e0)/(e1-e0)));return t*t*(3-2*t);};
+  const RAIL_Z = -8;
+  function H(x,z){
+    const n = Math.sin(x*0.09+1.3)*Math.cos(z*0.08)*2.2 + Math.sin(x*0.23+z*0.17)*0.9 + Math.cos(z*0.21-x*0.11)*0.7 + 1.2;
+    let f = sm(2.2,7,Math.abs(z-RAIL_Z));
+    f *= sm(7,15,Math.hypot(x*0.7,z-2));
+    let y = Math.max(0,n)*f;
+    if(z<-22) y += (-z-22)*0.13*(0.7+0.3*Math.sin(x*0.05));
+    return y;
+  }
+  const mat = (c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:1,metalness:0},o));
+  const glow = c=>new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:1.2,flatShading:true});
+  function mesh(geo,m,x=0,y=0,z=0,parent=scene){ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); parent.add(o); return o; }
+
+  function init(){
+    try{ renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); }catch(e){ return; }
+    renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
+    renderer.setClearColor(0x000000,0);
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x9a6680, 35, 190);
+    camera = new THREE.PerspectiveCamera(45,1,0.1,600);
+    camera.position.set(0,8,24); camera.lookAt(0,8,0);
+    clock = new THREE.Clock();
+
+    scene.add(new THREE.HemisphereLight(0xaab8ff,0x35503a,1.1));
+    const sun = new THREE.DirectionalLight(0xffb27a,2.4); sun.position.set(-40,18,25); scene.add(sun);
+    const rim = new THREE.DirectionalLight(0x8f7bff,0.6); rim.position.set(30,20,-40); scene.add(rim);
+
+    // terreng
+    const g0 = new THREE.PlaneGeometry(300,240,96,80); g0.rotateX(-Math.PI/2); g0.translate(0,0,-60);
+    const pa = g0.attributes.position;
+    for(let i=0;i<pa.count;i++){ const x=pa.getX(i), z=pa.getZ(i); pa.setY(i, H(x,z) + (Math.abs(z-RAIL_Z)>4 && Math.hypot(x,z-2)>10 ? (rnd()-0.5)*0.35 : 0)); }
+    const g = g0.toNonIndexed(); const gp=g.attributes.position; const cols=new Float32Array(gp.count*3);
+    const cLow=new THREE.Color('#5c9a4f'), cMid=new THREE.Color('#3f7a47'), cHigh=new THREE.Color('#6d6f8e'), cTop=new THREE.Color('#9a95b8'), c=new THREE.Color();
+    for(let i=0;i<gp.count;i+=3){
+      const y=(gp.getY(i)+gp.getY(i+1)+gp.getY(i+2))/3;
+      if(y<1.5) c.copy(cLow).lerp(cMid,y/1.5); else if(y<6) c.copy(cMid).lerp(cHigh,(y-1.5)/4.5); else c.copy(cHigh).lerp(cTop,Math.min(1,(y-6)/6));
+      const j=0.92+rnd()*0.16; c.multiplyScalar(j);
+      for(let k=0;k<3;k++){ cols[(i+k)*3]=c.r; cols[(i+k)*3+1]=c.g; cols[(i+k)*3+2]=c.b; }
+    }
+    g.setAttribute('color',new THREE.BufferAttribute(cols,3)); g.computeVertexNormals();
+    mesh(g, mat(0xffffff,{vertexColors:true}));
+
+    // fjell med snø
+    const mCols=['#5b4f86','#4c4a7d','#6a5a8e','#574c80'];
+    for(let i=0;i<12;i++){
+      const x=-170+i*30+(rnd()-0.5)*14, z=-100-rnd()*45, r=16+rnd()*16, h=22+rnd()*26, ry=rnd()*Math.PI, base=-2;
+      const m=mesh(new THREE.ConeGeometry(r,h,7,1), mat(mCols[i%4]), x, base+h/2, z); m.rotation.y=ry;
+      const ch=h*0.3; const s=mesh(new THREE.ConeGeometry(r*ch/h,ch,7,1), mat('#f4f1ff'), x, base+h-ch/2+0.02, z); s.rotation.y=ry;
+    }
+
+    // jernbane
+    mesh(new THREE.BoxGeometry(220,0.25,3), mat('#6e6258'), 0,0.12,RAIL_Z);
+    const sl = new THREE.InstancedMesh(new THREE.BoxGeometry(0.35,0.14,2.1), mat('#5a4030'), 220);
+    const d=new THREE.Object3D(); for(let i=0;i<220;i++){ d.position.set(-110+i,0.3,RAIL_Z); d.updateMatrix(); sl.setMatrixAt(i,d.matrix); } scene.add(sl);
+    const railM = mat('#b8c0c8',{metalness:0.6,roughness:0.4});
+    mesh(new THREE.BoxGeometry(220,0.14,0.14), railM, 0,0.44,RAIL_Z-0.7);
+    mesh(new THREE.BoxGeometry(220,0.14,0.14), railM, 0,0.44,RAIL_Z+0.7);
+
+    // trær
+    const trunkG=new THREE.CylinderGeometry(0.15,0.22,0.9,5), cone1=new THREE.ConeGeometry(1.1,1.9,6), cone2=new THREE.ConeGeometry(0.8,1.5,6);
+    const trunkM=mat('#6b4a2e'), leafM=[mat('#2f6b45'),mat('#3c7d4a'),mat('#285c3f'),mat('#4a8a50')];
+    function tree(x,z,s){
+      const y=H(x,z), t=new THREE.Group(); t.position.set(x,y,z); t.scale.setScalar(s); t.rotation.y=rnd()*6;
+      mesh(trunkG,trunkM,0,0.45,0,t); const lm=leafM[Math.floor(rnd()*4)];
+      mesh(cone1,lm,0,1.6,0,t); mesh(cone2,lm,0,2.5,0,t); scene.add(t);
+    }
+    let placed=0, tries=0;
+    while(placed<150 && tries<3000){
+      tries++; const x=(rnd()-0.5)*150, z=-70+rnd()*86;
+      if(Math.abs(z-RAIL_Z)<3.2) continue;
+      if(Math.abs(x)<10 && z>-5 && z<14) continue;
+      if(z>14 && Math.abs(x)<14) continue;
+      tree(x,z,0.8+rnd()*0.9); placed++;
+    }
+    // steiner
+    const rockG=new THREE.DodecahedronGeometry(0.6,0), rockM=mat('#8a8798');
+    for(let i=0;i<30;i++){ const x=(rnd()-0.5)*90, z=-40+rnd()*55; if(Math.abs(z-RAIL_Z)<2.5||(Math.abs(x)<8&&z>-4)) continue;
+      const r=mesh(rockG,rockM,x,H(x,z)+0.15,z); r.scale.set(0.6+rnd(),0.4+rnd()*0.6,0.6+rnd()); r.rotation.set(rnd(),rnd()*6,rnd()); }
+
+    // steinsti opp til skiltet
+    const stoneG=new THREE.CylinderGeometry(0.55,0.6,0.12,6), stoneM=mat('#b9b2a8');
+    for(let i=0;i<9;i++){ const z=1.8+i*1.5, x=Math.sin(i*0.9)*0.7; const st=mesh(stoneG,stoneM,x,H(x,z)+0.06,z); st.rotation.y=rnd()*3; st.scale.set(0.9+rnd()*0.4,1,0.8+rnd()*0.3); }
+    // busker og blomster i forgrunnen
+    const bushG=new THREE.IcosahedronGeometry(0.6,0), bushM=[mat('#3f8a4a'),mat('#4f9a52'),mat('#367a45')];
+    const flowerG=new THREE.IcosahedronGeometry(0.13,0), stemG=new THREE.CylinderGeometry(0.025,0.025,0.4,4), stemM=mat('#2f6b3a');
+    const flowerM=['#ff8fb1','#ffd166','#ffffff','#b39dff','#ff6b6b'].map(c=>mat(c,{emissive:c,emissiveIntensity:0.25}));
+    for(let i=0;i<70;i++){
+      const x=(rnd()-0.5)*26, z=-3+rnd()*20;
+      if(Math.abs(x)<1.6 && z>1) continue;
+      if(Math.abs(z-RAIL_Z)<3) continue;
+      const y=H(x,z);
+      if(rnd()<0.3){ const b=mesh(bushG,bushM[i%3],x,y+0.35,z); b.scale.set(0.8+rnd()*0.8,0.6+rnd()*0.5,0.8+rnd()*0.8); b.rotation.y=rnd()*6; }
+      else { const fm=flowerM[Math.floor(rnd()*5)]; for(let k=0;k<3;k++){ const fx=x+(rnd()-0.5)*0.6, fz=z+(rnd()-0.5)*0.6;
+        mesh(stemG,stemM,fx,y+0.2,fz); mesh(flowerG,fm,fx,y+0.42,fz); } }
+    }
+
+    // lyktestolper
+    for(const x of [-10.5,10.5]){
+      const z=1.5, y=H(x,z);
+      mesh(new THREE.CylinderGeometry(0.09,0.12,3.4,6), mat('#2b2b3a'), x,y+1.7,z);
+      mesh(new THREE.BoxGeometry(0.55,0.25,0.55), mat('#2b2b3a'), x,y+3.5,z);
+      mesh(new THREE.IcosahedronGeometry(0.22,0), glow('#ffe39a'), x,y+3.3,z);
+      const L=new THREE.PointLight(0xffd28a,30,14,2); L.position.set(x,y+3.2,z); scene.add(L);
+    }
+
+    // stjerner, måne og skyer
+    const sp=[]; for(let i=0;i<500;i++){ const th=rnd()*Math.PI*2, ph=0.08+rnd()*1.3, r=320; sp.push(Math.cos(th)*Math.cos(ph)*r, Math.sin(ph)*r, Math.sin(th)*Math.cos(ph)*r-80); }
+    const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
+    stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:2,sizeAttenuation:false,fog:false,transparent:true}));
+    scene.add(stars);
+    const moon=mesh(new THREE.IcosahedronGeometry(8,2), new THREE.MeshBasicMaterial({color:0xfff3cf,fog:false}), 150,115,-280);
+    const puffG=new THREE.IcosahedronGeometry(1,0), cloudM=mat('#fff4f6',{emissive:'#b88aa0',emissiveIntensity:0.35});
+    for(let i=0;i<8;i++){
+      const cg=new THREE.Group(); const n=3+Math.floor(rnd()*3);
+      for(let k=0;k<n;k++){ const p=mesh(puffG,cloudM,k*2.2-n,rnd()*0.8,rnd()*1.2,cg); const sc=1.4+rnd()*1.4; p.scale.set(sc*1.3,sc*0.7,sc); }
+      cg.position.set(-120+rnd()*240, 24+rnd()*14, -50-rnd()*60); cg.userData.v=0.6+rnd()*0.8; scene.add(cg); clouds.push(cg);
+    }
+
+    // toget
+    train=new THREE.Group(); train.position.set(-90,0.51,RAIL_Z);
+    const red=mat('#d7263d'), dark=mat('#2e2e3a'), gold=mat('#f2b134'), win=glow('#ffd98a');
+    const wheelG=new THREE.CylinderGeometry(0.5,0.5,0.2,10); wheelG.rotateX(Math.PI/2);
+    const smallWheelG=new THREE.CylinderGeometry(0.4,0.4,0.2,10); smallWheelG.rotateX(Math.PI/2);
+    const loco=new THREE.Group(); train.add(loco);
+    mesh(new THREE.BoxGeometry(4.2,0.35,1.5),dark,0,0.75,0,loco);
+    const boiler=mesh(new THREE.CylinderGeometry(0.7,0.7,2.6,8),red,0.7,1.6,0,loco); boiler.rotation.z=Math.PI/2;
+    const band=mesh(new THREE.CylinderGeometry(0.73,0.73,0.15,8),gold,0.4,1.6,0,loco); band.rotation.z=Math.PI/2;
+    const front=mesh(new THREE.CylinderGeometry(0.75,0.75,0.15,8),dark,2.02,1.6,0,loco); front.rotation.z=Math.PI/2;
+    mesh(new THREE.BoxGeometry(1.5,1.9,1.6),red,-1.0,1.9,0,loco);
+    mesh(new THREE.BoxGeometry(1.8,0.15,1.9),dark,-1.0,2.9,0,loco);
+    mesh(new THREE.BoxGeometry(0.6,0.5,1.62),win,-0.9,2.2,0,loco);
+    chimney=mesh(new THREE.CylinderGeometry(0.22,0.3,0.9,6),dark,1.5,2.6,0,loco);
+    mesh(new THREE.CylinderGeometry(0.36,0.22,0.25,6),dark,1.5,3.1,0,loco);
+    mesh(new THREE.IcosahedronGeometry(0.2,0),glow('#fff6d0'),2.12,1.95,0,loco);
+    const cc=mesh(new THREE.ConeGeometry(0.6,0.8,4),dark,2.4,0.6,0,loco); cc.rotation.z=-Math.PI/2;
+    for(const x of [-1.2,0,1.2]) for(const z of [-0.8,0.8]) wheels.push(mesh(wheelG,dark,x,0.5,z,loco));
+    function wagon(color,x){
+      const w=new THREE.Group(); w.position.x=x; train.add(w); const m=mat(color);
+      mesh(new THREE.BoxGeometry(3.6,0.3,1.3),dark,0,0.7,0,w);
+      mesh(new THREE.BoxGeometry(3.4,1.4,1.5),m,0,1.5,0,w);
+      mesh(new THREE.BoxGeometry(3.6,0.15,1.7),dark,0,2.25,0,w);
+      for(const wx of [-1.05,0,1.05]) mesh(new THREE.BoxGeometry(0.6,0.45,1.52),win,wx,1.65,0,w);
+      for(const wx of [-1.1,1.1]) for(const z of [-0.8,0.8]) wheels.push(mesh(smallWheelG,dark,wx,0.4,z,w));
+      mesh(new THREE.BoxGeometry(0.6,0.15,0.2),dark,2.0,0.7,0,w);
+    }
+    wagon('#2e9e6b',-4.4); wagon('#f2b134',-8.4); wagon('#2d6cdf',-12.4);
+    scene.add(train);
+    const smokeM=()=>new THREE.MeshStandardMaterial({color:0xf2eef7,flatShading:true,transparent:true,opacity:0,roughness:1});
+    for(let i=0;i<18;i++){ const p=mesh(new THREE.IcosahedronGeometry(0.35,0),smokeM()); p.visible=false; p.userData.life=0; puffs.push(p); }
+
+    // skiltet som menyen står på
+    const wood=mat('#6b4a2e'), woodDark=mat('#4a3220'), roofM=mat('#b23a2a');
+    sign.board=mesh(new THREE.BoxGeometry(1,1,1),woodDark);
+    sign.postL=mesh(new THREE.BoxGeometry(1,1,1),wood);
+    sign.postR=mesh(new THREE.BoxGeometry(1,1,1),wood);
+    sign.foot=[mesh(new THREE.BoxGeometry(1,1,1),mat('#7a7a88')),mesh(new THREE.BoxGeometry(1,1,1),mat('#7a7a88'))];
+    const tri=new THREE.Shape(); tri.moveTo(-0.5,0); tri.lineTo(0.5,0); tri.lineTo(0,0.5); tri.lineTo(-0.5,0);
+    const roofG=new THREE.ExtrudeGeometry(tri,{depth:1,bevelEnabled:false}); roofG.translate(0,0,-0.5);
+    sign.roof=mesh(roofG,roofM);
+    sign.ridge=mesh(new THREE.BoxGeometry(1,1,1),woodDark);
+    ready=true;
+  }
+
+  function worldAt(px,py,cr){
+    ndc.set((px-cr.left)/cr.width*2-1, -((py-cr.top)/cr.height*2-1));
+    ray.setFromCamera(ndc,camera); return ray.ray.intersectPlane(signPlane,new THREE.Vector3());
+  }
+  function placeSign(){
+    const el=signEl(); const parts=[sign.board,sign.postL,sign.postR,sign.roof,...sign.foot];
+    if(!el){ parts.forEach(p=>p.visible=false); return; }
+    sign.board.visible=sign.roof.visible=true;
+    const cr=canvas.getBoundingClientRect(), r=el.getBoundingClientRect(), pad=14;
+    const tl=worldAt(r.left-pad,r.top-pad,cr), br=worldAt(r.right+pad,r.bottom+pad,cr);
+    if(!tl||!br) return;
+    const w=br.x-tl.x, h=tl.y-br.y, cx=(tl.x+br.x)/2, cy=(tl.y+br.y)/2;
+    sign.board.position.set(cx,cy,-0.25); sign.board.scale.set(w,h,0.4);
+    const pw=Math.max(0.35,Math.min(0.7,w*0.045));
+    [[sign.postL,tl.x+w*0.2],[sign.postR,br.x-w*0.2]].forEach(([p,x],i)=>{
+      const g=H(x,-0.3), top=br.y+1.0, len=Math.max(0.01,top-g);
+      p.visible=len>0.2; p.position.set(x,g+len/2,-0.3); p.scale.set(pw,len,pw);
+      const f=sign.foot[i]; f.position.set(x,g+0.15,-0.3); f.scale.set(pw*2,0.3,pw*2); f.visible=p.visible;
+    });
+    const rh=Math.min(h*0.13,w*0.09,2.4);
+    sign.roof.position.set(cx,tl.y-0.05,-0.2); sign.roof.scale.set(w*1.12,rh*2,1.5);
+    sign.ridge.position.set(cx,tl.y-0.05+rh,-0.2); sign.ridge.scale.set(w*0.06,0.12,1.6); sign.ridge.visible=false;
+  }
+
+  function resize(){
+    const w=canvas.clientWidth, h=canvas.clientHeight;
+    if(canvas.width!==Math.floor(w*renderer.getPixelRatio()) || canvas.height!==Math.floor(h*renderer.getPixelRatio())){
+      renderer.setSize(w,h,false); camera.aspect=w/h;
+      camera.fov = w/h<0.8 ? 52 : 45; camera.updateProjectionMatrix();
+    }
+  }
+
+  function frame(){
+    if(!running) return;
+    const dt=Math.min(0.05,clock.getDelta()), t=clock.elapsedTime;
+    resize();
+    if(!reduced){
+      camera.position.x=Math.sin(t*0.12)*1.4; camera.position.y=8+Math.sin(t*0.17)*0.25;
+      camera.lookAt(0,8,0);
+    }
+    camera.updateMatrixWorld();
+    placeSign();
+    if(!reduced){
+      train.position.x+=dt*7; if(train.position.x>95) train.position.x=-95;
+      for(const w of wheels) w.rotation.z-=dt*7/0.45;
+      stars.material.opacity=0.75+Math.sin(t*1.7)*0.25;
+      for(const c of clouds){ c.position.x+=dt*c.userData.v; if(c.position.x>140) c.position.x=-140; }
+      puffTimer-=dt;
+      if(puffTimer<=0){ puffTimer=0.16; const p=puffs.find(p=>!p.visible); if(p){ chimney.getWorldPosition(tmp); p.position.set(tmp.x,tmp.y+0.6,tmp.z); p.userData.life=0; p.visible=true; } }
+      for(const p of puffs){ if(!p.visible) continue; const L=(p.userData.life+=dt);
+        p.position.y+=dt*1.6; p.position.x-=dt*2.2; p.scale.setScalar(0.6+L*1.4);
+        p.material.opacity=Math.max(0,0.85-L*0.55); if(L>1.6) p.visible=false; }
+    } else { train.position.x=-6; }
+    renderer.render(scene,camera);
+    requestAnimationFrame(frame);
+  }
+
+  return {
+    start(){ if(!ready) init(); if(!ready||running) return; running=true; clock.getDelta(); requestAnimationFrame(frame); },
+    stop(){ running=false; }
+  };
+})();
+teacherScene.start();
 </script>
 </body>
 </html>
