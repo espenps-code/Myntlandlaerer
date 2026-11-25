@@ -155,6 +155,7 @@ input{ font-family:inherit; color:inherit; }
 .clock .round{ font-size:26px; font-weight:500; color:var(--ink-soft); line-height:1.15; }
 .clock .round b{ color:var(--ink); font-weight:600; }
 .clock .bar{ position:absolute; left:0; bottom:0; height:12px; background:var(--ink); opacity:.28; width:0%; }
+.clock.p-tidy{ background:#f9c9dc; }
 .clock.p-lineup{ background:#ffd96b; }
 .clock.p-walk{ background:#bfe58a; }
 .clock.p-cleanup{ background:#a9e3ec; }
@@ -209,6 +210,17 @@ input{ font-family:inherit; color:inherit; }
 .tokens.lineup .token .ico{ animation:none; }
 .tokens.walk .ico{ animation:step .36s ease-in-out infinite alternate; animation-delay:var(--ad); }
 @keyframes step{ from{ transform:translateY(0) rotate(-6deg);} to{ transform:translateY(-8px) rotate(6deg);} }
+
+/* rydd stasjonen: liten ryddescene oppå bildet på hvert kort (blyanter i kurv, ark i bunke, klosser i tårn) */
+.tidy{ position:absolute; inset:6px; z-index:3; display:none; background:var(--cream); border-radius:14px; }
+.tidy svg{ width:100%; height:100%; display:block; overflow:visible; }
+.grid.tidying .tidy{ display:block; animation:tidyin .4s ease; }
+@keyframes tidyin{ from{ opacity:0; transform:scale(.9); } }
+.tidy .tok{ opacity:0; transition:opacity .4s; }
+.tidy.ok .tok{ opacity:1; animation:okpop .5s ease; transform-box:fill-box; transform-origin:center; }
+@keyframes okpop{ 0%{ transform:scale(.3); } 70%{ transform:scale(1.2); } }
+.tokens.busy .token .ico{ animation:busy .5s ease-in-out infinite alternate; animation-delay:var(--ad); }
+@keyframes busy{ from{ transform:rotate(-8deg); } to{ transform:rotate(8deg); } }
 
 /* stor beskjed ved fasebytte */
 .flash{ position:absolute; left:50%; top:47%; z-index:30; transform:translate(-50%,-50%) scale(.6); opacity:0; pointer-events:none;
@@ -316,7 +328,7 @@ input{ font-family:inherit; color:inherit; }
           <h2>Tid</h2>
           <div class="row"><span>Antall stasjoner</span><div class="stepper" data-key="stations" data-min="2" data-max="8" data-step="1"></div></div>
           <div class="row"><span>Minutter per stasjon</span><div class="stepper" data-key="work" data-min="1" data-max="45" data-step="1"></div></div>
-          <div class="row"><span>Minutter på bytte<span class="hint">Første halvdel: still på rekke. Andre halvdel: gå.</span></span><div class="stepper" data-key="swap" data-min="0.5" data-max="5" data-step="0.5"></div></div>
+          <div class="row"><span>Minutter på bytte<span class="hint">Delt i tre: rydd stasjonen, still på rekke, gå.</span></span><div class="stepper" data-key="swap" data-min="0.5" data-max="5" data-step="0.5"></div></div>
           <div class="row"><span>Antall runder<span class="hint">Like mange som stasjoner = alle innom alt.</span></span><div class="stepper" data-key="rounds" data-min="1" data-max="8" data-step="1"></div></div>
           <div class="row"><span>Rydding til slutt<span class="hint">Minutter. 0 = ingen rydding.</span></span><div class="stepper" data-key="cleanup" data-min="0" data-max="10" data-step="1"></div></div>
           <div class="row"><span>Lydsignal ved bytte</span><button class="switch" role="switch" data-toggle="sound" aria-label="Lydsignal ved bytte"></button></div>
@@ -687,7 +699,7 @@ function musicStop(ms){
   if(!music.playing) return; music.playing = false; synthStop(ms);
   if(music.cur){ var el = music.cur; music.cur = null; fadeEl(el, 0, function(){ el.pause(); }, ms); }
 }
-function phaseMusic(){ if(!run || run.ready || run.pausedLeft!==null) return null; var t = run.phases[run.idx].type; return (t==='lineup' || t==='walk') ? 'swap' : (t==='cleanup' ? 'clean' : null); }
+function phaseMusic(){ if(!run || run.ready || run.pausedLeft!==null) return null; var t = run.phases[run.idx].type; return (t==='tidy' || t==='lineup' || t==='walk') ? 'swap' : (t==='cleanup' ? 'clean' : null); }
 /* sørger for at riktig musikk spiller for fasen vi er i (bytte, rydding eller stille) */
 function ensureMusic(kind){
   if(kind && music.playing && music.kind===kind) return;
@@ -883,10 +895,10 @@ var tickTimer = null, wake = null;
 
 
 function buildPhases(){
-  var p = [], sw = cfg.swap*60/2;
+  var p = [], sw = cfg.swap*60/3;      // byttet deles i tre: rydd stasjonen, still på rekke, gå
   for(var r=0;r<cfg.rounds;r++){
     p.push({ type:'work', round:r, dur:cfg.work*60 });
-    if(r < cfg.rounds-1){ p.push({ type:'lineup', round:r, dur:sw }); p.push({ type:'walk', round:r, dur:sw }); }
+    if(r < cfg.rounds-1){ p.push({ type:'tidy', round:r, dur:sw }); p.push({ type:'lineup', round:r, dur:sw }); p.push({ type:'walk', round:r, dur:sw }); }
   }
   if(cfg.cleanup>0) p.push({ type:'cleanup', dur:cfg.cleanup*60 });
   p.push({ type:'done', dur:0 });
@@ -911,7 +923,7 @@ function buildBoard(){
     var c0 = centerT(i), x = c0.x, y = c0.y;
     html += '<div class="paper st" data-i="'+i+'" style="left:'+x.toFixed(0)+'px; top:'+y.toFixed(0)+'px; width:'+w+'px; height:'+h+'px; --ch:'+h+'px">'+
          '<div class="st-head"><span class="badge" style="background:var(--gold)">'+(i+1)+'</span><b>'+esc(stName(i))+'</b></div>'+
-         '<div class="st-mid"><div class="st-act">'+(stPic(i) || '<span class="bignum">'+(i+1)+'</span>')+'</div></div></div>';
+         '<div class="st-mid"><div class="st-act">'+(stPic(i) || '<span class="bignum">'+(i+1)+'</span>')+'<div class="tidy">'+TIDY_SVG+'</div></div></div></div>';
   }
   grid.innerHTML = html;
   var ring = geo.pts
@@ -930,6 +942,57 @@ function buildBoard(){
   $('tokens').innerHTML = tk;
   $('tokens').style.setProperty('--ts', geo.ts);
 }
+/* ---------- rydd stasjonen ----------
+   Ni ting ligger strødd på pulten og flyr på plass én etter én i løpet av ryddefasen:
+   blyanter ned i kurven, ark i en pen bunke, klosser stablet til et tårn. Styres av klokka, så pause og +1 virker. */
+var TIDY = (function(){
+  var pen = function(c){ return '<g><rect x="-5" y="-26" width="10" height="44" rx="2" fill="'+c+'" stroke="#2a1f3d" stroke-width="2.5"/>'+
+    '<rect x="-5" y="-30" width="10" height="7" rx="2" fill="#f4a6b8" stroke="#2a1f3d" stroke-width="2.5"/>'+
+    '<path d="M-5 18 L0 30 L5 18 Z" fill="#f3d9b1" stroke="#2a1f3d" stroke-width="2.5" stroke-linejoin="round"/><path d="M-1.6 26 L0 30 L1.6 26 Z" fill="#2a1f3d"/></g>'; };
+  var sheet = '<g><rect x="-24" y="-17" width="48" height="34" rx="3" fill="#fff" stroke="#2a1f3d" stroke-width="2.5"/>'+
+    '<path d="M-16 -7 H16 M-16 1 H16 M-16 9 H6" stroke="#9aa4c7" stroke-width="2.5" stroke-linecap="round"/></g>';
+  var block = function(c,t){ return '<g><rect x="-13" y="-13" width="26" height="26" rx="4" fill="'+c+'" stroke="#2a1f3d" stroke-width="2.5"/>'+
+    '<text x="0" y="6.5" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="18" fill="#2a1f3d">'+t+'</text></g>'; };
+  /* fra = strødd på pulten, til = på plass. Rekkefølgen veksler mellom kurv, bunke og tårn. */
+  var items = [
+    { svg:pen('#ffd96b'),    f:[24,128,-70], t:[38,92,-8]  },
+    { svg:sheet,             f:[112,40,-24], t:[112,124,0] },
+    { svg:block('#ff8a7a','A'), f:[178,40,20], t:[172,131,0] },
+    { svg:pen('#7cc6f2'),    f:[78,30,58],   t:[50,90,4]   },
+    { svg:sheet,             f:[84,138,18],  t:[112,118,-2]},
+    { svg:block('#9be08a','B'), f:[150,134,-28], t:[172,105,0] },
+    { svg:pen('#b5e48c'),    f:[40,22,110],  t:[62,93,12]  },
+    { svg:sheet,             f:[140,92,30],  t:[112,112,1] },
+    { svg:block('#c7a6f7','C'), f:[192,92,40], t:[172,79,0] }
+  ];
+  /* kurven: bakkant tegnes bak blyantene, framkant foran, så blyantene står nedi */
+  var back = '<path d="M18 106 Q50 96 82 106" fill="none" stroke="#7a4a1f" stroke-width="4"/>'+
+             '<ellipse cx="50" cy="108" rx="34" ry="8" fill="#8d5527" stroke="#2a1f3d" stroke-width="2.5"/>';
+  var front = '<path d="M16 108 L24 146 Q50 154 76 146 L84 108 Q50 118 16 108 Z" fill="#d9a15b" stroke="#2a1f3d" stroke-width="2.5" stroke-linejoin="round"/>'+
+    '<path d="M20 122 Q50 132 80 122 M22 135 Q50 144 78 135" fill="none" stroke="#a8692d" stroke-width="2.5"/>'+
+    '<path d="M32 116 L36 149 M50 119 L50 151 M68 116 L64 149" stroke="#a8692d" stroke-width="2"/>';
+  var html = '<svg viewBox="0 0 210 160" aria-hidden="true">'+
+    '<rect x="96" y="141" width="96" height="8" rx="4" fill="#2a1f3d" opacity=".12"/>'+ back;
+  items.forEach(function(it,k){ if(k%3===0) return; html += '<g class="ti" data-k="'+k+'">'+it.svg+'</g>'; });   // ark og klosser
+  items.forEach(function(it,k){ if(k%3!==0) return; html += '<g class="ti" data-k="'+k+'">'+it.svg+'</g>'; });   // blyanter (før framkanten av kurven)
+  html += front + '<g class="tok"><circle cx="186" cy="24" r="17" fill="#9be08a" stroke="#2a1f3d" stroke-width="2.5"/>'+
+    '<path d="M178 24 L184 30 L195 18" fill="none" stroke="#2a1f3d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>';
+  return { items:items, svg:html };
+})();
+var TIDY_SVG = TIDY.svg;
+function tidyFrame(p){                 // p: 0 → 1 gjennom ryddefasen
+  var N = TIDY.items.length, span = .85/N*1.6;
+  document.querySelectorAll('.tidy').forEach(function(box){
+    box.querySelectorAll('.ti').forEach(function(g){
+      var k = +g.dataset.k, it = TIDY.items[k], st = k*(.85-span)/(N-1) + .03;
+      var q = Math.max(0, Math.min(1, (p-st)/span)), e = ease(q), hop = Math.sin(Math.PI*q)*38;
+      var x = it.f[0]+(it.t[0]-it.f[0])*e, y = it.f[1]+(it.t[1]-it.f[1])*e - hop, r = it.f[2]+(it.t[2]-it.f[2])*e;
+      g.setAttribute('transform','translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+r.toFixed(1)+')');
+    });
+    box.classList.toggle('ok', p>=.93);
+  });
+}
+
 /* Stien gruppene følger. t er «stasjonsnummer med desimaler»: 0 = stasjon 1, 0.5 = midt mellom stasjon 1 og 2 osv.
    Vanligvis en ellipse; med fire stasjoner et rektangel mellom de fire hjørnekortene. */
 function centerT(t){
@@ -959,7 +1022,8 @@ function ease(p){ return p<.5 ? 2*p*p : 1 - Math.pow(-2*p+2, 2)/2; }
 function animFrame(){
   if(!run || run.ready){ if(run) run.anim = false; return; } var ph = run.phases[run.idx];
   var left = run.pausedLeft!==null ? run.pausedLeft : (run.endAt - Date.now()), el = ph.dur*1000 - left;
-  if(ph.type==='lineup'){ placeTokens(ph.round, 0, ease(Math.max(0, Math.min(1, el/1600)))); }
+  if(ph.type==='tidy'){ tidyFrame(Math.max(0, Math.min(1, el/(ph.dur*1000)))); }
+  else if(ph.type==='lineup'){ placeTokens(ph.round, 0, ease(Math.max(0, Math.min(1, el/1600)))); }
   else if(ph.type==='walk'){
     var p = Math.max(0, Math.min(1, el/(ph.dur*850)));                       // framme litt før tida er ute
     placeTokens(ph.round, ease(p), p<.8 ? 1 : (1-p)/.2);                     // rekka samler seg igjen ved stasjonen
@@ -975,7 +1039,7 @@ function start(){
   run = { phases:buildPhases(), idx:-1, endAt:0, pausedLeft:null, stored:0 }; resetStats();
   $('setup').hidden = true; $('board').hidden = false; $('done').hidden = true; $('cleanup').hidden = true;
   $('grid').hidden = false; $('tokens').hidden = false; $('ring').style.display=''; $('hub').classList.remove('at-top');
-  buildBoard(); placeTokens(0, 0, 0); placeThreshold(); musicUi();
+  $('grid').classList.remove('tidying'); buildBoard(); placeTokens(0, 0, 0); placeThreshold(); musicUi();
   $('sndBtn').classList.toggle('off', !cfg.sound);
   if(cfg.animals) startMic(); else updateMicUi();
   try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }catch(e){}
@@ -995,6 +1059,7 @@ function next(){
   run.endAt = Date.now() + ph.dur*1000; run.lastBeep = null;
   var clock = $('clock'); clock.className = 'paper clock p-'+ph.type;
   $('ring').classList.toggle('switching', ph.type==='lineup' || ph.type==='walk'); $('ring').classList.toggle('walking', ph.type==='walk');
+  $('grid').classList.toggle('tidying', ph.type==='tidy');
   herd.listening = (ph.type==='work');
   ensureMusic(phaseMusic());
   if(ph.type!=='work'){ herd.list.forEach(function(an){ if(an.state==='alert') setAnimalState(an,'grazing'); }); $('hush').classList.remove('show'); }
@@ -1003,16 +1068,22 @@ function next(){
   if(ph.type==='work'){
     tokenClass(null); placeTokens(ph.round, 0, 0);
     $('roundTxt').textContent = 'Runde '+(ph.round+1)+' av '+R;
-    $('afterTxt').textContent = ph.round < R-1 ? 'etterpå: bytte' : (cfg.cleanup>0 ? 'etterpå: rydding' : 'siste runde');
+    $('afterTxt').textContent = ph.round < R-1 ? 'etterpå: rydd stasjonen' : (cfg.cleanup>0 ? 'etterpå: rydding' : 'siste runde');
     $('phaseTxt').textContent = 'Jobb på stasjonen';
     chime(ph.round>0 ? [523,659,784] : [523,784]);
     flash('<span class="fl-hush"><img src="fagikoner/sett-i-gang.webp" alt=""></span>Sett i gang!', 'Runde '+(ph.round+1)+' av '+R);
   }
+  else if(ph.type==='tidy'){
+    $('afterTxt').textContent = 'etterpå: still på rekke';
+    $('phaseTxt').textContent = 'Rydd stasjonen';
+    tidyFrame(0); tokenClass('busy'); startAnim(); chime([784,659,523]);
+    flash('Rydd stasjonen');
+  }
   else if(ph.type==='lineup'){
     $('afterTxt').textContent = 'etterpå: gå videre';
     $('phaseTxt').textContent = 'Still på rekke';
-    tokenClass('lineup'); startAnim(); chime([784,659,523]);
-    flash('<span class="fl-hush">'+HUSH+'</span>Bytte! Still på rekke', 'Stå stille og vent på signalet');
+    tokenClass('lineup'); startAnim(); chime([659,523]);
+    flash('<span class="fl-hush">'+HUSH+'</span>Still på rekke', 'Stå stille og vent på signalet');
   }
   else if(ph.type==='walk'){
     $('afterTxt').textContent = 'etterpå: runde '+(ph.round+2)+' av '+R;
@@ -1042,7 +1113,7 @@ function tick(){
   $('clock').classList.toggle('last10', last);
   if(last && s<=3 && run.lastBeep!==s && run.pausedLeft===null){ run.lastBeep = s; chime([880], 0, .25); }
   if(run.pausedLeft===null){
-    var nx = run.phases[run.idx+1], endsMusic = !nx || !((ph.type==='lineup' && nx.type==='walk'));     // bytte: musikken går videre fra rekke til gåing
+    var nx = run.phases[run.idx+1], endsMusic = !nx || !((ph.type==='tidy' && nx.type==='lineup') || (ph.type==='lineup' && nx.type==='walk'));     // bytte: musikken går videre fra rydding til rekke til gåing
     var want = phaseMusic();
     if(want && endsMusic && left <= FADE_OUT){ if(music.playing && music.kind===want) musicStop(FADE_OUT); }
     else if(want && cfg.music && !(music.playing && music.kind===want)) ensureMusic(want);              // f.eks. etter +1 minutt
