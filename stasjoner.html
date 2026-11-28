@@ -204,7 +204,8 @@ input{ font-family:inherit; color:inherit; }
 .token{ position:absolute; transform:translate(-50%,-50%) scale(var(--ts,1)); display:flex; flex-direction:column; align-items:center; z-index:2; }
 .token .ico{ filter:drop-shadow(0 6px 0 rgba(42,31,61,.2)); animation:idle 2.6s ease-in-out infinite; animation-delay:var(--ad); }
 .chip{ border:var(--border); border-radius:40px; padding:0 18px; margin-top:-12px; font-size:27px; font-weight:600; white-space:nowrap; background:var(--paper); box-shadow:0 4px 0 rgba(42,31,61,.2); position:relative; }
-.fol{ position:absolute; transform:translate(-50%,-50%) scale(var(--fs,0)); z-index:1; --s:calc(62px * max(1, var(--ts,1) * .85)); }
+/* Rekka vokser ved at selve størrelsen endres (ikke scale fra 0): Safari på iPad tegner ellers ikke emojiene før noe annet rører på seg. */
+.fol{ position:absolute; transform:translate(-50%,-50%); z-index:1; --s:calc(62px * max(1, var(--ts,1) * .85) * var(--fs,0)); }
 .fol .ico{ filter:drop-shadow(0 4px 0 rgba(42,31,61,.2)); }
 @keyframes idle{ 50%{ transform:translateY(-5px); } }
 .tokens.lineup .token .ico{ animation:none; }
@@ -1015,7 +1016,7 @@ function placeTokens(round, frac, ext){
     var tt = lead[f.dataset.g], k = +f.dataset.k;
     for(var i=0;i<k;i++){ tt -= ext*(i===0 ? 96 : 70)*Math.max(1, geo.ts*.85)/speedT(tt-.02); }   // ca. 70 px mellom hver i rekka
     var p = posT(tt);
-    f.style.left = p.x.toFixed(1)+'px'; f.style.top = (p.y+14).toFixed(1)+'px'; f.style.setProperty('--fs', ext.toFixed(3));
+    f.style.left = p.x.toFixed(1)+'px'; f.style.top = (p.y+14).toFixed(1)+'px'; f.style.setProperty('--fs', ext.toFixed(3)); f.style.visibility = ext<.03 ? 'hidden' : '';
   });
 }
 function ease(p){ return p<.5 ? 2*p*p : 1 - Math.pow(-2*p+2, 2)/2; }
